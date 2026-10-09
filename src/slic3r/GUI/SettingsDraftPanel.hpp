@@ -12,6 +12,9 @@ class SettingsDraftPanel : public wxPanel {
 public:
     SettingsDraftPanel(wxWindow *parent, TabStrip *strip, std::function<void(bool)> show_page);
     bool Activate(const std::string &id);
+    // Picks the saved draft page while the host is still being built. Unlike
+    // Activate() it never calls show_page; the host shows the page itself.
+    bool Restore(const std::string &id);
     ~SettingsDraftPanel() override;
     static bool RestoreHistory(const std::string &id, const DynamicPrintConfig &config);
 private:

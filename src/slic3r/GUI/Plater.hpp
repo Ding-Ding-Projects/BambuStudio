@@ -232,6 +232,9 @@ public:
     // wider dock the tree needs, since the ctor applies the persisted choice
     // before the AUI pane that carries the width even exists.
     bool is_process_advanced() const;
+    // True while a settings draft page shows instead of the section body. It
+    // needs the same wide dock as the full settings tree.
+    bool is_draft_page_shown() const;
     // Width the section strip (Ink / Process / Objects) takes beside the body
     // when it is docked to the left or right, 0 when it runs along the top or
     // bottom. The strip shares the sidebar pane with the body, so every pane
