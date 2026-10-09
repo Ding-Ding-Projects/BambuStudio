@@ -96,9 +96,18 @@ void SettingsDraftPanel::Persist() {
     }
 }
 bool SettingsDraftPanel::Activate(const std::string &id) {
-    if (!m_store.find(id)) { m_show_page(false); return false; }
+    if (!m_store.find(id)) {
+        // Hand the body back only when a draft page was up: switching between
+        // ordinary sections must not resize the sidebar.
+        if (IsShown()) m_show_page(false);
+        return false;
+    }
     if (m_active != id) { m_active = id; Rebuild(); }
     m_show_page(true); return true;
+}
+bool SettingsDraftPanel::Restore(const std::string &id) {
+    if (!m_store.find(id)) return false;
+    m_active = id; Rebuild(); return true;
 }
 void SettingsDraftPanel::Rebuild() {
     ++m_view_generation;

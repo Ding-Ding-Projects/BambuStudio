@@ -4493,8 +4493,12 @@ Sidebar::Sidebar(Plater *parent)
     content_row->Add(p->scrolled, 1, wxEXPAND);
     p->m_draft_panel = new SettingsDraftPanel(this, p->m_prepare_tabs, [this](bool draft) {
         p->scrolled->Show(!draft); p->m_draft_panel->Show(draft);
+        // The draft editor needs the settings-tree width, and so does the full
+        // process tree that leaving a draft goes back to.
+        const bool wide = draft || is_process_advanced();
         if (auto *plater = dynamic_cast<Plater *>(GetParent()))
-            plater->request_sidebar_width(draft ? FromDIP(ADVANCED_SIDEBAR_WIDTH) + section_strip_width() : 0);
+            plater->request_sidebar_width(wide ? FromDIP(ADVANCED_SIDEBAR_WIDTH) + section_strip_width() : 0,
+                                          /*grow_only=*/wide);
         Layout();
     });
     content_row->Add(p->m_draft_panel, 1, wxEXPAND);
@@ -4503,8 +4507,17 @@ Sidebar::Sidebar(Plater *parent)
     m_prepare_layout->Add(content_row, 1, wxEXPAND);
     SetSizer(m_prepare_layout);
     place_prepare_strip();
+    // Restore the saved section without the show_page callback above. That
+    // callback asks the Plater for a sidebar width, and this constructor runs
+    // inside Plater::priv's, inside Plater's: neither the Plater's priv nor the
+    // dock that carries the width exists yet (md3-v230 crashed here on every
+    // start). A restored draft gets its width from the first laid-out size
+    // event in Plater::priv::priv, as the full settings tree does.
     const std::string saved_section = p->m_prepare_tabs->ActiveId();
-    if (!p->m_draft_panel->Activate(saved_section))
+    const bool restored_draft = p->m_draft_panel->Restore(saved_section);
+    p->scrolled->Show(!restored_draft);
+    p->m_draft_panel->Show(restored_draft);
+    if (!restored_draft)
         apply_prepare_section(saved_section.empty() ? "ink" : saved_section);
 
     //wxGetApp().CallAfter([this]() {
@@ -5657,6 +5670,8 @@ void Sidebar::jump_to_option(const std::string& opt_key, Preset::Type type, cons
 }
 
 bool Sidebar::is_process_advanced() const { return p->process_advanced; }
+
+bool Sidebar::is_draft_page_shown() const { return p->m_draft_panel && p->m_draft_panel->IsShown(); }
 
 void Sidebar::show_process_advanced(bool advanced, bool persist)
 {
@@ -9870,7 +9885,8 @@ Plater::priv::priv(Plater *q, MainFrame *main_frame)
         // parameter) shadow the members here, so reach them through this->.
         this->q->Bind(wxEVT_SIZE, [this](wxSizeEvent &e) {
             e.Skip();
-            if (m_advanced_width_applied || !this->sidebar || !this->sidebar->is_process_advanced())
+            if (m_advanced_width_applied || !this->sidebar ||
+                !(this->sidebar->is_process_advanced() || this->sidebar->is_draft_page_shown()))
                 return;
             // Latch only once the request actually had a laid-out frame to size
             // against; an early size event would otherwise clamp to the compact
@@ -23792,8 +23808,13 @@ void Sidebar::set_btn_label(const ActionButtonType btn_type, const wxString& lab
 
 Plater::Plater(wxWindow *parent, MainFrame *main_frame)
     : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxGetApp().get_min_size())
-    , p(new priv(this, main_frame))
 {
+    // Build priv here, not in the initializer list. Its constructor builds the
+    // Sidebar, and code running inside it can call back into this Plater. From
+    // the body, p reads null until priv is complete, and every other member is
+    // already initialized. In the initializer list p was not constructed yet,
+    // so it held whatever bytes that memory last contained.
+    p.reset(new priv(this, main_frame));
     // Initialization performed in the private c-tor
     enable_wireframe(true);
 }
@@ -27002,6 +27023,10 @@ void                  Plater::reset_window_layout(int width) { p->reset_window_l
 
 bool Plater::request_sidebar_width(int width_px, bool grow_only)
 {
+    // Not ready while Plater::Plater is still building priv: the sidebar and
+    // the dock manager do not exist yet. The startup size event asks again.
+    if (!p)
+        return false;
     auto &pane = p->m_aui_mgr.GetPane(p->sidebar);
     if (!pane.IsOk() || pane.IsFloating())
         return true; // nothing this call can usefully do; do not keep retrying
