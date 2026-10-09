@@ -971,6 +971,10 @@ struct Sidebar::priv
     // option on activation. The guard flag keeps the focus-driven popup from
     // being re-opened by the popup's own focus bounce.
     SearchField  *m_process_search = nullptr;
+    // Collapsible holders of the two settings searches. They open a results
+    // popup rather than narrowing a list, so they never report active filters.
+    CollapsibleFilterBar *m_process_search_filters = nullptr;
+    CollapsibleFilterBar *m_process_search_adv_filters = nullptr;
     // Same searcher, second host: the compact card's field is hidden along with
     // the card in advanced mode, which would leave the FULL process-settings
     // tree — the surface with the most options in it — as the only settings
@@ -4060,7 +4064,11 @@ Sidebar::Sidebar(Plater *parent)
         // filament options — so the Printer section needs no third search bar.
         // The pill's ".*" toggle and tune builder popover are wired into the
         // searcher's regex / case / whole-word flags by the SearchDialog.
-        p->m_process_search = new SearchField(p->m_process_card, _L("Search settings"));
+        // TRN: Header of the collapsible settings search in the sidebar.
+        p->m_process_search_filters = new CollapsibleFilterBar(p->m_process_card, "settings_search", _L("Search"));
+        p->m_process_search_filters->SetOnToggled([this](bool) { CallAfter([this]() { update_scroll_body(); }); });
+        p->m_process_search = new SearchField(p->m_process_search_filters->GetBody(), _L("Search settings"));
+        p->m_process_search_filters->GetBodySizer()->Add(p->m_process_search, 0, wxEXPAND);
         p->m_process_search->GetTextCtrl()->Bind(wxEVT_SET_FOCUS, [this](wxFocusEvent &e) {
             if (!p->m_process_search_open) {
                 p->m_process_search_open = true;
@@ -4074,7 +4082,7 @@ Sidebar::Sidebar(Plater *parent)
         p->m_process_search->Bind(wxCUSTOMEVT_EXIT_SEARCH, [this](wxCommandEvent &) {
             p->m_process_search_open = false;
         });
-        card_sizer->Add(p->m_process_search, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, pad / 2);
+        card_sizer->Add(p->m_process_search_filters->GetSectionSizer(), 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, pad / 2);
 
         // Process-preset SelectField: the live PlaterPresetComboBox (TYPE_PRINT)
         // dressed with kit SelectField chrome (r10 small-radius, SurfaceContainer-
@@ -4313,7 +4321,13 @@ Sidebar::Sidebar(Plater *parent)
         // as the compact card's, so the advanced surface is searchable too.
         // Preset::TYPE_INVALID keeps the query scoped across every indexed preset
         // type, and jumping to a result lands on the owning option in this tree.
-        p->m_process_search_adv = new SearchField(p->m_process_simple_bar, _L("Search settings"));
+        // TRN: Header of the collapsible settings search above the full process settings.
+        p->m_process_search_adv_filters = new CollapsibleFilterBar(p->m_process_simple_bar, "settings_search_full", _L("Search"),
+                                                                   CollapsibleFilterBar::Purpose::Narrows,
+                                                                   CollapsibleFilterBar::Layout::Inline);
+        p->m_process_search_adv_filters->SetOnToggled([this](bool) { CallAfter([this]() { update_scroll_body(); }); });
+        p->m_process_search_adv = new SearchField(p->m_process_search_adv_filters->GetBody(), _L("Search settings"));
+        p->m_process_search_adv_filters->GetBodySizer()->Add(p->m_process_search_adv, 0, wxEXPAND);
         p->m_process_search_adv->GetTextCtrl()->Bind(wxEVT_SET_FOCUS, [this](wxFocusEvent &e) {
             if (!p->m_process_search_open) {
                 p->m_process_search_open = true;
@@ -4325,7 +4339,7 @@ Sidebar::Sidebar(Plater *parent)
         p->m_process_search_adv->Bind(wxCUSTOMEVT_EXIT_SEARCH, [this](wxCommandEvent &) {
             p->m_process_search_open = false;
         });
-        simple_sizer->Add(p->m_process_search_adv, 1, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(4));
+        simple_sizer->Add(p->m_process_search_adv_filters->GetSectionSizer(), 1, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(4));
 
         p->m_process_simple_bar->SetSizer(simple_sizer);
         scrolled_sizer->Add(p->m_process_simple_bar, 0, wxEXPAND);
@@ -5416,6 +5430,8 @@ void Sidebar::msw_rescale()
     if (p->m_search_bar) p->m_search_bar->Rescale();
     // Sidebar settings search + filament slot search pills re-derive their
     // geometry and glyph rasters at the new DPI the same way.
+    if (p->m_process_search_filters) p->m_process_search_filters->Rescale();
+    if (p->m_process_search_adv_filters) p->m_process_search_adv_filters->Rescale();
     if (p->m_process_search) p->m_process_search->Rescale();
     if (p->m_process_search_adv) p->m_process_search_adv->Rescale();
     if (p->m_filament_search_filters) p->m_filament_search_filters->Rescale();

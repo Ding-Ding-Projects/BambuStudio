@@ -47,6 +47,7 @@ Each surface keeps its own remembered state.
 | Export dialog | Search | search text |
 | Sidebar object search | Search | search text; the header hides and shows with the object list |
 | Sidebar ink slot search | Search | search text; it folds away with the ink section as before |
+| Sidebar settings search (compact card and full settings bar) | Search | nothing: these open a results list instead of hiding settings, so there is never a hidden filter to report |
 
 In the sidebar, <kbd>Ctrl</kbd>+<kbd>F</kbd> still focuses the object search.
 If the search is collapsed, the shortcut expands it for the current session

@@ -60,8 +60,18 @@ test('the sidebar ink slot search is collapsible and reports its query', () => {
   assert.match(plater, /wrapper_sizer->Add\(p->m_filament_search_filters->GetSectionSizer\(\)/);
 });
 
+test('the two sidebar settings searches are collapsible', () => {
+  const plater = strip(read('Plater.cpp'));
+  assert.match(plater, /p->m_process_search_filters\s*=\s*new CollapsibleFilterBar\(p->m_process_card, "settings_search"/);
+  assert.match(plater, /p->m_process_search\s*=\s*new SearchField\(p->m_process_search_filters->GetBody\(\)/);
+  assert.match(plater, /card_sizer->Add\(p->m_process_search_filters->GetSectionSizer\(\)/);
+  assert.match(plater, /p->m_process_search_adv_filters\s*=\s*new CollapsibleFilterBar\(p->m_process_simple_bar, "settings_search_full"/);
+  assert.match(plater, /p->m_process_search_adv\s*=\s*new SearchField\(p->m_process_search_adv_filters->GetBody\(\)/);
+  assert.match(plater, /simple_sizer->Add\(p->m_process_search_adv_filters->GetSectionSizer\(\)/);
+});
+
 test('every surface id is unique', () => {
-  const ids = [...surfaces.map(([, id]) => id), 'filament_search'];
+  const ids = [...surfaces.map(([, id]) => id), 'filament_search', 'settings_search', 'settings_search_full'];
   assert.equal(new Set(ids).size, ids.length);
 });
 

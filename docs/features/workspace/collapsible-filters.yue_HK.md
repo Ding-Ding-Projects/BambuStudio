@@ -1,6 +1,6 @@
 ---
 translation-of: collapsible-filters.md
-source-sha256: 844813bbf7e8af1467906f34b6ce136d612e3426e7a52bd2ddebb70b482906f7
+source-sha256: f52d57873e6f7b94da648b8d3f0169759cefa41c367ae329fbb49aa454a601f5
 review-status: agent-drafted
 ---
 
@@ -36,6 +36,7 @@ review-status: agent-drafted
 | 匯出對話框 | 搜尋 | 搜尋文字 |
 | 側邊欄物件搜尋 | 搜尋 | 搜尋文字；標題會同物件清單一齊隱藏同顯示 |
 | 側邊欄墨水槽搜尋 | 搜尋 | 搜尋文字；同以前一樣會隨墨水部分一齊收埋 |
+| 側邊欄設定搜尋（精簡卡同完整設定列） | 搜尋 | 冇：呢兩個會開結果清單，唔會隱藏設定，所以永遠冇隱藏咗嘅篩選要報告 |
 
 喺側邊欄，<kbd>Ctrl</kbd>+<kbd>F</kbd> 仍然會聚焦物件搜尋。如果搜尋收埋咗，呢個快捷鍵只會喺今次工作階段展開佢；記住咗嘅選擇唔會變。
 
