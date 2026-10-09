@@ -30005,6 +30005,299 @@ msgid "Number"
 msgstr ""
 
 msgid "Source name"
+msgid "not measurable"
+msgstr ""
+
+msgid "Measured hardware evidence"
+msgstr ""
+
+msgid "Measure hardware again"
+msgstr ""
+
+msgid "Context for estimates"
+msgstr ""
+
+msgid "Context cache precision"
+msgstr ""
+
+msgid "Estimate settings could not be saved. They apply until the suite closes."
+msgstr ""
+
+msgid "Inspection finished. Hardware fit was recomputed from current measurements and estimate settings."
+msgstr ""
+
+msgid "Hardware measured again. Select a model to see its verdict."
+msgstr ""
+
+msgid "Runs well"
+msgstr ""
+
+msgid "Runs with limits"
+msgstr ""
+
+msgid "Unlikely"
+msgstr ""
+
+msgid "Estimates are conservative and do not guarantee that the model will run."
+msgstr ""
+
+msgid "The exact model size, the free space in the model folder, or the measurement time is unavailable."
+msgstr ""
+
+msgid "The storage estimate is too large to calculate."
+msgstr ""
+
+msgid "The model folder has less free space than the model size plus a ten percent safety allowance."
+msgstr ""
+
+msgid "Measured system memory, processor architecture and the model's parameters, quantization, context limit and attention layout are all needed. Inspect an installed model to read them."
+msgstr ""
+
+msgid "The estimate context is larger than the model's verified context limit."
+msgstr ""
+
+msgid "The memory estimate is too large to calculate."
+msgstr ""
+
+msgid "Memory estimate: model size, plus twenty percent for the runtime, plus the context cache for the chosen context and precision."
+msgstr ""
+
+msgid "The model does not fit in usable GPU memory, so part of it runs on the processor. Speed is not predicted."
+msgstr ""
+
+msgid "Neither measured system memory nor usable GPU memory holds this estimate."
+msgstr ""
+
+msgid "Ollama has not shown a working GPU backend on this computer, so the verdict assumes processor-only inference."
+msgstr ""
+
+msgid "System memory alone is not enough, and Ollama has not shown a working GPU backend, so GPU use cannot be counted."
+msgstr ""
+
+msgid "The estimate context was reduced to the model's verified context limit."
+msgstr ""
+
+msgid "OLLAMA_MODELS in this application's environment"
+msgstr ""
+
+msgid "OLLAMA_MODELS user setting"
+msgstr ""
+
+msgid "OLLAMA_MODELS computer setting"
+msgstr ""
+
+msgid "Ollama default location"
+msgstr ""
+
+msgid "8-bit context cache (OLLAMA_KV_CACHE_TYPE=q8_0)"
+msgstr ""
+
+msgid "4-bit context cache (OLLAMA_KV_CACHE_TYPE=q4_0)"
+msgstr ""
+
+msgid "16-bit context cache (default, recommended)"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s tokens (recommended)"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s tokens"
+msgstr ""
+
+msgid "Context memory grows with the number of tokens a chat keeps and with the cache precision Ollama uses. 4096 tokens with a 16-bit cache is a conservative starting point. Choose the context and OLLAMA_KV_CACHE_TYPE you run Ollama with; every verdict is recomputed at once."
+msgstr ""
+
+msgid "Hardware has not been measured yet. Choose Refresh runtime or Measure hardware again."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Measured at %s (UTC)."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "System memory available: %s of %s."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "System memory available: %s."
+msgstr ""
+
+msgid "System memory: not measured on this platform."
+msgstr ""
+
+msgid "Processor architecture: not identified."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Processor architecture: %s."
+msgstr ""
+
+msgid "Graphics: no hardware graphics adapter was reported."
+msgstr ""
+
+msgid "driver version unavailable"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "driver %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Graphics: %s, %s, %s dedicated memory, %s usable now."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "GPU backend: verified. Ollama %s kept %s of %s for %s in GPU memory at %s (UTC)."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "GPU backend: not in use. Ollama %s kept %s entirely in system memory at %s (UTC), so estimates assume processor inference."
+msgstr ""
+
+msgid "GPU backend: the earlier Ollama evidence no longer applies because the graphics adapter, driver or Ollama version changed. Load a model in Ollama again, then choose Refresh runtime."
+msgstr ""
+
+msgid "GPU backend: not verified. Ollama reports GPU use only while a model is loaded. Send one chat message or load a model in Ollama, then choose Refresh runtime."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Model folder: %s (%s). Confirmed by %s of %s installed model manifests. Free space: %s."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Model folder: %s (%s). No installed model exists yet to confirm it. Free space: %s."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Model folder: %s (%s), not yet confirmed because the installed-model list has not been read. Choose Refresh runtime to confirm it. Free space: %s."
+msgstr ""
+
+msgid "The documented settings name different folders, so the smallest free space among them is used."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Model folder: not confirmed. The installed models were not found under any documented location (closest: %s, %s of %s manifests). Storage fit stays Unknown. Check OLLAMA_MODELS for the running Ollama, restart Ollama, then choose Refresh runtime."
+msgstr ""
+
+msgid "Model folder: no documented location could be resolved, so storage fit stays Unknown."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Hardware fit: %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Installed size: %s."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Exact registry download size: %s."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Manifest: %s"
+msgstr ""
+
+msgid "Storage needed: none, the model is already installed."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Storage needed: %s including a ten percent allowance."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Estimate context: %s tokens, needing %s of context cache."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Estimate context: %s tokens. The context cache size is unknown because attention metadata is missing."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Memory estimate: %s."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Hardware measured at %s (UTC)."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Verified capabilities: %s"
+msgstr ""
+
+msgid "none reported"
+msgstr ""
+
+msgid "Capabilities are verified only after the model is installed and inspected."
+msgstr ""
+
+msgid "less than a minute"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s minutes"
+msgstr ""
+
+msgid "1 hour"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s hours"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s days"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The latest catalog refresh at %s (UTC) was stopped. Only the last verified catalog and the installed models are shown."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The latest catalog refresh at %s (UTC) could not reach the official catalog; this computer may be offline. Only the last verified catalog and the installed models are shown."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The latest catalog refresh at %s (UTC) exceeded the safety limit of pages or tags, so nothing from it was kept. Only the last verified catalog and the installed models are shown."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The latest catalog refresh at %s (UTC) found a page that did not pass validation, so nothing from it was kept. Only the last verified catalog and the installed models are shown."
+msgstr ""
+
+msgid "No verified catalog is saved. Installed models remain available. Choose Refresh official catalog to read every family and tag from the official Ollama library."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Certified complete catalog: every published count reconciled across %s pages (%s families, %s tags)."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Fully traversed catalog: every family, tag and page link was read across %s pages (%s families, %s tags). The official site publishes no total count, so completeness comes from the traversal and is not certified."
+msgstr ""
+
+msgid "not recorded"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Revision %s, verified at %s (UTC)."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Stale: verified %s ago. Choose Refresh official catalog to check for new models and tags."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Verified %s ago."
+msgstr ""
+
+msgid "Read from the saved last verified catalog."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Catalog refreshed: %s pages were read and saved as the last verified catalog."
 msgstr ""
 
 msgid "State"
@@ -30420,6 +30713,55 @@ msgid "DOCX, ODT, EPUB"
 msgstr ""
 
 msgid "No bundled verified offline document converter adapter is installed."
+msgid "Family"
+msgstr ""
+
+msgid "Variant"
+msgstr ""
+
+msgid "Capability"
+msgstr ""
+
+msgid "Quantization"
+msgstr ""
+
+msgid "Hardware fit"
+msgstr ""
+
+msgid "Sort"
+msgstr ""
+
+msgid "Clear filters"
+msgstr ""
+
+msgid "Any state"
+msgstr ""
+
+msgid "Any family"
+msgstr ""
+
+msgid "Any variant"
+msgstr ""
+
+msgid "Any capability"
+msgstr ""
+
+msgid "Capabilities not verified"
+msgstr ""
+
+msgid "Any quantization"
+msgstr ""
+
+msgid "Quantization not verified"
+msgstr ""
+
+msgid "Any size"
+msgstr ""
+
+msgid "Any hardware fit"
+msgstr ""
+
+msgid "Choose a family first; its published variants are then listed here."
 msgstr ""
 
 msgid "Running"
@@ -31023,4 +31365,164 @@ msgid "This conversion changes or leaves out data, and its changes were not conf
 msgstr ""
 
 msgid "What this conversion changes is different from what was confirmed, so the file was skipped. Confirm the changes again and add it."
+msgid "Installed"
+msgstr ""
+
+msgid "Catalog only"
+msgstr ""
+
+msgid "Running: Ollama has it loaded in memory now, so a chat starts without loading."
+msgstr ""
+
+msgid "Installed: stored in the model folder. The first chat loads it into memory."
+msgstr ""
+
+msgid "Catalog only: published in the official catalog and not installed. Adding it to the batch downloads it; its exact size is read from the official registry when you select it."
+msgstr ""
+
+msgid "Under 2 GiB"
+msgstr ""
+
+msgid "2 to 8 GiB"
+msgstr ""
+
+msgid "8 to 32 GiB"
+msgstr ""
+
+msgid "Over 32 GiB"
+msgstr ""
+
+msgid "Size not known yet"
+msgstr ""
+
+msgid "Group by family"
+msgstr ""
+
+msgid "Group by state"
+msgstr ""
+
+msgid "Group by hardware fit"
+msgstr ""
+
+msgid "Group by quantization"
+msgstr ""
+
+msgid "Group by size"
+msgstr ""
+
+msgid "No grouping"
+msgstr ""
+
+msgid "Sort by family"
+msgstr ""
+
+msgid "Sort by size, smallest first"
+msgstr ""
+
+msgid "Sort by size, largest first"
+msgstr ""
+
+msgid "Sort by hardware fit, best first"
+msgstr ""
+
+msgid "Sort by name"
+msgstr ""
+
+msgid "Runs well: the estimate fits in GPU memory that Ollama has shown it can use."
+msgstr ""
+
+msgid "Runs with limits: the estimate fits only with the processor doing part or all of the work, so replies are slower."
+msgstr ""
+
+msgid "Unlikely: the model folder or the measured memory cannot hold the estimate."
+msgstr ""
+
+msgid "Unknown: evidence is missing, so no estimate is made. Inspect the model, refresh the runtime or measure hardware again."
+msgstr ""
+
+msgid "completion: writes text replies. Chat needs it."
+msgstr ""
+
+msgid "vision: accepts images with a message."
+msgstr ""
+
+msgid "tools: can ask a client to run functions that the client defines."
+msgstr ""
+
+msgid "embedding: turns text into vectors for search; it does not chat."
+msgstr ""
+
+msgid "thinking: can return its reasoning separately before the answer."
+msgstr ""
+
+msgid "insert: can fill in text between a given beginning and end."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s: reported by Ollama; no explanation is bundled for it."
+msgstr ""
+
+msgid "Quantization is verified only from installed-model metadata."
+msgstr ""
+
+msgid "32-bit weights: the original precision and the largest size."
+msgstr ""
+
+msgid "16-bit weights: close to the original quality, with the largest memory and storage needs of the common variants."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "About %s bits per weight. Fewer bits need less memory and storage but lose more quality; 4 to 5 bits is a common balance."
+msgstr ""
+
+msgid "A quantization reported by Ollama; no explanation is bundled for this label."
+msgstr ""
+
+msgid "1 variant"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s variants"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Family %s: the variants published under one model name. They differ in parameter count, quantization or tuning, and each is pulled by its exact tag."
+msgstr ""
+
+msgid "Size not known yet: the exact size is read from the official registry when you select a catalog entry."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s: each variant needs about this much space in the model folder, plus a ten percent allowance while it downloads."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Group: %s, %s"
+msgstr ""
+
+msgid "Select a variant under this heading to see its details."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Variant %s: the exact tag that is pulled and run."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Quantization %s: %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Uses %s in the model folder."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Downloads %s; with the ten percent allowance it needs %s free in the model folder."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Hardware fit now: %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Showing %s of %s variants."
 msgstr ""

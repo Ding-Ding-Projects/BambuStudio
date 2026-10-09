@@ -912,6 +912,7 @@ list(APPEND SLIC3R_GUI_SOURCES
     GUI/TtsNarrator.hpp
     GUI/OllamaSuite/OllamaSuiteDialog.cpp
     GUI/OllamaSuite/OllamaClient.cpp
+    GUI/OllamaSuite/OllamaSuiteText.cpp
     GUI/OllamaSuite/NativeLaunchAdapter.cpp
     GUI/LocalConverter/LocalConverterPanel.cpp
     GUI/FeatureServices/SurfaceRegistry.cpp

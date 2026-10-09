@@ -13,5 +13,13 @@ public:
     CatalogPage catalog_page(const std::string &, const std::atomic_bool &cancel) const;
     Model registry_metadata(const std::string &exact_tag, const std::atomic_bool &cancel) const;
 };
-Hardware detect_hardware(const std::filesystem::path &destination);
+// Lower-case hex SHA-256 of `bytes`: the response identity of a catalog page and the digest of a catalog revision.
+std::string content_identity(const std::string &bytes);
+// The documented views of OLLAMA_MODELS: the persisted user/computer setting (or the default location)
+// and this process's environment (or the default location). Duplicates are removed.
+std::vector<DestinationCandidate> destination_candidates();
+// Measures this computer now: RAM, architecture, hardware graphics adapters with driver version,
+// dedicated memory and the operating system's current budget, and the model destination proven by
+// the installed models the local API reported. Backend evidence is applied separately by apply_backend.
+Hardware detect_hardware(const std::vector<Model> &installed);
 }
