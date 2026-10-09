@@ -39765,3 +39765,1393 @@ msgstr "模型匯入：網格達 1,000,000 個三角形時，先簡化再加入�
 #. review-status: agent-drafted
 msgid "Extra high, High, Medium, Low or Extra low detail for automatic model import simplification"
 msgstr "模型匯入自動簡化嘅細節：極高、高、中、低或極低"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Windows locale (w32_regex_traits)"
+msgstr "Windows 地區設定（w32_regex_traits）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "C++ locale (cpp_regex_traits)"
+msgstr "C++ 地區設定（cpp_regex_traits）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "C locale (c_regex_traits)"
+msgstr "C 地區設定（c_regex_traits）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "unknown locale traits"
+msgstr "未知嘅地區設定特性"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Off by default, so the query is plain text. When on, the worker compiles the query as a pattern."
+msgstr "預設關閉，所以查詢係純文字。開啟之後，worker 會將查詢當做樣式編譯。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Off by default, so letters match in either case. Folding follows the engine's locale traits."
+msgstr "預設關閉，所以字母大細楷都會匹配。大細楷轉換跟引擎嘅地區設定特性。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Multiline anchors"
+msgstr "多行錨點"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Off by default. When on, ^ and $ also match at line breaks."
+msgstr "預設關閉。開啟之後，^ 同 $ 喺換行位都會匹配。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Dot matches line breaks"
+msgstr "點號匹配換行"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Never set by a search field, so . stops at line breaks. Use (?s) inside the pattern to change it."
+msgstr "搜尋欄永遠唔會設定呢個旗標，所以 . 遇到換行就停。要改就喺樣式入面用 (?s)。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Free spacing"
+msgstr "自由空白"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Spaces and # comments are ignored only after (?x) inside the pattern."
+msgstr "淨係喺樣式入面寫咗 (?x) 之後，空格同 # 註解先會被忽略。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Applies to plain-text search only. In regex mode, write \\b around the word."
+msgstr "淨係適用於純文字搜尋。正則表達式模式請喺字詞前後寫 \\b。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Outside brackets these characters are syntax. Put a backslash before one to match it literally."
+msgstr "喺方括號外面，呢啲字元係語法。要照字面匹配，就喺前面加一個反斜線。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Inside brackets, escape ], \\, [, a leading ^ and a - that is not first or last."
+msgstr "喺方括號入面，要逸出 ]、\\、[、開頭嘅 ^，同埋唔喺頭尾嘅 -。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Everything between \\Q and \\E is literal. Without \\E the quoted text runs to the end."
+msgstr "\\Q 同 \\E 之間嘅所有嘢都係字面文字。冇 \\E 嘅話，引用範圍會一路去到尾。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "A code unit by hexadecimal value. With 16-bit code units, values above FFFF are rejected."
+msgstr "用十六進位值表示一個編碼單位。用 16 位元編碼單位嘅時候，高過 FFFF 嘅值會被拒絕。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "NUL or an octal value. A backslash and a digit from 1 to 9 is a backreference, never octal."
+msgstr "NUL 或者八進位值。反斜線加 1 至 9 嘅數字係反向參照，永遠唔係八進位。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Tab, newline, carriage return, form feed, bell, escape and Ctrl+X control characters."
+msgstr "Tab、換行、歸位、換頁、響鈴、Escape 同 Ctrl+X 控制字元。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "A backslash before a letter with no meaning here matches that letter. Other engines may reject it."
+msgstr "反斜線加一個喺呢度冇特別意思嘅字母，就會匹配嗰個字母。其他引擎可能會拒絕。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Under (?x), escape # and spaces that should match literally."
+msgstr "喺 (?x) 之下，要照字面匹配嘅 # 同空格都要逸出。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Supported"
+msgstr "支援"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Partly supported"
+msgstr "部分支援"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Not supported"
+msgstr "唔支援"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Literal characters"
+msgstr "字面字元"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Characters match themselves. Escape a metacharacter with a backslash."
+msgstr "字元會匹配佢自己。特殊字元要用反斜線逸出。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Quoted literal text"
+msgstr "引用嘅字面文字"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Everything between \\Q and \\E matches literally."
+msgstr "\\Q 同 \\E 之間嘅所有嘢都照字面匹配。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Hexadecimal code units"
+msgstr "十六進位編碼單位"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "One code unit by value. With 16-bit code units (Windows), values above FFFF are rejected, so type such characters directly."
+msgstr "用數值表示一個編碼單位。用 16 位元編碼單位（Windows）嘅時候，高過 FFFF 嘅值會被拒絕，所以呢類字元請直接打出嚟。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "\\uHHHH code point escape"
+msgstr "\\uHHHH 碼位逸出"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "\\u is the uppercase-letter class here, so \\u0041 means an uppercase letter followed by 0041. Use \\x{0041}."
+msgstr "喺呢度 \\u 係大楷字母類別，所以 \\u0041 即係一個大楷字母後面跟住 0041。請用 \\x{0041}。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Control escapes"
+msgstr "控制字元逸出"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Tab, newline, carriage return, form feed, bell, escape, Ctrl+X and NUL."
+msgstr "Tab、換行、歸位、換頁、響鈴、Escape、Ctrl+X 同 NUL。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "\\o{...} octal escape"
+msgstr "\\o{...} 八進位逸出"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Not recognised: \\o is the letter o, so \\o{12} means twelve o characters. Use \\012 or \\x{A}."
+msgstr "唔識：\\o 係字母 o，所以 \\o{12} 即係十二個 o。請用 \\012 或者 \\x{A}。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "\\N{name} named characters"
+msgstr "\\N{name} 具名字元"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Rejected: this engine has no \\N escape."
+msgstr "會被拒絕：呢個引擎冇 \\N 逸出。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Character sets and ranges"
+msgstr "字元集合同範圍"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Match one character from the list, or one not in it after ^."
+msgstr "匹配清單入面其中一個字元；開頭有 ^ 就匹配唔喺清單入面嘅字元。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Class shorthands"
+msgstr "類別簡寫"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "\\h is horizontal and \\v vertical whitespace; \\l and \\u are lowercase and uppercase letters. Capitals negate."
+msgstr "\\h 係橫向空白，\\v 係縱向空白；\\l 同 \\u 係細楷同大楷字母。大楷寫法表示相反。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "POSIX classes"
+msgstr "POSIX 類別"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Named classes inside brackets, including negated [:^name:] forms."
+msgstr "方括號入面嘅具名類別，包括相反嘅 [:^name:] 寫法。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Named classes with \\p"
+msgstr "用 \\p 寫嘅具名類別"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Only the engine's class names work (alnum, alpha, blank, cntrl, digit, graph, lower, print, punct, space, upper, word, xdigit and the letters d, h, l, s, u, v, w). \\p{L} means lowercase here, not Letter. Inside brackets \\p is just the letter p."
+msgstr "淨係引擎自己嘅類別名稱有效（alnum、alpha、blank、cntrl、digit、graph、lower、print、punct、space、upper、word、xdigit，同埋字母 d、h、l、s、u、v、w）。喺呢度 \\p{L} 係細楷字母，唔係 Letter。喺方括號入面 \\p 只係字母 p。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Unicode categories and scripts"
+msgstr "Unicode 類別同文字系統"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Rejected: the engine has no Unicode property tables."
+msgstr "會被拒絕：引擎冇 Unicode 屬性表。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Set intersection and subtraction"
+msgstr "集合交集同差集"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Not available: && is two literal ampersands and -- after a range is an error."
+msgstr "冇呢個功能：&& 係兩個字面 & 符號，範圍後面嘅 -- 會出錯。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Without multiline anchors, $ matches only at the very end; \\Z also allows one final line break."
+msgstr "冇開多行錨點嘅話，$ 淨係喺最尾匹配；\\Z 仲容許最後有一個換行。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Word boundaries"
+msgstr "字詞邊界"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "\\< and \\> match the start and end of a word."
+msgstr "\\< 同 \\> 匹配字詞嘅開頭同結尾。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Buffer anchors"
+msgstr "緩衝區錨點"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "\\` and \\' are start-of-text and end-of-text anchors, not quote characters."
+msgstr "\\` 同 \\' 係文字開頭同文字結尾錨點，唔係引號字元。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Numbered capture groups"
+msgstr "編號捕捉群組"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Groups are numbered by their opening parenthesis."
+msgstr "群組按佢哋嘅開括號次序編號。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Named capture groups"
+msgstr "具名捕捉群組"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Named groups are also numbered; refer to them with \\k<name> or \\g{name}."
+msgstr "具名群組都有編號；用 \\k<name> 或者 \\g{name} 參照佢哋。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Python-style named groups"
+msgstr "Python 式具名群組"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Rejected: use (?<name>...), \\k<name> and (?&name) instead."
+msgstr "會被拒絕：請改用 (?<name>...)、\\k<name> 同 (?&name)。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Non-capturing groups"
+msgstr "非捕捉群組"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Group without creating a capture."
+msgstr "淨係分組，唔會建立捕捉。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Atomic groups"
+msgstr "原子群組"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Once the group matches, the engine never backtracks into it."
+msgstr "群組一旦匹配咗，引擎就唔會再回溯入去。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Branch reset groups"
+msgstr "分支重設群組"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Each alternative reuses the same group numbers."
+msgstr "每個選項都重用同一組群組編號。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Alternation"
+msgstr "交替"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Alternatives are tried from left to right."
+msgstr "選項由左至右逐個試。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Greedy quantifiers"
+msgstr "貪婪數量詞"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "A { that does not form a count, such as {,3}, is a literal brace."
+msgstr "組唔成次數嘅 {，例如 {,3}，係字面大括號。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Lazy quantifiers"
+msgstr "懶惰數量詞"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Match as few repetitions as possible."
+msgstr "重複次數愈少愈好。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Possessive quantifiers"
+msgstr "佔有數量詞"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Never give characters back, so a*+a cannot match."
+msgstr "永遠唔會交返字元出嚟，所以 a*+a 匹配唔到。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Lookahead"
+msgstr "前瞻"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Checks what follows without consuming it."
+msgstr "檢查後面跟住乜嘢，但唔會食咗佢。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Lookbehind"
+msgstr "後顧"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Fixed width only: every alternative must have the same constant length, and repeated groups, \\R, \\X and backreferences are rejected inside."
+msgstr "淨係接受固定闊度：每個選項都要係同一個固定長度，入面嘅重複群組、\\R、\\X 同反向參照都會被拒絕。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Variable-width lookbehind"
+msgstr "可變闊度後顧"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Rejected by the engine. JavaScript and .NET accept it; rewrite with a fixed width or use \\K."
+msgstr "引擎會拒絕。JavaScript 同 .NET 接受；請改寫做固定闊度，或者用 \\K。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Backreferences"
+msgstr "反向參照"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "A backslash takes only one digit: \\10 is group 1 then 0, so write \\g{10}. \\g<1> is a backreference here, not a subroutine call."
+msgstr "反斜線淨係攞一位數字：\\10 係群組 1 跟住 0，所以要寫 \\g{10}。喺呢度 \\g<1> 係反向參照，唔係子程序呼叫。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Conditionals"
+msgstr "條件式"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Choose an alternative by a group, a lookaround, recursion or a DEFINE block."
+msgstr "按群組、前瞻後顧、遞迴或者 DEFINE 區塊揀選項。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Recursion and subroutine calls"
+msgstr "遞迴同子程序呼叫"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Re-run the whole pattern or one group at this point."
+msgstr "喺呢個位置再跑一次成個樣式或者某個群組。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Inline modifiers"
+msgstr "內嵌修飾符"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "i, m, s and x work, for the rest of the group or inside (?flags:...)."
+msgstr "i、m、s 同 x 有效，作用於群組餘下部分或者 (?flags:...) 入面。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Other inline modifiers"
+msgstr "其他內嵌修飾符"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Rejected: only i, m, s and x are modifiers in this engine."
+msgstr "會被拒絕：呢個引擎淨係有 i、m、s 同 x 修飾符。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Comments"
+msgstr "註解"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Ignored by the engine. An unclosed (?# runs to the end of the pattern."
+msgstr "引擎會忽略。未閂嘅 (?# 會一路去到樣式結尾。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Match start reset"
+msgstr "重設匹配起點"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Text before \\K must match but is left out of the reported match."
+msgstr "\\K 前面嘅文字一定要匹配，但唔會計入報告嘅匹配。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Backtracking control verbs"
+msgstr "回溯控制動詞"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "These six verbs work. Verbs with an argument, such as (*MARK:name), are rejected."
+msgstr "呢六個動詞有效。帶參數嘅動詞，例如 (*MARK:name)，會被拒絕。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Verbs with names"
+msgstr "帶名稱嘅動詞"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Rejected: verb arguments are not supported."
+msgstr "會被拒絕：唔支援動詞參數。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Line breaks, graphemes, code units"
+msgstr "換行、字素、編碼單位"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "\\R matches any line break (CRLF as one), \\X one grapheme cluster and \\C one code unit."
+msgstr "\\R 匹配任何換行（CRLF 當一個），\\X 匹配一個字素叢集，\\C 匹配一個編碼單位。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Case-insensitive matching"
+msgstr "唔分大細楷匹配"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Case folding follows the engine's locale traits, so letters outside ASCII fold as that locale says."
+msgstr "大細楷轉換跟引擎嘅地區設定特性，所以 ASCII 以外嘅字母點樣轉換由嗰個地區設定決定。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Characters above U+FFFF"
+msgstr "高過 U+FFFF 嘅字元"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "With 16-bit code units (Windows) such a character is two code units: . and [ ] see each half, and a quantifier repeats only the second half. Type it directly outside brackets."
+msgstr "用 16 位元編碼單位（Windows）嘅時候，呢類字元係兩個編碼單位：. 同 [ ] 會分開睇每一半，數量詞淨係重複後半。請喺方括號外面直接打出嚟。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Moderate"
+msgstr "中"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Unbalanced closing parenthesis"
+msgstr "閂括號冇對應嘅開括號"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Ignored whitespace (free-spacing mode)"
+msgstr "被忽略嘅空白（自由空白模式）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Comment, ignored by the engine"
+msgstr "註解，引擎會忽略"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "One of %s alternatives"
+msgstr "%s 個選項其中一個"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Quantifier with nothing to repeat"
+msgstr "數量詞前面冇嘢可以重複"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Quoted literal text: %s"
+msgstr "引用嘅字面文字：%s"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Literal text: %s"
+msgstr "字面文字：%s"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Empty: matches the empty string"
+msgstr "空白：匹配空字串"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Sequence of %s items"
+msgstr "%s 項組成嘅序列"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Repeat exactly %s times"
+msgstr "啱啱好重複 %s 次"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Repeat %s or more times (greedy: as many as possible)"
+msgstr "重複 %s 次或以上（貪婪：愈多愈好）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Repeat %s or more times (lazy: as few as possible)"
+msgstr "重複 %s 次或以上（懶惰：愈少愈好）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Repeat %s or more times (possessive: never gives back)"
+msgstr "重複 %s 次或以上（佔有：唔會交返出嚟）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Repeat %s to %s times (greedy: as many as possible)"
+msgstr "重複 %s 至 %s 次（貪婪：愈多愈好）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Repeat %s to %s times (lazy: as few as possible)"
+msgstr "重複 %s 至 %s 次（懶惰：愈少愈好）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Repeat %s to %s times (possessive: never gives back)"
+msgstr "重複 %s 至 %s 次（佔有：唔會交返出嚟）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "JavaScript RegExp has no %s, so this pattern will not work there unchanged."
+msgstr "JavaScript RegExp 冇 %s，所以呢個樣式唔改就唔可以喺嗰度用。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Any character, including line breaks"
+msgstr "任何字元，包括換行"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Start of a line"
+msgstr "一行嘅開頭"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Without multiline anchors $ matches only at the very end, not before a final line break as in Perl and PCRE. Use \\Z to allow one."
+msgstr "冇開多行錨點嘅話，$ 淨係喺最尾匹配，唔似 Perl 同 PCRE 咁喺最後一個換行前面都匹配。要容許嘅話請用 \\Z。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "End of a line"
+msgstr "一行嘅結尾"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "This { does not form a valid count, so it is a literal brace. Some engines read {,n} as a count."
+msgstr "呢個 { 組唔成有效次數，所以係字面大括號。有啲引擎會將 {,n} 當做次數。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "A character above U+FFFF is two UTF-16 code units for this engine: inside [ ] each half is separate and a quantifier repeats only the second half."
+msgstr "對呢個引擎嚟講，高過 U+FFFF 嘅字元係兩個 UTF-16 編碼單位：喺 [ ] 入面每一半都分開計，數量詞淨係重複後半。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "A character above U+FFFF is one code unit here but two in UTF-16 engines, including the Windows build."
+msgstr "高過 U+FFFF 嘅字元喺呢度係一個編碼單位，但喺 UTF-16 引擎（包括 Windows 版本）係兩個。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Trailing backslash with nothing to escape"
+msgstr "結尾嘅反斜線冇嘢可以逸出"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "A backslash takes only one digit here: %s is group %s followed by the digit %s. Write \\g{%s} for a higher group."
+msgstr "喺呢度反斜線淨係攞一位數字：%s 係群組 %s 跟住數字 %s。要參照更高編號嘅群組，請寫 \\g{%s}。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Octal escape for code unit U+%s"
+msgstr "編碼單位 U+%s 嘅八進位逸出"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Incomplete hexadecimal escape"
+msgstr "十六進位逸出唔完整"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "%s is above FFFF, which 16-bit code units cannot hold, so the Windows engine rejects it. Type the character itself."
+msgstr "%s 高過 FFFF，16 位元編碼單位裝唔落，所以 Windows 引擎會拒絕。請直接打個字元出嚟。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Code unit U+%s by hexadecimal value"
+msgstr "用十六進位值寫嘅編碼單位 U+%s"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Incomplete control escape"
+msgstr "控制字元逸出唔完整"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Control character U+%s"
+msgstr "控制字元 U+%s"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Bell character U+%s"
+msgstr "響鈴字元 U+%s"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Escape character U+%s"
+msgstr "Escape 字元 U+%s"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Form feed U+%s"
+msgstr "換頁字元 U+%s"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Newline (line feed) U+%s"
+msgstr "換行（line feed）U+%s"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Carriage return U+%s"
+msgstr "歸位字元 U+%s"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Tab character U+%s"
+msgstr "Tab 字元 U+%s"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Unterminated \\p{...} class name"
+msgstr "\\p{...} 類別名稱未完"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Characters outside class %s"
+msgstr "唔屬於類別 %s 嘅字元"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Characters in class %s"
+msgstr "屬於類別 %s 嘅字元"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "\\< and \\> are word start and end anchors here, not literal angle brackets. Escape-free < and > match themselves."
+msgstr "喺呢度 \\< 同 \\> 係字詞開頭同結尾錨點，唔係字面尖括號。冇反斜線嘅 < 同 > 會匹配佢哋自己。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Start of a word"
+msgstr "字詞開頭"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "End of a word"
+msgstr "字詞結尾"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Start of the text, even with multiline anchors"
+msgstr "文字開頭，開咗多行錨點都係"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "End of the text, even with multiline anchors"
+msgstr "文字結尾，開咗多行錨點都係"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "End of the text or before a final line break"
+msgstr "文字結尾，或者最後一個換行前面"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Where the previous match ended"
+msgstr "上一個匹配結束嘅位置"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "%s is a start-of-text or end-of-text anchor here, not a quote character. Write the quote without a backslash."
+msgstr "喺呢度 %s 係文字開頭或者文字結尾錨點，唔係引號字元。引號唔使加反斜線。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Start of the text (buffer anchor)"
+msgstr "文字開頭（緩衝區錨點）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "End of the text (buffer anchor)"
+msgstr "文字結尾（緩衝區錨點）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Reported match starts here; earlier text must still match"
+msgstr "報告嘅匹配由呢度開始；前面嘅文字仍然要匹配"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Any line break sequence, CRLF counted as one"
+msgstr "任何換行序列，CRLF 當一個計"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "One grapheme cluster: a character with its combining marks"
+msgstr "一個字素叢集：一個字元連同佢嘅組合符號"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Exactly one code unit"
+msgstr "啱啱好一個編碼單位"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Empty quoted text"
+msgstr "空嘅引用文字"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "\\E without an earlier \\Q is the literal letter E here."
+msgstr "喺呢度，前面冇 \\Q 嘅 \\E 係字面字母 E。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Not recognised by this engine: %s"
+msgstr "呢個引擎唔識：%s"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "\\o{...} is not an octal escape here: \\o is the letter o and the braces repeat it. Use \\0oo or \\x{...}."
+msgstr "喺呢度 \\o{...} 唔係八進位逸出：\\o 係字母 o，大括號會重複佢。請用 \\0oo 或者 \\x{...}。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "%s has no special meaning here, so it matches the letter %s. JavaScript with the u flag, Python and .NET reject it."
+msgstr "%s 喺呢度冇特別意思，所以會匹配字母 %s。開咗 u 旗標嘅 JavaScript、Python 同 .NET 會拒絕。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Escaped %s: matches the character itself"
+msgstr "逸出咗嘅 %s：匹配字元本身"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "%s is not a code point here: \\u is the uppercase-letter class, followed by the literal text %s. Write \\x{%s}."
+msgstr "喺呢度 %s 唔係碼位：\\u 係大楷字母類別，後面跟住字面文字 %s。請寫 \\x{%s}。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "\\u and \\U are uppercase-letter classes in this engine. In JavaScript, Java, .NET and Python \\u starts a code point escape."
+msgstr "喺呢個引擎 \\u 同 \\U 係大楷字母類別。喺 JavaScript、Java、.NET 同 Python，\\u 係碼位逸出嘅開頭。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "\\l and \\L are lowercase-letter classes that only Boost.Regex understands."
+msgstr "\\l 同 \\L 係細楷字母類別，淨係 Boost.Regex 識。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "\\h and \\v match horizontal and vertical whitespace here. In JavaScript \\v is only the vertical tab and \\h is not an escape."
+msgstr "喺呢度 \\h 同 \\v 匹配橫向同縱向空白。喺 JavaScript，\\v 淨係垂直 Tab，\\h 唔係逸出。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Horizontal whitespace: space or tab"
+msgstr "橫向空白：空格或者 Tab"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Not horizontal whitespace"
+msgstr "唔係橫向空白"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Vertical whitespace: a line break character"
+msgstr "縱向空白：換行字元"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Not vertical whitespace"
+msgstr "唔係縱向空白"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Lowercase letter"
+msgstr "細楷字母"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Not a lowercase letter"
+msgstr "唔係細楷字母"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Uppercase letter"
+msgstr "大楷字母"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Not an uppercase letter"
+msgstr "唔係大楷字母"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "%s uses the engine class %s, not the Unicode general category %s. Write the full class name, such as \\p{alpha}."
+msgstr "%s 用嘅係引擎類別 %s，唔係 Unicode 一般類別 %s。請寫完整類別名稱，例如 \\p{alpha}。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "%s is rejected: this engine has no Unicode categories or scripts, only its class names such as alpha, digit and upper."
+msgstr "%s 會被拒絕：呢個引擎冇 Unicode 類別或者文字系統，淨係有 alpha、digit、upper 呢類類別名稱。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Recurse into the whole pattern"
+msgstr "遞迴整個樣式"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Call group %s as a subroutine"
+msgstr "將群組 %s 當子程序呼叫"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Call group \"%s\" as a subroutine"
+msgstr "將群組「%s」當子程序呼叫"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Backreference to group %s"
+msgstr "反向參照群組 %s"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Backreference to group \"%s\""
+msgstr "反向參照群組「%s」"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Incomplete \\g or \\k reference"
+msgstr "\\g 或者 \\k 參照唔完整"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "%s is a backreference here. In PCRE and Oniguruma the same syntax calls the group as a subroutine; use (?1) or (?&name) for that."
+msgstr "喺呢度 %s 係反向參照。喺 PCRE 同 Oniguruma，同樣寫法係將群組當子程序呼叫；要咁做請用 (?1) 或者 (?&name)。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Capture group %s"
+msgstr "捕捉群組 %s"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Unclosed group"
+msgstr "群組未閂"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "This (?# comment has no closing parenthesis, so the rest of the pattern is ignored."
+msgstr "呢個 (?# 註解冇閂括號，所以樣式餘下部分都會被忽略。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Lookahead: must be followed by this"
+msgstr "前瞻：後面一定要跟住呢個"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Negative lookahead: must not be followed by this"
+msgstr "否定前瞻：後面一定唔可以跟住呢個"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Atomic group: never backtracks into its content"
+msgstr "原子群組：永遠唔會回溯入佢嘅內容"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Branch reset group: alternatives share group numbers"
+msgstr "分支重設群組：各選項共用群組編號"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Negative lookbehind: must not be preceded by this"
+msgstr "否定後顧：前面一定唔可以係呢個"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Lookbehind: must be preceded by this"
+msgstr "後顧：前面一定要係呢個"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Python-style %s is rejected here. Use (?<name>...), \\k<name> and (?&name)."
+msgstr "喺呢度 Python 式嘅 %s 會被拒絕。請用 (?<name>...)、\\k<name> 同 (?&name)。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Capture group %s named \"%s\""
+msgstr "捕捉群組 %s，名叫「%s」"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "End of group"
+msgstr "群組結尾"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Unclosed group opened at offset %s"
+msgstr "喺位置 %s 開咗嘅群組未閂"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Backtracking control verb %s"
+msgstr "回溯控制動詞 %s"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "%s is rejected: only (*ACCEPT), (*COMMIT), (*FAIL), (*PRUNE), (*SKIP) and (*THEN) work, without arguments."
+msgstr "%s 會被拒絕：淨係 (*ACCEPT)、(*COMMIT)、(*FAIL)、(*PRUNE)、(*SKIP) 同 (*THEN) 有效，而且唔可以帶參數。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Conditional on a lookaround assertion"
+msgstr "按前瞻後顧斷言決定嘅條件式"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Conditional on group %s"
+msgstr "按群組 %s 決定嘅條件式"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Conditional on group \"%s\""
+msgstr "按群組「%s」決定嘅條件式"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "DEFINE block: definitions for subroutine calls, never matched directly"
+msgstr "DEFINE 區塊：俾子程序呼叫用嘅定義，永遠唔會直接匹配"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Conditional on recursion"
+msgstr "按遞迴決定嘅條件式"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "%s is rejected: only the modifiers i, m, s and x exist in this engine."
+msgstr "%s 會被拒絕：呢個引擎淨係有 i、m、s 同 x 修飾符。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Group with modifiers %s"
+msgstr "帶修飾符 %s 嘅群組"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Modifiers for the rest of the group: %s"
+msgstr "群組餘下部分嘅修飾符：%s"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Unknown class name %s"
+msgstr "未知嘅類別名稱 %s"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Not in POSIX class %s"
+msgstr "唔屬於 POSIX 類別 %s"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "POSIX class %s"
+msgstr "POSIX 類別 %s"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Collating element %s"
+msgstr "排序元素 %s"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Equivalence class %s"
+msgstr "等價類別 %s"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Backspace U+%s"
+msgstr "退格字元 U+%s"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Vertical tab U+%s"
+msgstr "垂直 Tab U+%s"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Inside [ ], %s is just the letter %s. Use a POSIX class such as [[:alpha:]] instead."
+msgstr "喺 [ ] 入面，%s 只係字母 %s。請改用 POSIX 類別，例如 [[:alpha:]]。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Backreferences are not allowed inside [ ]; %s is rejected"
+msgstr "[ ] 入面唔可以用反向參照；%s 會被拒絕"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "[...&&...] is not an intersection here: && matches literal ampersands. This engine has no set operations."
+msgstr "喺呢度 [...&&...] 唔係交集：&& 匹配字面 & 符號。呢個引擎冇集合運算。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Set member %s"
+msgstr "集合成員 %s"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "End of character set"
+msgstr "字元集合結尾"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "[...--...] is not a subtraction here. This engine has no set operations and rejects -- after a range."
+msgstr "喺呢度 [...--...] 唔係差集。呢個引擎冇集合運算，範圍後面嘅 -- 會被拒絕。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Range %s to %s"
+msgstr "%s 至 %s 嘅範圍"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Invalid range %s: the engine rejects it"
+msgstr "範圍 %s 無效：引擎會拒絕"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Unterminated character set opened at offset %s"
+msgstr "喺位置 %s 開咗嘅字元集合未完"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Nested repetition %s can split the same text in many ways, so a failing match may backtrack exponentially. Make the inner or outer repeat possessive (++) or atomic (?>...), or remove the overlap."
+msgstr "巢狀重複 %s 可以用好多種方法分拆同一段文字，所以匹配失敗嗰陣可能會指數式回溯。請將內層或者外層重複改做佔有（++）或者原子（?>...），或者消除重疊。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Alternatives %s and %s inside the repeat %s can start with the same characters, so the engine may retry many combinations. Make the alternatives start differently or use an atomic group."
+msgstr "選項 %s 同 %s 喺重複 %s 入面可以用同樣嘅字元開頭，所以引擎可能會重試好多種組合。請令選項用唔同字元開頭，或者用原子群組。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The repeat %s contains a backreference, which the engine cannot optimise; long inputs can be slow."
+msgstr "重複 %s 入面有反向參照，引擎冇辦法優化；輸入長嘅話可能會慢。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The repeat %s contains recursion or a subroutine call; each iteration can re-run large parts of the pattern."
+msgstr "重複 %s 入面有遞迴或者子程序呼叫；每一輪都可能再跑一大部分樣式。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The count in %s is large; the engine's state limit or the time limit may stop it on long input."
+msgstr "%s 入面嘅次數好大；輸入長嘅話，引擎嘅狀態上限或者時間上限可能會截停佢。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The pattern starts with %s, so every start position rescans the rest of the text. Anchor it with ^ or drop the leading wildcard; a search already looks anywhere."
+msgstr "樣式用 %s 開頭，所以每個起點都要重新掃描餘下嘅文字。請用 ^ 錨定，或者刪走開頭嘅萬用字元；搜尋本身已經會喺任何位置搵。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "%s and %s can match the same characters next to each other, so a failing match tries every split point (polynomial backtracking)."
+msgstr "%s 同 %s 相鄰而且可以匹配同樣嘅字元，所以匹配失敗嗰陣會試晒每個分割點（多項式回溯）。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The lookbehind %s is not fixed width (or repeats a group), which this engine rejects. JavaScript and .NET accept it; rewrite it with one constant length or use \\K."
+msgstr "後顧 %s 唔係固定闊度（或者重複咗群組），呢個引擎會拒絕。JavaScript 同 .NET 接受；請改寫做一個固定長度，或者用 \\K。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "%s refers to a group that does not exist, so the engine rejects the pattern."
+msgstr "%s 參照咗一個唔存在嘅群組，所以引擎會拒絕呢個樣式。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "%s refers to a group that has not finished matching at this point, so it can never match here."
+msgstr "%s 參照嘅群組喺呢個位置仲未匹配完，所以喺呢度永遠匹配唔到。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "This pattern can succeed without consuming any text, so rows can match with nothing highlighted; a pattern such as a* matches every row."
+msgstr "呢個樣式可以一個字都唔食就成功，所以有啲行會匹配但冇嘢標示出嚟；例如 a* 會匹配每一行。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Case-insensitive matching of letters outside ASCII follows the engine's locale traits shown under Engine."
+msgstr "ASCII 以外字母嘅唔分大細楷匹配，跟「引擎」下面顯示嘅地區設定特性。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Whole word is ignored in regex mode. Put \\b around the word instead."
+msgstr "正則表達式模式會忽略「全字詞」。請改為喺字詞前後加 \\b。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Engine: Boost.Regex %s wide-character ECMAScript in an isolated 50 ms worker. Case-insensitive matching uses boost::regex_constants::icase. Escape metacharacters with a backslash."
+msgstr "引擎：隔離 50 毫秒 worker 入面嘅 Boost.Regex %s 寬字元 ECMAScript。唔分大小寫配對使用 boost::regex_constants::icase；特殊字元要用反斜線跳脫。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Pattern analysis summary"
+msgstr "樣式分析摘要"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Explain"
+msgstr "解說"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Engine, structure, tokens, compatibility and backtracking risk of this pattern"
+msgstr "呢個樣式嘅引擎、結構、標記、相容性同回溯風險"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Escaping rules"
+msgstr "逸出規則"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "What this engine supports, partly supports and rejects. Each row has a probe pattern; the button runs every probe through the worker to confirm the row."
+msgstr "呢個引擎支援、部分支援同拒絕嘅功能。每一行都有一個測試樣式；個掣會經 worker 逐個跑，確認每一行講得啱唔啱。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Check against the engine"
+msgstr "用引擎核對"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Capability check result"
+msgstr "功能核對結果"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Explain this pattern"
+msgstr "解說呢個樣式"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Engine"
+msgstr "引擎"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Flags in effect"
+msgstr "生效中嘅旗標"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Engine verdict"
+msgstr "引擎判斷"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Structure"
+msgstr "結構"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Pattern structure"
+msgstr "樣式結構"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Tokens"
+msgstr "標記"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Token annotations"
+msgstr "標記註釋"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Compatibility"
+msgstr "相容性"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Compatibility notes"
+msgstr "相容性備註"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Backtracking risk"
+msgstr "回溯風險"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Backtracking risk findings"
+msgstr "回溯風險結果"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Use example as sample text"
+msgstr "用例子做樣本文字"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Load the adversarial example into Test pattern to see the worker stop it safely"
+msgstr "將惡意例子載入「測試樣式」，睇吓 worker 點樣安全截停佢"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Tokens: %d, capture groups: %d, backtracking risk: %s, compatibility warnings: %d"
+msgstr "標記：%d，捕捉群組：%d，回溯風險：%s，相容性警告：%d"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Regex mode is off, so the search field matches this text literally. The analysis below shows how the engine would read it as a pattern."
+msgstr "正則表達式模式關咗，所以搜尋欄會照字面匹配呢段文字。下面嘅分析顯示引擎會點樣將佢當樣式解讀。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Boost.Regex %s as reported by the worker. Syntax: Perl-compatible, selected by the ECMAScript flag. Code units: %d-bit. Locale traits: %s. State limit: %s."
+msgstr "worker 回報嘅 Boost.Regex %s。語法：Perl 相容，由 ECMAScript 旗標選定。編碼單位：%d 位元。地區設定特性：%s。狀態上限：%s。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The worker has not reported its engine yet, so this shows the Boost.Regex %s this build was compiled with. Open this tab again to retry."
+msgstr "worker 仲未回報佢嘅引擎，所以呢度顯示呢個版本編譯時用嘅 Boost.Regex %s。再開一次呢個分頁就會重試。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "%s: %s. Engine flag: %s. In the pattern: %s"
+msgstr "%s：%s。引擎旗標：%s。樣式入面寫法：%s"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The engine accepts this pattern."
+msgstr "引擎接受呢個樣式。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The engine rejected the pattern at offset %d: %s"
+msgstr "引擎喺位置 %d 拒絕咗呢個樣式：%s"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Tokens: %d, capture groups: %d (%d named), backtracking risk: %s."
+msgstr "標記：%d，捕捉群組：%d（%d 個具名），回溯風險：%s。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "No compatibility notes."
+msgstr "冇相容性備註。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Example input: %s"
+msgstr "例子輸入：%s"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "No backtracking risks found."
+msgstr "搵唔到回溯風險。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "All %d rows behaved as listed on Boost.Regex %s in the worker."
+msgstr "全部 %d 行喺 worker 嘅 Boost.Regex %s 上面都同列明嘅一樣。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "%d of %d rows behaved as listed."
+msgstr "%d 行（共 %d 行）同列明嘅一樣。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Different on this engine: %s"
+msgstr "喺呢個引擎唔同：%s"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The worker did not answer for %d rows. Try again in a moment."
+msgstr "worker 冇回應 %d 行。請等陣再試。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Groups nested too deeply to analyse further; the engine rejects this nesting as too complex"
+msgstr "群組巢狀得太深，冇辦法再分析落去；引擎會因為太複雜而拒絕呢種巢狀"

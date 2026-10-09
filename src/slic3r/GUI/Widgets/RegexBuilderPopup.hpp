@@ -37,7 +37,15 @@ class Label;
 //     literals (auto-escaped input), character classes, anchors, groups /
 //     alternation, quantifiers (greedy + lazy);
 //   * a collapsible "Test pattern" section: bounded multiline sample text with
-//     match highlighting plus a match / capture-group listing.
+//     match highlighting plus a match / capture-group listing;
+//   * an Explain tab (RegexAnalysis.hpp): the engine identity the worker
+//     reports (Boost version, syntax, code-unit width, locale traits, state
+//     limit), the flags in effect and their exact engine flags, the engine's
+//     verdict with its error offset, the structure tree, token-by-token
+//     annotation, compatibility warnings and backtracking-risk findings with
+//     an adversarial example that can be loaded as sample text;
+//   * the Reference tab also lists the flag table, escaping rules and the
+//     capability matrix, whose probes can be checked against the worker.
 // Evaluation is local and bounded (pattern <= 512 code units, sample <= 8192,
 // first 200 matches, 50 ms worker deadline). A pathological evaluator process
 // is terminated; no user regex executes on the UI thread.
@@ -90,10 +98,22 @@ private:
 
     class ChipGroup;
 
+    enum Tab : int { TabBuild = 0, TabExplain = 1, TabReference = 2 };
+
     void build();
     // Reference tab: per-token descriptions, engine mini-documentation,
-    // worked examples, and the OpenCode search helper.
+    // flag and escaping tables, the capability matrix, worked examples, and
+    // the OpenCode search helper. Built on first use.
     void buildReference();
+    // Explain tab: live analysis of the current pattern. Built on first use.
+    void buildExplain();
+    // Re-analyse the pattern: refresh the Build tab summary and, while the
+    // Explain tab is showing, every Explain view.
+    void refreshAnalysis();
+    // Run every capability probe through the worker and report the outcome.
+    void checkCapabilities();
+    // Load the current backtracking-risk example into the sample text.
+    void useRiskExample();
     void switchTab(int tab);
     void openCodeHelp();
     void addSection(wxSizer *sizer, const wxString &title, const std::vector<ChipDef> &defs);
@@ -115,9 +135,27 @@ private:
 
     wxScrolledWindow *m_scroll  = nullptr;
     wxScrolledWindow *m_ref_scroll = nullptr;
+    wxScrolledWindow *m_explain_scroll = nullptr;
     Button           *m_tab_build  = nullptr;
+    Button           *m_tab_explain = nullptr;
     Button           *m_tab_ref    = nullptr;
     Label            *m_ref_status = nullptr;
+    // Build tab: one-line structure / risk summary under the validity line.
+    Label            *m_summary = nullptr;
+    // Explain tab views.
+    Label            *m_engine_info  = nullptr;
+    Label            *m_flags_info   = nullptr;
+    Label            *m_mode_note    = nullptr;
+    Label            *m_verdict      = nullptr;
+    Label            *m_explain_summary = nullptr;
+    wxTextCtrl       *m_tree    = nullptr;
+    wxTextCtrl       *m_tokens  = nullptr;
+    wxTextCtrl       *m_compat  = nullptr;
+    wxTextCtrl       *m_risks   = nullptr;
+    Button           *m_use_example = nullptr;
+    wxString          m_risk_example;
+    // Reference tab: capability check outcome.
+    Label            *m_cap_status = nullptr;
     int               m_active_tab = 0;
     // Guided sections recorded while building the chips, reused verbatim by
     // the Reference tab so docs can never drift from the palette.

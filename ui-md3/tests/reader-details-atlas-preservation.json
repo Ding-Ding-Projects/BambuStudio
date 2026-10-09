@@ -5,7 +5,7 @@
       "methods": {
         "void RegexBuilderPopup::Dismiss(": "9f500c5007bddc6b71b3a1871900324436ff4f3a1bdfbbf6fa24856f3df94895",
         "void RegexBuilderPopup::OnDismiss(": "3a62046bae74c45dc7e005eef01c634a04611d39d0eee19c8c2829a814baee70",
-        "void RegexBuilderPopup::switchTab(": "1e4ea3bf89467639beb4b3626c3e5478c4ed64a777c1c58f951f756f1c92a51f",
+        "void RegexBuilderPopup::switchTab(": "6b7a9382d8819b52ef5dfab700d6d31570d838d46e7124f7205595d16d662e20",
         "void RegexBuilderPopup::openCodeHelp(": "2e404340a479ba77c0da4824b0b3195384ed1b25fcfbb6901721b9645c844890",
         "void RegexBuilderPopup::addSection(": "6b6c615635ed6acaf6d558b086bdf8d4cb9c9f2184c4542c12ff3edf888b4f2b",
         "void RegexBuilderPopup::Configure(": "e3e3d2d35597f7570e15a64d9c9f5888d3b62aa22efadc60b33f3c2f54582f1c",
@@ -18,10 +18,10 @@
         "void RegexBuilderPopup::copyPattern(": "a058d88cb594b31014fe73424c5b679dc7c8b97a6be56e5bdb101d3e2799f00c",
         "void RegexBuilderPopup::toggleTest(": "27f3134e397ffbc569b0e95ebbe410cd71f5d31a12ac386db65fc80e81949cd5",
         "void RegexBuilderPopup::onPatternEdited(": "dda755f210a044174ec05766300203ab69ddc49d7d4b1ea26314e67377545e35",
-        "void RegexBuilderPopup::evaluate(": "2339775b949d7817997804b8180d3a0970586620ab234212f7ce41020289cdf2",
-        "void RegexBuilderPopup::fitPopup(": "a835714844133e348dc5305169cf0258a7167ae80c70a837334c6ff7452aedb4"
+        "void RegexBuilderPopup::evaluate(": "bf44831c2651e1a413d33634de5f9be9d77518d17ea758ca0f593a48fba2b79f",
+        "void RegexBuilderPopup::fitPopup(": "f7c348393182f86b13a1751a941c543b328ab23c149834812ba386b14a919826"
       },
-      "callbacks": "c77ce6896b2ecb3ee0dc7ff75e3f9803f8f567330bf398912290835c18474173"
+      "callbacks": "df5ca3619e5c9ac420480bf6bbdeecbb0911fd5954d24e1cfb03adb9677548b0"
     },
     "src/slic3r/GUI/Export/ExportDialog.cpp": {
       "methods": {

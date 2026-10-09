@@ -2,6 +2,7 @@
 
 #include "slic3r/GUI/Widgets/BoundedRegex.hpp"
 #include "slic3r/GUI/Widgets/BoundedRegexProtocol.hpp"
+#include "slic3r/GUI/Widgets/RegexAnalysis.hpp"
 #include "slic3r/GUI/Widgets/RegexBuilderBridgeState.hpp"
 #include "slic3r/GUI/CanvasMenuSearchModel.hpp"
 #include "slic3r/GUI/DeviceWeb/LatestRequestGate.hpp"
@@ -263,8 +264,8 @@ TEST_CASE("plain text remains literal while regex is an explicit opt-in", "[boun
     CHECK_FALSE(plain_search(L"a.c", L"abc", false));
     CHECK(plain_search(L"a.c", L"value a.c value", false));
     CHECK(search(L"a.c", L"abc").status == Status::Match);
-    CHECK(plain_search(L"cat", L"a cat naps", false, true));
-    CHECK_FALSE(plain_search(L"cat", L"concatenate", false, true));
+    CHECK(plain_search(L"art", L"an art class", false, true));
+    CHECK_FALSE(plain_search(L"art", L"partial", false, true));
 }
 
 TEST_CASE("a missing worker fails open without evaluating in-process", "[bounded_regex]")
@@ -440,6 +441,183 @@ TEST_CASE("regex builder bridge preserves pending edits bidirectionally", "[boun
     CHECK(bridge.values().pattern == "host edit");
     CHECK_FALSE(bridge.values().regex_enabled);
     CHECK_FALSE(bridge.values().multiline);
+}
+
+namespace RA = Slic3r::GUI::RegexAnalysis;
+
+namespace {
+
+// Same mapping the builder's "Check against the engine" action uses.
+Slic3r::GUI::RegexAnalysis::ProbeObservation observe(const std::wstring &pattern, const std::wstring &subject,
+                                                     const Options &options = {})
+{
+    Slic3r::GUI::RegexAnalysis::ProbeObservation seen;
+    const Result result = search(pattern, subject, options);
+    seen.answered = result.definitive() || result.status == Status::InvalidPattern;
+    seen.rejected = result.status == Status::InvalidPattern;
+    seen.matched = result.status == Status::Match;
+    if (seen.matched && !result.matches.empty() && !result.matches[0].groups.empty())
+        seen.whole = capture_text(subject, result.matches[0].groups[0]);
+    return seen;
+}
+
+} // namespace
+
+TEST_CASE("the worker reports the engine it really compiled", "[regex_workbench]")
+{
+    use_test_worker();
+    const Result described = describe_engine();
+    INFO("descriptor: " << described.diagnostic);
+    REQUIRE(described.status == Status::Valid);
+    const auto info = Slic3r::GUI::RegexAnalysis::parse_engine_descriptor(described.diagnostic);
+    CHECK(info.reported);
+    CHECK(info.version == BOOST_VERSION);
+    CHECK(info.code_unit_bits == sizeof(wchar_t) * 8);
+    CHECK(info.syntax == "perl");
+    CHECK(info.max_states == 1000000);
+#if defined(BOOST_REGEX_USE_WIN32_LOCALE)
+    CHECK(info.traits == "win32");
+#elif defined(BOOST_REGEX_USE_CPP_LOCALE)
+    CHECK(info.traits == "cpp");
+#else
+    CHECK(info.traits == "c");
+#endif
+
+    // Describe is a protocol mode of its own; unknown modes stay rejected.
+    Protocol::Request request;
+    request.mode = Protocol::Mode::Describe;
+    request.max_matches = 0;
+    const auto frame = Protocol::encode_request(request);
+    std::vector<std::uint8_t> payload(frame.begin() + Protocol::kPrefixBytes, frame.end());
+    Protocol::Request decoded;
+    REQUIRE(Protocol::decode_request(payload, decoded));
+    CHECK(decoded.mode == Protocol::Mode::Describe);
+    payload[0] = 5;
+    CHECK_FALSE(Protocol::decode_request(payload, decoded));
+}
+
+TEST_CASE("invalid patterns carry the engine's error offset", "[regex_workbench]")
+{
+    use_test_worker();
+    const Result valid = validate(L"[a-z]+");
+    REQUIRE(valid.status == Status::Valid);
+    CHECK(valid.error_offset == kNoErrorOffset);
+
+    const std::vector<std::pair<std::wstring, std::size_t>> cases{
+        {L"*a", 0}, {L"[a", 2}, {L"a{3,1}", 4}, {L"(a)\\2", 5}, {L"a)", 1}};
+    for (const auto &[pattern, offset] : cases) {
+        INFO("pattern size " << pattern.size());
+        const Result invalid = validate(pattern);
+        REQUIRE(invalid.status == Status::InvalidPattern);
+        CHECK(invalid.error_offset == offset);
+    }
+
+    Result original;
+    original.status = Status::InvalidPattern;
+    original.detail = ErrorDetail::Parenthesis;
+    original.error_offset = 17;
+    const auto frame = Protocol::encode_result(original);
+    std::vector<std::uint8_t> payload(frame.begin() + Protocol::kPrefixBytes, frame.end());
+    Result decoded;
+    REQUIRE(Protocol::decode_result(payload, decoded));
+    CHECK(decoded.error_offset == 17);
+    original.error_offset = kMaxPatternCodeUnits + 1;
+    const auto oversized = Protocol::encode_result(original);
+    std::vector<std::uint8_t> bad(oversized.begin() + Protocol::kPrefixBytes, oversized.end());
+    CHECK_FALSE(Protocol::decode_result(bad, decoded));
+}
+
+TEST_CASE("every capability row behaves as documented on the real engine", "[regex_workbench]")
+{
+    use_test_worker();
+    for (const auto &row : Slic3r::GUI::RegexAnalysis::capabilities()) {
+        INFO("capability " << row.id);
+        const auto seen = observe(row.probe, row.subject);
+        CHECK(seen.answered);
+        CHECK(Slic3r::GUI::RegexAnalysis::confirms(row, seen));
+    }
+}
+
+TEST_CASE("compatibility warnings describe what the engine actually does", "[regex_workbench]")
+{
+    use_test_worker();
+    Options sensitive;
+    sensitive.case_sensitive = true;
+
+    // \u is a class: A is not the letter A.
+    CHECK(RA::analyze(L"\\u0041").has_compatibility("u-escape"));
+    CHECK_FALSE(observe(L"\\u0041", L"A").matched);
+    CHECK(observe(L"\\u0041", L"B0041").matched);
+    // \p{L} is the lowercase class, not the Letter category.
+    CHECK(RA::analyze(L"\\p{L}").has_compatibility("p-letter-class"));
+    CHECK(observe(L"\\p{L}", L"a", sensitive).matched);
+    CHECK_FALSE(observe(L"\\p{L}", L"A", sensitive).matched);
+    CHECK(observe(L"\\p{Lu}", L"A").rejected);
+    CHECK(observe(L"[\\pL]", L"p").matched);
+    // \10 is group 1 followed by a literal 0.
+    CHECK(RA::analyze(L"(a)\\10").has_compatibility("single-digit-backreference"));
+    CHECK(observe(L"(a)\\10", L"aa0").whole == L"aa0");
+    // \g<1> is a backreference, not a subroutine call.
+    CHECK_FALSE(observe(L"(a|b)\\g<1>", L"ab").matched);
+    CHECK(observe(L"(a|b)\\g<1>", L"bb").matched);
+    // Lookbehind must be fixed width and may not repeat a group.
+    CHECK(observe(L"(?<=a+)b", L"aab").rejected);
+    CHECK(observe(L"(?<=a|bc)d", L"bcd").rejected);
+    CHECK(observe(L"(?<=(?:ab){2})c", L"ababc").rejected);
+    CHECK(observe(L"(?<=ab|cd)x", L"cdx").whole == L"x");
+    // Escapes that differ from other dialects.
+    CHECK(observe(L"\\'", L"'").whole.empty());
+    CHECK(observe(L"\\<a\\>", L"<a>").whole == L"a");
+    CHECK(observe(L"\\o{3}", L"ooo").whole == L"ooo");
+    CHECK(observe(L"\\y", L"y").whole == L"y");
+    CHECK(observe(L"a\\E", L"aE").whole == L"aE");
+    CHECK(observe(L"\\h\\v", L" \n").whole == L" \n");
+    CHECK(observe(L"\\l", L"A", sensitive).matched == false);
+    CHECK(observe(L"a{,3}", L"a{,3}").whole == L"a{,3}");
+    CHECK(observe(L"[a-z&&[aeiou]]", L"&]").whole == L"&]");
+    CHECK(observe(L"[a-z--[aeiou]]", L"b").rejected);
+    CHECK(observe(L"(?P<n>a)", L"a").rejected);
+    CHECK(observe(L"(?U)a", L"a").rejected);
+    CHECK(observe(L"(*MARK:x)a", L"a").rejected);
+    CHECK(observe(L"\\N{SPACE}", L" ").rejected);
+    // A backreference to a group that has not closed never matches.
+    CHECK(RA::analyze(L"\\1(a)").has_compatibility("early-backreference"));
+    CHECK_FALSE(observe(L"\\1(a)", L"aa").matched);
+    CHECK(observe(L"(a)\\2", L"aa").rejected);
+    // $ without multiline anchors does not match before a final line break.
+    CHECK_FALSE(observe(L"ab$", L"ab\n").matched);
+    CHECK(observe(L"ab\\Z", L"ab\n").matched);
+    // Values above FFFF depend on the code unit width the worker reports.
+    if (sizeof(wchar_t) == 2)
+        CHECK(observe(L"\\x{1F600}", L"x").rejected);
+    else
+        CHECK(observe(L"\\x{1F600}", std::wstring(1, static_cast<wchar_t>(0x1F600))).matched);
+    // Every probe the model reads as rejected is rejected by the engine too.
+    for (const auto *pattern : {L"(?<=a+)b", L"\\p{Lu}", L"(?P<n>a)", L"(?U)a", L"(*MARK:x)a"}) {
+        const RA::Analysis a = RA::analyze(pattern);
+        CHECK_FALSE(a.compatibility.empty());
+        CHECK(observe(pattern, L"a").rejected);
+    }
+}
+
+TEST_CASE("backtracking risk examples are adversarial on the real engine", "[regex_workbench]")
+{
+    use_test_worker();
+    const RA::Analysis risky = RA::analyze(L"(a+)+$");
+    REQUIRE(risky.risk == RA::RiskLevel::High);
+    REQUIRE_FALSE(risky.risks.empty());
+    const std::wstring example = risky.risks.front().example;
+    REQUIRE(example.size() > 20);
+    Options deadline;
+    deadline.timeout_ms = 250;
+    const Result hostile = search(L"(a+)+$", example, deadline);
+    INFO("status " << status_name(hostile.status));
+    CHECK((hostile.status == Status::PatternTooComplex || hostile.status == Status::TimedOut));
+    // The low-risk rewrite answers the same input definitively.
+    CHECK(RA::analyze(L"(a+b)+$").risk == RA::RiskLevel::Low);
+    CHECK(search(L"(a+b)+$", example, deadline).status == Status::NoMatch);
+    CHECK(RA::analyze(L"a++$").risks.empty());
+    CHECK(search(L"a++$", example, deadline).status == Status::NoMatch);
 }
 
 #ifdef __APPLE__

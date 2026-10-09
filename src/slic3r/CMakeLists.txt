@@ -805,6 +805,7 @@ list(APPEND SLIC3R_GUI_SOURCES
     GUI/Widgets/BoundedRegex.cpp
     GUI/Widgets/BoundedRegex.hpp
     GUI/Widgets/BoundedRegexProtocol.hpp
+    GUI/Widgets/RegexAnalysis.hpp
     GUI/Widgets/RegexBuilderBridgeState.hpp
     GUI/Widgets/SearchField.cpp
     GUI/Widgets/SearchField.hpp

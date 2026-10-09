@@ -17,6 +17,8 @@ inline constexpr std::size_t kMaxSubjectCodeUnits = 8192;
 inline constexpr std::size_t kMaxMatches          = 200;
 inline constexpr std::size_t kMaxNestingDepth     = 32;
 inline constexpr std::uint32_t kDefaultTimeoutMs  = 50;
+// Result::error_offset when the engine reported no position.
+inline constexpr std::size_t kNoErrorOffset = static_cast<std::size_t>(-1);
 
 enum class Status : std::uint32_t {
     Valid = 0,
@@ -75,6 +77,9 @@ struct Result {
     std::vector<Match> matches;
     bool               match_limit_reached = false;
     std::string        diagnostic;
+    // Code-unit offset in the pattern where the engine stopped compiling an
+    // invalid pattern (boost::regex_error::position()), or kNoErrorOffset.
+    std::size_t        error_offset = kNoErrorOffset;
 
     bool matched() const { return status == Status::Match; }
     bool definitive() const
@@ -117,6 +122,12 @@ Result validate(const std::wstring &pattern, const Options &options = {});
 Result search(const std::wstring &pattern, const std::wstring &subject, const Options &options = {});
 Result find_all(const std::wstring &pattern, const std::wstring &subject,
                 std::size_t max_matches = kMaxMatches, const Options &options = {});
+
+// Asks the contained worker which engine it was built with. On success the
+// status is Valid and diagnostic holds Protocol::engine_descriptor() as the
+// worker computed it (Boost version, syntax, code-unit width, locale traits,
+// state limit). No user pattern or text is involved.
+Result describe_engine(const Options &options = {});
 
 // Starts the persistent contained worker on an owned background task. This is
 // safe to call during application initialization and is deliberately

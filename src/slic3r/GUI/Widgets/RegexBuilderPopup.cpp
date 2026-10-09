@@ -6,11 +6,14 @@
 #include "CheckBox.hpp"
 #include "Label.hpp"
 #include "MaterialIcon.hpp"
+#include "RegexAnalysis.hpp"
 #include "StateColor.hpp"
 #include "TextArea.hpp"
 #include "TextInput.hpp"
 
 #include "slic3r/GUI/I18N.hpp"
+
+#include <boost/version.hpp>
 
 #include <algorithm>
 #include <string>
@@ -87,6 +90,71 @@ void refreshDiagnosticLayout(wxScrolledWindow *scroll)
         scroll->FitInside();
     }
     scroll->Scroll(view.x, view.y);
+}
+
+namespace RA = Slic3r::GUI::RegexAnalysis;
+
+// Translates an analysis message: the English source text is looked up in
+// the catalogue, then its %s placeholders take the message arguments.
+wxString tr(const RA::Text &message)
+{
+    const wxString translated = _L(message.msgid);
+    return wxString(RA::substitute(translated.ToStdWstring(), message.args));
+}
+
+wxString tr_utf8(const char *msgid) { return _L(msgid); }
+
+// The engine identity reported by the worker. It cannot change while the
+// application runs, so one successful report is kept for the process.
+const RA::EngineInfo &engineInfo(bool ask_worker)
+{
+    static RA::EngineInfo info;
+    if (!info.reported && ask_worker) {
+        const auto described = Slic3r::GUI::BoundedRegex::describe_engine();
+        if (described.status == Slic3r::GUI::BoundedRegex::Status::Valid)
+            info = RA::parse_engine_descriptor(described.diagnostic);
+    }
+    return info;
+}
+
+wxString engineVersionText() { return wxString(RA::version_text(BOOST_VERSION)); }
+
+// Runs one capability probe through the worker with default flags.
+RA::ProbeObservation observeProbe(const RA::Capability &row)
+{
+    RA::ProbeObservation seen;
+    const std::wstring subject(row.subject);
+    const auto result = Slic3r::GUI::BoundedRegex::search(row.probe, subject);
+    using Slic3r::GUI::BoundedRegex::Status;
+    seen.answered = result.definitive() || result.status == Status::InvalidPattern;
+    seen.rejected = result.status == Status::InvalidPattern;
+    seen.matched  = result.status == Status::Match;
+    if (seen.matched && !result.matches.empty() && !result.matches.front().groups.empty()) {
+        const auto &whole = result.matches.front().groups.front();
+        seen.whole = subject.substr(whole.begin, whole.length);
+    }
+    return seen;
+}
+
+wxString offsetText(std::size_t begin, std::size_t end)
+{
+    return end > begin + 1 ? wxString::Format("%d-%d", static_cast<int>(begin), static_cast<int>(end))
+                           : wxString::Format("%d", static_cast<int>(begin));
+}
+
+wxString compatibilitySeverity(RA::Severity severity)
+{
+    return severity == RA::Severity::Info ? _L("Note") : _L("Warning");
+}
+
+wxString riskSeverity(RA::Severity severity)
+{
+    switch (severity) {
+    case RA::Severity::Info: return _L("Note");
+    case RA::Severity::Warning: return tr_utf8(RA::risk_label(RA::RiskLevel::Moderate));
+    case RA::Severity::Danger: return tr_utf8(RA::risk_label(RA::RiskLevel::High));
+    }
+    return _L("Note");
 }
 
 } // namespace
@@ -230,7 +298,8 @@ void RegexBuilderPopup::build()
     sizer->Add(title, 0, wxLEFT | wxRIGHT | wxTOP, pad);
 
     auto *engine = new Label(m_scroll, Label::Body_13,
-                              _L("Engine: Boost.Regex 1.84 wide-character ECMAScript in an isolated 50 ms worker. Case-insensitive matching uses boost::regex_constants::icase. Escape metacharacters with a backslash."));
+                              wxString::Format(_L("Engine: Boost.Regex %s wide-character ECMAScript in an isolated 50 ms worker. Case-insensitive matching uses boost::regex_constants::icase. Escape metacharacters with a backslash."),
+                                               engineVersionText()));
     engine->SetBackgroundColour(surface);
     engine->SetForegroundColour(on_var);
     engine->Wrap(contentW);
@@ -279,6 +348,14 @@ void RegexBuilderPopup::build()
     m_status->Wrap(contentW);
     sizer->Add(m_status, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, pad);
 
+    // One-line structure and risk summary; the Explain tab has the detail.
+    m_summary = new Label(m_scroll, Label::Body_13, wxEmptyString, LB_AUTO_WRAP | wxST_NO_AUTORESIZE);
+    m_summary->SetBackgroundColour(surface);
+    m_summary->SetForegroundColour(on_var);
+    m_summary->SetMinSize(wxSize(0, -1));
+    m_summary->SetName(_L("Pattern analysis summary"));
+    sizer->Add(m_summary, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, gap / 2);
+
     // --- Flags ---------------------------------------------------------------
     sectionLabel(_L("Flags"));
     auto addFlag = [&](const wxString &text, bool value, std::function<void(bool)> onToggle) {
@@ -321,6 +398,7 @@ void RegexBuilderPopup::build()
         m_regex_on = on;
         if (m_cb.onRegexMode)
             m_cb.onRegexMode(on);
+        refreshAnalysis();
     });
     m_case_cb = addFlag(_L("Case sensitive"), m_case_on, [this](bool on) {
         m_case_on = on;
@@ -339,6 +417,7 @@ void RegexBuilderPopup::build()
         m_word_on = on;
         if (m_cb.onWord)
             m_cb.onWord(on);
+        refreshAnalysis();
     });
     auto *word_note = new Label(m_scroll, Label::Body_13,
                                 _L("Whole word applies to plain-text search only; in regex mode use \\b"));
@@ -462,17 +541,21 @@ void RegexBuilderPopup::build()
     sizer->AddSpacer(pad);
     m_scroll->SetSizer(sizer);
 
-    // --- Build | Reference tab header (popup children, laid out in fitPopup)
-    m_tab_build = new Button(this, _L("Build"));
-    m_tab_ref   = new Button(this, _L("Reference"));
-    for (Button *b : {m_tab_build, m_tab_ref}) {
+    // --- Build | Explain | Reference tab header (popup children, laid out
+    // in fitPopup). Explain and Reference are built when first opened.
+    m_tab_build   = new Button(this, _L("Build"));
+    m_tab_explain = new Button(this, _L("Explain"));
+    m_tab_ref     = new Button(this, _L("Reference"));
+    for (Button *b : {m_tab_build, m_tab_explain, m_tab_ref}) {
         b->SetButtonSize(Button::Size::Large);
         b->SetColorScheme(m_scheme);
+        b->SetName(b->GetLabel());
     }
-    m_tab_build->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { switchTab(0); });
-    m_tab_ref->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { switchTab(1); });
-    buildReference();
-    switchTab(0);
+    m_tab_explain->SetToolTip(_L("Engine, structure, tokens, compatibility and backtracking risk of this pattern"));
+    m_tab_build->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { switchTab(TabBuild); });
+    m_tab_explain->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { switchTab(TabExplain); });
+    m_tab_ref->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { switchTab(TabReference); });
+    switchTab(TabBuild);
 }
 
 void RegexBuilderPopup::buildReference()
@@ -527,16 +610,69 @@ void RegexBuilderPopup::buildReference()
 
     heading(_L("How search works"));
     paragraph(_L("Plain text is the default in every search bar; regex mode is a deliberate opt-in via the .* toggle."));
-    paragraph(_L("Engine: Boost.Regex 1.84 wide-character ECMAScript in an isolated 50 ms worker. Case-insensitive matching uses boost::regex_constants::icase. Escape metacharacters with a backslash."));
+    paragraph(wxString::Format(_L("Engine: Boost.Regex %s wide-character ECMAScript in an isolated 50 ms worker. Case-insensitive matching uses boost::regex_constants::icase. Escape metacharacters with a backslash."),
+                               engineVersionText()));
     paragraph(_L("Case sensitive refines plain-text and regex search. Multiline makes ^ and $ match line boundaries; Whole word is plain-text only, so use \\b in regex mode."));
     paragraph(_L("An invalid or half-typed pattern never hides rows: it matches everything until it compiles."));
     paragraph(_L("Evaluation is local and bounded - long patterns and samples are truncated and runaway matching stops safely."));
+
+    // Syntax on its own line, explanation below: capability and escaping
+    // entries are too long for the two-column term rows.
+    auto entry = [&](const wxString &syntax, const wxString &meaning) {
+        auto *code = new Label(m_ref_scroll, Label::Mono_11, wxEmptyString);
+        code->SetLabelText(syntax);
+        code->SetBackgroundColour(surface);
+        code->SetForegroundColour(on);
+        code->Wrap(contentW);
+        sizer->Add(code, 0, wxLEFT | wxRIGHT | wxTOP, pad - FromDIP(8));
+        auto *text = new Label(m_ref_scroll, Label::Body_12, wxEmptyString);
+        text->SetLabelText(meaning); // (?&name) and && must render literally
+        text->SetBackgroundColour(surface);
+        text->SetForegroundColour(on_var);
+        text->Wrap(contentW - FromDIP(12));
+        sizer->Add(text, 0, wxLEFT | wxRIGHT, pad + FromDIP(12));
+    };
+
+    // Every builder flag and the exact engine flag it maps to.
+    heading(_L("Flags"));
+    for (const RA::FlagRow &row : RA::flag_rows())
+        entry(wxString(row.engine) + "   " + wxString(row.inline_form),
+              tr_utf8(row.name) + ": " + tr_utf8(row.effect));
+
+    heading(_L("Escaping rules"));
+    for (const RA::EscapeRule &rule : RA::escape_rules())
+        entry(wxString(rule.syntax), tr_utf8(rule.meaning));
 
     // Full per-token documentation, straight from the Build tab's tables.
     for (const auto &[section_title, defs] : m_sections) {
         heading(section_title);
         for (const ChipDef &def : defs)
             term_row(def.label, def.tip);
+    }
+
+    // Capability matrix: unsupported constructs stay listed with the reason.
+    heading(_L("Capabilities"));
+    paragraph(_L("What this engine supports, partly supports and rejects. Each row has a probe pattern; the button runs every probe through the worker to confirm the row."));
+    auto *check = new Button(m_ref_scroll, _L("Check against the engine"));
+    check->SetButtonSize(Button::Size::Large);
+    check->SetColorScheme(m_scheme);
+    check->SetName(_L("Check against the engine"));
+    check->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { checkCapabilities(); });
+    sizer->Add(check, 0, wxLEFT | wxRIGHT | wxTOP, pad - FromDIP(4));
+    m_cap_status = new Label(m_ref_scroll, Label::Body_13, wxEmptyString, LB_AUTO_WRAP | wxST_NO_AUTORESIZE);
+    m_cap_status->SetMinSize(wxSize(0, -1));
+    m_cap_status->SetBackgroundColour(surface);
+    m_cap_status->SetForegroundColour(on_var);
+    m_cap_status->SetName(_L("Capability check result"));
+    sizer->Add(m_cap_status, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, pad - FromDIP(8));
+    for (RA::Support level : {RA::Support::Supported, RA::Support::Partial, RA::Support::Unsupported}) {
+        auto *level_label = new Label(m_ref_scroll, Label::Head_14, tr_utf8(RA::support_label(level)));
+        level_label->SetBackgroundColour(surface);
+        level_label->SetForegroundColour(on);
+        sizer->Add(level_label, 0, wxLEFT | wxRIGHT | wxTOP, pad);
+        for (const RA::Capability &row : RA::capabilities())
+            if (row.support == level)
+                entry(wxString(row.syntax), tr_utf8(row.feature) + ": " + tr_utf8(row.explanation));
     }
 
     heading(_L("Examples"));
@@ -564,15 +700,25 @@ void RegexBuilderPopup::buildReference()
 
 void RegexBuilderPopup::switchTab(int tab)
 {
+    if (tab == TabReference && !m_ref_scroll)
+        buildReference();
+    if (tab == TabExplain && !m_explain_scroll)
+        buildExplain();
     m_active_tab = tab;
-    if (m_scroll)     m_scroll->Show(tab == 0);
+    if (m_scroll)     m_scroll->Show(tab == TabBuild);
+    if (m_explain_scroll) {
+        m_explain_scroll->Show(tab == TabExplain);
+        if (tab == TabExplain)
+            refreshAnalysis(); // the engine report and live views are filled while visible
+    }
     if (m_ref_scroll) {
-        m_ref_scroll->Show(tab == 1);
-        if (tab == 1)
+        m_ref_scroll->Show(tab == TabReference);
+        if (tab == TabReference)
             m_ref_scroll->Scroll(0, 0); // always open the docs at the top
     }
-    if (m_tab_build)  m_tab_build->SetVariant(tab == 0 ? Button::Variant::Tonal : Button::Variant::Text);
-    if (m_tab_ref)    m_tab_ref->SetVariant(tab == 1 ? Button::Variant::Tonal : Button::Variant::Text);
+    if (m_tab_build)   m_tab_build->SetVariant(tab == TabBuild ? Button::Variant::Tonal : Button::Variant::Text);
+    if (m_tab_explain) m_tab_explain->SetVariant(tab == TabExplain ? Button::Variant::Tonal : Button::Variant::Text);
+    if (m_tab_ref)     m_tab_ref->SetVariant(tab == TabReference ? Button::Variant::Tonal : Button::Variant::Text);
     fitPopup();
     Refresh();
 }
@@ -782,6 +928,7 @@ void RegexBuilderPopup::evaluate()
 {
     if (!m_pattern || !m_status)
         return;
+    refreshAnalysis();
 
     const wxColour ok_colour   = StateColor::semantic(MD3::Role::Primary, m_scheme);
     const wxColour err_colour  = StateColor::semantic(MD3::Role::Error);
@@ -905,9 +1052,306 @@ void RegexBuilderPopup::evaluate()
     }
 }
 
+void RegexBuilderPopup::buildExplain()
+{
+    const wxColour surface  = StateColor::semantic(MD3::Role::SurfaceContainerLow);
+    const wxColour field_bg = StateColor::semantic(MD3::Role::SurfaceContainerLowest);
+    const wxColour on       = StateColor::semantic(MD3::Role::OnSurface);
+    const wxColour on_var   = StateColor::semantic(MD3::Role::OnSurfaceVariant);
+    const int pad      = FromDIP(MD3::Metrics::active().padding);
+    const int gap      = FromDIP(MD3::Metrics::active().gap);
+    const int contentW = FromDIP(kContentW);
+
+    m_explain_scroll = new MD3ScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize,
+                                            wxTAB_TRAVERSAL | wxVSCROLL | wxBORDER_NONE);
+    m_explain_scroll->SetBackgroundColour(surface);
+    m_explain_scroll->SetName(_L("Explain"));
+    wxBoxSizer *sizer = new wxBoxSizer(wxVERTICAL);
+    // The views stretch to the card; this strut gives the card the same
+    // content width as the Build and Reference tabs.
+    sizer->Add(contentW, 0, 0, wxLEFT | wxRIGHT, pad);
+
+    auto heading = [&](const wxString &text) {
+        auto *lbl = new Label(m_explain_scroll, Label::Head_14, text);
+        lbl->SetBackgroundColour(surface);
+        lbl->SetForegroundColour(on_var);
+        sizer->Add(lbl, 0, wxLEFT | wxRIGHT | wxTOP, pad);
+    };
+    // Text that changes with the pattern; it wraps inside the card however
+    // long a translation or diagnostic is.
+    auto live = [&](const wxString &name) {
+        auto *lbl = new Label(m_explain_scroll, Label::Body_13, wxEmptyString, LB_AUTO_WRAP | wxST_NO_AUTORESIZE);
+        lbl->SetBackgroundColour(surface);
+        lbl->SetForegroundColour(on);
+        lbl->SetMinSize(wxSize(0, -1));
+        lbl->SetName(name);
+        sizer->Add(lbl, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, gap / 2);
+        return lbl;
+    };
+    // Read-only, keyboard-focusable views a screen reader reads line by line.
+    auto view = [&](const wxString &name, int height) {
+        auto *text = new TextAreaEditor(m_explain_scroll, wxID_ANY, wxEmptyString, wxDefaultPosition,
+                                        wxSize(0, FromDIP(height)), wxTE_MULTILINE | wxTE_READONLY | wxBORDER_NONE);
+        text->SetFont(Label::Mono_11);
+        text->SetBackgroundColour(field_bg);
+        text->SetForegroundColour(on);
+        text->SetName(name);
+        sizer->Add(text, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, gap / 2);
+        return text;
+    };
+
+    auto *title = new Label(m_explain_scroll, Label::Head_14, _L("Explain this pattern"));
+    title->SetBackgroundColour(surface);
+    title->SetForegroundColour(on);
+    sizer->Add(title, 0, wxLEFT | wxRIGHT | wxTOP, pad);
+    m_mode_note = live(_L("Regex mode"));
+    m_mode_note->SetForegroundColour(on_var);
+
+    heading(_L("Engine"));
+    m_engine_info = live(_L("Engine"));
+    heading(_L("Flags in effect"));
+    m_flags_info = live(_L("Flags in effect"));
+    heading(_L("Engine verdict"));
+    m_verdict = live(_L("Engine verdict"));
+    m_explain_summary = live(_L("Pattern analysis summary"));
+    heading(_L("Structure"));
+    m_tree = view(_L("Pattern structure"), 140);
+    heading(_L("Tokens"));
+    m_tokens = view(_L("Token annotations"), 140);
+    heading(_L("Compatibility"));
+    m_compat = view(_L("Compatibility notes"), 104);
+    heading(_L("Backtracking risk"));
+    m_risks = view(_L("Backtracking risk findings"), 104);
+
+    m_use_example = new Button(m_explain_scroll, _L("Use example as sample text"));
+    m_use_example->SetButtonSize(Button::Size::Large);
+    m_use_example->SetVariant(Button::Variant::Tonal);
+    m_use_example->SetColorScheme(m_scheme);
+    m_use_example->SetName(_L("Use example as sample text"));
+    m_use_example->SetToolTip(_L("Load the adversarial example into Test pattern to see the worker stop it safely"));
+    m_use_example->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { useRiskExample(); });
+    sizer->Add(m_use_example, 0, wxLEFT | wxRIGHT | wxTOP, pad - FromDIP(4));
+
+    sizer->AddSpacer(pad);
+    m_explain_scroll->SetSizer(sizer);
+    m_explain_scroll->Hide();
+}
+
+void RegexBuilderPopup::refreshAnalysis()
+{
+    if (!m_pattern)
+        return;
+    const bool explain_visible = m_explain_scroll && m_active_tab == TabExplain;
+    // Ask the worker for its engine identity only for the visible Explain tab.
+    const RA::EngineInfo &engine = engineInfo(explain_visible);
+    const std::wstring pattern = m_pattern->GetValue().ToStdWstring();
+    RA::Options options;
+    options.regex_mode     = m_regex_on;
+    options.case_sensitive = m_case_on;
+    options.multiline      = m_multiline_on;
+    options.whole_word     = m_word_on;
+    options.code_unit_bits = engine.code_unit_bits;
+    const RA::Analysis analysis = RA::analyze(pattern, options);
+
+    std::size_t warnings = 0;
+    for (const RA::Finding &finding : analysis.compatibility)
+        if (finding.severity != RA::Severity::Info)
+            ++warnings;
+    const wxString risk = tr_utf8(RA::risk_label(analysis.risk));
+
+    if (m_summary) {
+        const wxString summary = pattern.empty() ? wxString()
+            : wxString::Format(_L("Tokens: %d, capture groups: %d, backtracking risk: %s, compatibility warnings: %d"),
+                               static_cast<int>(analysis.tokens.size()), static_cast<int>(analysis.capture_groups),
+                               risk, static_cast<int>(warnings));
+        if (m_summary->GetLabel() != summary) {
+            m_summary->SetForegroundColour(StateColor::semantic(
+                analysis.risk == RA::RiskLevel::High ? MD3::Role::Error : MD3::Role::OnSurfaceVariant));
+            m_summary->SetLabel(summary);
+            m_summary->SetToolTip(summary);
+            refreshDiagnosticLayout(m_scroll);
+        }
+    }
+    if (!explain_visible)
+        return;
+
+    const wxColour ok_colour  = StateColor::semantic(MD3::Role::Primary, m_scheme);
+    const wxColour err_colour = StateColor::semantic(MD3::Role::Error);
+    const wxColour on         = StateColor::semantic(MD3::Role::OnSurface);
+
+    m_mode_note->SetLabel(m_regex_on ? wxString()
+        : _L("Regex mode is off, so the search field matches this text literally. The analysis below shows how the engine would read it as a pattern."));
+    m_mode_note->Show(!m_regex_on);
+
+    // Engine identity, as the worker reported it.
+    if (engine.reported)
+        m_engine_info->SetLabel(wxString::Format(
+            _L("Boost.Regex %s as reported by the worker. Syntax: Perl-compatible, selected by the ECMAScript flag. Code units: %d-bit. Locale traits: %s. State limit: %s."),
+            wxString(RA::version_text(engine.version)), static_cast<int>(engine.code_unit_bits),
+            tr_utf8(RA::traits_label(engine.traits)), wxString(std::to_wstring(engine.max_states))));
+    else
+        m_engine_info->SetLabel(wxString::Format(
+            _L("The worker has not reported its engine yet, so this shows the Boost.Regex %s this build was compiled with. Open this tab again to retry."),
+            engineVersionText()));
+
+    // Flags in effect and the exact engine flag behind each one.
+    const bool states[] = {m_regex_on, m_case_on, m_multiline_on, false, false, m_word_on};
+    wxString flags;
+    const auto &rows = RA::flag_rows();
+    for (std::size_t i = 0; i < rows.size(); ++i) {
+        if (!flags.empty())
+            flags << "\n";
+        flags << wxString::Format(_L("%s: %s. Engine flag: %s. In the pattern: %s"), tr_utf8(rows[i].name),
+                                  (i < sizeof(states) / sizeof(states[0]) && states[i]) ? _L("On") : _L("Off"),
+                                  wxString(rows[i].engine), wxString(rows[i].inline_form));
+    }
+    m_flags_info->SetLabel(flags);
+
+    // The engine's verdict, with the offset where it stopped.
+    if (pattern.empty()) {
+        m_verdict->SetForegroundColour(on);
+        m_verdict->SetLabel(_L("Empty pattern matches everything"));
+    } else {
+        Slic3r::GUI::BoundedRegex::Options engine_options;
+        engine_options.case_sensitive = m_case_on;
+        engine_options.multiline      = m_multiline_on;
+        const auto verdict = Slic3r::GUI::BoundedRegex::validate(pattern, engine_options);
+        using Slic3r::GUI::BoundedRegex::Status;
+        if (verdict.status == Status::Valid) {
+            m_verdict->SetForegroundColour(ok_colour);
+            m_verdict->SetLabel(_L("The engine accepts this pattern."));
+        } else if (verdict.status == Status::InvalidPattern &&
+                   verdict.error_offset != Slic3r::GUI::BoundedRegex::kNoErrorOffset) {
+            m_verdict->SetForegroundColour(err_colour);
+            m_verdict->SetLabel(wxString::Format(_L("The engine rejected the pattern at offset %d: %s"),
+                                                 static_cast<int>(verdict.error_offset), friendlyRegexError(verdict)));
+        } else {
+            m_verdict->SetForegroundColour(err_colour);
+            m_verdict->SetLabel(friendlyRegexError(verdict));
+        }
+    }
+    m_explain_summary->SetLabel(wxString::Format(_L("Tokens: %d, capture groups: %d (%d named), backtracking risk: %s."),
+                                                 static_cast<int>(analysis.tokens.size()),
+                                                 static_cast<int>(analysis.capture_groups),
+                                                 static_cast<int>(analysis.named_groups), risk));
+
+    // Structure tree.
+    wxString tree;
+    for (const RA::TreeLine &line : RA::tree_lines(analysis)) {
+        const RA::Node &node = analysis.nodes[line.node];
+        if (!tree.empty())
+            tree << "\n";
+        tree << wxString(static_cast<size_t>(line.depth) * 2, ' ') << tr(node.label);
+        if (node.end > node.begin)
+            tree << "   " << wxString(RA::fragment(pattern, node.begin, node.end, 24));
+    }
+    m_tree->ChangeValue(pattern.empty() ? wxString() : tree);
+
+    // Token-by-token annotation.
+    wxString tokens;
+    for (const RA::Token &token : analysis.tokens) {
+        if (!tokens.empty())
+            tokens << "\n";
+        tokens << wxString::Format("%-7s %-10s ", offsetText(token.begin, token.end),
+                                   wxString(RA::fragment(pattern, token.begin, token.end, 16)))
+               << tr(token.explanation);
+    }
+    m_tokens->ChangeValue(tokens);
+
+    // Compatibility and portability notes.
+    wxString compat;
+    for (const RA::Finding &finding : analysis.compatibility) {
+        if (!compat.empty())
+            compat << "\n";
+        compat << "[" << compatibilitySeverity(finding.severity) << "] " << offsetText(finding.begin, finding.end)
+               << "  " << wxString(RA::fragment(pattern, finding.begin, finding.end, 24)) << "\n    "
+               << tr(finding.message);
+    }
+    m_compat->ChangeValue(pattern.empty() ? wxString() : (compat.empty() ? _L("No compatibility notes.") : compat));
+
+    // Backtracking risk with an adversarial example input.
+    wxString risks;
+    m_risk_example.clear();
+    for (const RA::Finding &finding : analysis.risks) {
+        if (!risks.empty())
+            risks << "\n";
+        risks << "[" << riskSeverity(finding.severity) << "] " << offsetText(finding.begin, finding.end) << "  "
+              << wxString(RA::fragment(pattern, finding.begin, finding.end, 24)) << "\n    " << tr(finding.message);
+        if (!finding.example.empty()) {
+            risks << "\n    " << wxString::Format(_L("Example input: %s"), wxString(finding.example));
+            if (m_risk_example.empty())
+                m_risk_example = wxString(finding.example);
+        }
+    }
+    m_risks->ChangeValue(pattern.empty() ? wxString() : (risks.empty() ? _L("No backtracking risks found.") : risks));
+    m_use_example->Enable(!m_risk_example.empty());
+
+    m_explain_scroll->Layout();
+    refreshDiagnosticLayout(m_explain_scroll);
+}
+
+void RegexBuilderPopup::checkCapabilities()
+{
+    if (!m_cap_status)
+        return;
+    const auto &rows = RA::capabilities();
+    std::size_t confirmed = 0;
+    std::size_t unanswered = 0;
+    wxString different;
+    for (const RA::Capability &row : rows) {
+        const RA::ProbeObservation seen = observeProbe(row);
+        if (!seen.answered) {
+            ++unanswered;
+            continue;
+        }
+        if (RA::confirms(row, seen)) {
+            ++confirmed;
+        } else {
+            if (!different.empty())
+                different << ", ";
+            different << tr_utf8(row.feature);
+        }
+    }
+    const RA::EngineInfo &engine = engineInfo(true);
+    wxString text;
+    if (confirmed == rows.size()) {
+        text = wxString::Format(_L("All %d rows behaved as listed on Boost.Regex %s in the worker."),
+                                static_cast<int>(rows.size()),
+                                engine.reported ? wxString(RA::version_text(engine.version)) : engineVersionText());
+    } else {
+        text = wxString::Format(_L("%d of %d rows behaved as listed."), static_cast<int>(confirmed),
+                                static_cast<int>(rows.size()));
+        if (!different.empty())
+            text << "\n" << wxString::Format(_L("Different on this engine: %s"), different);
+        if (unanswered != 0)
+            text << "\n" << wxString::Format(_L("The worker did not answer for %d rows. Try again in a moment."),
+                                             static_cast<int>(unanswered));
+    }
+    m_cap_status->SetForegroundColour(StateColor::semantic(
+        confirmed == rows.size() ? MD3::Role::Primary : MD3::Role::Error, m_scheme));
+    m_cap_status->SetLabel(text);
+    m_cap_status->SetToolTip(text);
+    m_ref_scroll->Layout();
+    refreshDiagnosticLayout(m_ref_scroll);
+}
+
+void RegexBuilderPopup::useRiskExample()
+{
+    if (m_risk_example.empty() || !m_sample)
+        return;
+    if (!m_test_open)
+        toggleTest();
+    switchTab(TabBuild);
+    // wxEVT_TEXT runs evaluate(): the bounded worker answers or stops it.
+    m_sample->SetValue(m_risk_example);
+    m_sample->SetFocus();
+}
+
 void RegexBuilderPopup::fitPopup()
 {
-    wxScrolledWindow *active = (m_active_tab == 1 && m_ref_scroll) ? m_ref_scroll : m_scroll;
+    wxScrolledWindow *active = (m_active_tab == TabReference && m_ref_scroll) ? m_ref_scroll
+                             : (m_active_tab == TabExplain && m_explain_scroll) ? m_explain_scroll
+                                                                                 : m_scroll;
     wxSizer *sizer = active ? active->GetSizer() : nullptr;
     if (!sizer)
         return;
@@ -924,18 +1368,25 @@ void RegexBuilderPopup::fitPopup()
     const int    max_h = std::max(FromDIP(96), std::min(FromDIP(600), area.height - FromDIP(32)));
 
     const int inset  = FromDIP(4); // keeps square children inside the r12 border arc
-    const int tab_h  = FromDIP(52); // 44-DIP Build | Reference targets + insets
+    const int tab_h  = FromDIP(52); // 44-DIP Build | Explain | Reference targets + insets
     const int view_h = std::min(content.y, max_h - tab_h);
     const int sb_w   = content.y > view_h ? MD3ScrolledWindow::BarThickness(this) : 0;
 
     const int view_w = std::max(1, std::min(content.x + sb_w, area.width - 2 * inset - FromDIP(16)));
     SetClientSize(view_w + 2 * inset, tab_h + view_h + 2 * inset);
-    if (m_tab_build && m_tab_ref) {
-        const int tab_w = std::max(FromDIP(96), std::max(m_tab_build->GetBestSize().x, m_tab_ref->GetBestSize().x));
-        m_tab_build->SetSize(inset + FromDIP(8), inset + FromDIP(4), tab_w, FromDIP(kTargetH));
-        m_tab_ref->SetSize(inset + FromDIP(12) + tab_w, inset + FromDIP(4), tab_w, FromDIP(kTargetH));
+    if (m_tab_build && m_tab_explain && m_tab_ref) {
+        // Equal-width tabs, never wider than a third of the card.
+        const int widest = std::max({m_tab_build->GetBestSize().x, m_tab_explain->GetBestSize().x,
+                                     m_tab_ref->GetBestSize().x});
+        const int tab_w  = std::max(FromDIP(72), std::min(std::max(FromDIP(96), widest),
+                                                          (view_w - FromDIP(16)) / 3));
+        int x = inset + FromDIP(8);
+        for (Button *tab : {m_tab_build, m_tab_explain, m_tab_ref}) {
+            tab->SetSize(x, inset + FromDIP(4), tab_w, FromDIP(kTargetH));
+            x += tab_w + FromDIP(4);
+        }
     }
-    for (wxScrolledWindow *scroll : {m_scroll, m_ref_scroll}) {
+    for (wxScrolledWindow *scroll : {m_scroll, m_explain_scroll, m_ref_scroll}) {
         if (!scroll)
             continue;
         scroll->SetSize(inset, inset + tab_h, view_w, view_h);
