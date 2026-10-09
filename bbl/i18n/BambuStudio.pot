@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-09 16:20+0000\n"
+"POT-Creation-Date: 2026-10-09 21:37+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -27286,6 +27286,21 @@ msgid "Inspection finished. Hardware fit was recomputed from current measurement
 msgstr ""
 
 msgid "Hardware measured again. Select a model to see its verdict."
+msgstr ""
+
+msgid "Review executable registration"
+msgstr ""
+
+#. TRN: The first %s is the full path of the chosen executable, the second its SHA-256 digest.
+#, possible-c-format, possible-boost-format
+msgid ""
+"Register this executable for the selected local profile?\n"
+"\n"
+"%s\n"
+"\n"
+"SHA256: %s\n"
+"\n"
+"Registration does not launch it. A separate launch review is required."
 msgstr ""
 
 msgid "Runs well"

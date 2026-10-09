@@ -47,6 +47,18 @@ wxString ui(Ui id)
     return wxString();
 }
 
+wxString registration_title()
+{
+    return _L("Review executable registration");
+}
+
+wxString registration_question(const std::string &path, const std::string &sha256)
+{
+    // TRN: The first %s is the full path of the chosen executable, the second its SHA-256 digest.
+    return wxString::Format(_L("Register this executable for the selected local profile?\n\n%s\n\nSHA256: %s\n\nRegistration does not launch it. A separate launch review is required."),
+                            u8(path), u8(sha256));
+}
+
 wxString bytes(std::uint64_t value)
 {
     const double gib = static_cast<double>(value) / (1024.0 * 1024.0 * 1024.0);

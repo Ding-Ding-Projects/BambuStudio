@@ -4,6 +4,7 @@
 #include "NativeLaunchAdapter.hpp"
 #include "libslic3r/OllamaSuite/LaunchProfiles.hpp"
 #include "../I18N.hpp"
+#include "../MsgDialog.hpp"
 #include "../Widgets/Button.hpp"
 #include "../Widgets/ComboBox.hpp"
 #include "../Widgets/Label.hpp"
@@ -456,6 +457,9 @@ private:
             { std::lock_guard<std::mutex> lock(m_state.mutex); if(!m_state.selected||m_state.selected->name!=profile.model_tag)return false; model=m_state.selected; settings=m_state.fit_settings; }
             settings.context=profile.context_length; // the profile's own context sizes its cache
             auto verdict=assess(*model,measure_hardware(),settings); return verdict.verdict==Fit::RunsWell||verdict.verdict==Fit::WithLimits; };
+        // The registration question is the Material message box, No by default, on this dialog.
+        policy.confirm_registration=[this](const std::string &path,const std::string &sha256) {
+            return md3_message_box(OllamaText::registration_question(path,sha256),OllamaText::registration_title(),wxYES_NO|wxNO_DEFAULT|wxICON_QUESTION,this)==wxYES; };
         m_launcher=std::make_unique<NativeLaunchAdapter>(std::move(policy)); m_profiles=LaunchProfileRegistry::prebuilt();
         if(!m_launcher->available()) note(p,s,u8(m_launcher->unavailable_reason()));
         for(std::size_t i=0;i<m_profiles.size();++i) {

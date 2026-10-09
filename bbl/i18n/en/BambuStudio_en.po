@@ -28986,3 +28986,10 @@ msgstr ""
 
 msgid "Normal delivery: 0"
 msgstr ""
+
+msgid "Review executable registration"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Register this executable for the selected local profile?\n\n%s\n\nSHA256: %s\n\nRegistration does not launch it. A separate launch review is required."
+msgstr ""

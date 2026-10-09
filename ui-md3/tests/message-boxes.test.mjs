@@ -17,6 +17,44 @@ const repoDir = path.resolve(testDir, '..', '..');
 const guiDir = path.join(repoDir, 'src', 'slic3r', 'GUI');
 const strip = (text) => text.replace(/\r\n/g, '\n').replace(/\/\*[\s\S]*?\*\//g, '').replace(/^[ \t]*\/\/.*$/gm, '').replace(/\/\/.*$/gm, '');
 
+// The scan for live calls reads code only: comments go, and every string or character literal
+// (raw strings included) keeps just its quotes. A message text, or the generated documentation
+// bundle (Documentation/DocumentationBundle.hpp, whose articles describe these very calls as
+// u8"..." text), names a call without making one.
+function codeOnly(text) {
+  const src = text.replace(/\r\n/g, '\n');
+  let out = '';
+  let i = 0;
+  while (i < src.length) {
+    const c = src[i];
+    const next = src[i + 1];
+    if (c === '/' && next === '/') {
+      while (i < src.length && src[i] !== '\n') i++;
+    } else if (c === '/' && next === '*') {
+      const end = src.indexOf('*/', i + 2);
+      i = end === -1 ? src.length : end + 2;
+    } else if (c === 'R' && next === '"' && /[^\w]/.test(src[i - 1] || ' ')) {
+      const open = src.indexOf('(', i + 2);
+      const delimiter = open === -1 ? '' : src.slice(i + 2, open);
+      const close = open === -1 ? -1 : src.indexOf(`)${delimiter}"`, open + 1);
+      if (close === -1) { out += c; i++; continue; }
+      out += '""';
+      i = close + delimiter.length + 2;
+    } else if (c === '"' || (c === "'" && !/[0-9a-fA-F]/.test(src[i - 1] || ' '))) {
+      // A quote after a digit or a hex letter is a C++14 digit separator, not a literal.
+      let j = i + 1;
+      while (j < src.length && src[j] !== c && src[j] !== '\n') j += src[j] === '\\' ? 2 : 1;
+      out += `${c}${c}`;
+      i = j + 1;
+    } else {
+      out += c;
+      i++;
+    }
+  }
+  return out;
+}
+const SYSTEM_BOX = /\bwxMessageBox\s*\(|\bwxMessageDialog\b|\bwxRichMessageDialog\b|\bMessageBox[AW]?\s*\(/g;
+
 async function sources(dir) {
   const out = [];
   for (const entry of await readdir(dir, { withFileTypes: true })) {
@@ -35,15 +73,29 @@ const ALLOWED = {
   'StatusPanel.cpp': { count: 2, why: 'the macOS branch, where MessageDialog can block' },
 };
 
+test('the scan counts calls, not names in comments or message texts', () => {
+  const sample = [
+    '// wxMessageBox(_L("a"));',
+    '/* wxMessageDialog dlg(this, a); */',
+    'const char *bundle = u8"44 raw wxMessageBox() calls and a native wxMessageDialog";',
+    'const char *raw = R"x(MessageBoxW( in a raw string)x";',
+    "const int big = 1'000'000;",
+    'int a = wxMessageBox(_L("Fatal error"), _L("x"), wxOK);',
+    'wxMessageDialog dialog(nullptr, text);',
+    'int b = ::MessageBoxW(nullptr, L"text", L"title", MB_OK);',
+  ].join('\n');
+  assert.deepEqual(codeOnly(sample).match(SYSTEM_BOX), ['wxMessageBox(', 'wxMessageDialog', 'MessageBoxW(']);
+});
+
 test('no system message box outside the few that must precede the Material layer', async () => {
   const found = {};
   for (const file of await sources(guiDir)) {
-    const text = strip(await readFile(file, 'utf8'));
+    const text = codeOnly(await readFile(file, 'utf8'));
     // A raw Win32 call is found by the same scan: MessageBox(, MessageBoxA( and
     // MessageBoxW(, with or without the :: prefix. wxMessageBox( has no word boundary
     // before its MessageBox, and the `#define MessageBox MessageBoxA` line in
     // GLCanvas3D.cpp has no opening bracket, so neither counts twice.
-    const hits = (text.match(/\bwxMessageBox\s*\(|\bwxMessageDialog\b|\bwxRichMessageDialog\b|\bMessageBox[AW]?\s*\(/g) || []).length;
+    const hits = (text.match(SYSTEM_BOX) || []).length;
     if (hits) found[path.relative(guiDir, file).replace(/\\/g, '/')] = hits;
   }
   const unexpected = Object.entries(found).filter(([file, hits]) => !ALLOWED[file] || hits > ALLOWED[file].count);

@@ -434,8 +434,10 @@ NativePickerResult NativeLaunchAdapter::pick_executable(LaunchKind kind, void* o
     if (name != expected || digest.empty() || !m->trusted(file.value, path, digest)) {
         result.diagnostic = "Choose the exact native executable with a valid cached signature and matching original filename, or an application-reviewed SHA256 identity."; return result;
     }
-    const std::wstring prompt = L"Register this executable for the selected local profile?\n\n" + path + L"\n\nSHA256: " + wide(digest) + L"\n\nRegistration does not launch it. A separate launch review is required.";
-    if (MessageBoxW(static_cast<HWND>(owner), prompt.c_str(), L"Review executable registration", MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON2) != IDYES) {
+    // The owner asks the question (Material message dialog, No by default); only Yes registers.
+    bool confirmed = false;
+    try { confirmed = m->policy.confirm_registration && m->policy.confirm_registration(utf8(path), digest); } catch (...) { confirmed = false; }
+    if (!confirmed) {
         result.cancelled = true; result.diagnostic = "Registration cancelled."; return result;
     }
     if (m->cancellation.load(std::memory_order_relaxed) != epoch) { result.cancelled = true; result.diagnostic = "Executable registration cancelled."; return result; }

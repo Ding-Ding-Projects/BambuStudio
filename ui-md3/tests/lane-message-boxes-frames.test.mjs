@@ -160,9 +160,15 @@ test('the command palette is borderless with the shared dialog chrome', async ()
   assert.match(source, /#include "Widgets\/MD3DialogChrome\.hpp"/);
   assert.match(ctor, /MD3DialogCaption::FinishChrome\(this\);\s*\}\s*$/, 'the chrome is finished at the very end of the constructor');
   assert.ok(ctor.indexOf('apply_size(') < ctor.indexOf('FinishChrome(this)'), 'after the sizing');
-  // FinishChrome already plays the entrance fade: a second one would fight it.
+  // One entrance: since the transient-motion change (docs/features/windows/transient-motion.md)
+  // FinishChrome only rounds the corners, and the palette's own show event plays the entrance and
+  // a hide stops it. A fade anywhere else would fight that one.
+  assert.match(ctor, /Bind\(wxEVT_SHOW, \[this\]\(wxShowEvent &event\) \{\s*if \(event\.GetEventObject\(\) == this\) \{\s*if \(event\.IsShown\(\)\) m_entrance\.Show\(this, MD3::Motion::medium1\);\s*else m_entrance\.Stop\(\);/,
+    'the actual show event plays the entrance and a hide stops it');
+  assert.ok(ctor.indexOf('Bind(wxEVT_SHOW') < ctor.indexOf('FinishChrome(this)'), 'bound before the chrome is finished');
+  assert.doesNotMatch(source, /MD3::Motion::FadeIn/, 'no second, constructor-time fade');
   const show = between(source, 'void CommandPalette::ShowPalette(', 'void CommandPalette::apply_size(');
-  assert.doesNotMatch(show, /MD3::Motion::FadeIn/, 'one entrance fade, played by FinishChrome');
+  assert.doesNotMatch(show, /MD3::Motion::FadeIn/, 'one entrance, played by the show event');
   assert.match(show, /palette\.ShowModal\(\)/);
   assert.match(show, /CenterOnParent\(\)/, 'the card is still centred');
   // The Esc handling and the Card versus FullWindow sizing are untouched.

@@ -8,6 +8,7 @@
 #include "Tab.hpp"
 #include "OptionsGroup.hpp"
 #include "I18N.hpp"
+#include "MsgDialog.hpp"
 #include "Widgets/TabStrip.hpp"
 #include "Widgets/TabStripDialogs.hpp"
 #include "Widgets/MD3Dialog.hpp"
@@ -19,7 +20,6 @@
 #include "libslic3r/AppConfig.hpp"
 #include "libslic3r/PresetBundle.hpp"
 #include <wx/scrolwin.h>
-#include <wx/msgdlg.h>
 #include <wx/textdlg.h>
 #include <wx/sizer.h>
 #include <wx/wrapsizer.h>
@@ -57,8 +57,8 @@ SettingsDraftPanel::SettingsDraftPanel(wxWindow *parent, TabStrip *strip, std::f
     m_strip->Bind(EVT_TABSTRIP_CLOSE_REQUEST, [this](wxCommandEvent &e) {
         const auto id = std::string(e.GetString().ToUTF8());
         if (!m_store.find(id)) { m_strip->SetHidden(id, true); return; }
-        if (m_store.dirty(id) && wxMessageBox(_L("Discard this draft's unsaved changes?"), _L("Close draft"),
-                                            wxYES_NO | wxNO_DEFAULT | wxICON_WARNING, this) != wxYES) return;
+        if (m_store.dirty(id) && md3_message_box(_L("Discard this draft's unsaved changes?"), _L("Close draft"),
+                                               wxYES_NO | wxNO_DEFAULT | wxICON_WARNING, this) != wxYES) return;
         if (m_active == id) { ++m_view_generation; m_groups.clear(); GetSizer()->Clear(true); }
         m_store.erase(id); m_strip->RemoveTab(id); Persist();
         if (m_active == id) { m_active.clear(); m_show_page(false); }
@@ -214,7 +214,7 @@ void SettingsDraftPanel::OpenPicker() {
         auto type = id == "new:print" ? Preset::TYPE_PRINT : id == "new:filament" ? Preset::TYPE_FILAMENT : Preset::TYPE_PRINTER;
         auto *tab = live_tab(type); if (!tab) return;
         const auto target = Target(type);
-        if (target.project_id.empty()) { wxMessageBox(_L("Open a project before creating a settings draft."), _L("Create draft"), wxOK, this); return; }
+        if (target.project_id.empty()) { md3_message_box(_L("Open a project before creating a settings draft."), _L("Create draft"), wxOK, this); return; }
         id = m_store.create(type, tab->get_presets()->get_selected_preset().name, *tab->get_config(), target);
         if (id.empty()) return;
         m_strip->AddTab(id, draft_title(type) + " [" + wxString::FromUTF8(id.substr(id.size() - 4)) + "]"); Persist();
@@ -225,7 +225,7 @@ void SettingsDraftPanel::Apply() {
     auto *draft = m_store.find(m_active); if (!draft) return;
     auto *tab = live_tab(draft->type); if (!tab) return;
     const auto result = m_store.prepare_apply(m_active, *tab->get_config(), Target(draft->type));
-    if (!result.ready) { wxMessageBox(_L("The target changed. Create a new draft from the current target before applying."), _L("Draft conflict"), wxOK | wxICON_WARNING, this); return; }
+    if (!result.ready) { md3_message_box(_L("The target changed. Create a new draft from the current target before applying."), _L("Draft conflict"), wxOK | wxICON_WARNING, this); return; }
     wxString preview;
     for (const auto &key : result.changed_keys) {
         const auto *before = draft->baseline.option(key);
@@ -233,7 +233,7 @@ void SettingsDraftPanel::Apply() {
         preview += wxString::FromUTF8(key) + ": " + wxString::FromUTF8(before ? before->serialize() : "(missing)") + " -> " + wxString::FromUTF8(after ? after->serialize() : "(removed)") + "\n";
     }
     if (preview.empty()) return;
-    if (wxMessageBox(_L("Apply these changed settings?\n") + preview, _L("Apply draft"), wxYES_NO | wxNO_DEFAULT, this) != wxYES) return;
+    if (md3_message_box(_L("Apply these changed settings?\n") + preview, _L("Apply draft"), wxYES_NO | wxNO_DEFAULT, this) != wxYES) return;
     // Recheck after the nested confirmation event loop.
     const auto confirmed = m_store.prepare_apply(m_active, *tab->get_config(), Target(draft->type));
     if (!confirmed.ready) return;
@@ -254,7 +254,7 @@ void SettingsDraftPanel::Apply() {
         tab->reload_config();
         tab->update();
         wxGetApp().plater()->on_config_change(wxGetApp().preset_bundle->full_config());
-        wxMessageBox(_L("Apply could not finish. Previous settings were restored."), _L("Apply draft"), wxOK | wxICON_ERROR, this);
+        md3_message_box(_L("Apply could not finish. Previous settings were restored."), _L("Apply draft"), wxOK | wxICON_ERROR, this);
         return;
     }
     m_undo_before = before; m_undo_after = *tab->get_config();
@@ -270,7 +270,7 @@ void SettingsDraftPanel::UndoApply() {
     auto *tab = live_tab(m_undo_type);
     if (!tab || !(Target(m_undo_type) == m_undo_target) ||
         SettingsDraftStore::fingerprint(*tab->get_config()) != SettingsDraftStore::fingerprint(m_undo_after)) {
-        wxMessageBox(_L("Undo Apply is unavailable because the target settings changed."), _L("Undo Apply"), wxOK, this); return;
+        md3_message_box(_L("Undo Apply is unavailable because the target settings changed."), _L("Undo Apply"), wxOK, this); return;
     }
     wxGetApp().plater()->take_snapshot("Undo settings draft apply");
     *tab->get_config() = m_undo_before;
@@ -288,7 +288,7 @@ void SettingsDraftPanel::SaveAs() {
     if (name.empty() || name.find_first_of("/\\:*?\"<>|") != std::string::npos) return;
     auto *tab = live_tab(draft->type); if (!tab) return;
     auto *collection = tab->get_presets();
-    if (collection->find_preset(name, false)) { wxMessageBox(_L("A preset with this name already exists."), _L("Save draft"), wxOK, this); return; }
+    if (collection->find_preset(name, false)) { md3_message_box(_L("A preset with this name already exists."), _L("Save draft"), wxOK, this); return; }
     Preset detached = collection->get_edited_preset();
     detached.config = draft->config; detached.name = name; detached.vendor = nullptr;
     detached.is_system = false; detached.is_default = false; detached.is_external = false;
@@ -302,7 +302,7 @@ void SettingsDraftPanel::SaveAs() {
         if (!detached.save(nullptr)) throw std::runtime_error("Unable to save preset");
         collection->load_preset(detached.file, name, detached.config, false);
         LocalConfigHistory::record_config("preset", std::to_string(int(draft->type)) + ":" + name, "Save draft as preset", detached.config);
-        wxMessageBox(_L("Preset saved. The live selection is unchanged."), _L("Save draft"), wxOK, this);
-    } catch (...) { wxMessageBox(_L("The preset could not be saved. Your draft is retained."), _L("Save draft"), wxOK | wxICON_ERROR, this); }
+        md3_message_box(_L("Preset saved. The live selection is unchanged."), _L("Save draft"), wxOK, this);
+    } catch (...) { md3_message_box(_L("The preset could not be saved. Your draft is retained."), _L("Save draft"), wxOK | wxICON_ERROR, this); }
 }
 }}
