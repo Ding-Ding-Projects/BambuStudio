@@ -14,6 +14,12 @@ Page shots are `<page>.png`; button close-ups are `<page>--<button>.png` (or ded
 audited image by image. File names keep the upstream spelling on purpose: they are identifiers this
 index links by, not displayed text.
 
+Many files have been retaken since, without changing their names. For the images the repository
+README shows, its [screenshot provenance](../../README.md#screenshot-provenance) table gives each
+source; `notifications/toast-info.png`, `version-history/history-dialog.png`,
+`config-profiles/dialog.png` and `sidebar-process/after-sidebar-readable.png` were retaken from
+release `md3-v231` on 2026-10-09.
+
 ## appearance (20 captures)
 
 - [`appearance-tab--accent-1.png`](appearance/appearance-tab--accent-1.png)

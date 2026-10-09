@@ -186,22 +186,44 @@ layout dump reports the text of the application's own windows, but not text draw
 inside a web view or in a native popup menu. A person therefore reviews every image before any of
 them is committed, and the workflow itself never commits, pushes or publishes anything else.
 
+## Runs whose images were committed
+
+- Run [37864716163](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37864716163),
+  second attempt, target `design-references`, source commit
+  `e7c4e7c6f7e8fa81d0ba562ce87eee5703402950`: all three references were staged, reviewed, accepted
+  and committed on 2026-10-09.
+- Run [37875388464](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37875388464),
+  target `native-app`, release `md3-v231` (package `2.8.4835`, source commit
+  `31410274b6fda69ff51b01a7a978704e8908a884`): 11 of the 23 rows were staged. The three Setup Wizard
+  rows were withheld for `image-bytes`, and nine rows were reported `not-done`. Of the 11 staged
+  images, 8 were accepted and committed on 2026-10-09. The two Home rows
+  (`native-material-home-light-en.png`, `shot-home.png`) and the Ink row
+  (`native-material-filament-manager-light-en.png`) passed the pixel check but were rejected in
+  review, because the embedded web page inside the window was blank.
+
+The README's screenshot provenance table records, for every image it shows, whether it came from
+one of these runs or from an earlier capture.
+
 ## Limits
 
-- Nothing here is proven until the workflow is dispatched. The release must carry the layout probe
-  with its end record and the driver commands the recipes use.
-- The Home page and the Setup Wizard body are web views. If they render blank in a window capture,
-  the pixel check withholds them.
+- Only the runs listed above are proven. Each later release must still carry the layout probe with
+  its end record and the driver commands the recipes use.
+- The Home page, the Ink page and the Setup Wizard body are web views. The pixel check withholds a
+  capture only when the whole image is blank or outside its size bounds, so a window whose web view
+  is blank inside intact chrome can pass it; run 37875388464 staged three such images, and only the
+  review caught them.
 - If the workspace tab strip has moved the Ink tab into its overflow menu at 1200 pixels, the Ink
   row is reported blocked instead of capturing another page.
-- The README captions of the earlier installed-app captures describe the old images; update them
-  together with the images.
+- A README caption must describe the image actually committed. Several earlier images do not show
+  what their file name says; their captions and the README's provenance table say what they show,
+  and both are updated together with the images.
 - The Pages app ships no CJK font. The app names `'Roboto', system-ui, sans-serif`, and the landing
   site adds `'Noto Sans HK', 'PingFang HK', 'Microsoft JhengHei', 'Microsoft YaHei'` without
   bundling any of them, so a visitor whose system has no CJK font sees Cantonese text as boxes. The
   font installed by this workflow fixes the capture only, not the published site.
-- Whether the installed application starts on a hosted runner's hidden desktop is not yet shown
-  by any run of this workflow; the next run's `start failed` lines will say.
+- Run 37875388464 showed the installed `md3-v231` application starting on a hosted runner's hidden
+  desktop. That says nothing about another release; when one does not start, the run's
+  `start failed` lines say so.
 
 ## Verification
 

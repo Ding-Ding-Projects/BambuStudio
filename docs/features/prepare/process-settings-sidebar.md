@@ -79,18 +79,21 @@ height to say nothing. Its divider is hidden and shown with it, so no orphan rul
 
 ## Verification
 
-Captured headlessly from the real Release build at 846 px — the width this host's display forces,
-and the narrowest supported case:
+The "before" images were captured headlessly from the real Release build at 846 px — the width
+that host's display forced, and the narrowest supported case — and committed on 2026-07-30. The
+"after" images have been retaken since and no longer show the same views; the
+[screenshot provenance](../../../README.md#screenshot-provenance) table in the README lists the
+source of each one.
 
 | Before | After |
 | --- | --- |
-| ![Clipped sidebar](../../screenshots/sidebar-process/before-sidebar-clipped.png) | ![Readable sidebar](../../screenshots/sidebar-process/after-sidebar-readable.png) |
-| Value fields sliced off the right edge, tab strip cut mid-`Support`, preset name truncated. | Values with their units, full tab strip plus overflow, full preset name. |
+| ![Clipped sidebar](../../screenshots/sidebar-process/before-sidebar-clipped.png) | ![Prepare sidebar on its Ink section](../../screenshots/sidebar-process/after-sidebar-readable.png) |
+| Value fields sliced off the right edge, tab strip cut mid-`Support`, preset name truncated. | Release `md3-v231` (2026-10-09): the whole sidebar open on its Ink section, with the Printer and Ink cards inside the panel; the process values are not in this view. |
 
 | Before | After |
 | --- | --- |
-| ![Starved header](../../screenshots/sidebar-process/before-header-starved.png) | ![Intact header](../../screenshots/sidebar-process/after-header-intact.png) |
-| No `Process` title, no Compare button. | Title and `Global` / `Objects` switch laid out. |
+| ![Starved header](../../screenshots/sidebar-process/before-header-starved.png) | ![Process section title](../../screenshots/sidebar-process/after-header-intact.png) |
+| No `Process` title, no Compare button. | Earlier capture (2026-09-06, build attempt 19 of `main` at `2cf53a936`): a crop of the `PROCESS` section title only, not the header row. |
 
 Measured with `press.py controls`: the 3D canvas starts at **x=348** before and **x=461** after, and
 `Object manipulation` is absent from the control list until something is selected.
