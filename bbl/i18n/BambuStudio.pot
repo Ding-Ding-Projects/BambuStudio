@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-07 01:44+0000\n"
+"POT-Creation-Date: 2026-10-09 02:05+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -3674,6 +3674,7 @@ msgstr ""
 msgid "Expand"
 msgstr ""
 
+#. TRN: Screen reader action of a collapsible filter or statistics header.
 msgid "Collapse"
 msgstr ""
 
@@ -23419,6 +23420,29 @@ msgid "Choose camera zoom percentage"
 msgstr ""
 
 msgid "LIVE"
+msgstr ""
+
+#. TRN: Tooltip of the header that collapses a search bar, filter row or statistics panel.
+msgid "Show or hide these controls. Your choice is remembered."
+msgstr ""
+
+#. TRN: Shown under a collapsed filter row; %d is how many filters still narrow the list.
+#, possible-c-format, possible-boost-format
+msgid "Active filters (%d)"
+msgstr ""
+
+#. TRN: Appended to the active filter list of a collapsed filter row; %d filters are not named.
+#, possible-c-format, possible-boost-format
+msgid "+%d more"
+msgstr ""
+
+#. TRN: Shown under a collapsed filter row. %d is the number of active filters, %s lists them.
+#, possible-c-format, possible-boost-format
+msgid "Active filters (%d): %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s (%d active)"
 msgstr ""
 
 msgid "HEX"

@@ -1640,12 +1640,12 @@
     {
       "route": "workspace/README.md",
       "title": "Workspace",
-      "sha256": "eddcad58c6b7bf46ef9477b05255b25894a34899bc9ddfeca5fedba4c170645a"
+      "sha256": "61560377f1dff0026bb3a7e6c456eb80b25b30837c1154a9ff43f24824ab05da"
     },
     {
       "route": "workspace/README.yue_HK.md",
       "title": "工作區",
-      "sha256": "a6722c53d270edc42b525e52d0c9d65e02a2ee6673d1b1ae467af62ca2073d00"
+      "sha256": "34c60e75600471e3edf05c2b27b9046d0c5f66b496f0a4389f687c0f28ee4f30"
     },
     {
       "route": "workspace/bulk-actions.md",
@@ -1656,6 +1656,16 @@
       "route": "workspace/bulk-actions.yue_HK.md",
       "title": "批次操作",
       "sha256": "311427ad22222efbba2c98750b19309149f6edc575c9cc9561670ea94db7fe6c"
+    },
+    {
+      "route": "workspace/collapsible-filters.md",
+      "title": "Collapsible filters and statistics",
+      "sha256": "59e06015c8f4442e02d454c70ac460cbb696bff02278a2a7bb7382306fb52af6"
+    },
+    {
+      "route": "workspace/collapsible-filters.yue_HK.md",
+      "title": "可收埋嘅篩選同統計",
+      "sha256": "5f23206b8becbaa7869372bc2324821c596dfe7c0c4d125f708a2647a4ae9a01"
     },
     {
       "route": "workspace/config-profiles-backup.md",
@@ -1850,7 +1860,7 @@
       "bytes": 1979
     }
   ],
-  "bundle_sha256": "83f73beaf446ccb7aa0e07b95fb5c875fff6514846b64ea38be78a6e9c61515c",
+  "bundle_sha256": "1e72ae81b60f09523a7f5ada2777f7c5d09f05d891a8a8d1859b4b7a1143d954",
   "unavailable_references": [
     {
       "source": "api/README.md",

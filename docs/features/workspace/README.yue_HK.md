@@ -1,6 +1,6 @@
 ---
 translation-of: README.md
-source-sha256: eddcad58c6b7bf46ef9477b05255b25894a34899bc9ddfeca5fedba4c170645a
+source-sha256: 61560377f1dff0026bb3a7e6c456eb80b25b30837c1154a9ff43f24824ab05da
 review-status: agent-drafted
 ---
 
@@ -48,6 +48,7 @@ review-status: agent-drafted
 - [設定自動歷史](preferences-history.md)──每個設定變更
   提交 BambuStudio.conf 到一個隔離本地 Git 倉庫（防抖、
   去重）、附帶一個瀏覽器同恢復旁邊活躍檔案語意。
+- [可收埋嘅篩選同統計](collapsible-filters.md)──搜尋列、篩選列同統計面板可以收埋喺一個會記住狀態、用鍵盤操作到嘅標題下面；標題會讀出自己嘅狀態，收埋時一定會講明仲生效緊嘅篩選條件。
 - [設備風扇動作](fan-motion.md)──獨立遙測驅動部件同
   輔助風扇預覽附帶不同輸入同命令反饋。
 

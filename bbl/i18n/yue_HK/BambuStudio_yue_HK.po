@@ -39765,3 +39765,28 @@ msgstr "模型匯入：網格達 1,000,000 個三角形時，先簡化再加入�
 #. review-status: agent-drafted
 msgid "Extra high, High, Medium, Low or Extra low detail for automatic model import simplification"
 msgstr "模型匯入自動簡化嘅細節：極高、高、中、低或極低"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Show or hide these controls. Your choice is remembered."
+msgstr "顯示或者收埋呢啲控制項，你揀咗點會記住。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Active filters (%d)"
+msgstr "生效中嘅篩選條件（%d）"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "+%d more"
+msgstr "仲有 %d 個"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Active filters (%d): %s"
+msgstr "生效中嘅篩選條件（%d）：%s"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "%s (%d active)"
+msgstr "%s（%d 個生效中）"

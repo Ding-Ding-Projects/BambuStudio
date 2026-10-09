@@ -28754,3 +28754,18 @@ msgstr ""
 
 msgid "Extra high, High, Medium, Low or Extra low detail for automatic model import simplification"
 msgstr ""
+
+msgid "Show or hide these controls. Your choice is remembered."
+msgstr ""
+
+msgid "Active filters (%d)"
+msgstr ""
+
+msgid "+%d more"
+msgstr ""
+
+msgid "Active filters (%d): %s"
+msgstr ""
+
+msgid "%s (%d active)"
+msgstr ""

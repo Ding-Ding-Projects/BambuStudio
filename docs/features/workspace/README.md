@@ -47,6 +47,10 @@ work is in progress.
 - [Preferences auto-history](preferences-history.md) — every settings change
   commits BambuStudio.conf into an isolated local Git repo (debounced,
   deduped), with a browser and restore-beside-the-live-file semantics.
+- [Collapsible filters and statistics](collapsible-filters.md) — search bars,
+  filter rows and statistics panels fold under a remembered, keyboard-operable
+  header that announces its state and always names the filters still active
+  while collapsed.
 - [Device fan motion](fan-motion.md) — independent telemetry-driven part and
   auxiliary fan previews with distinct input and command feedback.
 
