@@ -16461,11 +16461,6 @@ msgstr "JSON 格式化"
 
 #. reviewed-category: file-actions
 #. review-status: agent-drafted
-msgid "UTF-8, two-space indentation, LF. Duplicate keys are rejected. Number literals, string escapes and object order are preserved exactly."
-msgstr "UTF-8、兩格空白縮排、LF 換行。重複嘅鍵會被拒絕。數字字面值、字串轉義同物件次序會完全保留。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
 msgid "Reparse and compare ordered values; preserve original literal bytes"
 msgstr "重新解析並按次序比較數值；保留原本字面值位元組"
 
@@ -16481,11 +16476,6 @@ msgstr "TSV 轉 JSON 行"
 
 #. reviewed-category: file-actions
 #. review-status: agent-drafted
-msgid "Every cell remains a string in an array of arrays. Quoted separators and line breaks are preserved. Ragged rows are rejected."
-msgstr "每格都保持係字串，放喺陣列嘅陣列入面。引號內嘅分隔符同換行會保留。長短唔一嘅行會被拒絕。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
 msgid "Parse and compare every cell"
 msgstr "解析並比較每一格"
 
@@ -16498,11 +16488,6 @@ msgstr "JSON 行轉 CSV"
 #. review-status: agent-drafted
 msgid "JSON rows to TSV"
 msgstr "JSON 行轉 TSV"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Only rectangular arrays of string arrays are supported. Every field is quoted; UTF-8 with CRLF records."
-msgstr "只支援長方形、由字串陣列組成嘅陣列。每個欄位都會加引號；UTF-8，每條紀錄用 CRLF 結尾。"
 
 #. reviewed-category: file-actions
 #. review-status: agent-drafted
@@ -16553,11 +16538,6 @@ msgstr "重新開啟 ZIP，驗證 CRC 並比較解壓出嚟嘅位元組"
 #. review-status: agent-drafted
 msgid "ZIP single-entry extraction"
 msgstr "ZIP 單一項目解壓"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Only one unencrypted regular entry, stored or deflated, at most 64 MiB. Absolute and traversal names are rejected; entry name is not used as a path."
-msgstr "只支援一個冇加密嘅普通項目，儲存或者 deflate 壓縮，最多 64 MiB。絕對路徑同跳出資料夾嘅名稱會被拒絕；項目名稱唔會用作路徑。"
 
 #. reviewed-category: file-actions
 #. review-status: agent-drafted
@@ -17633,6 +17613,66 @@ msgstr "Windows 喺沙箱入面載入唔到佢嘅使用者介面程式庫。代�
 #. review-status: agent-drafted
 msgid "Windows could not load the bundled PDF engine. The number at the end of the code is the Windows error."
 msgstr "Windows 載入唔到隨附 PDF 引擎。代碼最尾嘅數字係 Windows 錯誤碼。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "I reviewed what this conversion changes or leaves out, and I want to convert with these changes."
+msgstr "我已經睇過呢個轉換會改動或者略去嘅內容，並願意按呢啲變動轉換。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Accept the data changes of the selected adapter"
+msgstr "接受已揀轉接器嘅資料變動"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Changes confirmed for this adapter. You can now add files."
+msgstr "已確認呢個轉接器嘅變動。而家可以加入檔案。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Confirmation withdrawn. Files cannot be added with this adapter until you confirm again."
+msgstr "已撤回確認。再確認之前，唔可以用呢個轉接器加入檔案。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "This conversion changes or leaves out data as described above. Confirm below before adding files."
+msgstr "呢個轉換會按上面所講改動或者略去資料。加入檔案之前，請喺下面確認。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Confirm what this conversion changes before adding files. Its disclosure lists what changes or is left out."
+msgstr "加入檔案之前，請先確認呢個轉換會改動嘅內容。佢嘅披露列明咗會改動或者略去乜嘢。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Changes whitespace only: two-space indentation and LF line endings in UTF-8. Duplicate keys are rejected. Number literals, string escapes and object order are preserved exactly."
+msgstr "只改動空白：UTF-8、兩格空白縮排同 LF 換行。重複嘅鍵會被拒絕。數字字面值、字串轉義同物件次序會完全保留。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Every cell becomes a JSON string in an array of arrays; the original quoting and record line endings are not kept. Quoted separators and line breaks inside cells are preserved. Ragged rows are rejected."
+msgstr "每格都會變成 JSON 字串，放喺陣列嘅陣列入面；原本嘅引號方式同紀錄換行唔會保留。儲存格入面加咗引號嘅分隔符同換行會保留。長短唔一嘅行會被拒絕。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Only rectangular arrays of string arrays are supported. Every field is written quoted, records end with CRLF and the file is UTF-8; the JSON whitespace is not kept."
+msgstr "只支援長方形、由字串陣列組成嘅陣列。每個欄位都會加引號寫入，每條紀錄用 CRLF 結尾，檔案係 UTF-8；JSON 嘅空白唔會保留。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Writes only the entry's bytes; its name, timestamps and comment are not kept. Only one unencrypted regular entry, stored or deflated, at most 64 MiB. Absolute and traversal names are rejected."
+msgstr "只寫入項目嘅位元組；佢嘅名稱、時間戳記同註解唔會保留。只支援一個冇加密嘅普通項目，儲存或者 deflate 壓縮，最多 64 MiB。絕對路徑同跳出資料夾嘅名稱會被拒絕。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "This conversion changes or leaves out data, and its changes were not confirmed. Nothing was added."
+msgstr "呢個轉換會改動或者略去資料，但未確認佢嘅變動。冇加入任何嘢。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "What this conversion changes is different from what was confirmed, so the file was skipped. Confirm the changes again and add it."
+msgstr "呢個轉換而家會改動嘅內容同之前確認嘅唔一樣，所以略過咗呢個檔案。請再確認變動，然後再加入。"
 
 #. reviewed-category: file-actions
 #. review-status: agent-drafted

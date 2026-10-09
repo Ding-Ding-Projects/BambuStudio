@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-09 00:46+0000\n"
+"POT-Creation-Date: 2026-10-09 01:09+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -7183,6 +7183,18 @@ msgstr ""
 msgid "Selected adapter details"
 msgstr ""
 
+msgid "I reviewed what this conversion changes or leaves out, and I want to convert with these changes."
+msgstr ""
+
+msgid "Accept the data changes of the selected adapter"
+msgstr ""
+
+msgid "Changes confirmed for this adapter. You can now add files."
+msgstr ""
+
+msgid "Confirmation withdrawn. Files cannot be added with this adapter until you confirm again."
+msgstr ""
+
 msgid "Search PDF operation settings"
 msgstr ""
 
@@ -7304,6 +7316,9 @@ msgstr ""
 msgid "Validation: %s"
 msgstr ""
 
+msgid "This conversion changes or leaves out data as described above. Confirm below before adding files."
+msgstr ""
+
 #, possible-c-format, possible-boost-format
 msgid "Unavailable: %s"
 msgstr ""
@@ -7327,6 +7342,9 @@ msgid "Wait for the current operation before adding sources."
 msgstr ""
 
 msgid "Select an enabled adapter first. Unavailable rows explain their missing packaged adapter."
+msgstr ""
+
+msgid "Confirm what this conversion changes before adding files. Its disclosure lists what changes or is left out."
 msgstr ""
 
 msgid "PDF merge needs an explicit ordered selection. Use Add source file and select at least two PDFs."
@@ -7554,7 +7572,7 @@ msgstr ""
 msgid "JSON formatting"
 msgstr ""
 
-msgid "UTF-8, two-space indentation, LF. Duplicate keys are rejected. Number literals, string escapes and object order are preserved exactly."
+msgid "Changes whitespace only: two-space indentation and LF line endings in UTF-8. Duplicate keys are rejected. Number literals, string escapes and object order are preserved exactly."
 msgstr ""
 
 msgid "Reparse and compare ordered values; preserve original literal bytes"
@@ -7566,7 +7584,7 @@ msgstr ""
 msgid "TSV to JSON rows"
 msgstr ""
 
-msgid "Every cell remains a string in an array of arrays. Quoted separators and line breaks are preserved. Ragged rows are rejected."
+msgid "Every cell becomes a JSON string in an array of arrays; the original quoting and record line endings are not kept. Quoted separators and line breaks inside cells are preserved. Ragged rows are rejected."
 msgstr ""
 
 msgid "Parse and compare every cell"
@@ -7578,7 +7596,7 @@ msgstr ""
 msgid "JSON rows to TSV"
 msgstr ""
 
-msgid "Only rectangular arrays of string arrays are supported. Every field is quoted; UTF-8 with CRLF records."
+msgid "Only rectangular arrays of string arrays are supported. Every field is written quoted, records end with CRLF and the file is UTF-8; the JSON whitespace is not kept."
 msgstr ""
 
 msgid "Reparse and compare every cell"
@@ -7611,7 +7629,7 @@ msgstr ""
 msgid "ZIP single-entry extraction"
 msgstr ""
 
-msgid "Only one unencrypted regular entry, stored or deflated, at most 64 MiB. Absolute and traversal names are rejected; entry name is not used as a path."
+msgid "Writes only the entry's bytes; its name, timestamps and comment are not kept. Only one unencrypted regular entry, stored or deflated, at most 64 MiB. Absolute and traversal names are rejected."
 msgstr ""
 
 msgid "Bounded extraction with CRC verification"
@@ -7729,6 +7747,12 @@ msgid "The bundled PDF engine is ready."
 msgstr ""
 
 msgid "The worker reported what it can convert."
+msgstr ""
+
+msgid "This conversion changes or leaves out data, and its changes were not confirmed. Nothing was added."
+msgstr ""
+
+msgid "What this conversion changes is different from what was confirmed, so the file was skipped. Confirm the changes again and add it."
 msgstr ""
 
 msgid "The destination already exists. It was not replaced."

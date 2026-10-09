@@ -4,11 +4,14 @@
 #include <array>
 #include <memory>
 #include <mutex>
+#include <set>
+#include <string>
 #include <thread>
 #include <wx/panel.h>
 #include <wx/timer.h>
 
 class Button;
+class LabeledCheckBox;
 class Label;
 class MD3DataViewListCtrl;
 class SearchField;
@@ -37,6 +40,7 @@ private:
     void show_category(const std::string &id);
     void select_adapter(unsigned category);
     void set_rotation(int degrees);
+    void update_acknowledgement();
     void refresh_catalog();
     void refresh_queue();
     void choose_source(bool folder);
@@ -66,6 +70,10 @@ private:
     int m_pdf_rotation = 90;
     Label *m_status = nullptr;
     Label *m_details = nullptr;
+    // Explicit consent for lossy and metadata/encoding-changing adapters, kept
+    // as acknowledgement tokens for this session only.
+    LabeledCheckBox *m_acknowledge = nullptr;
+    std::set<std::string> m_acknowledged;
     Label *m_page_label = nullptr;
     std::vector<std::size_t> m_visible_jobs;
     std::thread m_work;

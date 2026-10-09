@@ -118,6 +118,38 @@ int main(int argc, char **argv)
         auto j = nlohmann::json::parse(get(interrupted)); j["state"] = static_cast<unsigned>(State::Running); put(interrupted,j.dump());
         { Queue queue(root/"recovery"); require(queue.page(0,1)[0].state == State::RecoveryRequired,"crash not reported success"); }
         {
+            // A lossy or metadata/encoding-changing conversion is admitted only with
+            // an explicit acknowledgement bound to the exact disclosure shown.
+            const auto find=[&](const char *id){for(const auto &a:adapters)if(a.id==id)return a;throw std::runtime_error(id);};
+            const auto lf=find("text.lf"),pretty=find("json.pretty"),hex=find("hex.encode"),unzip=find("zip.decode");
+            require(requires_acknowledgement(lf)&&requires_acknowledgement(pretty)&&requires_acknowledgement(unzip),"lossy and encoding-changing adapters need acknowledgement");
+            require(!requires_acknowledgement(hex)&&!requires_acknowledgement(std::string("base64.decode")),"byte-preserving adapters need none");
+            for(const auto &a:adapters) if(a.lossy) require(requires_acknowledgement(a),"every lossy adapter needs acknowledgement");
+            require(requires_acknowledgement(std::string("no.such.adapter")),"an unknown adapter is never admitted silently");
+            const auto token=acknowledgement_token(lf);
+            require(token.size()==16&&token.find_first_not_of("0123456789abcdef")==std::string::npos,"token is 16 hex digits");
+            require(token==acknowledgement_token(lf)&&token!=acknowledgement_token(pretty),"token is stable and adapter specific");
+            auto changed=lf;changed.disclosure+=" ";require(acknowledgement_token(changed)!=token,"token follows the disclosure text");
+            put(root/"crlf.txt","a\r\nb\r\n");
+            Queue queue(root/"acknowledged");
+            rejects([&]{queue.enqueue(root/"crlf.txt",root/"lf-none.txt","text.lf");},"unacknowledged lossy admission refused");
+            rejects([&]{queue.enqueue(root/"crlf.txt",root/"lf-wrong.txt","text.lf","",{},acknowledgement_token(pretty));},"acknowledgement of another disclosure refused");
+            rejects([&]{queue.enqueue(source,root/"audio.bin","audio","",{},"");},"placeholder adapters are never admitted");
+            require(queue.count()==0,"refused admissions create no record");
+            queue.enqueue(root/"crlf.txt",root/"lf-ok.txt","text.lf","",{},token);
+            queue.enqueue(root/"crlf.txt",root/"lf-edited.txt","text.lf","",{},token);
+            queue.enqueue(source,root/"plain.hex","hex.encode");
+            require(queue.page(0,1)[0].acknowledgement==token,"acknowledgement is saved with the record");
+            const auto edited=root/"acknowledged"/"2.json";
+            auto record=nlohmann::json::parse(get(edited));record["acknowledgement"]="0000000000000000";put(edited,record.dump());
+            queue.pause(false);while(queue.step(exec,cancel)){}
+            require(queue.page(0,1)[0].state==State::Converted&&get(root/"lf-ok.txt")=="a\nb\n","acknowledged conversion runs");
+            require(queue.page(1,1)[0].state==State::Skipped&&queue.page(1,1)[0].code=="disclosure_changed_since_acknowledgement","stale acknowledgement is skipped");
+            require(!fs::exists(root/"lf-edited.txt"),"a skipped record writes nothing");
+            require(queue.page(2,1)[0].state==State::Converted,"byte-preserving conversion needs no acknowledgement");
+            require(result_message("disclosure_not_acknowledged")!=nullptr&&result_message("disclosure_changed_since_acknowledgement")!=nullptr,"acknowledgement results are described");
+        }
+        {
             Queue queue(root/"rejected");queue.record_rejected(root/"missing",root/"unwritten","hex.encode","source_unavailable");
             require(queue.page(0,1)[0].state==State::Skipped&&queue.page(0,1)[0].code=="source_unavailable","rejected admission has durable per-file outcome");
             rejects([&]{queue.record_rejected(source,output,"hex.encode","C:/private/path");},"reject private-path diagnostic");

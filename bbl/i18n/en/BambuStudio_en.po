@@ -29175,9 +29175,6 @@ msgstr ""
 msgid "JSON formatting"
 msgstr ""
 
-msgid "UTF-8, two-space indentation, LF. Duplicate keys are rejected. Number literals, string escapes and object order are preserved exactly."
-msgstr ""
-
 msgid "Reparse and compare ordered values; preserve original literal bytes"
 msgstr ""
 
@@ -29187,9 +29184,6 @@ msgstr ""
 msgid "TSV to JSON rows"
 msgstr ""
 
-msgid "Every cell remains a string in an array of arrays. Quoted separators and line breaks are preserved. Ragged rows are rejected."
-msgstr ""
-
 msgid "Parse and compare every cell"
 msgstr ""
 
@@ -29197,9 +29191,6 @@ msgid "JSON rows to CSV"
 msgstr ""
 
 msgid "JSON rows to TSV"
-msgstr ""
-
-msgid "Only rectangular arrays of string arrays are supported. Every field is quoted; UTF-8 with CRLF records."
 msgstr ""
 
 msgid "Reparse and compare every cell"
@@ -29230,9 +29221,6 @@ msgid "Reopen ZIP, verify CRC and compare extracted bytes"
 msgstr ""
 
 msgid "ZIP single-entry extraction"
-msgstr ""
-
-msgid "Only one unencrypted regular entry, stored or deflated, at most 64 MiB. Absolute and traversal names are rejected; entry name is not used as a path."
 msgstr ""
 
 msgid "Bounded extraction with CRC verification"
@@ -29878,4 +29866,40 @@ msgid "Windows could not load its user interface library inside the sandbox. The
 msgstr ""
 
 msgid "Windows could not load the bundled PDF engine. The number at the end of the code is the Windows error."
+msgstr ""
+
+msgid "I reviewed what this conversion changes or leaves out, and I want to convert with these changes."
+msgstr ""
+
+msgid "Accept the data changes of the selected adapter"
+msgstr ""
+
+msgid "Changes confirmed for this adapter. You can now add files."
+msgstr ""
+
+msgid "Confirmation withdrawn. Files cannot be added with this adapter until you confirm again."
+msgstr ""
+
+msgid "This conversion changes or leaves out data as described above. Confirm below before adding files."
+msgstr ""
+
+msgid "Confirm what this conversion changes before adding files. Its disclosure lists what changes or is left out."
+msgstr ""
+
+msgid "Changes whitespace only: two-space indentation and LF line endings in UTF-8. Duplicate keys are rejected. Number literals, string escapes and object order are preserved exactly."
+msgstr ""
+
+msgid "Every cell becomes a JSON string in an array of arrays; the original quoting and record line endings are not kept. Quoted separators and line breaks inside cells are preserved. Ragged rows are rejected."
+msgstr ""
+
+msgid "Only rectangular arrays of string arrays are supported. Every field is written quoted, records end with CRLF and the file is UTF-8; the JSON whitespace is not kept."
+msgstr ""
+
+msgid "Writes only the entry's bytes; its name, timestamps and comment are not kept. Only one unencrypted regular entry, stored or deflated, at most 64 MiB. Absolute and traversal names are rejected."
+msgstr ""
+
+msgid "This conversion changes or leaves out data, and its changes were not confirmed. Nothing was added."
+msgstr ""
+
+msgid "What this conversion changes is different from what was confirmed, so the file was skipped. Confirm the changes again and add it."
 msgstr ""

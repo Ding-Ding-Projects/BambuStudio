@@ -30,9 +30,33 @@ extraction round trip. Multi-entry extraction and 7z are not implemented.
 Each input is limited to 16 MiB. PDF merge applies that limit to aggregate source
 bytes. Output is limited to 64 MiB. The PDF transport envelope is limited to
 24 MiB. Images are limited to 4,194,304 pixels; structured input has depth and
-item bounds. Conversion disclosures describe line ending, number formatting,
-filename, timestamp, image-resolution and metadata changes before the user
-starts processing.
+item bounds.
+
+## Change disclosures and acknowledgement
+
+Each adapter's disclosure states exactly what it changes or leaves out: line
+endings, whitespace, quoting, filenames, timestamps, image resolution, color
+profile, metadata or PDF structure. An adapter that is lossy or changes metadata
+or encoding admits files only after an explicit acknowledgement. Those are the
+UTF-8 line ending conversions, JSON formatting, CSV/TSV and JSON table
+conversion, the bitmap conversions, ZIP creation and extraction, and every PDF
+tool. Hexadecimal and Base64 encoding and decoding preserve every byte and need
+no acknowledgement.
+
+Selecting such an adapter shows its disclosure, a line asking for confirmation
+and a check box: *I reviewed what this conversion changes or leaves out, and I
+want to convert with these changes*. Until it is ticked, **Add source file** and
+**Add source folder** are refused before any picker opens, and keyboard focus
+moves to the check box. Unticking withdraws the acceptance.
+
+The acceptance is bound to the exact disclosure by a token
+(`acknowledgement_token()`: 16 hexadecimal digits over the adapter id, the
+disclosure text and its change flags). It lasts for the current session and is
+saved in every admitted queue record. The queue refuses an admission without the
+matching token (`disclosure_not_acknowledged`, and no record is written) and
+skips a saved record whose token no longer matches the current disclosure
+(`disclosure_changed_since_acknowledgement`), so resuming after an update that
+changed a disclosure never converts on earlier consent.
 
 ## Bundled proof and process boundary
 
@@ -131,6 +155,7 @@ is constructed. The source contract is pinned by
 | Page order, PDF title and output folder | `TextInput` |
 | Title, guidance, details, empty states, page and status lines | `Label` (title in the kit headline face) |
 | Actions, rotation choice and paging | `Button` with an explicit Material variant; the chosen rotation is the filled button |
+| Change acknowledgement | `LabeledCheckBox` (the kit `CheckBox` glyph with a `Label`), named for assistive technology |
 | Scrolling body | `MD3ScrolledWindow` on the Surface role |
 
 The category strip keeps the shared tab contract: keyboard selection along its
@@ -177,10 +202,12 @@ factual and never change with the level.
 
 The standalone test project is `tests/local_converter` and can be configured
 with `LOCAL_CONVERTER_QPDF_SDK` pointing to the verified SDK. It builds three
-behavioral test executables and the real worker. The core test reports 310
-assertions without a worker path and 313 with one, where the extra three are the
+behavioral test executables and the real worker. The core test reports 331
+assertions without a worker path and 334 with one, where the extra three are the
 actual hash-verified AppContainer conversion; it also checks that every failure
-it provokes has a result sentence. The PDF tests recorded 31 typed and 63 framed
+it provokes has a result sentence, that unacknowledged or mismatched lossy
+admissions are refused, and that a record with stale consent is skipped without
+output. The PDF tests recorded 31 typed and 63 framed
 assertions. The PDF request test accepts optional worker path and worker digest
 arguments to run all seven operations through the real sandbox.
 
@@ -201,11 +228,14 @@ Localization is pinned by `ui-md3/tests/local-converter-localization.test.mjs`
 (every catalogue source has English and Cantonese entries, every result code has
 a sentence, registry text is translated at display time and only non-factual
 lines take a voice) and `tests/local_converter_copy` (the voice ladders keep
-their facts and placeholders at every level).
+their facts and placeholders at every level). The acknowledgement is pinned by
+`ui-md3/tests/local-converter-acknowledgement.test.mjs` (flags and disclosures,
+queue refusal and skip, and the check box gate before any picker).
 
 The native panel has not yet been compiled against the full application's wx
 dependency build or exercised in the packaged application, so the Cantonese and
-bilingual renderings and the funny-level variants still need to be seen there.
+bilingual renderings, the funny-level variants and the acknowledgement check
+box still need to be seen there.
 Per-element appearance/locking menus, notification/history integration,
 command-palette routing, complete bulk-action coverage and the documented
 language/theme/display-scale capture matrix still require shared integration

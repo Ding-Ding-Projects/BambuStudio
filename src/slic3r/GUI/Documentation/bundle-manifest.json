@@ -200,12 +200,12 @@
     {
       "route": "converter/README.md",
       "title": "Local file converter",
-      "sha256": "9ad3213abf7d421cb481329821cb506ea34470cff36d18a6d16e0c8d36d19ec9"
+      "sha256": "a9968110ed1cac91c7d307384bb4ee1c86e6cc761b07d40bc9f764915da037a6"
     },
     {
       "route": "converter/README.yue_HK.md",
       "title": "本機檔案轉換器",
-      "sha256": "bca7ed5d675c03d9ca6addbeeeb88d9dfb2a64febff59e14fc3fa282af5865c3"
+      "sha256": "4cc44131b58b5fe25bd60dd3f9f03d9d35305359e42c7a9385154adeece5cd77"
     },
     {
       "route": "converter/pdf-engine.md",
@@ -1860,7 +1860,7 @@
       "bytes": 1979
     }
   ],
-  "bundle_sha256": "65673780ab6dc9de7b04f87783a7411f3a6c6ffc3e053d870728ea7a02645115",
+  "bundle_sha256": "bb2f3a20e900e9004f3e61d029c12b20e5ab62ecf69656e259103afc667982ca",
   "unavailable_references": [
     {
       "source": "api/README.md",

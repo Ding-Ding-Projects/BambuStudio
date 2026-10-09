@@ -337,17 +337,20 @@ std::vector<Adapter> catalog(const PackageProof &p)
     add("base64.decode", Category::Binary, L("Base64 to binary"), "bin", {Kind::Utf8,Kind::Json}, L("Requires canonical RFC 4648 padding and no whitespace."), L("Re-encode and compare"));
     add("text.lf", Category::Text, L("UTF-8 with LF line endings"), "txt", {Kind::Utf8,Kind::Json}, L("Changes CRLF and CR line endings to LF. Preserves UTF-8 bytes and BOM otherwise."), L("UTF-8 validation and absence of CR"));
     add("text.crlf", Category::Text, L("UTF-8 with CRLF line endings"), "txt", {Kind::Utf8,Kind::Json}, L("Normalizes all line endings to CRLF. Preserves UTF-8 bytes and BOM otherwise."), L("UTF-8 validation and canonical line endings"));
-    add("json.pretty", Category::Structured, L("JSON formatting"), "json", {Kind::Json,Kind::Utf8}, L("UTF-8, two-space indentation, LF. Duplicate keys are rejected. Number literals, string escapes and object order are preserved exactly."), L("Reparse and compare ordered values; preserve original literal bytes"));
+    add("json.pretty", Category::Structured, L("JSON formatting"), "json", {Kind::Json,Kind::Utf8}, L("Changes whitespace only: two-space indentation and LF line endings in UTF-8. Duplicate keys are rejected. Number literals, string escapes and object order are preserved exactly."), L("Reparse and compare ordered values; preserve original literal bytes"));
     for (const bool csv : {true,false}) {
         const std::string sep = csv ? "csv" : "tsv";
-        add(sep + ".json", Category::Structured, csv ? L("CSV to JSON rows") : L("TSV to JSON rows"), "json", {Kind::Utf8,Kind::Json}, L("Every cell remains a string in an array of arrays. Quoted separators and line breaks are preserved. Ragged rows are rejected."), L("Parse and compare every cell"));
-        add("json." + sep, Category::Structured, csv ? L("JSON rows to CSV") : L("JSON rows to TSV"), sep, {Kind::Json}, L("Only rectangular arrays of string arrays are supported. Every field is quoted; UTF-8 with CRLF records."), L("Reparse and compare every cell"));
+        add(sep + ".json", Category::Structured, csv ? L("CSV to JSON rows") : L("TSV to JSON rows"), "json", {Kind::Utf8,Kind::Json}, L("Every cell becomes a JSON string in an array of arrays; the original quoting and record line endings are not kept. Quoted separators and line breaks inside cells are preserved. Ragged rows are rejected."), L("Parse and compare every cell"));
+        add("json." + sep, Category::Structured, csv ? L("JSON rows to CSV") : L("JSON rows to TSV"), sep, {Kind::Json}, L("Only rectangular arrays of string arrays are supported. Every field is written quoted, records end with CRLF and the file is UTF-8; the JSON whitespace is not kept."), L("Reparse and compare every cell"));
     }
     add("bmp.ppm", Category::Images, L("24-bit BMP to PPM"), "ppm", {Kind::Bmp}, L("Only uncompressed bottom-up 24-bit BMP with a 40-byte header. Resolution metadata is omitted; RGB pixels are preserved."), L("Reopen and compare dimensions and every pixel"));
     add("ppm.bmp", Category::Images, L("PPM to 24-bit BMP"), "bmp", {Kind::Ppm}, L("Only P6 8-bit RGB PPM without comments. RGB pixels are preserved; output has no color profile or resolution metadata."), L("Reopen and compare dimensions and every pixel"));
     add("zip.encode",Category::Archives,L("File to ZIP (one entry)"),"zip",any,L("Preserves every source byte in payload.bin. Original filename and filesystem timestamps are omitted. No encryption."),L("Reopen ZIP, verify CRC and compare extracted bytes"));
-    add("zip.decode",Category::Archives,L("ZIP single-entry extraction"),"bin",{Kind::Zip},L("Only one unencrypted regular entry, stored or deflated, at most 64 MiB. Absolute and traversal names are rejected; entry name is not used as a path."),L("Bounded extraction with CRC verification"));
-    for (auto &a : r) a.lossy = a.id == "text.lf" || a.id == "text.crlf" || a.category == Category::Images || a.id=="zip.encode";
+    add("zip.decode",Category::Archives,L("ZIP single-entry extraction"),"bin",{Kind::Zip},L("Writes only the entry's bytes; its name, timestamps and comment are not kept. Only one unencrypted regular entry, stored or deflated, at most 64 MiB. Absolute and traversal names are rejected."),L("Bounded extraction with CRC verification"));
+    for (auto &a : r) {
+        a.lossy = a.id == "text.lf" || a.id == "text.crlf" || a.category == Category::Images || a.id=="zip.encode";
+        a.changes_encoding = a.id == "json.pretty" || a.id == "csv.json" || a.id == "tsv.json" || a.id == "json.csv" || a.id == "json.tsv" || a.id == "zip.decode";
+    }
     auto missing = [&](std::string id, Category c, std::string name, std::string reason) { r.push_back({std::move(id),c,std::move(name),"",{},false,false,false,std::move(reason),"",L("Unavailable"),""}); };
     struct PdfTool { const char *id; const char *name; const char *extension; };
     static const PdfTool pdf_tools[]{
@@ -380,6 +383,44 @@ std::vector<Adapter> catalog(const PackageProof &p)
     missing("office",Category::Structured,L("XLSX, ODS, YAML, TOML"), L("No bundled verified parser and loss-preserving converter for these formats is installed."));
     missing("documents",Category::Documents,L("DOCX, ODT, EPUB"), L("No bundled verified offline document converter adapter is installed."));
     return r;
+}
+
+namespace {
+// The fixed registry terms (names, disclosures and change flags) without any
+// proof. The empty proof fails before hashing, so this never starts a worker.
+const Adapter *registered(const std::string &id)
+{
+    static const std::vector<Adapter> terms = catalog({});
+    for (const auto &a : terms)
+        if (a.id == id) return &a;
+    return nullptr;
+}
+// Why a saved record may not run, or empty when its acknowledgement holds.
+std::string acknowledgement_problem(const Job &job)
+{
+    const Adapter *terms = registered(job.adapter);
+    if (terms != nullptr && !requires_acknowledgement(*terms)) return {};
+    if (job.acknowledgement.empty()) return "disclosure_not_acknowledged";
+    if (terms == nullptr || job.acknowledgement != acknowledgement_token(*terms)) return "disclosure_changed_since_acknowledgement";
+    return {};
+}
+}
+bool requires_acknowledgement(const Adapter &a) { return a.lossy || a.changes_encoding; }
+bool requires_acknowledgement(const std::string &adapter_id)
+{
+    const Adapter *terms = registered(adapter_id);
+    return terms == nullptr || requires_acknowledgement(*terms);
+}
+std::string acknowledgement_token(const Adapter &a)
+{
+    // FNV-1a over everything the user was asked to accept. It is a binding,
+    // not a secret: any change to the disclosure invalidates earlier consent.
+    std::uint64_t h = 1469598103934665603ULL;
+    const auto mix = [&h](const std::string &part) { for (unsigned char c : part) { h ^= c; h *= 1099511628211ULL; } h ^= 0xff; h *= 1099511628211ULL; };
+    mix("v1"); mix(a.id); mix(a.disclosure); mix(a.lossy ? "lossy" : "kept"); mix(a.changes_encoding ? "encoding" : "same");
+    std::string token(16, '0');
+    for (int i = 15; i >= 0; --i) { token[static_cast<std::size_t>(i)] = hex[h & 15]; h >>= 4; }
+    return token;
 }
 
 Conversion transform(const std::string &adapter, const Bytes &source)
@@ -524,6 +565,8 @@ const char *result_message(const std::string &code)
         {"cancelled",L("Cancelled. Nothing was written for this file.")},
         {"ok",L("The bundled PDF engine is ready.")},
         {"capabilities",L("The worker reported what it can convert.")},
+        {"disclosure_not_acknowledged",L("This conversion changes or leaves out data, and its changes were not confirmed. Nothing was added.")},
+        {"disclosure_changed_since_acknowledgement",L("What this conversion changes is different from what was confirmed, so the file was skipped. Confirm the changes again and add it.")},
         {"destination_exists",L("The destination already exists. It was not replaced.")},
         {"destination_directory_missing",L("The output folder no longer exists.")},
         {"destination_storage_low",L("The output folder does not have enough free space.")},
@@ -765,7 +808,8 @@ void Queue::write(const Job &j)
     Json sources=Json::array(); for(std::size_t i=0;i<j.additional_sources.size();++i) sources.push_back(Json{{"path",j.additional_sources[i].u8string()},{"size",j.additional_sizes[i]},{"modified",j.additional_modified[i]}});
     const auto record=Json{{"version",1},{"id",j.id},{"source",j.source.u8string()},{"destination",j.destination.u8string()},
         {"adapter",j.adapter},{"state",static_cast<unsigned>(j.state)},{"code",j.code},{"input_size",j.input_size},{"input_modified",j.input_modified},
-        {"options",j.options},{"additional_sources",sources},{"cancellation_generation",j.cancellation_generation}}.dump();
+        {"options",j.options},{"additional_sources",sources},{"cancellation_generation",j.cancellation_generation},
+        {"acknowledgement",j.acknowledgement}}.dump();
     check(record.size()<=65536,"queue_record_limit"); replace_record(record_path(m_root,j.id),record);
 }
 Job Queue::read(std::uint64_t id) const
@@ -777,15 +821,21 @@ Job Queue::read(std::uint64_t id) const
         static_cast<State>(state),j.at("code").get<std::string>(),j.at("input_size").get<std::uint64_t>(),j.at("input_modified").get<std::int64_t>()};
     result.options=j.value("options",std::string());
     result.cancellation_generation=j.value("cancellation_generation",std::uint64_t(0));
+    result.acknowledgement=j.value("acknowledgement",std::string());
+    check(result.acknowledgement.size()<=64,"queue_record_limit");
     if(result.state==State::Pending&&result.cancellation_generation<m_cancellation_generation){result.state=State::Cancelled;result.code="cancelled";}
     if(j.contains("additional_sources")) for(const auto &p:j["additional_sources"]) {result.additional_sources.push_back(fs::u8path(p.at("path").get<std::string>()));result.additional_sizes.push_back(p.at("size").get<std::uint64_t>());result.additional_modified.push_back(p.at("modified").get<std::int64_t>());}
     check(result.options.size()<=16384 && result.additional_sources.size()<=1000,"queue_record_limit");
     return result;
 }
-std::uint64_t Queue::enqueue(const fs::path &source, const fs::path &destination, const std::string &adapter,const std::string &options,const std::vector<fs::path> &additional_sources)
+std::uint64_t Queue::enqueue(const fs::path &source, const fs::path &destination, const std::string &adapter,const std::string &options,const std::vector<fs::path> &additional_sources,
+                             const std::string &acknowledgement)
 {
     std::lock_guard<std::mutex> lock(m_mutex);
     check(adapter.size() < 64 && !adapter.empty(), "invalid_adapter");
+    const Adapter *terms = registered(adapter);
+    check(terms != nullptr && terms->bundled, "adapter_unavailable");
+    check(!requires_acknowledgement(*terms) || acknowledgement == acknowledgement_token(*terms), "disclosure_not_acknowledged");
     check(source.u8string().size() <= 16384 && destination.u8string().size() <= 16384, "path_limit");
     check(fs::is_regular_file(fs::symlink_status(source)) && fs::file_size(source) <= Limits::input_bytes, "input_limit_or_type");
     check(fs::is_directory(destination.parent_path()) && fs::space(destination.parent_path()).available >= Limits::output_bytes + 65536, "destination_storage_low");
@@ -795,6 +845,7 @@ std::uint64_t Queue::enqueue(const fs::path &source, const fs::path &destination
     check(options.size()<=16384 && additional_sources.size()<=1000,"queue_record_limit");
     if(!options.empty()) parse_json(bytes(options));
     j.options=options;
+    j.acknowledgement=requires_acknowledgement(*terms) ? acknowledgement : std::string();
     j.cancellation_generation=m_cancellation_generation;
     std::uint64_t total=j.input_size;
     for(const auto &p:additional_sources) { check(fs::is_regular_file(fs::symlink_status(p)),"source_not_regular");const auto size=fs::file_size(p);check(size<=Limits::input_bytes-total,"input_limit");total+=size;j.additional_sources.push_back(fs::absolute(p));j.additional_sizes.push_back(size);j.additional_modified.push_back(modified(p)); }
@@ -830,6 +881,11 @@ bool Queue::step(const Executor &executor, const std::atomic<bool> &cancel)
             if(++scanned==Limits::page_size){save_meta();return true;}
         }
         if (m_cursor > m_count) { save_meta(); return false; }
+        // A record whose acknowledgement is missing, edited or older than the
+        // current disclosure never runs; it is skipped with the reason.
+        if (const auto problem = acknowledgement_problem(job); !problem.empty()) {
+            job.state = State::Skipped; job.code = problem; write(job); ++m_cursor; save_meta(); return true;
+        }
         job.state = State::Running; job.code = "running"; write(job); save_meta(); m_active = true;
     }
     Result result;

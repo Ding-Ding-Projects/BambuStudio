@@ -7,6 +7,7 @@
 #include "slic3r/GUI/wxExtensions.hpp"
 #include "slic3r/GUI/Widgets/Button.hpp"
 #include "slic3r/GUI/Widgets/Label.hpp"
+#include "slic3r/GUI/Widgets/LabeledCheckBox.hpp"
 #include "slic3r/GUI/Widgets/MD3DataView.hpp"
 #include "slic3r/GUI/Widgets/MD3ScrolledWindow.hpp"
 #include "slic3r/GUI/Widgets/MD3Tokens.hpp"
@@ -195,6 +196,18 @@ LocalConverterPanel::LocalConverterPanel(wxWindow *parent, LC::PackageProof proo
 
     m_details = text(body,wxEmptyString); show(m_details,voice(Copy::Line::NoAdapterSelected));
     m_details->SetName(_L("Selected adapter details")); layout->Add(m_details,0,wxEXPAND|wxALL,gap);
+    // Explicit consent for a lossy or metadata/encoding-changing adapter. It is
+    // bound to the exact disclosure shown above and lasts for this session.
+    m_acknowledge = new LabeledCheckBox(body,_L("I reviewed what this conversion changes or leaves out, and I want to convert with these changes."));
+    m_acknowledge->SetName(_L("Accept the data changes of the selected adapter"));
+    m_acknowledge->GetCheckBox()->SetName(_L("Accept the data changes of the selected adapter"));
+    m_acknowledge->Bind(wxEVT_CHECKBOX,[this](wxCommandEvent &){
+        if (m_selected>=m_adapters.size()) return;
+        const std::string token=LC::acknowledgement_token(m_adapters[m_selected]);
+        if (m_acknowledge->GetValue()) { m_acknowledged.insert(token); update_status(fact(L("Changes confirmed for this adapter. You can now add files."))); }
+        else { m_acknowledged.erase(token); update_status(fact(L("Confirmation withdrawn. Files cannot be added with this adapter until you confirm again."))); }
+    });
+    m_acknowledge->Hide(); layout->Add(m_acknowledge,0,wxEXPAND|wxLEFT|wxRIGHT|wxBOTTOM,gap);
 
     // PDF operation settings, each row discoverable through its own search.
     auto *pdf_search=new SearchField(body,_L("Search PDF operation settings")); pdf_search->SetName(_L("PDF operation settings search"));
@@ -283,7 +296,7 @@ LocalConverterPanel::LocalConverterPanel(wxWindow *parent, LC::PackageProof proo
             if(m_catalog_pending.exchange(false)){
                 {std::lock_guard<std::mutex> lock(m_catalog_mutex);m_adapters=std::move(m_next_adapters);}
                 m_selected=static_cast<std::size_t>(-1);
-                show(m_details,voice(Copy::Line::NoAdapterSelected));
+                show(m_details,voice(Copy::Line::NoAdapterSelected)); update_acknowledgement();
                 refresh_catalog();update_status(voice(Copy::Line::ChecksFinished));return;
             }
             Text summary=format(voice(Copy::Line::Stopped),static_cast<unsigned long long>(m_admitted.load()),static_cast<unsigned long long>(m_rejected.load()));
@@ -324,10 +337,20 @@ void LocalConverterPanel::select_adapter(unsigned category)
     const Text name = fact(a.name);
     const Text disclosure = a.disclosure.empty() ? Text{} : fact(a.disclosure);
     if (a.enabled)
-        show(m_details,join({name,disclosure,fill(fact(L("Validation: %s")),fact(a.validator))},wxString("\n")));
+        show(m_details,join({name,disclosure,fill(fact(L("Validation: %s")),fact(a.validator)),
+                              LC::requires_acknowledgement(a) ? fact(L("This conversion changes or leaves out data as described above. Confirm below before adding files.")) : Text{}},wxString("\n")));
     else
         show(m_details,join({name,disclosure,fill(fact(L("Unavailable: %s")),fact(a.reason)),
                               a.detail.empty() ? Text{} : fill(fact(L("Diagnostic: %s")),result_text(a.detail))},wxString("\n")));
+    update_acknowledgement();
+}
+void LocalConverterPanel::update_acknowledgement()
+{
+    // Shown only for an enabled adapter that changes or leaves out data; its
+    // state is whether this exact disclosure was accepted in this session.
+    const bool needed = m_selected < m_adapters.size() && m_adapters[m_selected].enabled && LC::requires_acknowledgement(m_adapters[m_selected]);
+    if (needed) m_acknowledge->SetValue(m_acknowledged.count(LC::acknowledgement_token(m_adapters[m_selected])) != 0);
+    m_acknowledge->Show(needed);
     Layout();
 }
 void LocalConverterPanel::set_rotation(int degrees)
@@ -376,7 +399,14 @@ void LocalConverterPanel::choose_source(bool folder)
 {
     if (!m_queue || m_running) { update_status(fact(L("Wait for the current operation before adding sources."))); return; }
     if (m_selected>=m_adapters.size() || !m_adapters[m_selected].enabled) { update_status(fact(L("Select an enabled adapter first. Unavailable rows explain their missing packaged adapter."))); return; }
-    const bool merge=m_adapters[m_selected].id=="pdf.merge";
+    // A lossy or metadata/encoding-changing conversion needs the user's explicit
+    // acceptance of its disclosure before any file is admitted.
+    const auto &chosen=m_adapters[m_selected];
+    if (LC::requires_acknowledgement(chosen) && m_acknowledged.count(LC::acknowledgement_token(chosen))==0) {
+        update_status(fact(L("Confirm what this conversion changes before adding files. Its disclosure lists what changes or is left out.")));
+        m_acknowledge->GetCheckBox()->SetFocus(); return;
+    }
+    const bool merge=chosen.id=="pdf.merge";
     if(folder && merge){update_status(fact(L("PDF merge needs an explicit ordered selection. Use Add source file and select at least two PDFs.")));return;}
     if(folder) { wxDirDialog dialog(this,_L("Choose source folder, discovered one file at a time")); if(dialog.ShowModal()==wxID_OK) admit(fs::path(dialog.GetPath().ToStdWstring()),true); }
     else { wxFileDialog dialog(this,merge?_L("Choose PDFs to merge, in picker order"):_L("Choose source file"),wxEmptyString,wxEmptyString,_L("All files (*.*)|*.*"),wxFD_OPEN|wxFD_FILE_MUST_EXIST|(merge?wxFD_MULTIPLE:0));
@@ -402,9 +432,12 @@ void LocalConverterPanel::admit(fs::path source,bool folder,std::vector<fs::path
         if(adapter.id=="pdf.metadata")data["metadata"]={{"Title",field_value(m_pdf_title).ToUTF8().data()}};
         options=data.dump();
     }
+    // The accepted disclosure travels with every admitted record; the queue
+    // refuses the admission without it.
+    const std::string acknowledgement=LC::requires_acknowledgement(adapter) && m_acknowledged.count(LC::acknowledgement_token(adapter)) ? LC::acknowledgement_token(adapter) : std::string();
     if(m_work.joinable()) m_work.join(); m_cancel=false; m_running=true; m_admitted=0; m_rejected=0;
     update_status(fact(L("Discovering sources with bounded memory. Cancel stops discovery; admitted records stay saved.")));
-    m_work=std::thread([this,source=std::move(source),destination=std::move(destination),adapter,folder,options=std::move(options),additional=std::move(additional)]{
+    m_work=std::thread([this,source=std::move(source),destination=std::move(destination),adapter,folder,options=std::move(options),additional=std::move(additional),acknowledgement]{
         auto add=[&](const fs::path &path){
             if(m_cancel.load()) return;
             fs::path target=destination/path.filename();target.replace_extension("."+adapter.extension);
@@ -417,7 +450,12 @@ void LocalConverterPanel::admit(fs::path source,bool folder,std::vector<fs::path
                 if(!in || in.peek()!=std::char_traits<char>::eof()) {rejected("source_unreadable_or_changed");return;}
                 const auto kind=LC::detect(data); m_preview_kind=static_cast<int>(kind);m_preview_bytes=size;
                 if(std::find(adapter.sources.begin(),adapter.sources.end(),kind)==adapter.sources.end()) {rejected("incompatible_source_signature");return;}
-                m_queue->enqueue(path,target,adapter.id,options,additional); ++m_admitted;
+                m_queue->enqueue(path,target,adapter.id,options,additional,acknowledgement); ++m_admitted;
+            } catch (const std::runtime_error &e) {
+                // The queue refuses with a stable code (for example
+                // disclosure_not_acknowledged); keep it when it is one.
+                const std::string code=e.what();
+                rejected(LC::result_message(code)!=nullptr ? code.c_str() : "admission_preflight_failed");
             } catch (...) { rejected("admission_preflight_failed"); }
         };
         try { if(folder) { for(const auto &entry:fs::recursive_directory_iterator(source,fs::directory_options::none)) { if(m_cancel.load()) break; if(entry.is_regular_file()) add(entry.path()); } } else add(source); }
