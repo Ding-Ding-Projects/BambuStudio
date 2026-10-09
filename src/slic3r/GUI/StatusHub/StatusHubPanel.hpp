@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 class SearchField;
+class CollapsibleFilterBar;
 class Button;
 class wxStaticText;
 class wxScrolledWindow;
@@ -17,6 +18,7 @@ private:
     void refresh();
     void filter();
     wxTimer m_timer;
+    CollapsibleFilterBar* m_filters = nullptr;
     SearchField* m_search = nullptr;
     Button* m_retry = nullptr;
     wxScrolledWindow* m_body = nullptr;

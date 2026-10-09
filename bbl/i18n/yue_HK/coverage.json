@@ -4,14 +4,14 @@
   "language": "Hong Kong Cantonese (Traditional Chinese)",
   "source_catalog": "../en/BambuStudio_en.po",
   "compiled_artifact": "../../../resources/i18n/yue_HK/BambuStudio.mo",
-  "translated_messages": 8109,
+  "translated_messages": 8110,
   "review_status": "curated-in-repository",
   "reviewed_on": "2026-09-26",
   "categories": {
     "connection-offline": 399,
     "destructive-dirty-error-security": 1044,
     "file-actions": 846,
-    "navigation": 1069,
+    "navigation": 1070,
     "preferences": 1842,
     "slicing-printing": 2909
   },
@@ -29,5 +29,5 @@
     "destructive_error_security_copy": "restrained, explicit and recovery-oriented"
   },
   "validation": "Run py compile_translation.py, then py compile_translation.py --check",
-  "agent_drafted_messages": 7116
+  "agent_drafted_messages": 7117
 }

@@ -4,6 +4,7 @@
 #include "../GUI_App.hpp"
 #include "../Widgets/SearchField.hpp"
 #include "../Widgets/Button.hpp"
+#include "../Widgets/CollapsibleFilterBar.hpp"
 #include "../Widgets/MD3Tokens.hpp"
 #include <wx/scrolwin.h>
 #include <wx/sizer.h>
@@ -37,8 +38,13 @@ StatusHubPanel::StatusHubPanel(wxWindow* parent) : wxPanel(parent), m_timer(this
 {
     SetName(_L("Status Hub"));
     auto* outer = new wxBoxSizer(wxVERTICAL);
-    m_search = new SearchField(this, _L("Search status evidence"));
-    outer->Add(m_search, 0, wxEXPAND | wxALL, FromDIP(12));
+    // The search sits in the shared collapsible filter bar; collapsed, it
+    // still says when a query hides evidence rows.
+    // TRN: Header of the collapsible search of a list.
+    m_filters = new CollapsibleFilterBar(this, "status_hub", _L("Search"));
+    m_search = new SearchField(m_filters->GetBody(), _L("Search status evidence"));
+    m_filters->GetBodySizer()->Add(m_search, 0, wxEXPAND);
+    outer->Add(m_filters->GetSectionSizer(), 0, wxEXPAND | wxALL, FromDIP(12));
     m_retry = new Button(this, _L("Retry delivery"));
     m_retry->SetVariant(Button::Variant::Filled);
     m_retry->SetMinSize(wxSize(-1, FromDIP(44)));
@@ -98,6 +104,11 @@ void StatusHubPanel::filter()
 {
     SearchField::MatchPass matcher(m_search->GetValue(), m_search->IsRegexEnabled(),
         m_search->IsCaseSensitive(), m_search->IsWholeWord(), m_search->IsMultiline());
+    std::vector<wxString> active;
+    const wxString search = CollapsibleFilterBar::SearchFilterLabel(m_search->GetValue());
+    if (!search.IsEmpty())
+        active.push_back(search);
+    m_filters->SetActiveFilters(active);
     bool visible = false;
     const int width = std::max(1, m_body->GetClientSize().x - FromDIP(32));
     for (auto& row : m_rows) {

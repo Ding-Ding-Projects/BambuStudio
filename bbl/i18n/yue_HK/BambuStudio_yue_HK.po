@@ -39790,3 +39790,8 @@ msgstr "生效中嘅篩選條件（%d）：%s"
 #. review-status: agent-drafted
 msgid "%s (%d active)"
 msgstr "%s（%d 個生效中）"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Hiding %s"
+msgstr "隱藏緊%s"

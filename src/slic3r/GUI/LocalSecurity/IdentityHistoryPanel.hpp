@@ -1,6 +1,7 @@
 #pragma once
 #include "SecurityPanels.hpp"
 #include "libslic3r/LocalSecurity/IdentityHistory.hpp"
+class CollapsibleFilterBar;
 
 namespace Slic3r::GUI::LocalSecurityUI {
 struct RestoreIdentityRequest {
@@ -21,6 +22,8 @@ private:
     void safely(const std::function<void()>&);
     void read_page();
     void filter();
+    // Report search, dates and switched-off actions to the collapsible filter bar.
+    void update_active_filters();
     void require_session();
     std::shared_ptr<LocalSecurity::IdentityHistory> m_history;
     Hooks m_hooks;
@@ -28,6 +31,7 @@ private:
     std::optional<LocalSecurity::Secret> m_answer;
     LocalSecurity::Time m_expires{};
     unsigned m_offset=0;
+    CollapsibleFilterBar* m_filters{};
     SearchField* m_search{};
     wxListBox* m_list{};
     wxTextCtrl* m_from{};

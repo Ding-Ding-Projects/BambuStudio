@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-09 02:05+0000\n"
+"POT-Creation-Date: 2026-10-09 02:26+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -3895,6 +3895,10 @@ msgstr ""
 msgid "Assembly tree"
 msgstr ""
 
+#. TRN: Header of the collapsible object search in the sidebar.
+#. TRN: Header of the collapsible search of a list.
+#. TRN: Header of the collapsible search of the device farm toolbar.
+#. TRN: Header of the collapsible search of a list.
 msgid "Search"
 msgstr ""
 
@@ -12569,6 +12573,7 @@ msgstr ""
 msgid "Set"
 msgstr ""
 
+#. TRN: One active filter under a collapsed filter row: %1$s names the filter, %2$s is its value.
 #, possible-c-format, possible-boost-format
 msgid "%s: %s"
 msgstr ""
@@ -21151,6 +21156,10 @@ msgstr ""
 msgid "Every released version, with the commits behind each change."
 msgstr ""
 
+#. TRN: Header of the collapsible search and filter row of a list.
+msgid "Search and filters"
+msgstr ""
+
 #. TRN: Placeholder of the changelog search field.
 msgid "Search changes"
 msgstr ""
@@ -23027,9 +23036,6 @@ msgstr ""
 msgid "Pinned"
 msgstr ""
 
-msgid "Search and filters"
-msgstr ""
-
 msgid "Category / description"
 msgstr ""
 
@@ -23443,6 +23449,11 @@ msgstr ""
 
 #, possible-c-format, possible-boost-format
 msgid "%s (%d active)"
+msgstr ""
+
+#. TRN: One active filter under a collapsed filter row: a category that is switched off.
+#, possible-c-format, possible-boost-format
+msgid "Hiding %s"
 msgstr ""
 
 msgid "HEX"

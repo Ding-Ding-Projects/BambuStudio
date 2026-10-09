@@ -31,12 +31,12 @@ test('the header is a keyboard-focusable button with a disclosure accessible obj
 
 test('the state is restored from and written to the application config', () => {
   assert.match(widget, /m_state\.restore\(config_reader\(\)\)/);
-  assert.match(widget, /m_state\.set_expanded\(expanded, config_writer\(\)\)/);
+  assert.match(widget, /m_state\.set_expanded\(expanded, remember \? config_writer\(\) : CF::Section::Write\(\)\)/);
   assert.match(widget, /config->set\(section, key, value\)/);
 });
 
 test('collapsing hides only the body panel and rescues focus', () => {
-  assert.match(widget, /m_body->Show\(expanded\)/);
+  assert.match(widget, /m_body->Show\(m_section_shown && expanded\)/);
   assert.match(widget, /focus_is_inside\(m_body\)\)\s*SetFocus\(\)/);
   // Never ShowItems()/Show(sizer): that would overwrite the shown state the
   // host gives its own controls.
@@ -47,5 +47,5 @@ test('a collapsed bar discloses active filters in visible text', () => {
   assert.match(widget, /CF::disclose\(labels, m_state\.expanded\(\)\)/);
   assert.match(widget, /_L\("Active filters \(%d\): %s"\)/);
   assert.match(widget, /_L\("\+%d more"\)/);
-  assert.match(widget, /m_summary->Show\(disclosure\.visible\)/);
+  assert.match(widget, /m_summary->Show\(m_section_shown && disclosure\.visible\)/);
 });

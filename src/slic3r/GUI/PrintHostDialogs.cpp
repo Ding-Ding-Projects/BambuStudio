@@ -29,6 +29,7 @@
 #include "NotificationManager.hpp"
 #include "ExtraRenderers.hpp"
 #include "Widgets/SearchField.hpp"
+#include "Widgets/CollapsibleFilterBar.hpp"
 #include "Widgets/MD3DialogChrome.hpp"
 #include "Widgets/Button.hpp"
 #include "Widgets/ComboBox.hpp"
@@ -335,16 +336,21 @@ PrintHostQueueDialog::PrintHostQueueDialog(wxWindow *parent)
     // Find-in-queue bar. Upload job ids are row indices, so rows are never
     // hidden: the search selects the first matching row and reports the match
     // count, and the regex builder rides along via the shared SearchField.
+    // The bar sits in the shared collapsible filter bar; collapsed, it still
+    // says when a query is selecting rows.
+    // TRN: Header of the collapsible search of a list.
+    search_filters = new CollapsibleFilterBar(this, "upload_queue", _L("Search"));
     auto *searchsizer = new wxBoxSizer(wxHORIZONTAL);
     // TRN: Placeholder of the search field in the print host upload queue.
-    search_field = new SearchField(this, _L("Search uploads"));
-    search_status = new ::Label(this, ::Label::Body_13, wxEmptyString);
+    search_field = new SearchField(search_filters->GetBody(), _L("Search uploads"));
+    search_status = new ::Label(search_filters->GetBody(), ::Label::Body_13, wxEmptyString);
     search_status->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     search_field->SetOnQuery([this](const wxString &) { run_queue_search(); });
     search_field->SetOnRegexToggle([this](bool) { run_queue_search(); });
     searchsizer->Add(search_field, 1, wxALIGN_CENTER_VERTICAL | wxRIGHT, SPACING);
     searchsizer->Add(search_status, 0, wxALIGN_CENTER_VERTICAL);
-    topsizer->Add(searchsizer, 0, wxEXPAND | wxBOTTOM, SPACING);
+    search_filters->GetBodySizer()->Add(searchsizer, 0, wxEXPAND);
+    topsizer->Add(search_filters->GetSectionSizer(), 0, wxEXPAND | wxBOTTOM, SPACING);
 
     topsizer->Add(job_list, 1, wxEXPAND | wxBOTTOM, SPACING);
     topsizer->Add(btnsizer, 0, wxEXPAND);
@@ -396,6 +402,8 @@ PrintHostQueueDialog::PrintHostQueueDialog(wxWindow *parent)
     btn_cancel->Rescale();
     btn_error->Rescale();
     btn_close->Rescale();
+    search_filters->Rescale();
+    search_filters->SyncTheme();
 }
 
 void PrintHostQueueDialog::append_job(const PrintHostJob &job)
@@ -436,6 +444,8 @@ void PrintHostQueueDialog::on_dpi_changed(const wxRect &suggested_rect)
     btn_cancel->Rescale();
     btn_error->Rescale();
     btn_close->Rescale();
+    if (search_filters)
+        search_filters->Rescale();
 
     SetMinSize(wxSize(HEIGHT * em, WIDTH * em));
 
@@ -456,6 +466,10 @@ void PrintHostQueueDialog::on_sys_color_changed()
     btn_cancel->Rescale();
     btn_error->Rescale();
     btn_close->Rescale();
+    if (search_filters) {
+        search_filters->Rescale();
+        search_filters->SyncTheme();
+    }
     if (search_status)
         search_status->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
 #endif
@@ -489,6 +503,13 @@ void PrintHostQueueDialog::run_queue_search()
     if (search_field == nullptr || search_status == nullptr)
         return;
     const wxString query = search_field->GetValue();
+    if (search_filters != nullptr) {
+        std::vector<wxString> active;
+        const wxString search = CollapsibleFilterBar::SearchFilterLabel(query);
+        if (!search.IsEmpty())
+            active.push_back(search);
+        search_filters->SetActiveFilters(active);
+    }
     if (query.IsEmpty()) {
         search_status->SetLabel(wxEmptyString);
         Layout();

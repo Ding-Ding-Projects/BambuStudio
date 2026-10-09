@@ -145,8 +145,12 @@ CollapsibleFilterBar::CollapsibleFilterBar(wxWindow *parent, const std::string &
 
     const wxColour background = StaticBox::GetParentBackgroundColor(parent);
 
-    m_summary = new Label(parent, Label::Body_13, wxEmptyString, LB_AUTO_WRAP | wxST_NO_AUTORESIZE);
-    m_summary->SetMinSize(wxSize(0, -1));
+    // Stacked: the line wraps to the host width. Inline: it sizes to its text,
+    // since a toolbar gives the section no width of its own to wrap in.
+    m_summary = new Label(parent, Label::Body_13, wxEmptyString,
+                          layout == Layout::Inline ? 0L : static_cast<long>(LB_AUTO_WRAP | wxST_NO_AUTORESIZE));
+    if (layout != Layout::Inline)
+        m_summary->SetMinSize(wxSize(0, -1));
     m_summary->SetCursor(wxCursor(wxCURSOR_HAND));
     m_summary->Bind(wxEVT_LEFT_UP, [this](wxMouseEvent &event) {
         SetExpanded(true);
@@ -166,7 +170,7 @@ CollapsibleFilterBar::CollapsibleFilterBar(wxWindow *parent, const std::string &
         // or the controls (expanded) on the same row.
         auto *section = new wxBoxSizer(wxHORIZONTAL);
         section->Add(this, 0, wxALIGN_CENTER_VERTICAL);
-        section->Add(m_summary, 1, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(8));
+        section->Add(m_summary, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(8));
         section->Add(m_body, 1, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(8));
         m_section = section;
     } else {
@@ -332,7 +336,10 @@ void CollapsibleFilterBar::SyncTheme()
         return;
     const wxColour background = StaticBox::GetParentBackgroundColor(parent);
     const wxColour foreground = StateColor::semantic(MD3::Role::OnSurfaceVariant);
-    if (background == m_synced_background && m_summary->GetForegroundColour() == foreground)
+    // Compare with the live colours too: a host's legacy theme walk may have
+    // repainted the body or the line behind the bar's back.
+    if (background == m_synced_background && m_body->GetBackgroundColour() == background &&
+        m_summary->GetBackgroundColour() == background && m_summary->GetForegroundColour() == foreground)
         return;
     m_synced_background = background;
     m_body->SetBackgroundColour(background);

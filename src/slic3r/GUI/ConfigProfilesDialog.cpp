@@ -10,6 +10,7 @@
 #include "MsgDialog.hpp"
 #include "SingleChoiceDialog.hpp"
 #include "Widgets/Button.hpp"
+#include "Widgets/CollapsibleFilterBar.hpp"
 #include "Widgets/Label.hpp"
 #include "PreferencesHistory.hpp"
 #include "PersonalVocabulary.hpp"
@@ -233,11 +234,16 @@ void ConfigProfilesDialog::create_ui()
 
     m_list_card = new StaticBox(this);
     auto *list_sizer = new wxBoxSizer(wxVERTICAL);
+    // The search sits in the shared collapsible filter bar; collapsed, it
+    // still says when a query narrows the profile list.
+    // TRN: Header of the collapsible search of a list.
+    m_filters = new CollapsibleFilterBar(m_list_card, "config_profiles", _L("Search"));
     // TRN: Placeholder of the search field filtering config profiles.
-    m_search_field = new SearchField(m_list_card, _L("Search profiles"));
+    m_search_field = new SearchField(m_filters->GetBody(), _L("Search profiles"));
     m_search_field->SetOnQuery([this](const wxString &) { populate_profiles(); update_buttons(); });
     m_search_field->SetOnRegexToggle([this](bool) { populate_profiles(); update_buttons(); });
-    list_sizer->Add(m_search_field, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(8));
+    m_filters->GetBodySizer()->Add(m_search_field, 0, wxEXPAND);
+    list_sizer->Add(m_filters->GetSectionSizer(), 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(8));
     m_profile_list = new MD3DataViewListCtrl(m_list_card, wxID_ANY, wxDefaultPosition, wxDefaultSize,
                                             wxDV_MULTIPLE | wxBORDER_NONE);
     m_profile_list->AppendTextColumn(_L("Profile"), wxDATAVIEW_CELL_INERT, FromDIP(180));
@@ -362,6 +368,7 @@ void ConfigProfilesDialog::apply_theme()
         box->SetBorderColorNormal(outline);
         box->SetBorderWidth(1);
     }
+    if (m_filters) m_filters->SyncTheme();
     // The secrets warning uses the error-container roles: prominent without
     // reading as a blocking failure.
     m_transfer_card->SetBackgroundColorNormal(StateColor::semantic(MD3::Role::ErrorContainer));
@@ -426,6 +433,13 @@ void ConfigProfilesDialog::populate_profiles()
     const bool whole_word = m_search_field != nullptr && m_search_field->IsWholeWord();
     const bool multiline  = m_search_field != nullptr && m_search_field->IsMultiline();
     SearchField::MatchPass match_pass(query, regex, case_sense, whole_word, multiline);
+    if (m_filters != nullptr) {
+        std::vector<wxString> active;
+        const wxString search = CollapsibleFilterBar::SearchFilterLabel(query);
+        if (!search.IsEmpty())
+            active.push_back(search);
+        m_filters->SetActiveFilters(active);
+    }
     for (std::size_t i = 0; i < m_profiles.size(); ++i) {
         const ProfileRow &row = m_profiles[i];
         const wxString path_text = wxString::FromUTF8(row.data_dir.string());
@@ -1024,6 +1038,7 @@ void ConfigProfilesDialog::show_preferences_history(ProjectHistoryListResult ver
 
 void ConfigProfilesDialog::on_dpi_changed(const wxRect &)
 {
+    if (m_filters) m_filters->Rescale();
     if (m_search_field) m_search_field->Rescale();
     if (m_confirm_slider) m_confirm_slider->Rescale();
     Layout();

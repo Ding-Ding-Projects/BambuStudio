@@ -13,6 +13,7 @@
 #include "slic3r/GUI/NotificationManager.hpp"
 #include "slic3r/GUI/Plater.hpp"
 #include "slic3r/GUI/Widgets/Button.hpp"
+#include "slic3r/GUI/Widgets/CollapsibleFilterBar.hpp"
 #include "slic3r/GUI/Widgets/ComboBox.hpp"
 #include "slic3r/GUI/Widgets/Label.hpp"
 #include "slic3r/GUI/Widgets/LabeledCheckBox.hpp"
@@ -207,11 +208,16 @@ void ExportDialog::create_ui()
     m_subtitle_label->SetMinSize(wxSize(0, -1));
     body->Add(m_subtitle_label, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(24));
 
+    // The search sits in the shared collapsible filter bar; collapsed, it
+    // still says when a query hides formats or options.
+    // TRN: Header of the collapsible search of a list.
+    m_filters = new CollapsibleFilterBar(m_body, "export_formats", _L("Search"));
     // TRN: Placeholder of the search field filtering export formats and options.
-    m_search_field = new SearchField(m_body, _L("Search formats and options"));
+    m_search_field = new SearchField(m_filters->GetBody(), _L("Search formats and options"));
     m_search_field->SetOnQuery([this](const wxString &) { apply_search(); });
     m_search_field->SetOnRegexToggle([this](bool) { apply_search(); });
-    body->Add(m_search_field, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(24));
+    m_filters->GetBodySizer()->Add(m_search_field, 0, wxEXPAND);
+    body->Add(m_filters->GetSectionSizer(), 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(24));
 
     // --- Format card -----------------------------------------------------
     m_format_card = new StaticBox(m_body);
@@ -445,6 +451,8 @@ void ExportDialog::apply_theme()
 
     SetBackgroundColour(surface);
     m_body->SetBackgroundColour(surface);
+    if (m_filters != nullptr)
+        m_filters->SyncTheme();
     for (Label *label : {m_title_label, m_subtitle_label, m_status_label}) {
         label->SetBackgroundColour(surface);
         label->SetForegroundColour(label == m_title_label ? text : secondary);
@@ -525,6 +533,12 @@ void ExportDialog::apply_search()
     SearchField::MatchPass pass(m_search_field->GetValue(), m_search_field->IsRegexEnabled(), m_search_field->IsCaseSensitive(),
                                 m_search_field->IsWholeWord(), m_search_field->IsMultiline());
     const bool empty = m_search_field->GetValue().Trim().empty();
+    std::vector<wxString> active;
+    const wxString search = CollapsibleFilterBar::SearchFilterLabel(m_search_field->GetValue());
+    if (!search.IsEmpty())
+        active.push_back(search);
+    if (m_filters != nullptr)
+        m_filters->SetActiveFilters(active);
     for (OptionRow &row : m_option_rows) {
         const bool show = empty || pass.matches(row.label);
         for (wxWindow *w : row.windows) w->Show(show);
@@ -887,6 +901,8 @@ void ExportDialog::on_dpi_changed(const wxRect &)
     SetMinSize(FromDIP(wxSize(720, 560)));
     for (Button *button : {m_cancel_button, m_browse_button, m_locate_seven_zip_button}) button->SetMinSize(FromDIP(wxSize(104, 36)));
     m_export_button->SetMinSize(FromDIP(wxSize(124, 40)));
+    if (m_filters != nullptr)
+        m_filters->Rescale();
     Layout();
     m_body->FitInside();
     Refresh();
