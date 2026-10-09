@@ -170,12 +170,12 @@
     {
       "route": "automation/self-update-diagnostic.md",
       "title": "Self-update diagnostic",
-      "sha256": "2af1522291eefb90e82a9200dcf852237a1f5202e6cfc494124ff208e4742f58"
+      "sha256": "38dfdfe88d7e9685352f5162335a69206dcda48056a46de0d63f36ed199a1e83"
     },
     {
       "route": "automation/self-update-diagnostic.yue_HK.md",
       "title": "自我更新診斷",
-      "sha256": "77a8eb1f14a7cd1d7659e118ea9156912d117e68e5d8bbeb9fd5cc35dee65d34"
+      "sha256": "c256662cdb6289762d11b73acc3bcd2d053ecb15cdb1986a929d36f381f255db"
     },
     {
       "route": "camera/README.md",
@@ -1975,7 +1975,7 @@
       "bytes": 1979
     }
   ],
-  "bundle_sha256": "02d295f6eb65a534c9fd23b717dd8bf6b3e2a5c2209054fc107da078b29d8978",
+  "bundle_sha256": "68fac6132ad672f33e2172b68d94e130b4badf52a534e1cf045287e996c42f58",
   "unavailable_references": [
     {
       "source": "api/README.md",

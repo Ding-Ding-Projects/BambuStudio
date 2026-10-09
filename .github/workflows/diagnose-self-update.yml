@@ -43,13 +43,19 @@ jobs:
           foreach ($path in @('scripts/ci/Diagnose-SelfUpdate.ps1',
                               'scripts/ci/Diagnose-InstallerFirstRun.ps1',
                               'scripts/ci/Verify-HostedSquirrelInstall.ps1',
-                              'scripts/ci/Test-SquirrelWindowsPackage.ps1')) {
+                              'scripts/ci/Test-SquirrelWindowsPackage.ps1',
+                              'scripts/ci/Test-SelfUpdateClassification.ps1')) {
             $tokens = $null
             $parseErrors = $null
             [void][System.Management.Automation.Language.Parser]::ParseFile(
               (Resolve-Path -LiteralPath $path), [ref]$tokens, [ref]$parseErrors)
             if ($parseErrors.Count -ne 0) { throw "PowerShell parse failed: $path" }
           }
+
+      # The classification rules on synthetic facts, before anything is installed: a newer folder
+      # counts as staged only when Update.exe is shown to have finished it.
+      - name: Check the classification on synthetic facts
+        run: ./scripts/ci/Test-SelfUpdateClassification.ps1
 
       - name: Install the older release and observe its self-update
         env:

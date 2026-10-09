@@ -21,8 +21,9 @@ bambu-studio.exe, Update.exe and Setup.exe process and the application's windows
 five seconds with the installer first-run diagnostic's own helpers, loaded from its source, and the
 install root's app-<version> folders and the notification history are read. The application is then
 asked to close through its windows, so it writes out its log, and whatever still runs is stopped.
-When a newer version was staged, the install root's bambu-studio.exe is started once more, as a
-shortcut would, to record which version runs.
+When a newer folder holds its bambu-studio.exe, its files are compared with the full package
+Update.exe downloaded, and the install root's bambu-studio.exe is started once more, as a shortcut
+would, to record which version runs.
 
 The evidence is text only: the application's update log lines (a release build encrypts its log with
 the key it compiles in for logs written before a region is chosen; the key is read from this
@@ -36,11 +37,18 @@ Reporting and .NET Runtime entries. receipt.json holds one of:
                              start, by the installer first-run classifier's rules; this wins over
                              every other value
   updated_staged             a newer app-<version> folder with its bambu-studio.exe was staged and
-                             Update.exe had finished
-  update_failed              nothing newer was staged, and Update.exe exited with an error or
-                             crashed, or exited with 0 although the feed holds a newer version, or
-                             the application logged a failed update or release check, or recorded
-                             the failure notice
+                             Update.exe is shown to have finished it: an Update.exe --update run
+                             exited with 0 (or the application logged exit code 0 and not that it
+                             found nothing newer), nothing failed, Squirrel's local RELEASES lists
+                             the version, every file of the full package is in the folder at its
+                             size with bambu-studio.exe matching by SHA-256, and the next start ran
+                             that folder
+  update_failed              Update.exe exited with an error or crashed, or exited with 0 although
+                             the feed holds a newer version and nothing was staged, or the
+                             application logged a failed update or release check, or recorded the
+                             failure notice; or a newer folder holds its bambu-studio.exe but is not
+                             shown to be finished (partial staging: Update.exe extracts the package
+                             straight into app-<version> and leaves what it wrote when it fails)
   update_offered_not_staged  an update was offered (Update.exe --update ran, or the application
                              logged a newer release) but nothing was staged by the end, and nothing
                              failed
@@ -126,6 +134,19 @@ foreach ($name in $ReusedFunctions) {
 if ($firstRunTypes.Count -ne 1) { throw 'The installer first-run diagnostic no longer defines exactly one window type.' }
 & ([scriptblock]::Create($firstRunTypes[0].Extent.Text))
 
+# The package entry hash is the hosted install check's, which compares the installed executable with
+# the full package in the same way; it is loaded from that script's source too.
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+$installCheckPath = Join-Path $PSScriptRoot 'Verify-HostedSquirrelInstall.ps1'
+$installCheckTokens = $null
+$installCheckErrors = $null
+$installCheckAst = [System.Management.Automation.Language.Parser]::ParseFile($installCheckPath, [ref] $installCheckTokens, [ref] $installCheckErrors)
+if ($installCheckErrors.Count -ne 0) { throw "The hosted install check does not parse: $($installCheckErrors[0].Message)" }
+$entryHashFunction = @($installCheckAst.EndBlock.Statements | Where-Object {
+    $_ -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $_.Name -eq 'Get-EntrySha256' })
+if ($entryHashFunction.Count -ne 1) { throw 'The hosted install check no longer defines Get-EntrySha256.' }
+. ([scriptblock]::Create($entryHashFunction[0].Extent.Text))
+
 Add-Type -TypeDefinition @'
 using System;
 using System.Runtime.InteropServices;
@@ -167,6 +188,22 @@ function Compare-VersionParts {
         if ($Left[$i] -gt $Right[$i]) { return 1 }
     }
     return [math]::Sign($Left.Count - $Right.Count)
+}
+
+# One row of a Squirrel RELEASES file ("<SHA-1> <package file> <bytes>"), or $null when the row is
+# not of that form or names a path.
+function ConvertFrom-ReleasesRow {
+    param([AllowNull()][AllowEmptyString()][string] $Row)
+    $match = [regex]::Match([string] $Row,
+        '^(?<sha1>[0-9a-fA-F]{40})\s+(?<file>[^\\/\s]+-(?<version>\d+(?:\.\d+)+)-(?<kind>full|delta)\.nupkg)\s+(?<bytes>\d+)\s*$')
+    if (-not $match.Success) { return $null }
+    return [pscustomobject][ordered]@{
+        sha1 = $match.Groups['sha1'].Value.ToLowerInvariant()
+        file = $match.Groups['file'].Value
+        version = $match.Groups['version'].Value
+        full = $match.Groups['kind'].Value -eq 'full'
+        bytes = [int64] $match.Groups['bytes'].Value
+    }
 }
 
 # Every app-<version> folder of the install root, and whether it holds the application yet.
@@ -611,6 +648,106 @@ function Save-SquirrelEvidence {
     }
 }
 
+# Whether a newer folder holds the whole package Update.exe was to stage. Squirrel's install step
+# (ExtractZipForInstall) writes every file under lib/<framework>/ of the full package straight into
+# app-<version>, except the *_ExecutionStub.exe stubs, which go to the install root, and a failure
+# part of the way leaves what it wrote. The package must be the one the feed serves (its RELEASES row
+# holds the SHA-1 that Squirrel checks after the download), every file of it must be in the folder
+# at its size, and bambu-studio.exe must have its SHA-256. Returns what it found; problems lists
+# every reason the folder is not that package, and is empty when it is.
+function Test-StagedFiles {
+    param(
+        [Parameter(Mandatory)][object] $Folder,
+        [AllowEmptyCollection()][string[]] $FeedReleases = @(),
+        [AllowEmptyCollection()][string[]] $LocalReleases = @()
+    )
+    $problems = [System.Collections.Generic.List[string]]::new()
+    $examples = [System.Collections.Generic.List[string]]::new()
+    $result = [ordered]@{
+        folder = $Folder.name; package = $null; package_sha1 = $null; feed_sha1 = $null; package_files = $null
+        missing_files = 0; differing_files = 0; examples = @(); executable_sha256 = $null
+        package_executable_sha256 = $null; problems = @(); error = $null
+    }
+    try {
+        $version = ConvertTo-VersionParts $Folder.name
+        $fromFeed = @(@($FeedReleases) | ForEach-Object { ConvertFrom-ReleasesRow $_ } | Where-Object {
+            $null -ne $_ -and $_.full -and (Compare-VersionParts (ConvertTo-VersionParts $_.version) $version) -eq 0 })
+        $fromLocal = @(@($LocalReleases) | ForEach-Object { ConvertFrom-ReleasesRow $_ } | Where-Object {
+            $null -ne $_ -and $_.full -and (Compare-VersionParts (ConvertTo-VersionParts $_.version) $version) -eq 0 })
+        $row = if ($fromFeed.Count -gt 0) { $fromFeed[0] } elseif ($fromLocal.Count -gt 0) { $fromLocal[0] } else { $null }
+        if ($null -eq $row) { throw "neither the feed's RELEASES nor packages\RELEASES names a full package of $($Folder.version)" }
+        $result.package = $row.file
+        $package = Join-Path (Join-Path $installRoot 'packages') $row.file
+        if (-not (Test-Path -LiteralPath $package -PathType Leaf)) { throw "packages\$($row.file) is not there" }
+        $result.package_sha1 = (Get-FileHash -LiteralPath $package -Algorithm SHA1).Hash.ToLowerInvariant()
+        if ($fromFeed.Count -gt 0) {
+            $result.feed_sha1 = $fromFeed[0].sha1
+            if ($result.package_sha1 -ne $result.feed_sha1) {
+                $problems.Add("packages\$($row.file) is not the package the feed serves (SHA-1 $($result.package_sha1), the feed's $($result.feed_sha1))")
+            }
+        }
+
+        # The folder's files by their path inside it; the table ignores case, as Windows paths do.
+        $directory = Join-Path $installRoot $Folder.name
+        $prefix = $directory.TrimEnd('\') + '\'
+        $present = @{}
+        foreach ($file in @(Get-ChildItem -LiteralPath $directory -Recurse -File -Force -ErrorAction Stop)) {
+            $present[$file.FullName.Substring($prefix.Length).Replace('\', '/')] = $file
+        }
+        # Squirrel's own rule for the files it installs: the first lib/<framework>/ in the entry's path.
+        $libFolder = [regex]::new('lib[\\/][^\\/]*[\\/]', [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
+        $count = 0
+        $archive = [System.IO.Compression.ZipFile]::OpenRead($package)
+        try {
+            foreach ($entry in $archive.Entries) {
+                $name = $entry.FullName.Replace('\', '/')
+                if ($name.EndsWith('/') -or -not $libFolder.IsMatch($name) -or $name.Contains('_ExecutionStub.exe')) { continue }
+                $relative = $libFolder.Replace($name, '', 1)
+                $unescaped = [Uri]::UnescapeDataString($relative)
+                $count++
+                $file = if ($present.ContainsKey($relative)) { $present[$relative] }
+                        elseif ($present.ContainsKey($unescaped)) { $present[$unescaped] }
+                        else { $null }
+                if ($null -eq $file) {
+                    $result.missing_files++
+                    if ($examples.Count -lt 10) { $examples.Add("missing: $relative") }
+                    continue
+                }
+                if ($file.Length -ne $entry.Length) {
+                    $result.differing_files++
+                    if ($examples.Count -lt 10) { $examples.Add("$relative is $($file.Length) bytes, the package's $($entry.Length)") }
+                    continue
+                }
+                if ($relative -ieq 'bambu-studio.exe') {
+                    $result.package_executable_sha256 = Get-EntrySha256 -Entry $entry
+                    $result.executable_sha256 = (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+                }
+            }
+        }
+        finally {
+            $archive.Dispose()
+        }
+        $result.package_files = $count
+        if ($result.missing_files -gt 0) { $problems.Add("$($result.missing_files) of the package's $count files are missing from $($Folder.name)") }
+        if ($result.differing_files -gt 0) { $problems.Add("$($result.differing_files) of the package's $count files have another size in $($Folder.name)") }
+        if ($null -ne $result.package_executable_sha256) {
+            if ($result.executable_sha256 -ne $result.package_executable_sha256) {
+                $problems.Add("its bambu-studio.exe differs from the package's (SHA-256 $($result.executable_sha256), the package's $($result.package_executable_sha256))")
+            }
+        }
+        elseif ($result.missing_files -eq 0 -and $result.differing_files -eq 0) {
+            $problems.Add("$($row.file) has no lib/<framework>/bambu-studio.exe to compare with")
+        }
+    }
+    catch {
+        $result.error = $_.Exception.Message
+        $problems.Add("its files could not be compared with the package: $($_.Exception.Message)")
+    }
+    $result.examples = $examples.ToArray()
+    $result.problems = $problems.ToArray()
+    return [pscustomobject] $result
+}
+
 # Asks the application to close through its windows, as a person closing it does, so it writes out
 # its log and exits normally. Returns when no application process is left or after CloseSeconds.
 function Close-Application {
@@ -782,13 +919,19 @@ function Invoke-ObservationPhase {
 }
 
 # The result of the whole run, from the facts the phases gathered. Decided in this order: a crash,
-# a staged version, a failure, an update that was offered, and nothing.
+# a staged version, a failure, an update that was offered, and nothing. A newer app-<version> folder
+# with its bambu-studio.exe (the candidate) counts as staged only when Update.exe is shown to have
+# finished it, as the application itself requires (run_squirrel_update counts an update only when
+# Update.exe exited with 0 and a newer folder is there); a candidate that is not is partial staging,
+# a failure. Reads only the facts, so ui-md3/tests/self-update-diagnostic.test.mjs and
+# Test-SelfUpdateClassification.ps1 can run it on synthetic ones.
 function Get-SelfUpdateClassification {
     param([Parameter(Mandatory)][System.Collections.IDictionary] $Facts)
     $runs = @($Facts.update_runs | Where-Object { $null -ne $_ -and $_.role -eq 'update' })
     $log = $Facts.log
     $installed = "app-$($Facts.installed_version)"
     $feed = $Facts.feed
+    $candidate = $Facts.candidate
     $describe = {
         param([object] $Run)
         "Update.exe --update (pid $($Run.pid)$(if ($Run.started_by_application) { ', started by the application' }))"
@@ -809,40 +952,17 @@ function Get-SelfUpdateClassification {
         return & $result 'app_crashed' $basis
     }
 
-    $staged = $Facts.staged
-    if ($null -ne $staged) {
-        $parts = [System.Collections.Generic.List[string]]::new()
-        $parts.Add("$($staged.name) was staged beside $installed, with its bambu-studio.exe" +
-                   $(if ($staged.product_version) { " (product version $($staged.product_version))" } else { '' }))
-        if ($runs.Count -eq 0) { $parts.Add('no Update.exe --update run was seen by the polls or the process events') }
-        foreach ($run in $runs) {
-            $parts.Add("$(& $describe $run) " + $(if ($null -ne $run.exit_code_hex) { "exited with $($run.exit_code_hex)" } else { 'ended, exit code not captured' }))
-        }
-        if (@($Facts.updated_events).Count -gt 0) { $parts.Add("Squirrel ran $(@($Facts.updated_events)[0]) for the new version") }
-        $parts.Add($(if ($staged.version -eq $feed.version) { "it is the feed's version ($($feed.tag), $($feed.version))" }
-                     else { "the feed holds $($feed.version) ($($feed.tag))" }))
-        if ($null -ne $log.update_exit_code) { $parts.Add("the application logged that Update.exe exited with code $($log.update_exit_code)") }
-        elseif (-not $Facts.log_decoded) { $parts.Add('the application log could not be read') }
-        else { $parts.Add('the application log has no Update.exe exit line') }
-        $parts.Add($(if (@($Facts.notifications.ready).Count -gt 0) { 'the notification history records the ready banner (AppUpdateReady)' }
-                     elseif ($Facts.notifications.found) { 'the notification history has no ready banner' }
-                     else { 'there is no notification history' }))
-        if ($null -ne $Facts.next_start) {
-            $ran = @($Facts.next_start.folders_run)
-            $parts.Add($(if ($ran -contains $staged.name) { "the next start ran $($staged.name)\bambu-studio.exe ($($Facts.next_start.classification))" }
-                         elseif ($ran.Count -gt 0) { "the next start ran $($ran -join ', '), not $($staged.name) ($($Facts.next_start.classification))" }
-                         else { "the next start ran no app-<version> executable ($($Facts.next_start.classification))" }))
-        }
-        return & $result 'updated_staged' ($parts -join '; ')
-    }
-
+    # Every sign that the update failed, whether or not a newer folder is there.
     $failures = [System.Collections.Generic.List[string]]::new()
     foreach ($run in @($runs | Where-Object { $null -ne $_.exit_code -and [int64] $_.exit_code -ne 0 })) {
         $failures.Add("$(& $describe $run) exited with $($run.exit_code_hex)")
     }
-    foreach ($crash in @($Facts.update_exe_crashes)) {
+    foreach ($crash in @($Facts.update_exe_crashes | Where-Object { $null -ne $_ })) {
         $failures.Add("the Application log has a $($crash.provider) $($crash.id) entry for Update.exe" +
                       $(if ($crash.exception_code) { ", exception $($crash.exception_code)" } else { '' }))
+    }
+    if ($null -ne $log.update_exit_code -and [int64] $log.update_exit_code -ne 0) {
+        $failures.Add("the application logged that Update.exe exited with code $($log.update_exit_code)")
     }
     if ($null -ne $log.start_failed) { $failures.Add("the application could not start Update.exe ($($log.start_failed))") }
     if ($null -ne $log.gave_up) { $failures.Add("the application gave up waiting for Update.exe $($log.gave_up)".TrimEnd()) }
@@ -850,14 +970,72 @@ function Get-SelfUpdateClassification {
     if (@($Facts.notifications.failure).Count -gt 0) { $failures.Add('the notification history records the failure notice') }
     $stillRunning = @($runs | Where-Object { $_.alive_at_end })
     $cleanExits = @($runs | Where-Object { $null -ne $_.exit_code -and [int64] $_.exit_code -eq 0 })
-    if ($feed.newer -and $stillRunning.Count -eq 0 -and ($cleanExits.Count -gt 0 -or $log.nothing_newer)) {
+    if ($null -eq $candidate -and $feed.newer -and $stillRunning.Count -eq 0 -and ($cleanExits.Count -gt 0 -or $log.nothing_newer)) {
         $failures.Add("Update.exe exited with 0 but staged nothing newer than $installed, although the feed holds $($feed.version) ($($feed.tag))")
     }
     if ($null -ne $log.check_error -and $runs.Count -eq 0) { $failures.Add("the release check failed: $($log.check_error)") }
-    if ($failures.Count -gt 0) {
-        $basis = $failures -join '; '
-        if ($null -ne $Facts.partial) { $basis += "; $($Facts.partial.name) was left without a complete bambu-studio.exe" }
-        return & $result 'update_failed' $basis
+
+    # What a newer folder with its bambu-studio.exe still lacks to count as staged. The folder alone
+    # proves nothing: Update.exe extracts the package straight into it, leaves what it wrote when it
+    # fails part of the way, and rewrites packages\RELEASES only once the extraction has finished.
+    $gaps = [System.Collections.Generic.List[string]]::new()
+    $listed = @()
+    if ($null -ne $candidate) {
+        $loggedClean = $null -ne $log.update_exit_code -and [int64] $log.update_exit_code -eq 0 -and -not $log.nothing_newer
+        if ($cleanExits.Count -eq 0 -and -not $loggedClean) {
+            $gaps.Add('no Update.exe --update run was seen to exit with 0, by its exit code or by the application log')
+        }
+        if ($log.nothing_newer) { $gaps.Add('the application logged that Update.exe found nothing newer to install') }
+        $localRows = if ($null -ne $Facts.squirrel) { @($Facts.squirrel.local_releases) } else { @() }
+        $listed = @($localRows | ForEach-Object { ConvertFrom-ReleasesRow $_ } | Where-Object {
+            $null -ne $_ -and $_.full -and (Compare-VersionParts (ConvertTo-VersionParts $_.version) (ConvertTo-VersionParts $candidate.name)) -eq 0 })
+        if ($listed.Count -eq 0) {
+            $gaps.Add("packages\RELEASES does not list the full package of $($candidate.version), which Update.exe records only after extracting it")
+        }
+        if ($null -eq $Facts.staged_files) { $gaps.Add('its files were not compared with the package') }
+        else { foreach ($problem in @($Facts.staged_files.problems | Where-Object { $_ })) { $gaps.Add([string] $problem) } }
+        if ($null -eq $Facts.next_start) { $gaps.Add('the install root was not started again') }
+        else {
+            $ran = @($Facts.next_start.folders_run | Where-Object { $_ })
+            if ($ran -notcontains $candidate.name) {
+                $gaps.Add($(if ($ran.Count -gt 0) { "the next start ran $($ran -join ', '), not $($candidate.name) ($($Facts.next_start.classification))" }
+                            else { "the next start ran no app-<version> executable ($($Facts.next_start.classification))" }))
+            }
+        }
+    }
+    $product = if ($null -ne $candidate -and $candidate.product_version) { " (product version $($candidate.product_version))" } else { '' }
+
+    if ($null -ne $candidate -and $failures.Count -eq 0 -and $gaps.Count -eq 0) {
+        $parts = [System.Collections.Generic.List[string]]::new()
+        $parts.Add("$($candidate.name) was staged beside $installed, with its bambu-studio.exe$product")
+        if ($runs.Count -eq 0) { $parts.Add('no Update.exe --update run was seen by the polls or the process events') }
+        foreach ($run in $runs) {
+            $parts.Add("$(& $describe $run) " + $(if ($null -ne $run.exit_code_hex) { "exited with $($run.exit_code_hex)" } else { 'ended, exit code not captured' }))
+        }
+        $parts.Add($(if ($null -ne $log.update_exit_code) { "the application logged that Update.exe exited with code $($log.update_exit_code)" }
+                     elseif (-not $Facts.log_decoded) { 'the application log could not be read' }
+                     else { 'the application log has no Update.exe exit line' }))
+        if (@($Facts.updated_events).Count -gt 0) { $parts.Add("Squirrel ran $(@($Facts.updated_events)[0]) for the new version") }
+        $parts.Add($(if ($candidate.version -eq $feed.version) { "it is the feed's version ($($feed.tag), $($feed.version))" }
+                     else { "the feed holds $($feed.version) ($($feed.tag))" }))
+        $parts.Add("packages\RELEASES lists $($listed[0].file)")
+        $parts.Add("all $($Facts.staged_files.package_files) files of the package are in it at their sizes, and its bambu-studio.exe has the package's SHA-256")
+        $parts.Add($(if (@($Facts.notifications.ready).Count -gt 0) { 'the notification history records the ready banner (AppUpdateReady)' }
+                     elseif ($Facts.notifications.found) { 'the notification history has no ready banner' }
+                     else { 'there is no notification history' }))
+        $parts.Add("the next start ran $($candidate.name)\bambu-studio.exe ($($Facts.next_start.classification))")
+        return & $result 'updated_staged' ($parts -join '; ')
+    }
+
+    if ($failures.Count -gt 0 -or $null -ne $candidate) {
+        $reasons = [System.Collections.Generic.List[string]]::new()
+        foreach ($failure in $failures) { $reasons.Add($failure) }
+        if ($null -ne $candidate) {
+            $unfinished = "partial staging: $($candidate.name) holds a bambu-studio.exe$product but is not counted as staged"
+            $reasons.Add($(if ($gaps.Count -gt 0) { "${unfinished}: $($gaps -join '; ')" } else { "$unfinished because of the failures above" }))
+        }
+        elseif ($null -ne $Facts.partial) { $reasons.Add("$($Facts.partial.name) was left without a complete bambu-studio.exe") }
+        return & $result 'update_failed' ($reasons -join '; ')
     }
 
     $offers = [System.Collections.Generic.List[string]]::new()
@@ -932,11 +1110,9 @@ try {
     if ($feedRows.Count -eq 0) { throw "The RELEASES file of $($latest.tagName) is empty." }
     Set-Content -LiteralPath (Join-Path $OutputDirectory 'feed-RELEASES.txt') -Value $feedRows -Encoding utf8
     $feedVersion = $null
-    foreach ($row in $feedRows) {
-        $match = [regex]::Match($row, '^[0-9a-fA-F]{40} [^\\/\s]+-(?<version>\d+(?:\.\d+)+)-full\.nupkg \d+$')
-        if (-not $match.Success) { continue }
-        if ($null -eq $feedVersion -or (Compare-VersionParts (ConvertTo-VersionParts $match.Groups['version'].Value) (ConvertTo-VersionParts $feedVersion)) -gt 0) {
-            $feedVersion = $match.Groups['version'].Value
+    foreach ($row in @($feedRows | ForEach-Object { ConvertFrom-ReleasesRow $_ } | Where-Object { $null -ne $_ -and $_.full })) {
+        if ($null -eq $feedVersion -or (Compare-VersionParts (ConvertTo-VersionParts $row.version) (ConvertTo-VersionParts $feedVersion)) -gt 0) {
+            $feedVersion = $row.version
         }
     }
     if ($null -eq $feedVersion) { throw "The RELEASES file of $($latest.tagName) names no full package." }
@@ -977,16 +1153,21 @@ try {
     $squirrel = Save-SquirrelEvidence -Directory (Join-Path $OutputDirectory 'observe')
     $preferenceAfter = Read-AutoUpdatePreference
 
-    # Staged means complete: a newer folder with its executable, and no Update.exe --update still at work.
+    # The candidate: a newer folder with its executable, and no Update.exe --update still at work. It
+    # counts as staged only when Get-SelfUpdateClassification finds that Update.exe finished it.
     $newest = Get-NewerFolder -Folders @($observe.final.app_folders) -InstalledVersion $installedVersion
     $stillUpdating = @($observe.update_runs | Where-Object { $_.role -eq 'update' -and $_.alive_at_end }).Count -gt 0 -or
                      @($observe.final.update_exe | Where-Object { ([string] $_.command_line) -match '--update(?:=|\s)' }).Count -gt 0
-    $staged = if ($null -ne $newest -and $newest.has_executable -and -not $stillUpdating) { $newest } else { $null }
-    $partial = if ($null -ne $newest -and $null -eq $staged) { $newest } else { $null }
+    $candidate = if ($null -ne $newest -and $newest.has_executable -and -not $stillUpdating) { $newest } else { $null }
+    $partial = if ($null -ne $newest -and $null -eq $candidate) { $newest } else { $null }
+    # Compared with the package before the next start runs the folder.
+    $stagedFiles = if ($null -ne $candidate) {
+        Test-StagedFiles -Folder $candidate -FeedReleases $feedRows -LocalReleases @($squirrel.local_releases)
+    } else { $null }
 
     $nextStart = $null
     $nextVerdict = $null
-    if ($null -ne $staged) {
+    if ($null -ne $candidate) {
         $next = Invoke-ObservationPhase -Name 'next-start' -Seconds $NextStartSeconds -InstalledVersion $installedVersion
         $null = Stop-InstalledProcesses
         $foldersRun = @($next.processes | Where-Object { $_.role -eq 'app' -and $_.path } | ForEach-Object {
@@ -1011,8 +1192,10 @@ try {
     $facts = [ordered]@{
         installed_version = $installedVersion
         feed = [ordered]@{ tag = [string] $latest.tagName; version = $feedVersion; newer = $feedNewer }
-        staged = $staged
+        candidate = $candidate
         partial = $partial
+        staged_files = $stagedFiles
+        squirrel = $squirrel
         update_runs = $observe.update_runs
         update_exe_crashes = $observe.update_exe_crashes
         updated_events = $updatedEvents
@@ -1073,7 +1256,9 @@ try {
             close = $observe.close
             process_events = $observe.process_events
         }
-        staged = $staged
+        staged = if ($result.classification -eq 'updated_staged') { $candidate } else { $null }
+        staged_candidate = $candidate
+        staged_files = $stagedFiles
         partial = $partial
         app_folders_at_end = $observe.final.app_folders
         folder_sightings = $observe.folder_sightings
