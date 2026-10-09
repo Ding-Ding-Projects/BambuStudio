@@ -39765,3 +39765,343 @@ msgstr "模型匯入：網格達 1,000,000 個三角形時，先簡化再加入�
 #. review-status: agent-drafted
 msgid "Extra high, High, Medium, Low or Extra low detail for automatic model import simplification"
 msgstr "模型匯入自動簡化嘅細節：極高、高、中、低或極低"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "%s tokens"
+msgstr "%s 個 token"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "%s tokens (recommended)"
+msgstr "%s 個 token（建議）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "16-bit context cache (default, recommended)"
+msgstr "16 位元上下文快取（預設，建議）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "4-bit context cache (OLLAMA_KV_CACHE_TYPE=q4_0)"
+msgstr "4 位元上下文快取（OLLAMA_KV_CACHE_TYPE=q4_0）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "8-bit context cache (OLLAMA_KV_CACHE_TYPE=q8_0)"
+msgstr "8 位元上下文快取（OLLAMA_KV_CACHE_TYPE=q8_0）"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Capabilities are verified only after the model is installed and inspected."
+msgstr "要安裝咗模型再檢查過，先會核實佢嘅功能。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Context cache precision"
+msgstr "上下文快取精度"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Context for estimates"
+msgstr "估算用嘅上下文長度"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Context memory grows with the number of tokens a chat keeps and with the cache precision Ollama uses. 4096 tokens with a 16-bit cache is a conservative starting point. Choose the context and OLLAMA_KV_CACHE_TYPE you run Ollama with; every verdict is recomputed at once."
+msgstr "上下文記憶體會隨住對話保留嘅 token 數量同 Ollama 用嘅快取精度增加。4096 個 token 配 16 位元快取係一個保守嘅起點。揀返你運行 Ollama 時用嘅上下文長度同 OLLAMA_KV_CACHE_TYPE；每個評估結果都會即刻重新計算。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Estimate context: %s tokens, needing %s of context cache."
+msgstr "估算上下文：%s 個 token，需要 %s 上下文快取。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Estimate context: %s tokens. The context cache size is unknown because attention metadata is missing."
+msgstr "估算上下文：%s 個 token。因為缺少注意力結構資料，上下文快取大小未知。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Estimate settings could not be saved. They apply until the suite closes."
+msgstr "儲存唔到估算設定。呢啲設定會生效到套件關閉為止。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Estimates are conservative and do not guarantee that the model will run."
+msgstr "估算刻意保守，唔保證模型一定運行得到。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Exact registry download size: %s."
+msgstr "登記庫準確下載大小：%s。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "GPU backend: not in use. Ollama %s kept %s entirely in system memory at %s (UTC), so estimates assume processor inference."
+msgstr "GPU 後端：冇用到。Ollama %s 將 %s 全部放喺系統記憶體（時間 %s，UTC），所以估算假設用處理器推理。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "GPU backend: not verified. Ollama reports GPU use only while a model is loaded. Send one chat message or load a model in Ollama, then choose Refresh runtime."
+msgstr "GPU 後端：未核實。Ollama 只會喺載入咗模型嘅時候報告 GPU 用量。請傳送一條對話訊息，或者喺 Ollama 載入一個模型，然後揀「Refresh runtime」。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "GPU backend: the earlier Ollama evidence no longer applies because the graphics adapter, driver or Ollama version changed. Load a model in Ollama again, then choose Refresh runtime."
+msgstr "GPU 後端：因為顯示卡、驅動程式或者 Ollama 版本變咗，之前嘅 Ollama 證據已經唔再適用。請喺 Ollama 再載入模型，然後揀「Refresh runtime」。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "GPU backend: verified. Ollama %s kept %s of %s for %s in GPU memory at %s (UTC)."
+msgstr "GPU 後端：已核實。Ollama %s 將 %s（總共 %s）放喺 GPU 記憶體運行 %s（時間 %s，UTC）。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Graphics: %s, %s, %s dedicated memory, %s usable now."
+msgstr "顯示卡：%s，%s，專用記憶體 %s，而家可用 %s。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Graphics: no hardware graphics adapter was reported."
+msgstr "顯示卡：冇報告任何硬件顯示卡。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Hardware fit: %s"
+msgstr "硬件適配：%s"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Hardware has not been measured yet. Choose Refresh runtime or Measure hardware again."
+msgstr "仲未量度硬件。請揀「Refresh runtime」或者「重新量度硬件」。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Hardware measured again. Select a model to see its verdict."
+msgstr "已經重新量度硬件。揀一個模型就睇到佢嘅評估結果。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Hardware measured at %s (UTC)."
+msgstr "硬件量度時間：%s（UTC）。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Inspection finished. Hardware fit was recomputed from current measurements and estimate settings."
+msgstr "檢查完成。已經按目前嘅量度同估算設定重新計算硬件適配。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Installed size: %s."
+msgstr "已安裝大小：%s。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Manifest: %s"
+msgstr "清單：%s"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Measure hardware again"
+msgstr "重新量度硬件"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Measured at %s (UTC)."
+msgstr "量度時間：%s（UTC）。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Measured hardware evidence"
+msgstr "已量度嘅硬件證據"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Measured system memory, processor architecture and the model's parameters, quantization, context limit and attention layout are all needed. Inspect an installed model to read them."
+msgstr "需要已量度嘅系統記憶體、處理器架構，同埋模型嘅參數、量化、上下文上限同注意力結構。請檢查一個已安裝嘅模型嚟讀取呢啲資料。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Memory estimate: %s."
+msgstr "記憶體估算：%s。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Memory estimate: model size, plus twenty percent for the runtime, plus the context cache for the chosen context and precision."
+msgstr "記憶體估算：模型大小，加百分之二十俾運行環境，再加所揀上下文長度同精度嘅上下文快取。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Model folder: %s (%s), not yet confirmed because the installed-model list has not been read. Choose Refresh runtime to confirm it. Free space: %s."
+msgstr "模型資料夾：%s（%s），因為仲未讀取已安裝模型清單，所以未確認。請揀「Refresh runtime」確認。可用空間：%s。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Model folder: %s (%s). Confirmed by %s of %s installed model manifests. Free space: %s."
+msgstr "模型資料夾：%s（%s）。已用 %s／%s 個已安裝模型清單確認。可用空間：%s。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Model folder: %s (%s). No installed model exists yet to confirm it. Free space: %s."
+msgstr "模型資料夾：%s（%s）。仲未有已安裝嘅模型可以確認。可用空間：%s。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Model folder: no documented location could be resolved, so storage fit stays Unknown."
+msgstr "模型資料夾：搵唔到任何有文件記載嘅位置，所以儲存適配仍然係「未知」。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Model folder: not confirmed. The installed models were not found under any documented location (closest: %s, %s of %s manifests). Storage fit stays Unknown. Check OLLAMA_MODELS for the running Ollama, restart Ollama, then choose Refresh runtime."
+msgstr "模型資料夾：未確認。喺所有有文件記載嘅位置都搵唔到已安裝嘅模型（最接近：%s，%s／%s 個清單）。儲存適配仍然係「未知」。請檢查運行緊嘅 Ollama 嘅 OLLAMA_MODELS，重新啟動 Ollama，然後揀「Refresh runtime」。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Neither measured system memory nor usable GPU memory holds this estimate."
+msgstr "量度到嘅系統記憶體同可用 GPU 記憶體都裝唔落呢個估算。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "OLLAMA_MODELS computer setting"
+msgstr "OLLAMA_MODELS 電腦設定"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "OLLAMA_MODELS in this application's environment"
+msgstr "本應用程式環境入面嘅 OLLAMA_MODELS"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "OLLAMA_MODELS user setting"
+msgstr "OLLAMA_MODELS 使用者設定"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Ollama default location"
+msgstr "Ollama 預設位置"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Ollama has not shown a working GPU backend on this computer, so the verdict assumes processor-only inference."
+msgstr "Ollama 喺呢部電腦仲未顯示過可以用嘅 GPU 後端，所以評估結果假設淨係用處理器推理。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Processor architecture: %s."
+msgstr "處理器架構：%s。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Processor architecture: not identified."
+msgstr "處理器架構：未能識別。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Runs well"
+msgstr "運行順暢"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Runs with limits"
+msgstr "可以運行但有限制"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Storage needed: %s including a ten percent allowance."
+msgstr "需要儲存空間：%s（已包括百分之十預留）。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Storage needed: none, the model is already installed."
+msgstr "需要儲存空間：無，模型已經安裝咗。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "System memory alone is not enough, and Ollama has not shown a working GPU backend, so GPU use cannot be counted."
+msgstr "淨係靠系統記憶體唔夠，而 Ollama 仲未顯示過可以用嘅 GPU 後端，所以唔可以計埋 GPU。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "System memory available: %s of %s."
+msgstr "可用系統記憶體：%s（總共 %s）。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "System memory available: %s."
+msgstr "可用系統記憶體：%s。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "System memory: not measured on this platform."
+msgstr "系統記憶體：呢個平台冇量度。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "The documented settings name different folders, so the smallest free space among them is used."
+msgstr "有文件記載嘅設定指向唔同資料夾，所以用佢哋之中最少嘅可用空間。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The estimate context is larger than the model's verified context limit."
+msgstr "估算上下文大過模型已核實嘅上下文上限。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The estimate context was reduced to the model's verified context limit."
+msgstr "估算上下文已經減到模型已核實嘅上下文上限。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The exact model size, the free space in the model folder, or the measurement time is unavailable."
+msgstr "冇模型準確大小、模型資料夾可用空間，或者量度時間。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The memory estimate is too large to calculate."
+msgstr "記憶體估算太大，計唔到。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The model does not fit in usable GPU memory, so part of it runs on the processor. Speed is not predicted."
+msgstr "模型裝唔落可用嘅 GPU 記憶體，所以部分會喺處理器運行。唔會預測速度。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The model folder has less free space than the model size plus a ten percent safety allowance."
+msgstr "模型資料夾嘅可用空間少過模型大小加百分之十安全預留。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The storage estimate is too large to calculate."
+msgstr "儲存估算太大，計唔到。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Unlikely"
+msgstr "唔太可能"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Verified capabilities: %s"
+msgstr "已核實功能：%s"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "driver %s"
+msgstr "驅動程式 %s"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "driver version unavailable"
+msgstr "冇驅動程式版本"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "none reported"
+msgstr "冇報告"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "not measurable"
+msgstr "量度唔到"

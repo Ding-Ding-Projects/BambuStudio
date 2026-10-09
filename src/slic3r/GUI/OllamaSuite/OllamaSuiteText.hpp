@@ -6,6 +6,9 @@
 // facts and reason codes; every sentence a person reads is built here so it
 // passes through the translation catalog.
 namespace Slic3r::GUI::OllamaText {
+// Labels and notices of the Models section's evidence and estimate controls.
+enum class Ui { HardwareEvidence, MeasureAgain, EstimateContext, CachePrecision, SettingsNotSaved, InspectionFinished, MeasuredAgain };
+wxString ui(Ui id);
 wxString bytes(std::uint64_t value);
 wxString verdict_text(OllamaSuite::Fit verdict);
 wxString note_text(OllamaSuite::FitNote note);

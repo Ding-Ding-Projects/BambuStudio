@@ -6,7 +6,7 @@ Material Designer creation/export tools were not exposed to this implementation 
 
 | Section | Required states | Implementation |
 | --- | --- | --- |
-| Models | uninspected, unreachable, installed, running, metadata unavailable, catalog unverified, catalog offline | `OllamaSuiteDialog.cpp`, `OllamaClient.cpp` |
+| Models | uninspected, unreachable, installed, running, metadata unavailable, catalog unverified, catalog offline; hardware unmeasured or measured; GPU backend verified, processor-only, changed or unverified; model folder confirmed, configured or unconfirmed; estimate context and cache precision pickers | `OllamaSuiteDialog.cpp`, `OllamaClient.cpp`, `OllamaSuiteText.cpp` |
 | Chat | model unavailable, ready, streaming, stopped, incomplete, complete, attached image, history, rename/delete/export | `OllamaSuiteDialog.cpp`, `OllamaCore.cpp` |
 | Batch pulls | empty, queued, interrupted, preflight unavailable | `OllamaSuiteDialog.cpp`, `OllamaCore.cpp` |
 | Launch profiles | predefined, semantic executable/model/folder registration, preflight blocked, reviewed, snapshot/rollback, cancelled | `OllamaSuiteDialog.cpp`, `LaunchProfiles.cpp`, `NativeLaunchAdapter.cpp` |

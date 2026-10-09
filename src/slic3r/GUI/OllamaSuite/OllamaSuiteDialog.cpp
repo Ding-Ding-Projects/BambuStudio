@@ -124,10 +124,10 @@ private:
             if(!m_state.profile_preview.empty())m_profile_preview->SetValue(u8(m_state.profile_preview));
             if(done&&!m_state.messages.empty()) { m_session.messages=m_state.messages; m_state.messages=Json::array(); }
             if(m_state.hardware_ready) { m_hardware->SetLabel(OllamaText::hardware_summary(m_state.hardware)); m_state.hardware_ready=false; }
-            if(done&&m_state.measured_notice) { m_status->SetLabel(_L("Hardware measured again. Select a model to see its verdict.")); m_state.measured_notice=false; }
+            if(done&&m_state.measured_notice) { m_status->SetLabel(OllamaText::ui(OllamaText::Ui::MeasuredAgain)); m_state.measured_notice=false; }
             if(done&&m_state.details_ready&&m_state.selected&&m_state.fit) {
                 m_details->SetValue(OllamaText::fit_report(*m_state.selected,*m_state.fit)); m_state.details_ready=false;
-                m_status->SetLabel(_L("Inspection finished. Hardware fit was recomputed from current measurements and estimate settings.")); }
+                m_status->SetLabel(OllamaText::ui(OllamaText::Ui::InspectionFinished)); }
             m_attach->Enable(done&&m_state.selected&&m_state.selected->capabilities_verified&&m_state.selected->local&&m_state.selected->capabilities.count("vision"));
             m_launch->Enable(done&&m_state.launch_plan.has_value()); }
         if(done) { render_models(); render_queue(); render_history(); } Layout();
@@ -157,17 +157,17 @@ private:
         action(p,choose,_L("Add selected tag to batch"),[this] { auto i=m_models->GetSelection(); if(i<0||static_cast<std::size_t>(i)>=m_visible.size()) return; try { m_queue.add(m_visible[i].name); render_queue(); m_tabs->Activate("pulls"); } catch(...) { m_status->SetLabel(_L("Could not persist the batch item.")); } }); s->Add(choose,0,wxEXPAND);
     }
     void build_hardware(wxWindow *p,wxSizer *s) {
-        m_hardware=new Label(p,OllamaText::hardware_summary(Hardware{}),LB_AUTO_WRAP); m_hardware->SetName(_L("Measured hardware evidence")); s->Add(m_hardware,0,wxEXPAND|wxALL,FromDIP(8));
+        m_hardware=new Label(p,OllamaText::hardware_summary(Hardware{}),LB_AUTO_WRAP); m_hardware->SetName(OllamaText::ui(OllamaText::Ui::HardwareEvidence)); s->Add(m_hardware,0,wxEXPAND|wxALL,FromDIP(8));
         FitSettings settings; { std::lock_guard<std::mutex> lock(m_state.mutex); settings=m_state.fit_settings; }
         auto *row=new wxWrapSizer(wxHORIZONTAL);
-        action(p,row,_L("Measure hardware again"),[this] { recompute_fit(); });
-        row->Add(new Label(p,_L("Context for estimates")),0,wxALIGN_CENTER_VERTICAL|wxALL,FromDIP(4));
-        m_fit_context=new ComboBox(p,wxID_ANY,wxEmptyString,wxDefaultPosition,FromDIP(wxSize(220,-1)),0,nullptr,wxCB_READONLY); m_fit_context->SetName(_L("Context for estimates"));
+        action(p,row,OllamaText::ui(OllamaText::Ui::MeasureAgain),[this] { recompute_fit(); });
+        row->Add(new Label(p,OllamaText::ui(OllamaText::Ui::EstimateContext)),0,wxALIGN_CENTER_VERTICAL|wxALL,FromDIP(4));
+        m_fit_context=new ComboBox(p,wxID_ANY,wxEmptyString,wxDefaultPosition,FromDIP(wxSize(220,-1)),0,nullptr,wxCB_READONLY); m_fit_context->SetName(OllamaText::ui(OllamaText::Ui::EstimateContext));
         const auto &contexts=fit_contexts();
         for(std::size_t i=0;i<contexts.size();++i) { m_fit_context->Append(OllamaText::context_choice(contexts[i])); if(contexts[i]==settings.context) m_fit_context->SetSelection(static_cast<int>(i)); }
         row->Add(m_fit_context,0,wxALL,FromDIP(4));
-        row->Add(new Label(p,_L("Context cache precision")),0,wxALIGN_CENTER_VERTICAL|wxALL,FromDIP(4));
-        m_fit_cache=new ComboBox(p,wxID_ANY,wxEmptyString,wxDefaultPosition,FromDIP(wxSize(320,-1)),0,nullptr,wxCB_READONLY); m_fit_cache->SetName(_L("Context cache precision"));
+        row->Add(new Label(p,OllamaText::ui(OllamaText::Ui::CachePrecision)),0,wxALIGN_CENTER_VERTICAL|wxALL,FromDIP(4));
+        m_fit_cache=new ComboBox(p,wxID_ANY,wxEmptyString,wxDefaultPosition,FromDIP(wxSize(320,-1)),0,nullptr,wxCB_READONLY); m_fit_cache->SetName(OllamaText::ui(OllamaText::Ui::CachePrecision));
         for(std::size_t i=0;i<std::size(fit_caches);++i) { m_fit_cache->Append(OllamaText::kv_cache(fit_caches[i])); if(fit_caches[i]==settings.cache) m_fit_cache->SetSelection(static_cast<int>(i)); }
         row->Add(m_fit_cache,0,wxALL,FromDIP(4)); s->Add(row,0,wxEXPAND);
         m_fit_context->Bind(wxEVT_COMBOBOX,[this](wxCommandEvent &) { change_fit_settings(); });
@@ -180,7 +180,7 @@ private:
         if(context<0||static_cast<std::size_t>(context)>=contexts.size()||cache<0||static_cast<std::size_t>(cache)>=std::size(fit_caches)) return;
         FitSettings settings; settings.context=contexts[static_cast<std::size_t>(context)]; settings.cache=fit_caches[static_cast<std::size_t>(cache)];
         { std::lock_guard<std::mutex> lock(m_state.mutex); m_state.fit_settings=settings; }
-        try { atomic_json(m_root/"fit-settings.json",fit_settings_json(settings)); } catch(...) { m_status->SetLabel(_L("Estimate settings could not be saved. They apply until the suite closes.")); }
+        try { atomic_json(m_root/"fit-settings.json",fit_settings_json(settings)); } catch(...) { m_status->SetLabel(OllamaText::ui(OllamaText::Ui::SettingsNotSaved)); }
         recompute_fit();
     }
     std::optional<BackendObservation> saved_backend() const {

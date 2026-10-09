@@ -21,6 +21,20 @@ wxString path_text(const std::filesystem::path &p) { return wxString(p.wstring()
 wxString free_text(const std::optional<std::uint64_t> &value) { return value ? bytes(*value) : _L("not measurable"); }
 } // namespace
 
+wxString ui(Ui id)
+{
+    switch (id) {
+    case Ui::HardwareEvidence: return _L("Measured hardware evidence");
+    case Ui::MeasureAgain: return _L("Measure hardware again");
+    case Ui::EstimateContext: return _L("Context for estimates");
+    case Ui::CachePrecision: return _L("Context cache precision");
+    case Ui::SettingsNotSaved: return _L("Estimate settings could not be saved. They apply until the suite closes.");
+    case Ui::InspectionFinished: return _L("Inspection finished. Hardware fit was recomputed from current measurements and estimate settings.");
+    case Ui::MeasuredAgain: return _L("Hardware measured again. Select a model to see its verdict.");
+    }
+    return wxString();
+}
+
 wxString bytes(std::uint64_t value)
 {
     const double gib = static_cast<double>(value) / (1024.0 * 1024.0 * 1024.0);

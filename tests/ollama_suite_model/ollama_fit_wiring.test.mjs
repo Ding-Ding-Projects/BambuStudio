@@ -21,7 +21,7 @@ test('estimate settings are pickers that persist and recompute every verdict', (
   assert.match(dialog, /fit-settings\.json/, 'estimate settings persist in the suite state folder');
   assert.match(dialog, /m_fit_context\s*->\s*Bind\s*\(\s*wxEVT_COMBOBOX/, 'context picker recomputes');
   assert.match(dialog, /m_fit_cache\s*->\s*Bind\s*\(\s*wxEVT_COMBOBOX/, 'cache precision picker recomputes');
-  assert.match(dialog, /_L\("Measure hardware again"\)/, 'hardware can be measured again from the Models section');
+  assert.match(dialog, /OllamaText::ui\(OllamaText::Ui::MeasureAgain\)/, 'hardware can be measured again from the Models section');
 });
 
 test('runtime refresh records the runtime\'s own backend evidence', () => {
