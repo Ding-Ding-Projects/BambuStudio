@@ -57,6 +57,15 @@ struct AppUpdateCheckPolicy {
             return Action::Nothing;
         return newer_by_time ? Action::OfferDownload : Action::ShowNoNewVersion;
     }
+    // The release could not be read: the API refused the request (a shared address that has used
+    // GitHub's anonymous hourly allowance gets 403 or 429), there was no network, or the answer
+    // had no tag. Update.exe reads its own feed and compares package versions, so an installed copy
+    // with the preference on still asks it, except on a background check while a version is
+    // skipped, since the feed's tag is unknown. Its run counts as "not newer", so staging nothing
+    // is not reported as a failure. Every other copy behaves as when nothing is newer.
+    static Action decide_without_release(bool auto_update_enabled, bool squirrel_installed, bool manual_check, bool a_version_is_skipped) {
+        return decide(auto_update_enabled, squirrel_installed, false, manual_check, a_version_is_skipped);
+    }
     // After Update.exe. A staged version always shows the ready banner. Nothing staged is a real
     // failure only when the release was newer: a manual check then opens the download dialog, a
     // background check shows one failure notice per release. Otherwise there was nothing to install.

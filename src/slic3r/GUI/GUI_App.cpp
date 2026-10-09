@@ -483,6 +483,27 @@ static bool squirrel_newer_version_staged(const boost::filesystem::path &update_
     return false;
 }
 
+// The version of the newest app-<version> folder beside Update.exe ("2.8.4848"), which names what
+// Squirrel staged when the release check could not say. Empty when there is no such folder.
+static std::string squirrel_newest_folder_version(const boost::filesystem::path &update_exe)
+{
+    std::vector<long long> newest;
+    std::string            name;
+    boost::system::error_code ec;
+    for (boost::filesystem::directory_iterator it(update_exe.parent_path(), ec), end; !ec && it != end; it.increment(ec)) {
+        boost::system::error_code status_ec;
+        if (!boost::filesystem::is_directory(it->path(), status_ec))
+            continue;
+        const std::string            folder  = boost::nowide::narrow(it->path().filename().wstring());
+        const std::vector<long long> version = squirrel_folder_version(folder);
+        if (!version.empty() && version > newest) {
+            newest = version;
+            name   = folder.substr(4);
+        }
+    }
+    return name;
+}
+
 // Runs "Update.exe --update=<feed>" hidden and waits for it, on the worker thread. Returns true
 // only when Update.exe succeeded and a newer version is really staged beside the running one.
 static bool run_squirrel_update(const boost::filesystem::path &update_exe, const std::atomic<bool> &cancel)
@@ -6480,7 +6501,7 @@ void GUI_App::check_new_version(bool show_tips, int by_user)
             try {
                 json j = json::parse(body);
                 if (!j.contains("tag_name") || !j.contains("published_at")) {
-                    if (show_tips) this->no_new_version();
+                    this->check_without_release(show_tips, by_user, "the answer has no release tag");
                     return;
                 }
                 const std::string tag       = j["tag_name"].get<std::string>();
@@ -6537,13 +6558,38 @@ void GUI_App::check_new_version(bool show_tips, int by_user)
                 }
             }
             catch (...) {
-                if (show_tips) this->no_new_version();
+                this->check_without_release(show_tips, by_user, "the answer cannot be read");
             }
         })
-        .on_error([this, show_tips](std::string body, std::string error, unsigned int status) {
+        .on_error([this, show_tips, by_user](std::string body, std::string error, unsigned int status) {
             BOOST_LOG_TRIVIAL(error) << "check new version error (" << status << "): " << error;
-            if (show_tips) this->no_new_version();
+            this->check_without_release(show_tips, by_user, "the release could not be read (HTTP " + std::to_string(status) + ")");
         }).perform();
+}
+
+// The release could not be read (a refused or failed request, or an answer without a tag).
+// GitHub's anonymous API answers 403 or 429 once an address shared by many machines has used its
+// hourly allowance, so an installed copy with the preference on still asks Update.exe, which reads
+// its own feed. No tag is known, so the run counts as "not newer" and staging nothing stays quiet.
+void GUI_App::check_without_release(bool show_tips, int by_user, const std::string &reason)
+{
+    boost::filesystem::path update_exe;
+    const bool auto_update = app_config->get_bool("auto_update");
+    const bool installed   = squirrel_update_exe(update_exe);
+    const bool skipping    = !app_config->get("app", "skip_version").empty();
+    switch (AppUpdateCheckPolicy::decide_without_release(auto_update, installed, by_user != 0, skipping)) {
+    case AppUpdateCheckPolicy::Action::RunSquirrelUpdate:
+        BOOST_LOG_TRIVIAL(info) << "check new version: " << reason << ", asking Update.exe, which reads its own feed";
+        CallAfter([this, by_user]() { this->start_auto_update(std::string(), std::string(), by_user, false); });
+        break;
+    case AppUpdateCheckPolicy::Action::ShowNoNewVersion:
+        if (show_tips) no_new_version();
+        break;
+    case AppUpdateCheckPolicy::Action::OfferDownload:
+    case AppUpdateCheckPolicy::Action::Nothing:
+        BOOST_LOG_TRIVIAL(info) << "check new version: " << reason << ", nothing to do" << (skipping ? " (a version is skipped)" : "");
+        break;
+    }
 }
 
 void GUI_App::start_auto_update(const std::string &tag, const std::string &name, int by_user, bool newer_by_time)
@@ -6574,8 +6620,11 @@ void GUI_App::start_auto_update(const std::string &tag, const std::string &name,
     if (m_auto_update_thread.joinable())
         m_auto_update_thread.join();
 
-    BOOST_LOG_TRIVIAL(info) << "auto update: updating to " << tag << " (" << name << ") through " << boost::nowide::narrow(update_exe.wstring());
-    m_auto_update_thread = Slic3r::create_thread([this, tag, by_user, newer_by_time, update_exe]() {
+    if (tag.empty())
+        BOOST_LOG_TRIVIAL(info) << "auto update: updating to the newest version in the feed through " << boost::nowide::narrow(update_exe.wstring());
+    else
+        BOOST_LOG_TRIVIAL(info) << "auto update: updating to " << tag << " (" << name << ") through " << boost::nowide::narrow(update_exe.wstring());
+    m_auto_update_thread = Slic3r::create_thread([this, tag, by_user, newer_by_time, update_exe]() mutable {
         bool updated = false;
         try {
             updated = run_squirrel_update(update_exe, m_auto_update_cancel);
@@ -6584,6 +6633,9 @@ void GUI_App::start_auto_update(const std::string &tag, const std::string &name,
         } catch (...) {
             BOOST_LOG_TRIVIAL(error) << "auto update: unknown error";
         }
+        // Without a release tag the banner names the version Squirrel staged.
+        if (updated && tag.empty())
+            tag = squirrel_newest_folder_version(update_exe);
         m_auto_update_running = false;
         if (m_auto_update_cancel.load())
             return;

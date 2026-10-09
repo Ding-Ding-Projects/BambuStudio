@@ -136,8 +136,16 @@ remove it with its own uninstaller.
 
 ## Failure modes
 
-- No network, an API error, or a malformed payload: nothing is shown on the automatic check; a
-  manual check shows the "newest version" toast rather than an error, and the reason is logged.
+- No network, an API error (GitHub's anonymous API answers 403 or 429 once an address shared by
+  many machines has used its hourly allowance), or a payload without a readable release: the reason
+  is logged. An installed copy with automatic updates on still runs Update.exe, which reads its own
+  feed (`RELEASES` from the latest release's assets) rather than the API, so a refused check never
+  stops an update; on a background check it does so only while no version is skipped, since the
+  release's tag is unknown. That run counts as "not newer": a staged version shows the ready banner
+  named after the staged package version, and staging nothing is not a failure (a manual check
+  shows the "newest version" toast, a background check stays silent). Every other copy shows
+  nothing on the automatic check, and the "newest version" toast rather than an error on a manual
+  check.
 - `published_at` or the build time not in the exact `YYYY-MM-DDTHH:MM:SSZ` form, or an impossible
   date: logged, and the release does not count as newer. An installed copy still runs Update.exe.
 - Update.exe cannot be started, exits with a non-zero code, exits with 0 but stages nothing newer,
@@ -174,7 +182,8 @@ remove it with its own uninstaller.
 
 - Anonymous read of a public API; no token is sent. The rate limit (60 requests per hour per IP)
   is far above the app's one call per launch, one every six hours on an installed copy, plus
-  manual checks. Each check of an installed copy also lets Update.exe read the small `RELEASES`
+  manual checks, but an address shared by many machines (a hosted build machine, an office or
+  carrier network) can exhaust it; the fallback above keeps installed copies updating then. Each check of an installed copy also lets Update.exe read the small `RELEASES`
   file; it downloads a package only when the feed holds a newer version.
 - The automatic update uses HTTPS to GitHub and to the release-asset hosts GitHub redirects to.
   The feed address is a constant in the source; nothing from the release JSON, the preferences or

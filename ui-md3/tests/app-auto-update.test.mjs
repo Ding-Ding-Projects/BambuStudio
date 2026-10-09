@@ -122,6 +122,35 @@ test('an installed copy always asks Update.exe, and only a background check hono
   assert.match(policy, /return newer_by_time \? Action::OfferDownload : Action::ShowNoNewVersion;/);
 });
 
+test('a release check that cannot read the release still lets an installed copy ask Update.exe', () => {
+  const check = bodyOf(guiApp, 'void GUI_App::check_new_version(');
+  const fallback = bodyOf(guiApp, 'void GUI_App::check_without_release(');
+  const onError = check.slice(check.indexOf('.on_error('));
+  assert.match(onError, /^\.on_error\(\[this, show_tips, by_user\]\([^)]*\) \{[^}]*this->check_without_release\(show_tips, by_user, /, 'a refused or failed request (a rate-limited 403 or 429, no network) takes the fallback');
+  assert.doesNotMatch(onError, /no_new_version\(/, 'a failed request no longer just says nothing is newer');
+  assert.match(check, /catch \(\.\.\.\) \{\s*this->check_without_release\(show_tips, by_user, /, 'an unreadable answer takes the fallback');
+  assert.match(check, /if \(!j\.contains\("tag_name"\) \|\| !j\.contains\("published_at"\)\) \{\s*this->check_without_release\(show_tips, by_user, /, 'an answer without a tag takes the fallback');
+  assert.match(fallback, /skipping\s*=\s*!app_config->get\("app", "skip_version"\)\.empty\(\);/, 'any skipped version keeps a background check quiet, since the feed tag is unknown');
+  assert.match(fallback, /switch \(AppUpdateCheckPolicy::decide_without_release\(auto_update, installed, by_user != 0, skipping\)\)/, 'one policy decision routes every copy');
+  assert.match(
+    fallback,
+    /case AppUpdateCheckPolicy::Action::RunSquirrelUpdate:[^;]*;\s*CallAfter\(\[this, by_user\]\(\) \{ this->start_auto_update\(std::string\(\), std::string\(\), by_user, false\); \}\);\s*break;/,
+    'Update.exe runs from the UI thread with no tag and the "not newer" verdict, so staging nothing is not a failure'
+  );
+  assert.match(fallback, /case AppUpdateCheckPolicy::Action::ShowNoNewVersion:\s*if \(show_tips\) no_new_version\(\);\s*break;/, 'every other copy behaves as when nothing is newer');
+  assert.doesNotMatch(fallback, /request_new_version\(|push_auto_update_(?:failed|started)_notification\(/, 'without a release nothing is offered or reported as failed');
+  assert.match(
+    policy,
+    /static Action decide_without_release\(bool auto_update_enabled, bool squirrel_installed, bool manual_check, bool a_version_is_skipped\) \{\s*return decide\(auto_update_enabled, squirrel_installed, false, manual_check, a_version_is_skipped\);\s*\}/,
+    'an unknown release is never newer'
+  );
+  const start = bodyOf(guiApp, 'void GUI_App::start_auto_update(');
+  assert.match(start, /if \(updated && tag\.empty\(\)\)\s*tag = squirrel_newest_folder_version\(update_exe\);/, 'the ready banner names the version Squirrel staged when no tag was known');
+  const newest = bodyOf(guiApp, 'static std::string squirrel_newest_folder_version(');
+  assert.match(newest, /squirrel_folder_version\(folder\)/, 'only app-<version> folders count');
+  assert.match(newest, /version > newest/, 'the highest version wins');
+});
+
 test('Squirrel is pointed at one fixed feed and nothing else reaches its command line', () => {
   assert.equal(guiApp.split(FEED).length - 1, 1, 'the feed URL is written exactly once');
   assert.match(guiApp, new RegExp(`kSquirrelFeedUrl\\s*=\\s*"${escapeRegExp(FEED)}"`), 'the feed is one named constant');
@@ -315,7 +344,7 @@ test('the new messages are extracted into the source catalogue', async () => {
 
 test('the feature article describes the preference, the restart and the fallbacks', async () => {
   const doc = await read('docs', 'features', 'windows', 'app-updates.md');
-  for (const needle of ['Update automatically', '`auto_update`', 'Update.exe', 'Restart to install update', 'Release notes', 'not code-signed', 'every six hours', '--processStartAndWait', 'SLIC3R_BUILD_TIME_UTC', 'did not finish', 'reinstall']) {
+  for (const needle of ['Update automatically', '`auto_update`', 'Update.exe', 'Restart to install update', 'Release notes', 'not code-signed', 'every six hours', '--processStartAndWait', 'SLIC3R_BUILD_TIME_UTC', 'did not finish', 'reinstall', '429', 'which reads its own']) {
     assert.ok(doc.includes(needle), `app-updates.md must mention ${needle}`);
   }
 });

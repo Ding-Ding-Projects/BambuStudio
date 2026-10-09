@@ -88,6 +88,32 @@ static void decision_assertions() {
         CHECK((action == Action::RunSquirrelUpdate) == (auto_update && installed && (manual || !skipped)));
     }
 
+    // decide_without_release(auto_update_enabled, squirrel_installed, manual_check, a_version_is_skipped):
+    // the release could not be read (a rate-limited 403 or 429, no network, an unreadable answer).
+    // Update.exe reads its own feed, so an installed copy with the preference on still asks it; a
+    // background check does not while a version is skipped, since the feed's tag is unknown.
+    CHECK(AppUpdateCheckPolicy::decide_without_release(true, true, false, false) == Action::RunSquirrelUpdate);
+    CHECK(AppUpdateCheckPolicy::decide_without_release(true, true, true, false) == Action::RunSquirrelUpdate);
+    CHECK(AppUpdateCheckPolicy::decide_without_release(true, true, true, true) == Action::RunSquirrelUpdate);
+    CHECK(AppUpdateCheckPolicy::decide_without_release(true, true, false, true) == Action::Nothing);
+    CHECK(AppUpdateCheckPolicy::decide_without_release(false, true, false, false) == Action::Nothing);
+    CHECK(AppUpdateCheckPolicy::decide_without_release(true, false, false, false) == Action::Nothing);
+    CHECK(AppUpdateCheckPolicy::decide_without_release(false, true, true, false) == Action::ShowNoNewVersion);
+    CHECK(AppUpdateCheckPolicy::decide_without_release(true, false, true, false) == Action::ShowNoNewVersion);
+    for (int bits = 0; bits < 16; ++bits) {
+        const bool auto_update = bits & 1, installed = bits & 2, manual = bits & 4, skipping = bits & 8;
+        const Action action = AppUpdateCheckPolicy::decide_without_release(auto_update, installed, manual, skipping);
+        // Without a release nothing is offered, a background check stays silent, and only an
+        // installed copy with the preference on runs Update.exe.
+        CHECK(action != Action::OfferDownload);
+        CHECK(manual || action != Action::ShowNoNewVersion);
+        CHECK((action == Action::RunSquirrelUpdate) == (auto_update && installed && (manual || !skipping)));
+        // A run without a release never counts as a newer release, so staging nothing is no failure.
+        for (int staged = 0; staged < 2; ++staged)
+            CHECK(AppUpdateCheckPolicy::after_squirrel_update(staged != 0, false, manual, false) != Outcome::NotifyFailure &&
+                  AppUpdateCheckPolicy::after_squirrel_update(staged != 0, false, manual, false) != Outcome::OfferDownload);
+    }
+
     // after_squirrel_update(updated, newer_by_time, manual_check, failure_already_reported)
     CHECK(AppUpdateCheckPolicy::after_squirrel_update(true, false, false, false) == Outcome::ShowReady);
     CHECK(AppUpdateCheckPolicy::after_squirrel_update(true, true, false, true) == Outcome::ShowReady);

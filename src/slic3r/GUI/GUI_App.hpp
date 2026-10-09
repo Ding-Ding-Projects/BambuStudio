@@ -605,6 +605,10 @@ public:
 
     void            check_update(bool show_tips, int by_user);
     void            check_new_version(bool show_tips = false, int by_user = 0);
+    // The release check could not read the release (refused, failed or unreadable answer): an
+    // installed copy with automatic updates on still runs Update.exe, every other copy behaves as
+    // when nothing is newer (AppUpdateCheckPolicy::decide_without_release).
+    void            check_without_release(bool show_tips, int by_user, const std::string &reason);
 
     // Automatic update of a copy installed by Squirrel (docs/features/windows/app-updates.md).
     // start_auto_update() runs Squirrel's Update.exe against this fork's latest release on a

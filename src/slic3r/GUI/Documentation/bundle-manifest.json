@@ -1260,12 +1260,12 @@
     {
       "route": "windows/app-updates.md",
       "title": "App updates from this fork's releases",
-      "sha256": "f9cda573446a9f032ee4fac3aa230290b1160b5ae535d162ffb9d048635e90ed"
+      "sha256": "f15b8522d4c767c61cf7dd616fc54f948417a84624c5f6d3891915d68de70b64"
     },
     {
       "route": "windows/app-updates.yue_HK.md",
       "title": "來自呢個分叉發佈嘅應用程式更新",
-      "sha256": "cc137d98300f21fc48a897b59c8e6c03778d99b5db8276306b6eee283623877c"
+      "sha256": "ac2cb429079425a01ed4a371f96c9a9cafa176ef756c910165de3c11b38ab5fd"
     },
     {
       "route": "windows/appearance-customization.md",
@@ -1975,7 +1975,7 @@
       "bytes": 1979
     }
   ],
-  "bundle_sha256": "68fac6132ad672f33e2172b68d94e130b4badf52a534e1cf045287e996c42f58",
+  "bundle_sha256": "b19323313f12186b6c21fd9572dd89359b0a57e08cda6c9da1a2d533286a7718",
   "unavailable_references": [
     {
       "source": "api/README.md",
