@@ -1,6 +1,6 @@
 ---
 translation-of: collapsible-filters.md
-source-sha256: 83cc49b77ded5b56aab2421029adcd4b47f1f33d70a886611a03c2d8b1fa7171
+source-sha256: 844813bbf7e8af1467906f34b6ce136d612e3426e7a52bd2ddebb70b482906f7
 review-status: agent-drafted
 ---
 
@@ -64,6 +64,7 @@ filters->SetActiveFilters({_L("Errors"), wxString::Format(_L("Search: %s"), quer
 
 - 可以收埋嘅控制項要用 `GetBody()` 做父視窗。收埋只會隱藏嗰個面板，所以主介面俾自己控制項嘅顯示或者隱藏狀態永遠唔會被改。
 - 統計同摘要用 `Purpose::Describes`，咁佢哋一開始就係收埋嘅。
+- 篩選列重畫時會跟返主介面嘅背景色，DPI 改變時亦會自己重新縮放，所以主介面唔使額外處理主題或者縮放（喺現有流程度呼叫 `SyncTheme()` 或者 `Rescale()` 都冇問題）。
 - 表面 ID 會變成設定鍵：第一個字元係細楷字母，之後係細楷字母、數字、`_`、`.` 或者 `-`，最多 64 個字元。其他 ID 一樣收埋到，但係唔會儲存。
 - 每個而家排除緊項目嘅篩選條件都要經 `SetActiveFilters()` 報告。統計就留空。靜態輔助函數 `SearchFilterLabel()`、`FilterLabel()` 同 `ExcludedFilterLabel()` 會砌出標籤；值會縮短到 32 個字元。
 - `Layout::Inline` 會將標題、說明行同控制項放喺同一行，俾工具列用。`ShowSection()` 會同所屬集合一齊隱藏或者顯示成個部分，`SetExpanded(true, false)` 會展開控制項但唔儲存選擇。

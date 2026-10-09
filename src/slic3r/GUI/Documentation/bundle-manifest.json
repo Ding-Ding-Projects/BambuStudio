@@ -1660,12 +1660,12 @@
     {
       "route": "workspace/collapsible-filters.md",
       "title": "Collapsible filters and statistics",
-      "sha256": "83cc49b77ded5b56aab2421029adcd4b47f1f33d70a886611a03c2d8b1fa7171"
+      "sha256": "844813bbf7e8af1467906f34b6ce136d612e3426e7a52bd2ddebb70b482906f7"
     },
     {
       "route": "workspace/collapsible-filters.yue_HK.md",
       "title": "可收埋嘅篩選同統計",
-      "sha256": "4e8fe94eaed08c3d2700ace1ce070866a460560139a7087675d424a0eef594b5"
+      "sha256": "ba1f0bdbf132b3d154386ec47f22a597db8e8ec5544bff2601ca4f169d9ec9bc"
     },
     {
       "route": "workspace/config-profiles-backup.md",
@@ -1860,7 +1860,7 @@
       "bytes": 1979
     }
   ],
-  "bundle_sha256": "a23898b008b1bfebad8da85558e3d29f9620dfd0463ed9dae665fed2426a79f2",
+  "bundle_sha256": "88ffdca7755175bf93f1fdb875ec3f56ddb566102dc7cc4a74341e48b1f7487a",
   "unavailable_references": [
     {
       "source": "api/README.md",

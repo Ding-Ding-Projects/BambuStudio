@@ -35,6 +35,11 @@ test('the state is restored from and written to the application config', () => {
   assert.match(widget, /config->set\(section, key, value\)/);
 });
 
+test('the bar follows theme and DPI changes on its own', () => {
+  assert.match(widget, /Bind\(wxEVT_PAINT, \[this\]\(wxPaintEvent &event\) \{\s*SyncTheme\(\);/);
+  assert.match(widget, /Bind\(wxEVT_DPI_CHANGED, \[this\]\(wxDPIChangedEvent &event\) \{\s*Rescale\(\);/);
+});
+
 test('collapsing hides only the body panel and rescues focus', () => {
   assert.match(widget, /m_body->Show\(m_section_shown && expanded\)/);
   assert.match(widget, /focus_is_inside\(m_body\)\)\s*SetFocus\(\)/);

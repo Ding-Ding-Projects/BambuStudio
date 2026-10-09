@@ -214,7 +214,19 @@ void ExportDialog::create_ui()
     m_filters = new CollapsibleFilterBar(m_body, "export_formats", _L("Search"));
     // TRN: Placeholder of the search field filtering export formats and options.
     m_search_field = new SearchField(m_filters->GetBody(), _L("Search formats and options"));
-    m_search_field->SetOnQuery([this](const wxString &) { apply_search(); });
+    // apply_search() is behaviour-pinned (reader-details-atlas test), so the
+    // collapsed-row disclosure is reported beside it, from the query callback.
+    auto report_active_filters = [this]() {
+        std::vector<wxString> active;
+        const wxString search = CollapsibleFilterBar::SearchFilterLabel(m_search_field->GetValue());
+        if (!search.IsEmpty())
+            active.push_back(search);
+        m_filters->SetActiveFilters(active);
+    };
+    m_search_field->SetOnQuery([this, report_active_filters](const wxString &) {
+        apply_search();
+        report_active_filters();
+    });
     m_search_field->SetOnRegexToggle([this](bool) { apply_search(); });
     m_filters->GetBodySizer()->Add(m_search_field, 0, wxEXPAND);
     body->Add(m_filters->GetSectionSizer(), 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(24));
@@ -451,8 +463,6 @@ void ExportDialog::apply_theme()
 
     SetBackgroundColour(surface);
     m_body->SetBackgroundColour(surface);
-    if (m_filters != nullptr)
-        m_filters->SyncTheme();
     for (Label *label : {m_title_label, m_subtitle_label, m_status_label}) {
         label->SetBackgroundColour(surface);
         label->SetForegroundColour(label == m_title_label ? text : secondary);
@@ -533,12 +543,6 @@ void ExportDialog::apply_search()
     SearchField::MatchPass pass(m_search_field->GetValue(), m_search_field->IsRegexEnabled(), m_search_field->IsCaseSensitive(),
                                 m_search_field->IsWholeWord(), m_search_field->IsMultiline());
     const bool empty = m_search_field->GetValue().Trim().empty();
-    std::vector<wxString> active;
-    const wxString search = CollapsibleFilterBar::SearchFilterLabel(m_search_field->GetValue());
-    if (!search.IsEmpty())
-        active.push_back(search);
-    if (m_filters != nullptr)
-        m_filters->SetActiveFilters(active);
     for (OptionRow &row : m_option_rows) {
         const bool show = empty || pass.matches(row.label);
         for (wxWindow *w : row.windows) w->Show(show);
@@ -901,8 +905,6 @@ void ExportDialog::on_dpi_changed(const wxRect &)
     SetMinSize(FromDIP(wxSize(720, 560)));
     for (Button *button : {m_cancel_button, m_browse_button, m_locate_seven_zip_button}) button->SetMinSize(FromDIP(wxSize(104, 36)));
     m_export_button->SetMinSize(FromDIP(wxSize(124, 40)));
-    if (m_filters != nullptr)
-        m_filters->Rescale();
     Layout();
     m_body->FitInside();
     Refresh();

@@ -189,6 +189,12 @@ CollapsibleFilterBar::CollapsibleFilterBar(wxWindow *parent, const std::string &
         SyncTheme();
         event.Skip();
     });
+    // Re-derive the chevron and pill geometry on a monitor DPI change even
+    // when the host has no rescale pass of its own.
+    Bind(wxEVT_DPI_CHANGED, [this](wxDPIChangedEvent &event) {
+        Rescale();
+        event.Skip();
+    });
 
     SyncTheme();
     m_state.restore(config_reader());

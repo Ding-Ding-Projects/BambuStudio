@@ -102,6 +102,9 @@ filters->SetActiveFilters({_L("Errors"), wxString::Format(_L("Search: %s"), quer
   controls is never changed.
 - Use `Purpose::Describes` for statistics and summaries so they start
   collapsed.
+- The bar follows the host background when it repaints and rescales itself on
+  a DPI change, so hosts need no extra theme or rescale calls (calling
+  `SyncTheme()` or `Rescale()` from an existing pass is harmless).
 - Surface ids are config keys: a lowercase letter first, then lowercase letters,
   digits, `_`, `.` or `-`, at most 64 characters. Any other id still collapses
   but is not stored.
