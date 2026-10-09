@@ -15779,1901 +15779,6 @@ msgstr "Wiki 瞭解詳細。"
 msgid "Export successfully."
 msgstr "匯出成功咗。"
 
-#. reviewed-category: navigation
-#. review-status: agent-drafted
-msgid "Documents/PDF"
-msgstr "文件/PDF"
-
-#. reviewed-category: navigation
-#. review-status: agent-drafted
-msgid "Images"
-msgstr "圖像"
-
-#. reviewed-category: navigation
-#. review-status: agent-drafted
-msgid "Audio"
-msgstr "音訊"
-
-#. reviewed-category: navigation
-#. review-status: agent-drafted
-msgid "Archives"
-msgstr "封存檔"
-
-#. reviewed-category: navigation
-#. review-status: agent-drafted
-msgid "Structured Data/Spreadsheets"
-msgstr "結構化資料/試算表"
-
-#. reviewed-category: navigation
-#. review-status: agent-drafted
-msgid "Code/Text"
-msgstr "程式碼/文字"
-
-#. reviewed-category: navigation
-#. review-status: agent-drafted
-msgid "Binary Encodings"
-msgstr "二進位編碼"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "%s (code %s)"
-msgstr "%s（代碼 %s）"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "No description is available for this result code."
-msgstr "呢個結果代碼冇說明。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Bundled worker verified"
-msgstr "隨附工作程序已驗證"
-
-#. reviewed-category: navigation
-#. review-status: agent-drafted
-msgid "Local file converter"
-msgstr "本機檔案轉換器"
-
-#. reviewed-category: navigation
-#. review-status: agent-drafted
-msgid "Converter categories"
-msgstr "轉換器分類"
-
-#. reviewed-category: navigation
-#. review-status: agent-drafted
-msgid "Search adapters in this category"
-msgstr "搜尋呢個分類嘅轉接器"
-
-#. reviewed-category: navigation
-#. review-status: agent-drafted
-msgid "adapter search"
-msgstr "轉接器搜尋"
-
-#. reviewed-category: navigation
-#. review-status: agent-drafted
-msgid "available and unavailable adapters"
-msgstr "可用同不可用嘅轉接器"
-
-#. reviewed-category: navigation
-#. review-status: agent-drafted
-msgid "Adapter"
-msgstr "轉接器"
-
-#. reviewed-category: navigation
-#. review-status: agent-drafted
-msgid "Availability"
-msgstr "可用狀況"
-
-#. reviewed-category: navigation
-#. review-status: agent-drafted
-msgid "Selected adapter details"
-msgstr "已揀轉接器詳情"
-
-#. reviewed-category: preferences
-#. review-status: agent-drafted
-msgid "Search PDF operation settings"
-msgstr "搜尋 PDF 操作設定"
-
-#. reviewed-category: preferences
-#. review-status: agent-drafted
-msgid "PDF operation settings search"
-msgstr "PDF 操作設定搜尋"
-
-#. reviewed-category: preferences
-#. review-status: agent-drafted
-msgid "Page order (one-based, comma separated). Default: 1. Blank rotates all pages."
-msgstr "頁次（由 1 開始，用逗號分隔）。預設：1。留空就旋轉全部頁面。"
-
-#. reviewed-category: preferences
-#. review-status: agent-drafted
-msgid "PDF page order"
-msgstr "PDF 頁次"
-
-#. reviewed-category: preferences
-#. review-status: agent-drafted
-msgid "Absolute page rotation. Default: 90 degrees."
-msgstr "頁面絕對旋轉角度。預設：90 度。"
-
-#. reviewed-category: preferences
-#. review-status: agent-drafted
-msgid "PDF rotation degrees"
-msgstr "PDF 旋轉角度"
-
-#. reviewed-category: preferences
-#. review-status: agent-drafted
-msgid "%d degrees"
-msgstr "%d 度"
-
-#. reviewed-category: preferences
-#. review-status: agent-drafted
-msgid "PDF title for Metadata. Default: empty, which clears the title. Other supported metadata is preserved."
-msgstr "中繼資料工具用嘅 PDF 標題。預設：留空，即係清除標題。其他支援嘅中繼資料會保留。"
-
-#. reviewed-category: preferences
-#. review-status: agent-drafted
-msgid "PDF title metadata"
-msgstr "PDF 標題中繼資料"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Output folder (sources keep their names with the chosen extension)"
-msgstr "輸出資料夾（來源檔案保留原名，換成所揀嘅副檔名）"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Conversion output folder"
-msgstr "轉換輸出資料夾"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Browse output folder"
-msgstr "瀏覽輸出資料夾"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Choose output folder"
-msgstr "揀輸出資料夾"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Add source file"
-msgstr "加入來源檔案"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Add source folder"
-msgstr "加入來源資料夾"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Resume queue"
-msgstr "繼續佇列"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Pause after current file"
-msgstr "做完呢個檔案就暫停"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Paused. The current file may finish; pending files stay saved."
-msgstr "已暫停。目前嘅檔案可能會做完；等緊嘅檔案會保留紀錄。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "Cancel active and pending"
-msgstr "取消進行中同等緊嘅檔案"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "Cancellation requested. Completed outputs are preserved."
-msgstr "已要求取消。已完成嘅輸出會保留。"
-
-#. reviewed-category: navigation
-#. review-status: agent-drafted
-msgid "Search this queue page"
-msgstr "搜尋呢頁佇列"
-
-#. reviewed-category: navigation
-#. review-status: agent-drafted
-msgid "Converter queue page search"
-msgstr "轉換器佇列頁面搜尋"
-
-#. reviewed-category: navigation
-#. review-status: agent-drafted
-msgid "Conversion queue and result history, current page"
-msgstr "轉換佇列同結果紀錄（目前頁面）"
-
-#. reviewed-category: navigation
-#. review-status: agent-drafted
-msgid "Number"
-msgstr "編號"
-
-#. reviewed-category: navigation
-#. review-status: agent-drafted
-msgid "Source name"
-msgstr "來源名稱"
-
-#. reviewed-category: navigation
-#. review-status: agent-drafted
-msgid "State"
-msgstr "狀態"
-
-#. reviewed-category: navigation
-#. review-status: agent-drafted
-msgid "Result"
-msgstr "結果"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Retry selected"
-msgstr "重試已揀項目"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Pause and wait for the active file before retrying."
-msgstr "重試之前，請先暫停，等進行中嘅檔案做完。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Retried: %llu. Not eligible or destination already exists: %llu."
-msgstr "已重試：%llu。唔符合資格或者目的地已經存在：%llu。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Export visible results"
-msgstr "匯出可見結果"
-
-#. reviewed-category: navigation
-#. review-status: agent-drafted
-msgid "Previous page"
-msgstr "上一頁"
-
-#. reviewed-category: navigation
-#. review-status: agent-drafted
-msgid "Next page"
-msgstr "下一頁"
-
-#. reviewed-category: navigation
-#. review-status: agent-drafted
-msgid "Queue page summary"
-msgstr "佇列頁面摘要"
-
-#. reviewed-category: navigation
-#. review-status: agent-drafted
-msgid "Converter status"
-msgstr "轉換器狀態"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The private queue cannot be opened or another converter owns it. Close the other converter and reopen this destination."
-msgstr "私人佇列開唔到，或者已經俾另一個轉換器佔用。請關閉另一個轉換器，再重新開呢個頁面。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Last source preview: %s, %s bytes."
-msgstr "最後一個來源預覽：%s，%s 位元組。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Validation: %s"
-msgstr "驗證：%s"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Unavailable: %s"
-msgstr "不可用：%s"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "Diagnostic: %s"
-msgstr "診斷：%s"
-
-#. reviewed-category: preferences
-#. review-status: agent-drafted
-msgid "Absolute page rotation: %d degrees."
-msgstr "頁面絕對旋轉角度：%d 度。"
-
-#. reviewed-category: navigation
-#. review-status: agent-drafted
-msgid "%llu saved files. Showing %llu matches from at most 100 records."
-msgstr "已儲存 %llu 個檔案。喺最多 100 條紀錄入面顯示 %llu 個符合項目。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "A saved queue record could not be read. Records and outputs have been retained for recovery."
-msgstr "有一條已儲存嘅佇列紀錄讀唔到。紀錄同輸出都已保留，方便復原。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Wait for the current operation before adding sources."
-msgstr "請等目前嘅操作完成，先再加入來源。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Select an enabled adapter first. Unavailable rows explain their missing packaged adapter."
-msgstr "請先揀一個已啟用嘅轉接器。不可用嘅項目會講明缺少咗邊個隨附轉接器。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "PDF merge needs an explicit ordered selection. Use Add source file and select at least two PDFs."
-msgstr "PDF 合併需要明確揀好次序。請用「加入來源檔案」，揀最少兩個 PDF。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Choose source folder, discovered one file at a time"
-msgstr "揀來源資料夾（逐個檔案搜尋）"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Choose PDFs to merge, in picker order"
-msgstr "揀要合併嘅 PDF（按揀選次序）"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Choose source file"
-msgstr "揀來源檔案"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Select between 2 and 1000 PDFs within the aggregate 16 MiB limit."
-msgstr "請揀 2 至 1000 個 PDF，總共唔可以超過 16 MiB。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Choose an existing output folder."
-msgstr "請揀一個已經存在嘅輸出資料夾。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Enter page numbers from 1 to 1000, separated by commas."
-msgstr "請輸入 1 至 1000 嘅頁碼，用逗號分隔。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Discovering sources with bounded memory. Cancel stops discovery; admitted records stay saved."
-msgstr "用有限記憶體搜尋來源。取消會停止搜尋；已加入嘅紀錄會保留。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Export visible queue results"
-msgstr "匯出可見嘅佇列結果"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "CSV files (*.csv)|*.csv"
-msgstr "CSV 檔案 (*.csv)|*.csv"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "Export was not written. Choose a new destination in a writable folder."
-msgstr "匯出冇寫入。請喺可寫入嘅資料夾揀一個新目的地。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Choose a verified adapter, review its data changes, choose an output folder, then add files. Sources are preserved. Existing outputs are skipped. Processing stays offline."
-msgstr "揀一個已驗證嘅轉接器，睇清楚佢會改動咩資料，揀輸出資料夾，然後加入檔案。來源檔案會保留。已存在嘅輸出會略過。全程離線處理。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Pick a verified adapter, read what it changes, choose an output folder, then add files. Sources are preserved, existing outputs are skipped and processing stays offline."
-msgstr "揀一個已驗證嘅轉接器，睇吓佢會改咩，揀輸出資料夾，再加檔案。來源檔案會保留，已存在嘅輸出會略過，全程離線處理。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Pick a verified adapter, read exactly what it changes, choose where the results land, then hand it some files. Sources are preserved, existing outputs are skipped, and processing never leaves this computer."
-msgstr "揀個已驗證嘅轉接器，睇清楚佢實際會改咩，揀好結果放邊，再餵啲檔案俾佢。來源檔案會保留，已存在嘅輸出會略過，處理全程唔會離開呢部電腦。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Empty queue. No source files have been selected."
-msgstr "佇列係空嘅。未揀任何來源檔案。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "The queue is empty. No source files have been selected yet."
-msgstr "佇列係空嘅，暫時未揀任何來源檔案。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "The queue is empty and no source files have been selected. It is ready when you are."
-msgstr "佇列空空如也，仲未揀任何來源檔案。你準備好就開始啦。"
-
-#. reviewed-category: navigation
-#. review-status: agent-drafted
-msgid "No adapters match this search."
-msgstr "冇轉接器符合呢個搜尋。"
-
-#. reviewed-category: navigation
-#. review-status: agent-drafted
-msgid "No adapters match this search. Try fewer words."
-msgstr "冇轉接器符合呢個搜尋。試吓少打幾個字。"
-
-#. reviewed-category: navigation
-#. review-status: agent-drafted
-msgid "No adapters match this search. Try fewer words, or clear it to see the whole category again."
-msgstr "冇轉接器符合呢個搜尋。試吓少打幾個字，或者清空佢，再睇返成個分類。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "No adapter selected. Unavailable formats remain listed with their exact reason."
-msgstr "未揀轉接器。不可用嘅格式仍然會列出，並註明確切原因。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Select an adapter to see what it changes. Unavailable formats remain listed with their exact reason."
-msgstr "揀一個轉接器，睇吓佢會改咩。不可用嘅格式仍然會列出，並註明確切原因。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Pick an adapter and it will spell out what it changes. Unavailable formats stay listed, each with its exact reason."
-msgstr "揀個轉接器，佢會逐樣講清楚會改咩。不可用嘅格式照樣列出，每個都註明確切原因。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Checking the bundled worker and offline sandbox. No converter is enabled until its runtime check completes."
-msgstr "檢查緊隨附工作程序同離線沙箱。運行檢查完成之前，唔會啟用任何轉換器。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Checking the bundled worker and its offline sandbox. Converters stay disabled until the check completes."
-msgstr "檢查緊隨附工作程序同佢嘅離線沙箱。檢查完成之前，轉換器會保持停用。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Giving the bundled worker and its offline sandbox a once-over. Every converter stays disabled until that check completes."
-msgstr "幫隨附工作程序同佢嘅離線沙箱做個身體檢查。檢查完成之前，每個轉換器都會保持停用。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Bundled worker checks finished. Each unavailable adapter shows its exact reason."
-msgstr "隨附工作程序檢查完成。每個不可用嘅轉接器都會顯示確切原因。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Worker checks finished. Each unavailable adapter shows its exact reason."
-msgstr "工作程序檢查完成。每個不可用嘅轉接器都會顯示確切原因。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "The worker checks are finished. Anything still unavailable says exactly why."
-msgstr "工作程序檢查搞掂。仲係用唔到嘅，都會講清楚點解。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Converting offline in the isolated worker. One file runs at a time; every result is saved."
-msgstr "喺隔離工作程序入面離線轉換。一次處理一個檔案；每個結果都會儲存。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Converting offline in the isolated worker, one file at a time. Every result is saved."
-msgstr "喺隔離工作程序入面離線轉換，一次一個檔案。每個結果都會儲存。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Converting offline in the isolated worker, one file at a time, and writing down every result as it goes."
-msgstr "喺隔離工作程序入面離線轉換，一次一個檔案，邊做邊記低每個結果。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Operation stopped. Added: %llu. Not admitted: %llu. Review each saved result below."
-msgstr "操作已停止。已加入：%llu。未獲接納：%llu。請查看下面每個已儲存嘅結果。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Stopped. Added: %llu. Not admitted: %llu. Each saved result is listed below."
-msgstr "已停止。已加入：%llu。未獲接納：%llu。每個已儲存嘅結果都列喺下面。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "All stopped. %llu added and %llu not admitted, with every saved result listed below."
-msgstr "全部停晒。加咗 %llu 個，%llu 個未獲接納，每個已儲存嘅結果都列晒喺下面。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Visible result rows exported as UTF-8 CSV. Source paths were excluded."
-msgstr "可見嘅結果行已匯出為 UTF-8 CSV。冇包括來源路徑。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Exported the visible result rows as UTF-8 CSV, without source paths."
-msgstr "已經將可見嘅結果行匯出為 UTF-8 CSV，冇包括來源路徑。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "The visible result rows are out as UTF-8 CSV, and the source paths stayed behind."
-msgstr "可見嘅結果行已經以 UTF-8 CSV 出咗街，來源路徑就留咗喺屋企。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Binary"
-msgstr "二進位"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "UTF-8 text"
-msgstr "UTF-8 文字"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "JSON"
-msgstr "JSON"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "PDF"
-msgstr "PDF"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "PNG"
-msgstr "PNG"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "JPEG"
-msgstr "JPEG"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "BMP"
-msgstr "BMP"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "PPM"
-msgstr "PPM"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "ZIP"
-msgstr "ZIP"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "WAVE"
-msgstr "WAVE"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "MP4"
-msgstr "MP4"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "Bundled converter worker and SHA-256 package proof are required."
-msgstr "需要隨附嘅轉換器工作程序同 SHA-256 套件證明。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "Bundled worker SHA-256 does not match its installed package proof."
-msgstr "隨附工作程序嘅 SHA-256 同已安裝嘅套件證明唔相符。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "This worker containment implementation requires Windows AppContainer."
-msgstr "呢個工作程序隔離實作需要 Windows AppContainer。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "Bundled worker package proof cannot be read."
-msgstr "讀唔到隨附工作程序嘅套件證明。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The bundled worker cannot start in its sandbox."
-msgstr "隨附工作程序喺沙箱入面啟動唔到。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The bundled worker returned an invalid capability receipt."
-msgstr "隨附工作程序傳回無效嘅功能收據。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Binary to hexadecimal"
-msgstr "二進位轉十六進位"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Preserves every source byte; output is lowercase ASCII without whitespace."
-msgstr "保留來源每個位元組；輸出係冇空白嘅小楷 ASCII。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Decode and compare every byte"
-msgstr "解碼並比較每個位元組"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Hexadecimal to binary"
-msgstr "十六進位轉二進位"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Requires an even count of hexadecimal digits with no whitespace."
-msgstr "需要雙數個十六進位數字，而且唔可以有空白。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Re-encode and compare normalized digits"
-msgstr "重新編碼並比較標準化數字"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Binary to Base64"
-msgstr "二進位轉 Base64"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Preserves every byte; RFC 4648 alphabet and padding, no line wrapping."
-msgstr "保留每個位元組；用 RFC 4648 字母表同填充，唔會換行。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Base64 to binary"
-msgstr "Base64 轉二進位"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Requires canonical RFC 4648 padding and no whitespace."
-msgstr "需要標準 RFC 4648 填充，而且唔可以有空白。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Re-encode and compare"
-msgstr "重新編碼並比較"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "UTF-8 with LF line endings"
-msgstr "UTF-8（LF 換行）"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Changes CRLF and CR line endings to LF. Preserves UTF-8 bytes and BOM otherwise."
-msgstr "將 CRLF 同 CR 換行改成 LF。其餘 UTF-8 位元組同 BOM 會保留。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "UTF-8 validation and absence of CR"
-msgstr "UTF-8 驗證，並確認冇 CR"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "UTF-8 with CRLF line endings"
-msgstr "UTF-8（CRLF 換行）"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Normalizes all line endings to CRLF. Preserves UTF-8 bytes and BOM otherwise."
-msgstr "將所有換行統一成 CRLF。其餘 UTF-8 位元組同 BOM 會保留。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "UTF-8 validation and canonical line endings"
-msgstr "UTF-8 驗證，並確認換行標準"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "JSON formatting"
-msgstr "JSON 格式化"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Reparse and compare ordered values; preserve original literal bytes"
-msgstr "重新解析並按次序比較數值；保留原本字面值位元組"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "CSV to JSON rows"
-msgstr "CSV 轉 JSON 行"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "TSV to JSON rows"
-msgstr "TSV 轉 JSON 行"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Parse and compare every cell"
-msgstr "解析並比較每一格"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "JSON rows to CSV"
-msgstr "JSON 行轉 CSV"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "JSON rows to TSV"
-msgstr "JSON 行轉 TSV"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Reparse and compare every cell"
-msgstr "重新解析並比較每一格"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "24-bit BMP to PPM"
-msgstr "24 位元 BMP 轉 PPM"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Only uncompressed bottom-up 24-bit BMP with a 40-byte header. Resolution metadata is omitted; RGB pixels are preserved."
-msgstr "只支援冇壓縮、由下而上、40 位元組標頭嘅 24 位元 BMP。解像度中繼資料會略去；RGB 像素會保留。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Reopen and compare dimensions and every pixel"
-msgstr "重新開啟，並比較尺寸同每個像素"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "PPM to 24-bit BMP"
-msgstr "PPM 轉 24 位元 BMP"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Only P6 8-bit RGB PPM without comments. RGB pixels are preserved; output has no color profile or resolution metadata."
-msgstr "只支援冇註解嘅 P6 8 位元 RGB PPM。RGB 像素會保留；輸出冇色彩設定檔，亦冇解像度中繼資料。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "File to ZIP (one entry)"
-msgstr "檔案轉 ZIP（單一項目）"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Preserves every source byte in payload.bin. Original filename and filesystem timestamps are omitted. No encryption."
-msgstr "喺 payload.bin 保留來源每個位元組。原本檔名同檔案系統時間戳記會略去。唔會加密。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Reopen ZIP, verify CRC and compare extracted bytes"
-msgstr "重新開啟 ZIP，驗證 CRC 並比較解壓出嚟嘅位元組"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "ZIP single-entry extraction"
-msgstr "ZIP 單一項目解壓"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Bounded extraction with CRC verification"
-msgstr "有上限嘅解壓，附 CRC 驗證"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Unavailable"
-msgstr "不可用"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "PDF inspect"
-msgstr "PDF 檢查"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "PDF split"
-msgstr "PDF 分拆"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "PDF merge"
-msgstr "PDF 合併"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "PDF extract"
-msgstr "PDF 抽取頁面"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "PDF reorder"
-msgstr "PDF 重新排序"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "PDF rotate"
-msgstr "PDF 旋轉"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "PDF metadata"
-msgstr "PDF 中繼資料"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The bundled PDF engine cannot initialize in this sandbox."
-msgstr "隨附 PDF 引擎喺呢個沙箱入面初始化唔到。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "PDF requires the complete pinned qpdf 12.4.2 runtime inside tools/pdf."
-msgstr "PDF 需要 tools/pdf 入面有完整、已固定版本嘅 qpdf 12.4.2 runtime。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "qpdf 12.4.2. Unencrypted PDFs without forms, signatures or unsupported document features. Up to 1000 pages and 16 MiB aggregate input. Rewrites PDF structure. Split writes page PDFs into one ZIP. Review metadata and page choices before resuming."
-msgstr "qpdf 12.4.2。只支援冇加密、冇表格、冇簽署、冇不支援文件功能嘅 PDF。最多 1000 頁，輸入總共最多 16 MiB。會重寫 PDF 結構。分拆會將每頁 PDF 寫入同一個 ZIP。繼續之前請檢查中繼資料同頁面選擇。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Reopen every output and verify page count/order, rotations, metadata and structural page content"
-msgstr "重新開啟每個輸出，驗證頁數/次序、旋轉、中繼資料同頁面結構內容"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "A bundled, hash-verified PDF parser/editor with post-write page and metadata validation is not installed."
-msgstr "未安裝隨附、經雜湊驗證、寫入後會驗證頁面同中繼資料嘅 PDF 解析器/編輯器。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "PNG, JPEG, GIF, TIFF, WebP, SVG"
-msgstr "PNG、JPEG、GIF、TIFF、WebP、SVG"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "These formats have no verified converter worker adapter; slicer image support does not establish converter containment or preservation."
-msgstr "呢啲格式冇已驗證嘅轉換器工作程序轉接器；切片器支援呢啲圖像，唔代表轉換器有隔離或者保留資料。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "WAV, MP3, FLAC, AAC, Ogg"
-msgstr "WAV、MP3、FLAC、AAC、Ogg"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "No bundled verified offline audio converter adapter is installed."
-msgstr "未安裝隨附、已驗證嘅離線音訊轉換轉接器。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "MP4, WebM, AVI, MOV"
-msgstr "MP4、WebM、AVI、MOV"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "No bundled verified offline video converter adapter is installed."
-msgstr "未安裝隨附、已驗證嘅離線影片轉換轉接器。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Multi-entry ZIP and 7z"
-msgstr "多項目 ZIP 同 7z"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Multi-entry extraction and 7z require a bundled verified adapter with per-entry atomic publication and decompression limits."
-msgstr "多項目解壓同 7z 需要一個隨附、已驗證、逐項原子發佈兼有解壓上限嘅轉接器。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "XLSX, ODS, YAML, TOML"
-msgstr "XLSX、ODS、YAML、TOML"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "No bundled verified parser and loss-preserving converter for these formats is installed."
-msgstr "未安裝呢啲格式嘅隨附、已驗證解析器同無損轉換器。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "DOCX, ODT, EPUB"
-msgstr "DOCX、ODT、EPUB"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "No bundled verified offline document converter adapter is installed."
-msgstr "未安裝隨附、已驗證嘅離線文件轉換轉接器。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Running"
-msgstr "進行中"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Converted"
-msgstr "已轉換"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Skipped"
-msgstr "已略過"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "Recovery required"
-msgstr "需要復原"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Waiting to convert."
-msgstr "等緊轉換。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Converting now."
-msgstr "轉換緊。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Converted, checked and saved."
-msgstr "已轉換、檢查並儲存。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Written and checked."
-msgstr "已寫入並檢查。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Cancelled. Nothing was written for this file."
-msgstr "已取消。呢個檔案冇寫入任何嘢。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "The bundled PDF engine is ready."
-msgstr "隨附 PDF 引擎已準備好。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "The worker reported what it can convert."
-msgstr "工作程序已回報佢可以轉換咩。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The destination already exists. It was not replaced."
-msgstr "目的地已經存在，冇被取代。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The output folder no longer exists."
-msgstr "輸出資料夾已經唔存在。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The output folder does not have enough free space."
-msgstr "輸出資料夾冇足夠可用空間。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The finished output could not be published without replacing another file."
-msgstr "完成咗嘅輸出無法喺唔取代其他檔案嘅情況下發佈。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The file system refused the output."
-msgstr "檔案系統拒絕咗呢個輸出。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The output could not be written."
-msgstr "輸出寫入唔到。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "A temporary file could not be created in the output folder."
-msgstr "喺輸出資料夾建立唔到暫存檔案。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The temporary output could not be written completely."
-msgstr "暫存輸出未能完整寫入。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The source and the destination are the same file."
-msgstr "來源同目的地係同一個檔案。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The source is not a regular file."
-msgstr "來源唔係普通檔案。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The source file could not be read."
-msgstr "讀唔到來源檔案。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The source changed during conversion. Nothing was written."
-msgstr "來源喺轉換期間改咗。冇寫入任何嘢。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The source changed after it was added. Add it again to convert the new version."
-msgstr "來源加入之後改咗。請再加入一次，轉換新版本。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The source is no longer available."
-msgstr "來源已經唔可用。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The source could not be read completely, or it changed while it was read."
-msgstr "來源未能完整讀取，或者讀取期間改咗。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The file content does not match the formats this adapter accepts."
-msgstr "檔案內容唔符合呢個轉接器接受嘅格式。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The file could not be checked before it was added."
-msgstr "加入之前檢查唔到呢個檔案。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The folder could not be read completely. Files found before the problem were kept."
-msgstr "資料夾未能完整讀取。出問題之前搵到嘅檔案已保留。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The file could not be checked before conversion."
-msgstr "轉換之前檢查唔到呢個檔案。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The source is larger than the 16 MiB input limit."
-msgstr "來源超過 16 MiB 輸入上限。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The source is not a regular file within the 16 MiB input limit."
-msgstr "來源唔係 16 MiB 輸入上限以內嘅普通檔案。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The output would be larger than the 64 MiB output limit."
-msgstr "輸出會超過 64 MiB 輸出上限。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The output did not match when it was checked, so it was discarded."
-msgstr "輸出檢查時唔相符，所以已棄置。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "A path is longer than the converter accepts."
-msgstr "有路徑長過轉換器接受嘅長度。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The request is larger than the worker accepts."
-msgstr "要求大過工作程序接受嘅大小。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "This adapter takes no options or extra sources."
-msgstr "呢個轉接器唔接受選項或者額外來源。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "This adapter is not available in the bundled worker."
-msgstr "隨附工作程序冇呢個轉接器。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The adapter name is invalid."
-msgstr "轉接器名稱無效。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The conversion failed without a more specific reason."
-msgstr "轉換失敗，冇更具體嘅原因。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The structure nests deeper than the 64-level limit."
-msgstr "結構嵌套超過 64 層上限。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The structure has more items than the converter allows."
-msgstr "結構嘅項目多過轉換器容許嘅數量。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The JSON repeats a key inside one object."
-msgstr "JSON 喺同一個物件入面重複咗一個鍵。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The JSON is invalid or uses an unsupported form."
-msgstr "JSON 無效，或者用咗不支援嘅形式。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The text is not valid UTF-8, or it contains control characters."
-msgstr "文字唔係有效 UTF-8，或者包含控制字元。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The text contains a character that is not a hexadecimal digit."
-msgstr "文字包含唔係十六進位數字嘅字元。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "Hexadecimal text needs an even number of digits."
-msgstr "十六進位文字需要雙數個數字。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The Base64 text length is not a multiple of four."
-msgstr "Base64 文字長度唔係 4 嘅倍數。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The Base64 padding is not canonical."
-msgstr "Base64 填充唔係標準形式。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The text contains a character outside the Base64 alphabet."
-msgstr "文字包含 Base64 字母表以外嘅字元。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The Base64 text is not in canonical form."
-msgstr "Base64 文字唔係標準形式。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The table has more cells than the converter allows."
-msgstr "表格嘅儲存格多過轉換器容許嘅數量。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The table has a carriage return without a line feed."
-msgstr "表格有 CR 但後面冇 LF。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "A table cell has a quote in an unexpected place."
-msgstr "有一格表格喺唔應該出現嘅位置有引號。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "A table cell has text after its closing quote."
-msgstr "有一格表格喺結束引號後面仲有文字。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "A quoted table cell is never closed."
-msgstr "有一格加咗引號嘅表格冇結束引號。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The table rows do not all have the same number of cells."
-msgstr "表格每行嘅格數唔一樣。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The JSON must be an array of rows, and each row an array."
-msgstr "JSON 必須係一個由行組成嘅陣列，而每行都係陣列。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "Every JSON table cell must be a string."
-msgstr "JSON 表格每一格都必須係字串。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "A JSON table row is empty."
-msgstr "有一行 JSON 表格係空嘅。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The image ends before its header is complete."
-msgstr "圖像喺標頭完整之前已經完結。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The image has more pixels than the 4,194,304-pixel limit."
-msgstr "圖像像素超過 4,194,304 像素上限。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The source is not a BMP image."
-msgstr "來源唔係 BMP 圖像。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The BMP size does not match its dimensions."
-msgstr "BMP 大小同佢嘅尺寸唔相符。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "Only BMP images with the 40-byte header are supported."
-msgstr "只支援 40 位元組標頭嘅 BMP 圖像。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "Only uncompressed 24-bit BMP images are supported."
-msgstr "只支援冇壓縮嘅 24 位元 BMP 圖像。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The source is not a binary PPM (P6) image."
-msgstr "來源唔係二進位 PPM（P6）圖像。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The PPM pixel data does not match its dimensions."
-msgstr "PPM 像素資料同佢嘅尺寸唔相符。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The PPM header must end with one whitespace character."
-msgstr "PPM 標頭必須以一個空白字元結尾。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The PPM header is not supported. Comments are not accepted."
-msgstr "不支援呢個 PPM 標頭。唔接受註解。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "Only 8-bit PPM images with a maximum value of 255 are supported."
-msgstr "只支援最大值係 255 嘅 8 位元 PPM 圖像。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The source is not a readable ZIP archive."
-msgstr "來源唔係可讀取嘅 ZIP 封存檔。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The ZIP archive must contain exactly one regular file."
-msgstr "ZIP 封存檔必須剛好包含一個普通檔案。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The ZIP entry is encrypted or uses an unsupported compression method."
-msgstr "ZIP 項目有加密，或者用咗不支援嘅壓縮方法。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The ZIP entry name is absolute or leaves its folder."
-msgstr "ZIP 項目名稱係絕對路徑，或者會跳出佢嘅資料夾。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The extracted file would be larger than the 64 MiB output limit."
-msgstr "解壓出嚟嘅檔案會超過 64 MiB 輸出上限。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The ZIP entry failed its CRC check or could not be decompressed."
-msgstr "ZIP 項目 CRC 檢查唔通過，或者解壓唔到。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The archive needs more memory than the converter allows."
-msgstr "封存檔需要嘅記憶體多過轉換器容許嘅上限。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The ZIP archive could not be created."
-msgstr "建立唔到 ZIP 封存檔。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The ZIP archive could not be completed."
-msgstr "ZIP 封存檔未能完成。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The new ZIP archive did not extract back to the same bytes, so it was discarded."
-msgstr "新嘅 ZIP 封存檔解壓返出嚟唔係同樣嘅位元組，所以已棄置。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "Another converter already owns this queue."
-msgstr "另一個轉換器已經佔用咗呢個佇列。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "A queue record could not be saved."
-msgstr "有一條佇列紀錄儲存唔到。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "A queue record could not be replaced safely."
-msgstr "有一條佇列紀錄未能安全取代。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "A queue record is larger than its limit."
-msgstr "有一條佇列紀錄超過佢嘅上限。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "A queue page larger than 100 records was requested."
-msgstr "要求咗一頁多過 100 條紀錄嘅佇列。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The queue has run out of record numbers."
-msgstr "佇列嘅紀錄編號已經用晒。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The queue has run out of cancellation numbers."
-msgstr "佇列嘅取消編號已經用晒。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "A queue record is missing a source identity."
-msgstr "有一條佇列紀錄缺少來源身分資料。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "A saved queue record is invalid."
-msgstr "有一條已儲存嘅佇列紀錄無效。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "A saved queue record has an unknown state."
-msgstr "有一條已儲存嘅佇列紀錄狀態不明。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The saved queue position is invalid."
-msgstr "已儲存嘅佇列位置無效。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The saved queue was written by an unsupported version."
-msgstr "已儲存嘅佇列係由不支援嘅版本寫入。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The rejection code is invalid."
-msgstr "拒絕代碼無效。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The app stopped while this file was converting. Check the destination, then retry."
-msgstr "轉換呢個檔案期間應用程式停咗。請檢查目的地，再重試。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "This record cannot be retried now."
-msgstr "呢條紀錄而家唔可以重試。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "Only failed, cancelled or interrupted records can be retried."
-msgstr "只有失敗、已取消或者中斷咗嘅紀錄先可以重試。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The destination already exists, so the record was not retried."
-msgstr "目的地已經存在，所以冇重試呢條紀錄。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The bundled worker file cannot be opened."
-msgstr "開唔到隨附工作程序檔案。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The bundled worker does not match its package proof."
-msgstr "隨附工作程序同佢嘅套件證明唔相符。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The isolated worker sandbox requires Windows."
-msgstr "隔離工作程序沙箱需要 Windows。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "Windows could not prepare the isolated sandbox."
-msgstr "Windows 準備唔到隔離沙箱。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The private channel to the worker could not be secured."
-msgstr "通往工作程序嘅私人通道未能加上保護。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The private channel to the worker could not be created."
-msgstr "建立唔到通往工作程序嘅私人通道。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The private channel to the worker could not be isolated."
-msgstr "通往工作程序嘅私人通道未能隔離。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The resource limits for the worker could not be created."
-msgstr "建立唔到工作程序嘅資源限制。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The resource limits for the worker could not be applied."
-msgstr "套用唔到工作程序嘅資源限制。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The worker sandbox could not be configured."
-msgstr "設定唔到工作程序沙箱。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The Windows system folder could not be located."
-msgstr "搵唔到 Windows 系統資料夾。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The worker could not be placed under its resource limits, so it was stopped."
-msgstr "工作程序未能放入資源限制之下，所以已停止。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The worker could not start after containment, so it was stopped."
-msgstr "工作程序隔離之後啟動唔到，所以已停止。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The worker sent an invalid response."
-msgstr "工作程序傳回無效回應。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The worker sent an invalid diagnostic code."
-msgstr "工作程序傳回無效診斷代碼。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The worker response ended early."
-msgstr "工作程序嘅回應提早完結。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The worker sent more data than it declared."
-msgstr "工作程序傳送嘅資料多過佢聲明嘅數量。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The worker did not finish within its 30-second limit and was stopped."
-msgstr "工作程序喺 30 秒上限內未完成，已被停止。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The worker stopped with an error."
-msgstr "工作程序出錯停止。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "This build does not include the PDF adapter."
-msgstr "呢個建置冇包括 PDF 轉接器。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The PDF engine could not confirm its sandbox."
-msgstr "PDF 引擎確認唔到佢嘅沙箱。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The PDF engine runs only inside the isolated sandbox."
-msgstr "PDF 引擎只會喺隔離沙箱入面運行。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The PDF engine package could not be located."
-msgstr "搵唔到 PDF 引擎套件。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "A PDF engine file could not be opened."
-msgstr "有一個 PDF 引擎檔案開唔到。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "A PDF engine file does not match its pinned SHA-256."
-msgstr "有一個 PDF 引擎檔案同固定嘅 SHA-256 唔相符。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "This sandbox blocks the Windows interface calls the PDF engine needs."
-msgstr "呢個沙箱封鎖咗 PDF 引擎需要嘅 Windows 介面呼叫。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The PDF engine does not provide the expected interface."
-msgstr "PDF 引擎冇提供預期嘅介面。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The PDF engine is not loaded."
-msgstr "PDF 引擎未載入。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The source does not start with a PDF signature."
-msgstr "來源開頭冇 PDF 檔案標記。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The PDF is damaged or not well formed."
-msgstr "PDF 損壞，或者格式唔正確。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The PDF is encrypted. Encrypted PDFs are not supported."
-msgstr "呢個 PDF 有加密。不支援加密 PDF。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The PDF carries a digital signature, which this tool would invalidate."
-msgstr "呢個 PDF 有數碼簽署，用呢個工具會令簽署失效。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The PDF uses document features this tool does not support, such as forms, actions or outlines."
-msgstr "呢個 PDF 用咗呢個工具不支援嘅文件功能，例如表格、動作或者大綱。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "A page has annotations or actions, which this tool does not support."
-msgstr "有一頁有註釋或者動作，呢個工具不支援。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "A PDF stream uses an encoding this tool cannot read."
-msgstr "有一個 PDF 串流用咗呢個工具讀唔到嘅編碼。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The PDF metadata uses a form this tool does not support."
-msgstr "PDF 中繼資料用咗呢個工具不支援嘅形式。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "A page has a rotation that is not a multiple of 90 degrees."
-msgstr "有一頁嘅旋轉角度唔係 90 度嘅倍數。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The PDF needs more memory than the converter allows."
-msgstr "呢個 PDF 需要嘅記憶體多過轉換器容許嘅上限。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The PDF engine stopped unexpectedly."
-msgstr "PDF 引擎意外停止。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The PDF structure nests deeper than the 64-level limit."
-msgstr "PDF 結構嵌套超過 64 層上限。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The PDF structure has more items than the converter allows."
-msgstr "PDF 結構嘅項目多過轉換器容許嘅數量。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The PDF content expands beyond the 64 MiB limit."
-msgstr "PDF 內容展開之後超過 64 MiB 上限。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The PDF has more pages than the 1000-page limit."
-msgstr "呢個 PDF 頁數超過 1000 頁上限。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "More PDFs were given than the 1000-source limit."
-msgstr "提供嘅 PDF 數量超過 1000 個來源上限。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "This PDF tool takes exactly one source. Only merge takes several."
-msgstr "呢個 PDF 工具只接受一個來源。淨係合併先接受多個。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The PDFs together are larger than the 16 MiB input limit."
-msgstr "啲 PDF 加埋超過 16 MiB 輸入上限。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The PDF output would be larger than the 64 MiB output limit."
-msgstr "PDF 輸出會超過 64 MiB 輸出上限。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The PDF request is larger than its 24 MiB limit."
-msgstr "PDF 要求超過 24 MiB 上限。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The PDF request is larger than its limit."
-msgstr "PDF 要求超過佢嘅上限。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The PDF operation is not recognized."
-msgstr "認唔到呢個 PDF 操作。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "Rotation must be 0, 90, 180 or 270 degrees."
-msgstr "旋轉角度必須係 0、90、180 或者 270 度。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "A page number is outside the document."
-msgstr "有一個頁碼超出文件範圍。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "A page number appears more than once."
-msgstr "有一個頁碼出現咗多過一次。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "Enter the page numbers to use."
-msgstr "請輸入要用嘅頁碼。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "Reorder needs every page number exactly once."
-msgstr "重新排序需要每個頁碼剛好出現一次。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "This PDF tool does not take page numbers."
-msgstr "呢個 PDF 工具唔接受頁碼。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "This PDF tool does not take a rotation."
-msgstr "呢個 PDF 工具唔接受旋轉角度。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "Only the metadata tool takes metadata values."
-msgstr "淨係中繼資料工具先接受中繼資料值。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The PDFs to merge have different metadata."
-msgstr "要合併嘅 PDF 中繼資料唔一樣。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "A metadata field is not one this tool can write."
-msgstr "有一個中繼資料欄位係呢個工具寫唔到嘅。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "A metadata value is too long, or it is not valid UTF-8 text."
-msgstr "有一個中繼資料值太長，或者唔係有效嘅 UTF-8 文字。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "A metadata value is longer than 4,096 bytes."
-msgstr "有一個中繼資料值長過 4,096 位元組。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The PDF engine could not write the output."
-msgstr "PDF 引擎寫唔到輸出。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The new PDF has the wrong number of pages, so it was discarded."
-msgstr "新 PDF 頁數唔啱，所以已棄置。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The new PDF has its pages in the wrong order, so it was discarded."
-msgstr "新 PDF 頁面次序唔啱，所以已棄置。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The new PDF has the wrong page rotation, so it was discarded."
-msgstr "新 PDF 頁面旋轉唔啱，所以已棄置。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The new PDF has the wrong metadata, so it was discarded."
-msgstr "新 PDF 中繼資料唔啱，所以已棄置。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The PDF engine returned an unexpected number of outputs."
-msgstr "PDF 引擎傳回嘅輸出數量唔符合預期。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "Split produced no pages or too many pages."
-msgstr "分拆冇產生任何頁面，或者頁面太多。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The ZIP of split pages could not be started."
-msgstr "開始唔到分拆頁面嘅 ZIP。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "A split page could not be added to the ZIP."
-msgstr "有一頁分拆頁面加唔到入 ZIP。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The ZIP of split pages could not be completed."
-msgstr "分拆頁面嘅 ZIP 未能完成。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The ZIP of split pages did not reopen to the same pages, so it was discarded."
-msgstr "分拆頁面嘅 ZIP 重新開啟之後唔係同樣嘅頁面，所以已棄置。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The PDF request is not well formed."
-msgstr "PDF 要求格式唔正確。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The PDF options must be an object."
-msgstr "PDF 選項必須係一個物件。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The PDF request contains an unknown option."
-msgstr "PDF 要求包含未知選項。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The PDF request is not valid UTF-8."
-msgstr "PDF 要求唔係有效 UTF-8。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The PDF request nests too deeply."
-msgstr "PDF 要求嵌套得太深。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The PDF request has too many items."
-msgstr "PDF 要求項目太多。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The PDF request repeats an option."
-msgstr "PDF 要求重複咗一個選項。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "A PDF in the request is not valid Base64."
-msgstr "要求入面有一個 PDF 唔係有效 Base64。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "Page numbers must be whole numbers."
-msgstr "頁碼必須係整數。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The page list is not a list, or it is too long."
-msgstr "頁碼清單唔係清單，或者太長。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The metadata must be a set of at most nine fields."
-msgstr "中繼資料必須係最多九個欄位嘅集合。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "Every metadata value must be text."
-msgstr "每個中繼資料值都必須係文字。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The PDF request lists no sources."
-msgstr "PDF 要求冇列出任何來源。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "A PDF source in the request is not text."
-msgstr "要求入面有一個 PDF 來源唔係文字。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "The PDF request could not be processed."
-msgstr "處理唔到 PDF 要求。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "Windows could not start the isolated worker. The number at the end of the code is the Windows error."
-msgstr "Windows 啟動唔到隔離工作程序。代碼最尾嘅數字係 Windows 錯誤碼。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "Windows could not load its user interface library inside the sandbox. The number at the end of the code is the Windows error."
-msgstr "Windows 喺沙箱入面載入唔到佢嘅使用者介面程式庫。代碼最尾嘅數字係 Windows 錯誤碼。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "Windows could not load the bundled PDF engine. The number at the end of the code is the Windows error."
-msgstr "Windows 載入唔到隨附 PDF 引擎。代碼最尾嘅數字係 Windows 錯誤碼。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "I reviewed what this conversion changes or leaves out, and I want to convert with these changes."
-msgstr "我已經睇過呢個轉換會改動或者略去嘅內容，並願意按呢啲變動轉換。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Accept the data changes of the selected adapter"
-msgstr "接受已揀轉接器嘅資料變動"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Changes confirmed for this adapter. You can now add files."
-msgstr "已確認呢個轉接器嘅變動。而家可以加入檔案。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Confirmation withdrawn. Files cannot be added with this adapter until you confirm again."
-msgstr "已撤回確認。再確認之前，唔可以用呢個轉接器加入檔案。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "This conversion changes or leaves out data as described above. Confirm below before adding files."
-msgstr "呢個轉換會按上面所講改動或者略去資料。加入檔案之前，請喺下面確認。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Confirm what this conversion changes before adding files. Its disclosure lists what changes or is left out."
-msgstr "加入檔案之前，請先確認呢個轉換會改動嘅內容。佢嘅披露列明咗會改動或者略去乜嘢。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Changes whitespace only: two-space indentation and LF line endings in UTF-8. Duplicate keys are rejected. Number literals, string escapes and object order are preserved exactly."
-msgstr "只改動空白：UTF-8、兩格空白縮排同 LF 換行。重複嘅鍵會被拒絕。數字字面值、字串轉義同物件次序會完全保留。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Every cell becomes a JSON string in an array of arrays; the original quoting and record line endings are not kept. Quoted separators and line breaks inside cells are preserved. Ragged rows are rejected."
-msgstr "每格都會變成 JSON 字串，放喺陣列嘅陣列入面；原本嘅引號方式同紀錄換行唔會保留。儲存格入面加咗引號嘅分隔符同換行會保留。長短唔一嘅行會被拒絕。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Only rectangular arrays of string arrays are supported. Every field is written quoted, records end with CRLF and the file is UTF-8; the JSON whitespace is not kept."
-msgstr "只支援長方形、由字串陣列組成嘅陣列。每個欄位都會加引號寫入，每條紀錄用 CRLF 結尾，檔案係 UTF-8；JSON 嘅空白唔會保留。"
-
-#. reviewed-category: file-actions
-#. review-status: agent-drafted
-msgid "Writes only the entry's bytes; its name, timestamps and comment are not kept. Only one unencrypted regular entry, stored or deflated, at most 64 MiB. Absolute and traversal names are rejected."
-msgstr "只寫入項目嘅位元組；佢嘅名稱、時間戳記同註解唔會保留。只支援一個冇加密嘅普通項目，儲存或者 deflate 壓縮，最多 64 MiB。絕對路徑同跳出資料夾嘅名稱會被拒絕。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "This conversion changes or leaves out data, and its changes were not confirmed. Nothing was added."
-msgstr "呢個轉換會改動或者略去資料，但未確認佢嘅變動。冇加入任何嘢。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "What this conversion changes is different from what was confirmed, so the file was skipped. Confirm the changes again and add it."
-msgstr "呢個轉換而家會改動嘅內容同之前確認嘅唔一樣，所以略過咗呢個檔案。請再確認變動，然後再加入。"
-
 #. reviewed-category: file-actions
 #. review-status: agent-drafted
 msgid "Model file downloaded."
@@ -43050,6 +41155,9 @@ msgstr "worker 冇回應 %d 行。請等陣再試。"
 #. review-status: agent-drafted
 msgid "Groups nested too deeply to analyse further; the engine rejects this nesting as too complex"
 msgstr "群組巢狀得太深，冇辦法再分析落去；引擎會因為太複雜而拒絕呢種巢狀"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
 msgid "Shipped defaults"
 msgstr "出廠預設值"
 
@@ -43191,97 +41299,6 @@ msgstr "文字顏色"
 #. reviewed-category: preferences
 #. review-status: agent-drafted
 msgid "Background colour"
-msgid "App logo"
-msgstr "應用程式標誌"
-
-#. reviewed-category: preferences
-#. review-status: agent-drafted
-msgid "Choose the mark shown in the title bar, the window and taskbar icon, the About dialog and the startup screen. It changes presentation only: the installed app, its shortcuts and its updates keep the shipped identity."
-msgstr "揀一個標誌，用喺標題欄、視窗同工作列圖示、「關於」對話方塊同啟動畫面。佢淨係改外觀：已安裝嘅應用程式、捷徑同更新都保留出廠身份。"
-
-#. reviewed-category: preferences
-#. review-status: agent-drafted
-msgid "Search logo sources"
-msgstr "搜尋標誌來源"
-
-#. reviewed-category: preferences
-#. review-status: agent-drafted
-msgid "Shipped mark"
-msgstr "出廠標誌"
-
-#. reviewed-category: preferences
-#. review-status: agent-drafted
-msgid "Green printer"
-msgstr "綠色打印機"
-
-#. reviewed-category: preferences
-#. review-status: agent-drafted
-msgid "Blue layers"
-msgstr "藍色打印層"
-
-#. reviewed-category: preferences
-#. review-status: agent-drafted
-msgid "Amber nozzle"
-msgstr "琥珀色噴嘴"
-
-#. reviewed-category: preferences
-#. review-status: agent-drafted
-msgid "Custom image (unavailable)"
-msgstr "自訂圖片（未能使用）"
-
-#. reviewed-category: preferences
-#. review-status: agent-drafted
-msgid "Custom images need the isolated image decoder, which this build does not include yet."
-msgstr "自訂圖片要用隔離嘅圖片解碼器，呢個版本暫時未有。"
-
-#. reviewed-category: preferences
-#. review-status: agent-drafted
-msgid "No logo source matches your search."
-msgstr "搵唔到符合搜尋嘅標誌來源。"
-
-#. reviewed-category: preferences
-#. review-status: agent-drafted
-msgid "Contain: show the whole mark"
-msgstr "完整顯示：成個標誌都睇到"
-
-#. reviewed-category: preferences
-#. review-status: agent-drafted
-msgid "Cover: crop to fill"
-msgstr "填滿：裁剪到填滿為止"
-
-#. reviewed-category: preferences
-#. review-status: agent-drafted
-msgid "Image fit"
-msgstr "圖片適配"
-
-#. reviewed-category: preferences
-#. review-status: agent-drafted
-msgid "Horizontal focal point (%)"
-msgstr "水平焦點（%）"
-
-#. reviewed-category: preferences
-#. review-status: agent-drafted
-msgid "Vertical focal point (%)"
-msgstr "垂直焦點（%）"
-
-#. reviewed-category: preferences
-#. review-status: agent-drafted
-msgid "Safe area inset (%)"
-msgstr "安全區內縮（%）"
-
-#. reviewed-category: preferences
-#. review-status: agent-drafted
-msgid "Transparent background"
-msgstr "透明背景"
-
-#. reviewed-category: preferences
-#. review-status: agent-drafted
-msgid "Choose background color"
-msgstr "揀背景顏色"
-
-#. reviewed-category: preferences
-#. review-status: agent-drafted
-msgid "Background color"
 msgstr "背景顏色"
 
 #. reviewed-category: preferences
@@ -43433,6 +41450,1904 @@ msgstr "啟動時嘅偏好設定"
 #. review-status: agent-drafted
 msgid "Scheduled settings at startup"
 msgstr "啟動時嘅排程設定"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Documents/PDF"
+msgstr "文件/PDF"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Images"
+msgstr "圖像"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Audio"
+msgstr "音訊"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Archives"
+msgstr "封存檔"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Structured Data/Spreadsheets"
+msgstr "結構化資料/試算表"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Code/Text"
+msgstr "程式碼/文字"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Binary Encodings"
+msgstr "二進位編碼"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "%s (code %s)"
+msgstr "%s（代碼 %s）"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "No description is available for this result code."
+msgstr "呢個結果代碼冇說明。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Bundled worker verified"
+msgstr "隨附工作程序已驗證"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Local file converter"
+msgstr "本機檔案轉換器"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Converter categories"
+msgstr "轉換器分類"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Search adapters in this category"
+msgstr "搜尋呢個分類嘅轉接器"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "adapter search"
+msgstr "轉接器搜尋"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "available and unavailable adapters"
+msgstr "可用同不可用嘅轉接器"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Adapter"
+msgstr "轉接器"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Availability"
+msgstr "可用狀況"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Selected adapter details"
+msgstr "已揀轉接器詳情"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Search PDF operation settings"
+msgstr "搜尋 PDF 操作設定"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "PDF operation settings search"
+msgstr "PDF 操作設定搜尋"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Page order (one-based, comma separated). Default: 1. Blank rotates all pages."
+msgstr "頁次（由 1 開始，用逗號分隔）。預設：1。留空就旋轉全部頁面。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "PDF page order"
+msgstr "PDF 頁次"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Absolute page rotation. Default: 90 degrees."
+msgstr "頁面絕對旋轉角度。預設：90 度。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "PDF rotation degrees"
+msgstr "PDF 旋轉角度"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "%d degrees"
+msgstr "%d 度"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "PDF title for Metadata. Default: empty, which clears the title. Other supported metadata is preserved."
+msgstr "中繼資料工具用嘅 PDF 標題。預設：留空，即係清除標題。其他支援嘅中繼資料會保留。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "PDF title metadata"
+msgstr "PDF 標題中繼資料"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Output folder (sources keep their names with the chosen extension)"
+msgstr "輸出資料夾（來源檔案保留原名，換成所揀嘅副檔名）"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Conversion output folder"
+msgstr "轉換輸出資料夾"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Browse output folder"
+msgstr "瀏覽輸出資料夾"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Choose output folder"
+msgstr "揀輸出資料夾"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Add source file"
+msgstr "加入來源檔案"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Add source folder"
+msgstr "加入來源資料夾"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Resume queue"
+msgstr "繼續佇列"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Pause after current file"
+msgstr "做完呢個檔案就暫停"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Paused. The current file may finish; pending files stay saved."
+msgstr "已暫停。目前嘅檔案可能會做完；等緊嘅檔案會保留紀錄。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Cancel active and pending"
+msgstr "取消進行中同等緊嘅檔案"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Cancellation requested. Completed outputs are preserved."
+msgstr "已要求取消。已完成嘅輸出會保留。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Search this queue page"
+msgstr "搜尋呢頁佇列"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Converter queue page search"
+msgstr "轉換器佇列頁面搜尋"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Conversion queue and result history, current page"
+msgstr "轉換佇列同結果紀錄（目前頁面）"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Number"
+msgstr "編號"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Source name"
+msgstr "來源名稱"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "State"
+msgstr "狀態"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Result"
+msgstr "結果"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Retry selected"
+msgstr "重試已揀項目"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Pause and wait for the active file before retrying."
+msgstr "重試之前，請先暫停，等進行中嘅檔案做完。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Retried: %llu. Not eligible or destination already exists: %llu."
+msgstr "已重試：%llu。唔符合資格或者目的地已經存在：%llu。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Export visible results"
+msgstr "匯出可見結果"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Previous page"
+msgstr "上一頁"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Next page"
+msgstr "下一頁"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Queue page summary"
+msgstr "佇列頁面摘要"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Converter status"
+msgstr "轉換器狀態"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The private queue cannot be opened or another converter owns it. Close the other converter and reopen this destination."
+msgstr "私人佇列開唔到，或者已經俾另一個轉換器佔用。請關閉另一個轉換器，再重新開呢個頁面。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Last source preview: %s, %s bytes."
+msgstr "最後一個來源預覽：%s，%s 位元組。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Validation: %s"
+msgstr "驗證：%s"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Unavailable: %s"
+msgstr "不可用：%s"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Diagnostic: %s"
+msgstr "診斷：%s"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Absolute page rotation: %d degrees."
+msgstr "頁面絕對旋轉角度：%d 度。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "%llu saved files. Showing %llu matches from at most 100 records."
+msgstr "已儲存 %llu 個檔案。喺最多 100 條紀錄入面顯示 %llu 個符合項目。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "A saved queue record could not be read. Records and outputs have been retained for recovery."
+msgstr "有一條已儲存嘅佇列紀錄讀唔到。紀錄同輸出都已保留，方便復原。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Wait for the current operation before adding sources."
+msgstr "請等目前嘅操作完成，先再加入來源。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Select an enabled adapter first. Unavailable rows explain their missing packaged adapter."
+msgstr "請先揀一個已啟用嘅轉接器。不可用嘅項目會講明缺少咗邊個隨附轉接器。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "PDF merge needs an explicit ordered selection. Use Add source file and select at least two PDFs."
+msgstr "PDF 合併需要明確揀好次序。請用「加入來源檔案」，揀最少兩個 PDF。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Choose source folder, discovered one file at a time"
+msgstr "揀來源資料夾（逐個檔案搜尋）"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Choose PDFs to merge, in picker order"
+msgstr "揀要合併嘅 PDF（按揀選次序）"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Choose source file"
+msgstr "揀來源檔案"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Select between 2 and 1000 PDFs within the aggregate 16 MiB limit."
+msgstr "請揀 2 至 1000 個 PDF，總共唔可以超過 16 MiB。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Choose an existing output folder."
+msgstr "請揀一個已經存在嘅輸出資料夾。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Enter page numbers from 1 to 1000, separated by commas."
+msgstr "請輸入 1 至 1000 嘅頁碼，用逗號分隔。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Discovering sources with bounded memory. Cancel stops discovery; admitted records stay saved."
+msgstr "用有限記憶體搜尋來源。取消會停止搜尋；已加入嘅紀錄會保留。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Export visible queue results"
+msgstr "匯出可見嘅佇列結果"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "CSV files (*.csv)|*.csv"
+msgstr "CSV 檔案 (*.csv)|*.csv"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Export was not written. Choose a new destination in a writable folder."
+msgstr "匯出冇寫入。請喺可寫入嘅資料夾揀一個新目的地。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Choose a verified adapter, review its data changes, choose an output folder, then add files. Sources are preserved. Existing outputs are skipped. Processing stays offline."
+msgstr "揀一個已驗證嘅轉接器，睇清楚佢會改動咩資料，揀輸出資料夾，然後加入檔案。來源檔案會保留。已存在嘅輸出會略過。全程離線處理。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Pick a verified adapter, read what it changes, choose an output folder, then add files. Sources are preserved, existing outputs are skipped and processing stays offline."
+msgstr "揀一個已驗證嘅轉接器，睇吓佢會改咩，揀輸出資料夾，再加檔案。來源檔案會保留，已存在嘅輸出會略過，全程離線處理。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Pick a verified adapter, read exactly what it changes, choose where the results land, then hand it some files. Sources are preserved, existing outputs are skipped, and processing never leaves this computer."
+msgstr "揀個已驗證嘅轉接器，睇清楚佢實際會改咩，揀好結果放邊，再餵啲檔案俾佢。來源檔案會保留，已存在嘅輸出會略過，處理全程唔會離開呢部電腦。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Empty queue. No source files have been selected."
+msgstr "佇列係空嘅。未揀任何來源檔案。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "The queue is empty. No source files have been selected yet."
+msgstr "佇列係空嘅，暫時未揀任何來源檔案。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "The queue is empty and no source files have been selected. It is ready when you are."
+msgstr "佇列空空如也，仲未揀任何來源檔案。你準備好就開始啦。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "No adapters match this search."
+msgstr "冇轉接器符合呢個搜尋。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "No adapters match this search. Try fewer words."
+msgstr "冇轉接器符合呢個搜尋。試吓少打幾個字。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "No adapters match this search. Try fewer words, or clear it to see the whole category again."
+msgstr "冇轉接器符合呢個搜尋。試吓少打幾個字，或者清空佢，再睇返成個分類。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "No adapter selected. Unavailable formats remain listed with their exact reason."
+msgstr "未揀轉接器。不可用嘅格式仍然會列出，並註明確切原因。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Select an adapter to see what it changes. Unavailable formats remain listed with their exact reason."
+msgstr "揀一個轉接器，睇吓佢會改咩。不可用嘅格式仍然會列出，並註明確切原因。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Pick an adapter and it will spell out what it changes. Unavailable formats stay listed, each with its exact reason."
+msgstr "揀個轉接器，佢會逐樣講清楚會改咩。不可用嘅格式照樣列出，每個都註明確切原因。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Checking the bundled worker and offline sandbox. No converter is enabled until its runtime check completes."
+msgstr "檢查緊隨附工作程序同離線沙箱。運行檢查完成之前，唔會啟用任何轉換器。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Checking the bundled worker and its offline sandbox. Converters stay disabled until the check completes."
+msgstr "檢查緊隨附工作程序同佢嘅離線沙箱。檢查完成之前，轉換器會保持停用。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Giving the bundled worker and its offline sandbox a once-over. Every converter stays disabled until that check completes."
+msgstr "幫隨附工作程序同佢嘅離線沙箱做個身體檢查。檢查完成之前，每個轉換器都會保持停用。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Bundled worker checks finished. Each unavailable adapter shows its exact reason."
+msgstr "隨附工作程序檢查完成。每個不可用嘅轉接器都會顯示確切原因。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Worker checks finished. Each unavailable adapter shows its exact reason."
+msgstr "工作程序檢查完成。每個不可用嘅轉接器都會顯示確切原因。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "The worker checks are finished. Anything still unavailable says exactly why."
+msgstr "工作程序檢查搞掂。仲係用唔到嘅，都會講清楚點解。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Converting offline in the isolated worker. One file runs at a time; every result is saved."
+msgstr "喺隔離工作程序入面離線轉換。一次處理一個檔案；每個結果都會儲存。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Converting offline in the isolated worker, one file at a time. Every result is saved."
+msgstr "喺隔離工作程序入面離線轉換，一次一個檔案。每個結果都會儲存。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Converting offline in the isolated worker, one file at a time, and writing down every result as it goes."
+msgstr "喺隔離工作程序入面離線轉換，一次一個檔案，邊做邊記低每個結果。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Operation stopped. Added: %llu. Not admitted: %llu. Review each saved result below."
+msgstr "操作已停止。已加入：%llu。未獲接納：%llu。請查看下面每個已儲存嘅結果。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Stopped. Added: %llu. Not admitted: %llu. Each saved result is listed below."
+msgstr "已停止。已加入：%llu。未獲接納：%llu。每個已儲存嘅結果都列喺下面。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "All stopped. %llu added and %llu not admitted, with every saved result listed below."
+msgstr "全部停晒。加咗 %llu 個，%llu 個未獲接納，每個已儲存嘅結果都列晒喺下面。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Visible result rows exported as UTF-8 CSV. Source paths were excluded."
+msgstr "可見嘅結果行已匯出為 UTF-8 CSV。冇包括來源路徑。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Exported the visible result rows as UTF-8 CSV, without source paths."
+msgstr "已經將可見嘅結果行匯出為 UTF-8 CSV，冇包括來源路徑。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "The visible result rows are out as UTF-8 CSV, and the source paths stayed behind."
+msgstr "可見嘅結果行已經以 UTF-8 CSV 出咗街，來源路徑就留咗喺屋企。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Binary"
+msgstr "二進位"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "UTF-8 text"
+msgstr "UTF-8 文字"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "JSON"
+msgstr "JSON"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "PDF"
+msgstr "PDF"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "PNG"
+msgstr "PNG"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "JPEG"
+msgstr "JPEG"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "BMP"
+msgstr "BMP"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "PPM"
+msgstr "PPM"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "ZIP"
+msgstr "ZIP"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "WAVE"
+msgstr "WAVE"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "MP4"
+msgstr "MP4"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Bundled converter worker and SHA-256 package proof are required."
+msgstr "需要隨附嘅轉換器工作程序同 SHA-256 套件證明。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Bundled worker SHA-256 does not match its installed package proof."
+msgstr "隨附工作程序嘅 SHA-256 同已安裝嘅套件證明唔相符。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "This worker containment implementation requires Windows AppContainer."
+msgstr "呢個工作程序隔離實作需要 Windows AppContainer。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Bundled worker package proof cannot be read."
+msgstr "讀唔到隨附工作程序嘅套件證明。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The bundled worker cannot start in its sandbox."
+msgstr "隨附工作程序喺沙箱入面啟動唔到。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The bundled worker returned an invalid capability receipt."
+msgstr "隨附工作程序傳回無效嘅功能收據。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Binary to hexadecimal"
+msgstr "二進位轉十六進位"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Preserves every source byte; output is lowercase ASCII without whitespace."
+msgstr "保留來源每個位元組；輸出係冇空白嘅小楷 ASCII。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Decode and compare every byte"
+msgstr "解碼並比較每個位元組"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Hexadecimal to binary"
+msgstr "十六進位轉二進位"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Requires an even count of hexadecimal digits with no whitespace."
+msgstr "需要雙數個十六進位數字，而且唔可以有空白。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Re-encode and compare normalized digits"
+msgstr "重新編碼並比較標準化數字"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Binary to Base64"
+msgstr "二進位轉 Base64"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Preserves every byte; RFC 4648 alphabet and padding, no line wrapping."
+msgstr "保留每個位元組；用 RFC 4648 字母表同填充，唔會換行。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Base64 to binary"
+msgstr "Base64 轉二進位"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Requires canonical RFC 4648 padding and no whitespace."
+msgstr "需要標準 RFC 4648 填充，而且唔可以有空白。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Re-encode and compare"
+msgstr "重新編碼並比較"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "UTF-8 with LF line endings"
+msgstr "UTF-8（LF 換行）"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Changes CRLF and CR line endings to LF. Preserves UTF-8 bytes and BOM otherwise."
+msgstr "將 CRLF 同 CR 換行改成 LF。其餘 UTF-8 位元組同 BOM 會保留。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "UTF-8 validation and absence of CR"
+msgstr "UTF-8 驗證，並確認冇 CR"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "UTF-8 with CRLF line endings"
+msgstr "UTF-8（CRLF 換行）"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Normalizes all line endings to CRLF. Preserves UTF-8 bytes and BOM otherwise."
+msgstr "將所有換行統一成 CRLF。其餘 UTF-8 位元組同 BOM 會保留。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "UTF-8 validation and canonical line endings"
+msgstr "UTF-8 驗證，並確認換行標準"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "JSON formatting"
+msgstr "JSON 格式化"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Reparse and compare ordered values; preserve original literal bytes"
+msgstr "重新解析並按次序比較數值；保留原本字面值位元組"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "CSV to JSON rows"
+msgstr "CSV 轉 JSON 行"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "TSV to JSON rows"
+msgstr "TSV 轉 JSON 行"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Parse and compare every cell"
+msgstr "解析並比較每一格"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "JSON rows to CSV"
+msgstr "JSON 行轉 CSV"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "JSON rows to TSV"
+msgstr "JSON 行轉 TSV"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Reparse and compare every cell"
+msgstr "重新解析並比較每一格"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "24-bit BMP to PPM"
+msgstr "24 位元 BMP 轉 PPM"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Only uncompressed bottom-up 24-bit BMP with a 40-byte header. Resolution metadata is omitted; RGB pixels are preserved."
+msgstr "只支援冇壓縮、由下而上、40 位元組標頭嘅 24 位元 BMP。解像度中繼資料會略去；RGB 像素會保留。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Reopen and compare dimensions and every pixel"
+msgstr "重新開啟，並比較尺寸同每個像素"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "PPM to 24-bit BMP"
+msgstr "PPM 轉 24 位元 BMP"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Only P6 8-bit RGB PPM without comments. RGB pixels are preserved; output has no color profile or resolution metadata."
+msgstr "只支援冇註解嘅 P6 8 位元 RGB PPM。RGB 像素會保留；輸出冇色彩設定檔，亦冇解像度中繼資料。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "File to ZIP (one entry)"
+msgstr "檔案轉 ZIP（單一項目）"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Preserves every source byte in payload.bin. Original filename and filesystem timestamps are omitted. No encryption."
+msgstr "喺 payload.bin 保留來源每個位元組。原本檔名同檔案系統時間戳記會略去。唔會加密。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Reopen ZIP, verify CRC and compare extracted bytes"
+msgstr "重新開啟 ZIP，驗證 CRC 並比較解壓出嚟嘅位元組"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "ZIP single-entry extraction"
+msgstr "ZIP 單一項目解壓"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Bounded extraction with CRC verification"
+msgstr "有上限嘅解壓，附 CRC 驗證"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Unavailable"
+msgstr "不可用"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "PDF inspect"
+msgstr "PDF 檢查"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "PDF split"
+msgstr "PDF 分拆"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "PDF merge"
+msgstr "PDF 合併"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "PDF extract"
+msgstr "PDF 抽取頁面"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "PDF reorder"
+msgstr "PDF 重新排序"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "PDF rotate"
+msgstr "PDF 旋轉"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "PDF metadata"
+msgstr "PDF 中繼資料"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The bundled PDF engine cannot initialize in this sandbox."
+msgstr "隨附 PDF 引擎喺呢個沙箱入面初始化唔到。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "PDF requires the complete pinned qpdf 12.4.2 runtime inside tools/pdf."
+msgstr "PDF 需要 tools/pdf 入面有完整、已固定版本嘅 qpdf 12.4.2 runtime。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "qpdf 12.4.2. Unencrypted PDFs without forms, signatures or unsupported document features. Up to 1000 pages and 16 MiB aggregate input. Rewrites PDF structure. Split writes page PDFs into one ZIP. Review metadata and page choices before resuming."
+msgstr "qpdf 12.4.2。只支援冇加密、冇表格、冇簽署、冇不支援文件功能嘅 PDF。最多 1000 頁，輸入總共最多 16 MiB。會重寫 PDF 結構。分拆會將每頁 PDF 寫入同一個 ZIP。繼續之前請檢查中繼資料同頁面選擇。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Reopen every output and verify page count/order, rotations, metadata and structural page content"
+msgstr "重新開啟每個輸出，驗證頁數/次序、旋轉、中繼資料同頁面結構內容"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "A bundled, hash-verified PDF parser/editor with post-write page and metadata validation is not installed."
+msgstr "未安裝隨附、經雜湊驗證、寫入後會驗證頁面同中繼資料嘅 PDF 解析器/編輯器。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "PNG, JPEG, GIF, TIFF, WebP, SVG"
+msgstr "PNG、JPEG、GIF、TIFF、WebP、SVG"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "These formats have no verified converter worker adapter; slicer image support does not establish converter containment or preservation."
+msgstr "呢啲格式冇已驗證嘅轉換器工作程序轉接器；切片器支援呢啲圖像，唔代表轉換器有隔離或者保留資料。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "WAV, MP3, FLAC, AAC, Ogg"
+msgstr "WAV、MP3、FLAC、AAC、Ogg"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "No bundled verified offline audio converter adapter is installed."
+msgstr "未安裝隨附、已驗證嘅離線音訊轉換轉接器。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "MP4, WebM, AVI, MOV"
+msgstr "MP4、WebM、AVI、MOV"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "No bundled verified offline video converter adapter is installed."
+msgstr "未安裝隨附、已驗證嘅離線影片轉換轉接器。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Multi-entry ZIP and 7z"
+msgstr "多項目 ZIP 同 7z"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Multi-entry extraction and 7z require a bundled verified adapter with per-entry atomic publication and decompression limits."
+msgstr "多項目解壓同 7z 需要一個隨附、已驗證、逐項原子發佈兼有解壓上限嘅轉接器。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "XLSX, ODS, YAML, TOML"
+msgstr "XLSX、ODS、YAML、TOML"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "No bundled verified parser and loss-preserving converter for these formats is installed."
+msgstr "未安裝呢啲格式嘅隨附、已驗證解析器同無損轉換器。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "DOCX, ODT, EPUB"
+msgstr "DOCX、ODT、EPUB"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "No bundled verified offline document converter adapter is installed."
+msgstr "未安裝隨附、已驗證嘅離線文件轉換轉接器。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Running"
+msgstr "運行緊"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Converted"
+msgstr "已轉換"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Skipped"
+msgstr "已略過"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Recovery required"
+msgstr "需要復原"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Waiting to convert."
+msgstr "等緊轉換。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Converting now."
+msgstr "轉換緊。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Converted, checked and saved."
+msgstr "已轉換、檢查並儲存。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Written and checked."
+msgstr "已寫入並檢查。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Cancelled. Nothing was written for this file."
+msgstr "已取消。呢個檔案冇寫入任何嘢。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "The bundled PDF engine is ready."
+msgstr "隨附 PDF 引擎已準備好。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "The worker reported what it can convert."
+msgstr "工作程序已回報佢可以轉換咩。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The destination already exists. It was not replaced."
+msgstr "目的地已經存在，冇被取代。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The output folder no longer exists."
+msgstr "輸出資料夾已經唔存在。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The output folder does not have enough free space."
+msgstr "輸出資料夾冇足夠可用空間。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The finished output could not be published without replacing another file."
+msgstr "完成咗嘅輸出無法喺唔取代其他檔案嘅情況下發佈。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The file system refused the output."
+msgstr "檔案系統拒絕咗呢個輸出。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The output could not be written."
+msgstr "輸出寫入唔到。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "A temporary file could not be created in the output folder."
+msgstr "喺輸出資料夾建立唔到暫存檔案。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The temporary output could not be written completely."
+msgstr "暫存輸出未能完整寫入。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The source and the destination are the same file."
+msgstr "來源同目的地係同一個檔案。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The source is not a regular file."
+msgstr "來源唔係普通檔案。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The source file could not be read."
+msgstr "讀唔到來源檔案。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The source changed during conversion. Nothing was written."
+msgstr "來源喺轉換期間改咗。冇寫入任何嘢。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The source changed after it was added. Add it again to convert the new version."
+msgstr "來源加入之後改咗。請再加入一次，轉換新版本。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The source is no longer available."
+msgstr "來源已經唔可用。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The source could not be read completely, or it changed while it was read."
+msgstr "來源未能完整讀取，或者讀取期間改咗。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The file content does not match the formats this adapter accepts."
+msgstr "檔案內容唔符合呢個轉接器接受嘅格式。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The file could not be checked before it was added."
+msgstr "加入之前檢查唔到呢個檔案。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The folder could not be read completely. Files found before the problem were kept."
+msgstr "資料夾未能完整讀取。出問題之前搵到嘅檔案已保留。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The file could not be checked before conversion."
+msgstr "轉換之前檢查唔到呢個檔案。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The source is larger than the 16 MiB input limit."
+msgstr "來源超過 16 MiB 輸入上限。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The source is not a regular file within the 16 MiB input limit."
+msgstr "來源唔係 16 MiB 輸入上限以內嘅普通檔案。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The output would be larger than the 64 MiB output limit."
+msgstr "輸出會超過 64 MiB 輸出上限。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The output did not match when it was checked, so it was discarded."
+msgstr "輸出檢查時唔相符，所以已棄置。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "A path is longer than the converter accepts."
+msgstr "有路徑長過轉換器接受嘅長度。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The request is larger than the worker accepts."
+msgstr "要求大過工作程序接受嘅大小。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "This adapter takes no options or extra sources."
+msgstr "呢個轉接器唔接受選項或者額外來源。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "This adapter is not available in the bundled worker."
+msgstr "隨附工作程序冇呢個轉接器。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The adapter name is invalid."
+msgstr "轉接器名稱無效。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The conversion failed without a more specific reason."
+msgstr "轉換失敗，冇更具體嘅原因。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The structure nests deeper than the 64-level limit."
+msgstr "結構嵌套超過 64 層上限。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The structure has more items than the converter allows."
+msgstr "結構嘅項目多過轉換器容許嘅數量。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The JSON repeats a key inside one object."
+msgstr "JSON 喺同一個物件入面重複咗一個鍵。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The JSON is invalid or uses an unsupported form."
+msgstr "JSON 無效，或者用咗不支援嘅形式。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The text is not valid UTF-8, or it contains control characters."
+msgstr "文字唔係有效 UTF-8，或者包含控制字元。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The text contains a character that is not a hexadecimal digit."
+msgstr "文字包含唔係十六進位數字嘅字元。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Hexadecimal text needs an even number of digits."
+msgstr "十六進位文字需要雙數個數字。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The Base64 text length is not a multiple of four."
+msgstr "Base64 文字長度唔係 4 嘅倍數。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The Base64 padding is not canonical."
+msgstr "Base64 填充唔係標準形式。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The text contains a character outside the Base64 alphabet."
+msgstr "文字包含 Base64 字母表以外嘅字元。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The Base64 text is not in canonical form."
+msgstr "Base64 文字唔係標準形式。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The table has more cells than the converter allows."
+msgstr "表格嘅儲存格多過轉換器容許嘅數量。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The table has a carriage return without a line feed."
+msgstr "表格有 CR 但後面冇 LF。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "A table cell has a quote in an unexpected place."
+msgstr "有一格表格喺唔應該出現嘅位置有引號。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "A table cell has text after its closing quote."
+msgstr "有一格表格喺結束引號後面仲有文字。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "A quoted table cell is never closed."
+msgstr "有一格加咗引號嘅表格冇結束引號。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The table rows do not all have the same number of cells."
+msgstr "表格每行嘅格數唔一樣。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The JSON must be an array of rows, and each row an array."
+msgstr "JSON 必須係一個由行組成嘅陣列，而每行都係陣列。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Every JSON table cell must be a string."
+msgstr "JSON 表格每一格都必須係字串。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "A JSON table row is empty."
+msgstr "有一行 JSON 表格係空嘅。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The image ends before its header is complete."
+msgstr "圖像喺標頭完整之前已經完結。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The image has more pixels than the 4,194,304-pixel limit."
+msgstr "圖像像素超過 4,194,304 像素上限。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The source is not a BMP image."
+msgstr "來源唔係 BMP 圖像。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The BMP size does not match its dimensions."
+msgstr "BMP 大小同佢嘅尺寸唔相符。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Only BMP images with the 40-byte header are supported."
+msgstr "只支援 40 位元組標頭嘅 BMP 圖像。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Only uncompressed 24-bit BMP images are supported."
+msgstr "只支援冇壓縮嘅 24 位元 BMP 圖像。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The source is not a binary PPM (P6) image."
+msgstr "來源唔係二進位 PPM（P6）圖像。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The PPM pixel data does not match its dimensions."
+msgstr "PPM 像素資料同佢嘅尺寸唔相符。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The PPM header must end with one whitespace character."
+msgstr "PPM 標頭必須以一個空白字元結尾。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The PPM header is not supported. Comments are not accepted."
+msgstr "不支援呢個 PPM 標頭。唔接受註解。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Only 8-bit PPM images with a maximum value of 255 are supported."
+msgstr "只支援最大值係 255 嘅 8 位元 PPM 圖像。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The source is not a readable ZIP archive."
+msgstr "來源唔係可讀取嘅 ZIP 封存檔。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The ZIP archive must contain exactly one regular file."
+msgstr "ZIP 封存檔必須剛好包含一個普通檔案。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The ZIP entry is encrypted or uses an unsupported compression method."
+msgstr "ZIP 項目有加密，或者用咗不支援嘅壓縮方法。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The ZIP entry name is absolute or leaves its folder."
+msgstr "ZIP 項目名稱係絕對路徑，或者會跳出佢嘅資料夾。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The extracted file would be larger than the 64 MiB output limit."
+msgstr "解壓出嚟嘅檔案會超過 64 MiB 輸出上限。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The ZIP entry failed its CRC check or could not be decompressed."
+msgstr "ZIP 項目 CRC 檢查唔通過，或者解壓唔到。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The archive needs more memory than the converter allows."
+msgstr "封存檔需要嘅記憶體多過轉換器容許嘅上限。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The ZIP archive could not be created."
+msgstr "建立唔到 ZIP 封存檔。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The ZIP archive could not be completed."
+msgstr "ZIP 封存檔未能完成。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The new ZIP archive did not extract back to the same bytes, so it was discarded."
+msgstr "新嘅 ZIP 封存檔解壓返出嚟唔係同樣嘅位元組，所以已棄置。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Another converter already owns this queue."
+msgstr "另一個轉換器已經佔用咗呢個佇列。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "A queue record could not be saved."
+msgstr "有一條佇列紀錄儲存唔到。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "A queue record could not be replaced safely."
+msgstr "有一條佇列紀錄未能安全取代。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "A queue record is larger than its limit."
+msgstr "有一條佇列紀錄超過佢嘅上限。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "A queue page larger than 100 records was requested."
+msgstr "要求咗一頁多過 100 條紀錄嘅佇列。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The queue has run out of record numbers."
+msgstr "佇列嘅紀錄編號已經用晒。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The queue has run out of cancellation numbers."
+msgstr "佇列嘅取消編號已經用晒。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "A queue record is missing a source identity."
+msgstr "有一條佇列紀錄缺少來源身分資料。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "A saved queue record is invalid."
+msgstr "有一條已儲存嘅佇列紀錄無效。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "A saved queue record has an unknown state."
+msgstr "有一條已儲存嘅佇列紀錄狀態不明。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The saved queue position is invalid."
+msgstr "已儲存嘅佇列位置無效。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The saved queue was written by an unsupported version."
+msgstr "已儲存嘅佇列係由不支援嘅版本寫入。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The rejection code is invalid."
+msgstr "拒絕代碼無效。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The app stopped while this file was converting. Check the destination, then retry."
+msgstr "轉換呢個檔案期間應用程式停咗。請檢查目的地，再重試。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "This record cannot be retried now."
+msgstr "呢條紀錄而家唔可以重試。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Only failed, cancelled or interrupted records can be retried."
+msgstr "只有失敗、已取消或者中斷咗嘅紀錄先可以重試。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The destination already exists, so the record was not retried."
+msgstr "目的地已經存在，所以冇重試呢條紀錄。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The bundled worker file cannot be opened."
+msgstr "開唔到隨附工作程序檔案。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The bundled worker does not match its package proof."
+msgstr "隨附工作程序同佢嘅套件證明唔相符。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The isolated worker sandbox requires Windows."
+msgstr "隔離工作程序沙箱需要 Windows。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Windows could not prepare the isolated sandbox."
+msgstr "Windows 準備唔到隔離沙箱。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The private channel to the worker could not be secured."
+msgstr "通往工作程序嘅私人通道未能加上保護。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The private channel to the worker could not be created."
+msgstr "建立唔到通往工作程序嘅私人通道。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The private channel to the worker could not be isolated."
+msgstr "通往工作程序嘅私人通道未能隔離。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The resource limits for the worker could not be created."
+msgstr "建立唔到工作程序嘅資源限制。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The resource limits for the worker could not be applied."
+msgstr "套用唔到工作程序嘅資源限制。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The worker sandbox could not be configured."
+msgstr "設定唔到工作程序沙箱。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The Windows system folder could not be located."
+msgstr "搵唔到 Windows 系統資料夾。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The worker could not be placed under its resource limits, so it was stopped."
+msgstr "工作程序未能放入資源限制之下，所以已停止。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The worker could not start after containment, so it was stopped."
+msgstr "工作程序隔離之後啟動唔到，所以已停止。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The worker sent an invalid response."
+msgstr "工作程序傳回無效回應。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The worker sent an invalid diagnostic code."
+msgstr "工作程序傳回無效診斷代碼。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The worker response ended early."
+msgstr "工作程序嘅回應提早完結。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The worker sent more data than it declared."
+msgstr "工作程序傳送嘅資料多過佢聲明嘅數量。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The worker did not finish within its 30-second limit and was stopped."
+msgstr "工作程序喺 30 秒上限內未完成，已被停止。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The worker stopped with an error."
+msgstr "工作程序出錯停止。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "This build does not include the PDF adapter."
+msgstr "呢個建置冇包括 PDF 轉接器。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The PDF engine could not confirm its sandbox."
+msgstr "PDF 引擎確認唔到佢嘅沙箱。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The PDF engine runs only inside the isolated sandbox."
+msgstr "PDF 引擎只會喺隔離沙箱入面運行。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The PDF engine package could not be located."
+msgstr "搵唔到 PDF 引擎套件。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "A PDF engine file could not be opened."
+msgstr "有一個 PDF 引擎檔案開唔到。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "A PDF engine file does not match its pinned SHA-256."
+msgstr "有一個 PDF 引擎檔案同固定嘅 SHA-256 唔相符。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "This sandbox blocks the Windows interface calls the PDF engine needs."
+msgstr "呢個沙箱封鎖咗 PDF 引擎需要嘅 Windows 介面呼叫。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The PDF engine does not provide the expected interface."
+msgstr "PDF 引擎冇提供預期嘅介面。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The PDF engine is not loaded."
+msgstr "PDF 引擎未載入。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The source does not start with a PDF signature."
+msgstr "來源開頭冇 PDF 檔案標記。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The PDF is damaged or not well formed."
+msgstr "PDF 損壞，或者格式唔正確。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The PDF is encrypted. Encrypted PDFs are not supported."
+msgstr "呢個 PDF 有加密。不支援加密 PDF。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The PDF carries a digital signature, which this tool would invalidate."
+msgstr "呢個 PDF 有數碼簽署，用呢個工具會令簽署失效。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The PDF uses document features this tool does not support, such as forms, actions or outlines."
+msgstr "呢個 PDF 用咗呢個工具不支援嘅文件功能，例如表格、動作或者大綱。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "A page has annotations or actions, which this tool does not support."
+msgstr "有一頁有註釋或者動作，呢個工具不支援。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "A PDF stream uses an encoding this tool cannot read."
+msgstr "有一個 PDF 串流用咗呢個工具讀唔到嘅編碼。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The PDF metadata uses a form this tool does not support."
+msgstr "PDF 中繼資料用咗呢個工具不支援嘅形式。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "A page has a rotation that is not a multiple of 90 degrees."
+msgstr "有一頁嘅旋轉角度唔係 90 度嘅倍數。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The PDF needs more memory than the converter allows."
+msgstr "呢個 PDF 需要嘅記憶體多過轉換器容許嘅上限。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The PDF engine stopped unexpectedly."
+msgstr "PDF 引擎意外停止。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The PDF structure nests deeper than the 64-level limit."
+msgstr "PDF 結構嵌套超過 64 層上限。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The PDF structure has more items than the converter allows."
+msgstr "PDF 結構嘅項目多過轉換器容許嘅數量。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The PDF content expands beyond the 64 MiB limit."
+msgstr "PDF 內容展開之後超過 64 MiB 上限。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The PDF has more pages than the 1000-page limit."
+msgstr "呢個 PDF 頁數超過 1000 頁上限。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "More PDFs were given than the 1000-source limit."
+msgstr "提供嘅 PDF 數量超過 1000 個來源上限。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "This PDF tool takes exactly one source. Only merge takes several."
+msgstr "呢個 PDF 工具只接受一個來源。淨係合併先接受多個。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The PDFs together are larger than the 16 MiB input limit."
+msgstr "啲 PDF 加埋超過 16 MiB 輸入上限。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The PDF output would be larger than the 64 MiB output limit."
+msgstr "PDF 輸出會超過 64 MiB 輸出上限。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The PDF request is larger than its 24 MiB limit."
+msgstr "PDF 要求超過 24 MiB 上限。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The PDF request is larger than its limit."
+msgstr "PDF 要求超過佢嘅上限。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The PDF operation is not recognized."
+msgstr "認唔到呢個 PDF 操作。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Rotation must be 0, 90, 180 or 270 degrees."
+msgstr "旋轉角度必須係 0、90、180 或者 270 度。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "A page number is outside the document."
+msgstr "有一個頁碼超出文件範圍。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "A page number appears more than once."
+msgstr "有一個頁碼出現咗多過一次。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Enter the page numbers to use."
+msgstr "請輸入要用嘅頁碼。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Reorder needs every page number exactly once."
+msgstr "重新排序需要每個頁碼剛好出現一次。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "This PDF tool does not take page numbers."
+msgstr "呢個 PDF 工具唔接受頁碼。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "This PDF tool does not take a rotation."
+msgstr "呢個 PDF 工具唔接受旋轉角度。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Only the metadata tool takes metadata values."
+msgstr "淨係中繼資料工具先接受中繼資料值。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The PDFs to merge have different metadata."
+msgstr "要合併嘅 PDF 中繼資料唔一樣。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "A metadata field is not one this tool can write."
+msgstr "有一個中繼資料欄位係呢個工具寫唔到嘅。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "A metadata value is too long, or it is not valid UTF-8 text."
+msgstr "有一個中繼資料值太長，或者唔係有效嘅 UTF-8 文字。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "A metadata value is longer than 4,096 bytes."
+msgstr "有一個中繼資料值長過 4,096 位元組。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The PDF engine could not write the output."
+msgstr "PDF 引擎寫唔到輸出。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The new PDF has the wrong number of pages, so it was discarded."
+msgstr "新 PDF 頁數唔啱，所以已棄置。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The new PDF has its pages in the wrong order, so it was discarded."
+msgstr "新 PDF 頁面次序唔啱，所以已棄置。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The new PDF has the wrong page rotation, so it was discarded."
+msgstr "新 PDF 頁面旋轉唔啱，所以已棄置。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The new PDF has the wrong metadata, so it was discarded."
+msgstr "新 PDF 中繼資料唔啱，所以已棄置。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The PDF engine returned an unexpected number of outputs."
+msgstr "PDF 引擎傳回嘅輸出數量唔符合預期。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Split produced no pages or too many pages."
+msgstr "分拆冇產生任何頁面，或者頁面太多。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The ZIP of split pages could not be started."
+msgstr "開始唔到分拆頁面嘅 ZIP。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "A split page could not be added to the ZIP."
+msgstr "有一頁分拆頁面加唔到入 ZIP。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The ZIP of split pages could not be completed."
+msgstr "分拆頁面嘅 ZIP 未能完成。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The ZIP of split pages did not reopen to the same pages, so it was discarded."
+msgstr "分拆頁面嘅 ZIP 重新開啟之後唔係同樣嘅頁面，所以已棄置。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The PDF request is not well formed."
+msgstr "PDF 要求格式唔正確。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The PDF options must be an object."
+msgstr "PDF 選項必須係一個物件。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The PDF request contains an unknown option."
+msgstr "PDF 要求包含未知選項。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The PDF request is not valid UTF-8."
+msgstr "PDF 要求唔係有效 UTF-8。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The PDF request nests too deeply."
+msgstr "PDF 要求嵌套得太深。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The PDF request has too many items."
+msgstr "PDF 要求項目太多。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The PDF request repeats an option."
+msgstr "PDF 要求重複咗一個選項。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "A PDF in the request is not valid Base64."
+msgstr "要求入面有一個 PDF 唔係有效 Base64。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Page numbers must be whole numbers."
+msgstr "頁碼必須係整數。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The page list is not a list, or it is too long."
+msgstr "頁碼清單唔係清單，或者太長。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The metadata must be a set of at most nine fields."
+msgstr "中繼資料必須係最多九個欄位嘅集合。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Every metadata value must be text."
+msgstr "每個中繼資料值都必須係文字。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The PDF request lists no sources."
+msgstr "PDF 要求冇列出任何來源。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "A PDF source in the request is not text."
+msgstr "要求入面有一個 PDF 來源唔係文字。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The PDF request could not be processed."
+msgstr "處理唔到 PDF 要求。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Windows could not start the isolated worker. The number at the end of the code is the Windows error."
+msgstr "Windows 啟動唔到隔離工作程序。代碼最尾嘅數字係 Windows 錯誤碼。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Windows could not load its user interface library inside the sandbox. The number at the end of the code is the Windows error."
+msgstr "Windows 喺沙箱入面載入唔到佢嘅使用者介面程式庫。代碼最尾嘅數字係 Windows 錯誤碼。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Windows could not load the bundled PDF engine. The number at the end of the code is the Windows error."
+msgstr "Windows 載入唔到隨附 PDF 引擎。代碼最尾嘅數字係 Windows 錯誤碼。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "I reviewed what this conversion changes or leaves out, and I want to convert with these changes."
+msgstr "我已經睇過呢個轉換會改動或者略去嘅內容，並願意按呢啲變動轉換。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Accept the data changes of the selected adapter"
+msgstr "接受已揀轉接器嘅資料變動"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Changes confirmed for this adapter. You can now add files."
+msgstr "已確認呢個轉接器嘅變動。而家可以加入檔案。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Confirmation withdrawn. Files cannot be added with this adapter until you confirm again."
+msgstr "已撤回確認。再確認之前，唔可以用呢個轉接器加入檔案。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "This conversion changes or leaves out data as described above. Confirm below before adding files."
+msgstr "呢個轉換會按上面所講改動或者略去資料。加入檔案之前，請喺下面確認。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Confirm what this conversion changes before adding files. Its disclosure lists what changes or is left out."
+msgstr "加入檔案之前，請先確認呢個轉換會改動嘅內容。佢嘅披露列明咗會改動或者略去乜嘢。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Changes whitespace only: two-space indentation and LF line endings in UTF-8. Duplicate keys are rejected. Number literals, string escapes and object order are preserved exactly."
+msgstr "只改動空白：UTF-8、兩格空白縮排同 LF 換行。重複嘅鍵會被拒絕。數字字面值、字串轉義同物件次序會完全保留。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Every cell becomes a JSON string in an array of arrays; the original quoting and record line endings are not kept. Quoted separators and line breaks inside cells are preserved. Ragged rows are rejected."
+msgstr "每格都會變成 JSON 字串，放喺陣列嘅陣列入面；原本嘅引號方式同紀錄換行唔會保留。儲存格入面加咗引號嘅分隔符同換行會保留。長短唔一嘅行會被拒絕。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Only rectangular arrays of string arrays are supported. Every field is written quoted, records end with CRLF and the file is UTF-8; the JSON whitespace is not kept."
+msgstr "只支援長方形、由字串陣列組成嘅陣列。每個欄位都會加引號寫入，每條紀錄用 CRLF 結尾，檔案係 UTF-8；JSON 嘅空白唔會保留。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Writes only the entry's bytes; its name, timestamps and comment are not kept. Only one unencrypted regular entry, stored or deflated, at most 64 MiB. Absolute and traversal names are rejected."
+msgstr "只寫入項目嘅位元組；佢嘅名稱、時間戳記同註解唔會保留。只支援一個冇加密嘅普通項目，儲存或者 deflate 壓縮，最多 64 MiB。絕對路徑同跳出資料夾嘅名稱會被拒絕。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "This conversion changes or leaves out data, and its changes were not confirmed. Nothing was added."
+msgstr "呢個轉換會改動或者略去資料，但未確認佢嘅變動。冇加入任何嘢。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "What this conversion changes is different from what was confirmed, so the file was skipped. Confirm the changes again and add it."
+msgstr "呢個轉換而家會改動嘅內容同之前確認嘅唔一樣，所以略過咗呢個檔案。請再確認變動，然後再加入。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
 msgid "%s tokens"
 msgstr "%s 個 token"
 
@@ -43863,11 +43778,6 @@ msgstr "目錄已更新：讀咗 %s 頁，並儲存為上次已核實嘅目錄�
 
 #. reviewed-category: navigation
 #. review-status: agent-drafted
-msgid "State"
-msgstr "狀態"
-
-#. reviewed-category: navigation
-#. review-status: agent-drafted
 msgid "Family"
 msgstr "系列"
 
@@ -43950,11 +43860,6 @@ msgstr "任何硬件適配"
 #. review-status: agent-drafted
 msgid "Choose a family first; its published variants are then listed here."
 msgstr "請先揀一個系列；之後呢度會列出佢已公佈嘅變體。"
-
-#. reviewed-category: connection-offline
-#. review-status: agent-drafted
-msgid "Running"
-msgstr "運行緊"
 
 #. reviewed-category: connection-offline
 #. review-status: agent-drafted
@@ -44205,6 +44110,7 @@ msgstr "目前硬件適配：%s"
 #. review-status: agent-drafted
 msgid "Showing %s of %s variants."
 msgstr "顯示緊 %s／%s 個變體。"
+
 #. reviewed-category: navigation
 #. review-status: agent-drafted
 msgid "Show or hide these controls. Your choice is remembered."
@@ -44249,6 +44155,104 @@ msgstr "Shift+L"
 #. review-status: agent-drafted
 msgid "Collapse or expand the legend and statistics panel"
 msgstr "收埋或者展開圖例同統計面板"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "App logo"
+msgstr "應用程式標誌"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Choose the mark shown in the title bar, the window and taskbar icon, the About dialog and the startup screen. It changes presentation only: the installed app, its shortcuts and its updates keep the shipped identity."
+msgstr "揀一個標誌，用喺標題欄、視窗同工作列圖示、「關於」對話方塊同啟動畫面。佢淨係改外觀：已安裝嘅應用程式、捷徑同更新都保留出廠身份。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Search logo sources"
+msgstr "搜尋標誌來源"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Shipped mark"
+msgstr "出廠標誌"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Green printer"
+msgstr "綠色打印機"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Blue layers"
+msgstr "藍色打印層"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Amber nozzle"
+msgstr "琥珀色噴嘴"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Custom image (unavailable)"
+msgstr "自訂圖片（未能使用）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Custom images need the isolated image decoder, which this build does not include yet."
+msgstr "自訂圖片要用隔離嘅圖片解碼器，呢個版本暫時未有。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "No logo source matches your search."
+msgstr "搵唔到符合搜尋嘅標誌來源。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Contain: show the whole mark"
+msgstr "完整顯示：成個標誌都睇到"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Cover: crop to fill"
+msgstr "填滿：裁剪到填滿為止"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Image fit"
+msgstr "圖片適配"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Horizontal focal point (%)"
+msgstr "水平焦點（%）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Vertical focal point (%)"
+msgstr "垂直焦點（%）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Safe area inset (%)"
+msgstr "安全區內縮（%）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Transparent background"
+msgstr "透明背景"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Choose background color"
+msgstr "揀背景顏色"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Background color"
+msgstr "背景顏色"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
 msgid "Fit, focal point, safe area and background apply to the presets. The shipped mark keeps its own artwork."
 msgstr "適配、焦點、安全區同背景淨係用喺預設標誌。出廠標誌保留自己嘅圖案。"
 

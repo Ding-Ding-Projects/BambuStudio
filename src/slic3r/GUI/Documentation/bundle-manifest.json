@@ -25,12 +25,17 @@
     {
       "route": "appearance/README.md",
       "title": "Appearance",
-      "sha256": "3bb99c92ff2113bda61ace9ab140ba787c5ad53331c1de4a61700d4964f86fbd"
+      "sha256": "90739646308188ed817032a37aff35ea411d62cce2ae8728ebc99ed291cf1228"
     },
     {
       "route": "appearance/app-logo.md",
-      "title": "Application logo presentation",
-      "sha256": "c761f15a5acfbd9d3e8c14e8db7e42ffd44de1ffbc827f71e6a1f6d014e1437b"
+      "title": "App logo",
+      "sha256": "e41665f510697fe355dc35a8a2582678b69d2b5a2ede8bd1228771ad6f467824"
+    },
+    {
+      "route": "appearance/app-logo.yue_HK.md",
+      "title": "應用程式標誌",
+      "sha256": "4b2773375924ce09d6a41daa7dc17b17b8bc0524977aa419000d6ea507fa7a03"
     },
     {
       "route": "appearance/native-rendering.md",
@@ -155,12 +160,12 @@
     {
       "route": "automation/readme-screenshots.md",
       "title": "README screenshots",
-      "sha256": "02aec4451ea443add790761007f95edeb78a0e3d37f6a1265de473ce224cd43d"
+      "sha256": "7bb82fb9df2148247493eacefdd5e91ccbbc88c91d7e26ad8696fda4c0987213"
     },
     {
       "route": "automation/readme-screenshots.yue_HK.md",
       "title": "README 截圖",
-      "sha256": "2b2480a88be016ece28def5b5e33d5a9fab1dbab94c8f4d0e21ac59fce1b4169"
+      "sha256": "e9cbbca7b56b5acb700f7c7e968a6c76758dd3a17d5278ce8b4f5e38b2cd14ad"
     },
     {
       "route": "camera/README.md",
@@ -200,7 +205,12 @@
     {
       "route": "converter/README.md",
       "title": "Local file converter",
-      "sha256": "5c95e2c316f79a61b5a384202f2639b87e266a56538ae3618600d1e7f521c328"
+      "sha256": "a9968110ed1cac91c7d307384bb4ee1c86e6cc761b07d40bc9f764915da037a6"
+    },
+    {
+      "route": "converter/README.yue_HK.md",
+      "title": "本機檔案轉換器",
+      "sha256": "4cc44131b58b5fe25bd60dd3f9f03d9d35305359e42c7a9385154adeece5cd77"
     },
     {
       "route": "converter/pdf-engine.md",
@@ -210,12 +220,17 @@
     {
       "route": "converter/pdf-engine.yue_HK.md",
       "title": "隨附 PDF 引擎",
-      "sha256": "61179b131593c451527fcc7c94355e12e76252a42f60dcc69bb3636d5b9e51e6"
+      "sha256": "f04f7d72e9348de301c933f58fab91444ae70b06cabdaa400f0e3420b8ff426f"
     },
     {
       "route": "converter/pdf.md",
       "title": "Local PDF tools",
       "sha256": "a2989437bd42b5ef4048b8eed8077089da566e8758feb81171f2b1af1a709834"
+    },
+    {
+      "route": "converter/pdf.yue_HK.md",
+      "title": "本機 PDF 工具",
+      "sha256": "08663016ed04027e7d7125d545d736ec4f04ae864e3c7dd5043a22ccbe189117"
     },
     {
       "route": "design-system/README.md",
@@ -660,12 +675,37 @@
     {
       "route": "documentation/README.md",
       "title": "Offline documentation",
-      "sha256": "4c01ca44b0efbe5ed0d6008280238557be127894a1e4319a69c8a0ceb2b62f30"
+      "sha256": "870e91272c4e86ac21e2c4e609146e5fac0b6502b663abb23fc467cda41e69a6"
+    },
+    {
+      "route": "documentation/instruction-mirror.md",
+      "title": "Shared instruction mirror",
+      "sha256": "245859918defbfdfdbfff5511ea42637eea0ebac5e024a4d14720eb43ef9976d"
+    },
+    {
+      "route": "documentation/instruction-mirror.yue_HK.md",
+      "title": "共用指示鏡像",
+      "sha256": "9e3978bd0d7fd9c19d1b43bf11b122d1666fe03d3960cb47bb926a8142fd48b8"
     },
     {
       "route": "documentation/offline-reader.md",
       "title": "Native offline article browser",
       "sha256": "ff9300100b7cccd427675882bba6181a29375f807c4bc5938afd15af5b6fe436"
+    },
+    {
+      "route": "downloads/README.md",
+      "title": "Downloads",
+      "sha256": "49d15d21e1ecdcd3e3da46e74c2159dd06f543a43999e07ec084c757a0330872"
+    },
+    {
+      "route": "downloads/browser-download-capture.md",
+      "title": "Browser download capture",
+      "sha256": "bd97e21fa1ece76b1b2cf12c60034251e51d8f9913a4482880f7a84d4e5758fa"
+    },
+    {
+      "route": "downloads/browser-download-capture.yue_HK.md",
+      "title": "瀏覽器下載接手",
+      "sha256": "1cc5a31f0896c669fd07caa3d0cbf2d1c846d2493125b54a31445d92b55acbe5"
     },
     {
       "route": "exports/README.md",
@@ -710,7 +750,7 @@
     {
       "route": "local-security/README.md",
       "title": "Local security components",
-      "sha256": "d020a814e81ecba85e93ccf3357e1a3db51d20122edf8500484a378700890b64"
+      "sha256": "92ed5e1e460e1ba93b55e937a2377cf7623e68a8382a23aa56823686468251ba"
     },
     {
       "route": "local-security/identity-history.md",
@@ -720,12 +760,22 @@
     {
       "route": "local-security/native-integration.md",
       "title": "Native local-security integration",
-      "sha256": "a268b930f126e2a73bf014f583f785e41a3c8702bc19c9d0756135e41da3ce3a"
+      "sha256": "9512c7b7654a25534e9c5a544b8971ac7e88770a6ebca8e7a8dc281bd25f9dce"
     },
     {
       "route": "local-security/qr-pairing.md",
       "title": "Local authenticator QR pairing",
       "sha256": "e6137ada85e8483fcbc7c614a02357839ddbcac97b0b0c5674838ee4062ea2bd"
+    },
+    {
+      "route": "local-security/unlock-ladder.md",
+      "title": "Unlock ladder",
+      "sha256": "9bf7b19f5a26d97427a78c16f9658ecc6cd4ef256ebbd0dc108fe3674adfb505"
+    },
+    {
+      "route": "local-security/unlock-ladder.yue_HK.md",
+      "title": "解鎖階梯",
+      "sha256": "c243759a1ed7184f01c1a637a30496ca45af5c726bdb21f2fcebc30529fe5886"
     },
     {
       "route": "model-creator/README.md",
@@ -770,7 +820,37 @@
     {
       "route": "ollama-suite/README.md",
       "title": "Local Ollama suite",
-      "sha256": "2f692eb8af1f848a3fbbd1c18abd84636caf30d36b2a950968b26a2c58f272b2"
+      "sha256": "f2fded4f1a866b86376e287f77171b6882312c8f3a72b3a14f72ca730b236a45"
+    },
+    {
+      "route": "ollama-suite/catalog-snapshots.md",
+      "title": "Official catalog snapshots",
+      "sha256": "88df7447acb54261b4c7dcdeb86f5177629000a03824a5f55cce827a83886437"
+    },
+    {
+      "route": "ollama-suite/catalog-snapshots.yue_HK.md",
+      "title": "官方目錄快照",
+      "sha256": "00af4bd57c424ad18b29f2e8e6210e0e67b136f9b56b0bc553cff30c3d419bd7"
+    },
+    {
+      "route": "ollama-suite/hardware-fit.md",
+      "title": "Hardware fit evidence",
+      "sha256": "612261302d6671bed6d95aa99da246ab5be69d64c0ba444f46ec8b80f4e33ac3"
+    },
+    {
+      "route": "ollama-suite/hardware-fit.yue_HK.md",
+      "title": "硬件適配證據",
+      "sha256": "b35938681a29c97417a76371867ac3369f27a1c3933c1f4a6f2866e2de64a1bf"
+    },
+    {
+      "route": "ollama-suite/model-store.md",
+      "title": "Model Store filters and explanations",
+      "sha256": "8ae853161704fecf0fc0fa0aab52e6c3cc8edd6db1eb40bd83c6ba9bbafa75ad"
+    },
+    {
+      "route": "ollama-suite/model-store.yue_HK.md",
+      "title": "模型商店篩選同解釋",
+      "sha256": "5a36729499ba3a29d8a1e05b23c4307245cd8fd83b4b71a05ef21aac5ec6ddb5"
     },
     {
       "route": "pages/README.md",
@@ -990,12 +1070,12 @@
     {
       "route": "prepare/process-settings-sidebar.md",
       "title": "Process settings in the Prepare sidebar",
-      "sha256": "073e8f2237b4fa6541c55eb7f93024028dc2b73bafa681575cc8ccc574a48784"
+      "sha256": "6ed06840f8fe3edc3076a568cd80616ca5b47b882439ee83d9e5b4239756a8da"
     },
     {
       "route": "prepare/process-settings-sidebar.yue_HK.md",
       "title": "準備邊欄中嘅流程設定",
-      "sha256": "3b3fd3fc2c05be08b1f6f20ce2216555b654e430b59e040c9b59997d1300d23b"
+      "sha256": "cad1311a12bf3b7e93d703fb8efbc9c1b2ae71efd2a73a805a21dbee33bf64d4"
     },
     {
       "route": "prepare/scroll-ownership.md",
@@ -1110,7 +1190,7 @@
     {
       "route": "scheduled-settings/README.md",
       "title": "Scheduled settings",
-      "sha256": "90ddbbb971a473268afbf9508b5c806a43cd44ed3af0ccc8c0bcccf1244c7a47"
+      "sha256": "c2874a9b28c5c3cd6d6fd202c9f3bf60f377a24a8f7d8019bc6749ca7e40c1b5"
     },
     {
       "route": "settings-drafts.md",
@@ -1130,12 +1210,12 @@
     {
       "route": "windows/README.md",
       "title": "Windows features",
-      "sha256": "688154ab5a09095f542635dae344199a1608841621017a652f14c0d54e971df6"
+      "sha256": "7d29e23a136b082d004af7fd56494f3a78461477e252f688c0de4c60cf221655"
     },
     {
       "route": "windows/README.yue_HK.md",
       "title": "Windows 功能",
-      "sha256": "0d04f0f4d5c5ee02ecd83081bbc2ad4f0a38f2aa59137e2b26cf9754bf100d29"
+      "sha256": "d88f727d88b29be66d50646933cf95bc5d1bdceed4287b7db62e1236da7bd78b"
     },
     {
       "route": "windows/ai-filament-scanner.md",
@@ -1316,6 +1396,16 @@
       "route": "windows/documentation-browser.yue_HK.md",
       "title": "離線文件瀏覽器（F1）",
       "sha256": "42a0b4e312e70a6020aa13804c805b0aa353c6df39cd6dff324908fce5d6437a"
+    },
+    {
+      "route": "windows/first-run-funny-level-disclosure.md",
+      "title": "First-run funny-level disclosure",
+      "sha256": "3e63a61e74eb0965a04dee5c278cb4f622895dca96e4e3fb914149ae06cfef0e"
+    },
+    {
+      "route": "windows/first-run-funny-level-disclosure.yue_HK.md",
+      "title": "首次設定時講清楚搞笑程度",
+      "sha256": "6772aa8501d3ced5293427404c3c559f14d269c59ce34f114220f65d2d0d31d5"
     },
     {
       "route": "windows/funny-levels-and-dialog-emojis.md",
@@ -1510,12 +1600,12 @@
     {
       "route": "windows/regex-builder.md",
       "title": "Regex builder",
-      "sha256": "95d7520997bb54e8715f6b504268986b1a46d13662142f84d7781d40275eb7de"
+      "sha256": "d0f0a18a2a0c3b5f4e512ff867215b5015249295880ce8b5b0d7ff67f7ca1c5d"
     },
     {
       "route": "windows/regex-builder.yue_HK.md",
       "title": "正則表達式構建器",
-      "sha256": "3c6dc1ca7c2255e7ab8d81b6ad788959c55bb322c4447a63ae94b8877001c465"
+      "sha256": "545d7602dc04e18bd9b7094d6a101d73c4a94f8f3bcc1baa4afd5034c5507041"
     },
     {
       "route": "windows/release-splash-art.md",
@@ -1640,12 +1730,22 @@
     {
       "route": "workspace/README.md",
       "title": "Workspace",
-      "sha256": "eddcad58c6b7bf46ef9477b05255b25894a34899bc9ddfeca5fedba4c170645a"
+      "sha256": "40a934dbbd272bc0b615a0d87661e231ea12d9c3eba39ac13b29f96c84a2210a"
     },
     {
       "route": "workspace/README.yue_HK.md",
       "title": "工作區",
-      "sha256": "a6722c53d270edc42b525e52d0c9d65e02a2ee6673d1b1ae467af62ca2073d00"
+      "sha256": "846c35a8c909f72ed35313b1db219c3a62604c321f8755bcf24a8b6bdc580590"
+    },
+    {
+      "route": "workspace/blank-editor-presets.md",
+      "title": "Start-from presets for blank editors",
+      "sha256": "f1d6cb8fb3ac459aa8b9570767584d2481203e13bdf098112b918e020f4f9116"
+    },
+    {
+      "route": "workspace/blank-editor-presets.yue_HK.md",
+      "title": "空白編輯器嘅「由預設開始」",
+      "sha256": "f5b0d66fe9f1264cf1ed476ca90c28b6977ca75732ed3d549814ee3eed6b96ac"
     },
     {
       "route": "workspace/bulk-actions.md",
@@ -1656,6 +1756,16 @@
       "route": "workspace/bulk-actions.yue_HK.md",
       "title": "批次操作",
       "sha256": "311427ad22222efbba2c98750b19309149f6edc575c9cc9561670ea94db7fe6c"
+    },
+    {
+      "route": "workspace/collapsible-filters.md",
+      "title": "Collapsible filters and statistics",
+      "sha256": "f52d57873e6f7b94da648b8d3f0169759cefa41c367ae329fbb49aa454a601f5"
+    },
+    {
+      "route": "workspace/collapsible-filters.yue_HK.md",
+      "title": "可收埋嘅篩選同統計",
+      "sha256": "deb21a9ae79c61396311dd30896c8155f0b61668850764ab819e424d84a1d6a6"
     },
     {
       "route": "workspace/config-profiles-backup.md",
@@ -1825,6 +1935,11 @@
       "bytes": 48609
     },
     {
+      "name": "2d7b684eeb8d9c6b483787e0ae50f269b34f48d264f52cd3fa3e9c64102ef758.png",
+      "sha256": "2d7b684eeb8d9c6b483787e0ae50f269b34f48d264f52cd3fa3e9c64102ef758",
+      "bytes": 35941
+    },
+    {
       "name": "2e7db2159be40c2fa6f494e1b8a29b5fef491717e395e978295e8c0116aac664.png",
       "sha256": "2e7db2159be40c2fa6f494e1b8a29b5fef491717e395e978295e8c0116aac664",
       "bytes": 19763
@@ -1850,7 +1965,7 @@
       "bytes": 1979
     }
   ],
-  "bundle_sha256": "f59f84e8b97f6b88386ac3ec113416c27061d83d45910b14610b359621b3c564",
+  "bundle_sha256": "b4d2f1a0062b745056fe26824fbd08c4ed5c0ac2a5d800afb876ab25987ddce1",
   "unavailable_references": [
     {
       "source": "api/README.md",
@@ -2215,6 +2330,26 @@
     {
       "source": "automation/native-review-tuples.yue_HK.md",
       "target": "../../../design/workflow-refresh/built-review-queue.md",
+      "kind": "link"
+    },
+    {
+      "source": "automation/readme-screenshots.md",
+      "target": "https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37864716163",
+      "kind": "link"
+    },
+    {
+      "source": "automation/readme-screenshots.md",
+      "target": "https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37875388464",
+      "kind": "link"
+    },
+    {
+      "source": "automation/readme-screenshots.yue_HK.md",
+      "target": "https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37864716163",
+      "kind": "link"
+    },
+    {
+      "source": "automation/readme-screenshots.yue_HK.md",
+      "target": "https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37875388464",
       "kind": "link"
     },
     {
@@ -2615,6 +2750,16 @@
     {
       "source": "pages/tabbed-navigation.yue_HK.md",
       "target": "../../../ui-md3/site/tabs.js",
+      "kind": "link"
+    },
+    {
+      "source": "prepare/process-settings-sidebar.md",
+      "target": "../../../README.md#screenshot-provenance",
+      "kind": "link"
+    },
+    {
+      "source": "prepare/process-settings-sidebar.yue_HK.md",
+      "target": "../../../README.md#screenshot-provenance",
       "kind": "link"
     },
     {

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-07 01:44+0000\n"
+"POT-Creation-Date: 2026-10-09 16:16+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -3558,6 +3558,7 @@ msgstr ""
 msgid "Overall preview"
 msgstr ""
 
+#. TRN: Screen reader name of the collapse toggle of the assembly structure panel.
 msgid "Assembly Structure"
 msgstr ""
 
@@ -3674,6 +3675,7 @@ msgstr ""
 msgid "Expand"
 msgstr ""
 
+#. TRN: Screen reader action of a collapsible filter or statistics header.
 msgid "Collapse"
 msgstr ""
 
@@ -3894,6 +3896,13 @@ msgstr ""
 msgid "Assembly tree"
 msgstr ""
 
+#. TRN: Header of the collapsible ink slot search in the sidebar.
+#. TRN: Header of the collapsible settings search in the sidebar.
+#. TRN: Header of the collapsible object search in the sidebar.
+#. TRN: Header of the collapsible settings search above the full process settings.
+#. TRN: Header of the collapsible search of a list.
+#. TRN: Header of the collapsible search of the device farm toolbar.
+#. TRN: Header of the collapsible search of a list.
 msgid "Search"
 msgstr ""
 
@@ -5614,6 +5623,10 @@ msgstr ""
 msgid "Thermal Index (mean)"
 msgstr ""
 
+#. TRN: Screen reader name of the fold button of the preview legend and statistics dock.
+msgid "Legend and statistics"
+msgstr ""
+
 msgid "Statistics of All Plates"
 msgstr ""
 
@@ -7128,6 +7141,1167 @@ msgstr ""
 msgid "Synchronization"
 msgstr ""
 
+msgid "Documents/PDF"
+msgstr ""
+
+msgid "Images"
+msgstr ""
+
+msgid "Audio"
+msgstr ""
+
+msgid "Video"
+msgstr ""
+
+msgid "Archives"
+msgstr ""
+
+msgid "Structured Data/Spreadsheets"
+msgstr ""
+
+msgid "Code/Text"
+msgstr ""
+
+msgid "Binary Encodings"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s (code %s)"
+msgstr ""
+
+msgid "No description is available for this result code."
+msgstr ""
+
+msgid "Bundled worker verified"
+msgstr ""
+
+msgid "Converter categories"
+msgstr ""
+
+msgid "Search adapters in this category"
+msgstr ""
+
+msgid "adapter search"
+msgstr ""
+
+msgid "available and unavailable adapters"
+msgstr ""
+
+msgid "Adapter"
+msgstr ""
+
+msgid "Availability"
+msgstr ""
+
+msgid "Selected adapter details"
+msgstr ""
+
+msgid "I reviewed what this conversion changes or leaves out, and I want to convert with these changes."
+msgstr ""
+
+msgid "Accept the data changes of the selected adapter"
+msgstr ""
+
+msgid "Changes confirmed for this adapter. You can now add files."
+msgstr ""
+
+msgid "Confirmation withdrawn. Files cannot be added with this adapter until you confirm again."
+msgstr ""
+
+msgid "Search PDF operation settings"
+msgstr ""
+
+msgid "PDF operation settings search"
+msgstr ""
+
+msgid "Page order (one-based, comma separated). Default: 1. Blank rotates all pages."
+msgstr ""
+
+msgid "PDF page order"
+msgstr ""
+
+msgid "Absolute page rotation. Default: 90 degrees."
+msgstr ""
+
+msgid "PDF rotation degrees"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%d degrees"
+msgstr ""
+
+msgid "PDF title for Metadata. Default: empty, which clears the title. Other supported metadata is preserved."
+msgstr ""
+
+msgid "PDF title metadata"
+msgstr ""
+
+msgid "Output folder (sources keep their names with the chosen extension)"
+msgstr ""
+
+msgid "Conversion output folder"
+msgstr ""
+
+msgid "Browse output folder"
+msgstr ""
+
+msgid "Choose output folder"
+msgstr ""
+
+msgid "Add source file"
+msgstr ""
+
+msgid "Add source folder"
+msgstr ""
+
+msgid "Resume queue"
+msgstr ""
+
+msgid "Pause after current file"
+msgstr ""
+
+msgid "Paused. The current file may finish; pending files stay saved."
+msgstr ""
+
+msgid "Cancel active and pending"
+msgstr ""
+
+msgid "Cancellation requested. Completed outputs are preserved."
+msgstr ""
+
+msgid "Search this queue page"
+msgstr ""
+
+msgid "Converter queue page search"
+msgstr ""
+
+msgid "Conversion queue and result history, current page"
+msgstr ""
+
+msgid "Number"
+msgstr ""
+
+msgid "Source name"
+msgstr ""
+
+msgid "State"
+msgstr ""
+
+msgid "Result"
+msgstr ""
+
+msgid "Select this page"
+msgstr ""
+
+msgid "Retry selected"
+msgstr ""
+
+msgid "Pause and wait for the active file before retrying."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Retried: %llu. Not eligible or destination already exists: %llu."
+msgstr ""
+
+msgid "Export visible results"
+msgstr ""
+
+msgid "Previous page"
+msgstr ""
+
+msgid "Next page"
+msgstr ""
+
+msgid "Queue page summary"
+msgstr ""
+
+msgid "Converter status"
+msgstr ""
+
+msgid "The private queue cannot be opened or another converter owns it. Close the other converter and reopen this destination."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Last source preview: %s, %s bytes."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Validation: %s"
+msgstr ""
+
+msgid "This conversion changes or leaves out data as described above. Confirm below before adding files."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Unavailable: %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Diagnostic: %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Absolute page rotation: %d degrees."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%llu saved files. Showing %llu matches from at most 100 records."
+msgstr ""
+
+msgid "A saved queue record could not be read. Records and outputs have been retained for recovery."
+msgstr ""
+
+msgid "Wait for the current operation before adding sources."
+msgstr ""
+
+msgid "Select an enabled adapter first. Unavailable rows explain their missing packaged adapter."
+msgstr ""
+
+msgid "Confirm what this conversion changes before adding files. Its disclosure lists what changes or is left out."
+msgstr ""
+
+msgid "PDF merge needs an explicit ordered selection. Use Add source file and select at least two PDFs."
+msgstr ""
+
+msgid "Choose source folder, discovered one file at a time"
+msgstr ""
+
+msgid "Choose PDFs to merge, in picker order"
+msgstr ""
+
+msgid "Choose source file"
+msgstr ""
+
+msgid "All files (*.*)|*.*"
+msgstr ""
+
+msgid "Select between 2 and 1000 PDFs within the aggregate 16 MiB limit."
+msgstr ""
+
+msgid "Choose an existing output folder."
+msgstr ""
+
+msgid "Enter page numbers from 1 to 1000, separated by commas."
+msgstr ""
+
+msgid "Discovering sources with bounded memory. Cancel stops discovery; admitted records stay saved."
+msgstr ""
+
+msgid "Export visible queue results"
+msgstr ""
+
+msgid "CSV files (*.csv)|*.csv"
+msgstr ""
+
+msgid "Export was not written. Choose a new destination in a writable folder."
+msgstr ""
+
+msgid "Choose a verified adapter, review its data changes, choose an output folder, then add files. Sources are preserved. Existing outputs are skipped. Processing stays offline."
+msgstr ""
+
+msgid "Pick a verified adapter, read what it changes, choose an output folder, then add files. Sources are preserved, existing outputs are skipped and processing stays offline."
+msgstr ""
+
+msgid "Pick a verified adapter, read exactly what it changes, choose where the results land, then hand it some files. Sources are preserved, existing outputs are skipped, and processing never leaves this computer."
+msgstr ""
+
+msgid "Empty queue. No source files have been selected."
+msgstr ""
+
+msgid "The queue is empty. No source files have been selected yet."
+msgstr ""
+
+msgid "The queue is empty and no source files have been selected. It is ready when you are."
+msgstr ""
+
+msgid "No adapters match this search."
+msgstr ""
+
+msgid "No adapters match this search. Try fewer words."
+msgstr ""
+
+msgid "No adapters match this search. Try fewer words, or clear it to see the whole category again."
+msgstr ""
+
+msgid "No adapter selected. Unavailable formats remain listed with their exact reason."
+msgstr ""
+
+msgid "Select an adapter to see what it changes. Unavailable formats remain listed with their exact reason."
+msgstr ""
+
+msgid "Pick an adapter and it will spell out what it changes. Unavailable formats stay listed, each with its exact reason."
+msgstr ""
+
+msgid "Checking the bundled worker and offline sandbox. No converter is enabled until its runtime check completes."
+msgstr ""
+
+msgid "Checking the bundled worker and its offline sandbox. Converters stay disabled until the check completes."
+msgstr ""
+
+msgid "Giving the bundled worker and its offline sandbox a once-over. Every converter stays disabled until that check completes."
+msgstr ""
+
+msgid "Bundled worker checks finished. Each unavailable adapter shows its exact reason."
+msgstr ""
+
+msgid "Worker checks finished. Each unavailable adapter shows its exact reason."
+msgstr ""
+
+msgid "The worker checks are finished. Anything still unavailable says exactly why."
+msgstr ""
+
+msgid "Converting offline in the isolated worker. One file runs at a time; every result is saved."
+msgstr ""
+
+msgid "Converting offline in the isolated worker, one file at a time. Every result is saved."
+msgstr ""
+
+msgid "Converting offline in the isolated worker, one file at a time, and writing down every result as it goes."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Operation stopped. Added: %llu. Not admitted: %llu. Review each saved result below."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Stopped. Added: %llu. Not admitted: %llu. Each saved result is listed below."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "All stopped. %llu added and %llu not admitted, with every saved result listed below."
+msgstr ""
+
+msgid "Visible result rows exported as UTF-8 CSV. Source paths were excluded."
+msgstr ""
+
+msgid "Exported the visible result rows as UTF-8 CSV, without source paths."
+msgstr ""
+
+msgid "The visible result rows are out as UTF-8 CSV, and the source paths stayed behind."
+msgstr ""
+
+msgid "Binary"
+msgstr ""
+
+msgid "UTF-8 text"
+msgstr ""
+
+msgid "JSON"
+msgstr ""
+
+msgid "PDF"
+msgstr ""
+
+msgid "PNG"
+msgstr ""
+
+msgid "JPEG"
+msgstr ""
+
+msgid "BMP"
+msgstr ""
+
+msgid "PPM"
+msgstr ""
+
+msgid "ZIP"
+msgstr ""
+
+msgid "WAVE"
+msgstr ""
+
+msgid "MP4"
+msgstr ""
+
+msgid "Bundled converter worker and SHA-256 package proof are required."
+msgstr ""
+
+msgid "Bundled worker SHA-256 does not match its installed package proof."
+msgstr ""
+
+msgid "This worker containment implementation requires Windows AppContainer."
+msgstr ""
+
+msgid "Bundled worker package proof cannot be read."
+msgstr ""
+
+msgid "The bundled worker cannot start in its sandbox."
+msgstr ""
+
+msgid "The bundled worker returned an invalid capability receipt."
+msgstr ""
+
+msgid "Binary to hexadecimal"
+msgstr ""
+
+msgid "Preserves every source byte; output is lowercase ASCII without whitespace."
+msgstr ""
+
+msgid "Decode and compare every byte"
+msgstr ""
+
+msgid "Hexadecimal to binary"
+msgstr ""
+
+msgid "Requires an even count of hexadecimal digits with no whitespace."
+msgstr ""
+
+msgid "Re-encode and compare normalized digits"
+msgstr ""
+
+msgid "Binary to Base64"
+msgstr ""
+
+msgid "Preserves every byte; RFC 4648 alphabet and padding, no line wrapping."
+msgstr ""
+
+msgid "Base64 to binary"
+msgstr ""
+
+msgid "Requires canonical RFC 4648 padding and no whitespace."
+msgstr ""
+
+msgid "Re-encode and compare"
+msgstr ""
+
+msgid "UTF-8 with LF line endings"
+msgstr ""
+
+msgid "Changes CRLF and CR line endings to LF. Preserves UTF-8 bytes and BOM otherwise."
+msgstr ""
+
+msgid "UTF-8 validation and absence of CR"
+msgstr ""
+
+msgid "UTF-8 with CRLF line endings"
+msgstr ""
+
+msgid "Normalizes all line endings to CRLF. Preserves UTF-8 bytes and BOM otherwise."
+msgstr ""
+
+msgid "UTF-8 validation and canonical line endings"
+msgstr ""
+
+msgid "JSON formatting"
+msgstr ""
+
+msgid "Changes whitespace only: two-space indentation and LF line endings in UTF-8. Duplicate keys are rejected. Number literals, string escapes and object order are preserved exactly."
+msgstr ""
+
+msgid "Reparse and compare ordered values; preserve original literal bytes"
+msgstr ""
+
+msgid "CSV to JSON rows"
+msgstr ""
+
+msgid "TSV to JSON rows"
+msgstr ""
+
+msgid "Every cell becomes a JSON string in an array of arrays; the original quoting and record line endings are not kept. Quoted separators and line breaks inside cells are preserved. Ragged rows are rejected."
+msgstr ""
+
+msgid "Parse and compare every cell"
+msgstr ""
+
+msgid "JSON rows to CSV"
+msgstr ""
+
+msgid "JSON rows to TSV"
+msgstr ""
+
+msgid "Only rectangular arrays of string arrays are supported. Every field is written quoted, records end with CRLF and the file is UTF-8; the JSON whitespace is not kept."
+msgstr ""
+
+msgid "Reparse and compare every cell"
+msgstr ""
+
+msgid "24-bit BMP to PPM"
+msgstr ""
+
+msgid "Only uncompressed bottom-up 24-bit BMP with a 40-byte header. Resolution metadata is omitted; RGB pixels are preserved."
+msgstr ""
+
+msgid "Reopen and compare dimensions and every pixel"
+msgstr ""
+
+msgid "PPM to 24-bit BMP"
+msgstr ""
+
+msgid "Only P6 8-bit RGB PPM without comments. RGB pixels are preserved; output has no color profile or resolution metadata."
+msgstr ""
+
+msgid "File to ZIP (one entry)"
+msgstr ""
+
+msgid "Preserves every source byte in payload.bin. Original filename and filesystem timestamps are omitted. No encryption."
+msgstr ""
+
+msgid "Reopen ZIP, verify CRC and compare extracted bytes"
+msgstr ""
+
+msgid "ZIP single-entry extraction"
+msgstr ""
+
+msgid "Writes only the entry's bytes; its name, timestamps and comment are not kept. Only one unencrypted regular entry, stored or deflated, at most 64 MiB. Absolute and traversal names are rejected."
+msgstr ""
+
+msgid "Bounded extraction with CRC verification"
+msgstr ""
+
+msgid "Unavailable"
+msgstr ""
+
+msgid "PDF inspect"
+msgstr ""
+
+msgid "PDF split"
+msgstr ""
+
+msgid "PDF merge"
+msgstr ""
+
+msgid "PDF extract"
+msgstr ""
+
+msgid "PDF reorder"
+msgstr ""
+
+msgid "PDF rotate"
+msgstr ""
+
+msgid "PDF metadata"
+msgstr ""
+
+msgid "The bundled PDF engine cannot initialize in this sandbox."
+msgstr ""
+
+msgid "PDF requires the complete pinned qpdf 12.4.2 runtime inside tools/pdf."
+msgstr ""
+
+msgid "qpdf 12.4.2. Unencrypted PDFs without forms, signatures or unsupported document features. Up to 1000 pages and 16 MiB aggregate input. Rewrites PDF structure. Split writes page PDFs into one ZIP. Review metadata and page choices before resuming."
+msgstr ""
+
+msgid "Reopen every output and verify page count/order, rotations, metadata and structural page content"
+msgstr ""
+
+msgid "A bundled, hash-verified PDF parser/editor with post-write page and metadata validation is not installed."
+msgstr ""
+
+msgid "PNG, JPEG, GIF, TIFF, WebP, SVG"
+msgstr ""
+
+msgid "These formats have no verified converter worker adapter; slicer image support does not establish converter containment or preservation."
+msgstr ""
+
+msgid "WAV, MP3, FLAC, AAC, Ogg"
+msgstr ""
+
+msgid "No bundled verified offline audio converter adapter is installed."
+msgstr ""
+
+msgid "MP4, WebM, AVI, MOV"
+msgstr ""
+
+msgid "No bundled verified offline video converter adapter is installed."
+msgstr ""
+
+msgid "Multi-entry ZIP and 7z"
+msgstr ""
+
+msgid "Multi-entry extraction and 7z require a bundled verified adapter with per-entry atomic publication and decompression limits."
+msgstr ""
+
+msgid "XLSX, ODS, YAML, TOML"
+msgstr ""
+
+msgid "No bundled verified parser and loss-preserving converter for these formats is installed."
+msgstr ""
+
+msgid "DOCX, ODT, EPUB"
+msgstr ""
+
+msgid "No bundled verified offline document converter adapter is installed."
+msgstr ""
+
+msgid "Pending"
+msgstr ""
+
+msgid "Running"
+msgstr ""
+
+msgid "Converted"
+msgstr ""
+
+msgid "Skipped"
+msgstr ""
+
+msgid "Failed"
+msgstr ""
+
+msgid "Recovery required"
+msgstr ""
+
+msgid "Waiting to convert."
+msgstr ""
+
+msgid "Converting now."
+msgstr ""
+
+msgid "Converted, checked and saved."
+msgstr ""
+
+msgid "Written and checked."
+msgstr ""
+
+msgid "Cancelled. Nothing was written for this file."
+msgstr ""
+
+msgid "The bundled PDF engine is ready."
+msgstr ""
+
+msgid "The worker reported what it can convert."
+msgstr ""
+
+msgid "This conversion changes or leaves out data, and its changes were not confirmed. Nothing was added."
+msgstr ""
+
+msgid "What this conversion changes is different from what was confirmed, so the file was skipped. Confirm the changes again and add it."
+msgstr ""
+
+msgid "The destination already exists. It was not replaced."
+msgstr ""
+
+msgid "The output folder no longer exists."
+msgstr ""
+
+msgid "The output folder does not have enough free space."
+msgstr ""
+
+msgid "The finished output could not be published without replacing another file."
+msgstr ""
+
+msgid "The file system refused the output."
+msgstr ""
+
+msgid "The output could not be written."
+msgstr ""
+
+msgid "A temporary file could not be created in the output folder."
+msgstr ""
+
+msgid "The temporary output could not be written completely."
+msgstr ""
+
+msgid "The source and the destination are the same file."
+msgstr ""
+
+msgid "The source is not a regular file."
+msgstr ""
+
+msgid "The source file could not be read."
+msgstr ""
+
+msgid "The source changed during conversion. Nothing was written."
+msgstr ""
+
+msgid "The source changed after it was added. Add it again to convert the new version."
+msgstr ""
+
+msgid "The source is no longer available."
+msgstr ""
+
+msgid "The source could not be read completely, or it changed while it was read."
+msgstr ""
+
+msgid "The file content does not match the formats this adapter accepts."
+msgstr ""
+
+msgid "The file could not be checked before it was added."
+msgstr ""
+
+msgid "The folder could not be read completely. Files found before the problem were kept."
+msgstr ""
+
+msgid "The file could not be checked before conversion."
+msgstr ""
+
+msgid "The source is larger than the 16 MiB input limit."
+msgstr ""
+
+msgid "The source is not a regular file within the 16 MiB input limit."
+msgstr ""
+
+msgid "The output would be larger than the 64 MiB output limit."
+msgstr ""
+
+msgid "The output did not match when it was checked, so it was discarded."
+msgstr ""
+
+msgid "A path is longer than the converter accepts."
+msgstr ""
+
+msgid "The request is larger than the worker accepts."
+msgstr ""
+
+msgid "This adapter takes no options or extra sources."
+msgstr ""
+
+msgid "This adapter is not available in the bundled worker."
+msgstr ""
+
+msgid "The adapter name is invalid."
+msgstr ""
+
+msgid "The conversion failed without a more specific reason."
+msgstr ""
+
+msgid "The structure nests deeper than the 64-level limit."
+msgstr ""
+
+msgid "The structure has more items than the converter allows."
+msgstr ""
+
+msgid "The JSON repeats a key inside one object."
+msgstr ""
+
+msgid "The JSON is invalid or uses an unsupported form."
+msgstr ""
+
+msgid "The text is not valid UTF-8, or it contains control characters."
+msgstr ""
+
+msgid "The text contains a character that is not a hexadecimal digit."
+msgstr ""
+
+msgid "Hexadecimal text needs an even number of digits."
+msgstr ""
+
+msgid "The Base64 text length is not a multiple of four."
+msgstr ""
+
+msgid "The Base64 padding is not canonical."
+msgstr ""
+
+msgid "The text contains a character outside the Base64 alphabet."
+msgstr ""
+
+msgid "The Base64 text is not in canonical form."
+msgstr ""
+
+msgid "The table has more cells than the converter allows."
+msgstr ""
+
+msgid "The table has a carriage return without a line feed."
+msgstr ""
+
+msgid "A table cell has a quote in an unexpected place."
+msgstr ""
+
+msgid "A table cell has text after its closing quote."
+msgstr ""
+
+msgid "A quoted table cell is never closed."
+msgstr ""
+
+msgid "The table rows do not all have the same number of cells."
+msgstr ""
+
+msgid "The JSON must be an array of rows, and each row an array."
+msgstr ""
+
+msgid "Every JSON table cell must be a string."
+msgstr ""
+
+msgid "A JSON table row is empty."
+msgstr ""
+
+msgid "The image ends before its header is complete."
+msgstr ""
+
+msgid "The image has more pixels than the 4,194,304-pixel limit."
+msgstr ""
+
+msgid "The source is not a BMP image."
+msgstr ""
+
+msgid "The BMP size does not match its dimensions."
+msgstr ""
+
+msgid "Only BMP images with the 40-byte header are supported."
+msgstr ""
+
+msgid "Only uncompressed 24-bit BMP images are supported."
+msgstr ""
+
+msgid "The source is not a binary PPM (P6) image."
+msgstr ""
+
+msgid "The PPM pixel data does not match its dimensions."
+msgstr ""
+
+msgid "The PPM header must end with one whitespace character."
+msgstr ""
+
+msgid "The PPM header is not supported. Comments are not accepted."
+msgstr ""
+
+msgid "Only 8-bit PPM images with a maximum value of 255 are supported."
+msgstr ""
+
+msgid "The source is not a readable ZIP archive."
+msgstr ""
+
+msgid "The ZIP archive must contain exactly one regular file."
+msgstr ""
+
+msgid "The ZIP entry is encrypted or uses an unsupported compression method."
+msgstr ""
+
+msgid "The ZIP entry name is absolute or leaves its folder."
+msgstr ""
+
+msgid "The extracted file would be larger than the 64 MiB output limit."
+msgstr ""
+
+msgid "The ZIP entry failed its CRC check or could not be decompressed."
+msgstr ""
+
+msgid "The archive needs more memory than the converter allows."
+msgstr ""
+
+msgid "The ZIP archive could not be created."
+msgstr ""
+
+msgid "The ZIP archive could not be completed."
+msgstr ""
+
+msgid "The new ZIP archive did not extract back to the same bytes, so it was discarded."
+msgstr ""
+
+msgid "Another converter already owns this queue."
+msgstr ""
+
+msgid "A queue record could not be saved."
+msgstr ""
+
+msgid "A queue record could not be replaced safely."
+msgstr ""
+
+msgid "A queue record is larger than its limit."
+msgstr ""
+
+msgid "A queue page larger than 100 records was requested."
+msgstr ""
+
+msgid "The queue has run out of record numbers."
+msgstr ""
+
+msgid "The queue has run out of cancellation numbers."
+msgstr ""
+
+msgid "A queue record is missing a source identity."
+msgstr ""
+
+msgid "A saved queue record is invalid."
+msgstr ""
+
+msgid "A saved queue record has an unknown state."
+msgstr ""
+
+msgid "The saved queue position is invalid."
+msgstr ""
+
+msgid "The saved queue was written by an unsupported version."
+msgstr ""
+
+msgid "The rejection code is invalid."
+msgstr ""
+
+msgid "The app stopped while this file was converting. Check the destination, then retry."
+msgstr ""
+
+msgid "This record cannot be retried now."
+msgstr ""
+
+msgid "Only failed, cancelled or interrupted records can be retried."
+msgstr ""
+
+msgid "The destination already exists, so the record was not retried."
+msgstr ""
+
+msgid "The bundled worker file cannot be opened."
+msgstr ""
+
+msgid "The bundled worker does not match its package proof."
+msgstr ""
+
+msgid "The isolated worker sandbox requires Windows."
+msgstr ""
+
+msgid "Windows could not prepare the isolated sandbox."
+msgstr ""
+
+msgid "The private channel to the worker could not be secured."
+msgstr ""
+
+msgid "The private channel to the worker could not be created."
+msgstr ""
+
+msgid "The private channel to the worker could not be isolated."
+msgstr ""
+
+msgid "The resource limits for the worker could not be created."
+msgstr ""
+
+msgid "The resource limits for the worker could not be applied."
+msgstr ""
+
+msgid "The worker sandbox could not be configured."
+msgstr ""
+
+msgid "The Windows system folder could not be located."
+msgstr ""
+
+msgid "The worker could not be placed under its resource limits, so it was stopped."
+msgstr ""
+
+msgid "The worker could not start after containment, so it was stopped."
+msgstr ""
+
+msgid "The worker sent an invalid response."
+msgstr ""
+
+msgid "The worker sent an invalid diagnostic code."
+msgstr ""
+
+msgid "The worker response ended early."
+msgstr ""
+
+msgid "The worker sent more data than it declared."
+msgstr ""
+
+msgid "The worker did not finish within its 30-second limit and was stopped."
+msgstr ""
+
+msgid "The worker stopped with an error."
+msgstr ""
+
+msgid "This build does not include the PDF adapter."
+msgstr ""
+
+msgid "The PDF engine could not confirm its sandbox."
+msgstr ""
+
+msgid "The PDF engine runs only inside the isolated sandbox."
+msgstr ""
+
+msgid "The PDF engine package could not be located."
+msgstr ""
+
+msgid "A PDF engine file could not be opened."
+msgstr ""
+
+msgid "A PDF engine file does not match its pinned SHA-256."
+msgstr ""
+
+msgid "This sandbox blocks the Windows interface calls the PDF engine needs."
+msgstr ""
+
+msgid "The PDF engine does not provide the expected interface."
+msgstr ""
+
+msgid "The PDF engine is not loaded."
+msgstr ""
+
+msgid "The source does not start with a PDF signature."
+msgstr ""
+
+msgid "The PDF is damaged or not well formed."
+msgstr ""
+
+msgid "The PDF is encrypted. Encrypted PDFs are not supported."
+msgstr ""
+
+msgid "The PDF carries a digital signature, which this tool would invalidate."
+msgstr ""
+
+msgid "The PDF uses document features this tool does not support, such as forms, actions or outlines."
+msgstr ""
+
+msgid "A page has annotations or actions, which this tool does not support."
+msgstr ""
+
+msgid "A PDF stream uses an encoding this tool cannot read."
+msgstr ""
+
+msgid "The PDF metadata uses a form this tool does not support."
+msgstr ""
+
+msgid "A page has a rotation that is not a multiple of 90 degrees."
+msgstr ""
+
+msgid "The PDF needs more memory than the converter allows."
+msgstr ""
+
+msgid "The PDF engine stopped unexpectedly."
+msgstr ""
+
+msgid "The PDF structure nests deeper than the 64-level limit."
+msgstr ""
+
+msgid "The PDF structure has more items than the converter allows."
+msgstr ""
+
+msgid "The PDF content expands beyond the 64 MiB limit."
+msgstr ""
+
+msgid "The PDF has more pages than the 1000-page limit."
+msgstr ""
+
+msgid "More PDFs were given than the 1000-source limit."
+msgstr ""
+
+msgid "This PDF tool takes exactly one source. Only merge takes several."
+msgstr ""
+
+msgid "The PDFs together are larger than the 16 MiB input limit."
+msgstr ""
+
+msgid "The PDF output would be larger than the 64 MiB output limit."
+msgstr ""
+
+msgid "The PDF request is larger than its 24 MiB limit."
+msgstr ""
+
+msgid "The PDF request is larger than its limit."
+msgstr ""
+
+msgid "The PDF operation is not recognized."
+msgstr ""
+
+msgid "Rotation must be 0, 90, 180 or 270 degrees."
+msgstr ""
+
+msgid "A page number is outside the document."
+msgstr ""
+
+msgid "A page number appears more than once."
+msgstr ""
+
+msgid "Enter the page numbers to use."
+msgstr ""
+
+msgid "Reorder needs every page number exactly once."
+msgstr ""
+
+msgid "This PDF tool does not take page numbers."
+msgstr ""
+
+msgid "This PDF tool does not take a rotation."
+msgstr ""
+
+msgid "Only the metadata tool takes metadata values."
+msgstr ""
+
+msgid "The PDFs to merge have different metadata."
+msgstr ""
+
+msgid "A metadata field is not one this tool can write."
+msgstr ""
+
+msgid "A metadata value is too long, or it is not valid UTF-8 text."
+msgstr ""
+
+msgid "A metadata value is longer than 4,096 bytes."
+msgstr ""
+
+msgid "The PDF engine could not write the output."
+msgstr ""
+
+msgid "The new PDF has the wrong number of pages, so it was discarded."
+msgstr ""
+
+msgid "The new PDF has its pages in the wrong order, so it was discarded."
+msgstr ""
+
+msgid "The new PDF has the wrong page rotation, so it was discarded."
+msgstr ""
+
+msgid "The new PDF has the wrong metadata, so it was discarded."
+msgstr ""
+
+msgid "The PDF engine returned an unexpected number of outputs."
+msgstr ""
+
+msgid "Split produced no pages or too many pages."
+msgstr ""
+
+msgid "The ZIP of split pages could not be started."
+msgstr ""
+
+msgid "A split page could not be added to the ZIP."
+msgstr ""
+
+msgid "The ZIP of split pages could not be completed."
+msgstr ""
+
+msgid "The ZIP of split pages did not reopen to the same pages, so it was discarded."
+msgstr ""
+
+msgid "The PDF request is not well formed."
+msgstr ""
+
+msgid "The PDF options must be an object."
+msgstr ""
+
+msgid "The PDF request contains an unknown option."
+msgstr ""
+
+msgid "The PDF request is not valid UTF-8."
+msgstr ""
+
+msgid "The PDF request nests too deeply."
+msgstr ""
+
+msgid "The PDF request has too many items."
+msgstr ""
+
+msgid "The PDF request repeats an option."
+msgstr ""
+
+msgid "A PDF in the request is not valid Base64."
+msgstr ""
+
+msgid "Page numbers must be whole numbers."
+msgstr ""
+
+msgid "The page list is not a list, or it is too long."
+msgstr ""
+
+msgid "The metadata must be a set of at most nine fields."
+msgstr ""
+
+msgid "Every metadata value must be text."
+msgstr ""
+
+msgid "The PDF request lists no sources."
+msgstr ""
+
+msgid "A PDF source in the request is not text."
+msgstr ""
+
+msgid "The PDF request could not be processed."
+msgstr ""
+
+msgid "Windows could not start the isolated worker. The number at the end of the code is the Windows error."
+msgstr ""
+
+msgid "Windows could not load its user interface library inside the sandbox. The number at the end of the code is the Windows error."
+msgstr ""
+
+msgid "Windows could not load the bundled PDF engine. The number at the end of the code is the Windows error."
+msgstr ""
+
 msgid "Print preparation"
 msgstr ""
 
@@ -7292,9 +8466,6 @@ msgid "Timelapse"
 msgstr ""
 
 msgid "Switch to timelapse files."
-msgstr ""
-
-msgid "Video"
 msgstr ""
 
 msgid "Switch to video files."
@@ -10474,6 +11645,9 @@ msgstr ""
 msgid "Hide explanation"
 msgstr ""
 
+msgid "App logo"
+msgstr ""
+
 msgid "Personal vocabulary"
 msgstr ""
 
@@ -12568,6 +13742,7 @@ msgstr ""
 msgid "Set"
 msgstr ""
 
+#. TRN: One active filter under a collapsed filter row: %1$s names the filter, %2$s is its value.
 #, possible-c-format, possible-boost-format
 msgid "%s: %s"
 msgstr ""
@@ -13348,6 +14523,12 @@ msgid "Horizontal slider - Move active thumb Right"
 msgstr ""
 
 msgid "On/Off one layer mode of the vertical slider"
+msgstr ""
+
+msgid "Shift+L"
+msgstr ""
+
+msgid "Collapse or expand the legend and statistics panel"
 msgstr ""
 
 msgid "Move slider 5x faster"
@@ -17905,9 +19086,6 @@ msgstr ""
 msgid "*We recommend you to add brand, material, type, and even humidity level in the Name"
 msgstr ""
 
-msgid "Failed"
-msgstr ""
-
 msgid "Please enter the name you want to save to printer."
 msgstr ""
 
@@ -19668,9 +20846,6 @@ msgstr ""
 msgid "Edit Printers"
 msgstr ""
 
-msgid "Select this page"
-msgstr ""
-
 msgid "Export selected..."
 msgstr ""
 
@@ -19776,9 +20951,6 @@ msgid "Printing Failed"
 msgstr ""
 
 msgid "Printing Pause"
-msgstr ""
-
-msgid "Pending"
 msgstr ""
 
 msgid "Sending Finish"
@@ -20797,6 +21969,112 @@ msgstr ""
 msgid "Select Filament && Hotends"
 msgstr ""
 
+msgid "Choose the mark shown in the title bar, the window and taskbar icon, the About dialog and the startup screen. It changes presentation only: the installed app, its shortcuts and its updates keep the shipped identity."
+msgstr ""
+
+msgid "Search logo sources"
+msgstr ""
+
+msgid "Shipped mark"
+msgstr ""
+
+msgid "Green printer"
+msgstr ""
+
+msgid "Blue layers"
+msgstr ""
+
+msgid "Amber nozzle"
+msgstr ""
+
+msgid "Custom image (unavailable)"
+msgstr ""
+
+msgid "Custom images need the isolated image decoder, which this build does not include yet."
+msgstr ""
+
+msgid "No logo source matches your search."
+msgstr ""
+
+msgid "Contain: show the whole mark"
+msgstr ""
+
+msgid "Cover: crop to fill"
+msgstr ""
+
+msgid "Image fit"
+msgstr ""
+
+msgid "Horizontal focal point (%)"
+msgstr ""
+
+msgid "Vertical focal point (%)"
+msgstr ""
+
+msgid "Safe area inset (%)"
+msgstr ""
+
+msgid "Transparent background"
+msgstr ""
+
+msgid "Choose background color"
+msgstr ""
+
+msgid "Background color"
+msgstr ""
+
+msgid "Fit, focal point, safe area and background apply to the presets. The shipped mark keeps its own artwork."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Logo preview at %u pixels"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%u px"
+msgstr ""
+
+msgid "The title bar, the window and taskbar icon, the About dialog and the startup screen show their shipped artwork."
+msgstr ""
+
+msgid "Small sizes use nearest-neighbor sampling, so fine detail can drop out. Cover crops the mark. A transparent mark can lose contrast on some backgrounds; choose an opaque background if it does."
+msgstr ""
+
+msgid "Import custom image (unavailable)"
+msgstr ""
+
+msgid "Reset to shipped mark"
+msgstr ""
+
+msgid "Custom image import is unavailable: this build has no verified isolated image decoder, so no image file is read."
+msgstr ""
+
+msgid "App logo status"
+msgstr ""
+
+msgid "Shipped mark restored. The saved logo setting was cleared."
+msgstr ""
+
+msgid "Saved logo settings are invalid. The shipped mark is shown, and the saved value is kept until you choose a logo or reset."
+msgstr ""
+
+msgid "Shipped mark in use. No custom image loaded."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s in use, saved in your settings. No custom image loaded."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s applied and saved in your settings."
+msgstr ""
+
+msgid "Logo settings applied and saved in your settings."
+msgstr ""
+
+msgid "Unable to save logo settings. The previous logo is kept."
+msgstr ""
+
 msgid "Thin (100)"
 msgstr ""
 
@@ -21005,6 +22283,9 @@ msgstr ""
 msgid "Appearance presets"
 msgstr ""
 
+msgid "What the selected appearance preset sets"
+msgstr ""
+
 msgid "Make the selected preset the active one; your element overrides stay on top of it"
 msgstr ""
 
@@ -21076,6 +22357,17 @@ msgstr ""
 msgid "Active preset: %s"
 msgstr ""
 
+msgid "Select a preset to see exactly what it sets before you apply it."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Applied \"%s\". It sets nothing; the Material tokens and your own element overrides apply."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Applied \"%s\". It sets %s."
+msgstr ""
+
 #, possible-c-format, possible-boost-format
 msgid "Edit appearance: %s"
 msgstr ""
@@ -21083,10 +22375,140 @@ msgstr ""
 msgid "Theme default"
 msgstr ""
 
+msgid "Makes this shipped preset the active appearance preset. It creates nothing new, and your own element overrides stay on top of it."
+msgstr ""
+
+msgid "Makes this saved preset the active appearance preset. It creates nothing new, and your own element overrides stay on top of it."
+msgstr ""
+
 msgid "Edit appearance..."
 msgstr ""
 
 msgid "Open the appearance editor beside this element"
+msgstr ""
+
+msgid "Shipped defaults"
+msgstr ""
+
+msgid "The app does not ship a fixed value for this setting."
+msgstr ""
+
+msgid "This editor does not accept the shipped value for this setting."
+msgstr ""
+
+msgid "Your saved settings"
+msgstr ""
+
+msgid "Nothing usable is saved for this setting, and the app does not ship a fixed value for it."
+msgstr ""
+
+msgid "Start empty"
+msgstr ""
+
+msgid "(empty)"
+msgstr ""
+
+msgid "Follows your system language the first time the app starts, so there is no single shipped value."
+msgstr ""
+
+msgid "Font size (pt)"
+msgstr ""
+
+msgid "Font style"
+msgstr ""
+
+msgid "Text colour"
+msgstr ""
+
+msgid "Background colour"
+msgstr ""
+
+msgid "Highlight colour"
+msgstr ""
+
+msgid "Border colour"
+msgstr ""
+
+msgid "every element"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s (%s)"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s (shipped default, nothing saved)"
+msgstr ""
+
+msgid "Sets nothing."
+msgstr ""
+
+msgid "Sets:"
+msgstr ""
+
+msgid "Leaves out:"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Started from \"%s\". It sets nothing yet."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Started from \"%s\". It set %s."
+msgstr ""
+
+msgid "Every preset comes from the values the app ships with, your own saved settings, or a template the app ships. Nothing is applied until you start from one."
+msgstr ""
+
+msgid "Presets to start from"
+msgstr ""
+
+msgid "No preset matches the search. Clear the search to see every preset."
+msgstr ""
+
+msgid "What the highlighted preset creates and sets"
+msgstr ""
+
+msgid "Start from this preset"
+msgstr ""
+
+msgid "Start the new item from the highlighted preset"
+msgstr ""
+
+msgid "Highlight a preset first."
+msgstr ""
+
+msgid "Creates a new schedule rule that applies all day, every day and sets each setting below to the value the app ships with."
+msgstr ""
+
+msgid "Creates a new schedule rule that applies all day, every day and sets each setting below to your own saved value."
+msgstr ""
+
+msgid "Creates a new schedule rule that applies all day, every day and sets nothing yet. Choose at least one setting before you save it."
+msgstr ""
+
+msgid "Cantonese (Hong Kong)"
+msgstr ""
+
+msgid "Bilingual: English and Cantonese"
+msgstr ""
+
+msgid "Default (Roboto)"
+msgstr ""
+
+msgid "Shipped name"
+msgstr ""
+
+msgid "Language mode"
+msgstr ""
+
+msgid "Funny level (English)"
+msgstr ""
+
+msgid "Start a new schedule rule"
+msgstr ""
+
+msgid "Choose what the new rule starts with. You can change every value before you save it."
 msgstr ""
 
 msgid "Model Pictures"
@@ -21148,6 +22570,10 @@ msgstr ""
 
 #. TRN: Subtitle of the in-app changelog viewer.
 msgid "Every released version, with the commits behind each change."
+msgstr ""
+
+#. TRN: Header of the collapsible search and filter row of a list.
+msgid "Search and filters"
 msgstr ""
 
 #. TRN: Placeholder of the changelog search field.
@@ -22744,6 +24170,30 @@ msgstr ""
 msgid "Printer watch: %s"
 msgstr ""
 
+msgid "Appearance change"
+msgstr ""
+
+msgid "Appearance at startup"
+msgstr ""
+
+msgid "Reset all appearance"
+msgstr ""
+
+msgid "Restore appearance snapshot"
+msgstr ""
+
+msgid "Preferences at startup"
+msgstr ""
+
+msgid "Scheduled settings change"
+msgstr ""
+
+msgid "Scheduled settings at startup"
+msgstr ""
+
+msgid "Restore scheduled settings"
+msgstr ""
+
 #. TRN: Title of the prompt asking for a label to attach to project versions.
 msgid "Label versions"
 msgstr ""
@@ -22915,6 +24365,9 @@ msgstr ""
 msgid "Could not load version history: %s"
 msgstr ""
 
+msgid "Scheduled settings are not available."
+msgstr ""
+
 msgid "Enter valid dates in YYYY-MM-DD order, with From before Through."
 msgstr ""
 
@@ -23023,10 +24476,23 @@ msgstr ""
 msgid "Autosave: %s"
 msgstr ""
 
-msgid "Pinned"
+#, possible-c-format, possible-boost-format
+msgid "Save appearance preset: %s"
 msgstr ""
 
-msgid "Search and filters"
+#, possible-c-format, possible-boost-format
+msgid "Delete appearance preset: %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Reset element appearance: %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Add schedule rule from preset: %s"
+msgstr ""
+
+msgid "Pinned"
 msgstr ""
 
 msgid "Category / description"
@@ -23066,6 +24532,12 @@ msgid "Choose two entries from the same history store or printer."
 msgstr ""
 
 msgid "Could not read the selected versions for comparison."
+msgstr ""
+
+msgid "Unsupported scheduled settings version."
+msgstr ""
+
+msgid "Unsupported appearance snapshot."
 msgstr ""
 
 msgid "Unsupported settings snapshot."
@@ -23421,6 +24893,34 @@ msgstr ""
 msgid "LIVE"
 msgstr ""
 
+#. TRN: Tooltip of the header that collapses a search bar, filter row or statistics panel.
+msgid "Show or hide these controls. Your choice is remembered."
+msgstr ""
+
+#. TRN: Shown under a collapsed filter row; %d is how many filters still narrow the list.
+#, possible-c-format, possible-boost-format
+msgid "Active filters (%d)"
+msgstr ""
+
+#. TRN: Appended to the active filter list of a collapsed filter row; %d filters are not named.
+#, possible-c-format, possible-boost-format
+msgid "+%d more"
+msgstr ""
+
+#. TRN: Shown under a collapsed filter row. %d is the number of active filters, %s lists them.
+#, possible-c-format, possible-boost-format
+msgid "Active filters (%d): %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s (%d active)"
+msgstr ""
+
+#. TRN: One active filter under a collapsed filter row: a category that is switched off.
+#, possible-c-format, possible-boost-format
+msgid "Hiding %s"
+msgstr ""
+
 msgid "HEX"
 msgstr ""
 
@@ -23582,6 +25082,857 @@ msgstr ""
 msgid "Activate"
 msgstr ""
 
+msgid "Windows locale (w32_regex_traits)"
+msgstr ""
+
+msgid "C++ locale (cpp_regex_traits)"
+msgstr ""
+
+msgid "C locale (c_regex_traits)"
+msgstr ""
+
+msgid "unknown locale traits"
+msgstr ""
+
+msgid "Regex mode"
+msgstr ""
+
+msgid "Off by default, so the query is plain text. When on, the worker compiles the query as a pattern."
+msgstr ""
+
+msgid "Case sensitive"
+msgstr ""
+
+msgid "Off by default, so letters match in either case. Folding follows the engine's locale traits."
+msgstr ""
+
+msgid "Multiline anchors"
+msgstr ""
+
+msgid "Off by default. When on, ^ and $ also match at line breaks."
+msgstr ""
+
+msgid "Dot matches line breaks"
+msgstr ""
+
+msgid "Never set by a search field, so . stops at line breaks. Use (?s) inside the pattern to change it."
+msgstr ""
+
+msgid "Free spacing"
+msgstr ""
+
+msgid "Spaces and # comments are ignored only after (?x) inside the pattern."
+msgstr ""
+
+msgid "Whole word"
+msgstr ""
+
+msgid "Applies to plain-text search only. In regex mode, write \\b around the word."
+msgstr ""
+
+msgid "Outside brackets these characters are syntax. Put a backslash before one to match it literally."
+msgstr ""
+
+msgid "Inside brackets, escape ], \\, [, a leading ^ and a - that is not first or last."
+msgstr ""
+
+msgid "Everything between \\Q and \\E is literal. Without \\E the quoted text runs to the end."
+msgstr ""
+
+msgid "A code unit by hexadecimal value. With 16-bit code units, values above FFFF are rejected."
+msgstr ""
+
+msgid "NUL or an octal value. A backslash and a digit from 1 to 9 is a backreference, never octal."
+msgstr ""
+
+msgid "Tab, newline, carriage return, form feed, bell, escape and Ctrl+X control characters."
+msgstr ""
+
+msgid "A backslash before a letter with no meaning here matches that letter. Other engines may reject it."
+msgstr ""
+
+msgid "Under (?x), escape # and spaces that should match literally."
+msgstr ""
+
+msgid "Supported"
+msgstr ""
+
+msgid "Partly supported"
+msgstr ""
+
+msgid "Not supported"
+msgstr ""
+
+msgid "Literal characters"
+msgstr ""
+
+msgid "Characters match themselves. Escape a metacharacter with a backslash."
+msgstr ""
+
+msgid "Quoted literal text"
+msgstr ""
+
+msgid "Everything between \\Q and \\E matches literally."
+msgstr ""
+
+msgid "Hexadecimal code units"
+msgstr ""
+
+msgid "One code unit by value. With 16-bit code units (Windows), values above FFFF are rejected, so type such characters directly."
+msgstr ""
+
+msgid "\\uHHHH code point escape"
+msgstr ""
+
+msgid "\\u is the uppercase-letter class here, so \\u0041 means an uppercase letter followed by 0041. Use \\x{0041}."
+msgstr ""
+
+msgid "Control escapes"
+msgstr ""
+
+msgid "Tab, newline, carriage return, form feed, bell, escape, Ctrl+X and NUL."
+msgstr ""
+
+msgid "\\o{...} octal escape"
+msgstr ""
+
+msgid "Not recognised: \\o is the letter o, so \\o{12} means twelve o characters. Use \\012 or \\x{A}."
+msgstr ""
+
+msgid "\\N{name} named characters"
+msgstr ""
+
+msgid "Rejected: this engine has no \\N escape."
+msgstr ""
+
+msgid "Character sets and ranges"
+msgstr ""
+
+msgid "Match one character from the list, or one not in it after ^."
+msgstr ""
+
+msgid "Class shorthands"
+msgstr ""
+
+msgid "\\h is horizontal and \\v vertical whitespace; \\l and \\u are lowercase and uppercase letters. Capitals negate."
+msgstr ""
+
+msgid "POSIX classes"
+msgstr ""
+
+msgid "Named classes inside brackets, including negated [:^name:] forms."
+msgstr ""
+
+msgid "Named classes with \\p"
+msgstr ""
+
+msgid "Only the engine's class names work (alnum, alpha, blank, cntrl, digit, graph, lower, print, punct, space, upper, word, xdigit and the letters d, h, l, s, u, v, w). \\p{L} means lowercase here, not Letter. Inside brackets \\p is just the letter p."
+msgstr ""
+
+msgid "Unicode categories and scripts"
+msgstr ""
+
+msgid "Rejected: the engine has no Unicode property tables."
+msgstr ""
+
+msgid "Set intersection and subtraction"
+msgstr ""
+
+msgid "Not available: && is two literal ampersands and -- after a range is an error."
+msgstr ""
+
+msgid "Anchors"
+msgstr ""
+
+msgid "Without multiline anchors, $ matches only at the very end; \\Z also allows one final line break."
+msgstr ""
+
+msgid "Word boundaries"
+msgstr ""
+
+msgid "\\< and \\> match the start and end of a word."
+msgstr ""
+
+msgid "Buffer anchors"
+msgstr ""
+
+msgid "\\` and \\' are start-of-text and end-of-text anchors, not quote characters."
+msgstr ""
+
+msgid "Numbered capture groups"
+msgstr ""
+
+msgid "Groups are numbered by their opening parenthesis."
+msgstr ""
+
+msgid "Named capture groups"
+msgstr ""
+
+msgid "Named groups are also numbered; refer to them with \\k<name> or \\g{name}."
+msgstr ""
+
+msgid "Python-style named groups"
+msgstr ""
+
+msgid "Rejected: use (?<name>...), \\k<name> and (?&name) instead."
+msgstr ""
+
+msgid "Non-capturing groups"
+msgstr ""
+
+msgid "Group without creating a capture."
+msgstr ""
+
+msgid "Atomic groups"
+msgstr ""
+
+msgid "Once the group matches, the engine never backtracks into it."
+msgstr ""
+
+msgid "Branch reset groups"
+msgstr ""
+
+msgid "Each alternative reuses the same group numbers."
+msgstr ""
+
+msgid "Alternation"
+msgstr ""
+
+msgid "Alternatives are tried from left to right."
+msgstr ""
+
+msgid "Greedy quantifiers"
+msgstr ""
+
+msgid "A { that does not form a count, such as {,3}, is a literal brace."
+msgstr ""
+
+msgid "Lazy quantifiers"
+msgstr ""
+
+msgid "Match as few repetitions as possible."
+msgstr ""
+
+msgid "Possessive quantifiers"
+msgstr ""
+
+msgid "Never give characters back, so a*+a cannot match."
+msgstr ""
+
+msgid "Lookahead"
+msgstr ""
+
+msgid "Checks what follows without consuming it."
+msgstr ""
+
+msgid "Lookbehind"
+msgstr ""
+
+msgid "Fixed width only: every alternative must have the same constant length, and repeated groups, \\R, \\X and backreferences are rejected inside."
+msgstr ""
+
+msgid "Variable-width lookbehind"
+msgstr ""
+
+msgid "Rejected by the engine. JavaScript and .NET accept it; rewrite with a fixed width or use \\K."
+msgstr ""
+
+msgid "Backreferences"
+msgstr ""
+
+msgid "A backslash takes only one digit: \\10 is group 1 then 0, so write \\g{10}. \\g<1> is a backreference here, not a subroutine call."
+msgstr ""
+
+msgid "Conditionals"
+msgstr ""
+
+msgid "Choose an alternative by a group, a lookaround, recursion or a DEFINE block."
+msgstr ""
+
+msgid "Recursion and subroutine calls"
+msgstr ""
+
+msgid "Re-run the whole pattern or one group at this point."
+msgstr ""
+
+msgid "Inline modifiers"
+msgstr ""
+
+msgid "i, m, s and x work, for the rest of the group or inside (?flags:...)."
+msgstr ""
+
+msgid "Other inline modifiers"
+msgstr ""
+
+msgid "Rejected: only i, m, s and x are modifiers in this engine."
+msgstr ""
+
+msgid "Comments"
+msgstr ""
+
+msgid "Ignored by the engine. An unclosed (?# runs to the end of the pattern."
+msgstr ""
+
+msgid "Match start reset"
+msgstr ""
+
+msgid "Text before \\K must match but is left out of the reported match."
+msgstr ""
+
+msgid "Backtracking control verbs"
+msgstr ""
+
+msgid "These six verbs work. Verbs with an argument, such as (*MARK:name), are rejected."
+msgstr ""
+
+msgid "Verbs with names"
+msgstr ""
+
+msgid "Rejected: verb arguments are not supported."
+msgstr ""
+
+msgid "Line breaks, graphemes, code units"
+msgstr ""
+
+msgid "\\R matches any line break (CRLF as one), \\X one grapheme cluster and \\C one code unit."
+msgstr ""
+
+msgid "Case-insensitive matching"
+msgstr ""
+
+msgid "Case folding follows the engine's locale traits, so letters outside ASCII fold as that locale says."
+msgstr ""
+
+msgid "Characters above U+FFFF"
+msgstr ""
+
+msgid "With 16-bit code units (Windows) such a character is two code units: . and [ ] see each half, and a quantifier repeats only the second half. Type it directly outside brackets."
+msgstr ""
+
+msgid "Moderate"
+msgstr ""
+
+msgid "Unbalanced closing parenthesis"
+msgstr ""
+
+msgid "Ignored whitespace (free-spacing mode)"
+msgstr ""
+
+msgid "Comment, ignored by the engine"
+msgstr ""
+
+msgid "Alternation — matches either side"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "One of %s alternatives"
+msgstr ""
+
+msgid "Quantifier with nothing to repeat"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Quoted literal text: %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Literal text: %s"
+msgstr ""
+
+msgid "Empty: matches the empty string"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Sequence of %s items"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Repeat exactly %s times"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Repeat %s or more times (greedy: as many as possible)"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Repeat %s or more times (lazy: as few as possible)"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Repeat %s or more times (possessive: never gives back)"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Repeat %s to %s times (greedy: as many as possible)"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Repeat %s to %s times (lazy: as few as possible)"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Repeat %s to %s times (possessive: never gives back)"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "JavaScript RegExp has no %s, so this pattern will not work there unchanged."
+msgstr ""
+
+msgid "Any single character except newline"
+msgstr ""
+
+msgid "Any character, including line breaks"
+msgstr ""
+
+msgid "Start of a line"
+msgstr ""
+
+msgid "Start of the text"
+msgstr ""
+
+msgid "Without multiline anchors $ matches only at the very end, not before a final line break as in Perl and PCRE. Use \\Z to allow one."
+msgstr ""
+
+msgid "End of the text"
+msgstr ""
+
+msgid "End of a line"
+msgstr ""
+
+msgid "This { does not form a valid count, so it is a literal brace. Some engines read {,n} as a count."
+msgstr ""
+
+msgid "A character above U+FFFF is two UTF-16 code units for this engine: inside [ ] each half is separate and a quantifier repeats only the second half."
+msgstr ""
+
+msgid "A character above U+FFFF is one code unit here but two in UTF-16 engines, including the Windows build."
+msgstr ""
+
+msgid "Trailing backslash with nothing to escape"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "A backslash takes only one digit here: %s is group %s followed by the digit %s. Write \\g{%s} for a higher group."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Octal escape for code unit U+%s"
+msgstr ""
+
+msgid "Incomplete hexadecimal escape"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s is above FFFF, which 16-bit code units cannot hold, so the Windows engine rejects it. Type the character itself."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Code unit U+%s by hexadecimal value"
+msgstr ""
+
+msgid "Incomplete control escape"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Control character U+%s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Bell character U+%s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Escape character U+%s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Form feed U+%s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Newline (line feed) U+%s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Carriage return U+%s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Tab character U+%s"
+msgstr ""
+
+msgid "Unterminated \\p{...} class name"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Characters outside class %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Characters in class %s"
+msgstr ""
+
+msgid "Word boundary"
+msgstr ""
+
+msgid "Not a word boundary"
+msgstr ""
+
+msgid "\\< and \\> are word start and end anchors here, not literal angle brackets. Escape-free < and > match themselves."
+msgstr ""
+
+msgid "Start of a word"
+msgstr ""
+
+msgid "End of a word"
+msgstr ""
+
+msgid "Start of the text, even with multiline anchors"
+msgstr ""
+
+msgid "End of the text, even with multiline anchors"
+msgstr ""
+
+msgid "End of the text or before a final line break"
+msgstr ""
+
+msgid "Where the previous match ended"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s is a start-of-text or end-of-text anchor here, not a quote character. Write the quote without a backslash."
+msgstr ""
+
+msgid "Start of the text (buffer anchor)"
+msgstr ""
+
+msgid "End of the text (buffer anchor)"
+msgstr ""
+
+msgid "Reported match starts here; earlier text must still match"
+msgstr ""
+
+msgid "Any line break sequence, CRLF counted as one"
+msgstr ""
+
+msgid "One grapheme cluster: a character with its combining marks"
+msgstr ""
+
+msgid "Exactly one code unit"
+msgstr ""
+
+msgid "Empty quoted text"
+msgstr ""
+
+msgid "\\E without an earlier \\Q is the literal letter E here."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Not recognised by this engine: %s"
+msgstr ""
+
+msgid "\\o{...} is not an octal escape here: \\o is the letter o and the braces repeat it. Use \\0oo or \\x{...}."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s has no special meaning here, so it matches the letter %s. JavaScript with the u flag, Python and .NET reject it."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Escaped %s: matches the character itself"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s is not a code point here: \\u is the uppercase-letter class, followed by the literal text %s. Write \\x{%s}."
+msgstr ""
+
+msgid "\\u and \\U are uppercase-letter classes in this engine. In JavaScript, Java, .NET and Python \\u starts a code point escape."
+msgstr ""
+
+msgid "\\l and \\L are lowercase-letter classes that only Boost.Regex understands."
+msgstr ""
+
+msgid "\\h and \\v match horizontal and vertical whitespace here. In JavaScript \\v is only the vertical tab and \\h is not an escape."
+msgstr ""
+
+msgid "Digit 0-9"
+msgstr ""
+
+msgid "Any character that is not a digit"
+msgstr ""
+
+msgid "Word character: letter, digit, or underscore"
+msgstr ""
+
+msgid "Any character that is not a word character"
+msgstr ""
+
+msgid "Whitespace character"
+msgstr ""
+
+msgid "Any character that is not whitespace"
+msgstr ""
+
+msgid "Horizontal whitespace: space or tab"
+msgstr ""
+
+msgid "Not horizontal whitespace"
+msgstr ""
+
+msgid "Vertical whitespace: a line break character"
+msgstr ""
+
+msgid "Not vertical whitespace"
+msgstr ""
+
+msgid "Lowercase letter"
+msgstr ""
+
+msgid "Not a lowercase letter"
+msgstr ""
+
+msgid "Uppercase letter"
+msgstr ""
+
+msgid "Not an uppercase letter"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s uses the engine class %s, not the Unicode general category %s. Write the full class name, such as \\p{alpha}."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s is rejected: this engine has no Unicode categories or scripts, only its class names such as alpha, digit and upper."
+msgstr ""
+
+msgid "Recurse into the whole pattern"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Call group %s as a subroutine"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Call group \"%s\" as a subroutine"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Backreference to group %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Backreference to group \"%s\""
+msgstr ""
+
+msgid "Incomplete \\g or \\k reference"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s is a backreference here. In PCRE and Oniguruma the same syntax calls the group as a subroutine; use (?1) or (?&name) for that."
+msgstr ""
+
+msgid "Groups nested too deeply to analyse further; the engine rejects this nesting as too complex"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Capture group %s"
+msgstr ""
+
+msgid "Unclosed group"
+msgstr ""
+
+msgid "This (?# comment has no closing parenthesis, so the rest of the pattern is ignored."
+msgstr ""
+
+msgid "Non-capturing group — groups without remembering"
+msgstr ""
+
+msgid "Lookahead: must be followed by this"
+msgstr ""
+
+msgid "Negative lookahead: must not be followed by this"
+msgstr ""
+
+msgid "Atomic group: never backtracks into its content"
+msgstr ""
+
+msgid "Branch reset group: alternatives share group numbers"
+msgstr ""
+
+msgid "Negative lookbehind: must not be preceded by this"
+msgstr ""
+
+msgid "Lookbehind: must be preceded by this"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Python-style %s is rejected here. Use (?<name>...), \\k<name> and (?&name)."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Capture group %s named \"%s\""
+msgstr ""
+
+msgid "End of group"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Unclosed group opened at offset %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Backtracking control verb %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s is rejected: only (*ACCEPT), (*COMMIT), (*FAIL), (*PRUNE), (*SKIP) and (*THEN) work, without arguments."
+msgstr ""
+
+msgid "Conditional on a lookaround assertion"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Conditional on group %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Conditional on group \"%s\""
+msgstr ""
+
+msgid "DEFINE block: definitions for subroutine calls, never matched directly"
+msgstr ""
+
+msgid "Conditional on recursion"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s is rejected: only the modifiers i, m, s and x exist in this engine."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Group with modifiers %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Modifiers for the rest of the group: %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Unknown class name %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Not in POSIX class %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "POSIX class %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Collating element %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Equivalence class %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Backspace U+%s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Vertical tab U+%s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Inside [ ], %s is just the letter %s. Use a POSIX class such as [[:alpha:]] instead."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Backreferences are not allowed inside [ ]; %s is rejected"
+msgstr ""
+
+msgid "[...&&...] is not an intersection here: && matches literal ampersands. This engine has no set operations."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Set member %s"
+msgstr ""
+
+msgid "Negated set — matches any character not listed inside"
+msgstr ""
+
+msgid "Character set — matches any one character listed inside"
+msgstr ""
+
+msgid "End of character set"
+msgstr ""
+
+msgid "[...--...] is not a subtraction here. This engine has no set operations and rejects -- after a range."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Range %s to %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Invalid range %s: the engine rejects it"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Unterminated character set opened at offset %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Nested repetition %s can split the same text in many ways, so a failing match may backtrack exponentially. Make the inner or outer repeat possessive (++) or atomic (?>...), or remove the overlap."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Alternatives %s and %s inside the repeat %s can start with the same characters, so the engine may retry many combinations. Make the alternatives start differently or use an atomic group."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The repeat %s contains a backreference, which the engine cannot optimise; long inputs can be slow."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The repeat %s contains recursion or a subroutine call; each iteration can re-run large parts of the pattern."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The count in %s is large; the engine's state limit or the time limit may stop it on long input."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The pattern starts with %s, so every start position rescans the rest of the text. Anchor it with ^ or drop the leading wildcard; a search already looks anywhere."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s and %s can match the same characters next to each other, so a failing match tries every split point (polynomial backtracking)."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The lookbehind %s is not fixed width (or repeats a group), which this engine rejects. JavaScript and .NET accept it; rewrite it with one constant length or use \\K."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s refers to a group that does not exist, so the engine rejects the pattern."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s refers to a group that has not finished matching at this point, so it can never match here."
+msgstr ""
+
+msgid "This pattern can succeed without consuming any text, so rows can match with nothing highlighted; a pattern such as a* matches every row."
+msgstr ""
+
+msgid "Case-insensitive matching of letters outside ASCII follows the engine's locale traits shown under Engine."
+msgstr ""
+
+msgid "Whole word is ignored in regex mode. Put \\b around the word instead."
+msgstr ""
+
 #, possible-c-format, possible-boost-format
 msgid "Pattern too long (max %d characters)"
 msgstr ""
@@ -23626,7 +25977,8 @@ msgstr ""
 msgid "Invalid regular expression"
 msgstr ""
 
-msgid "Engine: Boost.Regex 1.84 wide-character ECMAScript in an isolated 50 ms worker. Case-insensitive matching uses boost::regex_constants::icase. Escape metacharacters with a backslash."
+#, possible-c-format, possible-boost-format
+msgid "Engine: Boost.Regex %s wide-character ECMAScript in an isolated 50 ms worker. Case-insensitive matching uses boost::regex_constants::icase. Escape metacharacters with a backslash."
 msgstr ""
 
 msgid "Regex pattern"
@@ -23638,19 +25990,13 @@ msgstr ""
 msgid "Empty pattern matches everything"
 msgstr ""
 
+msgid "Pattern analysis summary"
+msgstr ""
+
 msgid "Flags"
 msgstr ""
 
-msgid "Regex mode"
-msgstr ""
-
-msgid "Case sensitive"
-msgstr ""
-
 msgid "Multiline anchors (^ and $ match line boundaries)"
-msgstr ""
-
-msgid "Whole word"
 msgstr ""
 
 msgid "Whole word applies to plain-text search only; in regex mode use \\b"
@@ -23668,61 +26014,13 @@ msgstr ""
 msgid "Character classes"
 msgstr ""
 
-msgid "Any single character except newline"
-msgstr ""
-
-msgid "Character set — matches any one character listed inside"
-msgstr ""
-
-msgid "Negated set — matches any character not listed inside"
-msgstr ""
-
 msgid "Character range — use inside [ ], e.g. [a-z0-9]"
-msgstr ""
-
-msgid "Digit 0-9"
-msgstr ""
-
-msgid "Any character that is not a digit"
-msgstr ""
-
-msgid "Word character: letter, digit, or underscore"
-msgstr ""
-
-msgid "Any character that is not a word character"
-msgstr ""
-
-msgid "Whitespace character"
-msgstr ""
-
-msgid "Any character that is not whitespace"
-msgstr ""
-
-msgid "Anchors"
-msgstr ""
-
-msgid "Start of the text"
-msgstr ""
-
-msgid "End of the text"
-msgstr ""
-
-msgid "Word boundary"
-msgstr ""
-
-msgid "Not a word boundary"
 msgstr ""
 
 msgid "Groups & alternation"
 msgstr ""
 
 msgid "Capturing group — remembers the matched text"
-msgstr ""
-
-msgid "Non-capturing group — groups without remembering"
-msgstr ""
-
-msgid "Alternation — matches either side"
 msgstr ""
 
 msgid "Backreference — matches what group 1 captured"
@@ -23773,7 +26071,13 @@ msgstr ""
 msgid "Build"
 msgstr ""
 
+msgid "Explain"
+msgstr ""
+
 msgid "Reference"
+msgstr ""
+
+msgid "Engine, structure, tokens, compatibility and backtracking risk of this pattern"
 msgstr ""
 
 msgid "Reference & help"
@@ -23792,6 +26096,18 @@ msgid "An invalid or half-typed pattern never hides rows: it matches everything 
 msgstr ""
 
 msgid "Evaluation is local and bounded - long patterns and samples are truncated and runaway matching stops safely."
+msgstr ""
+
+msgid "Escaping rules"
+msgstr ""
+
+msgid "What this engine supports, partly supports and rejects. Each row has a probe pattern; the button runs every probe through the worker to confirm the row."
+msgstr ""
+
+msgid "Check against the engine"
+msgstr ""
+
+msgid "Capability check result"
 msgstr ""
 
 msgid "Examples"
@@ -23849,6 +26165,104 @@ msgstr ""
 
 #, possible-c-format, possible-boost-format
 msgid "Valid pattern — %d matches"
+msgstr ""
+
+msgid "Explain this pattern"
+msgstr ""
+
+msgid "Engine"
+msgstr ""
+
+msgid "Flags in effect"
+msgstr ""
+
+msgid "Engine verdict"
+msgstr ""
+
+msgid "Structure"
+msgstr ""
+
+msgid "Pattern structure"
+msgstr ""
+
+msgid "Tokens"
+msgstr ""
+
+msgid "Token annotations"
+msgstr ""
+
+msgid "Compatibility"
+msgstr ""
+
+msgid "Compatibility notes"
+msgstr ""
+
+msgid "Backtracking risk"
+msgstr ""
+
+msgid "Backtracking risk findings"
+msgstr ""
+
+msgid "Use example as sample text"
+msgstr ""
+
+msgid "Load the adversarial example into Test pattern to see the worker stop it safely"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Tokens: %d, capture groups: %d, backtracking risk: %s, compatibility warnings: %d"
+msgstr ""
+
+msgid "Regex mode is off, so the search field matches this text literally. The analysis below shows how the engine would read it as a pattern."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Boost.Regex %s as reported by the worker. Syntax: Perl-compatible, selected by the ECMAScript flag. Code units: %d-bit. Locale traits: %s. State limit: %s."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The worker has not reported its engine yet, so this shows the Boost.Regex %s this build was compiled with. Open this tab again to retry."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s: %s. Engine flag: %s. In the pattern: %s"
+msgstr ""
+
+msgid "The engine accepts this pattern."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The engine rejected the pattern at offset %d: %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Tokens: %d, capture groups: %d (%d named), backtracking risk: %s."
+msgstr ""
+
+msgid "No compatibility notes."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Example input: %s"
+msgstr ""
+
+msgid "No backtracking risks found."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "All %d rows behaved as listed on Boost.Regex %s in the worker."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%d of %d rows behaved as listed."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Different on this engine: %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The worker did not answer for %d rows. Try again in a moment."
 msgstr ""
 
 msgid "Turn key off"
@@ -24383,9 +26797,6 @@ msgstr ""
 msgid "Project 3MF (*.3mf)|*.3mf"
 msgstr ""
 
-msgid "All files (*.*)|*.*"
-msgstr ""
-
 msgid "Add checklist item"
 msgstr ""
 
@@ -24853,6 +27264,514 @@ msgstr ""
 msgid "Could not retain revision metadata"
 msgstr ""
 
+msgid "not measurable"
+msgstr ""
+
+msgid "Measured hardware evidence"
+msgstr ""
+
+msgid "Measure hardware again"
+msgstr ""
+
+msgid "Context for estimates"
+msgstr ""
+
+msgid "Context cache precision"
+msgstr ""
+
+msgid "Estimate settings could not be saved. They apply until the suite closes."
+msgstr ""
+
+msgid "Inspection finished. Hardware fit was recomputed from current measurements and estimate settings."
+msgstr ""
+
+msgid "Hardware measured again. Select a model to see its verdict."
+msgstr ""
+
+msgid "Runs well"
+msgstr ""
+
+msgid "Runs with limits"
+msgstr ""
+
+msgid "Unlikely"
+msgstr ""
+
+msgid "Estimates are conservative and do not guarantee that the model will run."
+msgstr ""
+
+msgid "The exact model size, the free space in the model folder, or the measurement time is unavailable."
+msgstr ""
+
+msgid "The storage estimate is too large to calculate."
+msgstr ""
+
+msgid "The model folder has less free space than the model size plus a ten percent safety allowance."
+msgstr ""
+
+msgid "Measured system memory, processor architecture and the model's parameters, quantization, context limit and attention layout are all needed. Inspect an installed model to read them."
+msgstr ""
+
+msgid "The estimate context is larger than the model's verified context limit."
+msgstr ""
+
+msgid "The memory estimate is too large to calculate."
+msgstr ""
+
+msgid "Memory estimate: model size, plus twenty percent for the runtime, plus the context cache for the chosen context and precision."
+msgstr ""
+
+msgid "The model does not fit in usable GPU memory, so part of it runs on the processor. Speed is not predicted."
+msgstr ""
+
+msgid "Neither measured system memory nor usable GPU memory holds this estimate."
+msgstr ""
+
+msgid "Ollama has not shown a working GPU backend on this computer, so the verdict assumes processor-only inference."
+msgstr ""
+
+msgid "System memory alone is not enough, and Ollama has not shown a working GPU backend, so GPU use cannot be counted."
+msgstr ""
+
+msgid "The estimate context was reduced to the model's verified context limit."
+msgstr ""
+
+msgid "OLLAMA_MODELS in this application's environment"
+msgstr ""
+
+msgid "OLLAMA_MODELS user setting"
+msgstr ""
+
+msgid "OLLAMA_MODELS computer setting"
+msgstr ""
+
+msgid "Ollama default location"
+msgstr ""
+
+msgid "8-bit context cache (OLLAMA_KV_CACHE_TYPE=q8_0)"
+msgstr ""
+
+msgid "4-bit context cache (OLLAMA_KV_CACHE_TYPE=q4_0)"
+msgstr ""
+
+msgid "16-bit context cache (default, recommended)"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s tokens (recommended)"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s tokens"
+msgstr ""
+
+msgid "Context memory grows with the number of tokens a chat keeps and with the cache precision Ollama uses. 4096 tokens with a 16-bit cache is a conservative starting point. Choose the context and OLLAMA_KV_CACHE_TYPE you run Ollama with; every verdict is recomputed at once."
+msgstr ""
+
+msgid "Hardware has not been measured yet. Choose Refresh runtime or Measure hardware again."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Measured at %s (UTC)."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "System memory available: %s of %s."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "System memory available: %s."
+msgstr ""
+
+msgid "System memory: not measured on this platform."
+msgstr ""
+
+msgid "Processor architecture: not identified."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Processor architecture: %s."
+msgstr ""
+
+msgid "Graphics: no hardware graphics adapter was reported."
+msgstr ""
+
+msgid "driver version unavailable"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "driver %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Graphics: %s, %s, %s dedicated memory, %s usable now."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "GPU backend: verified. Ollama %s kept %s of %s for %s in GPU memory at %s (UTC)."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "GPU backend: not in use. Ollama %s kept %s entirely in system memory at %s (UTC), so estimates assume processor inference."
+msgstr ""
+
+msgid "GPU backend: the earlier Ollama evidence no longer applies because the graphics adapter, driver or Ollama version changed. Load a model in Ollama again, then choose Refresh runtime."
+msgstr ""
+
+msgid "GPU backend: not verified. Ollama reports GPU use only while a model is loaded. Send one chat message or load a model in Ollama, then choose Refresh runtime."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Model folder: %s (%s). Confirmed by %s of %s installed model manifests. Free space: %s."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Model folder: %s (%s). No installed model exists yet to confirm it. Free space: %s."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Model folder: %s (%s), not yet confirmed because the installed-model list has not been read. Choose Refresh runtime to confirm it. Free space: %s."
+msgstr ""
+
+msgid "The documented settings name different folders, so the smallest free space among them is used."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Model folder: not confirmed. The installed models were not found under any documented location (closest: %s, %s of %s manifests). Storage fit stays Unknown. Check OLLAMA_MODELS for the running Ollama, restart Ollama, then choose Refresh runtime."
+msgstr ""
+
+msgid "Model folder: no documented location could be resolved, so storage fit stays Unknown."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Hardware fit: %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Installed size: %s."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Exact registry download size: %s."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Manifest: %s"
+msgstr ""
+
+msgid "Storage needed: none, the model is already installed."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Storage needed: %s including a ten percent allowance."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Estimate context: %s tokens, needing %s of context cache."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Estimate context: %s tokens. The context cache size is unknown because attention metadata is missing."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Memory estimate: %s."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Hardware measured at %s (UTC)."
+msgstr ""
+
+msgid "less than a minute"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s minutes"
+msgstr ""
+
+msgid "1 hour"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s hours"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s days"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The latest catalog refresh at %s (UTC) was stopped. Only the last verified catalog and the installed models are shown."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The latest catalog refresh at %s (UTC) could not reach the official catalog; this computer may be offline. Only the last verified catalog and the installed models are shown."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The latest catalog refresh at %s (UTC) exceeded the safety limit of pages or tags, so nothing from it was kept. Only the last verified catalog and the installed models are shown."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The latest catalog refresh at %s (UTC) found a page that did not pass validation, so nothing from it was kept. Only the last verified catalog and the installed models are shown."
+msgstr ""
+
+msgid "No verified catalog is saved. Installed models remain available. Choose Refresh official catalog to read every family and tag from the official Ollama library."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Certified complete catalog: every published count reconciled across %s pages (%s families, %s tags)."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Fully traversed catalog: every family, tag and page link was read across %s pages (%s families, %s tags). The official site publishes no total count, so completeness comes from the traversal and is not certified."
+msgstr ""
+
+msgid "not recorded"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Revision %s, verified at %s (UTC)."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Stale: verified %s ago. Choose Refresh official catalog to check for new models and tags."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Verified %s ago."
+msgstr ""
+
+msgid "Read from the saved last verified catalog."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Catalog refreshed: %s pages were read and saved as the last verified catalog."
+msgstr ""
+
+msgid "Family"
+msgstr ""
+
+msgid "Variant"
+msgstr ""
+
+msgid "Capability"
+msgstr ""
+
+msgid "Quantization"
+msgstr ""
+
+msgid "Hardware fit"
+msgstr ""
+
+msgid "Sort"
+msgstr ""
+
+msgid "Clear filters"
+msgstr ""
+
+msgid "Any state"
+msgstr ""
+
+msgid "Any family"
+msgstr ""
+
+msgid "Any variant"
+msgstr ""
+
+msgid "Any capability"
+msgstr ""
+
+msgid "Capabilities not verified"
+msgstr ""
+
+msgid "Any quantization"
+msgstr ""
+
+msgid "Quantization not verified"
+msgstr ""
+
+msgid "Any size"
+msgstr ""
+
+msgid "Any hardware fit"
+msgstr ""
+
+msgid "Choose a family first; its published variants are then listed here."
+msgstr ""
+
+msgid "Installed"
+msgstr ""
+
+msgid "Catalog only"
+msgstr ""
+
+msgid "Running: Ollama has it loaded in memory now, so a chat starts without loading."
+msgstr ""
+
+msgid "Installed: stored in the model folder. The first chat loads it into memory."
+msgstr ""
+
+msgid "Catalog only: published in the official catalog and not installed. Adding it to the batch downloads it; its exact size is read from the official registry when you select it."
+msgstr ""
+
+msgid "Under 2 GiB"
+msgstr ""
+
+msgid "2 to 8 GiB"
+msgstr ""
+
+msgid "8 to 32 GiB"
+msgstr ""
+
+msgid "Over 32 GiB"
+msgstr ""
+
+msgid "Size not known yet"
+msgstr ""
+
+msgid "Group by family"
+msgstr ""
+
+msgid "Group by state"
+msgstr ""
+
+msgid "Group by hardware fit"
+msgstr ""
+
+msgid "Group by quantization"
+msgstr ""
+
+msgid "Group by size"
+msgstr ""
+
+msgid "No grouping"
+msgstr ""
+
+msgid "Sort by family"
+msgstr ""
+
+msgid "Sort by size, smallest first"
+msgstr ""
+
+msgid "Sort by size, largest first"
+msgstr ""
+
+msgid "Sort by hardware fit, best first"
+msgstr ""
+
+msgid "Sort by name"
+msgstr ""
+
+msgid "Runs well: the estimate fits in GPU memory that Ollama has shown it can use."
+msgstr ""
+
+msgid "Runs with limits: the estimate fits only with the processor doing part or all of the work, so replies are slower."
+msgstr ""
+
+msgid "Unlikely: the model folder or the measured memory cannot hold the estimate."
+msgstr ""
+
+msgid "Unknown: evidence is missing, so no estimate is made. Inspect the model, refresh the runtime or measure hardware again."
+msgstr ""
+
+msgid "completion: writes text replies. Chat needs it."
+msgstr ""
+
+msgid "vision: accepts images with a message."
+msgstr ""
+
+msgid "tools: can ask a client to run functions that the client defines."
+msgstr ""
+
+msgid "embedding: turns text into vectors for search; it does not chat."
+msgstr ""
+
+msgid "thinking: can return its reasoning separately before the answer."
+msgstr ""
+
+msgid "insert: can fill in text between a given beginning and end."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s: reported by Ollama; no explanation is bundled for it."
+msgstr ""
+
+msgid "Quantization is verified only from installed-model metadata."
+msgstr ""
+
+msgid "32-bit weights: the original precision and the largest size."
+msgstr ""
+
+msgid "16-bit weights: close to the original quality, with the largest memory and storage needs of the common variants."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "About %s bits per weight. Fewer bits need less memory and storage but lose more quality; 4 to 5 bits is a common balance."
+msgstr ""
+
+msgid "A quantization reported by Ollama; no explanation is bundled for this label."
+msgstr ""
+
+msgid "1 variant"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s variants"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Family %s: the variants published under one model name. They differ in parameter count, quantization or tuning, and each is pulled by its exact tag."
+msgstr ""
+
+msgid "Size not known yet: the exact size is read from the official registry when you select a catalog entry."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s: each variant needs about this much space in the model folder, plus a ten percent allowance while it downloads."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Group: %s, %s"
+msgstr ""
+
+msgid "Select a variant under this heading to see its details."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Variant %s: the exact tag that is pulled and run."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Verified capabilities: %s"
+msgstr ""
+
+msgid "none reported"
+msgstr ""
+
+msgid "Capabilities are verified only after the model is installed and inspected."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Quantization %s: %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Uses %s in the model folder."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Downloads %s; with the ten percent allowance it needs %s free in the model folder."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Hardware fit now: %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Showing %s of %s variants."
+msgstr ""
+
 msgid "Time Lapse"
 msgstr ""
 
@@ -25129,921 +28048,4 @@ msgstr ""
 
 #: resources/data/helio_hints.ini: [hint: First-Time-Right Reliability]
 msgid "First-Time-Right Reliability\nLess babysitting, more predictable output. Example: a small farm running PETG parts avoids 'fail at hour 6' surprises and keeps batches on schedule."
-msgstr ""
-
-msgid "Windows locale (w32_regex_traits)"
-msgstr ""
-
-msgid "C++ locale (cpp_regex_traits)"
-msgstr ""
-
-msgid "C locale (c_regex_traits)"
-msgstr ""
-
-msgid "unknown locale traits"
-msgstr ""
-
-msgid "Off by default, so the query is plain text. When on, the worker compiles the query as a pattern."
-msgstr ""
-
-msgid "Off by default, so letters match in either case. Folding follows the engine's locale traits."
-msgstr ""
-
-msgid "Multiline anchors"
-msgstr ""
-
-msgid "Off by default. When on, ^ and $ also match at line breaks."
-msgstr ""
-
-msgid "Dot matches line breaks"
-msgstr ""
-
-msgid "Never set by a search field, so . stops at line breaks. Use (?s) inside the pattern to change it."
-msgstr ""
-
-msgid "Free spacing"
-msgstr ""
-
-msgid "Spaces and # comments are ignored only after (?x) inside the pattern."
-msgstr ""
-
-msgid "Applies to plain-text search only. In regex mode, write \\b around the word."
-msgstr ""
-
-msgid "Outside brackets these characters are syntax. Put a backslash before one to match it literally."
-msgstr ""
-
-msgid "Inside brackets, escape ], \\, [, a leading ^ and a - that is not first or last."
-msgstr ""
-
-msgid "Everything between \\Q and \\E is literal. Without \\E the quoted text runs to the end."
-msgstr ""
-
-msgid "A code unit by hexadecimal value. With 16-bit code units, values above FFFF are rejected."
-msgstr ""
-
-msgid "NUL or an octal value. A backslash and a digit from 1 to 9 is a backreference, never octal."
-msgstr ""
-
-msgid "Tab, newline, carriage return, form feed, bell, escape and Ctrl+X control characters."
-msgstr ""
-
-msgid "A backslash before a letter with no meaning here matches that letter. Other engines may reject it."
-msgstr ""
-
-msgid "Under (?x), escape # and spaces that should match literally."
-msgstr ""
-
-msgid "Supported"
-msgstr ""
-
-msgid "Partly supported"
-msgstr ""
-
-msgid "Not supported"
-msgstr ""
-
-msgid "Literal characters"
-msgstr ""
-
-msgid "Characters match themselves. Escape a metacharacter with a backslash."
-msgstr ""
-
-msgid "Quoted literal text"
-msgstr ""
-
-msgid "Everything between \\Q and \\E matches literally."
-msgstr ""
-
-msgid "Hexadecimal code units"
-msgstr ""
-
-msgid "One code unit by value. With 16-bit code units (Windows), values above FFFF are rejected, so type such characters directly."
-msgstr ""
-
-msgid "\\uHHHH code point escape"
-msgstr ""
-
-msgid "\\u is the uppercase-letter class here, so \\u0041 means an uppercase letter followed by 0041. Use \\x{0041}."
-msgstr ""
-
-msgid "Control escapes"
-msgstr ""
-
-msgid "Tab, newline, carriage return, form feed, bell, escape, Ctrl+X and NUL."
-msgstr ""
-
-msgid "\\o{...} octal escape"
-msgstr ""
-
-msgid "Not recognised: \\o is the letter o, so \\o{12} means twelve o characters. Use \\012 or \\x{A}."
-msgstr ""
-
-msgid "\\N{name} named characters"
-msgstr ""
-
-msgid "Rejected: this engine has no \\N escape."
-msgstr ""
-
-msgid "Character sets and ranges"
-msgstr ""
-
-msgid "Match one character from the list, or one not in it after ^."
-msgstr ""
-
-msgid "Class shorthands"
-msgstr ""
-
-msgid "\\h is horizontal and \\v vertical whitespace; \\l and \\u are lowercase and uppercase letters. Capitals negate."
-msgstr ""
-
-msgid "POSIX classes"
-msgstr ""
-
-msgid "Named classes inside brackets, including negated [:^name:] forms."
-msgstr ""
-
-msgid "Named classes with \\p"
-msgstr ""
-
-msgid "Only the engine's class names work (alnum, alpha, blank, cntrl, digit, graph, lower, print, punct, space, upper, word, xdigit and the letters d, h, l, s, u, v, w). \\p{L} means lowercase here, not Letter. Inside brackets \\p is just the letter p."
-msgstr ""
-
-msgid "Unicode categories and scripts"
-msgstr ""
-
-msgid "Rejected: the engine has no Unicode property tables."
-msgstr ""
-
-msgid "Set intersection and subtraction"
-msgstr ""
-
-msgid "Not available: && is two literal ampersands and -- after a range is an error."
-msgstr ""
-
-msgid "Without multiline anchors, $ matches only at the very end; \\Z also allows one final line break."
-msgstr ""
-
-msgid "Word boundaries"
-msgstr ""
-
-msgid "\\< and \\> match the start and end of a word."
-msgstr ""
-
-msgid "Buffer anchors"
-msgstr ""
-
-msgid "\\` and \\' are start-of-text and end-of-text anchors, not quote characters."
-msgstr ""
-
-msgid "Numbered capture groups"
-msgstr ""
-
-msgid "Groups are numbered by their opening parenthesis."
-msgstr ""
-
-msgid "Named capture groups"
-msgstr ""
-
-msgid "Named groups are also numbered; refer to them with \\k<name> or \\g{name}."
-msgstr ""
-
-msgid "Python-style named groups"
-msgstr ""
-
-msgid "Rejected: use (?<name>...), \\k<name> and (?&name) instead."
-msgstr ""
-
-msgid "Non-capturing groups"
-msgstr ""
-
-msgid "Group without creating a capture."
-msgstr ""
-
-msgid "Atomic groups"
-msgstr ""
-
-msgid "Once the group matches, the engine never backtracks into it."
-msgstr ""
-
-msgid "Branch reset groups"
-msgstr ""
-
-msgid "Each alternative reuses the same group numbers."
-msgstr ""
-
-msgid "Alternation"
-msgstr ""
-
-msgid "Alternatives are tried from left to right."
-msgstr ""
-
-msgid "Greedy quantifiers"
-msgstr ""
-
-msgid "A { that does not form a count, such as {,3}, is a literal brace."
-msgstr ""
-
-msgid "Lazy quantifiers"
-msgstr ""
-
-msgid "Match as few repetitions as possible."
-msgstr ""
-
-msgid "Possessive quantifiers"
-msgstr ""
-
-msgid "Never give characters back, so a*+a cannot match."
-msgstr ""
-
-msgid "Lookahead"
-msgstr ""
-
-msgid "Checks what follows without consuming it."
-msgstr ""
-
-msgid "Lookbehind"
-msgstr ""
-
-msgid "Fixed width only: every alternative must have the same constant length, and repeated groups, \\R, \\X and backreferences are rejected inside."
-msgstr ""
-
-msgid "Variable-width lookbehind"
-msgstr ""
-
-msgid "Rejected by the engine. JavaScript and .NET accept it; rewrite with a fixed width or use \\K."
-msgstr ""
-
-msgid "Backreferences"
-msgstr ""
-
-msgid "A backslash takes only one digit: \\10 is group 1 then 0, so write \\g{10}. \\g<1> is a backreference here, not a subroutine call."
-msgstr ""
-
-msgid "Conditionals"
-msgstr ""
-
-msgid "Choose an alternative by a group, a lookaround, recursion or a DEFINE block."
-msgstr ""
-
-msgid "Recursion and subroutine calls"
-msgstr ""
-
-msgid "Re-run the whole pattern or one group at this point."
-msgstr ""
-
-msgid "Inline modifiers"
-msgstr ""
-
-msgid "i, m, s and x work, for the rest of the group or inside (?flags:...)."
-msgstr ""
-
-msgid "Other inline modifiers"
-msgstr ""
-
-msgid "Rejected: only i, m, s and x are modifiers in this engine."
-msgstr ""
-
-msgid "Comments"
-msgstr ""
-
-msgid "Ignored by the engine. An unclosed (?# runs to the end of the pattern."
-msgstr ""
-
-msgid "Match start reset"
-msgstr ""
-
-msgid "Text before \\K must match but is left out of the reported match."
-msgstr ""
-
-msgid "Backtracking control verbs"
-msgstr ""
-
-msgid "These six verbs work. Verbs with an argument, such as (*MARK:name), are rejected."
-msgstr ""
-
-msgid "Verbs with names"
-msgstr ""
-
-msgid "Rejected: verb arguments are not supported."
-msgstr ""
-
-msgid "Line breaks, graphemes, code units"
-msgstr ""
-
-msgid "\\R matches any line break (CRLF as one), \\X one grapheme cluster and \\C one code unit."
-msgstr ""
-
-msgid "Case-insensitive matching"
-msgstr ""
-
-msgid "Case folding follows the engine's locale traits, so letters outside ASCII fold as that locale says."
-msgstr ""
-
-msgid "Characters above U+FFFF"
-msgstr ""
-
-msgid "With 16-bit code units (Windows) such a character is two code units: . and [ ] see each half, and a quantifier repeats only the second half. Type it directly outside brackets."
-msgstr ""
-
-msgid "Moderate"
-msgstr ""
-
-msgid "Unbalanced closing parenthesis"
-msgstr ""
-
-msgid "Ignored whitespace (free-spacing mode)"
-msgstr ""
-
-msgid "Comment, ignored by the engine"
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "One of %s alternatives"
-msgstr ""
-
-msgid "Quantifier with nothing to repeat"
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "Quoted literal text: %s"
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "Literal text: %s"
-msgstr ""
-
-msgid "Empty: matches the empty string"
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "Sequence of %s items"
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "Repeat exactly %s times"
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "Repeat %s or more times (greedy: as many as possible)"
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "Repeat %s or more times (lazy: as few as possible)"
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "Repeat %s or more times (possessive: never gives back)"
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "Repeat %s to %s times (greedy: as many as possible)"
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "Repeat %s to %s times (lazy: as few as possible)"
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "Repeat %s to %s times (possessive: never gives back)"
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "JavaScript RegExp has no %s, so this pattern will not work there unchanged."
-msgstr ""
-
-msgid "Any character, including line breaks"
-msgstr ""
-
-msgid "Start of a line"
-msgstr ""
-
-msgid "Without multiline anchors $ matches only at the very end, not before a final line break as in Perl and PCRE. Use \\Z to allow one."
-msgstr ""
-
-msgid "End of a line"
-msgstr ""
-
-msgid "This { does not form a valid count, so it is a literal brace. Some engines read {,n} as a count."
-msgstr ""
-
-msgid "A character above U+FFFF is two UTF-16 code units for this engine: inside [ ] each half is separate and a quantifier repeats only the second half."
-msgstr ""
-
-msgid "A character above U+FFFF is one code unit here but two in UTF-16 engines, including the Windows build."
-msgstr ""
-
-msgid "Trailing backslash with nothing to escape"
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "A backslash takes only one digit here: %s is group %s followed by the digit %s. Write \\g{%s} for a higher group."
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "Octal escape for code unit U+%s"
-msgstr ""
-
-msgid "Incomplete hexadecimal escape"
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "%s is above FFFF, which 16-bit code units cannot hold, so the Windows engine rejects it. Type the character itself."
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "Code unit U+%s by hexadecimal value"
-msgstr ""
-
-msgid "Incomplete control escape"
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "Control character U+%s"
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "Bell character U+%s"
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "Escape character U+%s"
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "Form feed U+%s"
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "Newline (line feed) U+%s"
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "Carriage return U+%s"
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "Tab character U+%s"
-msgstr ""
-
-msgid "Unterminated \\p{...} class name"
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "Characters outside class %s"
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "Characters in class %s"
-msgstr ""
-
-msgid "\\< and \\> are word start and end anchors here, not literal angle brackets. Escape-free < and > match themselves."
-msgstr ""
-
-msgid "Start of a word"
-msgstr ""
-
-msgid "End of a word"
-msgstr ""
-
-msgid "Start of the text, even with multiline anchors"
-msgstr ""
-
-msgid "End of the text, even with multiline anchors"
-msgstr ""
-
-msgid "End of the text or before a final line break"
-msgstr ""
-
-msgid "Where the previous match ended"
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "%s is a start-of-text or end-of-text anchor here, not a quote character. Write the quote without a backslash."
-msgstr ""
-
-msgid "Start of the text (buffer anchor)"
-msgstr ""
-
-msgid "End of the text (buffer anchor)"
-msgstr ""
-
-msgid "Reported match starts here; earlier text must still match"
-msgstr ""
-
-msgid "Any line break sequence, CRLF counted as one"
-msgstr ""
-
-msgid "One grapheme cluster: a character with its combining marks"
-msgstr ""
-
-msgid "Exactly one code unit"
-msgstr ""
-
-msgid "Empty quoted text"
-msgstr ""
-
-msgid "\\E without an earlier \\Q is the literal letter E here."
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "Not recognised by this engine: %s"
-msgstr ""
-
-msgid "\\o{...} is not an octal escape here: \\o is the letter o and the braces repeat it. Use \\0oo or \\x{...}."
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "%s has no special meaning here, so it matches the letter %s. JavaScript with the u flag, Python and .NET reject it."
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "Escaped %s: matches the character itself"
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "%s is not a code point here: \\u is the uppercase-letter class, followed by the literal text %s. Write \\x{%s}."
-msgstr ""
-
-msgid "\\u and \\U are uppercase-letter classes in this engine. In JavaScript, Java, .NET and Python \\u starts a code point escape."
-msgstr ""
-
-msgid "\\l and \\L are lowercase-letter classes that only Boost.Regex understands."
-msgstr ""
-
-msgid "\\h and \\v match horizontal and vertical whitespace here. In JavaScript \\v is only the vertical tab and \\h is not an escape."
-msgstr ""
-
-msgid "Horizontal whitespace: space or tab"
-msgstr ""
-
-msgid "Not horizontal whitespace"
-msgstr ""
-
-msgid "Vertical whitespace: a line break character"
-msgstr ""
-
-msgid "Not vertical whitespace"
-msgstr ""
-
-msgid "Lowercase letter"
-msgstr ""
-
-msgid "Not a lowercase letter"
-msgstr ""
-
-msgid "Uppercase letter"
-msgstr ""
-
-msgid "Not an uppercase letter"
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "%s uses the engine class %s, not the Unicode general category %s. Write the full class name, such as \\p{alpha}."
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "%s is rejected: this engine has no Unicode categories or scripts, only its class names such as alpha, digit and upper."
-msgstr ""
-
-msgid "Recurse into the whole pattern"
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "Call group %s as a subroutine"
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "Call group \"%s\" as a subroutine"
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "Backreference to group %s"
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "Backreference to group \"%s\""
-msgstr ""
-
-msgid "Incomplete \\g or \\k reference"
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "%s is a backreference here. In PCRE and Oniguruma the same syntax calls the group as a subroutine; use (?1) or (?&name) for that."
-msgstr ""
-
-msgid "Groups nested too deeply to analyse further; the engine rejects this nesting as too complex"
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "Capture group %s"
-msgstr ""
-
-msgid "Unclosed group"
-msgstr ""
-
-msgid "This (?# comment has no closing parenthesis, so the rest of the pattern is ignored."
-msgstr ""
-
-msgid "Lookahead: must be followed by this"
-msgstr ""
-
-msgid "Negative lookahead: must not be followed by this"
-msgstr ""
-
-msgid "Atomic group: never backtracks into its content"
-msgstr ""
-
-msgid "Branch reset group: alternatives share group numbers"
-msgstr ""
-
-msgid "Negative lookbehind: must not be preceded by this"
-msgstr ""
-
-msgid "Lookbehind: must be preceded by this"
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "Python-style %s is rejected here. Use (?<name>...), \\k<name> and (?&name)."
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "Capture group %s named \"%s\""
-msgstr ""
-
-msgid "End of group"
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "Unclosed group opened at offset %s"
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "Backtracking control verb %s"
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "%s is rejected: only (*ACCEPT), (*COMMIT), (*FAIL), (*PRUNE), (*SKIP) and (*THEN) work, without arguments."
-msgstr ""
-
-msgid "Conditional on a lookaround assertion"
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "Conditional on group %s"
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "Conditional on group \"%s\""
-msgstr ""
-
-msgid "DEFINE block: definitions for subroutine calls, never matched directly"
-msgstr ""
-
-msgid "Conditional on recursion"
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "%s is rejected: only the modifiers i, m, s and x exist in this engine."
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "Group with modifiers %s"
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "Modifiers for the rest of the group: %s"
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "Unknown class name %s"
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "Not in POSIX class %s"
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "POSIX class %s"
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "Collating element %s"
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "Equivalence class %s"
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "Backspace U+%s"
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "Vertical tab U+%s"
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "Inside [ ], %s is just the letter %s. Use a POSIX class such as [[:alpha:]] instead."
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "Backreferences are not allowed inside [ ]; %s is rejected"
-msgstr ""
-
-msgid "[...&&...] is not an intersection here: && matches literal ampersands. This engine has no set operations."
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "Set member %s"
-msgstr ""
-
-msgid "End of character set"
-msgstr ""
-
-msgid "[...--...] is not a subtraction here. This engine has no set operations and rejects -- after a range."
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "Range %s to %s"
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "Invalid range %s: the engine rejects it"
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "Unterminated character set opened at offset %s"
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "Nested repetition %s can split the same text in many ways, so a failing match may backtrack exponentially. Make the inner or outer repeat possessive (++) or atomic (?>...), or remove the overlap."
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "Alternatives %s and %s inside the repeat %s can start with the same characters, so the engine may retry many combinations. Make the alternatives start differently or use an atomic group."
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "The repeat %s contains a backreference, which the engine cannot optimise; long inputs can be slow."
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "The repeat %s contains recursion or a subroutine call; each iteration can re-run large parts of the pattern."
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "The count in %s is large; the engine's state limit or the time limit may stop it on long input."
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "The pattern starts with %s, so every start position rescans the rest of the text. Anchor it with ^ or drop the leading wildcard; a search already looks anywhere."
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "%s and %s can match the same characters next to each other, so a failing match tries every split point (polynomial backtracking)."
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "The lookbehind %s is not fixed width (or repeats a group), which this engine rejects. JavaScript and .NET accept it; rewrite it with one constant length or use \\K."
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "%s refers to a group that does not exist, so the engine rejects the pattern."
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "%s refers to a group that has not finished matching at this point, so it can never match here."
-msgstr ""
-
-msgid "This pattern can succeed without consuming any text, so rows can match with nothing highlighted; a pattern such as a* matches every row."
-msgstr ""
-
-msgid "Case-insensitive matching of letters outside ASCII follows the engine's locale traits shown under Engine."
-msgstr ""
-
-msgid "Whole word is ignored in regex mode. Put \\b around the word instead."
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "Engine: Boost.Regex %s wide-character ECMAScript in an isolated 50 ms worker. Case-insensitive matching uses boost::regex_constants::icase. Escape metacharacters with a backslash."
-msgstr ""
-
-msgid "Pattern analysis summary"
-msgstr ""
-
-msgid "Explain"
-msgstr ""
-
-msgid "Engine, structure, tokens, compatibility and backtracking risk of this pattern"
-msgstr ""
-
-msgid "Escaping rules"
-msgstr ""
-
-msgid "What this engine supports, partly supports and rejects. Each row has a probe pattern; the button runs every probe through the worker to confirm the row."
-msgstr ""
-
-msgid "Check against the engine"
-msgstr ""
-
-msgid "Capability check result"
-msgstr ""
-
-msgid "Explain this pattern"
-msgstr ""
-
-msgid "Engine"
-msgstr ""
-
-msgid "Flags in effect"
-msgstr ""
-
-msgid "Engine verdict"
-msgstr ""
-
-msgid "Structure"
-msgstr ""
-
-msgid "Pattern structure"
-msgstr ""
-
-msgid "Tokens"
-msgstr ""
-
-msgid "Token annotations"
-msgstr ""
-
-msgid "Compatibility"
-msgstr ""
-
-msgid "Compatibility notes"
-msgstr ""
-
-msgid "Backtracking risk"
-msgstr ""
-
-msgid "Backtracking risk findings"
-msgstr ""
-
-msgid "Use example as sample text"
-msgstr ""
-
-msgid "Load the adversarial example into Test pattern to see the worker stop it safely"
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "Tokens: %d, capture groups: %d, backtracking risk: %s, compatibility warnings: %d"
-msgstr ""
-
-msgid "Regex mode is off, so the search field matches this text literally. The analysis below shows how the engine would read it as a pattern."
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "Boost.Regex %s as reported by the worker. Syntax: Perl-compatible, selected by the ECMAScript flag. Code units: %d-bit. Locale traits: %s. State limit: %s."
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "The worker has not reported its engine yet, so this shows the Boost.Regex %s this build was compiled with. Open this tab again to retry."
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "%s: %s. Engine flag: %s. In the pattern: %s"
-msgstr ""
-
-msgid "The engine accepts this pattern."
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "The engine rejected the pattern at offset %d: %s"
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "Tokens: %d, capture groups: %d (%d named), backtracking risk: %s."
-msgstr ""
-
-msgid "No compatibility notes."
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "Example input: %s"
-msgstr ""
-
-msgid "No backtracking risks found."
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "All %d rows behaved as listed on Boost.Regex %s in the worker."
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "%d of %d rows behaved as listed."
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "Different on this engine: %s"
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "The worker did not answer for %d rows. Try again in a moment."
 msgstr ""

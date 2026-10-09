@@ -31658,3 +31658,321 @@ msgstr ""
 
 msgid "Unable to save logo settings. The previous logo is kept."
 msgstr ""
+
+msgid "Status Hub"
+msgstr ""
+
+msgid "Inspect status delivery and enrollment state"
+msgstr ""
+
+msgid "Offline documentation"
+msgstr ""
+
+msgid "Read bundled feature guides without opening a browser"
+msgstr ""
+
+msgid "Local model suite"
+msgstr ""
+
+msgid "Inspect local Ollama models, catalog availability and guided tools"
+msgstr ""
+
+msgid "Convert local files with verified bundled adapters"
+msgstr ""
+
+msgid "Schedule presentation without replacing stored preferences"
+msgstr ""
+
+msgid "Local security is unavailable. No protected action was performed."
+msgstr ""
+
+msgid "Authenticator"
+msgstr ""
+
+msgid "Manage local time-based authentication codes"
+msgstr ""
+
+msgid "Identity history"
+msgstr ""
+
+msgid "Enroll an independent history password and inspect encrypted identity changes"
+msgstr ""
+
+msgid "Local support tickets"
+msgstr ""
+
+msgid "Manage local-only support records; nothing is sent anywhere"
+msgstr ""
+
+msgid "Local tools"
+msgstr ""
+
+msgid "Source name"
+msgstr ""
+
+msgid "No bundled verified offline document converter adapter is installed."
+msgstr ""
+
+msgid "What this conversion changes is different from what was confirmed, so the file was skipped. Confirm the changes again and add it."
+msgstr ""
+
+msgid "Display name"
+msgstr ""
+
+msgid "Current unlock credential"
+msgstr ""
+
+msgid "New unlock credential"
+msgstr ""
+
+msgid "PIN"
+msgstr ""
+
+msgid "Unlock credential type"
+msgstr ""
+
+msgid "Unlock and disable"
+msgstr ""
+
+msgid "Set unlock credential"
+msgstr ""
+
+msgid "Replace unlock credential"
+msgstr ""
+
+msgid "This is a presentation lock, not a security boundary. Deleting the shared local application-data record resets it. Credentials remain in the operating-system vault."
+msgstr ""
+
+msgid "Restricted presentation is active."
+msgstr ""
+
+msgid "Normal presentation is active."
+msgstr ""
+
+msgid "Shared record is unreadable. Restricted presentation remains active."
+msgstr ""
+
+msgid "Native monitoring is active."
+msgstr ""
+
+msgid "Native monitoring is unavailable; polling is used."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Try again in %u seconds."
+msgstr ""
+
+msgid "Credential vault is unavailable."
+msgstr ""
+
+msgid "The change was not applied. Check the credential, input limits and shared-record availability."
+msgstr ""
+
+msgid "Narrator"
+msgstr ""
+
+msgid "Local speech is serialized. Voice network capability is unknown."
+msgstr ""
+
+msgid "Enable narrator"
+msgstr ""
+
+msgid "Off by default. Speak application events using installed voices."
+msgstr ""
+
+msgid "Quiet narration"
+msgstr ""
+
+msgid "Pause local speech without changing saved voice choices. An active screen reader also pauses narration."
+msgstr ""
+
+msgid "Narration language"
+msgstr ""
+
+msgid "Independent of the interface language. Both speaks English first."
+msgstr ""
+
+msgid "Selected voice is not installed"
+msgstr ""
+
+msgid "Effective Cantonese voice"
+msgstr ""
+
+msgid "Effective English voice"
+msgstr ""
+
+msgid "No installed voice can speak this language."
+msgstr ""
+
+msgid "Effective voice:"
+msgstr ""
+
+msgid "Selected voice is missing; the saved choice is kept."
+msgstr ""
+
+msgid "Voice network capability is unknown."
+msgstr ""
+
+msgid "Cantonese voice"
+msgstr ""
+
+msgid "English voice"
+msgstr ""
+
+msgid "Choose an installed voice. Missing selections remain saved."
+msgstr ""
+
+msgid "Cantonese speech rate"
+msgstr ""
+
+msgid "English speech rate"
+msgstr ""
+
+msgid "Platform range: -10 to 10. Normal delivery: 0."
+msgstr ""
+
+msgid "Cantonese speech pitch"
+msgstr ""
+
+msgid "English speech pitch"
+msgstr ""
+
+msgid "External speech mirror is not configured."
+msgstr ""
+
+msgid "External speech mirror is configured. Playback completion is unavailable; local serialization does not cover external playback."
+msgstr ""
+
+msgid "Collapse or expand the legend and statistics panel"
+msgstr ""
+
+msgid "Live shape and typography preview"
+msgstr ""
+
+msgid "Live appearance preview"
+msgstr ""
+
+msgid "Second line"
+msgstr ""
+
+msgid "Platform capabilities: variable font axes, oblique angle, underline style and color, double strikethrough, overline, small caps, superscript, subscript, outline, shadow, glow, word spacing, baseline offset, direction and paragraph alignment require a rich-text renderer. They are unavailable on this native element. Stored unknown properties are preserved during export and import."
+msgstr ""
+
+msgid "Typography platform capabilities"
+msgstr ""
+
+msgid "Margin updates native sizer layout. The live preview renders radius, border, padding and line height. Other owner-drawn controls require an explicit renderer adapter; native controls retain platform shape."
+msgstr ""
+
+msgid "Export the shown changes in a chosen format or archive"
+msgstr ""
+
+msgid "This article is not present in the installed documentation bundle."
+msgstr ""
+
+msgid "On Windows, sends the password through an isolated in-memory pipe, never command arguments. Encrypted headers are required. Single line, at most 1024 UTF-8 bytes."
+msgstr ""
+
+msgid "Open in VS Code"
+msgstr ""
+
+msgid "Visual Studio Code was not found. Install it, then try again. Portable builds are detected when added to PATH."
+msgstr ""
+
+msgid "Could not open the completed export in Visual Studio Code. Check that the file still exists."
+msgstr ""
+
+msgid "Download VS Code"
+msgstr ""
+
+msgid "Encrypted exports require encrypted headers to protect member names."
+msgstr ""
+
+msgid "Cannot resolve the export destination."
+msgstr ""
+
+msgid "Replace exported files"
+msgstr ""
+
+msgid "The exact existing files listed below will be replaced. Their previous contents cannot be restored by this export."
+msgstr ""
+
+msgid "Cannot inspect the export destination."
+msgstr ""
+
+msgid "This archive already exists. Choose a new output name."
+msgstr ""
+
+msgid "Export cancelled. Existing files were preserved."
+msgstr ""
+
+msgid "Cancel export"
+msgstr ""
+
+msgid "Preparing export. Cancel remains available until publication begins."
+msgstr ""
+
+msgid "Could not start the export worker. Nothing was written."
+msgstr ""
+
+msgid "Cancelling export. Waiting for the owned writer to stop."
+msgstr ""
+
+msgid "Publishing completed output. Cancellation is no longer available."
+msgstr ""
+
+msgid "Serializing export..."
+msgstr ""
+
+msgid "Writing temporary output..."
+msgstr ""
+
+msgid "Compressing archive..."
+msgstr ""
+
+msgid "Verifying archive encryption..."
+msgstr ""
+
+msgid "Publishing completed output..."
+msgstr ""
+
+msgid "Preparing export..."
+msgstr ""
+
+msgid "Export cancelled. Existing output was preserved."
+msgstr ""
+
+msgid "7-Zip options:"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Deleted %d notification entries from the history; %d reviewed entries were already unavailable."
+msgstr ""
+
+msgid "Scheduled settings at startup"
+msgstr ""
+
+msgid "Groups nested too deeply to analyse further; the engine rejects this nesting as too complex"
+msgstr ""
+
+msgid "Presentation mode"
+msgstr ""
+
+msgid "Shared local presentation and unlock settings"
+msgstr ""
+
+msgid "Pause local speech without changing saved voice choices"
+msgstr ""
+
+msgid "Independent of the interface language"
+msgstr ""
+
+msgid "Installed narrator voice"
+msgstr ""
+
+msgid "Normal delivery: 0"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Showing %s of %s variants."
+msgstr ""
