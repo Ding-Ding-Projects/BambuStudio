@@ -5,8 +5,11 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {execFileSync, spawnSync} from 'node:child_process';
 
-// Syntax-only regression using the real Button and configured wxWidgets headers.
-// Run in an MSVC developer environment. No executable or window is created.
+// Syntax-only regression using the real Button and installed wxWidgets headers.
+// Windows: an MSVC developer environment with --wx-include and --wx-setup.
+// Elsewhere those may be omitted: wx-config (WX_CONFIG) names the installed
+// headers and the host C++ compiler (CXX, default c++) checks the same probe.
+// No executable or window is created.
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const arg = name => {const i = process.argv.indexOf(name); return i < 0 ? undefined : process.argv[i + 1];};
 const base = 'ff8a0728f02c1e66bb9df2dd2e6220b3eb2e4bb3';
@@ -28,7 +31,18 @@ if (!revision) {
   // including hardware commands, event bodies, glyph/color choices and layout.
   assert.equal(source.replace('m_status_bitmap->Rescale();', 'm_status_bitmap->msw_rescale();'), fromGit(base, cpp));
 }
-const include = arg('--wx-include'), setup = arg('--wx-setup');
+const msvc = process.platform === 'win32';
+let hostFlags = null;
+if (!msvc && !arg('--wx-include') && !arg('--wx-setup')) {
+  try {
+    hostFlags = execFileSync(process.env.WX_CONFIG ?? 'wx-config', ['--cxxflags'], {encoding: 'utf8'}).trim().split(/\s+/);
+  } catch (error) {
+    assert.fail('Pass --wx-include and --wx-setup, or provide wx-config for real installed wxWidgets headers: ' + error.message);
+  }
+}
+const hostDirs = (hostFlags ?? []).filter(f => f.startsWith('-I')).map(f => f.slice(2));
+const include = arg('--wx-include') ?? hostDirs.find(d => fs.existsSync(path.join(d, 'wx', 'window.h')));
+const setup = arg('--wx-setup') ?? hostDirs.find(d => fs.existsSync(path.join(d, 'wx', 'setup.h')));
 assert(include && setup, 'Pass --wx-include and --wx-setup for real configured wxWidgets headers');
 assert(fs.existsSync(path.join(include, 'wx', 'window.h')));
 assert(fs.existsSync(path.join(setup, 'wx', 'setup.h')));
@@ -42,14 +56,22 @@ struct StatusButtonProbe {
     void rescale() { ${call} }
 };
 `);
-const result = spawnSync('cl.exe', ['/nologo', '/Zs', '/std:c++17', '/EHsc', '/D__WXMSW__', '/DUNICODE', '/D_UNICODE',
-  '/I' + setup, '/I' + include, '/I' + path.join(root, 'src'), file], {cwd: directory, encoding: 'utf8'});
+const result = hostFlags
+  ? spawnSync(process.env.CXX ?? 'c++', ['-std=c++17', '-fsyntax-only', '-DUNICODE', '-D_UNICODE', ...hostFlags,
+    '-I' + path.join(root, 'src'), file], {cwd: directory, encoding: 'utf8'})
+  : spawnSync('cl.exe', ['/nologo', '/Zs', '/std:c++17', '/EHsc', '/D__WXMSW__', '/DUNICODE', '/D_UNICODE',
+    '/I' + setup, '/I' + include, '/I' + path.join(root, 'src'), file], {cwd: directory, encoding: 'utf8'});
 if (result.error) throw result.error;
 const output = result.stdout + result.stderr;
 if (process.argv.includes('--expect-missing-member')) {
   assert.notEqual(result.status, 0, 'Old production call must fail');
-  assert.match(output, /error C2039:.*msw_rescale.*Button/, 'Expected actual missing Button member');
-  console.log('Old production call: compiler exit ' + result.status + ', C2039 observed');
+  // GCC: 'class Button' has no member named 'msw_rescale'; Clang: no member
+  // named 'msw_rescale' in 'Button'; MSVC: C2039.
+  const missing = hostFlags
+    ? output.split('\n').some(line => /error: .*no member named .msw_rescale./.test(line) && line.includes('Button'))
+    : /error C2039:.*msw_rescale.*Button/.test(output);
+  assert(missing, 'Expected actual missing Button member');
+  console.log('Old production call: compiler exit ' + result.status + ', ' + (hostFlags ? 'missing Button member' : 'C2039') + ' observed');
   console.log(output.trim());
 } else {
   assert.equal(result.status, 0, output);
