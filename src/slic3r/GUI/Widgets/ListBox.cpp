@@ -300,6 +300,19 @@ void ListBox::onLeave(wxMouseEvent &evt)
     evt.Skip();
 }
 
+int ListBox::GetSelections(wxArrayInt &selections) const
+{
+    selections.clear();
+    if (!HasMultipleSelection()) {
+        if (GetSelection() != wxNOT_FOUND) selections.push_back(GetSelection());
+        return int(selections.size());
+    }
+    unsigned long cookie = 0;
+    for (int row = GetFirstSelected(cookie); row != wxNOT_FOUND; row = GetNextSelected(cookie))
+        selections.push_back(row);
+    return int(selections.size());
+}
+
 void ListBox::animateHover(int previous)
 {
     m_hover_motion.Stop();

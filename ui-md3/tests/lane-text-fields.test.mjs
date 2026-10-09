@@ -40,6 +40,11 @@ async function sources(dir) {
 }
 
 const rel = (file) => path.relative(guiDir, file).replaceAll('\\', '/');
+// String and character literals are data, not constructions: the generated
+// Documentation/DocumentationBundle.hpp quotes the parity register, whose prose
+// names "new wxTextCtrl(". One left-to-right pass, so a quote inside the other
+// kind of literal is consumed with it.
+const withoutLiterals = (text) => text.replace(/"(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'/g, '""');
 
 test('the ratio editor of the Mixed Filament dialog is a kit field with the percent unit', async () => {
   const dialog = await read('MixedFilamentDialog.cpp');
@@ -201,7 +206,7 @@ test('native edit boxes are constructed only by the kit\'s own fields', async ()
   ].sort();
   const found = [];
   for (const file of await sources(guiDir)) {
-    const text = code(await readFile(file, 'utf8'));
+    const text = withoutLiterals(code(await readFile(file, 'utf8')));
     if (/new\s+(?:::)?(?:wx)?TextCtrl\s*\(/.test(text)) found.push(rel(file));
   }
   assert.deepEqual(found.sort(), expected);

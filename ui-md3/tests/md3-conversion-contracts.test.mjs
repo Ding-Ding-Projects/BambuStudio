@@ -391,7 +391,9 @@ test('the only list is the kit ListBox, drawn with the DropDown row anatomy', as
   assertOnlyAllowed(await sitesOf(/new wxListBox\(/g), new Set(), 'wxListBox');
   const list = stripComments(await read('Widgets', 'ListBox.cpp'));
   assert.match(list, /class ListBox : public wxVListBox|ListBox::ListBox\(wxWindow \*parent/, 'ListBox must be the owner-drawn wxVListBox');
-  assert.match(list, /MD3::Role::SecondaryContainer, m_scheme/, 'the selected pane must be SecondaryContainer in the active scheme');
+  // A disabled list keeps its selection visible on SurfaceContainerLow
+  // (ed3cbc35d, "Refine shared list row anatomy and focus feedback").
+  assert.match(list, /IsEnabled\(\) \? MD3::Role::SecondaryContainer : MD3::Role::SurfaceContainerLow, m_scheme\)/, 'the selected pane must be SecondaryContainer in the active scheme');
   assert.match(list, /MD3::Role::SurfaceContainerHigh/, 'the hover pane must be SurfaceContainerHigh');
   assert.match(list, /wxControl::Ellipsize\(m_rows\[n\], dc, wxELLIPSIZE_END/, 'long rows must ellipsize, with the full text in the tooltip');
   assert.match(list, /SetToolTip\(row >= 0/, 'the hovered row must expose its full text as the tooltip');
@@ -670,14 +672,25 @@ test('the ParamsPanel header sizer carries one stretch spacer and a fixed title 
   // stretch spacers of 2, 1 and 12 reported 56 x 16 + fixed = 1271px, which
   // the sidebar scroller took as its virtual width and cut every row at the
   // sidebar edge.
+  //
+  // The header has since been split into a context row (m_mode_sizer: icon,
+  // title, actions) and a scope row (m_scope_sizer), both inside the vertical
+  // m_header_sizer the top panel owns (760222830, "Refresh Prepare inspector
+  // hierarchy and list presentation"). The fix has to hold for each row.
   const src = await read('ParamsPanel.cpp');
-  const at = src.indexOf('m_mode_sizer = new wxBoxSizer( wxHORIZONTAL );');
+  const at = src.indexOf('m_mode_sizer = new wxBoxSizer(wxHORIZONTAL);');
   assert.ok(at > 0, 'the header sizer is built in create_layout');
-  const block = src.slice(at, src.indexOf('m_top_panel->SetSizer(m_mode_sizer);', at));
+  const end = src.indexOf('m_top_panel->SetSizer(m_header_sizer);', at);
+  assert.ok(end > at, 'the top panel owns the two-row header sizer');
+  const block = src.slice(at, end);
   assert.match(block, /^\s*m_mode_sizer->Add\( m_title_label, 0, wxALIGN_CENTER \);/m, 'the title is a fixed item');
-  const stretch = block.match(/AddStretchSpacer\(/g) || [];
-  assert.equal(stretch.length, 1, 'exactly one stretch spacer in the header');
-  assert.match(block, /^\s*m_mode_sizer->AddStretchSpacer\(1\);/m, 'and it is proportion 1');
+  for (const row of ['m_mode_sizer', 'm_scope_sizer']) {
+    const stretch = block.match(new RegExp(`${row}->AddStretchSpacer\\(`, 'g')) || [];
+    assert.equal(stretch.length, 1, `exactly one stretch spacer in ${row}`);
+    assert.match(block, new RegExp(`^\\s*${row}->AddStretchSpacer\\(1\\);`, 'm'), `and it is proportion 1 in ${row}`);
+    const proportional = [...block.matchAll(new RegExp(`${row}->Add\\(\\s*[^,()]+,\\s*[1-9]\\d*\\s*,`, 'g'))].map((m) => m[0]);
+    assert.deepEqual(proportional, [], `${row} holds no proportional item beside its spacer`);
+  }
 });
 
 test('every process setting is shown: no Simple/Advanced filter or flip remains', async () => {
@@ -736,11 +749,23 @@ test('the Squirrel package version carries a strictly increasing build number', 
   // and sorts prerelease labels lexically); the one-click build resolves N.
   const squirrel = await readFile(path.join(repoDir, 'scripts', 'windows', 'Invoke-SquirrelPackage.ps1'), 'utf8');
   assert.match(squirrel, /^\s*\[int\] \$ReleaseNumber = 0/m, 'the packaging script accepts a release number');
-  assert.match(squirrel, /^\s*return \('\{0\}\.\{1\}\.\{2\}' -f \$base\[0\], \$base\[1\], \(\(\[int\] \$base\[2\]\) \* 1000 \+ \$ReleaseNumber\)\)/m, 'the release number is folded into the patch part');
+  // The patch part is computed as a [long] and range-checked before it forms the
+  // version (63863c84a, "Keep Squirrel package versions above published delivery").
+  assert.match(squirrel, /^\s*if \(\$ReleaseNumber -gt 0\) \{ \$patch = \$patch \* 1000L \+ \$ReleaseNumber \}/m, 'the release number is folded into the patch part');
+  assert.match(squirrel, /^\s*if \(\$patch -gt \[int\]::MaxValue\) \{ throw /m, 'and the folded patch part must fit a version component');
+  assert.match(squirrel, /^\s*\$candidate = \[version\] \('\{0\}\.\{1\}\.\{2\}' -f \$base\[0\], \$base\[1\], \$patch\)/m, 'which forms the package version');
+  // A candidate at or below the previously published package moves one past it,
+  // so the number never walks backwards.
+  assert.match(squirrel, /^\s*if \(\$candidate -le \$previous\) \{/m, 'a candidate that does not exceed the previous package is raised');
+  assert.match(squirrel, /^\s*\$candidate = \[version\] \('\{0\}\.\{1\}\.\{2\}' -f \$previous\.Major, \$previous\.Minor, \(\$previous\.Build \+ 1\)\)/m, 'to one past the previous package');
   assert.match(squirrel, /^\$normalizedVersion = ConvertTo-SquirrelVersion -Version \$ProductVersion -ReleaseNumber \$ReleaseNumber/m, 'the package version uses it');
   const build = await readFile(path.join(repoDir, 'scripts', 'windows', 'Invoke-OneClickBuild.ps1'), 'utf8');
   assert.match(build, /^function Resolve-ReleaseNumber \{/m, 'the one-click build resolves the release number');
-  assert.match(build, /-ReleaseNumber \$releaseNumber -IconPath/m, 'and passes it to the packaging script');
+  // The packaging script runs through Invoke-LoggedNativeCommand with an argument
+  // array (c523fe3a7, "Capture both native build diagnostic streams").
+  const packageCall = build.split('\n').find((line) => line.includes("'scripts\\windows\\Invoke-SquirrelPackage.ps1'"));
+  assert.ok(packageCall, 'the one-click build runs the packaging script');
+  assert.match(packageCall, /'-ReleaseNumber', \$releaseNumber,/, 'and passes it to the packaging script');
   const workflow = await readFile(path.join(repoDir, '.github', 'workflows', 'build_bambu.yml'), 'utf8');
   assert.match(workflow, /^\s*-ReleaseNumber \$releaseNumber `$/m, 'the hosted packaging step passes a build number too');
   // Hosted builds take N from the workflow's run number. "Highest md3-v tag plus

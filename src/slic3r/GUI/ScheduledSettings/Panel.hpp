@@ -1,19 +1,18 @@
 #pragma once
 #include "libslic3r/ScheduledSettings/Service.hpp"
+#include "../Widgets/LabeledRadioButton.hpp"
 #include <wx/panel.h>
 #include <wx/timer.h>
 #include <functional>
 class SearchField;
 class TabCtrl;
-class wxListBox;
+class Label;
+class LabeledCheckBox;
+class SpinInput;
 class wxTextCtrl;
-class wxCheckBox;
-class wxSpinCtrl;
 class wxDatePickerCtrl;
 class wxTimePickerCtrl;
-class wxRadioBox;
-class wxStaticText;
-class wxScrolledWindow;
+namespace Slic3r::GUI { class ListBox; }
 namespace Slic3r::GUI::ScheduledSettingsUI {
 using Translate=std::function<wxString(const char* english,const char* cantonese)>;
 using Visible=std::function<bool(const std::string& setting_key)>;
@@ -45,18 +44,22 @@ private:
     std::map<std::string,std::string> m_preset_rules;
     std::vector<std::string> m_rule_ids,m_setting_keys;
     SearchField *m_search=nullptr,*m_setting_search=nullptr,*m_zone_search=nullptr;
-    wxListBox *m_rules=nullptr,*m_settings=nullptr,*m_zones=nullptr;
+    ListBox *m_rules=nullptr,*m_settings=nullptr,*m_zones=nullptr;
+    // The inner editors of kit TextInput fields.
     wxTextCtrl *m_label=nullptr,*m_url=nullptr,*m_entity=nullptr,*m_secret=nullptr;
-    wxCheckBox *m_enabled=nullptr,*m_every_day=nullptr,*m_days[7]={},*m_consent=nullptr,*m_private=nullptr,*m_loopback=nullptr;
-    wxSpinCtrl *m_priority=nullptr,*m_interval=nullptr;
+    LabeledCheckBox *m_enabled=nullptr,*m_every_day=nullptr,*m_days[7]={},*m_consent=nullptr,*m_private=nullptr,*m_loopback=nullptr;
+    SpinInput *m_priority=nullptr,*m_interval=nullptr;
     wxDatePickerCtrl *m_first=nullptr,*m_last=nullptr;
     wxTimePickerCtrl *m_start=nullptr,*m_end=nullptr;
-    wxRadioBox *m_source=nullptr;
-    wxStaticText* m_status=nullptr;
-    wxStaticText* m_live=nullptr;
+    // The value source rows; the selection is the SourceKind.
+    RadioGroup m_source;
+    Label* m_status=nullptr;
+    Label* m_live=nullptr;
     wxTimer m_live_timer;
     wxPanel* m_value_host=nullptr;
     wxWindow* m_value=nullptr;
+    // Row of the choice list in m_value -> index into the setting's choices.
+    std::vector<size_t> m_choice_rows;
     std::vector<ScheduledSettings::Zone> m_zone_values;
     std::vector<size_t> m_zone_indices;
     void zones_filter();

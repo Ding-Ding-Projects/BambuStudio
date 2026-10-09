@@ -4,7 +4,6 @@
 #include "Widgets/Label.hpp"
 #include "Widgets/MD3Tokens.hpp"
 #include "Widgets/StateColor.hpp"
-#include <wx/stattext.h>
 #include <wx/wrapsizer.h>
 #include <algorithm>
 
@@ -77,10 +76,11 @@ WorkflowPrintPanel::WorkflowPrintPanel(wxWindow* parent, ReadSummary read_summar
     Bind(wxEVT_SHOW, [this](wxShowEvent& event) { if (event.IsShown()) RefreshSummary(); event.Skip(); });
 }
 
-wxStaticText* WorkflowPrintPanel::AddText(wxWindow* parent, wxSizer* sizer, const wxString& text, bool heading)
+Label* WorkflowPrintPanel::AddText(wxWindow* parent, wxSizer* sizer, const wxString& text, bool heading)
 {
-    auto* label = new wxStaticText(parent, wxID_ANY, text, wxDefaultPosition, wxDefaultSize, wxST_NO_AUTORESIZE);
-    label->SetMinSize(wxSize(1, -1));
+    auto* label = new Label(parent, text, wxST_NO_AUTORESIZE);
+    // The sizer owns the width; Reflow() wraps the text to whatever it is given.
+    label->SetMinSize(wxSize(0, -1));
     m_spacing.emplace_back(sizer->Add(label, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP,
         FromDIP(MD3::Metrics::active().padding)), false);
     m_text.push_back(label);
@@ -135,11 +135,11 @@ void WorkflowPrintPanel::RefreshSummary()
     m_slice_send->Enable(m_summary.availability.allows(WorkflowPrint::Action::SliceAndSend));
     const wxString slice_reason = _L("Return to Prepare to review the plate, material settings, or slicing progress.");
     for (auto* button : {m_slice, m_slice_print, m_slice_send})
-        button->SetToolTip(button->IsEnabled() ? wxEmptyString : slice_reason);
+        button->SetToolTip(button->IsEnabled() ? wxString() : slice_reason);
     Reflow();
 }
 
-void WorkflowPrintPanel::SetText(wxStaticText* label, const wxString& text)
+void WorkflowPrintPanel::SetText(Label* label, const wxString& text)
 {
     m_labels[label] = text;
     label->SetLabel(text);

@@ -14,7 +14,7 @@
 #include "MaterialIcon.hpp"    // MaterialIcon::Glyph + draw helpers
 #include "MD3Tokens.hpp"       // MD3::Viewport::live
 
-class wxButton;
+class Button;
 
 namespace Slic3r { namespace GUI {
 
@@ -143,11 +143,12 @@ private:
     void on_pulse(wxTimerEvent &evt);
     void on_view_changed(wxCommandEvent &evt);
     void change_zoom(double factor);
+    void style_zoom_percent();
     wxWeakRef<wxWindow> m_media;
     CameraHUDChip *m_zoom_out{nullptr};
     CameraHUDChip *m_zoom_in{nullptr};
     CameraHUDChip *m_zoom_reset{nullptr};
-    wxButton *m_zoom_percent{nullptr};
+    Button *m_zoom_percent{nullptr};
 
     CameraHUDChip *    m_setting_chip{nullptr};
     CameraHUDChip *    m_fullscreen_chip{nullptr};

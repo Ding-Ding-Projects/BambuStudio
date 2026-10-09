@@ -23,6 +23,10 @@ namespace Slic3r { namespace GUI {
 // scrollbar is the kit scrollbar (MD3ScrollBars), not the Windows one.
 // Rows use density minima and measured caller fonts. Keyboard focus has an
 // inset ring; hover paint uses owner-bound, reduced-motion-aware feedback.
+// Created with wxLB_MULTIPLE it replaces a wxListBox with wxLB_EXTENDED:
+// wxVListBox then gives the extended model (a click selects one row,
+// Ctrl+click toggles a row, Shift+click and Shift+arrows extend the range,
+// Space toggles the current row) and GetSelections() reports the rows.
 class ListBox : public wxVListBox
 {
 public:
@@ -35,6 +39,9 @@ public:
     void     Clear();
     unsigned GetCount() const { return unsigned(m_rows.size()); }
     wxString GetString(unsigned index) const { return index < m_rows.size() ? m_rows[index] : wxString(); }
+    // The selected rows in ascending order, in either selection mode, as
+    // wxListBox::GetSelections() reported them; returns their count.
+    int      GetSelections(wxArrayInt &selections) const;
 
     // Recolor the selected pane to a workspace accent (Preview / Device).
     void SetColorScheme(MD3::ColorScheme scheme);

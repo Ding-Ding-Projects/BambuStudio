@@ -10,7 +10,7 @@
 
 class Button;
 class StaticBox;
-class wxStaticText;
+class Label;
 class wxSizerItem;
 class wxBoxSizer;
 
@@ -41,26 +41,26 @@ public:
 private:
     Button* AddAction(wxWindow* parent, wxSizer* sizer, const wxString& label,
                       WorkflowPrint::Action action, bool primary = false);
-    wxStaticText* AddText(wxWindow* parent, wxSizer* sizer, const wxString& text, bool heading = false);
+    Label* AddText(wxWindow* parent, wxSizer* sizer, const wxString& text, bool heading = false);
     void Reflow();
-    void SetText(wxStaticText* label, const wxString& text);
+    void SetText(Label* label, const wxString& text);
     ReadSummary m_read_summary;
     RunAction m_run_action;
     WorkflowPrintSummary m_summary;
-    wxStaticText* m_status = nullptr;
-    wxStaticText* m_reason = nullptr;
-    wxStaticText* m_plate = nullptr;
-    wxStaticText* m_printer = nullptr;
-    wxStaticText* m_estimate = nullptr;
-    wxStaticText* m_material = nullptr;
+    Label* m_status = nullptr;
+    Label* m_reason = nullptr;
+    Label* m_plate = nullptr;
+    Label* m_printer = nullptr;
+    Label* m_estimate = nullptr;
+    Label* m_material = nullptr;
     Button* m_output = nullptr;
     Button* m_slice = nullptr;
     Button* m_slice_print = nullptr;
     Button* m_slice_send = nullptr;
     std::vector<StaticBox*> m_cards;
-    std::vector<wxStaticText*> m_text;
-    std::vector<wxStaticText*> m_headings;
-    std::map<wxStaticText*, wxString> m_labels;
+    std::vector<Label*> m_text;
+    std::vector<Label*> m_headings;
+    std::map<Label*, wxString> m_labels;
     std::vector<Button*> m_buttons;
     std::vector<std::pair<wxSizerItem*, bool>> m_spacing;
     std::vector<wxSizerItem*> m_spacers;

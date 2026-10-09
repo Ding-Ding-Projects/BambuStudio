@@ -234,6 +234,7 @@ RadioGroup::~RadioGroup()
     for (auto *b : m_buttons) {
         b->Unbind(wxEVT_RADIOBUTTON, &RadioGroup::onMemberSelected, this);
         b->Unbind(wxEVT_KEY_DOWN, &RadioGroup::onMemberKey, this);
+        b->Unbind(wxEVT_DESTROY, &RadioGroup::onMemberDestroyed, this);
     }
 }
 
@@ -243,10 +244,18 @@ void RadioGroup::Add(LabeledRadioButton *button)
     m_buttons.push_back(button);
     button->Bind(wxEVT_RADIOBUTTON, &RadioGroup::onMemberSelected, this);
     button->Bind(wxEVT_KEY_DOWN, &RadioGroup::onMemberKey, this);
-    button->Bind(wxEVT_DESTROY, [this, button](wxWindowDestroyEvent &e) {
-        m_buttons.erase(std::remove(m_buttons.begin(), m_buttons.end(), button), m_buttons.end());
-        e.Skip();
-    });
+    button->Bind(wxEVT_DESTROY, &RadioGroup::onMemberDestroyed, this);
+}
+
+void RadioGroup::onMemberDestroyed(wxWindowDestroyEvent &evt)
+{
+    // The event is sent from the wxWindow destructor, when the row is no longer
+    // a LabeledRadioButton, so it is matched by address, not by a cast.
+    const wxWindow *gone = evt.GetWindow();
+    m_buttons.erase(std::remove_if(m_buttons.begin(), m_buttons.end(),
+                                   [gone](LabeledRadioButton *b) { return static_cast<wxWindow *>(b) == gone; }),
+                    m_buttons.end());
+    evt.Skip();
 }
 
 int RadioGroup::IndexOf(const LabeledRadioButton *button) const
