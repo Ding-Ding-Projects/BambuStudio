@@ -62,4 +62,6 @@ The native build reported C2039 because wxSizerItem has no SetSpacer member. app
 
 In an initialized MSVC developer environment, run node tests/native_shared_controls/preset_spacer_compile.test.mjs --wx-root <installed-wx-prefix>. The check extracts the production spacer statement and compiles it against the actual installed wx/sizer.h and matching setup header. With --source-revision c1149eab941cb179f3333f994111899281627ffb --expect-missing-api it reproduces C2039 for SetSpacer; the corrected statement compiles successfully. No substitute wx class or compatibility method is used. The existing focused field/preset density-DPI lifecycle source check also passes.
 
+Off Windows, `--wx-root` may be omitted: the test then compiles the same statement with the host C++ compiler (`CXX`, default `c++`) against the installed wx headers named by `wx-config`, and the expected-failure mode accepts that compiler's missing-member diagnostic for `SetSpacer`. The MSVC run against the Windows wx build remains the Windows proof.
+
 This verifies the repaired API call, not the full Tab.cpp translation unit, linked application, runtime spacer layout or rendered interface. No full build or application launch was performed by this repair lane.

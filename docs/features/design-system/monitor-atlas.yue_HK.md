@@ -1,6 +1,6 @@
 ---
 translation-of: monitor-atlas.md
-source-sha256: 7e1c1fc0df4b76da44529ee8465e529c741b2f23337993e747e3ef7abfb3e04a
+source-sha256: 7de6b32485e4deaf01d4db78ac0f086b39d8c47eb176d2c62ab3f97648430f50
 review-status: agent-drafted
 ---
 
@@ -48,3 +48,5 @@ review-status: agent-drafted
 原生編譯器喺兩個打印標題排列呼叫報告 C2664。`c1149eab941cb179f3333f994111899281627ffb` 仍有呢個問題：`PrintingTaskPanel::m_staticText_printing` 宣告為 `wxStaticText*`，但 `layout_printing_title` 要求 `Label*`。輔助方法而家接受實際成員合約及 `Label` 基底類別 `wxStaticText*`。完整量度本體、標題字型、快取失效、最低尺寸、建構呼叫同 DPI 呼叫保持不變。冇加入型別強制轉換、替換成員、修改換行或者遙測。
 
 `ui-md3/tests/printing-title-type-compile.test.mjs` 抽取真實產品成員、完整輔助方法同兩個呼叫陳述，包含實際 `Label.hpp` 同已設定 wxWidgets 標頭，使用 MSVC `/Zs` 語法檢查，冇替身控制項別名、連結或者建立視窗。喺 MSVC 開發環境執行，提供 `--wx-include <wx-include-directory> --wx-setup <configured-setup-directory>`。加上 `--source-revision c1149eab941cb179f3333f994111899281627ffb --expect-mismatch`，重現編譯器結束碼 2 同兩個呼叫嘅 C2664；修正後源碼結束碼為 0。四項現有 `monitor-atlas-dpi.test.mjs` 檢查通過。呢啲只證明抽出嘅產品型別合約，唔代表完整 StatusPanel 翻譯單元建置或者執行時呈現。
+
+喺非 Windows 平台可以唔畀兩個 wx 參數：同一個探針會用本機 C++ 編譯器（`CXX`，預設 `c++`）同 `wx-config` 指出嘅已安裝 wx 標頭檢查，預期失敗模式會數兩個呼叫上該編譯器嘅指標轉換拒絕。對 Windows wx 建置嘅 MSVC 執行仍然係 Windows 證明。

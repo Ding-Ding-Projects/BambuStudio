@@ -465,12 +465,12 @@
     {
       "route": "design-system/monitor-atlas.md",
       "title": "Studio Atlas native monitor surfaces",
-      "sha256": "7e1c1fc0df4b76da44529ee8465e529c741b2f23337993e747e3ef7abfb3e04a"
+      "sha256": "7de6b32485e4deaf01d4db78ac0f086b39d8c47eb176d2c62ab3f97648430f50"
     },
     {
       "route": "design-system/monitor-atlas.yue_HK.md",
       "title": "Studio Atlas 原生監察介面",
-      "sha256": "5cf47fe37238d8ac1a7d5c67b16216d6f439eba224b28cab6655a3ff9b75ef93"
+      "sha256": "7cf45072ed65bdcfb97d4c62c9b370e51240676225e94dedb69bf3fdfa945ef9"
     },
     {
       "route": "design-system/native-controls.md",
@@ -575,22 +575,22 @@
     {
       "route": "design-system/studio-atlas-fields-and-presets.md",
       "title": "Studio Atlas fields and preset controls",
-      "sha256": "6c8dc6a4e1f1eabbfe110bca4c7609f806983d306b6af99a25c8d5a43fb62e20"
+      "sha256": "844b517cfc391d1d4c1c4cf2845ebde4936ce01e6717f74205ce7d32ddb22660"
     },
     {
       "route": "design-system/studio-atlas-fields-and-presets.yue_HK.md",
       "title": "Studio Atlas 欄位同預設控制",
-      "sha256": "a7d2b7b210c3f75edab61f68fc490a455c9273d80746486bad88551778e53b7a"
+      "sha256": "ea7e6a9dd875d9befcd2706b4019d53f6b22ae27e9af2a6a28f940fdff9030da"
     },
     {
       "route": "design-system/studio-atlas-listbox.md",
       "title": "Studio Atlas shared list rows",
-      "sha256": "e6b5521b8afdc48f1af1971713d88d31ff1a4d356e51bbfd4a356454ee19296f"
+      "sha256": "6532d5c29153687cb7747d474201f3e32e5d820340e36a671f42c85d00116acb"
     },
     {
       "route": "design-system/studio-atlas-listbox.yue_HK.md",
       "title": "Studio Atlas 共用清單列",
-      "sha256": "8940c8b5e9c654e34fb06ff98a35c301ff37c9d46a6e6b26e460246df16b9afc"
+      "sha256": "2355c5adc2cafda995da0a2b207ca0900d8d6f91bf188e45cab2f278bb93727f"
     },
     {
       "route": "design-system/studio-atlas-selection-controls.md",
@@ -1975,7 +1975,7 @@
       "bytes": 1979
     }
   ],
-  "bundle_sha256": "b19323313f12186b6c21fd9572dd89359b0a57e08cda6c9da1a2d533286a7718",
+  "bundle_sha256": "85127109d5afc39d716e191b5dd51d5ee90f7be86375b2d8a78586efac32e31b",
   "unavailable_references": [
     {
       "source": "api/README.md",
