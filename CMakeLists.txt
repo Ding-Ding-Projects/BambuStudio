@@ -926,6 +926,9 @@ endif()
 # Resources install target, configure fhs.hpp on UNIX
 if (WIN32)
     install(DIRECTORY "${SLIC3R_RESOURCES_DIR}/" DESTINATION "${CMAKE_INSTALL_PREFIX}/resources")
+    # The download capture browser extension ships beside the application so
+    # Chromium browsers can load it from the installed folder.
+    install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/browser-extension/" DESTINATION "${CMAKE_INSTALL_PREFIX}/browser-extension")
 elseif (SLIC3R_FHS)
     # CMAKE_INSTALL_FULL_DATAROOTDIR: read-only architecture-independent data root (share)
     set(SLIC3R_FHS_RESOURCES "${CMAKE_INSTALL_FULL_DATAROOTDIR}/BambuStudio")
