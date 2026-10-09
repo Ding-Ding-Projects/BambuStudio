@@ -3,6 +3,7 @@ import {execFileSync,spawnSync} from 'node:child_process';
 import {tmpdir} from 'node:os';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {compileFixture} from './native_fixture_compiler.mjs';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const output=mkdtempSync(path.join(tmpdir(),'bambustudio-result-viewport-'));
 const revision=process.argv.find(x=>x.startsWith('--baseline='))?.slice(11);
@@ -18,7 +19,7 @@ console.log('Production viewport source: '+(revision??'current working source'))
 if(process.argv.includes('--negative-wheel'))console.log('Negative mutation: wheel binding removed');
 if(process.argv.includes('--negative-unbounded'))console.log('Negative mutation: width unbounded');
 console.log('Task-owned output: '+output);
-const compile=spawnSync('cl.exe',['/nologo','/std:c++17','/EHsc','/W4','/I'+root,cpp,'/Fe:'+exe,'/Fo:'+path.join(output,'fixture.obj')],{cwd:output,stdio:'inherit'});
+const compile=compileFixture({source:cpp,exe,cwd:output,include:root});
 if(compile.error)throw compile.error;if(compile.status!==0)process.exit(compile.status??1);
 const modes=process.argv.includes('--wheel')?[['wheel']]:[[],['wheel']];
 let result=0;

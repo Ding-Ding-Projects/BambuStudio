@@ -10,6 +10,8 @@ Resize, show and DPI changes coalesce into a deferred reflow. A running reflow c
 
 `node --test tests/calibration_layout.test.mjs` checks the actual adapters. Against commit `5568ae6ec28bb86cf481989da79d5582ca76dbfd`, all three cases fail; current source passes all three. `node tests/calibration_layout_fixture.test.mjs`, in an MSVC developer environment, builds only a non-window fixture outside the repository and exercises the production `CalibrationLayout.hpp`: five cases pass for measured widths at four scales, narrow/hidden bounds, height changes, deferred coalescing and state release. The existing preservation checks explicitly normalize only the new layout operations; actions, values and text remain compared with their original baselines.
 
+The four compile-and-run fixtures in this article (`calibration_layout_fixture`, `calibration_minimum`, `calibration_reflow` and `calibration_result_viewport`) take their compiler from `tests/native_fixture_compiler.mjs`: MSVC `cl.exe` on Windows, run from a developer environment, and `$CXX` (default `c++`) at C++17 with `-Wall -Wextra` on any other host. The Linux contract gate therefore executes the same fixtures and their negative modes instead of stopping because `cl.exe` is missing.
+
 This is source and helper evidence, not native rendering evidence. The application was not built or launched for this change. Minimum client-area readability, keyboard scroll/focus, English/Cantonese/bilingual text, both themes and 100%, 125%, 150%, 200% display scales still require the native capture matrix. Preset rows and result tables are subsequent bounded changes.
 
 ## 校準說明頁版面

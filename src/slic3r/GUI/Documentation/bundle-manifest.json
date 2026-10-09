@@ -295,12 +295,12 @@
     {
       "route": "design-system/calibration-viewport-layout.md",
       "title": "Calibration viewport layout",
-      "sha256": "e2c3de0eae066010e35d905be6301e1566976feca6a890c75f79d9fa2ef8dcdc"
+      "sha256": "242db8dc0e934f1c471d0dee4e9ab9d44a66e81cec9f21faab5e20f15287653b"
     },
     {
       "route": "design-system/calibration-viewport-layout.yue_HK.md",
       "title": "校準視窗佈局",
-      "sha256": "16ee6d0ccf25c0420c523813714ab320767908df0350f14e401f5532d1a6aba8"
+      "sha256": "c6314af4e7c777f81bef4499dc85bf468f7bb5d148ca4cd4f65cb9cb58c35f69"
     },
     {
       "route": "design-system/clipping-inventory.md",
@@ -495,12 +495,12 @@
     {
       "route": "design-system/native-preferences-setup-atlas.md",
       "title": "Studio Atlas: project, preferences and setup composition",
-      "sha256": "98d4b508bc229bcd11b115d8d607420fda0a2b2bf663feb57e2c7de40434ef69"
+      "sha256": "e3ca4580c05c6e2ac9846cff4e7a3082a4f911d3049a3821e599785b304d072c"
     },
     {
       "route": "design-system/native-preferences-setup-atlas.yue_HK.md",
       "title": "Studio Atlas 項目、偏好設定同設定流程",
-      "sha256": "aec844bfb7fbbb322cc9928b04ddadc0247902cd9773d5baefb2653b50f64845"
+      "sha256": "7b661644b4df1740d25277cdac28c870f1f0a970b7b761dba2c43fad60ff0fa9"
     },
     {
       "route": "design-system/native-workflow-navigation.md",
@@ -1975,7 +1975,7 @@
       "bytes": 1979
     }
   ],
-  "bundle_sha256": "b19323313f12186b6c21fd9572dd89359b0a57e08cda6c9da1a2d533286a7718",
+  "bundle_sha256": "2f550f16f167dbdf89510702316bb17fb29e6f6e553d9f803c7503f61d668dfc",
   "unavailable_references": [
     {
       "source": "api/README.md",

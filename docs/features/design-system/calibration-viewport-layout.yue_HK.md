@@ -1,6 +1,6 @@
 ---
 translation-of: calibration-viewport-layout.md
-source-sha256: e2c3de0eae066010e35d905be6301e1566976feca6a890c75f79d9fa2ef8dcdc
+source-sha256: 242db8dc0e934f1c471d0dee4e9ab9d44a66e81cec9f21faab5e20f15287653b
 review-status: agent-drafted
 ---
 
@@ -17,6 +17,8 @@ review-status: agent-drafted
 ## 驗證同限制
 
 `node --test tests/calibration_layout.test.mjs` 檢查實際轉接器。對照提交 `5568ae6ec28bb86cf481989da79d5582ca76dbfd`，三個案例全部失敗；目前原始碼全部通過。喺 MSVC 開發環境執行 `node tests/calibration_layout_fixture.test.mjs`，只會喺儲存庫外建置非視窗測試，測試正式 `CalibrationLayout.hpp`：五個案例通過，涵蓋四種縮放實測寬度、窄／隱藏邊界、高度改變、延後合併同狀態釋放。原有保留檢查只明確正規化新佈局操作；操作、值同文字繼續同原始基準比較。
+
+呢篇講嘅四個編譯再執行 fixture（`calibration_layout_fixture`、`calibration_minimum`、`calibration_reflow` 同 `calibration_result_viewport`）由 `tests/native_fixture_compiler.mjs` 揀編譯器：Windows 用 MSVC `cl.exe`，要喺開發環境執行；其他主機用 `$CXX`（預設 `c++`），C++17 加 `-Wall -Wextra`。所以 Linux 合約檢查都會跑同一批 fixture 同佢哋嘅負面模式，唔會因為冇 `cl.exe` 就停低。
 
 以上係原始碼同輔助函式證據，唔係原生畫面證據。呢項改動冇建置或啟動應用程式。最小用戶區可讀性、鍵盤捲動／焦點、英文／廣東話／雙語文字、兩種主題同 100%、125%、150%、200% 顯示縮放，仍需原生畫面矩陣。預設列同結果表格屬之後有界限改動。
 

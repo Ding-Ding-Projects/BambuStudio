@@ -1,6 +1,6 @@
 ---
 translation-of: native-preferences-setup-atlas.md
-source-sha256: 98d4b508bc229bcd11b115d8d607420fda0a2b2bf663feb57e2c7de40434ef69
+source-sha256: e3ca4580c05c6e2ac9846cff4e7a3082a4f911d3049a3821e599785b304d072c
 review-status: agent-drafted
 ---
 
@@ -43,7 +43,7 @@ Preferences 保留 Appearance、Schedules、General、User、3D、Other、條件
 
 後續三張卡都用 `StaticBox::SetDensity`，之前唔覆蓋半徑。真實 Preferences 索引經 wx sizer／window 轉接器用 `PreferencesSearchTraversal.hpp`：只進入確實含註冊列嘅容器，遇到確切註冊 sizer／window 身份停止，保留未註冊直接列同原可見性，唔將結構卡當成可隱藏列。子列篩選唔會隱藏自己張卡。原有父相對捲動已累積祖先位置，毋須替換。
 
-喺 MSVC 開發環境執行 `node tests/native_preferences_behavior.test.mjs`，會喺倉庫外編譯暫存無視窗 fixture，包含真實 `build_search_index`、圓角方法同三個卡片初始化語句；記憶體替身提供身份及 DPI 換算，冇建立原生視窗。
+喺 MSVC 開發環境執行 `node tests/native_preferences_behavior.test.mjs`，會喺倉庫外編譯暫存無視窗 fixture，包含真實 `build_search_index`、圓角方法同三個卡片初始化語句；記憶體替身提供身份及 DPI 換算，冇建立原生視窗。編譯器由 `tests/native_fixture_compiler.mjs` 揀：Windows 用 MSVC `cl.exe`，其他主機用 `$CXX`（預設 `c++`），C++17 加 `-Wall -Wextra`，咁 Linux 合約檢查都會跑同一個 fixture，唔會因為冇 `cl.exe` 就停低。
 
 附加 `--baseline=8b0b5e6da19d0ce877a3c5eb770de6945a516e77 --case=rows`，舊版出現 `nested card was indexed instead of its rows`；`--case=radius` 出現 `card initializer pinned radius`。修正後九個案例通過：精確鍵／文字匹配、篩選／重設、隱藏祖先、註冊停止邊界、未註冊複合列、結構包裝、空位、三初始化×四比例、密度同明確覆蓋語意。較早七項亦通過。
 
