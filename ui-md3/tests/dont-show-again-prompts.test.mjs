@@ -150,12 +150,13 @@ test('a ticked new-ink prompt is remembered however it closes, and takes the bad
 
 test('while the setting stands no new-ink badge or prompt is offered, native or Web', () => {
   assert.match(guiAppHpp, /bool is_new_filament_prompt_hidden\(\) const \{ return app_config && app_config->get\("hide_new_filament_prompt"\) == "1"; \}/);
-  // The one place a pending badge is shown, on the native slot and on the Web page.
-  const hidden = notify.search(/if \(is_new_filament_prompt_hidden\(\)\)\s*return;/);
-  const webShow = notify.search(/NotifyNewRfidFilament\(/);
-  const nativeShow = notify.search(/show_ams_filament_hint\(/);
-  assert.notEqual(hidden, -1, 'the badge is skipped while the setting stands');
-  assert.ok(hidden < webShow && hidden < nativeShow, 'before either badge is shown');
+  // The one place a pending badge used to be shown, on the native slot and on the Web page. Since the
+  // quiet-workflow change (docs/features/windows/quiet-workflow.md: new-filament badges no longer
+  // interrupt work, and RFID recording still runs through the synchronization service) it shows no
+  // badge at all, so none can be shown while the setting stands either.
+  assert.match(notify, /void GUI_App::notify_new_rfid_filament\(/, 'the RFID notice entry point is still there');
+  assert.doesNotMatch(notify, /NotifyNewRfidFilament\(/, 'no badge is put on the Web page');
+  assert.doesNotMatch(notify, /show_ams_filament_hint\(/, 'no badge is put on the native slot');
   assert.match(drainHints, /if \(wxGetApp\(\)\.is_new_filament_prompt_hidden\(\)\)\s*return;/);
   // A badge is not even recorded, but the new spool still reaches the Ink Manager.
   assert.match(filaSync, /if \(!wxGetApp\(\)\.is_new_filament_prompt_hidden\(\)\)\s*m_pending_badges\[/);
