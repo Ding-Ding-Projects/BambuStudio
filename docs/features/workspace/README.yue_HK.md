@@ -1,6 +1,6 @@
 ---
 translation-of: README.md
-source-sha256: eddcad58c6b7bf46ef9477b05255b25894a34899bc9ddfeca5fedba4c170645a
+source-sha256: 8a12fcb29afc9715cfaf8c4105f9fb7c3dfaf014006c193b4efdf74ce3bd2a41
 review-status: agent-drafted
 ---
 
@@ -50,6 +50,9 @@ review-status: agent-drafted
   去重）、附帶一個瀏覽器同恢復旁邊活躍檔案語意。
 - [設備風扇動作](fan-motion.md)──獨立遙測驅動部件同
   輔助風扇預覽附帶不同輸入同命令反饋。
+- [空白編輯器嘅「由預設開始」](blank-editor-presets.yue_HK.md)──本來一開就乜都冇嘅
+  編輯器，會先提供預設；預設只會用出廠預設值（即係重設會還原嘅數值）、你已儲存嘅設定
+  或者程式附帶嘅範本，並喺套用之前講明每個預設會建立同設定乜嘢。
 
 - [打印準備同工作流程導覽](print-preparation.yue_HK.md)：只讀取狀態嘅打印檢視、原有明確輸出同確認流程，以及保留嘅工作區入口。原生畫面驗證仍然未完成。
 

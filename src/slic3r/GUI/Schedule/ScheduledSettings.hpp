@@ -54,6 +54,12 @@ public:
     void shutdown();
 
     const Document &document() const { return m_document; }
+    // The base values captured for keys a rule currently controls; a new
+    // rule's "saved settings" preset reads the person's own values here.
+    const OverrideState &override_state() const { return m_override; }
+    // Re-read the rule document from AppConfig (after a preferences history
+    // restore wrote it) and evaluate at once.
+    void reload();
     // Replace the document, persist it (one AppConfig::save(), which is what
     // the preferences history records) and evaluate immediately. Returns
     // false with `error` filled when the document does not validate.

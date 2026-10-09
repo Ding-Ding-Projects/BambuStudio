@@ -17,7 +17,9 @@
 #include "libslic3r/AppConfig.hpp"
 #include "libslic3r/Utils.hpp"
 #include "libslic3r/ProjectHistoryManager.hpp"
+#include <chrono>
 #include <fstream>
+#include <future>
 #include <wx/filename.h>
 #include <wx/filefn.h>
 
@@ -47,6 +49,24 @@ void notify(const char* source)
         plater->get_notification_manager()->push_notification(into_u8(_L(source)));
 }
 std::filesystem::path schedule_path() { return std::filesystem::u8path(data_dir()) / "scheduled-settings" / "schedule.json"; }
+// Stage `bytes` beside the schedule file (the history engine only accepts .3mf
+// snapshot files) and record them in local history under `message`. `staged`
+// names the staging file whenever one was created, so the caller can publish
+// or remove it.
+bool record_version(ProjectHistoryManager& history, const std::filesystem::path& file, const std::string& bytes, const std::string& message, std::wstring& staged)
+{
+    staged.clear();
+    const auto stage = wxFileName::CreateTempFileName(wxString(file.parent_path().wstring()) + "/schedule-");
+    if (stage.empty()) return false;
+    const std::filesystem::path pending(stage.ToStdWstring());
+    if (!wxRenameFile(stage, wxString(pending.wstring() + L".3mf"), false)) return false;
+    staged = pending.wstring() + L".3mf";
+    { std::ofstream output(std::filesystem::path(staged), std::ios::binary | std::ios::trunc); output << bytes; output.flush(); if (!output) return false; }
+    ProjectHistoryCommitOptions options;
+    options.message = message;
+    auto future = history.commit_snapshot(ScheduledPreferences::history_identity(), std::filesystem::path(staged), options);
+    return future.wait_for(std::chrono::seconds(5)) == std::future_status::ready && future.get().ok();
+}
 }
 ScheduledPreferences::ScheduledPreferences(AppConfig& config)
     : m_config(config), m_service(registry(), {
@@ -131,18 +151,39 @@ bool ScheduledPreferences::save(const std::string& bytes)
     std::error_code ec;
     std::filesystem::create_directories(file.parent_path(), ec);
     if (ec) return false;
-    const auto stage = wxFileName::CreateTempFileName(wxString(file.parent_path().wstring()) + "/schedule-");
-    if (stage.empty()) return false;
-    const std::filesystem::path pending(stage.ToStdWstring());
-    const auto snapshot = pending.wstring() + L".3mf";
-    if (!wxRenameFile(stage, wxString(snapshot), false)) return false;
-    { std::ofstream output(std::filesystem::path(snapshot), std::ios::binary | std::ios::trunc); output << bytes; output.flush(); if (!output) return false; }
-    ProjectHistoryCommitOptions options;
-    options.message = "Scheduled settings change";
-    auto future = history->commit_snapshot(file.parent_path() / "schedules.history.3mf", std::filesystem::path(snapshot), options);
-    if (future.wait_for(std::chrono::seconds(5)) != std::future_status::ready || !future.get().ok()) return false;
+    if (!m_recorded_start) {
+        // The service still holds the schedule from before this change. Record
+        // it once per session, so even the first rule ever started from a
+        // preset can be undone from Version history. An identical version is
+        // not recorded twice, and a failure here never blocks the save.
+        m_recorded_start = true;
+        std::wstring baseline;
+        // The staging copy is removed only once the engine has read it.
+        if (record_version(*history, file, ScheduledSettings::serialize(m_service.schedule()), "Scheduled settings at startup", baseline))
+            wxRemoveFile(wxString(baseline));
+    }
+    // A named change (a rule started from a preset, a restore) keeps its name.
+    const std::string label = m_service.take_change_label();
+    std::wstring snapshot;
+    if (!record_version(*history, file, bytes, label.empty() ? std::string("Scheduled settings change") : label, snapshot)) return false;
     // Publish only after the real local history sink confirms its snapshot.
     return wxRenameFile(wxString(snapshot), wxString(file.wstring()), true);
+}
+std::filesystem::path ScheduledPreferences::history_identity() { return schedule_path().parent_path() / "schedules.history.3mf"; }
+bool ScheduledPreferences::restore(const std::filesystem::path& snapshot, std::string& error)
+{
+    std::error_code ec;
+    const auto length = std::filesystem::file_size(snapshot, ec);
+    if (ec || length == 0 || length > ScheduledSettings::max_payload) { error = "The scheduled settings version is unreadable or too large."; return false; }
+    std::ifstream input(snapshot, std::ios::binary);
+    std::string bytes(static_cast<std::size_t>(length), '\0');
+    if (!input.read(bytes.data(), static_cast<std::streamsize>(bytes.size()))) { error = "Unable to read the scheduled settings version."; return false; }
+    ScheduledSettings::Schedule next;
+    if (!ScheduledSettings::parse(bytes, m_service.registry(), next, error)) return false;
+    m_service.label_next_change("Restore scheduled settings");
+    if (!m_service.replace(next, error)) { m_service.take_change_label(); return false; }
+    pulse();
+    return true;
 }
 wxPanel* ScheduledPreferences::create_panel(wxWindow* parent)
 {

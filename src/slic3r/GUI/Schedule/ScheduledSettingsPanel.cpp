@@ -1,4 +1,5 @@
 #include "ScheduledSettingsPanel.hpp"
+#include "ScheduleRuleStart.hpp"
 #include "ScheduledSettings.hpp"
 
 #include "slic3r/GUI/GUI.hpp"
@@ -746,18 +747,22 @@ bool ScheduledSettingsPanel::commit(const Document &document)
 
 void ScheduledSettingsPanel::add_rule()
 {
-    Rule rule;
-    rule.id         = unique_rule_id(Scheduler::instance().document(), entropy_now());
-    rule.start_time = {20, 0};
-    rule.end_time   = {7, 0};
-    ScheduleRuleDialog dlg(this, rule, true);
+    // A new rule starts from the shipped defaults, your own saved settings or
+    // nothing (ScheduleRuleStart), never from values invented here. The rule
+    // dialog opens with exactly the preset's settings ticked.
+    RuleStart start;
+    if (!start_rule(this, entropy_now(), start)) return;
+    ScheduleRuleDialog dlg(this, start.rule, true);
     if (dlg.ShowModal() != wxID_OK) return;
     Document doc = Scheduler::instance().document();
     doc.rules.push_back(dlg.result());
+    record_rule_start(start);
     if (commit(doc)) {
         for (size_t r = 0; r < m_visible.size(); ++r)
             if (m_visible[r] == int(doc.rules.size()) - 1) m_list->SetSelection(int(r));
         refresh_status();
+    } else {
+        forget_rule_start(); // nothing was saved
     }
 }
 

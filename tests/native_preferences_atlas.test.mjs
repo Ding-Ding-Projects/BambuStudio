@@ -37,7 +37,10 @@ test('footer and destination action groups wrap without stretch spacers',()=>{
 });
 test('existing project, schedule and calibration engine tails are unchanged',()=>{
  for(const [p,marker] of [['Project.cpp','ProjectPanel::~ProjectPanel'],['Schedule/ScheduledSettingsPanel.cpp','ScheduledSettingsPanel::~ScheduledSettingsPanel'],['CalibrationWizard.cpp','CalibrationWizard::~CalibrationWizard']]){
-  const normalize=s=>s.replaceAll('\r\n','\n').replace(/^\s*m_scrolledWindow->FitInside\(\);\n/gm,'').replace(/(m_all_pages_sizer->Add\([^\n]+)FromDIP\(MD3::Metrics::active\(\).padding\)/g,'$1FromDIP(25)');
+  // add_rule() deliberately changed: a new rule now starts from a preset (shipped
+  // defaults, saved settings or empty). ui-md3/tests/blank-editor-presets.test.mjs
+  // owns that contract; the rest of the schedule tail stays fingerprinted here.
+  const normalize=s=>s.replaceAll('\r\n','\n').replace(/^\s*m_scrolledWindow->FitInside\(\);\n/gm,'').replace(/(m_all_pages_sizer->Add\([^\n]+)FromDIP\(MD3::Metrics::active\(\).padding\)/g,'$1FromDIP(25)').replace(/\nvoid ScheduledSettingsPanel::add_rule\(\)\n\{\n[\s\S]*?\n\}\n/,'\n');
   const a=normalize(read(p)),b=normalize(old(p));assert.ok(a.includes(marker));assert.equal(a.slice(a.indexOf(marker)),b.slice(b.indexOf(marker)),p);
  }
 });

@@ -29,6 +29,8 @@
 #include <wx/timer.h>
 #include <wx/weakref.h>
 
+#include "slic3r/GUI/Presets/BlankEditorPresets.hpp"
+
 class wxMenu;
 class wxMenuItem;
 class wxSimplebook;
@@ -74,6 +76,8 @@ private:
     void refresh_from_registry();
     void refresh_font_list();
     void refresh_preset_list();
+    void show_preset_detail();
+    void apply_preset(const std::string &name);
     void reflow_preset_page();
     void refresh_reset_buttons();
 
@@ -138,6 +142,8 @@ private:
     Button *                 m_preset_apply { nullptr };
     Button *                 m_preset_delete { nullptr };
     Label *                  m_preset_active { nullptr };
+    Label *                  m_preset_detail { nullptr }; // what the selected preset sets
+    std::string              m_preset_applied;            // last preset applied from this card
     bool                     m_preset_reflowing { false };
     int                      m_preset_page_width { -1 };
 
@@ -151,6 +157,14 @@ namespace AppearanceEditor {
 
 // Storage + hooks. Call once at startup after data_dir() is known.
 void init(const std::string &storage_dir);
+
+// What applying the shipped or saved appearance preset `name` creates and
+// every property it sets, for the Presets page and the command palette.
+BlankEditorPresets::Preset preset_statement(const std::string &name);
+// Make `name` the active preset and save, recorded in local history as
+// "Apply appearance preset: <name>". False when it does not exist or the
+// save failed.
+bool apply_preset(const std::string &name);
 
 // "Ctrl+Shift+E" (platform notation), shown in menus and the shortcuts dialog.
 wxString shortcut_text();

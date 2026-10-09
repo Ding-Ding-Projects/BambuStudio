@@ -28,6 +28,12 @@ public:
     const Registry& registry() const { return m_registry; }
     const Schedule& schedule() const { return m_schedule; }
     const Effective& effective() const { return m_effective; }
+    // The person's own saved values, as last passed to set_base().
+    const Values& base() const { return m_base; }
+    // The local history message the owner records with the next replace();
+    // empty means the owner's default. take_change_label() hands it over once.
+    void label_next_change(std::string label) { m_change_label = std::move(label); }
+    std::string take_change_label() { std::string label = std::move(m_change_label); m_change_label.clear(); return label; }
 private:
     struct Job { uint64_t generation; Rule rule; std::shared_ptr<std::atomic_bool> cancel; };
     struct Done { uint64_t generation; Rule rule; FetchResult result; };
@@ -37,6 +43,7 @@ private:
     ServiceHooks m_hooks;
     Schedule m_schedule;
     Values m_base;
+    std::string m_change_label;
     Effective m_effective;
     std::map<std::string,ExternalValue> m_external;
     std::map<std::string,int64_t> m_due;

@@ -2,6 +2,7 @@
 #include "libslic3r/Utils.hpp"
 #include "libslic3r/MultiNozzleUtils.hpp"
 #include "AppConfig.hpp"
+#include "PresentationDefaults.hpp"
 //BBS
 #include "Preset.hpp"
 #include "Exception.hpp"
@@ -100,13 +101,13 @@ void AppConfig::reset()
 // Override missing or keys with their defaults.
 void AppConfig::set_defaults()
 {
-    if (get("narrator_enabled").empty()) set("narrator_enabled", "false");
-    if (get("narrator_language").empty()) set("narrator_language", "en");
-    for (const auto* key : {"narrator_rate_en", "narrator_rate_yue", "narrator_pitch_en", "narrator_pitch_yue"})
-        if (get(key).empty()) set(key, "0");
+    // Shipped presentation values come from the one table the reset paths and
+    // the blank-editor presets also read (PresentationDefaults.hpp).
+    for (const auto* key : {"narrator_enabled", "narrator_language", "narrator_rate_en", "narrator_rate_yue", "narrator_pitch_en", "narrator_pitch_yue"})
+        if (get(key).empty()) set(key, PresentationDefaults::value_or_empty(key));
     // Unknown settings from newer or edited profiles use the system default.
     if (get("motion_preference") != "system" && get("motion_preference") != "reduced")
-        set("motion_preference", "system");
+        set("motion_preference", PresentationDefaults::value_or_empty("motion_preference"));
     if (m_mode == EAppMode::Editor) {
 #ifdef SUPPORT_AUTO_CENTER
         // Reset the empty fields to defaults.
@@ -297,7 +298,7 @@ void AppConfig::set_defaults()
 
 #ifdef SUPPORT_DARK_MODE
     if (get("dark_color_mode").empty())
-        set("dark_color_mode", "0");
+        set("dark_color_mode", PresentationDefaults::value_or_empty("dark_color_mode"));
 #endif
 
 //#ifdef SUPPORT_SYS_MENU

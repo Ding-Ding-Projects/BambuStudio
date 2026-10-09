@@ -21,6 +21,9 @@
 #include "slic3r/GUI/GUI.hpp"
 #include "slic3r/GUI/I18N.hpp"
 #include "slic3r/GUI/MsgDialog.hpp"
+#include "slic3r/GUI/PreferencesHistory.hpp"
+#include "slic3r/GUI/Presets/BlankEditorPresets.hpp"
+#include "slic3r/GUI/Presets/StartFromPicker.hpp"
 #include "slic3r/GUI/Widgets/Button.hpp"
 #include "slic3r/GUI/Widgets/CheckBox.hpp"
 #include "slic3r/GUI/Widgets/ComboBox.hpp"
@@ -512,6 +515,7 @@ void AppearanceEditorPopover::build()
     reset_el->SetButtonSize(Button::Size::Small);
     reset_el->SetToolTip(_L("Drop every override of this element; the active preset still applies"));
     reset_el->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) {
+        PreferencesHistory::begin_appearance_action(BlankEditorPresets::history_label("Reset element appearance", m_id));
         ElementStyle::registry().reset_element(m_id);
         persist();
     });
@@ -526,6 +530,7 @@ void AppearanceEditorPopover::build()
                             _L("Reset all appearance overrides"), wxYES_NO | wxNO_DEFAULT | wxICON_QUESTION);
         if (ask.ShowModal() != wxID_YES)
             return;
+        PreferencesHistory::begin_appearance_action("Reset all appearance");
         ElementStyle::registry().reset_all();
         persist();
     });
@@ -747,15 +752,22 @@ void AppearanceEditorPopover::build_presets(wxWindow *page)
             m_preset_apply->Enable(ok);
         if (m_preset_delete)
             m_preset_delete->Enable(ok && !ElementStyle::registry().is_shipped_preset(m_preset_visible[sel]));
+        show_preset_detail();
+        reflow_preset_page();
     });
     m_preset_list->Bind(wxEVT_LISTBOX_DCLICK, [this](wxCommandEvent &) {
         const int sel = m_preset_list->GetSelection();
-        if (sel >= 0 && sel < static_cast<int>(m_preset_visible.size())) {
-            ElementStyle::registry().set_active_preset(m_preset_visible[sel]);
-            persist();
-        }
+        if (sel >= 0 && sel < static_cast<int>(m_preset_visible.size()))
+            apply_preset(m_preset_visible[sel]);
     });
     s->Add(m_preset_list, 0, wxEXPAND | wxBOTTOM, FromDIP(8));
+
+    // What the selected preset sets, stated before it is applied.
+    m_preset_detail = new Label(page, Label::Body_13, wxEmptyString, LB_AUTO_WRAP | wxST_NO_AUTORESIZE);
+    m_preset_detail->SetMinSize(wxSize(0, -1));
+    m_preset_detail->SetForegroundColour(role(MD3::Role::OnSurfaceVariant));
+    m_preset_detail->SetName(_L("What the selected appearance preset sets"));
+    s->Add(m_preset_detail, 0, wxEXPAND | wxBOTTOM, FromDIP(8));
 
     auto *actions = new wxWrapSizer(wxHORIZONTAL);
     m_preset_apply = new Button(page, _L("Apply"));
@@ -764,10 +776,8 @@ void AppearanceEditorPopover::build_presets(wxWindow *page)
     m_preset_apply->SetToolTip(_L("Make the selected preset the active one; your element overrides stay on top of it"));
     m_preset_apply->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) {
         const int sel = m_preset_list->GetSelection();
-        if (sel >= 0 && sel < static_cast<int>(m_preset_visible.size())) {
-            ElementStyle::registry().set_active_preset(m_preset_visible[sel]);
-            persist();
-        }
+        if (sel >= 0 && sel < static_cast<int>(m_preset_visible.size()))
+            apply_preset(m_preset_visible[sel]);
     });
     auto *save_as = new Button(page, _L("Save as preset..."));
     save_as->SetVariant(Button::Variant::Tonal);
@@ -788,6 +798,7 @@ void AppearanceEditorPopover::build_presets(wxWindow *page)
                          _L("Save as preset"), wxOK | wxICON_INFORMATION, this);
             return;
         }
+        PreferencesHistory::begin_appearance_action(BlankEditorPresets::history_label("Save appearance preset", n));
         reg.save_preset(n);
         reg.set_active_preset(n);
         persist();
@@ -805,6 +816,7 @@ void AppearanceEditorPopover::build_presets(wxWindow *page)
                             _L("Delete preset"), wxYES_NO | wxNO_DEFAULT | wxICON_WARNING);
         if (ask.ShowModal() != wxID_YES)
             return;
+        PreferencesHistory::begin_appearance_action(BlankEditorPresets::history_label("Delete appearance preset", name));
         ElementStyle::registry().delete_preset(name);
         persist();
     });
@@ -837,8 +849,10 @@ void AppearanceEditorPopover::build_presets(wxWindow *page)
                          "JSON (*.json)|*.json", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
         if (dlg.ShowModal() != wxID_OK)
             return;
+        PreferencesHistory::begin_appearance_action("Import appearance theme");
         const StyleLoadReport r = ElementStyle::registry().import_theme(std::string(dlg.GetPath().ToUTF8().data()));
         if (!r.ok) {
+            PreferencesHistory::cancel_appearance_action(); // nothing changed
             md3_message_box(wxString::Format(_L("The theme could not be imported: %s"), wxString::FromUTF8(r.error)),
                          _L("Import appearance theme"), wxOK | wxICON_ERROR, this);
             return;
@@ -965,6 +979,7 @@ void AppearanceEditorPopover::refresh_preset_list()
         m_preset_active->SetLabel(wxString::Format(_L("Active preset: %s"), wxString::FromUTF8(reg.active_preset())));
     const int sel = m_preset_list->GetSelection();
     const bool ok = sel >= 0 && sel < static_cast<int>(m_preset_visible.size());
+    show_preset_detail();
     if (m_preset_apply)
         m_preset_apply->Enable(ok);
     if (m_preset_delete)
@@ -993,6 +1008,43 @@ void AppearanceEditorPopover::reflow_preset_page()
     m_preset_page_width = page->GetClientSize().x;
     page->Scroll(view.x, view.y);
     m_preset_reflowing = false;
+}
+
+void AppearanceEditorPopover::show_preset_detail()
+{
+    if (!m_preset_detail || !m_preset_list)
+        return;
+    const int sel = m_preset_list->GetSelection();
+    if (sel < 0 || sel >= static_cast<int>(m_preset_visible.size())) {
+        m_preset_detail->SetLabel(_L("Select a preset to see exactly what it sets before you apply it."));
+        return;
+    }
+    const std::string                &name      = m_preset_visible[sel];
+    const BlankEditorPresets::Preset statement = AppearanceEditor::preset_statement(name);
+    wxString                          text;
+    // Immediately after an apply from this card, say exactly what it set.
+    if (name == m_preset_applied && name == ElementStyle::registry().active_preset()) {
+        if (statement.sets.empty())
+            text << wxString::Format(_L("Applied \"%s\". It sets nothing; the Material tokens and your own element overrides apply."),
+                                     wxString::FromUTF8(name));
+        else
+            text << wxString::Format(_L("Applied \"%s\". It sets %s."), wxString::FromUTF8(name), preset_settings_line(statement));
+        text << "\n\n";
+    }
+    text << describe_preset(statement);
+    m_preset_detail->SetLabel(text);
+}
+
+void AppearanceEditorPopover::apply_preset(const std::string &name)
+{
+    StyleRegistry &reg = ElementStyle::registry();
+    if (!reg.preset(name))
+        return;
+    // A recorded, undoable action like any other appearance change.
+    PreferencesHistory::begin_appearance_action(BlankEditorPresets::history_label("Apply appearance preset", name));
+    reg.set_active_preset(name);
+    m_preset_applied = name;
+    persist();
 }
 
 void AppearanceEditorPopover::refresh_reset_buttons()
@@ -1123,6 +1175,34 @@ void AppearanceEditorPopover::persist()
 // Free functions
 // ---------------------------------------------------------------------------
 namespace AppearanceEditor {
+
+BlankEditorPresets::Preset preset_statement(const std::string &name)
+{
+    const StyleRegistry &reg = ElementStyle::registry();
+    std::map<std::string, nlohmann::json> bags;
+    if (const StylePreset *preset = reg.preset(name))
+        for (const auto &entry : *preset)
+            bags[entry.first] = entry.second;
+    std::vector<BlankEditorPresets::Assignment> sets = BlankEditorPresets::style_assignments(bags);
+    // Element ids read as the names the editor shows for them.
+    for (BlankEditorPresets::Assignment &assignment : sets)
+        if (!assignment.scope_translatable)
+            assignment.scope = into_u8(ElementStyle::display_name_of(assignment.scope));
+    const char *creates = reg.is_shipped_preset(name)
+        ? L("Makes this shipped preset the active appearance preset. It creates nothing new, and your own element overrides stay on top of it.")
+        : L("Makes this saved preset the active appearance preset. It creates nothing new, and your own element overrides stay on top of it.");
+    return BlankEditorPresets::template_preset("appearance:" + name, name, creates, std::move(sets));
+}
+
+bool apply_preset(const std::string &name)
+{
+    StyleRegistry &reg = ElementStyle::registry();
+    if (!reg.preset(name))
+        return false;
+    PreferencesHistory::begin_appearance_action(BlankEditorPresets::history_label("Apply appearance preset", name));
+    reg.set_active_preset(name);
+    return ElementStyle::save();
+}
 
 void init(const std::string &storage_dir)
 {

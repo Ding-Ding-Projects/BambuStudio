@@ -4,6 +4,7 @@
 
 #include "Appearance/AppearanceEditorPopover.hpp"
 #include "Appearance/ElementStyle.hpp"
+#include "Presets/StartFromPicker.hpp"
 
 #include "GUI_App.hpp"
 #include "PersonalModes/SchoolMode.hpp"
@@ -309,11 +310,10 @@ void CommandPalette::collect_entries()
         StyleRegistry &reg = ElementStyle::registry();
         for (const std::string &name : reg.preset_names()) {
             const wxString title = wxString::Format(_L("Apply appearance preset: %s"), wxString::FromUTF8(name));
-            const wxString desc  = reg.is_shipped_preset(name) ? _L("Shipped Material preset") : _L("Your saved appearance preset");
-            m_entries.push_back({MaterialIcon::Palette, title, desc, [name]() {
-                                     ElementStyle::registry().set_active_preset(name);
-                                     ElementStyle::save();
-                                 }});
+            // The row states exactly what the preset sets before it is chosen.
+            const wxString kind = reg.is_shipped_preset(name) ? _L("Shipped Material preset") : _L("Your saved appearance preset");
+            const wxString desc = wxString::Format(_L("%s: %s"), kind, preset_settings_line(AppearanceEditor::preset_statement(name)));
+            m_entries.push_back({MaterialIcon::Palette, title, desc, [name]() { AppearanceEditor::apply_preset(name); }});
         }
     }
 

@@ -199,6 +199,16 @@ void Scheduler::on_timer(wxTimerEvent &)
     evaluate_now();
 }
 
+void Scheduler::reload()
+{
+    if (!m_installed || m_shut_down)
+        return;
+    load_from_config();
+    evaluate_now();
+    if (m_listener)
+        m_listener();
+}
+
 void Scheduler::evaluate_now()
 {
     if (m_shut_down || wxGetApp().app_config == nullptr)

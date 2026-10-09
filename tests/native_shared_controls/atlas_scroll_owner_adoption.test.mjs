@@ -18,6 +18,15 @@ const files = [
 ];
 const read = file => fs.readFileSync(path.join(root, 'src/slic3r/GUI', file), 'utf8').replaceAll('\r\n', '\n');
 const old = file => execFileSync('git', ['show', baseline + ':src/slic3r/GUI/' + file], {cwd: root, encoding: 'utf8'}).replaceAll('\r\n', '\n');
+// Later deliberate feature changes, each owned by its own contract and left out
+// of this owner-adoption comparison on both sides:
+//   * Preferences > Schedules > Add rule starts from a preset (blank-editor
+//     presets, ui-md3/tests/blank-editor-presets.test.mjs owns add_rule()).
+const later = {
+    'Schedule/ScheduledSettingsPanel.cpp': text => text
+        .replace('#include "ScheduleRuleStart.hpp"\n', '')
+        .replace(/\nvoid ScheduledSettingsPanel::add_rule\(\)\n\{\n[\s\S]*?\n\}\n/, '\n'),
+};
 function verify(file, kind, include, count, source = read(file)) {
     const owner = kind === 'scroll' ? 'MD3ScrolledWindow' : 'MD3DataViewListCtrl';
     let restored = source;
@@ -27,7 +36,8 @@ function verify(file, kind, include, count, source = read(file)) {
     }
     assert.equal((restored.match(new RegExp(`\\b${owner}\\b`, 'g')) || []).length, count, file);
     restored = restored.replaceAll(owner, kind === 'scroll' ? 'wxScrolledWindow' : 'wxDataViewListCtrl');
-    assert.equal(restored, old(file), file + ': only the owner type and explicit include may change');
+    const adjust = later[file] ?? (text => text);
+    assert.equal(adjust(restored), adjust(old(file)), file + ': only the owner type and explicit include may change');
 }
 for (const entry of files)
     test(entry[0] + ' retains complete caller logic, sizing, flags and callbacks', () => verify(...entry));

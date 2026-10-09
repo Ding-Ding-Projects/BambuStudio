@@ -29670,4 +29670,210 @@ msgid "The worker did not answer for %d rows. Try again in a moment."
 msgstr ""
 
 msgid "Groups nested too deeply to analyse further; the engine rejects this nesting as too complex"
+msgid "Shipped defaults"
+msgstr ""
+
+msgid "The app does not ship a fixed value for this setting."
+msgstr ""
+
+msgid "This editor does not accept the shipped value for this setting."
+msgstr ""
+
+msgid "Your saved settings"
+msgstr ""
+
+msgid "Nothing usable is saved for this setting, and the app does not ship a fixed value for it."
+msgstr ""
+
+msgid "Start empty"
+msgstr ""
+
+msgid "(empty)"
+msgstr ""
+
+msgid "Follows your system language the first time the app starts, so there is no single shipped value."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s (%s)"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s (shipped default, nothing saved)"
+msgstr ""
+
+msgid "Sets nothing."
+msgstr ""
+
+msgid "Sets:"
+msgstr ""
+
+msgid "Leaves out:"
+msgstr ""
+
+msgid "Every preset comes from the values the app ships with, your own saved settings, or a template the app ships. Nothing is applied until you start from one."
+msgstr ""
+
+msgid "Presets to start from"
+msgstr ""
+
+msgid "No preset matches the search. Clear the search to see every preset."
+msgstr ""
+
+msgid "What the highlighted preset creates and sets"
+msgstr ""
+
+msgid "Start from this preset"
+msgstr ""
+
+msgid "Start the new item from the highlighted preset"
+msgstr ""
+
+msgid "Highlight a preset first."
+msgstr ""
+
+msgid "What the selected appearance preset sets"
+msgstr ""
+
+msgid "Select a preset to see exactly what it sets before you apply it."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Applied \"%s\". It sets nothing; the Material tokens and your own element overrides apply."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Applied \"%s\". It sets %s."
+msgstr ""
+
+msgid "Makes this shipped preset the active appearance preset. It creates nothing new, and your own element overrides stay on top of it."
+msgstr ""
+
+msgid "Makes this saved preset the active appearance preset. It creates nothing new, and your own element overrides stay on top of it."
+msgstr ""
+
+msgid "Font size (pt)"
+msgstr ""
+
+msgid "Font style"
+msgstr ""
+
+msgid "Text colour"
+msgstr ""
+
+msgid "Background colour"
+msgstr ""
+
+msgid "Highlight colour"
+msgstr ""
+
+msgid "Border colour"
+msgstr ""
+
+msgid "every element"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Started from \"%s\". It sets nothing yet."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Started from \"%s\". It set %s."
+msgstr ""
+
+msgid "Appearance change"
+msgstr ""
+
+msgid "Appearance at startup"
+msgstr ""
+
+msgid "Reset all appearance"
+msgstr ""
+
+msgid "Restore appearance snapshot"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Save appearance preset: %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Delete appearance preset: %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Reset element appearance: %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Add schedule rule from preset: %s"
+msgstr ""
+
+msgid "Unsupported appearance snapshot."
+msgstr ""
+
+msgid "Scheduled settings"
+msgstr ""
+
+msgid "English"
+msgstr ""
+
+msgid "Cantonese"
+msgstr ""
+
+msgid "Both languages"
+msgstr ""
+
+msgid "Automatic voice"
+msgstr ""
+
+msgid "Creates a new schedule rule that applies all day, every day and sets each setting below to the value the app ships with."
+msgstr ""
+
+msgid "Creates a new schedule rule that applies all day, every day and sets each setting below to your own saved value."
+msgstr ""
+
+msgid "Creates a new schedule rule that applies all day, every day and sets nothing yet. Choose at least one setting before you save it."
+msgstr ""
+
+msgid "Cantonese (Hong Kong)"
+msgstr ""
+
+msgid "Bilingual: English and Cantonese"
+msgstr ""
+
+msgid "Default (Roboto)"
+msgstr ""
+
+msgid "Shipped name"
+msgstr ""
+
+msgid "Language mode"
+msgstr ""
+
+msgid "Funny level (English)"
+msgstr ""
+
+msgid "Start a new schedule rule"
+msgstr ""
+
+msgid "Choose what the new rule starts with. You can change every value before you save it."
+msgstr ""
+
+msgid "Scheduled settings change"
+msgstr ""
+
+msgid "Restore scheduled settings"
+msgstr ""
+
+msgid "Scheduled settings are not available."
+msgstr ""
+
+msgid "Unsupported scheduled settings version."
+msgstr ""
+
+msgid "Preferences at startup"
+msgstr ""
+
+msgid "Scheduled settings at startup"
 msgstr ""

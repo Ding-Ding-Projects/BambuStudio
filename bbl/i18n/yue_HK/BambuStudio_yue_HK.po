@@ -41155,3 +41155,295 @@ msgstr "worker 冇回應 %d 行。請等陣再試。"
 #. review-status: agent-drafted
 msgid "Groups nested too deeply to analyse further; the engine rejects this nesting as too complex"
 msgstr "群組巢狀得太深，冇辦法再分析落去；引擎會因為太複雜而拒絕呢種巢狀"
+msgid "Shipped defaults"
+msgstr "出廠預設值"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The app does not ship a fixed value for this setting."
+msgstr "呢個設定出廠時冇固定數值。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "This editor does not accept the shipped value for this setting."
+msgstr "呢個編輯器唔接受呢個設定嘅出廠數值。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Your saved settings"
+msgstr "你已儲存嘅設定"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Nothing usable is saved for this setting, and the app does not ship a fixed value for it."
+msgstr "呢個設定未有可用嘅已儲存數值，出廠時亦冇固定數值。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Start empty"
+msgstr "由空白開始"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "(empty)"
+msgstr "（空白）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Follows your system language the first time the app starts, so there is no single shipped value."
+msgstr "第一次開啟時會跟隨系統語言，所以冇單一出廠數值。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "%s (%s)"
+msgstr "%s（%s）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "%s (shipped default, nothing saved)"
+msgstr "%s（出廠預設值，未有儲存）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Sets nothing."
+msgstr "唔會設定任何嘢。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Leaves out:"
+msgstr "唔包括："
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Every preset comes from the values the app ships with, your own saved settings, or a template the app ships. Nothing is applied until you start from one."
+msgstr "每個預設都嚟自程式嘅出廠數值、你自己已儲存嘅設定，或者程式附帶嘅範本。揀定由邊個開始之前，乜都唔會套用。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Presets to start from"
+msgstr "可以用嚟開始嘅預設"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "No preset matches the search. Clear the search to see every preset."
+msgstr "冇預設符合搜尋。清除搜尋就會見到全部預設。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "What the highlighted preset creates and sets"
+msgstr "已標示預設會建立同設定嘅內容"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Start from this preset"
+msgstr "由呢個預設開始"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Start the new item from the highlighted preset"
+msgstr "用已標示嘅預設開始新項目"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Highlight a preset first."
+msgstr "請先標示一個預設。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "What the selected appearance preset sets"
+msgstr "已選外觀預設會設定嘅內容"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Select a preset to see exactly what it sets before you apply it."
+msgstr "揀一個預設，套用之前就會見到佢實際會設定乜嘢。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Applied \"%s\". It sets nothing; the Material tokens and your own element overrides apply."
+msgstr "已套用「%s」。佢唔會設定任何嘢，沿用 Material 樣式記號同你自己嘅元素覆寫。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Applied \"%s\". It sets %s."
+msgstr "已套用「%s」。佢會設定：%s。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Makes this shipped preset the active appearance preset. It creates nothing new, and your own element overrides stay on top of it."
+msgstr "將呢個內置預設設為使用中嘅外觀預設。唔會建立任何新嘢，你自己嘅元素覆寫會繼續蓋喺上面。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Makes this saved preset the active appearance preset. It creates nothing new, and your own element overrides stay on top of it."
+msgstr "將呢個已儲存預設設為使用中嘅外觀預設。唔會建立任何新嘢，你自己嘅元素覆寫會繼續蓋喺上面。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Font size (pt)"
+msgstr "字體大小（pt）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Font style"
+msgstr "字體樣式"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Text colour"
+msgstr "文字顏色"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Background colour"
+msgstr "背景顏色"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Highlight colour"
+msgstr "強調顏色"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Border colour"
+msgstr "邊框顏色"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "every element"
+msgstr "所有元素"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Started from \"%s\". It sets nothing yet."
+msgstr "已由「%s」開始，暫時未設定任何嘢。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Started from \"%s\". It set %s."
+msgstr "已由「%s」開始，設定咗：%s。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Appearance change"
+msgstr "外觀變更"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Appearance at startup"
+msgstr "啟動時嘅外觀"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Reset all appearance"
+msgstr "重設所有外觀"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Restore appearance snapshot"
+msgstr "還原外觀快照"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Save appearance preset: %s"
+msgstr "儲存外觀預設：%s"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Delete appearance preset: %s"
+msgstr "刪除外觀預設：%s"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Reset element appearance: %s"
+msgstr "重設元素外觀：%s"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Add schedule rule from preset: %s"
+msgstr "由預設新增排程規則：%s"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Unsupported appearance snapshot."
+msgstr "唔支援呢個外觀快照。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Scheduled settings"
+msgstr "排程設定"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Cantonese"
+msgstr "廣東話"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Both languages"
+msgstr "兩種語言"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Automatic voice"
+msgstr "自動選擇聲音"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Creates a new schedule rule that applies all day, every day and sets each setting below to the value the app ships with."
+msgstr "建立一條新排程規則：全日、每日適用，並將下面每個設定設成程式出廠時嘅數值。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Creates a new schedule rule that applies all day, every day and sets each setting below to your own saved value."
+msgstr "建立一條新排程規則：全日、每日適用，並將下面每個設定設成你自己已儲存嘅數值。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Creates a new schedule rule that applies all day, every day and sets nothing yet. Choose at least one setting before you save it."
+msgstr "建立一條新排程規則：全日、每日適用，暫時唔設定任何嘢。儲存之前請至少揀一個設定。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Shipped name"
+msgstr "出廠名稱"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Start a new schedule rule"
+msgstr "開始一條新排程規則"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Choose what the new rule starts with. You can change every value before you save it."
+msgstr "揀新規則由乜嘢開始。儲存之前，每個數值都可以再改。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Scheduled settings change"
+msgstr "排程設定變更"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Restore scheduled settings"
+msgstr "還原排程設定"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Scheduled settings are not available."
+msgstr "排程設定暫時用唔到。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Unsupported scheduled settings version."
+msgstr "唔支援呢個排程設定版本。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Preferences at startup"
+msgstr "啟動時嘅偏好設定"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Scheduled settings at startup"
+msgstr "啟動時嘅排程設定"

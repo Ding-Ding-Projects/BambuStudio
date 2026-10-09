@@ -796,6 +796,10 @@ list(APPEND SLIC3R_GUI_SOURCES
     GUI/Appearance/ElementStyle.hpp
     GUI/Appearance/AppearanceEditorPopover.cpp
     GUI/Appearance/AppearanceEditorPopover.hpp
+    GUI/Presets/BlankEditorPresets.cpp
+    GUI/Presets/BlankEditorPresets.hpp
+    GUI/Presets/StartFromPicker.cpp
+    GUI/Presets/StartFromPicker.hpp
     GUI/Widgets/MaterialIcon.cpp
     GUI/Widgets/MaterialIcon.hpp
     GUI/Widgets/MD3Dialog.cpp
@@ -939,6 +943,10 @@ list(APPEND SLIC3R_GUI_SOURCES
     GUI/Schedule/ScheduledSettingsModel.hpp
     GUI/Schedule/ScheduledSettingsPanel.cpp
     GUI/Schedule/ScheduledSettingsPanel.hpp
+    GUI/Schedule/ScheduleRulePresets.cpp
+    GUI/Schedule/ScheduleRulePresets.hpp
+    GUI/Schedule/ScheduleRuleStart.cpp
+    GUI/Schedule/ScheduleRuleStart.hpp
     GUI/SmartHomeDialog.cpp
     GUI/SmartHomeDialog.hpp
     GUI/third_party/qrcodegen.cpp

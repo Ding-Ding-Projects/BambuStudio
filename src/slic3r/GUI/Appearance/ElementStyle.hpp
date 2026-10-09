@@ -198,6 +198,11 @@ public:
     static std::string storage_file();
     // Persist the live registry to storage_file(); no-op without a dir.
     static bool save();
+    // Called after every successful save(), so local history can record the
+    // appearance like any other setting. Null (the default, and in tests)
+    // observes nothing.
+    using SaveObserver = std::function<void()>;
+    static void set_save_observer(SaveObserver observer);
 
     // --- Paint-site hooks ----------------------------------------------------
     // Typography of `id` applied over `base`; `base` unchanged when nothing is
