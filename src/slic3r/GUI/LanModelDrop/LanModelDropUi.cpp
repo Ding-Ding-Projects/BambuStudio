@@ -80,6 +80,7 @@ void relayout(wxWindow *self, bool fit_top_level)
 {
     if (tearing_down(self)) return;
     for (wxWindow *w = self; w != nullptr; w = w->GetParent()) {
+        w->InvalidateBestSize();
         w->Layout();
         if (auto *scrolled = dynamic_cast<wxScrolledWindow *>(w)) scrolled->FitInside();
         if (w->IsTopLevel()) {
@@ -302,6 +303,8 @@ InvitePanel::InvitePanel(wxWindow *parent, const Options &options) : wxPanel(par
     lan_row->Add(m_lan_label, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, gap);
     lan_row->Add(m_lan_choice, 0, wxALIGN_CENTER_VERTICAL);
     column->Add(lan_row, 0, wxBOTTOM, FromDIP(4));
+    m_manual = body_label(m_link_area, wxEmptyString, MD3::Role::OnSurface, ::Label::Body_12);
+    column->Add(m_manual, 0, wxBOTTOM, FromDIP(4));
     m_source_note = body_label(m_link_area, wxEmptyString, MD3::Role::OnSurfaceVariant, ::Label::Body_12);
     column->Add(m_source_note, 0);
     link_row->Add(column, 1, wxEXPAND);
@@ -432,6 +435,9 @@ void InvitePanel::refresh()
         const int  index = it == choices.end() ? 0 : static_cast<int>(it - choices.begin());
         if (m_lan_choice->GetSelection() != index) m_lan_choice->SetSelection(index);
     }
+    // For someone who types rather than scans: the address and the code separately.
+    changed |= set_wrapped(m_manual, has_link ? format_wxstr(_L("Or open %1% and type the drop code %2%."), v.invite.base, v.drop_code)
+                                              : wxString());
     changed |= set_wrapped(m_source_note, has_link ? invite_source_text(v) : wxString());
 
     if (m_waiting_for_code && !v.busy_code) {
@@ -443,7 +449,12 @@ void InvitePanel::refresh()
     changed |= show(m_waiting_label, v.waiting > 0);
     changed |= show(m_show_waiting, v.waiting > 0);
 
-    if (changed) relayout(this, m_options.offer_turn_on);
+    if (changed) {
+        // The QR code, the picker and the notes live in the inner panel: size it afresh first.
+        m_link_area->InvalidateBestSize();
+        m_link_area->Layout();
+        relayout(this, m_options.offer_turn_on);
+    }
     // Turned on from the dialog: the invite is the first thing shown, and focus lands on Copy link
     // as soon as the link exists.
     if (m_focus_copy_when_ready && has_link) {

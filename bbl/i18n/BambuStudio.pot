@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-09 22:38+0000\n"
+"POT-Creation-Date: 2026-10-09 22:50+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -28106,6 +28106,10 @@ msgid "The drop site's code is fixed by DROP_CODE, so New link cannot change it.
 msgstr ""
 
 msgid "The drop site did not make a new code. Older links still work."
+msgstr ""
+
+#, possible-boost-format
+msgid "Or open %1% and type the drop code %2%."
 msgstr ""
 
 msgid "New link ready. Older links no longer work."

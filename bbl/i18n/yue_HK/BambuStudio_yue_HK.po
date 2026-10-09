@@ -45250,3 +45250,8 @@ msgstr "整一個新投遞碼；用舊投遞碼嘅連結會失效。"
 #. review-status: agent-drafted
 msgid "People on your local network can send 3D models to this computer through the LAN drop site that runs in Docker. Each model waits for you: nothing is opened, sliced or printed until you choose Open."
 msgstr "同一個區域網絡上嘅人可以經喺 Docker 運行嘅 LAN 投遞網站，將 3D 模型傳去呢部電腦。每個模型都會等你處理：你揀「開啟」之前，乜都唔會開啟、切片或者打印。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Or open %1% and type the drop code %2%."
+msgstr "或者打開 %1%，再輸入投遞碼 %2%。"

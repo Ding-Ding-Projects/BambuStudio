@@ -69,6 +69,7 @@ private:
     Button    *m_larger        = nullptr;
     Label     *m_lan_label     = nullptr;
     ComboBox  *m_lan_choice    = nullptr;
+    Label     *m_manual        = nullptr;
     Label     *m_source_note   = nullptr;
     Label     *m_fixed_note    = nullptr;
     Label     *m_live          = nullptr;

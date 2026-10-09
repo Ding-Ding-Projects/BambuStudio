@@ -29256,3 +29256,7 @@ msgstr ""
 
 msgid "People on your local network can send 3D models to this computer through the LAN drop site that runs in Docker. Each model waits for you: nothing is opened, sliced or printed until you choose Open."
 msgstr ""
+
+#, possible-boost-format
+msgid "Or open %1% and type the drop code %2%."
+msgstr ""

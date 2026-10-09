@@ -55,6 +55,8 @@ is off and then moves focus to **Copy link** as soon as the link exists.
   172.16/12, 192.168/16), **Address of this computer** lets you pick one; the choice is remembered.
   Loopback, link-local, multicast and public addresses are never offered. A line under the link says
   which base is in use. With no usable base the invite says so instead of showing a link.
+- Under the link, the base and the drop code are also shown on their own ("Or open ... and type the
+  drop code ..."), for someone who types them rather than scans or clicks.
 - **Copy link** puts exactly that link on the clipboard and announces "Link copied to the
   clipboard." to screen readers.
 - **The QR code** encodes exactly the same link with the bundled encoder (the one the local security
