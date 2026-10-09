@@ -40195,3 +40195,348 @@ msgstr "由已儲存嘅上次已核實目錄讀取。"
 #. review-status: agent-drafted
 msgid "Catalog refreshed: %s pages were read and saved as the last verified catalog."
 msgstr "目錄已更新：讀咗 %s 頁，並儲存為上次已核實嘅目錄。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "State"
+msgstr "狀態"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Family"
+msgstr "系列"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Variant"
+msgstr "變體"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Capability"
+msgstr "功能"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Quantization"
+msgstr "量化"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Hardware fit"
+msgstr "硬件適配"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Sort"
+msgstr "排序"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Clear filters"
+msgstr "清除篩選"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Any state"
+msgstr "任何狀態"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Any family"
+msgstr "任何系列"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Any variant"
+msgstr "任何變體"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Any capability"
+msgstr "任何功能"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Capabilities not verified"
+msgstr "功能未核實"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Any quantization"
+msgstr "任何量化"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Quantization not verified"
+msgstr "量化未核實"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Any size"
+msgstr "任何大小"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Any hardware fit"
+msgstr "任何硬件適配"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Choose a family first; its published variants are then listed here."
+msgstr "請先揀一個系列；之後呢度會列出佢已公佈嘅變體。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Running"
+msgstr "運行緊"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Installed"
+msgstr "已安裝"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Catalog only"
+msgstr "只喺目錄"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Running: Ollama has it loaded in memory now, so a chat starts without loading."
+msgstr "運行緊：Ollama 而家已經將佢載入記憶體，所以對話一開始就唔使再載入。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Installed: stored in the model folder. The first chat loads it into memory."
+msgstr "已安裝：儲存喺模型資料夾。第一次對話會將佢載入記憶體。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Catalog only: published in the official catalog and not installed. Adding it to the batch downloads it; its exact size is read from the official registry when you select it."
+msgstr "只喺目錄：已喺官方目錄公佈，但未安裝。加入批次就會下載；揀佢嘅時候會由官方登記庫讀取準確大小。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Under 2 GiB"
+msgstr "少過 2 GiB"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "2 to 8 GiB"
+msgstr "2 至 8 GiB"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "8 to 32 GiB"
+msgstr "8 至 32 GiB"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Over 32 GiB"
+msgstr "超過 32 GiB"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Size not known yet"
+msgstr "仲未知道大小"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Group by family"
+msgstr "按系列分組"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Group by state"
+msgstr "按狀態分組"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Group by hardware fit"
+msgstr "按硬件適配分組"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Group by quantization"
+msgstr "按量化分組"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Group by size"
+msgstr "按大小分組"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "No grouping"
+msgstr "唔分組"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Sort by family"
+msgstr "按系列排序"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Sort by size, smallest first"
+msgstr "按大小排序，細嘅先"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Sort by size, largest first"
+msgstr "按大小排序，大嘅先"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Sort by hardware fit, best first"
+msgstr "按硬件適配排序，最好嘅先"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Sort by name"
+msgstr "按名稱排序"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Runs well: the estimate fits in GPU memory that Ollama has shown it can use."
+msgstr "運行順暢：估算裝得落 Ollama 已顯示可以用嘅 GPU 記憶體。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Runs with limits: the estimate fits only with the processor doing part or all of the work, so replies are slower."
+msgstr "可以運行但有限制：要處理器負責部分或者全部工作先裝得落估算，所以回覆會慢啲。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Unlikely: the model folder or the measured memory cannot hold the estimate."
+msgstr "唔太可能：模型資料夾或者量度到嘅記憶體裝唔落估算。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Unknown: evidence is missing, so no estimate is made. Inspect the model, refresh the runtime or measure hardware again."
+msgstr "未知：缺少證據，所以唔會作出估算。請檢查模型、更新運行環境，或者重新量度硬件。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "completion: writes text replies. Chat needs it."
+msgstr "completion：寫文字回覆。對話需要呢個功能。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "vision: accepts images with a message."
+msgstr "vision：訊息可以附上圖片。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "tools: can ask a client to run functions that the client defines."
+msgstr "tools：可以要求用戶端執行用戶端自己定義嘅函數。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "embedding: turns text into vectors for search; it does not chat."
+msgstr "embedding：將文字轉成向量用嚟搜尋；唔可以對話。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "thinking: can return its reasoning separately before the answer."
+msgstr "thinking：可以喺答案之前另外俾出推理過程。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "insert: can fill in text between a given beginning and end."
+msgstr "insert：可以喺指定嘅開頭同結尾之間填入文字。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "%s: reported by Ollama; no explanation is bundled for it."
+msgstr "%s：由 Ollama 報告；冇內置呢項嘅解釋。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Quantization is verified only from installed-model metadata."
+msgstr "量化只會由已安裝模型嘅資料核實。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "32-bit weights: the original precision and the largest size."
+msgstr "32 位元權重：原始精度，體積最大。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "16-bit weights: close to the original quality, with the largest memory and storage needs of the common variants."
+msgstr "16 位元權重：質素接近原版，喺常見變體入面需要最多記憶體同儲存空間。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "About %s bits per weight. Fewer bits need less memory and storage but lose more quality; 4 to 5 bits is a common balance."
+msgstr "每個權重大約 %s 位元。位元越少，需要嘅記憶體同儲存空間越少，但質素損失越多；4 至 5 位元係常見嘅平衡。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "A quantization reported by Ollama; no explanation is bundled for this label."
+msgstr "由 Ollama 報告嘅量化；冇內置呢個標籤嘅解釋。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "1 variant"
+msgstr "1 個變體"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "%s variants"
+msgstr "%s 個變體"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Family %s: the variants published under one model name. They differ in parameter count, quantization or tuning, and each is pulled by its exact tag."
+msgstr "系列 %s：同一個模型名稱下公佈嘅變體。佢哋嘅參數數量、量化或者調校唔同，每個都用準確標籤下載。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Size not known yet: the exact size is read from the official registry when you select a catalog entry."
+msgstr "仲未知道大小：揀目錄項目嘅時候會由官方登記庫讀取準確大小。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "%s: each variant needs about this much space in the model folder, plus a ten percent allowance while it downloads."
+msgstr "%s：每個變體喺模型資料夾大約需要咁多空間，下載期間再加百分之十預留。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Group: %s, %s"
+msgstr "分組：%s，%s"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Select a variant under this heading to see its details."
+msgstr "揀呢個標題下面嘅一個變體就睇到詳情。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Variant %s: the exact tag that is pulled and run."
+msgstr "變體 %s：下載同運行嘅準確標籤。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Quantization %s: %s"
+msgstr "量化 %s：%s"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Uses %s in the model folder."
+msgstr "喺模型資料夾佔用 %s。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Downloads %s; with the ten percent allowance it needs %s free in the model folder."
+msgstr "下載 %s；加埋百分之十預留，模型資料夾需要有 %s 可用空間。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Hardware fit now: %s"
+msgstr "目前硬件適配：%s"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Showing %s of %s variants."
+msgstr "顯示緊 %s／%s 個變體。"

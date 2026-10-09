@@ -83,6 +83,8 @@ public:
                 if(!catalog_verified(saved)) throw std::runtime_error("Saved catalog is not verified");
                 m_state.catalog=std::move(saved); } }
         catch(...) { m_status->SetLabel(_L("Saved suite data is invalid or unavailable. Existing files were retained.")); }
+        // Measuring is local and quick, so every catalog and installed entry opens with a current verdict.
+        m_state.hardware=measure_hardware(); m_hardware->SetLabel(OllamaText::hardware_summary(m_state.hardware));
         render_models(); render_queue();
     }
     ~SuiteDialog() override { m_timer.Stop(); m_state.cancel=true; if(m_launcher)m_launcher->request_cancel(); if(m_worker.joinable()) m_worker.join(); }
@@ -92,7 +94,7 @@ private:
     TabStrip *m_tabs=nullptr; wxSimplebook *m_book=nullptr; wxBoxSizer *m_body=nullptr;
     std::vector<std::string> m_sections; SearchField *m_model_search=nullptr;
     ListBox *m_models=nullptr,*m_pulls=nullptr; TextArea *m_details=nullptr,*m_prompt=nullptr,*m_system=nullptr,*m_output=nullptr;
-    std::vector<Model> m_visible; std::size_t m_model_offset=0,m_queue_offset=0,m_history_offset=0; ChatSession m_session;
+    std::vector<StoreEntry> m_store; std::vector<StoreRow> m_rows; std::size_t m_model_offset=0,m_queue_offset=0,m_history_offset=0; ChatSession m_session;
     SearchField *m_history_search=nullptr; ListBox *m_sessions=nullptr; TextInput *m_title=nullptr;
     Button *m_attach=nullptr;
     std::unique_ptr<NativeLaunchAdapter> m_launcher; std::vector<LaunchProfile> m_profiles;
@@ -100,6 +102,10 @@ private:
     TextArea *m_profile_preview=nullptr;
     TextInput *m_temperature=nullptr,*m_context=nullptr,*m_predict=nullptr;
     Label *m_hardware=nullptr; ComboBox *m_fit_context=nullptr,*m_fit_cache=nullptr;
+    // Model Store pickers. Dynamic pickers keep the value behind each item: nullopt is "any", "" is "not verified".
+    ComboBox *m_filter_state=nullptr,*m_filter_family=nullptr,*m_filter_variant=nullptr,*m_filter_capability=nullptr,*m_filter_quantization=nullptr;
+    ComboBox *m_filter_size=nullptr,*m_filter_fit=nullptr,*m_store_group=nullptr,*m_store_sort=nullptr; Label *m_query_summary=nullptr;
+    std::vector<std::optional<std::string>> m_family_values,m_variant_values,m_capability_values,m_quantization_values;
     std::vector<ChatSession> m_history_rows; std::string m_attachment;
     std::pair<wxWindow *,wxBoxSizer *> section(const std::string &id,const wxString &name) {
         auto *panel=new MD3ScrolledWindow(m_book,wxID_ANY,wxDefaultPosition,wxDefaultSize,wxVSCROLL);
@@ -136,7 +142,7 @@ private:
             if(done&&m_state.measured_notice) { m_status->SetLabel(OllamaText::ui(OllamaText::Ui::MeasuredAgain)); m_state.measured_notice=false; }
             if(done&&m_state.catalog_ready&&m_state.catalog_attempt) { m_status->SetLabel(OllamaText::catalog_outcome(*m_state.catalog_attempt)); m_state.catalog_ready=false; }
             if(done&&m_state.details_ready&&m_state.selected&&m_state.fit) {
-                m_details->SetValue(OllamaText::fit_report(*m_state.selected,*m_state.fit)); m_state.details_ready=false;
+                m_details->SetValue(OllamaText::model_explanation(*m_state.selected,m_state.fit->verdict)+"\n\n"+OllamaText::fit_report(*m_state.selected,*m_state.fit)); m_state.details_ready=false;
                 m_status->SetLabel(OllamaText::ui(OllamaText::Ui::InspectionFinished)); }
             m_attach->Enable(done&&m_state.selected&&m_state.selected->capabilities_verified&&m_state.selected->local&&m_state.selected->capabilities.count("vision"));
             m_launch->Enable(done&&m_state.launch_plan.has_value()); }
@@ -160,16 +166,98 @@ private:
         m_model_search=new SearchField(p,_L("Search exact model, family, capability or quantization")); s->Add(m_model_search,0,wxEXPAND|wxALL,FromDIP(8));
         m_model_search->SetOnQuery([this](const wxString &) { m_model_offset=0; render_models(); });
         m_model_search->SetOnRegexToggle([this](bool) { m_model_offset=0; render_models(); });
+        build_store_filters(p,s);
         m_models=new ListBox(p,wxID_ANY,FromDIP(wxSize(-1,220))); m_models->SetName("Ollama model inventory"); s->Add(m_models,0,wxEXPAND|wxALL,FromDIP(8));
         m_models->Bind(wxEVT_LISTBOX,[this](wxCommandEvent &) { inspect_selected(); });
         auto *pages=new wxWrapSizer(wxHORIZONTAL);
         action(p,pages,_L("Previous models"),[this] { if(m_model_offset>=100) m_model_offset-=100; render_models(); });
-        action(p,pages,_L("Next models"),[this] { if(m_visible.size()==100) m_model_offset+=100; render_models(); }); s->Add(pages,0,wxEXPAND);
+        action(p,pages,_L("Next models"),[this] { if(m_model_offset+100<m_rows.size()) m_model_offset+=100; render_models(); }); s->Add(pages,0,wxEXPAND);
         m_details=new TextArea(p,_L("Select an installed model to inspect verified capabilities and hardware evidence."),FromDIP(wxSize(-1,150))); m_details->SetReadOnly(true); s->Add(m_details,0,wxEXPAND|wxALL,FromDIP(8));
         auto *choose=new wxWrapSizer(wxHORIZONTAL);
         action(p,choose,_L("Use selected model for chat"),[this] { std::lock_guard<std::mutex> lock(m_state.mutex); if(m_state.busy||!m_state.selected||!m_state.selected->capabilities_verified||!m_state.selected->local) { m_status->SetLabel(_L("Finish the current operation and inspect a verified installed local model first.")); return; } m_session={unique_id(),"Local session",m_state.selected->name,Json::array()}; m_state.messages=Json::array(); m_state.response.clear(); m_output->Clear(); m_tabs->Activate("chat"); });
-        action(p,choose,_L("Add selected tag to batch"),[this] { auto i=m_models->GetSelection(); if(i<0||static_cast<std::size_t>(i)>=m_visible.size()) return; try { m_queue.add(m_visible[i].name); render_queue(); m_tabs->Activate("pulls"); } catch(...) { m_status->SetLabel(_L("Could not persist the batch item.")); } }); s->Add(choose,0,wxEXPAND);
+        action(p,choose,_L("Add selected tag to batch"),[this] { const auto model=selected_model(); if(!model) return; try { m_queue.add(model->name); render_queue(); m_tabs->Activate("pulls"); } catch(...) { m_status->SetLabel(_L("Could not persist the batch item.")); } }); s->Add(choose,0,wxEXPAND);
     }
+    static constexpr StoreState store_states[]={StoreState::Running,StoreState::Installed,StoreState::Catalog};
+    static constexpr SizeBand size_bands[]={SizeBand::Under2GiB,SizeBand::From2To8GiB,SizeBand::From8To32GiB,SizeBand::Over32GiB,SizeBand::Unknown};
+    static constexpr OllamaSuite::Fit fit_verdicts[]={OllamaSuite::Fit::RunsWell,OllamaSuite::Fit::WithLimits,OllamaSuite::Fit::Unlikely,OllamaSuite::Fit::Unknown}; // wxWindow::Fit hides the type name here
+    static constexpr StoreGroup store_groups[]={StoreGroup::None,StoreGroup::Family,StoreGroup::State,StoreGroup::Fit,StoreGroup::Quantization,StoreGroup::Size};
+    static constexpr StoreSort store_sorts[]={StoreSort::Name,StoreSort::Family,StoreSort::SizeAscending,StoreSort::SizeDescending,StoreSort::Fit};
+    ComboBox *store_picker(wxWindow *p,wxSizer *row,OllamaText::StoreUi name,int width) {
+        auto *column=new wxBoxSizer(wxVERTICAL); column->Add(new Label(p,OllamaText::store_ui(name)),0,wxBOTTOM,FromDIP(2));
+        auto *picker=new ComboBox(p,wxID_ANY,wxEmptyString,wxDefaultPosition,FromDIP(wxSize(width,-1)),0,nullptr,wxCB_READONLY); picker->SetName(OllamaText::store_ui(name));
+        column->Add(picker,0); row->Add(column,0,wxALL,FromDIP(4));
+        picker->Bind(wxEVT_COMBOBOX,[this](wxCommandEvent &) { m_model_offset=0; render_models(); });
+        return picker;
+    }
+    void build_store_filters(wxWindow *p,wxSizer *s) {
+        using OllamaText::StoreUi;
+        auto *row=new wxWrapSizer(wxHORIZONTAL);
+        m_filter_state=store_picker(p,row,StoreUi::StateFilter,150); m_filter_state->Append(OllamaText::store_ui(StoreUi::AnyState));
+        for(auto state:store_states) m_filter_state->Append(OllamaText::state_text(state));
+        m_filter_family=store_picker(p,row,StoreUi::FamilyFilter,200);
+        m_filter_variant=store_picker(p,row,StoreUi::VariantFilter,200);
+        m_filter_capability=store_picker(p,row,StoreUi::CapabilityFilter,180);
+        m_filter_quantization=store_picker(p,row,StoreUi::QuantizationFilter,180);
+        m_filter_size=store_picker(p,row,StoreUi::SizeFilter,170); m_filter_size->Append(OllamaText::store_ui(StoreUi::AnySize));
+        for(auto band:size_bands) m_filter_size->Append(OllamaText::size_band_text(band));
+        m_filter_fit=store_picker(p,row,StoreUi::FitFilter,170); m_filter_fit->Append(OllamaText::store_ui(StoreUi::AnyFit));
+        for(auto verdict:fit_verdicts) m_filter_fit->Append(OllamaText::verdict_text(verdict));
+        m_store_group=store_picker(p,row,StoreUi::Grouping,200); for(auto group:store_groups) m_store_group->Append(OllamaText::group_text(group));
+        m_store_sort=store_picker(p,row,StoreUi::SortOrder,240); for(auto sort:store_sorts) m_store_sort->Append(OllamaText::sort_text(sort));
+        for(auto *picker:{m_filter_state,m_filter_size,m_filter_fit,m_store_group,m_store_sort}) picker->SetSelection(0);
+        s->Add(row,0,wxEXPAND);
+        auto *actions=new wxWrapSizer(wxHORIZONTAL);
+        action(p,actions,OllamaText::store_ui(StoreUi::ClearFilters),[this] {
+            for(auto *picker:{m_filter_state,m_filter_family,m_filter_variant,m_filter_capability,m_filter_quantization,m_filter_size,m_filter_fit,m_store_group,m_store_sort}) if(picker->GetCount()>0) picker->SetSelection(0);
+            m_model_offset=0; render_models(); });
+        s->Add(actions,0,wxEXPAND);
+        m_query_summary=new Label(p,wxString(),LB_AUTO_WRAP); s->Add(m_query_summary,0,wxEXPAND|wxALL,FromDIP(8));
+    }
+    static std::optional<std::string> picked(ComboBox *picker,const std::vector<std::optional<std::string>> &values) {
+        const int i=picker->GetSelection(); return i>=0&&static_cast<std::size_t>(i)<values.size() ? values[static_cast<std::size_t>(i)] : std::nullopt;
+    }
+    // Repopulates a picker only when its values changed, keeping the chosen value when it still exists.
+    static void set_options(ComboBox *picker,std::vector<std::optional<std::string>> &values,std::vector<std::optional<std::string>> next,const std::function<wxString(const std::optional<std::string> &)> &label) {
+        if(next==values) return;
+        const auto current=picked(picker,values); picker->Clear(); int keep=0;
+        for(std::size_t i=0;i<next.size();++i) { picker->Append(label(next[i])); if(next[i]==current) keep=static_cast<int>(i); }
+        picker->SetSelection(keep); values=std::move(next);
+    }
+    void update_store_options(const std::vector<StoreEntry> &entries) {
+        using OllamaText::StoreUi;
+        const auto facets=store_facets(entries);
+        std::vector<std::optional<std::string>> families{std::nullopt},capabilities{std::nullopt},quantizations{std::nullopt},variants{std::nullopt};
+        for(const auto &f:facets.families) families.push_back(f);
+        for(const auto &c:facets.capabilities) capabilities.push_back(c);
+        if(facets.unverified_capabilities) capabilities.push_back(std::string());
+        for(const auto &q:facets.quantizations) quantizations.push_back(q);
+        if(facets.unverified_quantization) quantizations.push_back(std::string());
+        set_options(m_filter_family,m_family_values,families,[](const std::optional<std::string> &v) { return v ? u8(*v) : OllamaText::store_ui(StoreUi::AnyFamily); });
+        set_options(m_filter_capability,m_capability_values,capabilities,[](const std::optional<std::string> &v) { return !v ? OllamaText::store_ui(StoreUi::AnyCapability) : v->empty() ? OllamaText::store_ui(StoreUi::CapabilitiesUnverified) : u8(*v); });
+        set_options(m_filter_quantization,m_quantization_values,quantizations,[](const std::optional<std::string> &v) { return !v ? OllamaText::store_ui(StoreUi::AnyQuantization) : v->empty() ? OllamaText::store_ui(StoreUi::QuantizationUnverified) : u8(*v); });
+        // Variants are listed for one family at a time; a family has tens of tags, the catalog thousands.
+        const auto family=picked(m_filter_family,m_family_values);
+        if(family) for(const auto &v:family_variants(entries,*family)) variants.push_back(v);
+        set_options(m_filter_variant,m_variant_values,variants,[](const std::optional<std::string> &v) { return v ? u8(*v) : OllamaText::store_ui(StoreUi::AnyVariant); });
+        m_filter_variant->Enable(family.has_value());
+        m_filter_variant->SetToolTip(family ? wxString() : OllamaText::store_ui(StoreUi::ChooseFamilyFirst));
+    }
+    StoreQuery current_query() const {
+        StoreQuery q; int i=0;
+        if((i=m_filter_state->GetSelection())>0) q.state=store_states[i-1];
+        q.family=picked(m_filter_family,m_family_values); q.variant=picked(m_filter_variant,m_variant_values);
+        q.capability=picked(m_filter_capability,m_capability_values); q.quantization=picked(m_filter_quantization,m_quantization_values);
+        if((i=m_filter_size->GetSelection())>0) q.size=size_bands[i-1];
+        if((i=m_filter_fit->GetSelection())>0) q.fit=fit_verdicts[i-1];
+        if((i=m_store_group->GetSelection())>0) q.group=store_groups[i];
+        if((i=m_store_sort->GetSelection())>0) q.sort=store_sorts[i];
+        return q;
+    }
+    const StoreRow *selected_row() const {
+        const int i=m_models->GetSelection(); if(i<0) return nullptr;
+        const auto row=m_model_offset+static_cast<std::size_t>(i); return row<m_rows.size() ? &m_rows[row] : nullptr;
+    }
+    std::optional<Model> selected_model() const { const auto *row=selected_row(); if(!row||row->header) return std::nullopt; return m_store[row->entry].model; }
     void build_hardware(wxWindow *p,wxSizer *s) {
         m_hardware=new Label(p,OllamaText::hardware_summary(Hardware{}),LB_AUTO_WRAP); m_hardware->SetName(OllamaText::ui(OllamaText::Ui::HardwareEvidence)); s->Add(m_hardware,0,wxEXPAND|wxALL,FromDIP(8));
         FitSettings settings; { std::lock_guard<std::mutex> lock(m_state.mutex); settings=m_state.fit_settings; }
@@ -216,7 +304,14 @@ private:
         if(health.state!=RuntimeState::Healthy) { set_status(health.diagnostic); return; }
         const auto version=health.value.at("version").get<std::string>();
         auto tags=c.execute(Operation::Installed,Json::object(),m_state.cancel); if(tags.state!=RuntimeState::Healthy) { set_status(tags.diagnostic); return; }
-        auto models=installed_models(tags.value); auto running=c.execute(Operation::Running,Json::object(),m_state.cancel); std::set<std::string> names;
+        auto models=installed_models(tags.value);
+        // Verified /api/show metadata for each installed model lets the store filter by capability and fit
+        // without guessing. A model whose metadata cannot be read stays unverified.
+        for(std::size_t i=0;i<models.size()&&i<256&&!m_state.cancel.load();++i) {
+            auto shown=c.execute(Operation::Show,{{"model",models[i].name}},m_state.cancel);
+            if(shown.state==RuntimeState::Healthy) { try { apply_details(models[i],shown.value); } catch(...) { models[i].capabilities_verified=false; } }
+        }
+        auto running=c.execute(Operation::Running,Json::object(),m_state.cancel); std::set<std::string> names;
         std::vector<RuntimeMemory> loaded;
         if(running.state==RuntimeState::Healthy) { for(const auto &m:installed_models(running.value)) names.insert(m.name); loaded=runtime_memory(running.value); }
         { std::lock_guard<std::mutex> lock(m_state.mutex); m_state.installed=models; m_state.running=std::move(names); m_state.runtime_version=version; m_state.inventory_known=true; m_state.selected.reset(); m_state.fit.reset(); }
@@ -231,18 +326,34 @@ private:
     // The catalog's age keeps moving while the dialog is open.
     void show_catalog_age() { std::lock_guard<std::mutex> lock(m_state.mutex); m_catalog_status->SetLabel(OllamaText::catalog_status(m_state.catalog,m_state.catalog_attempt,now_seconds())); }
     void render_models() {
-        std::string selected; const auto selection=m_models->GetSelection(); if(selection>=0&&static_cast<std::size_t>(selection)<m_visible.size())selected=m_visible[selection].name;
-        std::vector<Model> all; { std::lock_guard<std::mutex> lock(m_state.mutex); all=reconcile(m_state.catalog.models,m_state.installed,m_state.running);
+        if(!m_models||!m_filter_state) return; // a search callback can arrive before the store is built
+        const auto previous=selected_model(); const std::string selected=previous ? previous->name : std::string();
+        // Every entry gets its verdict from the current hardware and estimate settings, so fit filters, groups
+        // and sorting follow each re-measurement and settings change.
+        std::vector<StoreEntry> entries;
+        { std::lock_guard<std::mutex> lock(m_state.mutex); auto all=reconcile(m_state.catalog.models,m_state.installed,m_state.running); entries.reserve(all.size());
+            for(auto &m:all) { const auto verdict=assess(m,m_state.hardware,m_state.fit_settings).verdict; entries.push_back({std::move(m),verdict}); }
             m_catalog_status->SetLabel(OllamaText::catalog_status(m_state.catalog,m_state.catalog_attempt,now_seconds())); }
+        update_store_options(entries);
+        const auto query=current_query();
         SearchField::MatchPass match(m_model_search->GetValue(),m_model_search->IsRegexEnabled(),m_model_search->IsCaseSensitive(),m_model_search->IsWholeWord(),m_model_search->IsMultiline());
-        std::vector<wxString> rows; m_visible.clear(); std::size_t offset=0;
-        for(const auto &m:all) { std::string hay=m.name+" "+m.family+" "+m.quantization; for(const auto &c:m.capabilities) hay+=" "+c;
-            if(!match.matches(u8(hay))) continue; if(offset++<m_model_offset) continue; if(rows.size()==100) break;
-            rows.push_back(u8(m.name)+(m.installed?_L(" | installed"):_L(" | catalog, metadata unverified"))+(m.running?_L(" | running"):wxString())); m_visible.push_back(m); }
-        m_models->Set(rows); for(std::size_t i=0;i<m_visible.size();++i)if(m_visible[i].name==selected)m_models->SetSelection(static_cast<int>(i));
+        m_rows=query_store(entries,query,[&](const Model &m) { std::string hay=m.name+" "+m.family+" "+m.quantization; for(const auto &c:m.capabilities) hay+=" "+c; return match.matches(u8(hay)); });
+        m_store=std::move(entries);
+        if(m_model_offset>=m_rows.size()) m_model_offset=0;
+        std::vector<wxString> labels;
+        for(std::size_t r=m_model_offset;r<m_rows.size()&&labels.size()<100;++r) {
+            const auto &row=m_rows[r]; const auto &entry=m_store[row.entry];
+            labels.push_back(row.header ? OllamaText::group_heading(query.group,entry,row.members) : OllamaText::store_row(entry)); }
+        m_models->Set(labels);
+        for(std::size_t i=0;i<labels.size();++i) { const auto &row=m_rows[m_model_offset+i]; if(!row.header&&m_store[row.entry].model.name==selected) m_models->SetSelection(static_cast<int>(i)); }
+        m_query_summary->SetLabel(OllamaText::query_summary(query,store_matches(m_rows),m_store.size()));
     }
     void inspect_selected() {
-        auto i=m_models->GetSelection(); if(i<0||static_cast<std::size_t>(i)>=m_visible.size()) return; auto m=m_visible[i];
+        const auto *row=selected_row(); if(!row) return;
+        // Explain before anything is chosen: a heading explains its group, a model its family, variant,
+        // state, capabilities, quantization, size, storage and current fit, before inspection adds evidence.
+        if(row->header) { m_details->SetValue(OllamaText::group_explanation(current_query().group,m_store[row->entry],row->members)); return; }
+        auto m=m_store[row->entry].model; m_details->SetValue(OllamaText::model_explanation(m,m_store[row->entry].fit));
         if(!m.installed) {
             // Registry metadata gives the exact download size; runtime metadata stays unknown until installation.
             start([this,m=std::move(m)]() mutable { LocalClient client; m=client.registry_metadata(m.name,m_state.cancel);

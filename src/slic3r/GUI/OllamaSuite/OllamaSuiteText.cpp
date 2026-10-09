@@ -1,9 +1,11 @@
 #include "OllamaSuiteText.hpp"
 #include "../I18N.hpp"
 #include <algorithm>
+#include <cctype>
 
 namespace Slic3r::GUI::OllamaText {
-// Named one by one: the application also has a Slic3r::Model, and this namespace has its own fit_label.
+// Named one by one: the application also has a Slic3r::Model, and argument-dependent lookup must not
+// mix this namespace's text functions with the core's English ones.
 using OllamaSuite::BackendState;
 using OllamaSuite::CatalogAttempt;
 using OllamaSuite::CatalogFailure;
@@ -18,6 +20,12 @@ using OllamaSuite::FitSettings;
 using OllamaSuite::Hardware;
 using OllamaSuite::KvCache;
 using OllamaSuite::Model;
+using OllamaSuite::SizeBand;
+using OllamaSuite::StoreEntry;
+using OllamaSuite::StoreGroup;
+using OllamaSuite::StoreQuery;
+using OllamaSuite::StoreSort;
+using OllamaSuite::StoreState;
 namespace {
 wxString u8(const std::string &s) { return wxString::FromUTF8(s.c_str()); }
 wxString count(std::size_t n) { return wxString::Format("%llu", static_cast<unsigned long long>(n)); }
@@ -181,8 +189,7 @@ wxString hardware_summary(const Hardware &h)
 
 wxString fit_report(const Model &model, const FitResult &fit)
 {
-    wxString out = u8(model.name) + "\n";
-    out += wxString::Format(_L("Hardware fit: %s"), verdict_text(fit.verdict)) + "\n";
+    wxString out = wxString::Format(_L("Hardware fit: %s"), verdict_text(fit.verdict)) + "\n";
     if (model.bytes)
         out += wxString::Format(model.installed ? _L("Installed size: %s.") : _L("Exact registry download size: %s."), bytes(*model.bytes)) + "\n";
     if (!model.installed && !model.digest.empty())
@@ -198,14 +205,7 @@ wxString fit_report(const Model &model, const FitResult &fit)
     for (const auto note : fit.notes)
         out += "- " + note_text(note) + "\n";
     if (!fit.measured_at.empty())
-        out += wxString::Format(_L("Hardware measured at %s (UTC)."), u8(fit.measured_at)) + "\n";
-    if (model.capabilities_verified) {
-        wxString list;
-        for (const auto &capability : model.capabilities)
-            list += (list.empty() ? wxString() : wxString(", ")) + u8(capability);
-        out += wxString::Format(_L("Verified capabilities: %s"), list.empty() ? _L("none reported") : list);
-    } else
-        out += _L("Capabilities are verified only after the model is installed and inspected.");
+        out += wxString::Format(_L("Hardware measured at %s (UTC)."), u8(fit.measured_at));
     return out;
 }
 
@@ -275,5 +275,229 @@ wxString catalog_outcome(const CatalogAttempt &attempt)
     if (attempt.verdict == CatalogVerdict::Traversed || attempt.verdict == CatalogVerdict::Certified)
         return wxString::Format(_L("Catalog refreshed: %s pages were read and saved as the last verified catalog."), count(attempt.pages));
     return failed_refresh(attempt);
+}
+
+wxString store_ui(StoreUi id)
+{
+    switch (id) {
+    case StoreUi::StateFilter: return _L("State");
+    case StoreUi::FamilyFilter: return _L("Family");
+    case StoreUi::VariantFilter: return _L("Variant");
+    case StoreUi::CapabilityFilter: return _L("Capability");
+    case StoreUi::QuantizationFilter: return _L("Quantization");
+    case StoreUi::SizeFilter: return _L("Size");
+    case StoreUi::FitFilter: return _L("Hardware fit");
+    case StoreUi::Grouping: return _L("Group");
+    case StoreUi::SortOrder: return _L("Sort");
+    case StoreUi::ClearFilters: return _L("Clear filters");
+    case StoreUi::AnyState: return _L("Any state");
+    case StoreUi::AnyFamily: return _L("Any family");
+    case StoreUi::AnyVariant: return _L("Any variant");
+    case StoreUi::AnyCapability: return _L("Any capability");
+    case StoreUi::CapabilitiesUnverified: return _L("Capabilities not verified");
+    case StoreUi::AnyQuantization: return _L("Any quantization");
+    case StoreUi::QuantizationUnverified: return _L("Quantization not verified");
+    case StoreUi::AnySize: return _L("Any size");
+    case StoreUi::AnyFit: return _L("Any hardware fit");
+    case StoreUi::ChooseFamilyFirst: return _L("Choose a family first; its published variants are then listed here.");
+    }
+    return wxString();
+}
+
+wxString state_text(StoreState state)
+{
+    switch (state) {
+    case StoreState::Running: return _L("Running");
+    case StoreState::Installed: return _L("Installed");
+    default: return _L("Catalog only");
+    }
+}
+
+wxString state_explanation(StoreState state)
+{
+    switch (state) {
+    case StoreState::Running: return _L("Running: Ollama has it loaded in memory now, so a chat starts without loading.");
+    case StoreState::Installed: return _L("Installed: stored in the model folder. The first chat loads it into memory.");
+    default: return _L("Catalog only: published in the official catalog and not installed. Adding it to the batch downloads it; its exact size is read from the official registry when you select it.");
+    }
+}
+
+wxString size_band_text(SizeBand band)
+{
+    switch (band) {
+    case SizeBand::Under2GiB: return _L("Under 2 GiB");
+    case SizeBand::From2To8GiB: return _L("2 to 8 GiB");
+    case SizeBand::From8To32GiB: return _L("8 to 32 GiB");
+    case SizeBand::Over32GiB: return _L("Over 32 GiB");
+    default: return _L("Size not known yet");
+    }
+}
+
+wxString group_text(StoreGroup group)
+{
+    switch (group) {
+    case StoreGroup::Family: return _L("Group by family");
+    case StoreGroup::State: return _L("Group by state");
+    case StoreGroup::Fit: return _L("Group by hardware fit");
+    case StoreGroup::Quantization: return _L("Group by quantization");
+    case StoreGroup::Size: return _L("Group by size");
+    default: return _L("No grouping");
+    }
+}
+
+wxString sort_text(StoreSort sort)
+{
+    switch (sort) {
+    case StoreSort::Family: return _L("Sort by family");
+    case StoreSort::SizeAscending: return _L("Sort by size, smallest first");
+    case StoreSort::SizeDescending: return _L("Sort by size, largest first");
+    case StoreSort::Fit: return _L("Sort by hardware fit, best first");
+    default: return _L("Sort by name");
+    }
+}
+
+wxString verdict_explanation(Fit verdict)
+{
+    switch (verdict) {
+    case Fit::RunsWell: return _L("Runs well: the estimate fits in GPU memory that Ollama has shown it can use.");
+    case Fit::WithLimits: return _L("Runs with limits: the estimate fits only with the processor doing part or all of the work, so replies are slower.");
+    case Fit::Unlikely: return _L("Unlikely: the model folder or the measured memory cannot hold the estimate.");
+    default: return _L("Unknown: evidence is missing, so no estimate is made. Inspect the model, refresh the runtime or measure hardware again.");
+    }
+}
+
+wxString capability_explanation(const std::string &capability)
+{
+    if (capability == "completion") return _L("completion: writes text replies. Chat needs it.");
+    if (capability == "vision") return _L("vision: accepts images with a message.");
+    if (capability == "tools") return _L("tools: can ask a client to run functions that the client defines.");
+    if (capability == "embedding") return _L("embedding: turns text into vectors for search; it does not chat.");
+    if (capability == "thinking") return _L("thinking: can return its reasoning separately before the answer.");
+    if (capability == "insert") return _L("insert: can fill in text between a given beginning and end.");
+    return wxString::Format(_L("%s: reported by Ollama; no explanation is bundled for it."), u8(capability));
+}
+
+wxString quantization_explanation(const std::string &quantization)
+{
+    if (quantization.empty())
+        return _L("Quantization is verified only from installed-model metadata.");
+    std::string upper = quantization;
+    std::transform(upper.begin(), upper.end(), upper.begin(), [](unsigned char c) { return static_cast<char>(std::toupper(c)); });
+    if (upper.rfind("F32", 0) == 0)
+        return _L("32-bit weights: the original precision and the largest size.");
+    if (upper.rfind("F16", 0) == 0 || upper.rfind("BF16", 0) == 0)
+        return _L("16-bit weights: close to the original quality, with the largest memory and storage needs of the common variants.");
+    // The label names its bit width (Q4_K_M, IQ3_XS, Q8_0): read it, never the model name.
+    const auto digit = upper.find_first_of("0123456789");
+    if ((upper.rfind("Q", 0) == 0 || upper.rfind("IQ", 0) == 0) && digit != std::string::npos && digit <= 2) {
+        const int bits = upper[digit] - '0';
+        if (bits >= 1 && bits <= 8)
+            return wxString::Format(_L("About %s bits per weight. Fewer bits need less memory and storage but lose more quality; 4 to 5 bits is a common balance."),
+                                    count(static_cast<std::size_t>(bits)));
+    }
+    return _L("A quantization reported by Ollama; no explanation is bundled for this label.");
+}
+
+wxString store_row(const StoreEntry &entry)
+{
+    const auto &m = entry.model;
+    wxString row = u8(m.name) + " | " + state_text(OllamaSuite::store_state(m));
+    if (!m.quantization.empty())
+        row += " | " + u8(m.quantization);
+    if (m.bytes)
+        row += " | " + bytes(*m.bytes);
+    row += " | " + verdict_text(entry.fit);
+    return row;
+}
+
+namespace {
+wxString group_label(StoreGroup group, const StoreEntry &first)
+{
+    switch (group) {
+    case StoreGroup::Family: return u8(OllamaSuite::model_family(first.model.name));
+    case StoreGroup::State: return state_text(OllamaSuite::store_state(first.model));
+    case StoreGroup::Fit: return verdict_text(first.fit);
+    case StoreGroup::Quantization: return first.model.quantization.empty() ? store_ui(StoreUi::QuantizationUnverified) : u8(first.model.quantization);
+    case StoreGroup::Size: return size_band_text(OllamaSuite::size_band(first.model));
+    default: return wxString();
+    }
+}
+wxString variants_text(std::size_t n) { return n == 1 ? _L("1 variant") : wxString::Format(_L("%s variants"), count(n)); }
+wxString family_explanation(const std::string &family)
+{
+    return wxString::Format(_L("Family %s: the variants published under one model name. They differ in parameter count, quantization or tuning, and each is pulled by its exact tag."), u8(family));
+}
+wxString size_explanation(SizeBand band)
+{
+    if (band == SizeBand::Unknown)
+        return _L("Size not known yet: the exact size is read from the official registry when you select a catalog entry.");
+    return wxString::Format(_L("%s: each variant needs about this much space in the model folder, plus a ten percent allowance while it downloads."), size_band_text(band));
+}
+} // namespace
+
+wxString group_heading(StoreGroup group, const StoreEntry &first, std::size_t members)
+{
+    return wxString::Format(_L("Group: %s, %s"), group_label(group, first), variants_text(members));
+}
+
+wxString group_explanation(StoreGroup group, const StoreEntry &first, std::size_t members)
+{
+    wxString out = group_heading(group, first, members) + "\n";
+    switch (group) {
+    case StoreGroup::Family: out += family_explanation(OllamaSuite::model_family(first.model.name)); break;
+    case StoreGroup::State: out += state_explanation(OllamaSuite::store_state(first.model)); break;
+    case StoreGroup::Fit: out += verdict_explanation(first.fit); break;
+    case StoreGroup::Quantization: out += quantization_explanation(first.model.quantization); break;
+    case StoreGroup::Size: out += size_explanation(OllamaSuite::size_band(first.model)); break;
+    default: break;
+    }
+    return out + "\n" + _L("Select a variant under this heading to see its details.");
+}
+
+wxString model_explanation(const Model &m, Fit verdict)
+{
+    wxString out = u8(m.name) + "\n";
+    out += family_explanation(OllamaSuite::model_family(m.name)) + "\n";
+    out += wxString::Format(_L("Variant %s: the exact tag that is pulled and run."), u8(OllamaSuite::model_variant(m.name))) + "\n";
+    out += state_explanation(OllamaSuite::store_state(m)) + "\n";
+    if (m.capabilities_verified) {
+        wxString list;
+        for (const auto &capability : m.capabilities)
+            list += (list.empty() ? wxString() : wxString(", ")) + u8(capability);
+        out += wxString::Format(_L("Verified capabilities: %s"), list.empty() ? _L("none reported") : list) + "\n";
+        for (const auto &capability : m.capabilities)
+            out += "- " + capability_explanation(capability) + "\n";
+    } else
+        out += _L("Capabilities are verified only after the model is installed and inspected.") + "\n";
+    out += (m.quantization.empty() ? quantization_explanation(m.quantization)
+                                   : wxString::Format(_L("Quantization %s: %s"), u8(m.quantization), quantization_explanation(m.quantization))) + "\n";
+    if (m.bytes && m.installed)
+        out += wxString::Format(_L("Uses %s in the model folder."), bytes(*m.bytes)) + "\n";
+    else if (m.bytes)
+        out += wxString::Format(_L("Downloads %s; with the ten percent allowance it needs %s free in the model folder."), bytes(*m.bytes), bytes(*m.bytes + *m.bytes / 10)) + "\n";
+    else
+        out += size_explanation(SizeBand::Unknown) + "\n";
+    out += wxString::Format(_L("Hardware fit now: %s"), verdict_explanation(verdict));
+    return out;
+}
+
+wxString query_summary(const StoreQuery &q, std::size_t shown, std::size_t total)
+{
+    wxString out = wxString::Format(_L("Showing %s of %s variants."), count(shown), count(total));
+    if (q.state)
+        out += "\n" + state_explanation(*q.state);
+    if (q.family)
+        out += "\n" + family_explanation(*q.family);
+    if (q.variant)
+        out += "\n" + wxString::Format(_L("Variant %s: the exact tag that is pulled and run."), u8(*q.variant));
+    if (q.capability)
+        out += "\n" + (q.capability->empty() ? _L("Capabilities are verified only after the model is installed and inspected.") : capability_explanation(*q.capability));
+    if (q.quantization)
+        out += "\n" + quantization_explanation(*q.quantization);
+    if (q.size)
+        out += "\n" + size_explanation(*q.size);
+    if (q.fit)
+        out += "\n" + verdict_explanation(*q.fit);
+    return out;
 }
 } // namespace Slic3r::GUI::OllamaText

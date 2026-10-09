@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-09 01:24+0000\n"
+"POT-Creation-Date: 2026-10-09 01:41+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -25071,16 +25071,6 @@ msgstr ""
 msgid "Hardware measured at %s (UTC)."
 msgstr ""
 
-#, possible-c-format, possible-boost-format
-msgid "Verified capabilities: %s"
-msgstr ""
-
-msgid "none reported"
-msgstr ""
-
-msgid "Capabilities are verified only after the model is installed and inspected."
-msgstr ""
-
 msgid "less than a minute"
 msgstr ""
 
@@ -25146,6 +25136,235 @@ msgstr ""
 
 #, possible-c-format, possible-boost-format
 msgid "Catalog refreshed: %s pages were read and saved as the last verified catalog."
+msgstr ""
+
+msgid "State"
+msgstr ""
+
+msgid "Family"
+msgstr ""
+
+msgid "Variant"
+msgstr ""
+
+msgid "Capability"
+msgstr ""
+
+msgid "Quantization"
+msgstr ""
+
+msgid "Hardware fit"
+msgstr ""
+
+msgid "Sort"
+msgstr ""
+
+msgid "Clear filters"
+msgstr ""
+
+msgid "Any state"
+msgstr ""
+
+msgid "Any family"
+msgstr ""
+
+msgid "Any variant"
+msgstr ""
+
+msgid "Any capability"
+msgstr ""
+
+msgid "Capabilities not verified"
+msgstr ""
+
+msgid "Any quantization"
+msgstr ""
+
+msgid "Quantization not verified"
+msgstr ""
+
+msgid "Any size"
+msgstr ""
+
+msgid "Any hardware fit"
+msgstr ""
+
+msgid "Choose a family first; its published variants are then listed here."
+msgstr ""
+
+msgid "Running"
+msgstr ""
+
+msgid "Installed"
+msgstr ""
+
+msgid "Catalog only"
+msgstr ""
+
+msgid "Running: Ollama has it loaded in memory now, so a chat starts without loading."
+msgstr ""
+
+msgid "Installed: stored in the model folder. The first chat loads it into memory."
+msgstr ""
+
+msgid "Catalog only: published in the official catalog and not installed. Adding it to the batch downloads it; its exact size is read from the official registry when you select it."
+msgstr ""
+
+msgid "Under 2 GiB"
+msgstr ""
+
+msgid "2 to 8 GiB"
+msgstr ""
+
+msgid "8 to 32 GiB"
+msgstr ""
+
+msgid "Over 32 GiB"
+msgstr ""
+
+msgid "Size not known yet"
+msgstr ""
+
+msgid "Group by family"
+msgstr ""
+
+msgid "Group by state"
+msgstr ""
+
+msgid "Group by hardware fit"
+msgstr ""
+
+msgid "Group by quantization"
+msgstr ""
+
+msgid "Group by size"
+msgstr ""
+
+msgid "No grouping"
+msgstr ""
+
+msgid "Sort by family"
+msgstr ""
+
+msgid "Sort by size, smallest first"
+msgstr ""
+
+msgid "Sort by size, largest first"
+msgstr ""
+
+msgid "Sort by hardware fit, best first"
+msgstr ""
+
+msgid "Sort by name"
+msgstr ""
+
+msgid "Runs well: the estimate fits in GPU memory that Ollama has shown it can use."
+msgstr ""
+
+msgid "Runs with limits: the estimate fits only with the processor doing part or all of the work, so replies are slower."
+msgstr ""
+
+msgid "Unlikely: the model folder or the measured memory cannot hold the estimate."
+msgstr ""
+
+msgid "Unknown: evidence is missing, so no estimate is made. Inspect the model, refresh the runtime or measure hardware again."
+msgstr ""
+
+msgid "completion: writes text replies. Chat needs it."
+msgstr ""
+
+msgid "vision: accepts images with a message."
+msgstr ""
+
+msgid "tools: can ask a client to run functions that the client defines."
+msgstr ""
+
+msgid "embedding: turns text into vectors for search; it does not chat."
+msgstr ""
+
+msgid "thinking: can return its reasoning separately before the answer."
+msgstr ""
+
+msgid "insert: can fill in text between a given beginning and end."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s: reported by Ollama; no explanation is bundled for it."
+msgstr ""
+
+msgid "Quantization is verified only from installed-model metadata."
+msgstr ""
+
+msgid "32-bit weights: the original precision and the largest size."
+msgstr ""
+
+msgid "16-bit weights: close to the original quality, with the largest memory and storage needs of the common variants."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "About %s bits per weight. Fewer bits need less memory and storage but lose more quality; 4 to 5 bits is a common balance."
+msgstr ""
+
+msgid "A quantization reported by Ollama; no explanation is bundled for this label."
+msgstr ""
+
+msgid "1 variant"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s variants"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Family %s: the variants published under one model name. They differ in parameter count, quantization or tuning, and each is pulled by its exact tag."
+msgstr ""
+
+msgid "Size not known yet: the exact size is read from the official registry when you select a catalog entry."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s: each variant needs about this much space in the model folder, plus a ten percent allowance while it downloads."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Group: %s, %s"
+msgstr ""
+
+msgid "Select a variant under this heading to see its details."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Variant %s: the exact tag that is pulled and run."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Verified capabilities: %s"
+msgstr ""
+
+msgid "none reported"
+msgstr ""
+
+msgid "Capabilities are verified only after the model is installed and inspected."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Quantization %s: %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Uses %s in the model folder."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Downloads %s; with the ten percent allowance it needs %s free in the model folder."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Hardware fit now: %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Showing %s of %s variants."
 msgstr ""
 
 msgid "Time Lapse"

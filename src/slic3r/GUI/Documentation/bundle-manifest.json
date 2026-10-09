@@ -770,7 +770,7 @@
     {
       "route": "ollama-suite/README.md",
       "title": "Local Ollama suite",
-      "sha256": "1c77a914b80bc0f88f4f2df8eaf2ecc14aee2a5b1813bbccab835ce37a3ef34d"
+      "sha256": "f2fded4f1a866b86376e287f77171b6882312c8f3a72b3a14f72ca730b236a45"
     },
     {
       "route": "ollama-suite/catalog-snapshots.md",
@@ -791,6 +791,16 @@
       "route": "ollama-suite/hardware-fit.yue_HK.md",
       "title": "硬件適配證據",
       "sha256": "b35938681a29c97417a76371867ac3369f27a1c3933c1f4a6f2866e2de64a1bf"
+    },
+    {
+      "route": "ollama-suite/model-store.md",
+      "title": "Model Store filters and explanations",
+      "sha256": "8ae853161704fecf0fc0fa0aab52e6c3cc8edd6db1eb40bd83c6ba9bbafa75ad"
+    },
+    {
+      "route": "ollama-suite/model-store.yue_HK.md",
+      "title": "模型商店篩選同解釋",
+      "sha256": "5a36729499ba3a29d8a1e05b23c4307245cd8fd83b4b71a05ef21aac5ec6ddb5"
     },
     {
       "route": "pages/README.md",
@@ -1870,7 +1880,7 @@
       "bytes": 1979
     }
   ],
-  "bundle_sha256": "8d4a2479755ce202bf82ad9f30ed5aa164fa78a8aafa8093a203a0ba8fa69c09",
+  "bundle_sha256": "efd5a35336b51b3c0ff3957faf8e5c363cb447728709f2f82a07ed412c82503a",
   "unavailable_references": [
     {
       "source": "api/README.md",

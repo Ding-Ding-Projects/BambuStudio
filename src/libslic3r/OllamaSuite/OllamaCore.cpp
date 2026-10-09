@@ -419,6 +419,100 @@ Json chat_payload(const Model &m, const Json &messages, double temperature, std:
     Json p = {{"model", m.name}, {"messages", messages}, {"options", {{"temperature",temperature}, {"num_ctx",context}, {"num_predict",output}}}};
     request(Operation::Chat, p); return p;
 }
+std::string model_family(const std::string &name) { return name.substr(0, name.find(':')); }
+std::string model_variant(const std::string &name) { const auto colon = name.find(':'); return colon == std::string::npos ? std::string("latest") : name.substr(colon + 1); }
+StoreState store_state(const Model &m) { return m.running ? StoreState::Running : m.installed ? StoreState::Installed : StoreState::Catalog; }
+SizeBand size_band(const Model &m) {
+    if (!m.bytes) return SizeBand::Unknown;
+    constexpr std::uint64_t GiB = 1024ull * 1024ull * 1024ull;
+    if (*m.bytes < 2 * GiB) return SizeBand::Under2GiB;
+    if (*m.bytes < 8 * GiB) return SizeBand::From2To8GiB;
+    if (*m.bytes < 32 * GiB) return SizeBand::From8To32GiB;
+    return SizeBand::Over32GiB;
+}
+namespace {
+// Groups appear in a fixed meaningful order: best fit first, running before installed, smaller sizes first,
+// alphabetical families and quantizations with unverified values last.
+std::pair<int, std::string> group_order(const StoreEntry &e, StoreGroup g) {
+    switch (g) {
+    case StoreGroup::Family: return {0, model_family(e.model.name)};
+    case StoreGroup::State: return {static_cast<int>(store_state(e.model)), {}};
+    case StoreGroup::Fit: return {static_cast<int>(e.fit), {}};
+    case StoreGroup::Quantization: return {e.model.quantization.empty() ? 1 : 0, e.model.quantization};
+    case StoreGroup::Size: return {static_cast<int>(size_band(e.model)), {}};
+    default: return {0, {}};
+    }
+}
+bool sorted_before(const StoreEntry &a, const StoreEntry &b, StoreSort s) {
+    switch (s) {
+    case StoreSort::Family: {
+        const auto fa = model_family(a.model.name), fb = model_family(b.model.name);
+        if (fa != fb) return fa < fb;
+        break;
+    }
+    case StoreSort::SizeAscending:
+    case StoreSort::SizeDescending:
+        // Unknown sizes always sort last: they are not small, they are unmeasured.
+        if (a.model.bytes.has_value() != b.model.bytes.has_value()) return a.model.bytes.has_value();
+        if (a.model.bytes && *a.model.bytes != *b.model.bytes) return s == StoreSort::SizeAscending ? *a.model.bytes < *b.model.bytes : *a.model.bytes > *b.model.bytes;
+        break;
+    case StoreSort::Fit:
+        if (a.fit != b.fit) return static_cast<int>(a.fit) < static_cast<int>(b.fit);
+        break;
+    default: break;
+    }
+    return a.model.name < b.model.name;
+}
+}
+std::vector<StoreRow> query_store(const std::vector<StoreEntry> &entries, const StoreQuery &q, const std::function<bool(const Model &)> &text) {
+    std::vector<std::size_t> hits;
+    for (std::size_t i = 0; i < entries.size(); ++i) {
+        const auto &e = entries[i]; const auto &m = e.model;
+        // Installed includes running models; Running and Catalog are exact.
+        if (q.state && (*q.state == StoreState::Installed ? !m.installed : store_state(m) != *q.state)) continue;
+        if (q.family && model_family(m.name) != *q.family) continue;
+        if (q.variant && model_variant(m.name) != *q.variant) continue;
+        if (q.capability) {
+            if (q.capability->empty() ? m.capabilities_verified : (!m.capabilities_verified || !m.capabilities.count(*q.capability))) continue;
+        }
+        if (q.quantization && m.quantization != *q.quantization) continue;
+        if (q.size && size_band(m) != *q.size) continue;
+        if (q.fit && e.fit != *q.fit) continue;
+        if (text && !text(m)) continue;
+        hits.push_back(i);
+    }
+    std::stable_sort(hits.begin(), hits.end(), [&](std::size_t a, std::size_t b) {
+        const auto ga = group_order(entries[a], q.group), gb = group_order(entries[b], q.group);
+        if (ga != gb) return ga < gb;
+        return sorted_before(entries[a], entries[b], q.sort);
+    });
+    std::vector<StoreRow> rows;
+    for (std::size_t i = 0; i < hits.size(); ++i) {
+        if (q.group != StoreGroup::None && (i == 0 || group_order(entries[hits[i]], q.group) != group_order(entries[hits[i - 1]], q.group))) {
+            StoreRow header; header.header = true; header.entry = hits[i];
+            for (std::size_t j = i; j < hits.size() && group_order(entries[hits[j]], q.group) == group_order(entries[hits[i]], q.group); ++j) ++header.members;
+            rows.push_back(header);
+        }
+        StoreRow row; row.entry = hits[i]; rows.push_back(row);
+    }
+    return rows;
+}
+std::size_t store_matches(const std::vector<StoreRow> &rows) { return static_cast<std::size_t>(std::count_if(rows.begin(), rows.end(), [](const StoreRow &r) { return !r.header; })); }
+StoreFacets store_facets(const std::vector<StoreEntry> &entries) {
+    std::set<std::string> families, capabilities, quantizations; StoreFacets f;
+    for (const auto &e : entries) {
+        families.insert(model_family(e.model.name));
+        if (e.model.capabilities_verified) capabilities.insert(e.model.capabilities.begin(), e.model.capabilities.end()); else f.unverified_capabilities = true;
+        if (e.model.quantization.empty()) f.unverified_quantization = true; else quantizations.insert(e.model.quantization);
+    }
+    f.families.assign(families.begin(), families.end()); f.capabilities.assign(capabilities.begin(), capabilities.end()); f.quantizations.assign(quantizations.begin(), quantizations.end());
+    return f;
+}
+std::vector<std::string> family_variants(const std::vector<StoreEntry> &entries, const std::string &family) {
+    std::set<std::string> variants;
+    for (const auto &e : entries) if (model_family(e.model.name) == family) variants.insert(model_variant(e.model.name));
+    return {variants.begin(), variants.end()};
+}
 bool official_catalog_path(const std::string &s) {
     if (s.size() > 300 || s.compare(0, 8, "/library") != 0) return false;
     const auto q = s.find('?'); const auto base = s.substr(0, q);

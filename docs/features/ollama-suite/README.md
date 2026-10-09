@@ -8,6 +8,7 @@ The host calls `Slic3r::GUI::show_ollama_suite(parent, state_root)` from `Ollama
 
 - [Hardware fit evidence](hardware-fit.md): what is measured, how the model folder is confirmed, the estimate settings, and how each of the four verdicts is reached.
 - [Official catalog snapshots](catalog-snapshots.md): traversal verdicts, the saved revision, page count and refresh times, stale and offline presentation.
+- [Model Store filters and explanations](model-store.md): search, the state, family, variant, capability, quantization, size and fit filters, grouping, sorting, and the explanations shown before a model is chosen.
 
 ## Implemented boundaries
 
@@ -24,7 +25,7 @@ The host calls `Slic3r::GUI::show_ollama_suite(parent, state_root)` from `Ollama
 
 ## Native surface
 
-The dialog uses the existing Material Design 3 caption, shared browser-style `TabStrip`, `SearchField` with its anchored regex builder, `ListBox`, buttons, labels, multiline fields and scroll containers. Model list presentation is paged at 100 rows. Network work runs outside the UI thread. Closing the dialog cancels its owned request before destroying callback state.
+The dialog uses the existing Material Design 3 caption, shared browser-style `TabStrip`, `SearchField` with its anchored regex builder, read-only `ComboBox` pickers for the store filters, grouping, sorting and estimate settings, `ListBox`, buttons, labels, multiline fields and scroll containers. Model list presentation, including group headings, is paged at 100 rows. Network work runs outside the UI thread. Closing the dialog cancels its owned request before destroying callback state.
 
 The tabs are Models, Chat, Batch pulls, Launch profiles and Troubleshooting. Chat includes guided parameter presets and validated advanced numeric inputs, transient PNG/JPEG attachment selection after verified vision capability, local session browsing/search, rename, confirmation-protected deletion, and redacted export. Disabled controls state their precise unmet condition. No model is downloaded, installed or launched during development verification.
 
@@ -32,7 +33,7 @@ The tabs are Models, Chat, Batch pulls, Launch profiles and Troubleshooting. Cha
 
 The following remain required before this feature can be claimed complete:
 
-- Authoritative published catalog totals (the HTML source has none), complete guided filters, and full tag capability metadata before installation.
+- Authoritative published catalog totals (the HTML source has none), and capability, quantization and size metadata for catalog tags before installation or selection.
 - Runtime observation of the DXGI adapter, registry setting and model-folder readings in a built Windows application.
 - Full native batch review/start integration and proof of the runtime's configured model destination. Core concurrency, preflight and reconciliation require real local-service verification.
 - History searches beyond the current bounded page, per-session system-prompt editing, retry/regenerate controls, additional documented parameters and complete localized copy.

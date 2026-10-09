@@ -130,6 +130,38 @@ std::string fit_note(FitNote);
 Json chat_payload(const Model &, const Json &messages, double temperature = 0.7,
                   std::uint64_t context = 2048, std::uint64_t output_tokens = 512);
 
+// Model Store query over the reconciled variant inventory. Family and variant are the catalog's own
+// structure (family:tag); capability, quantization and size come only from verified metadata, and an
+// unverified value is a facet of its own (the empty string) rather than a guess.
+std::string model_family(const std::string &name);
+std::string model_variant(const std::string &name);
+enum class StoreState { Running, Installed, Catalog };
+StoreState store_state(const Model &);
+enum class SizeBand { Under2GiB, From2To8GiB, From8To32GiB, Over32GiB, Unknown };
+SizeBand size_band(const Model &);
+enum class StoreGroup { None, Family, State, Fit, Quantization, Size };
+enum class StoreSort { Name, Family, SizeAscending, SizeDescending, Fit };
+struct StoreQuery {
+    std::optional<StoreState> state;
+    std::optional<std::string> family, variant, capability, quantization; // "" selects unverified values
+    std::optional<SizeBand> size;
+    std::optional<Fit> fit;
+    StoreGroup group = StoreGroup::None;
+    StoreSort sort = StoreSort::Name;
+};
+struct StoreEntry { Model model; Fit fit = Fit::Unknown; };
+// A heading row names its group through `entry`, the first member; `members` counts the group.
+struct StoreRow { bool header = false; std::size_t entry = 0, members = 0; };
+std::vector<StoreRow> query_store(const std::vector<StoreEntry> &, const StoreQuery &,
+                                  const std::function<bool(const Model &)> &text = {});
+std::size_t store_matches(const std::vector<StoreRow> &);
+struct StoreFacets {
+    std::vector<std::string> families, capabilities, quantizations;
+    bool unverified_capabilities = false, unverified_quantization = false;
+};
+StoreFacets store_facets(const std::vector<StoreEntry> &);
+std::vector<std::string> family_variants(const std::vector<StoreEntry> &, const std::string &family);
+
 struct CatalogPage {
     std::string path, response_identity, fetched_at;
     std::vector<std::string> names, next_pages;
