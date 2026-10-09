@@ -8,8 +8,8 @@ Audit source commit: `38c76dfdf572d7881c3f13f67dda4b0bb88a3c16`. Completion clai
 
 | Status | Meaning | Gaps |
 | --- | --- | ---: |
-| open | Not implemented, or implemented only in part. | 397 |
-| landed | Source, documentation and focused tests are on main (landedIn names the commit). Native behaviour is not yet observed on Windows. | 1 |
+| open | Not implemented, or implemented only in part. | 379 |
+| landed | Source, documentation and focused tests are on main (landedIn names the commit). Native behaviour is not yet observed on Windows. | 19 |
 | verified | Landed, and observed working in a built Windows application (runtimeEvidence names the record). | 0 |
 | total | | 398 |
 
@@ -34,13 +34,13 @@ Audit source commit: `38c76dfdf572d7881c3f13f67dda4b0bb88a3c16`. Completion clai
 | material-appearance | [overlay-panels](#overlay-panels) | partial | 6 | 0 | 0 |
 | security-locks | [element-locks](#element-locks) | partial | 15 | 0 | 0 |
 | security-locks | [support-tickets](#support-tickets) | partial | 7 | 0 | 0 |
-| security-locks | [unlock-ladder](#unlock-ladder) | missing | 7 | 0 | 0 |
+| security-locks | [unlock-ladder](#unlock-ladder) | missing | 5 | 2 | 0 |
 | security-locks | [authenticator](#authenticator) | partial | 13 | 0 | 0 |
 | security-locks | [super-confirmation](#super-confirmation) | partial | 6 | 0 | 0 |
 | search-navigation | [tabs](#tabs) | partial | 8 | 0 | 0 |
-| search-navigation | [regex-search](#regex-search) | partial | 8 | 0 | 0 |
+| search-navigation | [regex-search](#regex-search) | partial | 7 | 1 | 0 |
 | search-navigation | [command-palette](#command-palette) | partial | 7 | 0 | 0 |
-| search-navigation | [collapse-filters](#collapse-filters) | missing | 5 | 0 | 0 |
+| search-navigation | [collapse-filters](#collapse-filters) | missing | 2 | 3 | 0 |
 | search-navigation | [workflow-navigation](#workflow-navigation) | partial | 3 | 0 | 0 |
 | search-navigation | [rich-controls](#rich-controls) | partial | 4 | 0 | 0 |
 | search-navigation | [guided-forms](#guided-forms) | partial | 6 | 0 | 0 |
@@ -49,13 +49,13 @@ Audit source commit: `38c76dfdf572d7881c3f13f67dda4b0bb88a3c16`. Completion clai
 | records-data | [bulk-actions](#bulk-actions) | partial | 7 | 0 | 0 |
 | records-data | [changelog](#changelog) | partial | 7 | 0 | 0 |
 | records-data | [external-editor](#external-editor) | partial | 6 | 0 | 0 |
-| records-data | [blank-editors](#blank-editors) | partial | 6 | 0 | 0 |
+| records-data | [blank-editors](#blank-editors) | partial | 3 | 3 | 0 |
 | notifications-ops | [notifications](#notifications) | partial | 10 | 0 | 0 |
 | notifications-ops | [progress-recovery](#progress-recovery) | partial | 10 | 0 | 0 |
 | notifications-ops | [download-handoff](#download-handoff) | missing | 8 | 0 | 0 |
 | notifications-ops | [forge-publishing](#forge-publishing) | missing | 7 | 0 | 0 |
-| converter-ollama-docs | [file-converter](#file-converter) | partial | 13 | 0 | 0 |
-| converter-ollama-docs | [ollama-suite](#ollama-suite) | partial | 14 | 0 | 0 |
+| converter-ollama-docs | [file-converter](#file-converter) | partial | 10 | 3 | 0 |
+| converter-ollama-docs | [ollama-suite](#ollama-suite) | partial | 11 | 3 | 0 |
 | converter-ollama-docs | [offline-docs](#offline-docs) | partial | 6 | 0 | 0 |
 | evidence-front-site | [front-provenance](#front-provenance) | partial | 5 | 0 | 0 |
 | evidence-front-site | [product-evidence](#product-evidence) | partial | 4 | 0 | 0 |
@@ -64,7 +64,7 @@ Audit source commit: `38c76dfdf572d7881c3f13f67dda4b0bb88a3c16`. Completion clai
 | evidence-front-site | [readme-and-recording](#readme-and-recording) | partial | 4 | 0 | 0 |
 | evidence-front-site | [line-count](#line-count) | partial | 4 | 0 | 0 |
 | evidence-front-site | [discord-embed](#discord-embed) | partial | 4 | 0 | 0 |
-| evidence-front-site | [sanitized-instruction-copy](#sanitized-instruction-copy) | missing | 2 | 0 | 0 |
+| evidence-front-site | [sanitized-instruction-copy](#sanitized-instruction-copy) | missing | 1 | 1 | 0 |
 | critic | [critic-frameless-window-chrome](#critic-frameless-window-chrome) | partial | 4 | 0 | 0 |
 | critic | [critic-accessibility-and-sizing](#critic-accessibility-and-sizing) | partial | 6 | 0 | 0 |
 | critic | [critic-no-promotional-prompts](#critic-no-promotional-prompts) | partial | 3 | 0 | 0 |
@@ -74,7 +74,7 @@ Audit source commit: `38c76dfdf572d7881c3f13f67dda4b0bb88a3c16`. Completion clai
 | critic | [critic-article-structure](#critic-article-structure) | partial | 3 | 0 | 0 |
 | critic | [critic-provider-markup](#critic-provider-markup) | partial | 3 | 0 | 0 |
 | critic | [critic-remote-hosted-pages](#critic-remote-hosted-pages) | partial | 3 | 0 | 0 |
-| critic | [critic-funny-level-first-run-disclosure](#critic-funny-level-first-run-disclosure) | missing | 2 | 0 | 0 |
+| critic | [critic-funny-level-first-run-disclosure](#critic-funny-level-first-run-disclosure) | missing | 0 | 2 | 0 |
 | critic | [critic-status-corrections](#critic-status-corrections) | partial | 4 | 0 | 0 |
 
 ## school-mode
@@ -343,8 +343,8 @@ No unlock ladder exists. The only related code is AttemptBudget::clear_wait. It 
 
 | Gap | Size | Needs Windows | Status | Title | Landed in |
 | --- | --- | --- | --- | --- | --- |
-| `unlock-ladder#01` | L | no | open | Trusted unlock-ladder challenge service with single-use nonces |  |
-| `unlock-ladder#02` | M | no | open | Global persisted ladder budget and lockout state |  |
+| `unlock-ladder#01` | L | no | landed | Trusted unlock-ladder challenge service with single-use nonces | `1f3e894189` |
+| `unlock-ladder#02` | M | no | landed | Global persisted ladder budget and lockout state | `bbaa05ff89` |
 | `unlock-ladder#03` | L | yes | open | Native unlock-ladder UI component |  |
 | `unlock-ladder#04` | M | yes | open | Offer the ladder on every native lockout surface |  |
 | `unlock-ladder#05` | M | no | open | Unlock ladder for Pages-site toy-lock lockouts |  |
@@ -405,7 +405,7 @@ A real bounded regex engine runs Boost.Regex in an isolated worker process with 
 
 | Gap | Size | Needs Windows | Status | Title | Landed in |
 | --- | --- | --- | --- | --- | --- |
-| `regex-search#01` | XL | no | open | Regex workbench structure, capability and risk analysis |  |
+| `regex-search#01` | XL | no | landed | Regex workbench structure, capability and risk analysis | `b4f0f386d5` |
 | `regex-search#02` | L | no | open | Regex workbench replacement preview, test suites, snippets, import/export and match navigation |  |
 | `regex-search#03` | M | no | open | Per-field search history, snippets and visible validation state |  |
 | `regex-search#04` | L | no | open | Hand-written per-surface search inventory with negative regression |  |
@@ -434,9 +434,9 @@ No shared collapsible container exists for search bars, filter rows or statistic
 
 | Gap | Size | Needs Windows | Status | Title | Landed in |
 | --- | --- | --- | --- | --- | --- |
-| `collapse-filters#01` | M | no | open | Shared collapsible filter and statistics container |  |
-| `collapse-filters#02` | L | no | open | Adopt collapsible filters across native collection surfaces with active-filter disclosure |  |
-| `collapse-filters#03` | M | yes | open | Persist and announce collapse state of ImGui statistics panels |  |
+| `collapse-filters#01` | M | no | landed | Shared collapsible filter and statistics container | `ba005181de` |
+| `collapse-filters#02` | L | no | landed | Adopt collapsible filters across native collection surfaces with active-filter disclosure | `e098bc3a7e` |
+| `collapse-filters#03` | M | yes | landed | Persist and announce collapse state of ImGui statistics panels | `bd0114bdf8` |
 | `collapse-filters#04` | M | no | open | Collapsible filter rows on web surfaces |  |
 | `collapse-filters#05` | S | no | open | Hand-written collapsible-filter inventory with negative regression |  |
 
@@ -555,9 +555,9 @@ A few editors have starting points. The appearance editor has a Presets page tha
 
 | Gap | Size | Needs Windows | Status | Title | Landed in |
 | --- | --- | --- | --- | --- | --- |
-| `blank-editors#01` | L | no | open | Shared defaults-derived preset registry and Start-from picker |  |
-| `blank-editors#02` | M | yes | open | Preset application states what it sets and is recorded in local history |  |
-| `blank-editors#03` | S | no | open | Scheduled-rule editor starts from real base settings and shipped defaults |  |
+| `blank-editors#01` | L | no | landed | Shared defaults-derived preset registry and Start-from picker | `7352a29f60` |
+| `blank-editors#02` | M | yes | landed | Preset application states what it sets and is recorded in local history | `7541849895` |
+| `blank-editors#03` | S | no | landed | Scheduled-rule editor starts from real base settings and shipped defaults | `7541849895` |
 | `blank-editors#04` | M | no | open | Ollama launch presets derived from the runtime's real model defaults |  |
 | `blank-editors#05` | M | yes | open | Start-from-defaults paths for model creator, drafts and other blank editors |  |
 | `blank-editors#06` | M | no | open | Blank-editor preset article, localization and consistency tests |  |
@@ -631,9 +631,9 @@ Audited at HEAD 45b0a9ec9. That is two commits after 38c76dfd, and those commits
 
 | Gap | Size | Needs Windows | Status | Title | Landed in |
 | --- | --- | --- | --- | --- | --- |
-| `file-converter#01` | L | no | open | Rebuild the converter panel on registered MD3 primitives with TabStrip categories |  |
-| `file-converter#02` | M | no | open | Localize all converter copy in English, Cantonese and bilingual modes, with funny-level styling for non-factual text |  |
-| `file-converter#03` | M | no | open | Require explicit acknowledgement of lossy and metadata/encoding disclosures before admitting files |  |
+| `file-converter#01` | L | no | landed | Rebuild the converter panel on registered MD3 primitives with TabStrip categories | `6cc8734057` |
+| `file-converter#02` | M | no | landed | Localize all converter copy in English, Cantonese and bilingual modes, with funny-level styling for non-factual text | `8ec835f6ce` |
+| `file-converter#03` | M | no | landed | Require explicit acknowledgement of lossy and metadata/encoding disclosures before admitting files | `8ec835f6ce` |
 | `file-converter#04` | M | no | open | Add a bounded source preview, target filename guidance and per-file progress with screen-reader announcements |  |
 | `file-converter#05` | M | no | open | Apply the full bulk-action contract to the queue and result history |  |
 | `file-converter#06` | M | no | open | Expose every supported PDF metadata field and guided page selection driven by the inspect result |  |
@@ -651,9 +651,9 @@ No longer missing (the old inventory was stale). The bounded core is real: an al
 
 | Gap | Size | Needs Windows | Status | Title | Landed in |
 | --- | --- | --- | --- | --- | --- |
-| `ollama-suite#01` | L | yes | open | Detect hardware evidence for fit verdicts: GPU, usable VRAM, driver/backend, Ollama model destination free space and context overhead |  |
-| `ollama-suite#02` | M | no | open | Persist every verified catalog traversal with an explicit completeness verdict, revision identity, page count and stale/offline presentation |  |
-| `ollama-suite#03` | M | no | open | Add Model Store filters, grouping and sorting by state, family, capability, variant, quantization, size and fit, plus pre-selection explanations |  |
+| `ollama-suite#01` | L | yes | landed | Detect hardware evidence for fit verdicts: GPU, usable VRAM, driver/backend, Ollama model destination free space and context overhead | `32743a2e25` |
+| `ollama-suite#02` | M | no | landed | Persist every verified catalog traversal with an explicit completeness verdict, revision identity, page count and stale/offline presentation | `e851c9e87c` |
+| `ollama-suite#03` | M | no | landed | Add Model Store filters, grouping and sorting by state, family, capability, variant, quantization, size and fit, plus pre-selection explanations | `cb24a87daf` |
 | `ollama-suite#04` | L | no | open | Wire the reviewed batch-pull cart: review sheet, bounded parallelism, byte progress, cancel/retry/resume and honest partial outcomes |  |
 | `ollama-suite#05` | M | no | open | Add installed-model delete (super-confirmation, bulk) and copy actions |  |
 | `ollama-suite#06` | L | no | open | Complete the chat surface: model/variant picker, per-session system prompt, documented parameters, retry/regenerate, all-session content search, complete redacted export, capability-gap attachment control with model-filter action |  |
@@ -771,7 +771,7 @@ Neither README.md nor AGENTS.md carries a sanitized mirror of the shared instruc
 | Gap | Size | Needs Windows | Status | Title | Landed in |
 | --- | --- | --- | --- | --- | --- |
 | `sanitized-instruction-copy#01` | M | no | open | Mirror the sanitized shared instructions into README.md and AGENTS.md |  |
-| `sanitized-instruction-copy#02` | M | no | open | Privacy and drift guard for the instruction mirror |  |
+| `sanitized-instruction-copy#02` | M | no | landed | Privacy and drift guard for the instruction mirror | `1bac792f47` |
 
 ## critic-frameless-window-chrome
 
@@ -874,8 +874,8 @@ The contract requires the funny-level behaviour to be disclosed at install or fi
 
 | Gap | Size | Needs Windows | Status | Title | Landed in |
 | --- | --- | --- | --- | --- | --- |
-| `critic-funny-level-first-run-disclosure#01` | M | yes | open | Disclose funny-level behaviour and defaults in the first-run guide |  |
-| `critic-funny-level-first-run-disclosure#02` | S | no | open | First-run disclosure tests in all three language modes and at both funny-level extremes |  |
+| `critic-funny-level-first-run-disclosure#01` | M | yes | landed | Disclose funny-level behaviour and defaults in the first-run guide | `0104e8c722` |
+| `critic-funny-level-first-run-disclosure#02` | S | no | landed | First-run disclosure tests in all three language modes and at both funny-level extremes | `780a9bd7eb` |
 
 ## critic-status-corrections
 

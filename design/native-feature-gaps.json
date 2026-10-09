@@ -3798,7 +3798,7 @@
       "testReferences": [],
       "documentationReferences": [],
       "runtimeEvidence": [],
-      "note": null
+      "note": "partial: Local custom-image upload and its loading, converted, replace and conversion-failure states. These wait for the isolated decoder (gap #02) and verified conversion (gap #03). The row and button stay visibly disabled.; The logo does not yet take part in scheduled settings, appearance export/import, local history snapshots, command palette teleport or per-element appearance editing (gap #05). The Preferences settings search does find the row.; Embedded web pages and the Pages site have no logo surface yet (gap #08).; Secondary dialog window icons (about 54 dialogs load BambuStudioTitle.ico) keep the shipped icon. NotificationManager.cpp was not changed: no notification draws the app mark.; The Preferences 'Reset appearance to defaults' button does not reset the logo. The panel has its own reset.; Captures from a packaged build at every display size (gap #07)."
     },
     {
       "id": "logo-customization#02",
@@ -4717,12 +4717,19 @@
       ],
       "hotFiles": [],
       "dependsOn": [],
-      "status": "open",
-      "landedIn": null,
-      "testReferences": [],
-      "documentationReferences": [],
+      "status": "landed",
+      "landedIn": "1f3e89418971f70e6128a3bf1b7ce6f55cad4978",
+      "testReferences": [
+        "tests/local_security/unlock_ladder_tests.cpp",
+        "tests/dim_sum/dim_sum_tests_main.cpp"
+      ],
+      "documentationReferences": [
+        "docs/features/local-security/unlock-ladder.md",
+        "docs/features/local-security/unlock-ladder.yue_HK.md",
+        "docs/features/local-security/README.md"
+      ],
       "runtimeEvidence": [],
-      "note": null
+      "note": "Needs observation in a built Windows application: MSVC build of libslic3r_local_security with the new UnlockLadder.cpp, and of DimSumSurprise.cpp now that DimSumSurpriseModel.hpp includes UnlockLadder.hpp. Only g++ syntax and full g++ builds ran here.; No native surface renders the ladder yet. The ladder UI for the School-mode credential in Preferences, the identity-history password and the element-lock prompt (LockWizard) needs to be built and observed in a built Windows app: keyboard play, screen-reader names and live score announcements, a countdown that does not rely on colour or motion, the reduced-motion mole animation, three language modes, and the honest 'winning only ends the wait' copy."
     },
     {
       "id": "unlock-ladder#02",
@@ -4741,12 +4748,22 @@
       ],
       "hotFiles": [],
       "dependsOn": [],
-      "status": "open",
-      "landedIn": null,
-      "testReferences": [],
-      "documentationReferences": [],
+      "status": "landed",
+      "landedIn": "bbaa05ff89ebb215f497602f1c3dfec41ed87dab",
+      "testReferences": [
+        "tests/local_security/local_security_tests.cpp",
+        "tests/local_security/unlock_ladder_tests.cpp",
+        "tests/local_security/identity_history_tests.cpp",
+        "tests/feature_services/school_credentials_tests.cpp"
+      ],
+      "documentationReferences": [
+        "docs/features/local-security/unlock-ladder.md",
+        "docs/features/local-security/unlock-ladder.yue_HK.md",
+        "docs/features/local-security/README.md",
+        "docs/features/local-security/native-integration.md"
+      ],
       "runtimeEvidence": [],
-      "note": null
+      "note": "Needs observation in a built Windows application: MSVC compile of the #ifdef _WIN32 RecordLock block in LocalSecurity.cpp (CreateMutexW, WaitForSingleObject, ReleaseMutex, CloseHandle). I read it twice for MSVC correctness but it is not compiled here.; Real Windows Credential Manager round trip of the new records: org.dingding.shared.school.attempts.v1 and org.dingding.shared.unlock-ladder.v1 in the OS vault, and the identity-history and element-lock attempts records in the application vault.; In a built app: five wrong School-mode credentials in Preferences, restart, and 'Try again in N seconds' still counts down with the unlock button disabled. Same for the identity-history password after a restart.; Two running processes, or two windows, sharing one lockout and one ladder allowance through the named mutex, with no lost update.; The existing MSVC negative-regression driver (tests/local_security/negative_regression.py --msvc) re-run ag"
     },
     {
       "id": "unlock-ladder#03",
@@ -5547,12 +5564,20 @@
         "src/slic3r/CMakeLists.txt"
       ],
       "dependsOn": [],
-      "status": "open",
-      "landedIn": null,
-      "testReferences": [],
-      "documentationReferences": [],
+      "status": "landed",
+      "landedIn": "b4f0f386d5733aee1d0f4571c04abc425dfb659f",
+      "testReferences": [
+        "tests/regex_analysis/regex_analysis_tests.cpp",
+        "tests/bounded_regex/bounded_regex_tests.cpp",
+        "ui-md3/tests/regex-workbench.test.mjs",
+        "ui-md3/tests/reader-details-atlas.test.mjs"
+      ],
+      "documentationReferences": [
+        "docs/features/windows/regex-builder.md",
+        "docs/features/windows/regex-builder.yue_HK.md"
+      ],
       "runtimeEvidence": [],
-      "note": null
+      "note": "Needs observation in a built Windows application: Explain tab renders and scrolls correctly at 100-200% DPI inside the transient popup. The three equal-width tab buttons fit with English and Cantonese labels, and switching tabs keeps the popup open and correctly sized.; The worker's Describe report on the Windows build shows Boost.Regex 1.84.0, 16-bit code units, Windows locale (w32_regex_traits) and a 1000000-state limit.; bounded_regex_tests [regex_workbench] on hosted Windows (Boost 1.84, w32_regex_traits, 16-bit wchar_t). This covers every capability probe, error offsets, \\x{1F600} rejected on 16-bit units, and the surrogate-pair probe matching.; Screen readers announce the named read-only views (Pattern structure, Token annotations, Compatibility notes, Backtracking risk findings), the summary labels and the tab buttons. Tab/Shift+Tab reaches every Explain view and button. Esc still dismisses and focus returns to the field.; 'Use e"
     },
     {
       "id": "regex-search#02",
@@ -5939,12 +5964,20 @@
         "src/slic3r/CMakeLists.txt"
       ],
       "dependsOn": [],
-      "status": "open",
-      "landedIn": null,
-      "testReferences": [],
-      "documentationReferences": [],
+      "status": "landed",
+      "landedIn": "ba005181deadf7f950e1bb6e52a696fd684f2a47",
+      "testReferences": [
+        "tests/collapsible_filters/collapsible_filters_tests.cpp",
+        "tests/collapsible_filters/collapsible_filters_contract.test.mjs"
+      ],
+      "documentationReferences": [
+        "docs/features/workspace/collapsible-filters.md",
+        "docs/features/workspace/collapsible-filters.yue_HK.md",
+        "docs/features/workspace/README.md",
+        "docs/features/workspace/README.yue_HK.md"
+      ],
       "runtimeEvidence": [],
-      "note": null
+      "note": "Needs observation in a built Windows application: The header focus ring is visible after Tab, and Space/Enter toggle the bar.; A screen reader announces 'button, expanded/collapsed', the active count in the name, and the disclosure line as the description.; The chosen state survives an application restart (collapsible_filters section in BambuStudio.conf).; The disclosure line wraps correctly and clicking it expands the bar.; After a light/dark switch, the body panel and its custom-drawn children (pills, chips) take the new surface colour.; Geometry is correct after moving to a monitor with a different DPI."
     },
     {
       "id": "collapse-filters#02",
@@ -5972,12 +6005,17 @@
       "dependsOn": [
         "Shared collapsible filter and statistics container"
       ],
-      "status": "open",
-      "landedIn": null,
-      "testReferences": [],
-      "documentationReferences": [],
+      "status": "landed",
+      "landedIn": "e098bc3a7e9403809d29aa7bd4fa88983de7287b",
+      "testReferences": [
+        "tests/collapsible_filters/collapsible_filters_adoption.test.mjs"
+      ],
+      "documentationReferences": [
+        "docs/features/workspace/collapsible-filters.md",
+        "docs/features/workspace/collapsible-filters.yue_HK.md"
+      ],
       "runtimeEvidence": [],
-      "note": null
+      "note": "Needs observation in a built Windows application: On each of the 14 surfaces, the bar renders on the right background, the layout reflows after a toggle, and nothing clips at narrow widths in all three language modes.; In the device farm toolbar, the inline header and disclosure line sit correctly beside the title and the Edit Printers button.; The sidebar object search section hides and shows with the object list. Ctrl+F reveals a collapsed object search, focuses it, and the results popup anchors under the field.; The sidebar ink slot search folds with the ink section. Both settings searches still open the SearchDialog anchored under the field. The sidebar scroll body refits after a toggle.; Collapsed rows show the correct disclosure line while a filter is active, for example notification level Errors with search text.; Upload queue: the dark-theme walk followed by the bar's Rescale/SyncTheme leaves the header styled as a Material text"
     },
     {
       "id": "collapse-filters#03",
@@ -5995,12 +6033,18 @@
       ],
       "hotFiles": [],
       "dependsOn": [],
-      "status": "open",
-      "landedIn": null,
-      "testReferences": [],
-      "documentationReferences": [],
+      "status": "landed",
+      "landedIn": "bd0114bdf826986303d640a0eb927e680f8d14f2",
+      "testReferences": [
+        "tests/collapsible_filters/collapsible_filters_tests.cpp",
+        "tests/collapsible_filters/canvas_panels_contract.test.mjs"
+      ],
+      "documentationReferences": [
+        "docs/features/workspace/collapsible-filters.md",
+        "docs/features/workspace/collapsible-filters.yue_HK.md"
+      ],
       "runtimeEvidence": [],
-      "note": null
+      "note": "Needs observation in a built Windows application: In the preview with a sliced plate, Shift+L folds and unfolds the legend and statistics dock, and plain L still toggles the one-layer slider mode.; In the assembly view, Shift+L folds and unfolds the Assembly Structure panel, and no gizmo or ImGui text input consumes it first.; The Primary focus ring is drawn around the fold toggle after Shift+L at 100/150/200% scale and disappears on the next mouse press.; With the canvas focused, a screen reader reads 'Legend and statistics, button, expanded/collapsed' (or 'Assembly Structure') after Shift+L, and reads the state change after a mouse toggle. Accessibility inspection tools (Inspect/Accessibility Insights) show the child buttons at the drawn locations, and their default action toggles them.; The fold state survives a restart for both panels, and with use_last_fold_state_gcodeview_option_panel off the dock reopens expanded on each new G-co"
     },
     {
       "id": "collapse-filters#04",
@@ -7397,12 +7441,20 @@
         "src/slic3r/CMakeLists.txt"
       ],
       "dependsOn": [],
-      "status": "open",
-      "landedIn": null,
-      "testReferences": [],
-      "documentationReferences": [],
+      "status": "landed",
+      "landedIn": "7352a29f60a19c31cbeafbc2b137ad5dc32d810e",
+      "testReferences": [
+        "tests/blank_editor_presets/blank_editor_presets_tests.cpp",
+        "ui-md3/tests/blank-editor-presets.test.mjs"
+      ],
+      "documentationReferences": [
+        "docs/features/workspace/blank-editor-presets.md",
+        "docs/features/workspace/blank-editor-presets.yue_HK.md",
+        "docs/features/workspace/README.md",
+        "docs/features/workspace/README.yue_HK.md"
+      ],
       "runtimeEvidence": [],
-      "note": null
+      "note": "Needs observation in a built Windows application: Start from picker layout at comfortable and compact density, and in English, Cantonese and bilingual modes; Screen reader reads 'Presets to start from' and 'What the highlighted preset creates and sets', and the statement follows the arrow-key highlight; Regex toggle and the no-match message in the picker search; Enter, double-click and Escape in the picker, with focus returning to the editor that opened it"
     },
     {
       "id": "blank-editors#02",
@@ -7422,12 +7474,19 @@
         "Shared defaults-derived preset registry and Start-from picker",
         "Extend history coverage to every non-secret setting and customization record"
       ],
-      "status": "open",
-      "landedIn": null,
-      "testReferences": [],
-      "documentationReferences": [],
+      "status": "landed",
+      "landedIn": "754184989591775b3262ac17c228c0edc0cce431",
+      "testReferences": [
+        "ui-md3/tests/blank-editor-presets.test.mjs",
+        "tests/blank_editor_presets/blank_editor_presets_tests.cpp",
+        "ui-md3/tests/appearance-property-pages-atlas.test.mjs"
+      ],
+      "documentationReferences": [
+        "docs/features/workspace/blank-editor-presets.md",
+        "docs/features/workspace/blank-editor-presets.yue_HK.md"
+      ],
       "runtimeEvidence": [],
-      "note": null
+      "note": "Needs observation in a built Windows application: Appearance Presets page: the statement for each shipped and saved preset before Apply, and the 'Applied ... It sets ...' line after Apply or a double-click; Command palette (Ctrl+Shift+F) 'Apply appearance preset' rows show what each preset sets, and choosing one records a version; File > Version history lists Appearance versions such as 'Appearance at startup' and 'Apply appearance preset: <name>', compares them and restores them, and the restore is recorded; Preferences 'Preferences at startup' version, and a version of its own for a preferences change made within two seconds before adding a schedule rule; Scheduled settings: on the first save of a session the history shows 'Scheduled settings at startup' before the rule's version, restoring it removes the rule, and saving is not blocked when the history store is unavailable for the baseline; History messages shown in Cantonese and bil"
     },
     {
       "id": "blank-editors#03",
@@ -7445,12 +7504,21 @@
       "dependsOn": [
         "Shared defaults-derived preset registry and Start-from picker"
       ],
-      "status": "open",
-      "landedIn": null,
-      "testReferences": [],
-      "documentationReferences": [],
+      "status": "landed",
+      "landedIn": "754184989591775b3262ac17c228c0edc0cce431",
+      "testReferences": [
+        "tests/blank_editor_presets/blank_editor_presets_tests.cpp",
+        "ui-md3/tests/blank-editor-presets.test.mjs",
+        "tests/native_preferences_atlas.test.mjs",
+        "tests/native_shared_controls/atlas_scroll_owner_adoption.test.mjs"
+      ],
+      "documentationReferences": [
+        "docs/features/workspace/blank-editor-presets.md",
+        "docs/features/workspace/blank-editor-presets.yue_HK.md",
+        "docs/features/scheduled-settings/README.md"
+      ],
       "runtimeEvidence": [],
-      "note": null
+      "note": "Needs observation in a built Windows application: Preferences > Schedules > Add rule: picker, then the rule dialog with exactly the preset's settings ticked and the all-day window, for each of the three presets; 'Your saved settings' while a rule controls a key shows the captured base value, not the rule's value; File > Scheduled settings > Add rule: picker, then the status line 'Started from ... It set ...' and the draft rule's values; Saving each is recorded with the preset name and can be compared and restored from Version history"
     },
     {
       "id": "blank-editors#04",
@@ -8086,7 +8154,7 @@
       "testReferences": [],
       "documentationReferences": [],
       "runtimeEvidence": [],
-      "note": null
+      "note": "partial: Gap #02: native messaging host executable, its host manifest and HKCU registration for Chrome (Software\\Google\\Chrome\\NativeMessagingHosts) and Edge (Software\\Microsoft\\Edge\\NativeMessagingHosts) with allowed_origins chrome-extension://beapempohkjjpcjdfojdlngcbamofiok/, implementing the documented capture/capture-result and hello messages and forwarding to the running instance. Until then every capture falls back to the browser.; Gap #04: the always-on-top Start download dialog that a 'queued' reply promises. Gaps #05 and #06: the Downloading and Download complete surfaces.; Stable extension location: Squirrel installs each version in a new app-<version> folder and later removes the old one, so a Load unpacked path breaks after updates. Copying the folder to a fixed per-user location on install or update (with the host's own stable path) belongs with gap #02. The article states the curre"
     },
     {
       "id": "download-handoff#02",
@@ -8489,12 +8557,14 @@
       ],
       "hotFiles": [],
       "dependsOn": [],
-      "status": "open",
-      "landedIn": null,
-      "testReferences": [],
+      "status": "landed",
+      "landedIn": "6cc8734057f086effeaf6db102b76b52597480fd",
+      "testReferences": [
+        "ui-md3/tests/local-converter-panel.test.mjs"
+      ],
       "documentationReferences": [],
       "runtimeEvidence": [],
-      "note": null
+      "note": "Needs observation in a built Windows application: Panel renders with kit visuals in light and dark themes: TabStrip categories, MD3 tables, TextInput fields, Label text, Material buttons, visible focus rings; Category strip keyboard selection, overflow, reorder and pinning, and the saved dock edge re-placing the pages after a restart; The empty-state label appears when a category search has no match; Assistive technology reads the accessible names of every search, table and field"
     },
     {
       "id": "file-converter#02",
@@ -8516,12 +8586,16 @@
       "dependsOn": [
         "Rebuild the converter panel on registered MD3 primitives with TabStrip categories"
       ],
-      "status": "open",
-      "landedIn": null,
-      "testReferences": [],
+      "status": "landed",
+      "landedIn": "8ec835f6ce99131402923866577b23cdb51b0253",
+      "testReferences": [
+        "ui-md3/tests/local-converter-localization.test.mjs",
+        "tests/local_converter_copy/local_converter_copy_tests.cpp",
+        "tests/local_converter/converter_tests.cpp"
+      ],
       "documentationReferences": [],
       "runtimeEvidence": [],
-      "note": null
+      "note": "Needs observation in a built Windows application: Cantonese mode: panel labels, tabs, column titles, adapter names, disclosures, reasons, states and result sentences all appear in Cantonese from the compiled yue_HK catalogue; Bilingual mode: status, details, page summary, empty-state and rotation label show English then Cantonese; table cells and rotation buttons read 'English · Cantonese'; window labels, buttons and column titles get Cantonese from the bilingual decorator without doubling; Funny levels 1, 3 and 5 per language change only the voice lines (intro, empty queue, no match, no selection, checking, checks finished, converting, stop summary, export) and never the factual copy; with different English and Cantonese levels in bilingual mode each language shows the variant for its own level; A result cell shows a sentence plus its code, for example for destination_exists and for a numbered isolated_worker_start_ code; the exported "
     },
     {
       "id": "file-converter#03",
@@ -8538,12 +8612,15 @@
       ],
       "hotFiles": [],
       "dependsOn": [],
-      "status": "open",
-      "landedIn": null,
-      "testReferences": [],
+      "status": "landed",
+      "landedIn": "8ec835f6ce99131402923866577b23cdb51b0253",
+      "testReferences": [
+        "ui-md3/tests/local-converter-acknowledgement.test.mjs",
+        "tests/local_converter/converter_tests.cpp"
+      ],
       "documentationReferences": [],
       "runtimeEvidence": [],
-      "note": null
+      "note": "Needs observation in a built Windows application: Selecting text.lf, json.pretty, a CSV/JSON table adapter, a bitmap adapter, a ZIP adapter or a PDF tool shows the consent check box under the disclosure; selecting hexadecimal or Base64 does not; Before ticking, Add source file and Add source folder show the refusal status and move keyboard focus to the check box without opening a picker; after ticking (Space key included) files are admitted; unticking withdraws consent; Switching adapters shows each adapter's own consent state for the session, and restarting the app requires consent again; A queue record admitted through the panel contains the acknowledgement token, and a resumed record from before this change, or one whose disclosure changed, is shown as Skipped with its sentence and writes no output; Screen readers announce the check box name 'Accept the data changes of the selected adapter' and its checked state"
     },
     {
       "id": "file-converter#04",
@@ -8792,12 +8869,19 @@
       ],
       "hotFiles": [],
       "dependsOn": [],
-      "status": "open",
-      "landedIn": null,
-      "testReferences": [],
-      "documentationReferences": [],
+      "status": "landed",
+      "landedIn": "32743a2e2571ff58ae24f9a391717c0350c7e1c2",
+      "testReferences": [
+        "tests/ollama_suite_model/ollama_suite_model_tests.cpp",
+        "tests/ollama_suite_model/ollama_fit_wiring.test.mjs"
+      ],
+      "documentationReferences": [
+        "docs/features/ollama-suite/hardware-fit.md",
+        "docs/features/ollama-suite/hardware-fit.yue_HK.md",
+        "docs/features/ollama-suite/README.md"
+      ],
       "runtimeEvidence": [],
-      "note": null
+      "note": "Needs observation in a built Windows application: DXGI enumeration in a built app: adapter names, driver version, dedicated memory and current budget appear in the Measured hardware evidence panel; software adapters are excluded; OLLAMA_MODELS read from HKCU and HKLM Environment (REG_SZ and REG_EXPAND_SZ) and the process environment; the default folder under USERPROFILE is used when they are absent; Model folder confirmed by real installed manifests, with free space shown; the unconfirmed state appears when OLLAMA_MODELS points elsewhere; Backend evidence after Refresh runtime with a loaded model: GPU verified, or processor-only for a CPU-only runtime; invalidated after a driver or Ollama version change; Estimate context and cache precision pickers persist across restart and recompute the selected verdict; launch preflight for the llama-server profile reflects the new assessment; Layout, keyboard and screen-reader names of the new panel"
     },
     {
       "id": "ollama-suite#02",
@@ -8813,12 +8897,19 @@
       ],
       "hotFiles": [],
       "dependsOn": [],
-      "status": "open",
-      "landedIn": null,
-      "testReferences": [],
-      "documentationReferences": [],
+      "status": "landed",
+      "landedIn": "e851c9e87cbce4ae1b7ce1bff9405eaef50e5f27",
+      "testReferences": [
+        "tests/ollama_suite_model/catalog_snapshot_tests.cpp",
+        "tests/ollama_suite_model/ollama_catalog_wiring.test.mjs"
+      ],
+      "documentationReferences": [
+        "docs/features/ollama-suite/catalog-snapshots.md",
+        "docs/features/ollama-suite/catalog-snapshots.yue_HK.md",
+        "docs/features/ollama-suite/README.md"
+      ],
       "runtimeEvidence": [],
-      "note": null
+      "note": "Needs observation in a built Windows application: A live Refresh official catalog against ollama.com/library from the built app, saved as Fully traversed with page, family and tag counts and a revision; Offline refresh (network disabled): the failure line appears and the last verified catalog stays listed with installed models; Reopening the suite reads catalog.json back; a hand-edited catalog.json is rejected with the invalid-data status; The stale presentation after 24 hours and the age updating while the dialog is open"
     },
     {
       "id": "ollama-suite#03",
@@ -8836,12 +8927,19 @@
         "Detect hardware evidence for fit verdicts: GPU, usable VRAM, driver/backend, Ollama model destination free space and context overhead",
         "Persist every verified catalog traversal with an explicit completeness verdict, revision identity, page count and stale/offline presentation"
       ],
-      "status": "open",
-      "landedIn": null,
-      "testReferences": [],
-      "documentationReferences": [],
+      "status": "landed",
+      "landedIn": "cb24a87daf04ab08f06e89a3cbad91d1bda1af41",
+      "testReferences": [
+        "tests/ollama_suite_model/store_query_tests.cpp",
+        "tests/ollama_suite_model/ollama_store_wiring.test.mjs"
+      ],
+      "documentationReferences": [
+        "docs/features/ollama-suite/model-store.md",
+        "docs/features/ollama-suite/model-store.yue_HK.md",
+        "docs/features/ollama-suite/README.md"
+      ],
       "runtimeEvidence": [],
-      "note": null
+      "note": "Needs observation in a built Windows application: The nine pickers render, wrap at the 640 DIP minimum width and at high scale, and each re-filters the list; Clear filters resets them; Variant picker disabled with its tooltip until a family is chosen, then lists that family's tags; Grouped headings with counts, paging across headings, and heading selection showing the group explanation; Selecting a catalog entry shows the explanation immediately, then the registry size and evidence after inspection; installed entries show verified capabilities after Refresh runtime; Keyboard traversal and screen-reader names of the pickers in English, Cantonese and bilingual modes"
     },
     {
       "id": "ollama-suite#04",
@@ -10166,7 +10264,7 @@
       "testReferences": [],
       "documentationReferences": [],
       "runtimeEvidence": [],
-      "note": null
+      "note": "blocked: The user must explicitly approve publishing a sanitized mirror derived from the private canonical instructions into this public repository. The permission system blocked that step, so README.md and AGENTS.md carry no mirror block yet.; Canonical-side work, outside this repository: the maintainer's exporter refuses the full instruction file (two sections fail). Its passing output still names the canonical repository, its file paths and script names, and a private fixed refusal phrase. A publishable export needs those generalized, and the vocabulary section omitted entirely.; After approval and a clean export: run node scripts/instructions/refresh-instruction-mirror.mjs --source <export.md> --source-revision <canonical revision>, then node scripts/instructions/check-instruction-mirror.mjs --require --source <export.md>, run the maintainer's public-boundary scan on README.md and AGENTS.md, "
     },
     {
       "id": "sanitized-instruction-copy#02",
@@ -10185,12 +10283,17 @@
       "dependsOn": [
         "Mirror the sanitized shared instructions into README.md and AGENTS.md"
       ],
-      "status": "open",
-      "landedIn": null,
-      "testReferences": [],
-      "documentationReferences": [],
+      "status": "landed",
+      "landedIn": "1bac792f47e7a9565934b8b39188ea856e31855b",
+      "testReferences": [
+        "ui-md3/tests/instruction-mirror-guard.test.mjs"
+      ],
+      "documentationReferences": [
+        "docs/features/documentation/instruction-mirror.md",
+        "docs/features/documentation/instruction-mirror.yue_HK.md"
+      ],
       "runtimeEvidence": [],
-      "note": null
+      "note": "Landed with tests; not yet observed in a built Windows application."
     },
     {
       "id": "critic-frameless-window-chrome#01",
@@ -11010,12 +11113,22 @@
       "dependsOn": [
         "funny-emoji: Per-slider reset and complete disclosure copy"
       ],
-      "status": "open",
-      "landedIn": null,
-      "testReferences": [],
-      "documentationReferences": [],
+      "status": "landed",
+      "landedIn": "0104e8c72263994ea2cdc6a00d0cf1c96482abeb",
+      "testReferences": [
+        "tests/language_mode/first_run_disclosure_tests.cpp",
+        "ui-md3/tests/first-run-funny-disclosure.test.mjs",
+        "resources/web/data/validate-text-locales.mjs",
+        "tests/web_resources_accessibility.test.mjs"
+      ],
+      "documentationReferences": [
+        "docs/features/windows/first-run-funny-level-disclosure.md",
+        "docs/features/windows/first-run-funny-level-disclosure.yue_HK.md",
+        "docs/features/windows/README.md",
+        "docs/features/windows/README.yue_HK.md"
+      ],
       "runtimeEvidence": [],
-      "note": null
+      "note": "Needs observation in a built Windows application: The Funny levels step appears in the first-run Setup Wizard after 'Please select your login region' and before the experience programme page, and again from Help > Setup Wizard; Back and Next move correctly both ways and the region still reaches page 3; The WebView2 round trip works: request_funny_disclosure is answered through HandleStudio and the controls appear with the levels from BambuStudio.conf; Moving each slider writes funny_level_en / funny_level_yue to BambuStudio.conf; the opening line and sample message update, and the rest of the app (Preferences sliders, MsgDialog copy) follows without a restart; Each reset button removes its key, after which Preferences shows 'Not stored yet; using the compiled default 5.'; Next writes funny_level_disclosed=true; With School mode on, the step is skipped forward from page 11 and backward from page 3 with no visible flash of funny-level tex"
     },
     {
       "id": "critic-funny-level-first-run-disclosure#02",
@@ -11032,12 +11145,18 @@
       "dependsOn": [
         "Disclose funny-level behaviour and defaults in the first-run guide"
       ],
-      "status": "open",
-      "landedIn": null,
-      "testReferences": [],
-      "documentationReferences": [],
+      "status": "landed",
+      "landedIn": "780a9bd7ebc84c6f1a99038d25dbef2eaf84fb74",
+      "testReferences": [
+        "ui-md3/tests/first-run-funny-disclosure.test.mjs",
+        "tests/language_mode/first_run_disclosure_tests.cpp"
+      ],
+      "documentationReferences": [
+        "docs/features/windows/first-run-funny-level-disclosure.md",
+        "docs/features/windows/first-run-funny-level-disclosure.yue_HK.md"
+      ],
       "runtimeEvidence": [],
-      "note": null
+      "note": "Landed with tests; not yet observed in a built Windows application."
     },
     {
       "id": "critic-status-corrections#01",
