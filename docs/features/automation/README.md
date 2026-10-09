@@ -22,6 +22,9 @@ isolated headless slicing through MCP and a matching command-line interface.
 - [Installer first-run diagnostic](installer-first-run-diagnostic.md)
   ([粵語](installer-first-run-diagnostic.yue_HK.md)), the dispatch-only workflow that installs a
   release interactively and silently on hosted Windows and classifies the first start, text evidence only.
+- [Self-update diagnostic](self-update-diagnostic.md) ([粵語](self-update-diagnostic.yue_HK.md)), the
+  dispatch-only workflow that installs an older release on hosted Windows, starts it like a shortcut and
+  records whether it stages the latest release by itself, text evidence only.
 - [README screenshots](readme-screenshots.md) ([粵語](readme-screenshots.yue_HK.md)), the dispatch-only
   workflow that retakes the README images and uploads them as plain PNG files for review, kept three
   days, only after a fail-closed privacy check.

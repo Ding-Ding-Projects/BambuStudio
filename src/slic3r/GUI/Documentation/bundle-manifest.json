@@ -55,7 +55,7 @@
     {
       "route": "automation/README.md",
       "title": "Automation",
-      "sha256": "57b23421b314f1ecca5a0b850a54dd231bee0c1570e020b287192d21bd794314"
+      "sha256": "792d6dec6bc961e1813e38687e0e5030356412317b9d8cc35c24e9c7cdc5fbfd"
     },
     {
       "route": "automation/hosted-display-scale-probe.md",
@@ -166,6 +166,16 @@
       "route": "automation/readme-screenshots.yue_HK.md",
       "title": "README 截圖",
       "sha256": "e9cbbca7b56b5acb700f7c7e968a6c76758dd3a17d5278ce8b4f5e38b2cd14ad"
+    },
+    {
+      "route": "automation/self-update-diagnostic.md",
+      "title": "Self-update diagnostic",
+      "sha256": "38dfdfe88d7e9685352f5162335a69206dcda48056a46de0d63f36ed199a1e83"
+    },
+    {
+      "route": "automation/self-update-diagnostic.yue_HK.md",
+      "title": "自我更新診斷",
+      "sha256": "c256662cdb6289762d11b73acc3bcd2d053ecb15cdb1986a929d36f381f255db"
     },
     {
       "route": "camera/README.md",
@@ -1250,12 +1260,12 @@
     {
       "route": "windows/app-updates.md",
       "title": "App updates from this fork's releases",
-      "sha256": "af129e1f6281762017d58fa6aaad874fcb5b12d58cfd6cc33843466b6af677b5"
+      "sha256": "f9cda573446a9f032ee4fac3aa230290b1160b5ae535d162ffb9d048635e90ed"
     },
     {
       "route": "windows/app-updates.yue_HK.md",
       "title": "來自呢個分叉發佈嘅應用程式更新",
-      "sha256": "da1f0029fbaa7260ce662a3d766b0b6527623c84a12b2239376c40804f985c28"
+      "sha256": "cc137d98300f21fc48a897b59c8e6c03778d99b5db8276306b6eee283623877c"
     },
     {
       "route": "windows/appearance-customization.md",
@@ -1965,7 +1975,7 @@
       "bytes": 1979
     }
   ],
-  "bundle_sha256": "b4d2f1a0062b745056fe26824fbd08c4ed5c0ac2a5d800afb876ab25987ddce1",
+  "bundle_sha256": "68fac6132ad672f33e2172b68d94e130b4badf52a534e1cf045287e996c42f58",
   "unavailable_references": [
     {
       "source": "api/README.md",
@@ -2350,6 +2360,16 @@
     {
       "source": "automation/readme-screenshots.yue_HK.md",
       "target": "https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/37875388464",
+      "kind": "link"
+    },
+    {
+      "source": "automation/self-update-diagnostic.md",
+      "target": "https://github.com/Ding-Ding-Projects/BambuStudio/issues/46",
+      "kind": "link"
+    },
+    {
+      "source": "automation/self-update-diagnostic.yue_HK.md",
+      "target": "https://github.com/Ding-Ding-Projects/BambuStudio/issues/46",
       "kind": "link"
     },
     {

@@ -1,6 +1,6 @@
 ---
 translation-of: app-updates.md
-source-sha256: af129e1f6281762017d58fa6aaad874fcb5b12d58cfd6cc33843466b6af677b5
+source-sha256: f9cda573446a9f032ee4fac3aa230290b1160b5ae535d162ffb9d048635e90ed
 review-status: agent-drafted
 ---
 
@@ -80,7 +80,7 @@ review-status: agent-drafted
 
 - 政策：`tests/app_update_check_policy_test.cpp` 係 `AppUpdateCheckPolicy` 嘅獨立 C++ 斷言執行檔。佢涵蓋嚴格嘅 UTC 解析（閏日、跨年同格式唔啱嘅時間戳）、寬限邊界（啱啱三個鐘唔算較新，多一秒就算）、md3-v225 嘅情況、每個路線同結果分支，同埋喺 `UTC`、`America/Toronto` 同 `Asia/Hong_Kong` 時區下得出相同結論。構建時唔好定義 `NDEBUG`（檔案自己會取消定義），然後執行，例如 `g++ -std=c++17 -Wall -Wextra -Werror tests/app_update_check_policy_test.cpp -o aucp && ./aucp`。
 - 合約：`node --test ui-md3/tests/app-auto-update.test.mjs` 固定安裝偵測、`check_new_version` 嘅路線、唔用時區 API 嘅 UTC 比較、固定來源、隱藏行程、退出代碼加資料夾嘅成功規則、結果處理（每次檢查後都有準備好橫幅、手動檢查失敗後開下載對話框、背景檢查失敗後每個發佈一個失敗通知、冇較新版本時顯示「已經係最新版本」或者唔出聲）、重新啟動交接、取消關閉規則、永遠唔會淡出嘅橫幅連兩條連結同冇簽署通知、每六個鐘重新檢查、`auto_update` 預設值同抽取咗嘅訊息。`node scripts/check-quiet-prompts.mjs` 要求更新路線入面每個下載對話框都要有明確請求先出現，而兩個背景更新通知都必須係唔阻住你嘅通知。
-- 執行時（等發佈截取）：用 `Setup.exe` 裝一個舊發佈，啟動佢，確認 `auto update:` 記錄行、「已準備好」橫幅，同埋撳「重新啟動以安裝更新」之後新版本會啟動；然後關咗偏好設定、再用可攜式副本重複一次，做一次手動檢查，確認出現嘅係下載對話框。啟動一個比最新發佈更新嘅構建，確認兩條路線都冇觸發。呢個改動嘅原生編譯要等雲端 Windows 構建確認。
+- 執行時（等發佈截取）：用 `Setup.exe` 裝一個舊發佈，啟動佢，確認 `auto update:` 記錄行、「已準備好」橫幅，同埋撳「重新啟動以安裝更新」之後新版本會啟動；然後關咗偏好設定、再用可攜式副本重複一次，做一次手動檢查，確認出現嘅係下載對話框。啟動一個比最新發佈更新嘅構建，確認兩條路線都冇觸發。呢個改動嘅原生編譯要等雲端 Windows 構建確認。喺託管 Windows 上，[自我更新診斷](../automation/self-update-diagnostic.md)會裝一個舊發佈，用預設設定啟動佢，再記低佢有冇自己準備好最新嗰個。
 
 ## 相關
 
