@@ -29876,4 +29876,1151 @@ msgid "Preferences at startup"
 msgstr ""
 
 msgid "Scheduled settings at startup"
+msgid "Local file converter"
+msgstr ""
+
+msgid "Documents/PDF"
+msgstr ""
+
+msgid "Images"
+msgstr ""
+
+msgid "Audio"
+msgstr ""
+
+msgid "Archives"
+msgstr ""
+
+msgid "Structured Data/Spreadsheets"
+msgstr ""
+
+msgid "Code/Text"
+msgstr ""
+
+msgid "Binary Encodings"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s (code %s)"
+msgstr ""
+
+msgid "No description is available for this result code."
+msgstr ""
+
+msgid "Bundled worker verified"
+msgstr ""
+
+msgid "Converter categories"
+msgstr ""
+
+msgid "Search adapters in this category"
+msgstr ""
+
+msgid "adapter search"
+msgstr ""
+
+msgid "available and unavailable adapters"
+msgstr ""
+
+msgid "Adapter"
+msgstr ""
+
+msgid "Availability"
+msgstr ""
+
+msgid "Selected adapter details"
+msgstr ""
+
+msgid "Search PDF operation settings"
+msgstr ""
+
+msgid "PDF operation settings search"
+msgstr ""
+
+msgid "Page order (one-based, comma separated). Default: 1. Blank rotates all pages."
+msgstr ""
+
+msgid "PDF page order"
+msgstr ""
+
+msgid "Absolute page rotation. Default: 90 degrees."
+msgstr ""
+
+msgid "PDF rotation degrees"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%d degrees"
+msgstr ""
+
+msgid "PDF title for Metadata. Default: empty, which clears the title. Other supported metadata is preserved."
+msgstr ""
+
+msgid "PDF title metadata"
+msgstr ""
+
+msgid "Output folder (sources keep their names with the chosen extension)"
+msgstr ""
+
+msgid "Conversion output folder"
+msgstr ""
+
+msgid "Browse output folder"
+msgstr ""
+
+msgid "Choose output folder"
+msgstr ""
+
+msgid "Add source file"
+msgstr ""
+
+msgid "Add source folder"
+msgstr ""
+
+msgid "Resume queue"
+msgstr ""
+
+msgid "Pause after current file"
+msgstr ""
+
+msgid "Paused. The current file may finish; pending files stay saved."
+msgstr ""
+
+msgid "Cancel active and pending"
+msgstr ""
+
+msgid "Cancellation requested. Completed outputs are preserved."
+msgstr ""
+
+msgid "Search this queue page"
+msgstr ""
+
+msgid "Converter queue page search"
+msgstr ""
+
+msgid "Conversion queue and result history, current page"
+msgstr ""
+
+msgid "Number"
+msgstr ""
+
+msgid "Source name"
+msgstr ""
+
+msgid "State"
+msgstr ""
+
+msgid "Result"
+msgstr ""
+
+msgid "Retry selected"
+msgstr ""
+
+msgid "Pause and wait for the active file before retrying."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Retried: %llu. Not eligible or destination already exists: %llu."
+msgstr ""
+
+msgid "Export visible results"
+msgstr ""
+
+msgid "Previous page"
+msgstr ""
+
+msgid "Next page"
+msgstr ""
+
+msgid "Queue page summary"
+msgstr ""
+
+msgid "Converter status"
+msgstr ""
+
+msgid "The private queue cannot be opened or another converter owns it. Close the other converter and reopen this destination."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Last source preview: %s, %s bytes."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Validation: %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Unavailable: %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Diagnostic: %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Absolute page rotation: %d degrees."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%llu saved files. Showing %llu matches from at most 100 records."
+msgstr ""
+
+msgid "A saved queue record could not be read. Records and outputs have been retained for recovery."
+msgstr ""
+
+msgid "Wait for the current operation before adding sources."
+msgstr ""
+
+msgid "Select an enabled adapter first. Unavailable rows explain their missing packaged adapter."
+msgstr ""
+
+msgid "PDF merge needs an explicit ordered selection. Use Add source file and select at least two PDFs."
+msgstr ""
+
+msgid "Choose source folder, discovered one file at a time"
+msgstr ""
+
+msgid "Choose PDFs to merge, in picker order"
+msgstr ""
+
+msgid "Choose source file"
+msgstr ""
+
+msgid "Select between 2 and 1000 PDFs within the aggregate 16 MiB limit."
+msgstr ""
+
+msgid "Choose an existing output folder."
+msgstr ""
+
+msgid "Enter page numbers from 1 to 1000, separated by commas."
+msgstr ""
+
+msgid "Discovering sources with bounded memory. Cancel stops discovery; admitted records stay saved."
+msgstr ""
+
+msgid "Export visible queue results"
+msgstr ""
+
+msgid "CSV files (*.csv)|*.csv"
+msgstr ""
+
+msgid "Export was not written. Choose a new destination in a writable folder."
+msgstr ""
+
+msgid "Choose a verified adapter, review its data changes, choose an output folder, then add files. Sources are preserved. Existing outputs are skipped. Processing stays offline."
+msgstr ""
+
+msgid "Pick a verified adapter, read what it changes, choose an output folder, then add files. Sources are preserved, existing outputs are skipped and processing stays offline."
+msgstr ""
+
+msgid "Pick a verified adapter, read exactly what it changes, choose where the results land, then hand it some files. Sources are preserved, existing outputs are skipped, and processing never leaves this computer."
+msgstr ""
+
+msgid "Empty queue. No source files have been selected."
+msgstr ""
+
+msgid "The queue is empty. No source files have been selected yet."
+msgstr ""
+
+msgid "The queue is empty and no source files have been selected. It is ready when you are."
+msgstr ""
+
+msgid "No adapters match this search."
+msgstr ""
+
+msgid "No adapters match this search. Try fewer words."
+msgstr ""
+
+msgid "No adapters match this search. Try fewer words, or clear it to see the whole category again."
+msgstr ""
+
+msgid "No adapter selected. Unavailable formats remain listed with their exact reason."
+msgstr ""
+
+msgid "Select an adapter to see what it changes. Unavailable formats remain listed with their exact reason."
+msgstr ""
+
+msgid "Pick an adapter and it will spell out what it changes. Unavailable formats stay listed, each with its exact reason."
+msgstr ""
+
+msgid "Checking the bundled worker and offline sandbox. No converter is enabled until its runtime check completes."
+msgstr ""
+
+msgid "Checking the bundled worker and its offline sandbox. Converters stay disabled until the check completes."
+msgstr ""
+
+msgid "Giving the bundled worker and its offline sandbox a once-over. Every converter stays disabled until that check completes."
+msgstr ""
+
+msgid "Bundled worker checks finished. Each unavailable adapter shows its exact reason."
+msgstr ""
+
+msgid "Worker checks finished. Each unavailable adapter shows its exact reason."
+msgstr ""
+
+msgid "The worker checks are finished. Anything still unavailable says exactly why."
+msgstr ""
+
+msgid "Converting offline in the isolated worker. One file runs at a time; every result is saved."
+msgstr ""
+
+msgid "Converting offline in the isolated worker, one file at a time. Every result is saved."
+msgstr ""
+
+msgid "Converting offline in the isolated worker, one file at a time, and writing down every result as it goes."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Operation stopped. Added: %llu. Not admitted: %llu. Review each saved result below."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Stopped. Added: %llu. Not admitted: %llu. Each saved result is listed below."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "All stopped. %llu added and %llu not admitted, with every saved result listed below."
+msgstr ""
+
+msgid "Visible result rows exported as UTF-8 CSV. Source paths were excluded."
+msgstr ""
+
+msgid "Exported the visible result rows as UTF-8 CSV, without source paths."
+msgstr ""
+
+msgid "The visible result rows are out as UTF-8 CSV, and the source paths stayed behind."
+msgstr ""
+
+msgid "Binary"
+msgstr ""
+
+msgid "UTF-8 text"
+msgstr ""
+
+msgid "JSON"
+msgstr ""
+
+msgid "PDF"
+msgstr ""
+
+msgid "PNG"
+msgstr ""
+
+msgid "JPEG"
+msgstr ""
+
+msgid "BMP"
+msgstr ""
+
+msgid "PPM"
+msgstr ""
+
+msgid "ZIP"
+msgstr ""
+
+msgid "WAVE"
+msgstr ""
+
+msgid "MP4"
+msgstr ""
+
+msgid "Bundled converter worker and SHA-256 package proof are required."
+msgstr ""
+
+msgid "Bundled worker SHA-256 does not match its installed package proof."
+msgstr ""
+
+msgid "This worker containment implementation requires Windows AppContainer."
+msgstr ""
+
+msgid "Bundled worker package proof cannot be read."
+msgstr ""
+
+msgid "The bundled worker cannot start in its sandbox."
+msgstr ""
+
+msgid "The bundled worker returned an invalid capability receipt."
+msgstr ""
+
+msgid "Binary to hexadecimal"
+msgstr ""
+
+msgid "Preserves every source byte; output is lowercase ASCII without whitespace."
+msgstr ""
+
+msgid "Decode and compare every byte"
+msgstr ""
+
+msgid "Hexadecimal to binary"
+msgstr ""
+
+msgid "Requires an even count of hexadecimal digits with no whitespace."
+msgstr ""
+
+msgid "Re-encode and compare normalized digits"
+msgstr ""
+
+msgid "Binary to Base64"
+msgstr ""
+
+msgid "Preserves every byte; RFC 4648 alphabet and padding, no line wrapping."
+msgstr ""
+
+msgid "Base64 to binary"
+msgstr ""
+
+msgid "Requires canonical RFC 4648 padding and no whitespace."
+msgstr ""
+
+msgid "Re-encode and compare"
+msgstr ""
+
+msgid "UTF-8 with LF line endings"
+msgstr ""
+
+msgid "Changes CRLF and CR line endings to LF. Preserves UTF-8 bytes and BOM otherwise."
+msgstr ""
+
+msgid "UTF-8 validation and absence of CR"
+msgstr ""
+
+msgid "UTF-8 with CRLF line endings"
+msgstr ""
+
+msgid "Normalizes all line endings to CRLF. Preserves UTF-8 bytes and BOM otherwise."
+msgstr ""
+
+msgid "UTF-8 validation and canonical line endings"
+msgstr ""
+
+msgid "JSON formatting"
+msgstr ""
+
+msgid "Reparse and compare ordered values; preserve original literal bytes"
+msgstr ""
+
+msgid "CSV to JSON rows"
+msgstr ""
+
+msgid "TSV to JSON rows"
+msgstr ""
+
+msgid "Parse and compare every cell"
+msgstr ""
+
+msgid "JSON rows to CSV"
+msgstr ""
+
+msgid "JSON rows to TSV"
+msgstr ""
+
+msgid "Reparse and compare every cell"
+msgstr ""
+
+msgid "24-bit BMP to PPM"
+msgstr ""
+
+msgid "Only uncompressed bottom-up 24-bit BMP with a 40-byte header. Resolution metadata is omitted; RGB pixels are preserved."
+msgstr ""
+
+msgid "Reopen and compare dimensions and every pixel"
+msgstr ""
+
+msgid "PPM to 24-bit BMP"
+msgstr ""
+
+msgid "Only P6 8-bit RGB PPM without comments. RGB pixels are preserved; output has no color profile or resolution metadata."
+msgstr ""
+
+msgid "File to ZIP (one entry)"
+msgstr ""
+
+msgid "Preserves every source byte in payload.bin. Original filename and filesystem timestamps are omitted. No encryption."
+msgstr ""
+
+msgid "Reopen ZIP, verify CRC and compare extracted bytes"
+msgstr ""
+
+msgid "ZIP single-entry extraction"
+msgstr ""
+
+msgid "Bounded extraction with CRC verification"
+msgstr ""
+
+msgid "Unavailable"
+msgstr ""
+
+msgid "PDF inspect"
+msgstr ""
+
+msgid "PDF split"
+msgstr ""
+
+msgid "PDF merge"
+msgstr ""
+
+msgid "PDF extract"
+msgstr ""
+
+msgid "PDF reorder"
+msgstr ""
+
+msgid "PDF rotate"
+msgstr ""
+
+msgid "PDF metadata"
+msgstr ""
+
+msgid "The bundled PDF engine cannot initialize in this sandbox."
+msgstr ""
+
+msgid "PDF requires the complete pinned qpdf 12.4.2 runtime inside tools/pdf."
+msgstr ""
+
+msgid "qpdf 12.4.2. Unencrypted PDFs without forms, signatures or unsupported document features. Up to 1000 pages and 16 MiB aggregate input. Rewrites PDF structure. Split writes page PDFs into one ZIP. Review metadata and page choices before resuming."
+msgstr ""
+
+msgid "Reopen every output and verify page count/order, rotations, metadata and structural page content"
+msgstr ""
+
+msgid "A bundled, hash-verified PDF parser/editor with post-write page and metadata validation is not installed."
+msgstr ""
+
+msgid "PNG, JPEG, GIF, TIFF, WebP, SVG"
+msgstr ""
+
+msgid "These formats have no verified converter worker adapter; slicer image support does not establish converter containment or preservation."
+msgstr ""
+
+msgid "WAV, MP3, FLAC, AAC, Ogg"
+msgstr ""
+
+msgid "No bundled verified offline audio converter adapter is installed."
+msgstr ""
+
+msgid "MP4, WebM, AVI, MOV"
+msgstr ""
+
+msgid "No bundled verified offline video converter adapter is installed."
+msgstr ""
+
+msgid "Multi-entry ZIP and 7z"
+msgstr ""
+
+msgid "Multi-entry extraction and 7z require a bundled verified adapter with per-entry atomic publication and decompression limits."
+msgstr ""
+
+msgid "XLSX, ODS, YAML, TOML"
+msgstr ""
+
+msgid "No bundled verified parser and loss-preserving converter for these formats is installed."
+msgstr ""
+
+msgid "DOCX, ODT, EPUB"
+msgstr ""
+
+msgid "No bundled verified offline document converter adapter is installed."
+msgstr ""
+
+msgid "Running"
+msgstr ""
+
+msgid "Converted"
+msgstr ""
+
+msgid "Skipped"
+msgstr ""
+
+msgid "Recovery required"
+msgstr ""
+
+msgid "Waiting to convert."
+msgstr ""
+
+msgid "Converting now."
+msgstr ""
+
+msgid "Converted, checked and saved."
+msgstr ""
+
+msgid "Written and checked."
+msgstr ""
+
+msgid "Cancelled. Nothing was written for this file."
+msgstr ""
+
+msgid "The bundled PDF engine is ready."
+msgstr ""
+
+msgid "The worker reported what it can convert."
+msgstr ""
+
+msgid "The destination already exists. It was not replaced."
+msgstr ""
+
+msgid "The output folder no longer exists."
+msgstr ""
+
+msgid "The output folder does not have enough free space."
+msgstr ""
+
+msgid "The finished output could not be published without replacing another file."
+msgstr ""
+
+msgid "The file system refused the output."
+msgstr ""
+
+msgid "The output could not be written."
+msgstr ""
+
+msgid "A temporary file could not be created in the output folder."
+msgstr ""
+
+msgid "The temporary output could not be written completely."
+msgstr ""
+
+msgid "The source and the destination are the same file."
+msgstr ""
+
+msgid "The source is not a regular file."
+msgstr ""
+
+msgid "The source file could not be read."
+msgstr ""
+
+msgid "The source changed during conversion. Nothing was written."
+msgstr ""
+
+msgid "The source changed after it was added. Add it again to convert the new version."
+msgstr ""
+
+msgid "The source is no longer available."
+msgstr ""
+
+msgid "The source could not be read completely, or it changed while it was read."
+msgstr ""
+
+msgid "The file content does not match the formats this adapter accepts."
+msgstr ""
+
+msgid "The file could not be checked before it was added."
+msgstr ""
+
+msgid "The folder could not be read completely. Files found before the problem were kept."
+msgstr ""
+
+msgid "The file could not be checked before conversion."
+msgstr ""
+
+msgid "The source is larger than the 16 MiB input limit."
+msgstr ""
+
+msgid "The source is not a regular file within the 16 MiB input limit."
+msgstr ""
+
+msgid "The output would be larger than the 64 MiB output limit."
+msgstr ""
+
+msgid "The output did not match when it was checked, so it was discarded."
+msgstr ""
+
+msgid "A path is longer than the converter accepts."
+msgstr ""
+
+msgid "The request is larger than the worker accepts."
+msgstr ""
+
+msgid "This adapter takes no options or extra sources."
+msgstr ""
+
+msgid "This adapter is not available in the bundled worker."
+msgstr ""
+
+msgid "The adapter name is invalid."
+msgstr ""
+
+msgid "The conversion failed without a more specific reason."
+msgstr ""
+
+msgid "The structure nests deeper than the 64-level limit."
+msgstr ""
+
+msgid "The structure has more items than the converter allows."
+msgstr ""
+
+msgid "The JSON repeats a key inside one object."
+msgstr ""
+
+msgid "The JSON is invalid or uses an unsupported form."
+msgstr ""
+
+msgid "The text is not valid UTF-8, or it contains control characters."
+msgstr ""
+
+msgid "The text contains a character that is not a hexadecimal digit."
+msgstr ""
+
+msgid "Hexadecimal text needs an even number of digits."
+msgstr ""
+
+msgid "The Base64 text length is not a multiple of four."
+msgstr ""
+
+msgid "The Base64 padding is not canonical."
+msgstr ""
+
+msgid "The text contains a character outside the Base64 alphabet."
+msgstr ""
+
+msgid "The Base64 text is not in canonical form."
+msgstr ""
+
+msgid "The table has more cells than the converter allows."
+msgstr ""
+
+msgid "The table has a carriage return without a line feed."
+msgstr ""
+
+msgid "A table cell has a quote in an unexpected place."
+msgstr ""
+
+msgid "A table cell has text after its closing quote."
+msgstr ""
+
+msgid "A quoted table cell is never closed."
+msgstr ""
+
+msgid "The table rows do not all have the same number of cells."
+msgstr ""
+
+msgid "The JSON must be an array of rows, and each row an array."
+msgstr ""
+
+msgid "Every JSON table cell must be a string."
+msgstr ""
+
+msgid "A JSON table row is empty."
+msgstr ""
+
+msgid "The image ends before its header is complete."
+msgstr ""
+
+msgid "The image has more pixels than the 4,194,304-pixel limit."
+msgstr ""
+
+msgid "The source is not a BMP image."
+msgstr ""
+
+msgid "The BMP size does not match its dimensions."
+msgstr ""
+
+msgid "Only BMP images with the 40-byte header are supported."
+msgstr ""
+
+msgid "Only uncompressed 24-bit BMP images are supported."
+msgstr ""
+
+msgid "The source is not a binary PPM (P6) image."
+msgstr ""
+
+msgid "The PPM pixel data does not match its dimensions."
+msgstr ""
+
+msgid "The PPM header must end with one whitespace character."
+msgstr ""
+
+msgid "The PPM header is not supported. Comments are not accepted."
+msgstr ""
+
+msgid "Only 8-bit PPM images with a maximum value of 255 are supported."
+msgstr ""
+
+msgid "The source is not a readable ZIP archive."
+msgstr ""
+
+msgid "The ZIP archive must contain exactly one regular file."
+msgstr ""
+
+msgid "The ZIP entry is encrypted or uses an unsupported compression method."
+msgstr ""
+
+msgid "The ZIP entry name is absolute or leaves its folder."
+msgstr ""
+
+msgid "The extracted file would be larger than the 64 MiB output limit."
+msgstr ""
+
+msgid "The ZIP entry failed its CRC check or could not be decompressed."
+msgstr ""
+
+msgid "The archive needs more memory than the converter allows."
+msgstr ""
+
+msgid "The ZIP archive could not be created."
+msgstr ""
+
+msgid "The ZIP archive could not be completed."
+msgstr ""
+
+msgid "The new ZIP archive did not extract back to the same bytes, so it was discarded."
+msgstr ""
+
+msgid "Another converter already owns this queue."
+msgstr ""
+
+msgid "A queue record could not be saved."
+msgstr ""
+
+msgid "A queue record could not be replaced safely."
+msgstr ""
+
+msgid "A queue record is larger than its limit."
+msgstr ""
+
+msgid "A queue page larger than 100 records was requested."
+msgstr ""
+
+msgid "The queue has run out of record numbers."
+msgstr ""
+
+msgid "The queue has run out of cancellation numbers."
+msgstr ""
+
+msgid "A queue record is missing a source identity."
+msgstr ""
+
+msgid "A saved queue record is invalid."
+msgstr ""
+
+msgid "A saved queue record has an unknown state."
+msgstr ""
+
+msgid "The saved queue position is invalid."
+msgstr ""
+
+msgid "The saved queue was written by an unsupported version."
+msgstr ""
+
+msgid "The rejection code is invalid."
+msgstr ""
+
+msgid "The app stopped while this file was converting. Check the destination, then retry."
+msgstr ""
+
+msgid "This record cannot be retried now."
+msgstr ""
+
+msgid "Only failed, cancelled or interrupted records can be retried."
+msgstr ""
+
+msgid "The destination already exists, so the record was not retried."
+msgstr ""
+
+msgid "The bundled worker file cannot be opened."
+msgstr ""
+
+msgid "The bundled worker does not match its package proof."
+msgstr ""
+
+msgid "The isolated worker sandbox requires Windows."
+msgstr ""
+
+msgid "Windows could not prepare the isolated sandbox."
+msgstr ""
+
+msgid "The private channel to the worker could not be secured."
+msgstr ""
+
+msgid "The private channel to the worker could not be created."
+msgstr ""
+
+msgid "The private channel to the worker could not be isolated."
+msgstr ""
+
+msgid "The resource limits for the worker could not be created."
+msgstr ""
+
+msgid "The resource limits for the worker could not be applied."
+msgstr ""
+
+msgid "The worker sandbox could not be configured."
+msgstr ""
+
+msgid "The Windows system folder could not be located."
+msgstr ""
+
+msgid "The worker could not be placed under its resource limits, so it was stopped."
+msgstr ""
+
+msgid "The worker could not start after containment, so it was stopped."
+msgstr ""
+
+msgid "The worker sent an invalid response."
+msgstr ""
+
+msgid "The worker sent an invalid diagnostic code."
+msgstr ""
+
+msgid "The worker response ended early."
+msgstr ""
+
+msgid "The worker sent more data than it declared."
+msgstr ""
+
+msgid "The worker did not finish within its 30-second limit and was stopped."
+msgstr ""
+
+msgid "The worker stopped with an error."
+msgstr ""
+
+msgid "This build does not include the PDF adapter."
+msgstr ""
+
+msgid "The PDF engine could not confirm its sandbox."
+msgstr ""
+
+msgid "The PDF engine runs only inside the isolated sandbox."
+msgstr ""
+
+msgid "The PDF engine package could not be located."
+msgstr ""
+
+msgid "A PDF engine file could not be opened."
+msgstr ""
+
+msgid "A PDF engine file does not match its pinned SHA-256."
+msgstr ""
+
+msgid "This sandbox blocks the Windows interface calls the PDF engine needs."
+msgstr ""
+
+msgid "The PDF engine does not provide the expected interface."
+msgstr ""
+
+msgid "The PDF engine is not loaded."
+msgstr ""
+
+msgid "The source does not start with a PDF signature."
+msgstr ""
+
+msgid "The PDF is damaged or not well formed."
+msgstr ""
+
+msgid "The PDF is encrypted. Encrypted PDFs are not supported."
+msgstr ""
+
+msgid "The PDF carries a digital signature, which this tool would invalidate."
+msgstr ""
+
+msgid "The PDF uses document features this tool does not support, such as forms, actions or outlines."
+msgstr ""
+
+msgid "A page has annotations or actions, which this tool does not support."
+msgstr ""
+
+msgid "A PDF stream uses an encoding this tool cannot read."
+msgstr ""
+
+msgid "The PDF metadata uses a form this tool does not support."
+msgstr ""
+
+msgid "A page has a rotation that is not a multiple of 90 degrees."
+msgstr ""
+
+msgid "The PDF needs more memory than the converter allows."
+msgstr ""
+
+msgid "The PDF engine stopped unexpectedly."
+msgstr ""
+
+msgid "The PDF structure nests deeper than the 64-level limit."
+msgstr ""
+
+msgid "The PDF structure has more items than the converter allows."
+msgstr ""
+
+msgid "The PDF content expands beyond the 64 MiB limit."
+msgstr ""
+
+msgid "The PDF has more pages than the 1000-page limit."
+msgstr ""
+
+msgid "More PDFs were given than the 1000-source limit."
+msgstr ""
+
+msgid "This PDF tool takes exactly one source. Only merge takes several."
+msgstr ""
+
+msgid "The PDFs together are larger than the 16 MiB input limit."
+msgstr ""
+
+msgid "The PDF output would be larger than the 64 MiB output limit."
+msgstr ""
+
+msgid "The PDF request is larger than its 24 MiB limit."
+msgstr ""
+
+msgid "The PDF request is larger than its limit."
+msgstr ""
+
+msgid "The PDF operation is not recognized."
+msgstr ""
+
+msgid "Rotation must be 0, 90, 180 or 270 degrees."
+msgstr ""
+
+msgid "A page number is outside the document."
+msgstr ""
+
+msgid "A page number appears more than once."
+msgstr ""
+
+msgid "Enter the page numbers to use."
+msgstr ""
+
+msgid "Reorder needs every page number exactly once."
+msgstr ""
+
+msgid "This PDF tool does not take page numbers."
+msgstr ""
+
+msgid "This PDF tool does not take a rotation."
+msgstr ""
+
+msgid "Only the metadata tool takes metadata values."
+msgstr ""
+
+msgid "The PDFs to merge have different metadata."
+msgstr ""
+
+msgid "A metadata field is not one this tool can write."
+msgstr ""
+
+msgid "A metadata value is too long, or it is not valid UTF-8 text."
+msgstr ""
+
+msgid "A metadata value is longer than 4,096 bytes."
+msgstr ""
+
+msgid "The PDF engine could not write the output."
+msgstr ""
+
+msgid "The new PDF has the wrong number of pages, so it was discarded."
+msgstr ""
+
+msgid "The new PDF has its pages in the wrong order, so it was discarded."
+msgstr ""
+
+msgid "The new PDF has the wrong page rotation, so it was discarded."
+msgstr ""
+
+msgid "The new PDF has the wrong metadata, so it was discarded."
+msgstr ""
+
+msgid "The PDF engine returned an unexpected number of outputs."
+msgstr ""
+
+msgid "Split produced no pages or too many pages."
+msgstr ""
+
+msgid "The ZIP of split pages could not be started."
+msgstr ""
+
+msgid "A split page could not be added to the ZIP."
+msgstr ""
+
+msgid "The ZIP of split pages could not be completed."
+msgstr ""
+
+msgid "The ZIP of split pages did not reopen to the same pages, so it was discarded."
+msgstr ""
+
+msgid "The PDF request is not well formed."
+msgstr ""
+
+msgid "The PDF options must be an object."
+msgstr ""
+
+msgid "The PDF request contains an unknown option."
+msgstr ""
+
+msgid "The PDF request is not valid UTF-8."
+msgstr ""
+
+msgid "The PDF request nests too deeply."
+msgstr ""
+
+msgid "The PDF request has too many items."
+msgstr ""
+
+msgid "The PDF request repeats an option."
+msgstr ""
+
+msgid "A PDF in the request is not valid Base64."
+msgstr ""
+
+msgid "Page numbers must be whole numbers."
+msgstr ""
+
+msgid "The page list is not a list, or it is too long."
+msgstr ""
+
+msgid "The metadata must be a set of at most nine fields."
+msgstr ""
+
+msgid "Every metadata value must be text."
+msgstr ""
+
+msgid "The PDF request lists no sources."
+msgstr ""
+
+msgid "A PDF source in the request is not text."
+msgstr ""
+
+msgid "The PDF request could not be processed."
+msgstr ""
+
+msgid "Windows could not start the isolated worker. The number at the end of the code is the Windows error."
+msgstr ""
+
+msgid "Windows could not load its user interface library inside the sandbox. The number at the end of the code is the Windows error."
+msgstr ""
+
+msgid "Windows could not load the bundled PDF engine. The number at the end of the code is the Windows error."
+msgstr ""
+
+msgid "I reviewed what this conversion changes or leaves out, and I want to convert with these changes."
+msgstr ""
+
+msgid "Accept the data changes of the selected adapter"
+msgstr ""
+
+msgid "Changes confirmed for this adapter. You can now add files."
+msgstr ""
+
+msgid "Confirmation withdrawn. Files cannot be added with this adapter until you confirm again."
+msgstr ""
+
+msgid "This conversion changes or leaves out data as described above. Confirm below before adding files."
+msgstr ""
+
+msgid "Confirm what this conversion changes before adding files. Its disclosure lists what changes or is left out."
+msgstr ""
+
+msgid "Changes whitespace only: two-space indentation and LF line endings in UTF-8. Duplicate keys are rejected. Number literals, string escapes and object order are preserved exactly."
+msgstr ""
+
+msgid "Every cell becomes a JSON string in an array of arrays; the original quoting and record line endings are not kept. Quoted separators and line breaks inside cells are preserved. Ragged rows are rejected."
+msgstr ""
+
+msgid "Only rectangular arrays of string arrays are supported. Every field is written quoted, records end with CRLF and the file is UTF-8; the JSON whitespace is not kept."
+msgstr ""
+
+msgid "Writes only the entry's bytes; its name, timestamps and comment are not kept. Only one unencrypted regular entry, stored or deflated, at most 64 MiB. Absolute and traversal names are rejected."
+msgstr ""
+
+msgid "This conversion changes or leaves out data, and its changes were not confirmed. Nothing was added."
+msgstr ""
+
+msgid "What this conversion changes is different from what was confirmed, so the file was skipped. Confirm the changes again and add it."
 msgstr ""

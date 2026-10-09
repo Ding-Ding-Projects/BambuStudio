@@ -19,7 +19,7 @@ std::string get(const fs::path &p) { std::ifstream in(p,std::ios::binary); retur
 void good(const char *id, const std::string &input, const std::string &expected)
 { auto r = transform(id,b(input)); require(r.outcome == Outcome::Converted,id); require(s(r.output) == expected,id); }
 void bad(const char *id, const Bytes &input)
-{ auto r = transform(id,input); require(r.outcome == Outcome::Failed,id); require(r.output.empty(),"failed conversion exposes no output"); }
+{ auto r = transform(id,input); require(r.outcome == Outcome::Failed,id); require(r.output.empty(),"failed conversion exposes no output"); require(result_message(r.code) != nullptr,"every failure code has a translatable message"); }
 int main(int argc, char **argv)
 {
     auto root = fs::temp_directory_path() / ("bambu-converter-tests-" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
@@ -66,6 +66,18 @@ int main(int argc, char **argv)
         std::array<bool,8> categories{};
         for (const auto &a : adapters) { categories[static_cast<unsigned>(a.category)] = true; require(!a.enabled,"unproven adapter disabled"); require(!a.reason.empty(),"disabled reason explicit"); }
         for (bool covered : categories) require(covered,"all categories visible");
+        for (const auto &a : adapters) {
+            // Registry text is fixed catalogue English: a runtime diagnostic never
+            // joins it, so every reason can be translated as one message.
+            require(!a.name.empty() && !a.validator.empty(),"adapter text present");
+            require(a.reason.find(": ")==std::string::npos,"no diagnostic concatenated into a reason");
+            require(a.detail.empty() || result_message(a.detail) != nullptr,"diagnostic detail is a described code");
+        }
+        require(result_message("converted") != nullptr && result_message("cancelled") != nullptr,"outcome messages");
+        require(result_message("isolated_worker_start_1114") != nullptr && result_message("pdf_system_ui_load_1114") != nullptr,"numbered Windows codes described by prefix");
+        require(result_message("isolated_worker_start_") == nullptr && result_message("isolated_worker_start_x") == nullptr,"prefix needs a Windows number");
+        require(result_message("no_such_code") == nullptr && result_message("") == nullptr,"unknown codes are reported as unknown");
+        require(std::string(state_name(State::RecoveryRequired)) == "Recovery required" && std::string(kind_name(Kind::Utf8)) == "UTF-8 text","state and kind names stay catalogue English");
         std::atomic<bool> cancel{false};
         Executor exec = [](const std::string &a,const Bytes &v,const std::atomic<bool>&){ return transform(a,v); };
         const auto source = root / "input.dat"; put(source,"hello"); const auto output = root / "out.hex";
@@ -105,6 +117,38 @@ int main(int argc, char **argv)
         const auto interrupted = root/"recovery"/"1.json";
         auto j = nlohmann::json::parse(get(interrupted)); j["state"] = static_cast<unsigned>(State::Running); put(interrupted,j.dump());
         { Queue queue(root/"recovery"); require(queue.page(0,1)[0].state == State::RecoveryRequired,"crash not reported success"); }
+        {
+            // A lossy or metadata/encoding-changing conversion is admitted only with
+            // an explicit acknowledgement bound to the exact disclosure shown.
+            const auto find=[&](const char *id){for(const auto &a:adapters)if(a.id==id)return a;throw std::runtime_error(id);};
+            const auto lf=find("text.lf"),pretty=find("json.pretty"),hex=find("hex.encode"),unzip=find("zip.decode");
+            require(requires_acknowledgement(lf)&&requires_acknowledgement(pretty)&&requires_acknowledgement(unzip),"lossy and encoding-changing adapters need acknowledgement");
+            require(!requires_acknowledgement(hex)&&!requires_acknowledgement(std::string("base64.decode")),"byte-preserving adapters need none");
+            for(const auto &a:adapters) if(a.lossy) require(requires_acknowledgement(a),"every lossy adapter needs acknowledgement");
+            require(requires_acknowledgement(std::string("no.such.adapter")),"an unknown adapter is never admitted silently");
+            const auto token=acknowledgement_token(lf);
+            require(token.size()==16&&token.find_first_not_of("0123456789abcdef")==std::string::npos,"token is 16 hex digits");
+            require(token==acknowledgement_token(lf)&&token!=acknowledgement_token(pretty),"token is stable and adapter specific");
+            auto changed=lf;changed.disclosure+=" ";require(acknowledgement_token(changed)!=token,"token follows the disclosure text");
+            put(root/"crlf.txt","a\r\nb\r\n");
+            Queue queue(root/"acknowledged");
+            rejects([&]{queue.enqueue(root/"crlf.txt",root/"lf-none.txt","text.lf");},"unacknowledged lossy admission refused");
+            rejects([&]{queue.enqueue(root/"crlf.txt",root/"lf-wrong.txt","text.lf","",{},acknowledgement_token(pretty));},"acknowledgement of another disclosure refused");
+            rejects([&]{queue.enqueue(source,root/"audio.bin","audio","",{},"");},"placeholder adapters are never admitted");
+            require(queue.count()==0,"refused admissions create no record");
+            queue.enqueue(root/"crlf.txt",root/"lf-ok.txt","text.lf","",{},token);
+            queue.enqueue(root/"crlf.txt",root/"lf-edited.txt","text.lf","",{},token);
+            queue.enqueue(source,root/"plain.hex","hex.encode");
+            require(queue.page(0,1)[0].acknowledgement==token,"acknowledgement is saved with the record");
+            const auto edited=root/"acknowledged"/"2.json";
+            auto record=nlohmann::json::parse(get(edited));record["acknowledgement"]="0000000000000000";put(edited,record.dump());
+            queue.pause(false);while(queue.step(exec,cancel)){}
+            require(queue.page(0,1)[0].state==State::Converted&&get(root/"lf-ok.txt")=="a\nb\n","acknowledged conversion runs");
+            require(queue.page(1,1)[0].state==State::Skipped&&queue.page(1,1)[0].code=="disclosure_changed_since_acknowledgement","stale acknowledgement is skipped");
+            require(!fs::exists(root/"lf-edited.txt"),"a skipped record writes nothing");
+            require(queue.page(2,1)[0].state==State::Converted,"byte-preserving conversion needs no acknowledgement");
+            require(result_message("disclosure_not_acknowledged")!=nullptr&&result_message("disclosure_changed_since_acknowledgement")!=nullptr,"acknowledgement results are described");
+        }
         {
             Queue queue(root/"rejected");queue.record_rejected(root/"missing",root/"unwritten","hex.encode","source_unavailable");
             require(queue.page(0,1)[0].state==State::Skipped&&queue.page(0,1)[0].code=="source_unavailable","rejected admission has durable per-file outcome");

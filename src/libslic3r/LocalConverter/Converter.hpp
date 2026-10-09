@@ -24,6 +24,10 @@ struct Limits {
     static constexpr std::size_t page_size = 100;
     static constexpr std::uint32_t seconds = 30;
 };
+// User-facing text in the registry (name, reason, disclosure, validator) is
+// fixed English that doubles as the message-catalogue source; the application
+// translates it at display time. A runtime diagnostic never joins that text:
+// it travels separately in `detail` as a stable machine code.
 struct Adapter {
     std::string id;
     Category category;
@@ -36,6 +40,10 @@ struct Adapter {
     std::string reason;
     std::string disclosure;
     std::string validator;
+    std::string detail;
+    // Changes metadata or encoding (line endings, whitespace, quoting, names,
+    // timestamps) without losing content. Lossy adapters may also omit content.
+    bool changes_encoding = false;
 };
 struct PackageProof {
     std::filesystem::path installed_directory;
@@ -46,6 +54,14 @@ struct PackageProof {
 // A PATH lookup and a caller-supplied boolean never enable an adapter.
 bool verify_package(const PackageProof &, std::string &reason);
 std::vector<Adapter> catalog(const PackageProof &);
+// A lossy or metadata/encoding-changing adapter converts only after the user
+// explicitly accepts its disclosure. The token (16 hex digits) binds that
+// acceptance to the exact adapter and disclosure text; the queue refuses an
+// admission without the matching token and skips a saved record whose token
+// no longer matches. An unknown adapter id always requires acknowledgement.
+bool requires_acknowledgement(const Adapter &);
+bool requires_acknowledgement(const std::string &adapter_id);
+std::string acknowledgement_token(const Adapter &);
 const char *category_name(Category);
 const char *kind_name(Kind);
 Kind detect(const Bytes &);
@@ -85,6 +101,7 @@ struct Job {
     std::vector<std::uint64_t> additional_sizes;
     std::vector<std::int64_t> additional_modified;
     std::uint64_t cancellation_generation = 0;
+    std::string acknowledgement;
 };
 // One bounded JSON record per item; no vector of all queue paths. Queue roots
 // belong in the application's private local data directory, never in a log.
@@ -95,8 +112,12 @@ public:
     ~Queue();
     Queue(const Queue &) = delete;
     Queue &operator=(const Queue &) = delete;
+    // `acknowledgement` is the adapter's acknowledgement_token when it requires
+    // one; a missing or mismatched token is refused with
+    // disclosure_not_acknowledged and creates no record.
     std::uint64_t enqueue(const std::filesystem::path &, const std::filesystem::path &, const std::string &,
-                          const std::string &options = "", const std::vector<std::filesystem::path> &additional_sources = {});
+                          const std::string &options = "", const std::vector<std::filesystem::path> &additional_sources = {},
+                          const std::string &acknowledgement = "");
     std::uint64_t record_rejected(const std::filesystem::path &, const std::filesystem::path &, const std::string &, const std::string &code);
     std::vector<Job> page(std::uint64_t after, std::size_t count = Limits::page_size) const;
     bool step(const Executor &, const std::atomic<bool> &cancel);
@@ -118,5 +139,9 @@ private:
     void write(const Job &);
 };
 const char *state_name(State);
+// English catalogue source describing a stable result or diagnostic code, or
+// nullptr for a code the converter never produces. Codes that end in a Windows
+// error number (isolated_worker_start_5) share one message for their prefix.
+const char *result_message(const std::string &code);
 
 } // namespace Slic3r::LocalConverter

@@ -157,6 +157,9 @@ src/slic3r/GUI/CameraPopup.cpp
 src/slic3r/GUI/ConnectPrinter.cpp
 src/slic3r/GUI/HMSPanel.cpp
 src/slic3r/GUI/MainFrame.cpp
+src/slic3r/GUI/LocalConverter/LocalConverterPanel.cpp
+src/slic3r/GUI/LocalConverter/LocalConverterCopy.hpp
+src/libslic3r/LocalConverter/Converter.cpp
 src/slic3r/GUI/WorkflowPrintPanel.cpp
 src/slic3r/GUI/MediaPlayCtrl.cpp
 src/slic3r/GUI/MediaFilePanel.cpp
