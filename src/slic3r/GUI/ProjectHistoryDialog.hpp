@@ -14,6 +14,7 @@
 #include <wx/timer.h>
 
 class Button;
+class CollapsibleFilterBar;
 class Label;
 class SearchField;
 class StaticBox;
@@ -61,6 +62,8 @@ private:
     void finish_list(ProjectHistoryListResult result);
     void finish_restore(ProjectHistoryRestoreResult result);
     void populate_versions();
+    // Report search, category, status, device, date and store filters to the collapsible bar.
+    void update_active_filters();
     void update_history_status();
     void update_responsive_layout();
     void update_window_constraints(bool initialize_size);
@@ -159,6 +162,7 @@ private:
     StaticBox              *m_info_card{nullptr};
     StaticBox              *m_failure_card{nullptr};
     StaticBox              *m_list_card{nullptr};
+    CollapsibleFilterBar   *m_filters{nullptr};
     SearchField            *m_search_field{nullptr};
     wxDataViewListCtrl     *m_version_list{nullptr};
     // View-row -> m_versions index for the current (possibly filtered) list.

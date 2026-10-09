@@ -10,6 +10,7 @@
 #include <vector>
 
 class Button;
+class CollapsibleFilterBar;
 class Label;
 class SearchField;
 class TextInput;
@@ -55,6 +56,8 @@ private:
 
     // Re-run date + text filtering and rebuild the list.
     void apply_filters();
+    // Report the search and date range to the collapsible filter bar.
+    void update_active_filters();
     void rebuild_list();
     void add_release_card(const Changelog::FilteredRelease &filtered, wxSizer *into);
     void update_status();
@@ -85,6 +88,7 @@ private:
     // The list renders this many releases before offering "Show all".
     bool m_show_all = false;
 
+    CollapsibleFilterBar *m_filters     = nullptr;
     SearchField      *m_search          = nullptr;
     TextInput        *m_from_field      = nullptr;
     TextInput        *m_to_field        = nullptr;

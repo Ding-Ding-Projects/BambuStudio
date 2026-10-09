@@ -30,7 +30,8 @@ class wxSizer;
 //     is still narrowing the collection ("Active filters (2): Errors ·
 //     Search: abc"). Clicking it expands the bar.
 //
-// GetSectionSizer() stacks header, disclosure line and body; the host adds it
+// GetSectionSizer() stacks header, disclosure line and body (Layout::Stacked)
+// or lines them up in one row for toolbars (Layout::Inline); the host adds it
 // to its own layout once (the host's sizer then owns it).
 //
 // Behaviour (rules in CollapsibleFilterState.hpp):
@@ -48,9 +49,10 @@ class CollapsibleFilterBar : public Button
 {
 public:
     using Purpose = Slic3r::GUI::CollapsibleFilters::Purpose;
+    enum class Layout { Stacked, Inline };
 
     CollapsibleFilterBar(wxWindow *parent, const std::string &surface_id, const wxString &title,
-                         Purpose purpose = Purpose::Narrows);
+                         Purpose purpose = Purpose::Narrows, Layout layout = Layout::Stacked);
 
     // Parent for the collapsible controls, and the sizer they go into.
     wxPanel *GetBody() const { return m_body; }
@@ -65,9 +67,23 @@ public:
     const std::vector<wxString> &GetActiveFilters() const { return m_active; }
 
     bool IsExpanded() const { return m_state.expanded(); }
-    // A user choice: stored, laid out and announced.
-    void SetExpanded(bool expanded);
+    // A user choice: laid out, announced and, unless `remember` is false,
+    // stored. Pass remember=false to reveal the controls for this session
+    // only, for example when a shortcut asks to focus the search field.
+    void SetExpanded(bool expanded, bool remember = true);
     void Toggle() { SetExpanded(!IsExpanded()); }
+
+    // Show or hide the whole section (header, disclosure line and body) when
+    // the host hides the collection it belongs to. The expanded state is kept.
+    void ShowSection(bool show);
+    bool IsSectionShown() const { return m_section_shown; }
+
+    // Labels for SetActiveFilters(). FilterLabel gives "Name: value" with the
+    // value shortened; SearchFilterLabel is empty for a blank query;
+    // ExcludedFilterLabel names a category that is switched off.
+    static wxString FilterLabel(const wxString &name, const wxString &value);
+    static wxString SearchFilterLabel(const wxString &query);
+    static wxString ExcludedFilterLabel(const wxString &what);
 
     // Called after the expanded state changed.
     void SetOnToggled(std::function<void(bool expanded)> cb) { m_on_toggled = std::move(cb); }
@@ -83,6 +99,7 @@ public:
     wxString GetTitle() const { return m_title; }
 
 private:
+    void applyVisibility();
     void applyState(bool user_change);
     void updateDisclosure(bool notify);
     void relayout();
@@ -95,6 +112,7 @@ private:
     Label *                                      m_summary = nullptr;
     wxPanel *                                    m_body    = nullptr;
     wxSizer *                                    m_section = nullptr;
+    bool                                         m_section_shown = true;
     std::function<void(bool)>                    m_on_toggled;
 };
 

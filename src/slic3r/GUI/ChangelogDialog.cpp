@@ -8,6 +8,7 @@
 #include "NotificationManager.hpp"
 #include "Plater.hpp"
 #include "Widgets/Button.hpp"
+#include "Widgets/CollapsibleFilterBar.hpp"
 #include "Widgets/ComboBox.hpp"
 #include "Widgets/Label.hpp"
 #include "Widgets/LinkLabel.hpp"
@@ -499,11 +500,17 @@ void ChangelogDialog::build_ui()
     const wxColour bg   = GetBackgroundColour();
 
     // --- Search -------------------------------------------------------------
+    // The search, date range and its inline error sit in the shared
+    // collapsible filter bar; collapsed, it still names the active filters.
+    // TRN: Header of the collapsible search and filter row of a list.
+    m_filters = new CollapsibleFilterBar(this, "changelog", _L("Search and filters"));
+    wxWindow *body         = m_filters->GetBody();
+    wxSizer  *filter_sizer = m_filters->GetBodySizer();
     // TRN: Placeholder of the changelog search field.
-    m_search = new SearchField(this, _L("Search changes"));
+    m_search = new SearchField(m_filters->GetBody(), _L("Search changes"));
     m_search->SetOnQuery([this](const wxString &) { apply_filters(); });
     m_search->SetOnRegexToggle([this](bool) { apply_filters(); });
-    content->Add(m_search, 0, wxEXPAND | wxBOTTOM, FromDIP(12));
+    filter_sizer->Add(m_search, 0, wxEXPAND | wxBOTTOM, FromDIP(12));
 
     // --- Date range ---------------------------------------------------------
     // The date fields and the preset chips share a line when they fit; the chips
@@ -513,7 +520,7 @@ void ChangelogDialog::build_ui()
     auto *range   = new wxBoxSizer(wxHORIZONTAL);
     auto *presets = new wxBoxSizer(wxHORIZONTAL);
     auto make_date_field = [&](const wxString &name, Bound bound) {
-        auto *field = new TextInput(this, wxEmptyString, wxEmptyString, wxEmptyString, wxDefaultPosition,
+        auto *field = new TextInput(body, wxEmptyString, wxEmptyString, wxEmptyString, wxDefaultPosition,
                                     FromDIP(wxSize(132, 40)), wxTE_PROCESS_ENTER);
         const wxString hint = locale_date_hint();
         field->GetTextCtrl()->SetHint(hint);
@@ -533,14 +540,14 @@ void ChangelogDialog::build_ui()
         field->Bind(wxEVT_TEXT_ENTER, [this, bound](wxCommandEvent &) { on_date_typed(bound); });
         return field;
     };
-    auto *from_label = new Label(this, Label::Body_13, _L("From"));
+    auto *from_label = new Label(body, Label::Body_13, _L("From"));
     from_label->SetBackgroundColour(bg);
     m_from_field = make_date_field(_L("From date"), Bound::From);
-    auto *to_label = new Label(this, Label::Body_13, _L("To"));
+    auto *to_label = new Label(body, Label::Body_13, _L("To"));
     to_label->SetBackgroundColour(bg);
     m_to_field = make_date_field(_L("To date"), Bound::To);
 
-    m_calendar_button = new Button(this, wxEmptyString);
+    m_calendar_button = new Button(body, wxEmptyString);
     m_calendar_button->SetIconButton(Button::IconShape::Circle, FromDIP(40));
     m_calendar_button->SetGlyph(MaterialIcon::Schedule);
     m_calendar_button->SetToolTip(_L("Pick dates on a calendar"));
@@ -548,7 +555,7 @@ void ChangelogDialog::build_ui()
     m_calendar_button->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { open_calendar(); });
 
     auto make_preset = [&](const wxString &text, std::function<Changelog::DateRange()> make) {
-        auto *button = new Button(this, text);
+        auto *button = new Button(body, text);
         button->SetVariant(Button::Variant::Tonal);
         button->SetButtonSize(Button::Size::Small);
         button->Bind(wxEVT_BUTTON, [this, make](wxCommandEvent &) { set_range(make(), true); });
@@ -571,15 +578,16 @@ void ChangelogDialog::build_ui()
     presets->Add(m_preset_all, 0, wxALIGN_CENTER_VERTICAL);
     dates->Add(range, 0, wxALIGN_CENTER_VERTICAL | wxBOTTOM, FromDIP(6));
     dates->Add(presets, 0, wxALIGN_CENTER_VERTICAL | wxBOTTOM, FromDIP(6));
-    content->Add(dates, 0, wxEXPAND);
+    filter_sizer->Add(dates, 0, wxEXPAND);
 
     // Inline validation: what was typed stays in the field; this line says why
     // it is not being applied yet. Hidden while both fields are valid.
-    m_date_error = new Label(this, Label::Body_12, wxEmptyString, LB_AUTO_WRAP | wxST_NO_AUTORESIZE);
+    m_date_error = new Label(body, Label::Body_12, wxEmptyString, LB_AUTO_WRAP | wxST_NO_AUTORESIZE);
     m_date_error->SetMinSize(wxSize(0, -1));
     m_date_error->SetBackgroundColour(bg);
     m_date_error->Hide();
-    content->Add(m_date_error, 0, wxEXPAND | wxTOP, FromDIP(6));
+    filter_sizer->Add(m_date_error, 0, wxEXPAND | wxTOP, FromDIP(6));
+    content->Add(m_filters->GetSectionSizer(), 0, wxEXPAND);
 
     m_status = new Label(this, Label::Body_12, wxEmptyString, LB_AUTO_WRAP | wxST_NO_AUTORESIZE);
     m_status->SetMinSize(wxSize(0, -1));
@@ -624,6 +632,8 @@ void ChangelogDialog::apply_theme()
 {
     const wxColour bg     = GetBackgroundColour();
     const wxColour on_var = StateColor::semantic(MD3::Role::OnSurfaceVariant);
+    if (m_filters != nullptr)
+        m_filters->SyncTheme();
     m_scroll->SetBackgroundColour(bg);
     m_status->SetForegroundColour(on_var);
     m_date_error->SetForegroundColour(StateColor::semantic(MD3::Role::Error));
@@ -636,6 +646,8 @@ void ChangelogDialog::apply_theme()
 void ChangelogDialog::on_dpi_changed(const wxRect &suggested_rect)
 {
     MD3Dialog::on_dpi_changed(suggested_rect);
+    if (m_filters != nullptr)
+        m_filters->Rescale();
     rebuild_list();
     Layout();
 }
@@ -678,6 +690,26 @@ void ChangelogDialog::apply_filters()
     m_show_all = false;
     rebuild_list();
     update_status();
+    update_active_filters();
+}
+
+void ChangelogDialog::update_active_filters()
+{
+    if (m_filters == nullptr)
+        return;
+    std::vector<wxString> active;
+    const wxString query = CollapsibleFilterBar::SearchFilterLabel(m_search->GetValue());
+    if (!query.IsEmpty())
+        active.push_back(query);
+    auto readable = [](const Changelog::CivilDate &date) {
+        return HumanDate::format(wxDateTime(static_cast<wxDateTime::wxDateTime_t>(date.day),
+                                            static_cast<wxDateTime::Month>(date.month - 1), date.year));
+    };
+    if (m_range.from)
+        active.push_back(CollapsibleFilterBar::FilterLabel(_L("From"), readable(*m_range.from)));
+    if (m_range.to)
+        active.push_back(CollapsibleFilterBar::FilterLabel(_L("To"), readable(*m_range.to)));
+    m_filters->SetActiveFilters(active);
 }
 
 void ChangelogDialog::update_status()

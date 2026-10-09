@@ -28,6 +28,7 @@
 #include "NotificationManager.hpp"
 #include "Plater.hpp"
 #include "Widgets/Button.hpp"
+#include "Widgets/CollapsibleFilterBar.hpp"
 #include "Widgets/Label.hpp"
 #include "Widgets/MaterialIcon.hpp"
 #include "Widgets/MD3Dialog.hpp"
@@ -330,8 +331,14 @@ void ProjectHistoryDialog::create_ui()
     root->Add(tabs, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(24));
     m_list_card = new StaticBox(this);
     auto *list_sizer = new wxBoxSizer(wxVERTICAL);
+    // The search and the filter grid sit in the shared collapsible filter bar;
+    // collapsed, it still names every filter that narrows the list.
+    // TRN: Header of the collapsible search and filter row of a list.
+    m_filters = new CollapsibleFilterBar(m_list_card, "project_history", _L("Search and filters"));
+    wxWindow *filter_body  = m_filters->GetBody();
+    wxSizer  *filter_sizer = m_filters->GetBodySizer();
     // TRN: Placeholder of the search field filtering the version list.
-    m_search_field = new SearchField(m_list_card, _L("Search versions"));
+    m_search_field = new SearchField(m_filters->GetBody(), _L("Search versions"));
     m_search_field->SetOnQuery([this](const wxString &) {
         populate_versions();
         update_history_status();
@@ -342,26 +349,27 @@ void ProjectHistoryDialog::create_ui()
         update_history_status();
         update_selection();
     });
-    list_sizer->Add(m_search_field, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(8));
+    filter_sizer->Add(m_search_field, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(8));
     auto *filters = new wxFlexGridSizer(2, 4, FromDIP(6), FromDIP(8));
     filters->AddGrowableCol(1); filters->AddGrowableCol(3);
-    m_category_filter = new wxChoice(m_list_card, wxID_ANY);
+    m_category_filter = new wxChoice(filter_body, wxID_ANY);
     for (const auto &name : {_L("All categories"), _L("Project"), _L("Preferences"), _L("Preset"), _L("Draft"), _L("Printer")}) m_category_filter->Append(name);
     m_category_filter->SetSelection(0);
-    m_status_filter = new wxChoice(m_list_card, wxID_ANY);
+    m_status_filter = new wxChoice(filter_body, wxID_ANY);
     for (const auto &name : {_L("All statuses"), _L("Active"), _L("Unknown"), _L("Resolved")}) m_status_filter->Append(name);
     m_status_filter->SetSelection(0);
-    m_device_filter = new wxTextCtrl(m_list_card, wxID_ANY); m_device_filter->SetHint(_L("Device identifier"));
-    m_store_filter = new wxChoice(m_list_card, wxID_ANY); m_store_filter->Append(_L("Current project")); m_store_filter->SetSelection(0);
-    m_from_filter = new wxTextCtrl(m_list_card, wxID_ANY); m_from_filter->SetHint(_L("From YYYY-MM-DD"));
-    m_to_filter = new wxTextCtrl(m_list_card, wxID_ANY); m_to_filter->SetHint(_L("Through YYYY-MM-DD"));
+    m_device_filter = new wxTextCtrl(filter_body, wxID_ANY); m_device_filter->SetHint(_L("Device identifier"));
+    m_store_filter = new wxChoice(filter_body, wxID_ANY); m_store_filter->Append(_L("Current project")); m_store_filter->SetSelection(0);
+    m_from_filter = new wxTextCtrl(filter_body, wxID_ANY); m_from_filter->SetHint(_L("From YYYY-MM-DD"));
+    m_to_filter = new wxTextCtrl(filter_body, wxID_ANY); m_to_filter->SetHint(_L("Through YYYY-MM-DD"));
     for (auto *control : std::vector<wxWindow*>{m_category_filter, m_status_filter, m_device_filter, m_store_filter, m_from_filter, m_to_filter}) {
         filters->Add(control, 1, wxEXPAND);
         control->Bind(wxEVT_TEXT, [this](wxCommandEvent &) { populate_versions(); update_selection(); });
         control->Bind(wxEVT_CHOICE, [this](wxCommandEvent &) { populate_versions(); update_selection(); });
     }
-    m_submit_button = new Button(m_list_card, _L("Search")); m_submit_button->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { submit_search(); });
-    filters->Add(m_submit_button, 0, wxEXPAND); list_sizer->Add(filters, 0, wxEXPAND | wxALL, FromDIP(8));
+    m_submit_button = new Button(filter_body, _L("Search")); m_submit_button->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { submit_search(); });
+    filters->Add(m_submit_button, 0, wxEXPAND); filter_sizer->Add(filters, 0, wxEXPAND | wxALL, FromDIP(8));
+    list_sizer->Add(m_filters->GetSectionSizer(), 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(8));
     m_search_field->GetTextCtrl()->Bind(wxEVT_KEY_DOWN, [this](wxKeyEvent &event) { if (event.GetKeyCode() == WXK_RETURN || event.GetKeyCode() == WXK_NUMPAD_ENTER) submit_search(); else event.Skip(); });
     m_version_list = new MD3DataViewListCtrl(m_list_card, wxID_ANY, wxDefaultPosition, wxDefaultSize,
                                             wxDV_MULTIPLE | wxBORDER_NONE);
@@ -513,6 +521,8 @@ void ProjectHistoryDialog::apply_theme()
         box->SetBorderWidth(1);
         box->SetCornerRadius(FromDIP(MD3::Metrics::active().radius));
     }
+    if (m_filters != nullptr)
+        m_filters->SyncTheme();
 
     // The recovery banner uses the MD3 error-container roles to read as a
     // problem that needs attention without shouting like a hard error.
@@ -772,8 +782,33 @@ void ProjectHistoryDialog::finish_restore(ProjectHistoryRestoreResult result)
     EndModal(wxID_APPLY);
 }
 
+void ProjectHistoryDialog::update_active_filters()
+{
+    if (m_filters == nullptr)
+        return;
+    std::vector<wxString> active;
+    const wxString query = CollapsibleFilterBar::SearchFilterLabel(m_search_field->GetValue());
+    if (!query.IsEmpty())
+        active.push_back(query);
+    // Index 0 of both choices is the "All ..." entry that filters nothing.
+    for (wxChoice *choice : {m_category_filter, m_status_filter})
+        if (choice->GetSelection() > 0)
+            active.push_back(choice->GetStringSelection());
+    if (!m_device_filter->GetValue().IsEmpty())
+        active.push_back(CollapsibleFilterBar::FilterLabel(_L("Device identifier"), m_device_filter->GetValue()));
+    if (!m_from_filter->GetValue().IsEmpty())
+        active.push_back(CollapsibleFilterBar::FilterLabel(_L("From"), m_from_filter->GetValue()));
+    if (!m_to_filter->GetValue().IsEmpty())
+        active.push_back(CollapsibleFilterBar::FilterLabel(_L("To"), m_to_filter->GetValue()));
+    // The git graph shows a single store at a time.
+    if (m_view == "graph" && !m_store_filter->GetStringSelection().IsEmpty())
+        active.push_back(m_store_filter->GetStringSelection());
+    m_filters->SetActiveFilters(active);
+}
+
 void ProjectHistoryDialog::populate_versions()
 {
+    update_active_filters();
     if(m_view=="searches"){populate_searches();return;}
     const int selected=m_version_list->GetSelectedRow();
     if(selected>=0 && static_cast<std::size_t>(selected)<m_filtered_rows.size()){ const auto index = m_filtered_rows[selected]; m_selected_id=m_versions[index].commit_id; m_selected_store=m_origins[index].category+":"+m_origins[index].identity.string()+":"+m_origins[index].device; }
@@ -1633,6 +1668,8 @@ void ProjectHistoryDialog::compare_selection()
 void ProjectHistoryDialog::on_dpi_changed(const wxRect &suggested_rect)
 {
     (void) suggested_rect;
+    if (m_filters != nullptr)
+        m_filters->Rescale();
     for (Button *button : {m_refresh_button, m_load_all_button, m_retry_failures_button, m_restore_button, m_close_button,
                            m_select_visible_button, m_select_all_button, m_invert_button, m_bulk_export_button, m_label_button})
         button->Rescale();

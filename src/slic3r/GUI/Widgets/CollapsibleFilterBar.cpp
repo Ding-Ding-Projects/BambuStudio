@@ -129,7 +129,7 @@ private:
 } // namespace
 
 CollapsibleFilterBar::CollapsibleFilterBar(wxWindow *parent, const std::string &surface_id, const wxString &title,
-                                           Purpose purpose)
+                                           Purpose purpose, Layout layout)
     : Button(parent, title)
     , m_title(title)
     , m_state(surface_id, purpose)
@@ -161,11 +161,21 @@ CollapsibleFilterBar::CollapsibleFilterBar(wxWindow *parent, const std::string &
     m_body->SetName(title);
     m_body->SetSizer(new wxBoxSizer(wxVERTICAL));
 
-    auto *section = new wxBoxSizer(wxVERTICAL);
-    section->Add(this, 0, wxALIGN_LEFT);
-    section->Add(m_summary, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(8));
-    section->Add(m_body, 0, wxEXPAND | wxTOP, FromDIP(4));
-    m_section = section;
+    if (layout == Layout::Inline) {
+        // Toolbar form: header, then either the disclosure line (collapsed)
+        // or the controls (expanded) on the same row.
+        auto *section = new wxBoxSizer(wxHORIZONTAL);
+        section->Add(this, 0, wxALIGN_CENTER_VERTICAL);
+        section->Add(m_summary, 1, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(8));
+        section->Add(m_body, 1, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(8));
+        m_section = section;
+    } else {
+        auto *section = new wxBoxSizer(wxVERTICAL);
+        section->Add(this, 0, wxALIGN_LEFT);
+        section->Add(m_summary, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(8));
+        section->Add(m_body, 0, wxEXPAND | wxTOP, FromDIP(4));
+        m_section = section;
+    }
 
     // Handled here and not propagated: a host binding wxEVT_BUTTON on itself
     // must not mistake the disclosure header for one of its own actions.
@@ -192,13 +202,31 @@ void CollapsibleFilterBar::SetActiveFilters(const std::vector<wxString> &labels)
     relayout();
 }
 
-void CollapsibleFilterBar::SetExpanded(bool expanded)
+void CollapsibleFilterBar::SetExpanded(bool expanded, bool remember)
 {
-    if (!m_state.set_expanded(expanded, config_writer()))
+    if (!m_state.set_expanded(expanded, remember ? config_writer() : CF::Section::Write()))
         return;
     applyState(/*user_change=*/true);
     if (m_on_toggled)
         m_on_toggled(expanded);
+}
+
+void CollapsibleFilterBar::ShowSection(bool show)
+{
+    if (show == m_section_shown)
+        return;
+    m_section_shown = show;
+    if (!show && focus_is_inside(m_body))
+        GetParent()->SetFocus();
+    applyVisibility();
+}
+
+void CollapsibleFilterBar::applyVisibility()
+{
+    const bool expanded = m_state.expanded();
+    Show(m_section_shown);
+    m_body->Show(m_section_shown && expanded);
+    m_summary->Show(m_section_shown && !m_disclosure_text.IsEmpty());
 }
 
 void CollapsibleFilterBar::applyState(bool user_change)
@@ -207,8 +235,8 @@ void CollapsibleFilterBar::applyState(bool user_change)
     SetGlyph(expanded ? MaterialIcon::ExpandLess : MaterialIcon::ExpandMore, kChevronPx);
     if (!expanded && focus_is_inside(m_body))
         SetFocus();
-    m_body->Show(expanded);
     updateDisclosure(user_change);
+    applyVisibility();
 #if wxUSE_ACCESSIBILITY
     if (user_change)
         wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_STATECHANGE, this, wxOBJID_CLIENT, wxACC_SELF);
@@ -256,13 +284,39 @@ void CollapsibleFilterBar::updateDisclosure(bool notify)
     m_disclosure_text = text;
     if (text_changed)
         m_summary->SetLabel(text);
-    m_summary->Show(disclosure.visible);
+    m_summary->Show(m_section_shown && disclosure.visible);
 #if wxUSE_ACCESSIBILITY
     if (notify && text_changed)
         wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_DESCRIPTIONCHANGE, this, wxOBJID_CLIENT, wxACC_SELF);
 #else
     (void) notify;
 #endif
+}
+
+wxString CollapsibleFilterBar::FilterLabel(const wxString &name, const wxString &value)
+{
+    constexpr size_t kMaxValue = 32;
+    wxString shown = value;
+    shown.Trim(true).Trim(false);
+    if (shown.length() > kMaxValue)
+        shown = shown.Left(kMaxValue - 1) + wxString::FromUTF8("\xE2\x80\xA6");
+    // TRN: One active filter under a collapsed filter row: %1$s names the filter, %2$s is its value.
+    return wxString::Format(_L("%s: %s"), name, shown);
+}
+
+wxString CollapsibleFilterBar::SearchFilterLabel(const wxString &query)
+{
+    wxString trimmed = query;
+    trimmed.Trim(true).Trim(false);
+    if (trimmed.IsEmpty())
+        return wxString();
+    return FilterLabel(_L("Search"), trimmed);
+}
+
+wxString CollapsibleFilterBar::ExcludedFilterLabel(const wxString &what)
+{
+    // TRN: One active filter under a collapsed filter row: a category that is switched off.
+    return wxString::Format(_L("Hiding %s"), what);
 }
 
 wxString CollapsibleFilterBar::AccessibleName() const
