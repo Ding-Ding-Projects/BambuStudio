@@ -185,7 +185,10 @@ test('the helper process never opens a console window', () => {
 test('the update runs once at a time on a worker thread and reports back on the UI thread', () => {
   const start = bodyOf(guiApp, 'void GUI_App::start_auto_update(');
   assert.match(start, /m_auto_update_running\.compare_exchange_strong\(/, 'an atomic flag lets one update run at a time');
-  assert.match(start, /Slic3r::create_thread\(\[this, tag, by_user, newer_by_time, update_exe\]/, 'the wait happens off the UI thread');
+  assert.match(start, /Slic3r::create_thread\(\[this, tag = std::string\(tag\), by_user, newer_by_time, update_exe\]\(\) mutable \{/, 'the wait happens off the UI thread');
+  // The worker names the staged version when no tag was known, so it owns a writable copy of the
+  // tag: a plain copy of the const reference parameter is const even in a mutable lambda (MSVC C2678).
+  assert.doesNotMatch(start, /create_thread\(\[this, tag,/, 'a plain copy capture of the const tag cannot be assigned');
   assert.match(start, /CallAfter\(\[this, tag, by_user, updated, newer_by_time\]/, 'the outcome is handled on the UI thread');
   assert.match(start, /const bool reported = m_auto_update_failed_tag == tag;/, 'a failure is remembered per release');
   assert.match(

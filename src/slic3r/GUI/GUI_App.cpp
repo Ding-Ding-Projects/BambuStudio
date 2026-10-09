@@ -6624,7 +6624,8 @@ void GUI_App::start_auto_update(const std::string &tag, const std::string &name,
         BOOST_LOG_TRIVIAL(info) << "auto update: updating to the newest version in the feed through " << boost::nowide::narrow(update_exe.wstring());
     else
         BOOST_LOG_TRIVIAL(info) << "auto update: updating to " << tag << " (" << name << ") through " << boost::nowide::narrow(update_exe.wstring());
-    m_auto_update_thread = Slic3r::create_thread([this, tag, by_user, newer_by_time, update_exe]() mutable {
+    // `tag` is a const reference, so a plain copy capture would be const even in a mutable lambda.
+    m_auto_update_thread = Slic3r::create_thread([this, tag = std::string(tag), by_user, newer_by_time, update_exe]() mutable {
         bool updated = false;
         try {
             updated = run_squirrel_update(update_exe, m_auto_update_cancel);
