@@ -34,7 +34,16 @@ public:
            const wxPoint &pos      = wxDefaultPosition,
            const wxSize & size     = wxDefaultSize);
 
-    ~Slider() override { m_halo_motion.Stop(); }
+    // ~wxWindowMSW destroys the window after this class is gone. ::DestroyWindow
+    // sends a visible child WM_SHOWWINDOW(FALSE) and releases a held mouse
+    // capture; wx delivers those as wxEVT_SHOW and wxEVT_MOUSE_CAPTURE_LOST.
+    // Unbind both first so neither can reach settleHalo() on a destroyed Slider.
+    ~Slider() override
+    {
+        Unbind(wxEVT_SHOW, &Slider::onShow, this);
+        Unbind(wxEVT_MOUSE_CAPTURE_LOST, &Slider::onCaptureLost, this);
+        m_halo_motion.Stop();
+    }
 
     bool Create(wxWindow *     parent,
                 int            value    = 0,
@@ -84,6 +93,8 @@ private:
     void onWheel(wxMouseEvent &evt);
     void onKey(wxKeyEvent &evt);
     void onFocus(wxFocusEvent &evt);
+    void onShow(wxShowEvent &e);
+    void onCaptureLost(wxMouseCaptureLostEvent &e);
     void emphasizeHalo();
     void settleHalo();
 

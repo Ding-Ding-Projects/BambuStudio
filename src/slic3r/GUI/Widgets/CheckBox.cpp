@@ -33,7 +33,7 @@ CheckBox::CheckBox(wxWindow *parent, int id)
 		SetBackgroundColour(m_seeded_background);
 	}
 	Bind(wxEVT_TOGGLEBUTTON, [this](auto& e) { m_half_checked = false; emphasizeSelection(); e.Skip(); });
-    Bind(wxEVT_SHOW, [this](wxShowEvent &e) { if (!e.IsShown()) settleSelection(); e.Skip(); });
+    Bind(wxEVT_SHOW, &CheckBox::onShow, this);
 	// The glyph is rasterised into the button's bitmaps, so no repaint can recolor
 	// it: GUI_App::UpdateDarkUI only remaps a window's fg/bg colours (and only for
 	// the wxButton subclasses it special-cases, and this is a wxBitmapToggleButton
@@ -68,6 +68,16 @@ void CheckBox::SetHalfChecked(bool value)
     if (m_half_checked == value) return;
 	m_half_checked = value;
 	emphasizeSelection();
+}
+
+void CheckBox::onShow(wxShowEvent &e)
+{
+    e.Skip();
+    // A window that is being deleted gets its hide from inside ::DestroyWindow;
+    // there is nothing left to settle by then.
+    if (e.IsShown() || IsBeingDeleted())
+        return;
+    settleSelection();
 }
 
 void CheckBox::settleSelection()

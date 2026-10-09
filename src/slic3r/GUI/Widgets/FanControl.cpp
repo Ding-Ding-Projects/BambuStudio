@@ -199,9 +199,10 @@ void FanMotionView::Notify()
 
 void FanMotionView::OnShow(wxShowEvent& event)
 {
+    event.Skip();
+    if (IsBeingDeleted()) return;
     if (event.IsShown()) UpdateTimer();
     else Stop();
-    event.Skip();
 }
 
 void FanMotionView::OnPaint(wxPaintEvent&)

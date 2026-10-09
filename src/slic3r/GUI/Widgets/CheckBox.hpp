@@ -17,7 +17,15 @@ class CheckBox : public wxBitmapToggleButton
 {
 public:
 	CheckBox(wxWindow * parent, int id = wxID_ANY);
-    ~CheckBox() override { m_selection_motion.Stop(); }
+    // ~wxWindowMSW destroys the window after this class is gone, and
+    // ::DestroyWindow sends a visible child WM_SHOWWINDOW(FALSE), which wx
+    // delivers as wxEVT_SHOW. Unbind first so that hide can never reach
+    // settleSelection()/update() on a destroyed CheckBox.
+    ~CheckBox() override
+    {
+        Unbind(wxEVT_SHOW, &CheckBox::onShow, this);
+        m_selection_motion.Stop();
+    }
 
 public:
 	void SetValue(bool value) override;
@@ -70,6 +78,7 @@ protected:
 
 private:
 	void update();
+    void onShow(wxShowEvent &e);
     void emphasizeSelection();
     void settleSelection();
 

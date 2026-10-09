@@ -27,7 +27,14 @@ class FanMotionView final : public wxWindow, private wxTimer
 {
 public:
     FanMotionView(wxWindow* parent, bool auxiliary, ::Slider* slider);
-    ~FanMotionView() override { Stop(); }
+    // The wxTimer base is destroyed before ~wxWindowMSW runs ::DestroyWindow,
+    // which sends the visible child a hide. Unbind first so OnShow() never
+    // stops a destroyed timer.
+    ~FanMotionView() override
+    {
+        wxWindow::Unbind(wxEVT_SHOW, &FanMotionView::OnShow, this);
+        Stop();
+    }
     void SetTelemetry(int pwm);
     void SetCommandPending(int percent);
     void SetSlider(::Slider* slider);
