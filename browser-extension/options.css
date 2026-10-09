@@ -92,6 +92,7 @@ h2 { margin: 0 0 12px; font-size: 18px; font-weight: 600; }
   font-size: 0.92em;
   font-weight: 400;
 }
+button .secondary { color: inherit; opacity: 0.86; }
 
 .help { margin: 4px 0 12px; color: var(--md-on-surface-variant); font-size: 14px; }
 .error { margin: 4px 0 12px; color: var(--md-error); font-weight: 600; }
@@ -122,9 +123,9 @@ button:disabled { opacity: 0.5; cursor: default; box-shadow: none; }
   outline-offset: 2px;
 }
 
-.facts { display: grid; grid-template-columns: max-content 1fr; gap: 4px 16px; margin: 12px 0 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; align-items: baseline; gap: 4px 16px; margin: 12px 0 0; }
 .facts dt { color: var(--md-on-surface-variant); }
-.facts dd { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; min-width: 0; }
+.facts dd { margin: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; min-width: 0; }
 code { font-family: "Cascadia Mono", Consolas, monospace; font-size: 13px; overflow-wrap: anywhere; }
 
 .toggle-row, .check {
@@ -207,9 +208,12 @@ textarea[aria-invalid="true"] { border-color: var(--md-error); }
   vertical-align: top;
   padding: 8px;
   border-bottom: 1px solid var(--md-outline-variant);
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
+.recent .when { white-space: nowrap; }
+.recent .file { overflow-wrap: anywhere; }
 .recent th { color: var(--md-on-surface-variant); font-weight: 600; font-size: 13px; }
+.recent .outcome { display: block; }
 .recent .detail { display: block; color: var(--md-on-surface-variant); font-size: 13px; }
 .recent .origin { display: block; color: var(--md-on-surface-variant); font-size: 13px; }
 .empty { color: var(--md-on-surface-variant); font-style: italic; }
@@ -223,6 +227,7 @@ textarea[aria-invalid="true"] { border-color: var(--md-error); }
   .recent, .recent tbody, .recent tr, .recent td { display: block; width: 100%; }
   .recent tr { border-bottom: 1px solid var(--md-outline-variant); padding: 8px 0; }
   .recent td { border: 0; padding: 2px 0; }
+  .recent .when { white-space: normal; }
   .recent td::before {
     content: attr(data-label);
     display: block;

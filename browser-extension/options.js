@@ -83,31 +83,31 @@ function renderLog(t) {
   };
   $('recent').tBodies[0].replaceChildren(...rows.map((row) => {
     const tr = document.createElement('tr');
-    const cell = (label) => {
+    const cell = (label, className) => {
       const td = document.createElement('td');
       td.dataset.label = label;
+      if (className) td.className = className;
       tr.append(td);
       return td;
     };
+    // One line per language, each tagged with its own language.
+    const lines = (parts, className) => [parts.primary, parts.secondary].filter(Boolean).map((text, index) => {
+      const span = document.createElement('span');
+      span.className = className;
+      span.textContent = text;
+      const lang = index === 0 ? parts.primaryLang : parts.secondaryLang;
+      if (lang !== t.htmlLang) span.lang = lang;
+      return span;
+    });
     const time = document.createElement('time');
     time.dateTime = row.dateTime;
     time.textContent = row.time;
-    cell(labels.time).append(time);
-    cell(labels.file).textContent = row.file;
+    cell(labels.time, 'when').append(time);
+    cell(labels.file, 'file').textContent = row.file;
     cell(labels.site).textContent = row.site;
     const outcomeCell = cell(labels.outcome);
-    const outcome = document.createElement('span');
-    outcome.textContent = row.outcome.secondary ? `${row.outcome.primary} / ${row.outcome.secondary}` : row.outcome.primary;
-    const detail = document.createElement('span');
-    detail.className = 'detail';
-    detail.textContent = row.detail.secondary ? `${row.detail.primary} ${row.detail.secondary}` : row.detail.primary;
-    outcomeCell.append(outcome, detail);
-    if (row.fromLink) {
-      const origin = document.createElement('span');
-      origin.className = 'origin';
-      origin.textContent = t.text('originLink');
-      outcomeCell.append(origin);
-    }
+    outcomeCell.append(...lines(row.outcome, 'outcome'), ...lines(row.detail, 'detail'));
+    if (row.fromLink) outcomeCell.append(...lines(t.parts('originLink'), 'origin'));
     return tr;
   }));
 }

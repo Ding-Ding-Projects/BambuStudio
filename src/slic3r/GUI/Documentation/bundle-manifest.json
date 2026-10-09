@@ -668,6 +668,21 @@
       "sha256": "ff9300100b7cccd427675882bba6181a29375f807c4bc5938afd15af5b6fe436"
     },
     {
+      "route": "downloads/README.md",
+      "title": "Downloads",
+      "sha256": "49d15d21e1ecdcd3e3da46e74c2159dd06f543a43999e07ec084c757a0330872"
+    },
+    {
+      "route": "downloads/browser-download-capture.md",
+      "title": "Browser download capture",
+      "sha256": "767244288e7f2b4781996dc7f5936b6107acc9fd9c983c0d1f0ababe7c184369"
+    },
+    {
+      "route": "downloads/browser-download-capture.yue_HK.md",
+      "title": "瀏覽器下載接手",
+      "sha256": "bde457271c6c70259ae44dda70cf46d732b0ddd1c6d85b0efa594db354889fe9"
+    },
+    {
       "route": "exports/README.md",
       "title": "Export safety and portable formats",
       "sha256": "0d57339634e1b41abc341e39f64187e9e921f6a1fa4eefa8380a151361398d31"
@@ -1850,7 +1865,7 @@
       "bytes": 1979
     }
   ],
-  "bundle_sha256": "83f73beaf446ccb7aa0e07b95fb5c875fff6514846b64ea38be78a6e9c61515c",
+  "bundle_sha256": "d4576b03c9dfa449fb44c2e7dfa954cd5398c0e7f27e72a8dac9510b7527f498",
   "unavailable_references": [
     {
       "source": "api/README.md",
