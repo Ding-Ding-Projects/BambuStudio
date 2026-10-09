@@ -41,7 +41,6 @@ ICONS = (
     "send",
     "upload_file",
     "view_in_ar",
-    "wifi",
 )
 
 
