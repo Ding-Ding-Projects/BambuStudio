@@ -69,6 +69,31 @@ export function validDropCode(value) {
   return typeof value === 'string' && /^\d{4,12}$/.test(value);
 }
 
+// DROP_PUBLIC_URL: the address people open when the service sits behind a
+// reverse proxy or has a fixed name. Bambu Studio builds invite links as
+// `<publicUrl>/#code=<drop code>`, so the URL is an http or https address
+// with a host and nothing that could carry a secret or change the page:
+// no user name or password, no query and no fragment. The answer has no
+// trailing slash: https://drop.example.org/ becomes https://drop.example.org.
+export function normalizePublicUrl(raw) {
+  const text = String(raw ?? '').trim();
+  const problem = 'DROP_PUBLIC_URL must be an http:// or https:// address without a user name, password, query or fragment, for example http://192.0.2.20:8833';
+  const parts = /^(https?):\/\/([^/\\]*)(.*)$/iu.exec(text);
+  if (!parts || text.length > 2048 || /[\s\u0000-\u001f\u007f]/u.test(text) || /[?#@\\]/u.test(text) || parts[2] === '') {
+    throw new ConfigError(problem);
+  }
+  let url;
+  try {
+    url = new URL(text);
+  } catch {
+    throw new ConfigError(problem);
+  }
+  if ((url.protocol !== 'http:' && url.protocol !== 'https:') || !url.hostname || url.username !== '' || url.password !== '') {
+    throw new ConfigError(problem);
+  }
+  return url.href.replace(/\/+$/u, '');
+}
+
 export function readConfig(env = process.env) {
   const stationName = present(env.DROP_STATION_NAME) ? cleanStationName(env.DROP_STATION_NAME) : DEFAULTS.stationName;
   const maxBytes = wholeNumber(env, 'DROP_MAX_BYTES', DEFAULTS.maxBytes);
@@ -94,6 +119,8 @@ export function readConfig(env = process.env) {
     if (!validDropCode(fixedCode)) throw new ConfigError('DROP_CODE must be 4 to 12 digits.');
   }
 
+  const publicUrl = present(env.DROP_PUBLIC_URL) ? normalizePublicUrl(env.DROP_PUBLIC_URL) : null;
+
   return Object.freeze({
     dataDir: present(env.DROP_DATA_DIR) ? env.DROP_DATA_DIR.trim() : DEFAULTS.dataDir,
     stationName: stationName || DEFAULTS.stationName,
@@ -103,5 +130,6 @@ export function readConfig(env = process.env) {
     queueMaxBytes,
     stationKey,
     fixedCode,
+    publicUrl,
   });
 }

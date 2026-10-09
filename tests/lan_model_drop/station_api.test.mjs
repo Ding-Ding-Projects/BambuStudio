@@ -90,8 +90,32 @@ test('status reports the protocol, station and drop box', async (t) => {
     queuedBytes: 300 + OBJ.length,
     maxBytes: 5000,
     ttlHours: 6,
+    publicUrl: null,
   });
   assert.match(response.json.dropCode, /^\d{6}$/);
+});
+
+test('status reports DROP_PUBLIC_URL as publicUrl, without a trailing slash', async (t) => {
+  const cases = [
+    ['https://drop.example.org', 'https://drop.example.org'],
+    ['https://drop.example.org/', 'https://drop.example.org'],
+    ['http://192.0.2.20:8833/', 'http://192.0.2.20:8833'],
+    ['  HTTP://Workshop-PC.local:8833/drop/  ', 'http://workshop-pc.local:8833/drop'],
+    ['https://drop.example.org:443/', 'https://drop.example.org'],
+  ];
+  for (const [configured, expected] of cases) {
+    const service = await startDrop(t, { env: { DROP_PUBLIC_URL: configured } });
+    const response = await station(service.port, service.key, 'GET', '/api/station/status');
+    assert.equal(response.status, 200);
+    assert.equal(response.json.publicUrl, expected, configured);
+    // The invite link the station builds from it reaches the sender page.
+    const link = new URL(`${response.json.publicUrl}/#code=${service.code}`);
+    assert.equal(link.hash, `#code=${service.code}`);
+    assert.ok(link.pathname.endsWith('/'), link.href);
+    await service.close();
+  }
+  const unset = await startDrop(t, { env: { DROP_PUBLIC_URL: '' } });
+  assert.equal((await station(unset.port, unset.key, 'GET', '/api/station/status')).json.publicUrl, null);
 });
 
 test('the inbox lists items oldest first with exactly the protocol fields', async (t) => {

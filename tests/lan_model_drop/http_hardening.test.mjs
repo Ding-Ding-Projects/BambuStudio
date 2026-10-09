@@ -2,13 +2,14 @@
 // every response, time-limited requests, the running size check on a
 // streamed body, and configuration validation.
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import net from 'node:net';
 import path from 'node:path';
 import { Readable } from 'node:stream';
 import test from 'node:test';
 import {
-  ConfigError, drop, OBJ, readConfig, receiveBody, request, SECURITY_HEADERS, startDrop, station, tempDir,
+  ConfigError, drop, dropRoot, OBJ, readConfig, receiveBody, request, SECURITY_HEADERS, startDrop, station, tempDir,
 } from './harness.mjs';
 
 function assertSecurityHeaders(response, label) {
@@ -155,8 +156,61 @@ test('invalid settings stop the service with a message instead of being guessed'
     queueMaxBytes: 2147483648,
     stationKey: null,
     fixedCode: null,
+    publicUrl: null,
   });
   // Empty values, as compose passes unset variables, mean the default.
   assert.deepEqual({ ...readConfig({ DROP_STATION_KEY: '', DROP_CODE: '', DROP_STATION_NAME: ' ' }) }, { ...defaults });
   assert.equal(readConfig({ DROP_STATION_NAME: 'Lab\u0007 PC' }).stationName, 'Lab PC');
+});
+
+test('DROP_PUBLIC_URL must be an http or https address without credentials, query or fragment', () => {
+  const refused = [
+    'drop.example.org',
+    '192.0.2.20:8833',
+    'ftp://drop.example.org/',
+    'file:///etc/passwd',
+    'javascript:alert(1)',
+    'http://',
+    'http:///path',
+    'http:drop.example.org',
+    'https://user:secret@drop.example.org/',
+    'https://user@drop.example.org/',
+    'https://@drop.example.org/',
+    'https://drop.example.org/?code=1',
+    'https://drop.example.org/?',
+    'https://drop.example.org/#code=123456',
+    'https://drop.example.org/#',
+    'https://drop example.org/',
+    'https://drop.example.org/\\evil',
+    'https://drop.example.org/a\nb',
+    `https://drop.example.org/${'a'.repeat(2100)}`,
+  ];
+  for (const value of refused) {
+    assert.throws(() => readConfig({ DROP_PUBLIC_URL: value }), (error) => error instanceof ConfigError
+      && /DROP_PUBLIC_URL/.test(error.message) && !error.message.includes('secret'), JSON.stringify(value));
+  }
+  assert.equal(readConfig({ DROP_PUBLIC_URL: 'https://drop.example.org/models/' }).publicUrl, 'https://drop.example.org/models');
+  assert.equal(readConfig({ DROP_PUBLIC_URL: 'http://[fd00::20]:8833' }).publicUrl, 'http://[fd00::20]:8833');
+  assert.equal(readConfig({ DROP_PUBLIC_URL: '   ' }).publicUrl, null);
+});
+
+test('the service refuses to start with an invalid DROP_PUBLIC_URL', (t) => {
+  const dataDir = path.join(tempDir(t), 'never-created');
+  const result = spawnSync(process.execPath, [path.join(dropRoot, 'server', 'main.mjs')], {
+    env: { ...process.env, DROP_DATA_DIR: dataDir, DROP_PUBLIC_URL: 'https://drop.example.org/?code=1' },
+    encoding: 'utf8',
+    timeout: 10000,
+  });
+  assert.equal(result.status, 2, result.stderr);
+  assert.equal(result.stdout, '');
+  assert.match(result.stderr, /^lan-model-drop: DROP_PUBLIC_URL must be an http:\/\/ or https:\/\/ address/);
+  assert.equal(fs.existsSync(dataDir), false, 'nothing is created before the settings are valid');
+});
+
+test('a request target that looks like another host stays a path here', async (t) => {
+  const service = await startDrop(t);
+  for (const target of ['//evil.example/', '//evil.example/api/station/status', '///']) {
+    const response = await request(service.port, { path: target });
+    assert.equal(response.status, 404, target);
+  }
 });

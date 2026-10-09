@@ -293,6 +293,7 @@ export function createDropService(config, options = {}) {
         queuedBytes: bytes,
         maxBytes: config.maxBytes,
         ttlHours: config.ttlHours,
+        publicUrl: config.publicUrl ?? null,
       });
     }
     if (route === 'inbox') {
@@ -366,7 +367,11 @@ export function createDropService(config, options = {}) {
     let pathname;
     try {
       if (!req.url.startsWith('/')) throw new Error('not an origin-form request target');
-      pathname = new URL(req.url, 'http://drop.invalid').pathname;
+      // Joined as text, so a target such as //host/path stays a path on
+      // this service instead of naming another host.
+      const target = new URL(`http://drop.invalid${req.url}`);
+      if (target.host !== 'drop.invalid') throw new Error('not a path on this service');
+      pathname = target.pathname;
     } catch {
       return refuse(req, res, 400, 'bad_request');
     }
