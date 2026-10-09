@@ -348,9 +348,9 @@ h2 {
 .file-row[data-status="rejected"] .file-state { color: var(--md-error); font-weight: 600; }
 .file-row[data-status="sent"] .file-state { color: var(--md-primary); font-weight: 600; }
 
-/* ProgressBar: surface-container-highest track, primary fill. */
+/* ProgressBar: 8 px surface-container-highest track, radius 6, primary fill. */
 .progress {
-  height: 6px;
+  height: 8px;
   margin-top: 8px;
   background: var(--md-sc-highest);
   border-radius: 6px;
@@ -382,6 +382,10 @@ h2 {
 .live[data-tone="error"] .secondary { color: inherit; }
 
 /* ------------------------------------------------------------ info cards */
+
+/* The guidance cards stack in their own column, so a long form never
+   stretches them apart. */
+.side { display: grid; gap: 16px; align-content: start; min-width: 0; }
 
 .steps { margin: 0; padding: 0; list-style: none; display: grid; gap: 12px; counter-reset: step; }
 .steps li {
@@ -440,7 +444,7 @@ h2 {
     padding: 8px 24px 32px;
     gap: 24px;
   }
-  main > form { grid-row: span 2; }
+  .side { gap: 24px; }
   .card { padding: 24px; }
   .drop-zone { padding: 28px 24px; }
   .actions .button.filled { flex: 0 0 auto; }

@@ -26,7 +26,7 @@
       </div>
     </div>
     <div class="language" role="group" aria-labelledby="language-label">
-      <span id="language-label" class="visually-hidden">Language</span>
+      <span id="language-label" class="visually-hidden" data-i18n="languageLabel">Language</span>
       <div class="segmented">
         <button type="button" data-mode="en" lang="en" aria-pressed="true">English</button>
         <button type="button" data-mode="yue_HK" lang="yue-HK" aria-pressed="false">粵語</button>
@@ -43,11 +43,11 @@
         <label for="code" data-i18n="codeLabel">Drop code</label>
         <div class="input-wrap">
           <span data-icon aria-hidden="true">pin</span>
-          <input id="code" name="code" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="12"
+          <input id="code" name="code" type="text" inputmode="numeric" maxlength="16"
                  autocomplete="off" autocapitalize="off" spellcheck="false" required
                  aria-describedby="code-help code-error">
         </div>
-        <p id="code-help" class="supporting" data-i18n="codeHelp">Shown in Bambu Studio on the computer, in Preferences, LAN model drop.</p>
+        <p id="code-help" class="supporting" data-i18n="codeHelp">Filled in for you when you open an invite link or scan its QR code. Otherwise type the code shown in Bambu Studio on the computer.</p>
         <p id="code-error" class="supporting error" hidden></p>
       </div>
 
@@ -67,6 +67,7 @@
         <button type="button" id="choose" class="button tonal" aria-describedby="drop-hint">
           <span data-icon aria-hidden="true">upload_file</span><span data-i18n="chooseFiles">Choose models</span>
         </button>
+        <!-- No accept filter: phones grey out model files whose type they do not know. -->
         <input type="file" id="files" multiple hidden>
       </div>
 
@@ -85,19 +86,21 @@
       <p id="live" class="live" role="status" aria-live="polite" aria-atomic="true"></p>
     </form>
 
-    <section class="card" aria-labelledby="how-heading">
-      <h2 id="how-heading" class="card-title"><span data-icon aria-hidden="true">info</span><span data-i18n="howHeading">How it works</span></h2>
-      <ol class="steps">
-        <li><span data-i18n="howStep1">On the computer, open Bambu Studio, Preferences, LAN model drop, and read the drop code.</span></li>
-        <li><span data-i18n="howStep2">Type the code here, choose your models and send them.</span></li>
-        <li><span data-i18n="howStep3">Bambu Studio asks the person at the computer to open or discard each model. Nothing is sliced or printed automatically.</span></li>
-      </ol>
-    </section>
+    <div class="side">
+      <section class="card" aria-labelledby="how-heading">
+        <h2 id="how-heading" class="card-title"><span data-icon aria-hidden="true">info</span><span data-i18n="howHeading">How it works</span></h2>
+        <ol class="steps">
+          <li><span data-i18n="howStep1">The person at the computer shares an invite link or QR code from Bambu Studio (File, LAN model drop). Open it on this device, or type the drop code they read out.</span></li>
+          <li><span data-i18n="howStep2">Choose your models and send them.</span></li>
+          <li><span data-i18n="howStep3">Bambu Studio asks the person at the computer to open or discard each model. Nothing is sliced or printed automatically.</span></li>
+        </ol>
+      </section>
 
-    <section class="card" aria-labelledby="privacy-heading">
-      <h2 id="privacy-heading" class="card-title"><span data-icon aria-hidden="true">lock</span><span data-i18n="privacyHeading">Privacy</span></h2>
-      <p class="body" id="privacy-text">Models go only to this drop box on your local network.</p>
-    </section>
+      <section class="card" aria-labelledby="privacy-heading">
+        <h2 id="privacy-heading" class="card-title"><span data-icon aria-hidden="true">lock</span><span data-i18n="privacyHeading">Privacy</span></h2>
+        <p class="body" id="privacy-text">Models go only to this drop box on your local network.</p>
+      </section>
+    </div>
   </main>
 
   <footer class="footer"><p id="footer">Bambu Studio MD3 · LAN model drop</p></footer>
