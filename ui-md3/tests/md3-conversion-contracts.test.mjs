@@ -322,6 +322,18 @@ test('every radio is the kit LabeledRadioButton, which carries the radio role an
   assert.match(widget, /wxCommandEvent event\(wxEVT_RADIOBUTTON, GetId\(\)\);/, 'activation must emit wxEVT_RADIOBUTTON from the row');
   assert.match(widget, /case WXK_UP: case WXK_LEFT:\s+moveTo\(here - 1\)/, 'RadioGroup must move selection with the arrow keys');
   assert.match(widget, /new RadioBox\(this\)/, 'the row must draw the kit RadioBox glyph');
+  // A group that is a member of the window owning its rows dies before wx destroys
+  // the rows, so its destroy handler must be one the destructor can unbind.
+  assert.match(widget, /button->Bind\(wxEVT_DESTROY, &RadioGroup::onMemberDestroyed, this\);/, 'the group binds its destroy handler as a member');
+  assert.match(widget, /b->Unbind\(wxEVT_DESTROY, &RadioGroup::onMemberDestroyed, this\);/, 'and unbinds it when the group is destroyed');
+  assert.doesNotMatch(widget, /Bind\(wxEVT_DESTROY, \[this/, 'no destroy lambda may outlive the group');
+  // The converted radio sets keep one group each, owned by their window.
+  for (const [file, needle] of [
+    ['ScheduledSettings/Panel.cpp', 'm_source.Add(row);'],
+    ['LocalSecurity/SecurityPanels.cpp', 'm_policy_group.Add(b);'],
+    ['LocalSecurity/SecurityPanels.cpp', 'm_duration_group.Add(b);'],
+    ['LocalSecurity/SecurityPanels.cpp', 'm_category_group.Add(b);'],
+  ]) assert.ok(stripComments(await read(file)).includes(needle), `${file} must group its kit radio rows: ${needle}`);
   const cmake = await readFile(path.join(repoDir, 'src', 'slic3r', 'CMakeLists.txt'), 'utf8');
   assert.match(cmake, /^\s*GUI\/Widgets\/LabeledRadioButton\.cpp\s*$/m, 'LabeledRadioButton.cpp must be registered');
   const page = stripComments(await read('CalibrationWizardPage.hpp'));
@@ -353,6 +365,8 @@ test('every text field is a kit TextInput or TextArea; native editors exist only
     'the editor must stay MSW-colour-safe, as the kit TextCtrl is');
   const cmake = await readFile(path.join(repoDir, 'src', 'slic3r', 'CMakeLists.txt'), 'utf8');
   assert.match(cmake, /^\s*GUI\/Widgets\/TextArea\.cpp\s*$/m, 'TextArea.cpp must be registered');
+  // The scheduled-settings access token stays a password field on the kit.
+  assert.ok(stripComments(await read('ScheduledSettings', 'Panel.cpp')).includes('m_secret=text_field(p,ps,wxTE_PASSWORD,'), 'the access token must stay a password TextInput');
   for (const [file, needle] of [
     ['UpdateDialogs.cpp', 'new TextArea(this, from_u8(update.change_log)'],
     ['MsgDialog.cpp', 'm_script_text = new TextArea('],
@@ -400,6 +414,16 @@ test('the only list is the kit ListBox, drawn with the DropDown row anatomy', as
   const cmake = await readFile(path.join(repoDir, 'src', 'slic3r', 'CMakeLists.txt'), 'utf8');
   assert.match(cmake, /^\s*GUI\/Widgets\/ListBox\.cpp\s*$/m, 'ListBox.cpp must be registered');
   assert.ok(stripComments(await read('SmartHomeDialog.cpp')).includes('m_list = new ListBox(m_scroll'), 'SmartHome must use the kit ListBox');
+  // Lists that were wxLB_EXTENDED keep extended selection: wxVListBox gives the
+  // extended model for wxLB_MULTIPLE, and GetSelections() reports the rows.
+  assert.match(list, /^int ListBox::GetSelections\(wxArrayInt &selections\) const/m, 'ListBox must report its selected rows');
+  assert.match(list, /for \(int row = GetFirstSelected\(cookie\); row != wxNOT_FOUND; row = GetNextSelected\(cookie\)\)/, 'in either selection mode');
+  for (const [file, needle] of [
+    ['ScheduledSettings/Panel.cpp', 'm_rules=new ListBox(scroll,wxID_ANY,FromDIP(wxSize(300,110)),wxLB_MULTIPLE);'],
+    ['LocalSecurity/SecurityPanels.cpp', 'm_list=new ListBox(scroll,wxID_ANY,FromDIP(wxSize(350,160)),wxLB_MULTIPLE);'],
+    ['LocalSecurity/SecurityPanels.cpp', 'm_list=new ListBox(scroll,wxID_ANY,FromDIP(wxSize(350,180)),wxLB_MULTIPLE);'],
+    ['LocalSecurity/IdentityHistoryPanel.cpp', 'm_list=new ListBox(scroll,wxID_ANY,FromDIP(wxSize(420,200)),wxLB_MULTIPLE);'],
+  ]) assert.ok(stripComments(await read(file)).includes(needle), `${file} must keep extended selection on the kit list: ${needle}`);
 });
 
 test('every static bitmap is inventoried in the triage CSV, and none is an unaccounted click target', async () => {
