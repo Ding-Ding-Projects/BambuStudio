@@ -228,7 +228,11 @@ test('Preferences > Schedules starts a rule from a preset with the model default
   const history = strip(read('src', 'slic3r', 'GUI', 'PreferencesHistory.cpp'));
   assert.match(history, /Schedule::kDocumentConfigKey\n\s*\};/, 'the rule document is recorded with the preferences');
   assert.match(history, /Schedule::Scheduler::instance\(\)\.reload\(\);/, 'a restore reloads the rules');
-  assert.match(history, /if \(key != Schedule::kDocumentConfigKey\) config->erase\("app", key\);/, 'older snapshots never erase the rules');
+  assert.match(history, /\{"version", 2\}, \{"settings", settings\}/, 'snapshots that record the rules say so');
+  assert.match(history, /const bool records_schedules = snapshot\["version"\] != 1;/);
+  assert.match(history, /if \(key != Schedule::kDocumentConfigKey \|\| records_schedules\) config->erase\("app", key\);/,
+    'a version 1 snapshot never erases the rules; a version 2 snapshot without them means there were none');
+  assert.match(history, /pending_reason = "Preferences at startup";\s*snapshot_timer\(\)->Notify\(\);/, 'the first rule of a session can be undone');
 });
 
 test('Version history lists, compares and restores Scheduled settings versions', () => {

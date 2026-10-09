@@ -98,6 +98,7 @@ wxString translate_known_history_reason(const wxString &reason)
         L("Reset all appearance"),
         L("Import appearance theme"),
         L("Restore appearance snapshot"),
+        L("Preferences at startup"),
         // Scheduled settings history (FeatureServices/ScheduledPreferences.cpp).
         L("Scheduled settings change"),
         L("Restore scheduled settings"),

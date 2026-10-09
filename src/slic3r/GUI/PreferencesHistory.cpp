@@ -219,7 +219,9 @@ nlohmann::json safe_snapshot(const AppConfig &config)
         if (config.get("app", key, value) && value.size() <= value_limit(key))
             settings[key] = value;
     }
-    return {{"format", "bambu-safe-preferences"}, {"version", 1}, {"settings", settings}};
+    // Version 2 snapshots always speak for the schedule rules: an absent rule
+    // document means there were none. Version 1 predates recording them.
+    return {{"format", "bambu-safe-preferences"}, {"version", 2}, {"settings", settings}};
 }
 
 bool read_snapshot(const std::filesystem::path &path, nlohmann::json &snapshot, std::string &error)
@@ -242,7 +244,7 @@ bool read_snapshot(const std::filesystem::path &path, nlohmann::json &snapshot, 
         auto parsed = nlohmann::json::parse(bytes);
         if (!parsed.is_object() || parsed.size() != 3 ||
             parsed.value("format", std::string()) != "bambu-safe-preferences" ||
-            !parsed.at("version").is_number_integer() || parsed.at("version") != 1 ||
+            !parsed.at("version").is_number_integer() || (parsed.at("version") != 1 && parsed.at("version") != 2) ||
             !parsed.at("settings").is_object()) {
             error = "Unsupported preferences snapshot. Legacy raw configuration is preserved but cannot be restored.";
             return false;
@@ -273,13 +275,16 @@ bool apply_snapshot(const std::filesystem::path &path, std::string &error)
         return false;
     }
     const auto previous = safe_snapshot(*config)["settings"];
+    // A version 1 snapshot predates recording the schedule rules and says
+    // nothing about them, so their rules are kept rather than erased.
+    const bool records_schedules = snapshot["version"] != 1;
     try {
         for (const auto &key : safe_keys()) {
             const auto it = snapshot["settings"].find(key);
-            // A snapshot from before schedules were recorded says nothing
-            // about them, so their rules are kept rather than erased.
-            if (it == snapshot["settings"].end()) { if (key != Schedule::kDocumentConfigKey) config->erase("app", key); }
-            else config->set(key, it->get<std::string>());
+            if (it == snapshot["settings"].end()) {
+                if (key != Schedule::kDocumentConfigKey || records_schedules) config->erase("app", key);
+            } else
+                config->set(key, it->get<std::string>());
         }
         config->set_dirty();
         config->save();
@@ -410,6 +415,11 @@ void install()
     // first change, a preset application included, can be undone.
     ElementStyle::set_save_observer([]() { on_appearance_saved(); });
     commit_appearance("Appearance at startup");
+    // The preferences at startup too, so the first change of a session (a
+    // schedule rule started from a preset included) has a version to undo to.
+    // Identical snapshots dedupe in the engine.
+    pending_reason = "Preferences at startup";
+    snapshot_timer()->Notify();
 }
 
 } } } // namespace Slic3r::GUI::PreferencesHistory
