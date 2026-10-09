@@ -929,6 +929,14 @@ if (WIN32)
     # The download capture browser extension ships beside the application so
     # Chromium browsers can load it from the installed folder.
     install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/browser-extension/" DESTINATION "${CMAKE_INSTALL_PREFIX}/browser-extension")
+    # The LAN model drop container ships beside the application too, so it can
+    # be started from the installed folder with `docker compose up -d`. A local
+    # .env (it can hold the station key) and development files never ship.
+    install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/lan-model-drop/" DESTINATION "${CMAKE_INSTALL_PREFIX}/lan-model-drop"
+        PATTERN ".env" EXCLUDE
+        PATTERN ".gitignore" EXCLUDE
+        PATTERN "node_modules" EXCLUDE
+        PATTERN "*.test.mjs" EXCLUDE)
 elseif (SLIC3R_FHS)
     # CMAKE_INSTALL_FULL_DATAROOTDIR: read-only architecture-independent data root (share)
     set(SLIC3R_FHS_RESOURCES "${CMAKE_INSTALL_FULL_DATAROOTDIR}/BambuStudio")
