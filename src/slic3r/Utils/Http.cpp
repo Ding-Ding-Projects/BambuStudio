@@ -541,6 +541,16 @@ Http& Http::header(std::string name, const std::string &value)
 	return *this;
 }
 
+Http& Http::clear_headers()
+{
+	if (p) {
+		::curl_slist_free_all(p->headerlist);
+		p->headerlist = nullptr;
+	}
+
+	return *this;
+}
+
 Http& Http::remove_header(std::string name)
 {
 	if (p) {

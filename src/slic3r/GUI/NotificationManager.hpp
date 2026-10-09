@@ -191,6 +191,9 @@ enum class NotificationType
     // One-time disclosure that the funny level styles every message. Fires the
     // first time a level above 1 is active and is then recorded in AppConfig.
     FunnyLevelDisclosure,
+    // A model arrived from the LAN drop site and waits for the user: Open loads it through the
+    // normal load path, Discard removes it. Never fades; one notification per received file.
+    LanModelDropReceived,
     // A new release was downloaded and staged in the background by Squirrel. Carries a
     // "Restart now" hyperlink; without it the new version starts the next time the app opens.
     // De-duplicated by type, so repeated checks refresh one toast.
@@ -265,6 +268,12 @@ public:
 	void push_app_update_ready_notification(const std::string& text,
 	                                        const std::string& restart_text, std::function<bool(wxEvtHandler*)> restart_callback,
 	                                        const std::string& notes_text, std::function<bool(wxEvtHandler*)> notes_callback);
+	// LAN model drop (docs/features/application-integration/lan-model-drop.md): one notification per
+	// received file that stays until the user picks Open or Discard, or closes it. Nothing is opened
+	// automatically. Files with different texts stack; the same text refreshes one notification.
+	void push_lan_model_drop_notification(const std::string& text,
+	                                      const std::string& open_text, std::function<bool(wxEvtHandler*)> open_callback,
+	                                      const std::string& discard_text, std::function<bool(wxEvtHandler*)> discard_callback);
 	// Pushes basic_notification with delay. See push_delayed_notification_data.
 	void push_delayed_notification(const NotificationType type, std::function<bool(void)> condition_callback, int64_t initial_delay, int64_t delay_interval);
 	// Removes all notifications of type from m_waiting_notifications
@@ -1006,7 +1015,8 @@ private:
 		NotificationType::PlaterWarning,
 		NotificationType::ProgressBar,
 		NotificationType::PrintHostUpload,
-        NotificationType::SimplifySuggestion
+        NotificationType::SimplifySuggestion,
+        NotificationType::LanModelDropReceived
 	};
 	//prepared (basic) notifications
 	// non-static so its not loaded too early. If static, the translations wont load correctly.

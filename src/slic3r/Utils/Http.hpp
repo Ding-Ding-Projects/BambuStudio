@@ -118,6 +118,10 @@ public:
 	Http& header(std::string name, const std::string &value);
 	// Removes a header field.
 	Http& remove_header(std::string name);
+	// Drops every header field set so far, including the global extra headers the constructor
+	// adds (see set_extra_headers). A request to a local service then carries only the fields its
+	// protocol defines, not the cloud client's identity headers.
+	Http& clear_headers();
 	// Authorization by HTTP digest, based on RFC2617.
 	Http& auth_digest(const std::string &user, const std::string &password);
     // Basic HTTP authorization
