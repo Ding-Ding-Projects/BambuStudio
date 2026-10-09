@@ -12,14 +12,17 @@ GitHub-hosted Windows runner. Dispatched only by .github/workflows/diagnose-inst
 The release is downloaded and verified, and installed, by Verify-HostedSquirrelInstall.ps1 (with
 -Interactive for the interactive arm). While that runs, and for -ObserveSeconds after each start,
 every bambu-studio.exe process and the foreground window are polled every five seconds; process
-start and stop events add exit codes for processes too short-lived to be polled. Each phase then
-collects, as text only, the Squirrel logs, the launcher trace, the newest application logs and the
-Application event-log entries about the application, and writes receipt.json with one of:
+start and stop events add start times and exit codes, though on hosted runners so far stop events
+arrived only for Update.exe and Setup.exe, so a bambu-studio.exe exit code is known only when a poll
+caught the process. Each phase then collects, as text only, the Squirrel logs, the launcher trace,
+the newest application logs and the Application event-log entries about the application, and writes
+receipt.json with one of:
 
   not_started      no application process was seen
   started_crashed  an application process was ended by an exception (an NTSTATUS error exit code other
                    than the launcher's own 0xFFFFFFFF), or the Application log has a crash entry for
-                   bambu-studio.exe from the phase; this wins over every other value
+                   bambu-studio.exe from the phase, whatever exit code followed; this wins over
+                   every other value
   started_exited   an application process ran and ended without a crash; the basis says whether it
                    had shown a visible window
   started_hidden   an application process was still running at the end, without a visible window
@@ -577,9 +580,11 @@ function Test-MainFrameShown {
 # copy Windows Error Reporting takes of a faulting process appears.
 #
 # A crash wins over every other classification: an application process ended with a crash exit code
-# (Test-CrashExitCode), or a crash entry for bambu-studio.exe in the phase's Application log. A crash
-# entry whose process then ended by itself with an ordinary exit code is a handled fault, reported but
-# not a crash: the launcher exits with -1 when BambuStudio.dll fails to initialise after a fault in it.
+# (Test-CrashExitCode), or a crash entry for bambu-studio.exe in the phase's Application log. Every
+# such entry is a crash, whatever exit code its process then had: a bambu-studio.exe exit code is
+# known only when a poll caught the process and held its handle, so it cannot decide the verdict. The
+# crash record and the basis give that exit code when it is known, such as the launcher's own -1
+# after a fault while BambuStudio.dll initialised.
 # A visible window counts as a visible start only from a process that was still running at the end,
 # or when it was the main frame.
 function Get-FirstRunClassification {
@@ -624,13 +629,11 @@ function Get-FirstRunClassification {
     foreach ($entry in $entries) {
         if ($entry.provider -ne 'Application Error' -and $entry.report_id -and $reportIds -contains [string] $entry.report_id) { continue }
         $process = if ($null -ne $entry.pid) { $byPid[[string] $entry.pid] } else { $null }
-        $handled = $null -ne $process -and $null -ne $process.exit_code -and -not (Test-CrashExitCode $process.exit_code)
         $faults.Add([pscustomobject][ordered]@{
             time = Format-Utc $entry.time; event_id = $entry.id; provider = $entry.provider; event_name = $entry.event_name
             pid = $entry.pid; role = if ($null -ne $process) { $process.role } else { $null }
             exception_code = $entry.exception_code; fault_offset = $entry.fault_offset
             faulting_module = $entry.module; faulting_module_path = $entry.module_path; report_id = $entry.report_id
-            outcome = if ($handled) { 'handled' } else { 'crash' }
             exit_code_hex = if ($null -ne $process) { $process.exit_code_hex } else { $null }
         })
     }
@@ -673,12 +676,6 @@ function Get-FirstRunClassification {
     $candidates = @($Processes | Where-Object { $_.role -in $appRoles -and $skipped -notcontains [string] $_.pid })
 
     $notes = [System.Collections.Generic.List[string]]::new()
-    foreach ($fault in @($faults | Where-Object { $_.outcome -eq 'handled' })) {
-        $notes.Add("the Application log reports exception $($fault.exception_code)" +
-                   $(if ($fault.faulting_module) { " in $($fault.faulting_module)" } else { '' }) +
-                   $(if ($fault.fault_offset) { " at offset $($fault.fault_offset)" } else { '' }) +
-                   " in pid $($fault.pid), which then ended by itself with exit code $($fault.exit_code_hex)")
-    }
     foreach ($skip in $notCounted) {
         if ($skip.reason -eq 'fault_copy') { $notes.Add("pid $($skip.pid), created by pid $($skip.of_pid) at its fault with the same command line, is not counted") }
         else { $notes.Add("pid $($skip.pid), which was running before the phase began, is not counted") }
@@ -692,12 +689,12 @@ function Get-FirstRunClassification {
         }
     }
 
-    # Crashes: application processes with a crash exit code, and crash entries that were not handled.
+    # Crashes: application processes with a crash exit code, and every crash entry of the phase.
     $crashes = [System.Collections.Generic.List[object]]::new()
     foreach ($process in @($candidates | Where-Object { Test-CrashExitCode $_.exit_code })) {
         $crashes.Add([ordered]@{ pid = $process.pid; process = $process; fault = $null; time = ConvertTo-UtcTime $process.exited })
     }
-    foreach ($fault in @($faults | Where-Object { $_.outcome -eq 'crash' })) {
+    foreach ($fault in $faults) {
         $known = @($crashes | Where-Object { $null -ne $fault.pid -and [string] $_.pid -eq [string] $fault.pid })
         if ($known.Count -gt 0) {
             if ($null -eq $known[0].fault) { $known[0].fault = $fault; $known[0].time = ConvertTo-UtcTime $fault.time }
@@ -742,8 +739,15 @@ function Get-FirstRunClassification {
         if ($crash.faulting_module) { $basis += " in $($crash.faulting_module)" }
         if ($crash.fault_offset) { $basis += " at offset $($crash.fault_offset)" }
         if ($null -ne $process) {
-            if ($null -ne $process.exit_code_hex -and $process.exit_code_hex -ne $code) { $basis += ", exit code $($process.exit_code_hex)" }
-            $basis += & $lifetime $process
+            # The exit code is known only when a poll caught the process; it describes, never decides.
+            if ($null -eq $process.exit_code_hex) {
+                $basis += if ($process.alive_at_end) { '; it was still running at the end' } else { "; it ended$(& $lifetime $process), exit code not captured" }
+            }
+            elseif ($process.exit_code_hex -ne $code) {
+                $basis += "; it then exited with exit code $($process.exit_code_hex)" +
+                          $(if ($process.exit_code_hex -eq '0xFFFFFFFF') { " (the launcher's own -1)" } else { '' }) + (& $lifetime $process)
+            }
+            else { $basis += & $lifetime $process }
             $basis += if ($process.visible_window) { "; it had shown a visible window ($(& $titles $process)) before the crash" } else { '; it had shown no visible window before the crash' }
         }
         if ($crashes.Count -gt 1) { $basis += "; $($crashes.Count - 1) more crash(es) in this phase" }

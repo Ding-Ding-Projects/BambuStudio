@@ -1,6 +1,6 @@
 ---
 translation-of: installer-first-run-diagnostic.md
-source-sha256: 4afda378c2855c91f50ae06f153731606d08518ea23e022a3481b5c23217189e
+source-sha256: f3a9b8989383b77942e35eebe22662dbab5044a47aaeb1c026b5f847f563c512
 review-status: agent-drafted
 ---
 
@@ -39,7 +39,7 @@ gh workflow run diagnose-installer-first-run.yml -f tag=md3-v225 -f observe_seco
 - 每個 `bambu-studio.exe`、`Update.exe` 同 `Setup.exe` 程序：程序 ID、父程序、路徑、命令列、主視窗 handle 同標題，同埋有冇回應；
 - 應用程式程序嘅每個頂層視窗，連 z-order、可唔可見、有冇最小化同大小，仲有前景視窗同擁有佢嘅程序。
 
-程序開始同結束事件會補上準確嘅開始時間同退出碼，就算程序活唔夠一次輪詢都捉到；建立事件就補上佢哋嘅命令列。每個階段之後會將以下嘢以純文字儲存：Squirrel 嘅記錄（`%LOCALAPPDATA%\SquirrelTemp` 同安裝根目錄入面每個 `*.log`）、`%TEMP%\bbs-launcher-trace.log`、`%APPDATA%\BambuStudio\log` 入面最新嘅檔案，同埋 Application 事件記錄入面提到應用程式嘅錯誤同當機報告。分類會將嗰段 Application 記錄文字讀返：每個 Application Error 項目都講出出錯程序嘅 ID、例外代碼、出錯位移同出錯模組；每份 Windows Error Reporting 當機報告都講埋呢啲，淨係冇程序 ID。`preflight.json` 記錄之前冇任何安裝、顯示卡，同埋工作同主控台嘅工作階段。
+程序開始同結束事件會補上準確嘅開始時間同退出碼，建立事件就補上佢哋嘅命令列。不過到目前為止，託管執行器上嘅結束事件淨係見過 `Update.exe` 同 `Setup.exe` 嘅，所以 `bambu-studio.exe` 嘅退出碼，要有一次輪詢捉到個程序、握住佢嘅 handle 先會知道。每個階段之後會將以下嘢以純文字儲存：Squirrel 嘅記錄（`%LOCALAPPDATA%\SquirrelTemp` 同安裝根目錄入面每個 `*.log`）、`%TEMP%\bbs-launcher-trace.log`、`%APPDATA%\BambuStudio\log` 入面最新嘅檔案，同埋 Application 事件記錄入面提到應用程式嘅錯誤同當機報告。分類會將嗰段 Application 記錄文字讀返：每個 Application Error 項目都講出出錯程序嘅 ID、例外代碼、出錯位移同出錯模組；每份 Windows Error Reporting 當機報告都講埋呢啲，淨係冇程序 ID。`preflight.json` 記錄之前冇任何安裝、顯示卡，同埋工作同主控台嘅工作階段。
 
 ## 分類
 
@@ -55,7 +55,7 @@ gh workflow run diagnose-installer-first-run.yml -f tag=md3-v225 -f observe_seco
 
 `started_crashed` 嘅時候，收據入面嘅 `crash` 會講出出錯程序嘅 ID 同角色、例外代碼，Application 記錄有講嘅話仲有出錯位移同出錯模組，加上退出碼、活咗幾耐、當機之前有冇出過可見視窗（`window_shown_before_crash`，連埋視窗標題），同埋佢喺出錯嗰陣整出嚟嘅副本。md3-v230 就係呢種情況：佢第一次啟動嗰陣出過個 480 乘 480、冇標題嘅啟動畫面，而每次啟動最後都喺 `BambuStudio.dll` 入面存取違規（`0xC0000005`）結束。
 
-`application_faults` 列出呢個階段每個當機項目同佢嘅結果：`crash`，或者 `handled`，即係項目講嘅程序之後自己用普通退出碼結束。md3-v229 就係 `handled` 嘅例子：`BambuStudio.dll` 初始化嗰陣出錯，Windows 記低咗存取違規，但啟動器捱過咗，之後用 `-1` 退出（佢嘅追蹤記錄寫住 `EXIT -1: BambuStudio.dll load failed, error=1114`），所以嗰幾次啟動係 `started_exited`，退出碼 `0xFFFFFFFF`，根據會引述嗰次出錯。
+`application_faults` 列出呢個階段每個當機項目，知道嘅話仲會寫埋項目講嗰個程序嘅退出碼。每一個項目都會令呢個階段變成 `started_crashed`，唔理個程序之後用咩退出碼結束：嗰個退出碼要啱啱有輪詢捉到個程序先會知道，所以佢只係用嚟描述當機，唔會決定分類。md3-v229 就係咁嘅例子：`BambuStudio.dll` 初始化嗰陣出錯，Windows 記低咗存取違規，之後啟動器用 `-1` 退出（佢嘅追蹤記錄寫住 `EXIT -1: BambuStudio.dll load failed, error=1114`）。嗰幾次啟動都係 `started_crashed`。有輪詢捉到啟動器嘅話，`crash.exit_code_hex` 係 `0xFFFFFFFF`，根據會講啟動器之後用佢退出；冇輪詢捉到嘅話，根據會講冇記錄到退出碼。
 
 收據之前有嘅欄位全部保留原名。`crash`、`application_faults` 同 `not_counted` 係新加嘅，`exit` 亦多咗 `visible_window`。
 

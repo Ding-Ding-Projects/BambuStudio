@@ -207,8 +207,11 @@ test('the first-run diagnostic lets a crash win and names the faulting process',
   }
   const classify = fn('Get-FirstRunClassification');
   assert.ok(classify.indexOf("'started_crashed'") < classify.indexOf("'started_visible'"), 'the crash is decided first');
-  // A crash entry whose process then ended by itself (the launcher's -1) is a handled fault.
-  assert.match(classify, /\$handled = \$null -ne \$process -and \$null -ne \$process\.exit_code -and -not \(Test-CrashExitCode \$process\.exit_code\)/);
+  // Every crash entry of the phase is a crash. A bambu-studio.exe exit code is known only when a poll
+  // caught the process, so the launcher's later -1 is reported in the basis but never downgrades it.
+  assert.match(classify, /\n {4}foreach \(\$fault in \$faults\) \{\n {8}\$known = /, 'every crash entry is a crash');
+  assert.doesNotMatch(classify, /handled|\.outcome\b/, 'no crash entry is downgraded by its exit code');
+  assert.match(classify, /then exited with exit code \$\(\$process\.exit_code_hex\)/);
   // Not counted: a process from before the phase, and the copy a faulting process makes at its fault.
   assert.match(classify, /reason = 'started_before_phase'/);
   assert.match(classify, /reason = 'fault_copy'/);

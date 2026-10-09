@@ -44,8 +44,10 @@ after it finished:
 - every top-level window of the application's processes, with its z-order, visibility, minimized
   state and size, and the window in the foreground with its owning process.
 
-Process start and stop events add exact start times and exit codes, including for processes that
-live less than a poll, and creation events add their command lines. Each phase then saves, as text:
+Process start and stop events add exact start times and exit codes, and creation events add their
+command lines. On the hosted runs so far, stop events arrived only for `Update.exe` and `Setup.exe`,
+so a `bambu-studio.exe` exit code is known only when a poll caught the process and held its handle.
+Each phase then saves, as text:
 Squirrel's logs (every `*.log` in `%LOCALAPPDATA%\SquirrelTemp` and in the install root),
 `%TEMP%\bbs-launcher-trace.log`, the newest files in `%APPDATA%\BambuStudio\log`, and the
 Application event-log errors and crash reports that name the application. The classification reads
@@ -78,11 +80,15 @@ lifetime, whether the process had shown a visible window before the crash
 case this covers: its first starts showed an untitled 480 by 480 splash, and every start ended with
 an access violation (`0xC0000005`) in `BambuStudio.dll`.
 
-`application_faults` lists every crash entry of the phase with its outcome: `crash`, or `handled`
-when the process it names then ended by itself with an ordinary exit code. md3-v229 is the case for
-`handled`: `BambuStudio.dll` faulted while it initialized, Windows logged the access violation, and
-the launcher went on to exit with `-1` (`EXIT -1: BambuStudio.dll load failed, error=1114` in its
-trace), so those starts are `started_exited` with `0xFFFFFFFF`, and the basis quotes the fault.
+`application_faults` lists every crash entry of the phase, with the exit code of the process it
+names when that is known. Every one of them makes the phase `started_crashed`, whatever exit code
+the process had afterwards: that exit code is known only when a poll happened to catch the process,
+so it describes the crash and never decides it. md3-v229 is such a case: `BambuStudio.dll` faulted
+while it initialized, Windows logged the access violation, and the launcher went on to exit with
+`-1` (`EXIT -1: BambuStudio.dll load failed, error=1114` in its trace). Its starts are
+`started_crashed`. When a poll caught the launcher, `crash.exit_code_hex` is `0xFFFFFFFF` and the
+basis says the launcher then exited with it; when none did, the basis says the exit code was not
+captured.
 
 The receipt keeps every earlier field under its name. `crash`, `application_faults` and
 `not_counted` are new, and `exit` also gives `visible_window`.
