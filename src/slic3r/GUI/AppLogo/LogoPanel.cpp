@@ -186,13 +186,23 @@ wxString LogoPanel::resting_status() const
     return wxString::Format(_L("%s in use, saved in your settings. No custom image loaded."), source_name(m_settings));
 }
 
+void LogoPanel::relayout()
+{
+    // Rows appear and disappear (search, shipped versus preset, status text),
+    // so the hosting scroll area has to re-measure its virtual size too.
+    Layout();
+    if (wxWindow* host = GetParent()) {
+        host->Layout();
+        host->FitInside();
+    }
+}
+
 void LogoPanel::set_status(const wxString& text, bool error)
 {
     m_status->SetForegroundColour(StateColor::semantic(error ? MD3::Role::Error : MD3::Role::OnSurfaceVariant));
     m_status->SetLabel(text);
     m_status->Wrap(FromDIP(wrap_width));
-    Layout();
-    if (GetParent()) GetParent()->Layout();
+    relayout();
 }
 
 void LogoPanel::refresh()
@@ -213,8 +223,7 @@ void LogoPanel::refresh()
         m_previews[i]->SetBitmap(preset ? bitmap(m_settings, preview_sizes[i]) : wxBitmap());
     m_preview_sizer->ShowItems(preset);
     m_preview_note->Show(!preset);
-    Layout();
-    if (GetParent()) GetParent()->Layout();
+    relayout();
 }
 
 void LogoPanel::filter_sources()
@@ -228,8 +237,7 @@ void LogoPanel::filter_sources()
         any |= match;
     }
     m_no_match->Show(!any);
-    Layout();
-    if (GetParent()) GetParent()->Layout();
+    relayout();
 }
 
 void LogoPanel::select_source(size_t index)

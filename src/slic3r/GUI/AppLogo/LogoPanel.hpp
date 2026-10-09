@@ -42,6 +42,7 @@ private:
         wxString haystack;
     };
     void refresh();
+    void relayout();
     void filter_sources();
     void select_source(size_t index);
     void apply_edits();
