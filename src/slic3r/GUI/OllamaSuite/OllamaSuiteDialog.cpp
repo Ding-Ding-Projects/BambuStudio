@@ -1,9 +1,11 @@
 #include "OllamaSuiteDialog.hpp"
 #include "OllamaClient.hpp"
+#include "OllamaSuiteText.hpp"
 #include "NativeLaunchAdapter.hpp"
 #include "libslic3r/OllamaSuite/LaunchProfiles.hpp"
 #include "../I18N.hpp"
 #include "../Widgets/Button.hpp"
+#include "../Widgets/ComboBox.hpp"
 #include "../Widgets/Label.hpp"
 #include "../Widgets/ListBox.hpp"
 #include "../Widgets/SearchField.hpp"
@@ -22,6 +24,7 @@
 #include <wx/base64.h>
 #include <fstream>
 #include <algorithm>
+#include <iterator>
 #include <mutex>
 #include <thread>
 
@@ -31,6 +34,10 @@ using namespace Slic3r::OllamaSuite;
 using Model = Slic3r::OllamaSuite::Model;
 wxString u8(const std::string &s) { return wxString::FromUTF8(s.c_str()); }
 std::string utf8(const wxString &s) { auto bytes=s.ToUTF8(); return bytes ? std::string(bytes.data(),bytes.length()) : std::string(); }
+FitSettings saved_fit_settings(const std::filesystem::path &root) {
+    try { if(std::filesystem::exists(root/"fit-settings.json")) return load_fit_settings(read_json(root/"fit-settings.json",4096)); } catch(...) {}
+    return {};
+}
 class SuiteDialog final : public wxDialog {
     struct WorkerState {
         std::mutex mutex; std::atomic_bool cancel{false}; bool busy=false, changed=false;
@@ -39,11 +46,15 @@ class SuiteDialog final : public wxDialog {
         Json messages=Json::array();
         std::optional<ValidatedLaunchPlan> launch_plan;
         std::string profile_preview;
+        // Hardware evidence and the verdict for the selected model; both are recomputed, never cached across inputs.
+        Hardware hardware; std::string runtime_version; FitSettings fit_settings; std::optional<FitResult> fit;
+        bool details_ready=false, hardware_ready=false, measured_notice=false, inventory_known=false;
     };
 public:
     SuiteDialog(wxWindow *parent,const std::filesystem::path &root)
         :wxDialog(parent,wxID_ANY,_L("Local Ollama suite"),wxDefaultPosition,wxDefaultSize,wxRESIZE_BORDER|wxBORDER_NONE),
          m_root(root/"ollama-suite"),m_queue(m_root/"pulls"),m_history(m_root/"chats"),m_timer(this) {
+        m_state.fit_settings=saved_fit_settings(m_root);
         SetName("ollama-suite"); SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));
         SetSize(FromDIP(wxSize(960,760))); SetMinSize(FromDIP(wxSize(640,560)));
         auto *outer=new wxBoxSizer(wxVERTICAL); outer->Add(new MD3DialogCaption(this,_L("Local Ollama suite")),0,wxEXPAND);
@@ -79,6 +90,7 @@ private:
     Button *m_launch=nullptr;
     TextArea *m_profile_preview=nullptr;
     TextInput *m_temperature=nullptr,*m_context=nullptr,*m_predict=nullptr;
+    Label *m_hardware=nullptr; ComboBox *m_fit_context=nullptr,*m_fit_cache=nullptr;
     std::vector<ChatSession> m_history_rows; std::string m_attachment;
     std::pair<wxWindow *,wxBoxSizer *> section(const std::string &id,const wxString &name) {
         auto *panel=new MD3ScrolledWindow(m_book,wxID_ANY,wxDefaultPosition,wxDefaultSize,wxVSCROLL);
@@ -111,7 +123,11 @@ private:
             m_status->SetLabel(u8(m_state.status.substr(0,m_state.status.find('\n')))); m_output->SetValue(u8(m_state.response)); done=!m_state.busy;
             if(!m_state.profile_preview.empty())m_profile_preview->SetValue(u8(m_state.profile_preview));
             if(done&&!m_state.messages.empty()) { m_session.messages=m_state.messages; m_state.messages=Json::array(); }
-            if(done&&m_state.selected) m_details->SetValue(u8(m_state.status));
+            if(m_state.hardware_ready) { m_hardware->SetLabel(OllamaText::hardware_summary(m_state.hardware)); m_state.hardware_ready=false; }
+            if(done&&m_state.measured_notice) { m_status->SetLabel(_L("Hardware measured again. Select a model to see its verdict.")); m_state.measured_notice=false; }
+            if(done&&m_state.details_ready&&m_state.selected&&m_state.fit) {
+                m_details->SetValue(OllamaText::fit_report(*m_state.selected,*m_state.fit)); m_state.details_ready=false;
+                m_status->SetLabel(_L("Inspection finished. Hardware fit was recomputed from current measurements and estimate settings.")); }
             m_attach->Enable(done&&m_state.selected&&m_state.selected->capabilities_verified&&m_state.selected->local&&m_state.selected->capabilities.count("vision"));
             m_launch->Enable(done&&m_state.launch_plan.has_value()); }
         if(done) { render_models(); render_queue(); render_history(); } Layout();
@@ -125,6 +141,7 @@ private:
             std::lock_guard<std::mutex> lock(m_state.mutex); m_state.status=snapshot.reason;
             if(snapshot.complete || m_state.catalog.models.empty()) m_state.catalog=std::move(snapshot); else m_state.catalog.offline=true;
         }); }); s->Add(buttons,0,wxEXPAND);
+        build_hardware(p,s);
         m_catalog_status=new Label(p,_L("Catalog has not been verified."),LB_AUTO_WRAP); s->Add(m_catalog_status,0,wxEXPAND|wxALL,FromDIP(8));
         m_model_search=new SearchField(p,_L("Search exact model, family, capability or quantization")); s->Add(m_model_search,0,wxEXPAND|wxALL,FromDIP(8));
         m_model_search->SetOnQuery([this](const wxString &) { m_model_offset=0; render_models(); });
@@ -139,13 +156,63 @@ private:
         action(p,choose,_L("Use selected model for chat"),[this] { std::lock_guard<std::mutex> lock(m_state.mutex); if(m_state.busy||!m_state.selected||!m_state.selected->capabilities_verified||!m_state.selected->local) { m_status->SetLabel(_L("Finish the current operation and inspect a verified installed local model first.")); return; } m_session={unique_id(),"Local session",m_state.selected->name,Json::array()}; m_state.messages=Json::array(); m_state.response.clear(); m_output->Clear(); m_tabs->Activate("chat"); });
         action(p,choose,_L("Add selected tag to batch"),[this] { auto i=m_models->GetSelection(); if(i<0||static_cast<std::size_t>(i)>=m_visible.size()) return; try { m_queue.add(m_visible[i].name); render_queue(); m_tabs->Activate("pulls"); } catch(...) { m_status->SetLabel(_L("Could not persist the batch item.")); } }); s->Add(choose,0,wxEXPAND);
     }
+    void build_hardware(wxWindow *p,wxSizer *s) {
+        m_hardware=new Label(p,OllamaText::hardware_summary(Hardware{}),LB_AUTO_WRAP); m_hardware->SetName(_L("Measured hardware evidence")); s->Add(m_hardware,0,wxEXPAND|wxALL,FromDIP(8));
+        FitSettings settings; { std::lock_guard<std::mutex> lock(m_state.mutex); settings=m_state.fit_settings; }
+        auto *row=new wxWrapSizer(wxHORIZONTAL);
+        action(p,row,_L("Measure hardware again"),[this] { recompute_fit(); });
+        row->Add(new Label(p,_L("Context for estimates")),0,wxALIGN_CENTER_VERTICAL|wxALL,FromDIP(4));
+        m_fit_context=new ComboBox(p,wxID_ANY,wxEmptyString,wxDefaultPosition,FromDIP(wxSize(220,-1)),0,nullptr,wxCB_READONLY); m_fit_context->SetName(_L("Context for estimates"));
+        const auto &contexts=fit_contexts();
+        for(std::size_t i=0;i<contexts.size();++i) { m_fit_context->Append(OllamaText::context_choice(contexts[i])); if(contexts[i]==settings.context) m_fit_context->SetSelection(static_cast<int>(i)); }
+        row->Add(m_fit_context,0,wxALL,FromDIP(4));
+        row->Add(new Label(p,_L("Context cache precision")),0,wxALIGN_CENTER_VERTICAL|wxALL,FromDIP(4));
+        m_fit_cache=new ComboBox(p,wxID_ANY,wxEmptyString,wxDefaultPosition,FromDIP(wxSize(320,-1)),0,nullptr,wxCB_READONLY); m_fit_cache->SetName(_L("Context cache precision"));
+        for(std::size_t i=0;i<std::size(fit_caches);++i) { m_fit_cache->Append(OllamaText::kv_cache(fit_caches[i])); if(fit_caches[i]==settings.cache) m_fit_cache->SetSelection(static_cast<int>(i)); }
+        row->Add(m_fit_cache,0,wxALL,FromDIP(4)); s->Add(row,0,wxEXPAND);
+        m_fit_context->Bind(wxEVT_COMBOBOX,[this](wxCommandEvent &) { change_fit_settings(); });
+        m_fit_cache->Bind(wxEVT_COMBOBOX,[this](wxCommandEvent &) { change_fit_settings(); });
+        note(p,s,OllamaText::fit_settings_help());
+    }
+    static constexpr KvCache fit_caches[]={KvCache::F16,KvCache::Q8_0,KvCache::Q4_0};
+    void change_fit_settings() {
+        const auto &contexts=fit_contexts(); const int context=m_fit_context->GetSelection(), cache=m_fit_cache->GetSelection();
+        if(context<0||static_cast<std::size_t>(context)>=contexts.size()||cache<0||static_cast<std::size_t>(cache)>=std::size(fit_caches)) return;
+        FitSettings settings; settings.context=contexts[static_cast<std::size_t>(context)]; settings.cache=fit_caches[static_cast<std::size_t>(cache)];
+        { std::lock_guard<std::mutex> lock(m_state.mutex); m_state.fit_settings=settings; }
+        try { atomic_json(m_root/"fit-settings.json",fit_settings_json(settings)); } catch(...) { m_status->SetLabel(_L("Estimate settings could not be saved. They apply until the suite closes.")); }
+        recompute_fit();
+    }
+    std::optional<BackendObservation> saved_backend() const {
+        try { if(std::filesystem::exists(m_root/"backend.json")) return load_backend(read_json(m_root/"backend.json",64*1024)); } catch(...) {}
+        return std::nullopt;
+    }
+    // Measures now; called on the worker thread without holding the state lock.
+    Hardware measure_hardware() {
+        std::vector<Model> installed; std::string version; bool known=false;
+        { std::lock_guard<std::mutex> lock(m_state.mutex); installed=m_state.installed; version=m_state.runtime_version; known=m_state.inventory_known; }
+        auto h=detect_hardware(installed); h.inventory_known=known; apply_backend(h,saved_backend(),version); return h;
+    }
+    void recompute_fit() { start([this] {
+        auto h=measure_hardware(); std::lock_guard<std::mutex> lock(m_state.mutex); m_state.hardware=h; m_state.hardware_ready=true;
+        if(m_state.selected) { m_state.fit=assess(*m_state.selected,h,m_state.fit_settings); m_state.details_ready=true; } else m_state.measured_notice=true;
+    }); }
     void refresh_runtime() { start([this] {
         LocalClient c; auto health=c.execute(Operation::Version,Json::object(),m_state.cancel);
         if(health.state!=RuntimeState::Healthy) { set_status(health.diagnostic); return; }
+        const auto version=health.value.at("version").get<std::string>();
         auto tags=c.execute(Operation::Installed,Json::object(),m_state.cancel); if(tags.state!=RuntimeState::Healthy) { set_status(tags.diagnostic); return; }
         auto models=installed_models(tags.value); auto running=c.execute(Operation::Running,Json::object(),m_state.cancel); std::set<std::string> names;
-        if(running.state==RuntimeState::Healthy) for(const auto &m:installed_models(running.value)) names.insert(m.name);
-        std::lock_guard<std::mutex> lock(m_state.mutex); m_state.installed=std::move(models); m_state.running=std::move(names); m_state.selected.reset(); m_state.status="Local Ollama responded. Installed model inventory refreshed.";
+        std::vector<RuntimeMemory> loaded;
+        if(running.state==RuntimeState::Healthy) { for(const auto &m:installed_models(running.value)) names.insert(m.name); loaded=runtime_memory(running.value); }
+        { std::lock_guard<std::mutex> lock(m_state.mutex); m_state.installed=models; m_state.running=std::move(names); m_state.runtime_version=version; m_state.inventory_known=true; m_state.selected.reset(); m_state.fit.reset(); }
+        // Measure after the inventory is current: its manifests prove the model folder. A loaded model is
+        // the runtime's own evidence of which backend it uses, so it replaces any earlier observation.
+        auto h=detect_hardware(models); h.inventory_known=true;
+        auto seen=observe_backend(loaded,version,adapter_identity(h.gpus),h.measured_at);
+        if(seen) { try { atomic_json(m_root/"backend.json",backend_json(*seen)); } catch(...) {} } else seen=saved_backend();
+        apply_backend(h,seen,version);
+        std::lock_guard<std::mutex> lock(m_state.mutex); m_state.hardware=std::move(h); m_state.hardware_ready=true; m_state.status="Local Ollama responded. Installed model inventory refreshed.";
     }); }
     void render_models() {
         std::string selected; const auto selection=m_models->GetSelection(); if(selection>=0&&static_cast<std::size_t>(selection)<m_visible.size())selected=m_visible[selection].name;
@@ -161,19 +228,18 @@ private:
     void inspect_selected() {
         auto i=m_models->GetSelection(); if(i<0||static_cast<std::size_t>(i)>=m_visible.size()) return; auto m=m_visible[i];
         if(!m.installed) {
+            // Registry metadata gives the exact download size; runtime metadata stays unknown until installation.
             start([this,m=std::move(m)]() mutable { LocalClient client; m=client.registry_metadata(m.name,m_state.cancel);
-                std::lock_guard<std::mutex> lock(m_state.mutex); m_state.selected=m;
-                m_state.status=m.name+"\nVerified registry transfer bytes: "+std::to_string(*m.bytes)+"\nManifest: "+m.digest+"\nHardware fit: Unknown. Model runtime metadata is not installed.";
+                auto h=measure_hardware(); std::lock_guard<std::mutex> lock(m_state.mutex);
+                m_state.selected=m; m_state.hardware=h; m_state.hardware_ready=true; m_state.fit=assess(m,h,m_state.fit_settings); m_state.details_ready=true;
                 for(auto &entry:m_state.catalog.models) if(entry.name==m.name) entry=m;
             }); return;
         }
         start([this,m=std::move(m)]() mutable {
             LocalClient c; auto details=c.execute(Operation::Show,{{"model",m.name}},m_state.cancel);
             if(details.state!=RuntimeState::Healthy) { set_status(details.diagnostic); return; } apply_details(m,details.value);
-            auto h=detect_hardware(m_root); h.free_disk.reset(); auto verdict=fit(m,h,2048,{});
-            std::string summary=m.name+"\n"+fit_label(verdict.verdict)+"\n"; for(const auto &e:verdict.evidence) summary+=e+"\n";
-            summary+="Capabilities:"; for(const auto &c:m.capabilities) summary+=" "+c;
-            std::lock_guard<std::mutex> lock(m_state.mutex); m_state.selected=m; m_state.status=summary;
+            auto h=measure_hardware(); std::lock_guard<std::mutex> lock(m_state.mutex);
+            m_state.selected=m; m_state.hardware=h; m_state.hardware_ready=true; m_state.fit=assess(m,h,m_state.fit_settings); m_state.details_ready=true;
         });
     }
     void build_chat() {
@@ -259,9 +325,10 @@ private:
         auto [p,s]=section("profiles",_L("Launch profiles")); note(p,s,_L("Launch profiles belong to this application. Ollama does not launch other programs. Profiles cannot accept shell commands, scripts, or arbitrary environment values."));
         NativeLaunchPolicy policy;
         policy.installed_model=[this](const std::string &tag) { LocalClient client; auto result=client.execute(Operation::Installed,Json::object(),m_state.cancel); if(result.state!=RuntimeState::Healthy)return false; auto installed=installed_models(result.value); return std::any_of(installed.begin(),installed.end(),[&](const Model &model){return model.name==tag;}); };
-        policy.hardware_fit=[this](const LaunchProfile &profile) { std::lock_guard<std::mutex> lock(m_state.mutex); if(!m_state.selected||m_state.selected->name!=profile.model_tag)return false;
-            auto hardware=detect_hardware(m_root); hardware.free_disk.reset();
-            auto verdict=fit(*m_state.selected,hardware,profile.context_length,{}); return verdict.verdict==Fit::RunsWell||verdict.verdict==Fit::WithLimits; };
+        policy.hardware_fit=[this](const LaunchProfile &profile) { std::optional<Model> model; FitSettings settings;
+            { std::lock_guard<std::mutex> lock(m_state.mutex); if(!m_state.selected||m_state.selected->name!=profile.model_tag)return false; model=m_state.selected; settings=m_state.fit_settings; }
+            settings.context=profile.context_length; // the profile's own context sizes its cache
+            auto verdict=assess(*model,measure_hardware(),settings); return verdict.verdict==Fit::RunsWell||verdict.verdict==Fit::WithLimits; };
         m_launcher=std::make_unique<NativeLaunchAdapter>(std::move(policy)); m_profiles=LaunchProfileRegistry::prebuilt();
         if(!m_launcher->available()) note(p,s,u8(m_launcher->unavailable_reason()));
         for(std::size_t i=0;i<m_profiles.size();++i) {

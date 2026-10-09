@@ -32,6 +32,18 @@ std::string text(const Json &j, const char *key, std::size_t limit = 512) {
 std::uint64_t plus(std::uint64_t a, std::uint64_t b) {
     require(b <= (std::numeric_limits<std::uint64_t>::max)() - a, "Resource estimate overflow"); return a + b;
 }
+std::uint64_t times(std::uint64_t a, std::uint64_t b) {
+    require(a == 0 || b <= (std::numeric_limits<std::uint64_t>::max)() / a, "Resource estimate overflow"); return a * b;
+}
+// A per-layer array (hybrid and sliding-window architectures) contributes its largest entry, which never underestimates.
+std::optional<std::uint64_t> largest(const Json &j, const std::string &key) {
+    auto i = j.find(key); if (i == j.end()) return {};
+    if (i->is_number_unsigned()) return i->get<std::uint64_t>();
+    if (!i->is_array() || i->empty() || i->size() > 4096) return {};
+    std::uint64_t most = 0;
+    for (const auto &v : *i) { if (!v.is_number_unsigned()) return {}; most = (std::max)(most, v.get<std::uint64_t>()); }
+    return most;
+}
 std::vector<std::filesystem::path> file_page(const std::filesystem::path &root, std::size_t offset, std::size_t count) {
     require(count > 0 && count <= 100, "Page size must be between 1 and 100");
     std::vector<std::filesystem::path> out; std::size_t seen = 0;
@@ -154,11 +166,20 @@ void apply_details(Model &m, const Json &j) {
         for (const auto &c : j.at("capabilities")) { require(c.is_string() && c.get<std::string>().size() <= 80, "Invalid capability"); m.capabilities.insert(c.get<std::string>()); }
         m.capabilities_verified = true;
     }
+    m.block_count.reset(); m.head_count.reset(); m.head_count_kv.reset(); m.key_length.reset(); m.value_length.reset(); m.embedding_length.reset();
     if (j.contains("model_info")) {
         const auto &info = j.at("model_info"); require(info.is_object() && info.size() <= 10000, "Invalid model metadata");
         m.parameter_count = number(info, "general.parameter_count");
         const auto architecture = text(info, "general.architecture");
-        if (!architecture.empty()) m.context_length = number(info, (architecture + ".context_length").c_str());
+        if (!architecture.empty()) {
+            m.context_length = number(info, (architecture + ".context_length").c_str());
+            m.block_count = number(info, (architecture + ".block_count").c_str());
+            m.embedding_length = number(info, (architecture + ".embedding_length").c_str());
+            m.head_count = largest(info, architecture + ".attention.head_count");
+            m.head_count_kv = largest(info, architecture + ".attention.head_count_kv");
+            m.key_length = number(info, (architecture + ".attention.key_length").c_str());
+            m.value_length = number(info, (architecture + ".attention.value_length").c_str());
+        }
     }
 }
 void apply_manifest(Model &m, const Json &j, const std::string &sha) {
@@ -181,23 +202,199 @@ std::vector<Model> reconcile(const std::vector<Model> &catalog, const std::vecto
     for (const auto &m : installed) all[m.name] = m;
     std::vector<Model> out; for (auto &[name, m] : all) { m.running = running.count(name) != 0; out.push_back(std::move(m)); } return out;
 }
-std::string fit_label(Fit f) { switch (f) { case Fit::RunsWell:return "Runs well"; case Fit::WithLimits:return "Runs with limits"; case Fit::Unlikely:return "Unlikely"; default:return "Unknown"; } }
-FitResult fit(const Model &m, const Hardware &h, std::uint64_t context, std::optional<std::uint64_t> overhead) {
-    FitResult r; r.evidence.push_back("Estimates are conservative and do not guarantee execution.");
-    if (!m.bytes || !*m.bytes || !h.free_disk || h.measured_at.empty()) { r.evidence.push_back("Exact model size, destination space, or measurement timestamp is unavailable."); return r; }
-    try { r.disk_required = m.installed ? 0 : plus(*m.bytes, *m.bytes / 10); }
-    catch (...) { r.evidence.push_back("Storage estimate overflow."); return r; }
-    if (*h.free_disk < *r.disk_required) { r.verdict = Fit::Unlikely; r.evidence.push_back("Destination has less than model size plus ten percent safety allowance."); return r; }
-    if (!h.available_ram || !h.usable_vram || !h.backend_verified || h.architecture.empty() || !m.parameter_count || !m.context_length || m.quantization.empty() || !overhead) {
-        r.evidence.push_back("RAM, usable VRAM, backend, architecture, parameters, quantization, context, and context-memory evidence are all required."); return r;
+std::optional<std::filesystem::path> manifest_path(const std::string &name) {
+    if (!valid_model(name)) return {};
+    const auto colon = name.find(':');
+    const std::string base = name.substr(0, colon), tag = colon == std::string::npos ? std::string("latest") : name.substr(colon + 1);
+    if (tag.empty() || tag.find('/') != std::string::npos || tag == ".") return {};
+    std::vector<std::string> parts;
+    for (std::size_t start = 0;;) {
+        const auto slash = base.find('/', start);
+        parts.push_back(base.substr(start, slash - start));
+        if (slash == std::string::npos) break;
+        start = slash + 1;
     }
-    if (context == 0 || context > *m.context_length) { r.verdict = Fit::Unlikely; r.evidence.push_back("Requested context exceeds the verified model context."); return r; }
+    if (parts.size() > 3 || std::any_of(parts.begin(), parts.end(), [](const std::string &p) { return p.empty() || p == "."; })) return {};
+    // Ollama's documented name defaults: registry.ollama.ai host, library namespace, latest tag.
+    std::string host = "registry.ollama.ai", space = "library";
+    if (parts.size() == 3) { host = parts[0]; space = parts[1]; }
+    else if (parts.size() == 2) space = parts[0];
+    return std::filesystem::path("manifests") / host / space / parts.back() / tag;
+}
+DestinationProbe probe_destination(const DestinationCandidate &c, const std::vector<Model> &installed, std::size_t limit) {
+    DestinationProbe p; p.candidate = c;
+    if (c.path.empty() || !c.path.is_absolute()) return p;
+    std::error_code ec;
+    for (const auto &m : installed) {
+        if (p.manifests_checked >= limit) break;
+        const auto relative = manifest_path(m.name); if (!relative) continue;
+        ++p.manifests_checked; if (std::filesystem::is_regular_file(c.path / *relative, ec)) ++p.manifests_found;
+    }
+    // Before the runtime creates the directory, the free space that matters is its nearest existing ancestor's.
+    auto at = c.path;
+    while (!std::filesystem::exists(at, ec)) { const auto parent = at.parent_path(); if (parent.empty() || parent == at) return p; at = parent; }
+    const auto space = std::filesystem::space(at, ec); if (!ec) p.free_bytes = space.available;
+    return p;
+}
+ModelDestination choose_destination(const std::vector<DestinationProbe> &probes) {
+    ModelDestination d; d.candidates = probes.size(); if (probes.empty()) return d;
+    const bool installed = std::any_of(probes.begin(), probes.end(), [](const DestinationProbe &p) { return p.manifests_checked > 0; });
+    if (installed) {
+        for (const auto &p : probes) if (p.manifests_checked > 0 && p.manifests_found == p.manifests_checked) {
+            d.path = p.candidate.path; d.source = p.candidate.source; d.proof = DestinationProof::Manifests;
+            d.manifests_checked = p.manifests_checked; d.manifests_found = p.manifests_found; d.free_bytes = p.free_bytes; return d;
+        }
+        // Installed models exist but no documented location holds them: the destination stays unknown.
+        const auto best = std::max_element(probes.begin(), probes.end(), [](const DestinationProbe &a, const DestinationProbe &b) { return a.manifests_found < b.manifests_found; });
+        d.path = best->candidate.path; d.source = best->candidate.source; d.manifests_checked = best->manifests_checked; d.manifests_found = best->manifests_found;
+        return d;
+    }
+    // Nothing installed to cross-check: follow the documented setting, and when the views of that
+    // setting disagree, use the least free space among them.
+    d.path = probes.front().candidate.path; d.source = probes.front().candidate.source; d.proof = DestinationProof::Configured;
+    std::optional<std::uint64_t> least; bool unknown = false;
+    for (const auto &p : probes) {
+        if (p.candidate.path.lexically_normal() != d.path.lexically_normal()) d.candidates_disagree = true;
+        if (!p.free_bytes) unknown = true; else if (!least || *p.free_bytes < *least) least = p.free_bytes;
+    }
+    if (!unknown) d.free_bytes = least;
+    return d;
+}
+std::optional<std::uint64_t> usable_vram(const std::vector<GpuAdapter> &gpus) {
+    std::optional<std::uint64_t> best;
+    for (const auto &g : gpus) {
+        if (g.dedicated_bytes == 0) continue;
+        const auto usable = g.budget_bytes ? (std::min)(g.dedicated_bytes, *g.budget_bytes) : g.dedicated_bytes;
+        if (!best || usable > *best) best = usable;
+    }
+    return best;
+}
+std::string adapter_identity(const std::vector<GpuAdapter> &gpus) {
+    std::vector<std::string> rows;
+    for (const auto &g : gpus) rows.push_back(g.name + "|" + g.driver_version + "|" + std::to_string(g.dedicated_bytes));
+    std::sort(rows.begin(), rows.end()); std::string out;
+    for (const auto &r : rows) out += (out.empty() ? "" : ";") + r;
+    return out;
+}
+std::vector<RuntimeMemory> runtime_memory(const Json &j) {
+    require(j.contains("models") && j.at("models").is_array() && j.at("models").size() <= 10000, "Invalid running-model response");
+    std::vector<RuntimeMemory> out;
+    for (const auto &v : j.at("models")) {
+        require(v.is_object(), "Invalid running-model entry");
+        RuntimeMemory r; r.model = text(v, "name"); require(valid_model(r.model), "Invalid running-model name");
+        const auto size = number(v, "size"), vram = number(v, "size_vram");
+        // Entries without exact sizes are not evidence and are left out rather than read as zero.
+        if (!size || !vram || *size == 0 || *vram > *size) continue;
+        r.size = *size; r.size_vram = *vram; out.push_back(std::move(r));
+    }
+    return out;
+}
+std::optional<BackendObservation> observe_backend(const std::vector<RuntimeMemory> &loaded, const std::string &version, const std::string &adapters, const std::string &at) {
+    if (version.empty() || at.empty()) return {};
+    const RuntimeMemory *best = nullptr;
+    for (const auto &r : loaded) if (!best || r.size_vram > best->size_vram) best = &r;
+    if (!best) return {};
+    return BackendObservation{at, version, adapters, best->model, best->size, best->size_vram};
+}
+Json backend_json(const BackendObservation &o) {
+    return {{"schema",1},{"observed_at",o.observed_at},{"runtime_version",o.runtime_version},{"adapters",o.adapters},{"model",o.model},{"size",o.size},{"size_vram",o.size_vram}};
+}
+BackendObservation load_backend(const Json &j) {
+    require(j.is_object() && j.value("schema",0) == 1, "Unsupported backend evidence schema");
+    BackendObservation o; o.observed_at = text(j,"observed_at",40); o.runtime_version = text(j,"runtime_version",80); o.adapters = text(j,"adapters",4096); o.model = text(j,"model",200);
+    require(!o.observed_at.empty() && !o.runtime_version.empty() && valid_model(o.model), "Incomplete backend evidence");
+    const auto size = number(j,"size"), vram = number(j,"size_vram"); require(size && vram && *size > 0 && *vram <= *size, "Invalid backend evidence sizes");
+    o.size = *size; o.size_vram = *vram; return o;
+}
+void apply_backend(Hardware &h, const std::optional<BackendObservation> &o, const std::string &version) {
+    h.backend_verified = false; h.backend_state = BackendState::Unverified; h.backend.clear(); h.backend_observation = o;
+    h.usable_vram = usable_vram(h.gpus);
+    if (!o) return;
+    // Evidence belongs to the adapters, drivers and runtime it was observed with.
+    if (o->adapters != adapter_identity(h.gpus) || (!version.empty() && version != o->runtime_version)) { h.backend_state = BackendState::Changed; return; }
+    h.backend_verified = true;
+    if (o->size_vram > 0) { h.backend_state = BackendState::Gpu; h.backend = "gpu"; }
+    else { h.backend_state = BackendState::CpuOnly; h.backend = "cpu"; h.usable_vram = 0; }
+}
+std::string kv_cache_name(KvCache c) { switch (c) { case KvCache::Q8_0: return "q8_0"; case KvCache::Q4_0: return "q4_0"; default: return "f16"; } }
+std::optional<KvCache> kv_cache_from(const std::string &s) {
+    for (auto c : {KvCache::F16, KvCache::Q8_0, KvCache::Q4_0})
+        if (kv_cache_name(c) == s) return c;
+    return {};
+}
+std::optional<std::uint64_t> context_memory(const Model &m, std::uint64_t context, KvCache cache) {
+    if (context == 0 || !m.block_count || !*m.block_count) return {};
+    const auto heads = m.head_count, kv = m.head_count_kv ? m.head_count_kv : m.head_count;
+    if (!kv || !*kv) return {};
+    std::optional<std::uint64_t> key = m.key_length;
+    if (!key && heads && *heads && m.embedding_length && *m.embedding_length) key = (*m.embedding_length + *heads - 1) / *heads;
+    const auto value = m.value_length ? m.value_length : key;
+    if (!key || !*key || !value || !*value) return {};
+    try {
+        const auto elements = times(times(times(context, *m.block_count), *kv), plus(*key, *value));
+        switch (cache) {
+        case KvCache::Q8_0: return times(plus(elements, 31) / 32, 34); // 32 values per 34-byte block
+        case KvCache::Q4_0: return times(plus(elements, 31) / 32, 18); // 32 values per 18-byte block
+        default: return times(elements, 2);
+        }
+    } catch (...) { return {}; }
+}
+const std::vector<std::uint64_t> &fit_contexts() { static const std::vector<std::uint64_t> values{2048, 4096, 8192, 16384, 32768, 65536, 131072}; return values; }
+Json fit_settings_json(const FitSettings &s) { return {{"schema",1},{"context",s.context},{"kv_cache",kv_cache_name(s.cache)}}; }
+FitSettings load_fit_settings(const Json &j) {
+    require(j.is_object() && j.value("schema",0) == 1, "Unsupported fit settings schema");
+    FitSettings s; const auto context = number(j,"context"); const auto &allowed = fit_contexts();
+    require(context && std::find(allowed.begin(), allowed.end(), *context) != allowed.end(), "Unsupported estimate context");
+    const auto cache = kv_cache_from(text(j,"kv_cache",8)); require(cache.has_value(), "Unsupported context cache precision");
+    s.context = *context; s.cache = *cache; return s;
+}
+std::string fit_label(Fit f) { switch (f) { case Fit::RunsWell:return "Runs well"; case Fit::WithLimits:return "Runs with limits"; case Fit::Unlikely:return "Unlikely"; default:return "Unknown"; } }
+std::string fit_note(FitNote n) {
+    switch (n) {
+    case FitNote::Conservative: return "Estimates are conservative and do not guarantee execution.";
+    case FitNote::MissingSizeOrDestination: return "Exact model size, destination space, or measurement timestamp is unavailable.";
+    case FitNote::StorageOverflow: return "Storage estimate overflow.";
+    case FitNote::InsufficientDisk: return "Destination has less than model size plus ten percent safety allowance.";
+    case FitNote::MissingMemoryEvidence: return "RAM, architecture, parameters, quantization, context, and context-memory evidence are all required.";
+    case FitNote::ContextExceedsModel: return "Requested context exceeds the verified model context.";
+    case FitNote::MemoryOverflow: return "Memory estimate overflow.";
+    case FitNote::MemoryFormula: return "Memory estimate: blob bytes + twenty percent runtime allowance + context-memory estimate.";
+    case FitNote::PartialOffload: return "CPU or partial GPU offload may be necessary; throughput is not predicted.";
+    case FitNote::NoMemoryFits: return "Neither measured RAM nor measured VRAM accommodates this estimate.";
+    case FitNote::GpuUnverifiedCpuEstimate: return "The runtime has not shown a working GPU backend; the verdict assumes processor-only inference.";
+    case FitNote::GpuUnverified: return "Measured RAM alone is not enough and the runtime has not shown a working GPU backend.";
+    case FitNote::ContextLimitedToModel: return "The estimate context was limited to the model's verified maximum.";
+    }
+    return {};
+}
+FitResult fit(const Model &m, const Hardware &h, std::uint64_t context, std::optional<std::uint64_t> overhead) {
+    FitResult r; r.context = context; r.context_bytes = overhead; r.measured_at = h.measured_at; r.notes.push_back(FitNote::Conservative);
+    if (!m.bytes || !*m.bytes || !h.free_disk || h.measured_at.empty()) { r.notes.push_back(FitNote::MissingSizeOrDestination); return r; }
+    try { r.disk_required = m.installed ? 0 : plus(*m.bytes, *m.bytes / 10); }
+    catch (...) { r.notes.push_back(FitNote::StorageOverflow); return r; }
+    if (*h.free_disk < *r.disk_required) { r.verdict = Fit::Unlikely; r.notes.push_back(FitNote::InsufficientDisk); return r; }
+    if (!h.available_ram || h.architecture.empty() || !m.parameter_count || !m.context_length || m.quantization.empty() || !overhead) {
+        r.notes.push_back(FitNote::MissingMemoryEvidence); return r;
+    }
+    if (context == 0 || context > *m.context_length) { r.verdict = Fit::Unlikely; r.notes.push_back(FitNote::ContextExceedsModel); return r; }
     try { r.memory_required = plus(plus(*m.bytes, *m.bytes / 5), *overhead); }
-    catch (...) { r.evidence.push_back("Memory estimate overflow."); return r; }
-    r.evidence.push_back("Memory estimate: blob bytes + twenty percent runtime allowance + explicitly supplied context-memory estimate.");
-    if (*h.usable_vram >= *r.memory_required && *h.available_ram >= *m.bytes / 5) r.verdict = Fit::RunsWell;
-    else if (*h.available_ram >= *r.memory_required) { r.verdict = Fit::WithLimits; r.evidence.push_back("CPU or partial GPU offload may be necessary; throughput is not predicted."); }
-    else { r.verdict = Fit::Unlikely; r.evidence.push_back("Neither measured RAM nor measured VRAM accommodates this estimate."); }
+    catch (...) { r.notes.push_back(FitNote::MemoryOverflow); return r; }
+    r.notes.push_back(FitNote::MemoryFormula);
+    if (h.backend_verified && h.usable_vram) {
+        if (*h.usable_vram >= *r.memory_required && *h.available_ram >= *m.bytes / 5) r.verdict = Fit::RunsWell;
+        else if (*h.available_ram >= *r.memory_required) { r.verdict = Fit::WithLimits; r.notes.push_back(FitNote::PartialOffload); }
+        else { r.verdict = Fit::Unlikely; r.notes.push_back(FitNote::NoMemoryFits); }
+    } else if (*h.available_ram >= *r.memory_required) {
+        // Without the runtime's own GPU evidence only processor inference is evidenced, so never better than limits.
+        r.verdict = Fit::WithLimits; r.notes.push_back(FitNote::GpuUnverifiedCpuEstimate);
+    } else r.notes.push_back(FitNote::GpuUnverified);
+    return r;
+}
+FitResult assess(const Model &m, const Hardware &h, const FitSettings &s) {
+    auto context = s.context; bool limited = false;
+    if (m.context_length && *m.context_length && context > *m.context_length) { context = *m.context_length; limited = true; }
+    auto r = fit(m, h, context, context_memory(m, context, s.cache));
+    if (limited) r.notes.insert(r.notes.begin() + 1, FitNote::ContextLimitedToModel);
     return r;
 }
 Json chat_payload(const Model &m, const Json &messages, double temperature, std::uint64_t context, std::uint64_t output) {

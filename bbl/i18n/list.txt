@@ -392,6 +392,7 @@ src/slic3r/GUI/WorkspacePanel.cpp
 src/slic3r/GUI/wxMediaCtrl2.cpp
 src/slic3r/GUI/CommandPaletteIndex.cpp
 src/slic3r/GUI/ModelCreator/ModelCreatorBackend.cpp
+src/slic3r/GUI/OllamaSuite/OllamaSuiteText.cpp
 src/slic3r/GUI/MonitorBasePanel.cpp
 src/slic3r/GUI/HomeAssistant.cpp
 src/slic3r/GUI/PrinterWebView.cpp
