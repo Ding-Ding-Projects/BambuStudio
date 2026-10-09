@@ -178,12 +178,57 @@ test('the first-run diagnostic is dispatch-only, pinned, bounded and text-only',
     /Join-Path \(Join-Path \$env:APPDATA 'BambuStudio'\) 'log'/, /LogName = 'Application'/, /Win32_VideoController/, /WTSGetActiveConsoleSessionId/]) {
     assert.match(diagnose, source);
   }
-  for (const verdict of ['not_started', 'started_exited', 'started_hidden', 'started_visible']) {
-    assert.match(diagnose, new RegExp(`classification = '${verdict}'`), verdict);
+  for (const verdict of ['not_started', 'started_crashed', 'started_exited', 'started_hidden', 'started_visible']) {
+    assert.match(diagnose, new RegExp(`return & \\$verdict '${verdict}' `), verdict);
   }
   assert.match(diagnose, /function Start-InstalledStub \{[\s\S]*?'GH_TOKEN', 'GITHUB_TOKEN', 'ORG_TOKEN', 'RELEASE_TOKEN'[\s\S]*?Start-Process -FilePath \$stubPath/,
     'no workflow credential reaches installed code');
   assert.doesNotMatch(diagnose, /CopyFromScreen|\.png|PrintWindow|BitBlt/i, 'no screenshots');
+});
+
+test('the first-run diagnostic lets a crash win and names the faulting process', async () => {
+  // md3-v230 crashed about 3 s into every start with an access violation, after an untitled
+  // splash; the phase still read started_visible. A crash now wins over every other value.
+  const diagnose = await read('scripts', 'ci', 'Diagnose-InstallerFirstRun.ps1');
+  const fn = (name) => {
+    const start = diagnose.indexOf(`\nfunction ${name} {`);
+    assert.notEqual(start, -1, `${name} exists`);
+    return diagnose.slice(start, diagnose.indexOf('\n}\n', start) + 3);
+  };
+  // An NTSTATUS error exit code is a crash; the launcher's own -1 (0xFFFFFFFF) is not.
+  assert.match(fn('Test-CrashExitCode'), /\$value -ge 3221225472 -and \$value -ne 4294967295/);
+  // The collected Application log text is parsed back into crash entries.
+  const parse = fn('ConvertFrom-ApplicationEventText');
+  assert.match(parse, /\$entry\.provider -eq 'Application Error' -and \$entry\.id -eq 1000/);
+  assert.match(parse, /\$entry\.provider -eq 'Windows Error Reporting' -and \$entry\.id -eq 1001/);
+  assert.match(parse, /\$eventName -in @\('APPCRASH', 'MoAppCrash', 'BEX', 'BEX64'\)/);
+  for (const name of ['Faulting application name', 'Faulting module name', 'Exception code', 'Fault offset', 'Faulting process id', 'Report Id']) {
+    assert.ok(parse.includes(`'${name}'`), name);
+  }
+  const classify = fn('Get-FirstRunClassification');
+  assert.ok(classify.indexOf("'started_crashed'") < classify.indexOf("'started_visible'"), 'the crash is decided first');
+  // Every crash entry of the phase is a crash. A bambu-studio.exe exit code is known only when a poll
+  // caught the process, so the launcher's later -1 is reported in the basis but never downgrades it.
+  assert.match(classify, /\n {4}foreach \(\$fault in \$faults\) \{\n {8}\$known = /, 'every crash entry is a crash');
+  assert.doesNotMatch(classify, /handled|\.outcome\b/, 'no crash entry is downgraded by its exit code');
+  assert.match(classify, /then exited with exit code \$\(\$process\.exit_code_hex\)/);
+  // Not counted: a process from before the phase, and the copy a faulting process makes at its fault.
+  assert.match(classify, /reason = 'started_before_phase'/);
+  assert.match(classify, /reason = 'fault_copy'/);
+  // A window is a visible start only from a process still running at the end, or the main frame.
+  assert.match(classify, /\$_\.visible_window -and \$_\.alive_at_end/);
+  assert.match(classify, /\$_\.visible_window -and -not \$_\.alive_at_end -and \(Test-MainFrameShown \$_\)/);
+  for (const field of ['pid', 'exception_code', 'fault_offset', 'faulting_module', 'window_shown_before_crash']) {
+    assert.match(classify, new RegExp(`\\n {12}${field} = `), `the crash record names ${field}`);
+  }
+  // The receipt keeps its fields and adds the crash; the classification reads the collected log.
+  const phase = fn('Invoke-FirstRunPhase');
+  for (const field of ['classification', 'basis', 'exit', 'crash', 'application_faults', 'not_counted', 'processes']) {
+    assert.match(phase, new RegExp(`\\n {8}${field} = `), `receipt.${field}`);
+  }
+  assert.ok(phase.indexOf('Save-PhaseEvidence -Directory') < phase.indexOf('Get-FirstRunClassification -Processes'),
+    'the Application log is collected before the classification');
+  assert.match(phase, /Get-FirstRunClassification -Processes \$processes -ApplicationEvents \$applicationEvents -Since \$started -Until \$collected/);
 });
 
 test('the hosted install check installs silently unless asked for the interactive install', async () => {

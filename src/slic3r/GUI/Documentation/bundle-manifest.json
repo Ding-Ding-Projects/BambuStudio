@@ -75,12 +75,12 @@
     {
       "route": "automation/installer-first-run-diagnostic.md",
       "title": "Installer first-run diagnostic",
-      "sha256": "b825b63a6693999c5b75308a61540ff91889b11ada32b655965cde551501491c"
+      "sha256": "f3a9b8989383b77942e35eebe22662dbab5044a47aaeb1c026b5f847f563c512"
     },
     {
       "route": "automation/installer-first-run-diagnostic.yue_HK.md",
       "title": "安裝程式首次啟動診斷",
-      "sha256": "3a23b90412e633ad8ede4d5a9bf6f1be1eaef42845934981aeba81648fce1fe1"
+      "sha256": "c8fc5eb1d861322ba11759246b64b5c21ba46158cb0a482b7b95ad55720fe511"
     },
     {
       "route": "automation/integration-readiness.md",
@@ -1850,7 +1850,7 @@
       "bytes": 1979
     }
   ],
-  "bundle_sha256": "83f73beaf446ccb7aa0e07b95fb5c875fff6514846b64ea38be78a6e9c61515c",
+  "bundle_sha256": "f59f84e8b97f6b88386ac3ec113416c27061d83d45910b14610b359621b3c564",
   "unavailable_references": [
     {
       "source": "api/README.md",

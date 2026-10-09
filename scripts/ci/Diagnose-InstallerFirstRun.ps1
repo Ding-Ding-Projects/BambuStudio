@@ -12,14 +12,22 @@ GitHub-hosted Windows runner. Dispatched only by .github/workflows/diagnose-inst
 The release is downloaded and verified, and installed, by Verify-HostedSquirrelInstall.ps1 (with
 -Interactive for the interactive arm). While that runs, and for -ObserveSeconds after each start,
 every bambu-studio.exe process and the foreground window are polled every five seconds; process
-start and stop events add exit codes for processes too short-lived to be polled. Each phase then
-collects, as text only, the Squirrel logs, the launcher trace, the newest application logs and the
-Application event-log entries about the application, and writes receipt.json with one of:
+start and stop events add start times and exit codes, though on hosted runners so far stop events
+arrived only for Update.exe and Setup.exe, so a bambu-studio.exe exit code is known only when a poll
+caught the process. Each phase then collects, as text only, the Squirrel logs, the launcher trace,
+the newest application logs and the Application event-log entries about the application, and writes
+receipt.json with one of:
 
   not_started      no application process was seen
-  started_exited   an application process ran and ended without a visible window
+  started_crashed  an application process was ended by an exception (an NTSTATUS error exit code other
+                   than the launcher's own 0xFFFFFFFF), or the Application log has a crash entry for
+                   bambu-studio.exe from the phase, whatever exit code followed; this wins over
+                   every other value
+  started_exited   an application process ran and ended without a crash; the basis says whether it
+                   had shown a visible window
   started_hidden   an application process was still running at the end, without a visible window
-  started_visible  an application process showed a visible window
+  started_visible  an application process showed a visible window and was still running at the end,
+                   or showed the main frame, and nothing crashed
 
 The classification is the result. The script fails only when the release cannot be verified or
 installed, or the install root's bambu-studio.exe cannot be started; never because of a
@@ -160,6 +168,26 @@ function Format-ExitCode {
     $value = [int64] $Code
     if ($value -lt 0) { $value += 4294967296 }
     return '0x{0:X8}' -f $value
+}
+
+# Whether an exit code is one an exception leaves: an NTSTATUS error, 0xC0000000 (3221225472) and
+# above. 0xFFFFFFFF (4294967295) is the launcher's own -1, an ordinary exit.
+function Test-CrashExitCode {
+    param([object] $Code)
+    if ($null -eq $Code) { return $false }
+    $value = [int64] $Code
+    if ($value -lt 0) { $value += 4294967296 }
+    return ($value -ge 3221225472 -and $value -ne 4294967295)
+}
+
+# A time as UTC, from a DateTime or from the round-trip text that Format-Utc writes.
+function ConvertTo-UtcTime {
+    param([object] $Value)
+    if ($null -eq $Value) { return $null }
+    if ($Value -is [datetime]) { return $Value.ToUniversalTime() }
+    $text = [string] $Value
+    if (-not $text) { return $null }
+    return [datetime]::Parse($text, [Globalization.CultureInfo]::InvariantCulture, [Globalization.DateTimeStyles]::RoundtripKind).ToUniversalTime()
 }
 
 function Get-CimValue {
@@ -454,40 +482,316 @@ function Merge-FirstRunProcesses {
     })
 }
 
-# Install events and Squirrel's stub are not the application. A process whose command line was never
-# seen counts as the application, since an install event is long-lived enough to be seen.
-function Get-FirstRunClassification {
-    param([Parameter(Mandatory)][AllowEmptyCollection()][object[]] $Processes)
-    $candidates = @($Processes | Where-Object { $_.role -in @('firstrun', 'app', 'unknown') })
-    $visible = @($candidates | Where-Object { $_.visible_window })
-    if ($visible.Count -gt 0) {
-        $shown = $visible[0]
-        return [ordered]@{
-            classification = 'started_visible'; pid = $shown.pid; exit = $null
-            basis = "pid $($shown.pid) ($($shown.role)) showed a visible window: $($shown.window_titles -join ' | ')" +
-                    $(if ($shown.ever_foreground) { '; it was the foreground window' } else { '; it was never the foreground window' })
+# "0x1E4C", "c0000005" or "000000000311d895" as a number; $null when the text is not hexadecimal.
+function ConvertFrom-HexText {
+    param([string] $Text)
+    $match = [regex]::Match([string] $Text, '^\s*(?:0[xX])?(?<hex>[0-9a-fA-F]{1,16})\s*$')
+    if (-not $match.Success) { return $null }
+    return [Convert]::ToInt64($match.Groups['hex'].Value, 16)
+}
+
+# The Application event-log entries as Save-PhaseEvidence writes them: a line
+# "<UTC time> id=<id> provider=<provider> level=<level>", then the message. Crash entries are an
+# Application Error 1000 entry, which names the faulting process id, and a Windows Error Reporting
+# 1001 entry for an APPCRASH, BEX or BEX64 report, which does not. Both name the application, the
+# exception code, the fault offset and the faulting module. Hang reports and other entries are 'other'.
+function ConvertFrom-ApplicationEventText {
+    param([Parameter(Mandatory)][AllowEmptyCollection()][AllowEmptyString()][string[]] $Lines)
+    $header = '^(?<time>\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d+)?Z) id=(?<id>\d+) provider=(?<provider>.*?) level=(?<level>.*)$'
+    $raw = [System.Collections.Generic.List[object]]::new()
+    foreach ($line in @($Lines | ForEach-Object { ([string] $_) -split '\r?\n' })) {
+        $text = $line.TrimStart([char] 0xFEFF)
+        $match = [regex]::Match($text, $header)
+        if ($match.Success) {
+            $raw.Add([ordered]@{
+                time = ConvertTo-UtcTime $match.Groups['time'].Value; id = [int] $match.Groups['id'].Value
+                provider = $match.Groups['provider'].Value; level = $match.Groups['level'].Value
+                message = [System.Collections.Generic.List[string]]::new()
+            })
         }
+        elseif ($raw.Count -gt 0) {
+            $raw[$raw.Count - 1].message.Add($text)
+        }
+    }
+    $entries = [System.Collections.Generic.List[object]]::new()
+    foreach ($entry in $raw) {
+        $message = ($entry.message -join "`n").Trim()
+        $field = {
+            param([string] $Name)
+            $found = [regex]::Match($message, "(?m)^$([regex]::Escape($Name)):[ \t]*(?<value>[^\n]*)$")
+            if ($found.Success -and $found.Groups['value'].Value.Trim()) { $found.Groups['value'].Value.Trim() } else { $null }
+        }
+        $kind = 'other'
+        $eventName = $null
+        $application = $null
+        $processId = $null
+        $code = $null
+        $offset = $null
+        $module = $null
+        $modulePath = $null
+        if ($entry.provider -eq 'Application Error' -and $entry.id -eq 1000) {
+            $kind = 'crash'
+            $application = & $field 'Faulting application name'
+            $module = & $field 'Faulting module name'
+            $code = & $field 'Exception code'
+            $offset = & $field 'Fault offset'
+            $modulePath = & $field 'Faulting module path'
+            $processText = [string] (& $field 'Faulting process id')
+            if ($processText -match '^0[xX][0-9a-fA-F]+$') { $processId = [int] (ConvertFrom-HexText $processText) }
+            elseif ($processText -match '^\d+$') { $processId = [int] $processText }
+        }
+        elseif ($entry.provider -eq 'Windows Error Reporting' -and $entry.id -eq 1001) {
+            $eventName = & $field 'Event Name'
+            if ($eventName -in @('APPCRASH', 'MoAppCrash', 'BEX', 'BEX64')) {
+                $kind = 'crash'
+                $application = & $field 'P1'
+                $module = & $field 'P4'
+                # APPCRASH gives the exception code before the offset; BEX and BEX64 the other way round.
+                if ($eventName -like 'BEX*') { $offset = & $field 'P7'; $code = & $field 'P8' }
+                else { $code = & $field 'P7'; $offset = & $field 'P8' }
+            }
+        }
+        # "bambu-studio.exe, version: 2.8.4.61, time stamp: 0x6ac79c73" names bambu-studio.exe.
+        if ($application) { $application = ($application -split ',')[0].Trim() }
+        if ($module) { $module = ($module -split ',')[0].Trim() }
+        $codeValue = ConvertFrom-HexText $code
+        if ($offset -and $offset -notmatch '^0[xX]') { $offset = "0x$offset" }
+        $entries.Add([pscustomobject][ordered]@{
+            time = $entry.time; id = $entry.id; provider = $entry.provider; level = $entry.level; kind = $kind
+            event_name = $eventName; application = $application; pid = $processId
+            exception_code = if ($null -ne $codeValue) { Format-ExitCode $codeValue } else { $null }
+            fault_offset = $offset; module = $module; module_path = $modulePath; report_id = & $field 'Report Id'
+        })
+    }
+    return , $entries.ToArray()
+}
+
+# The main frame's title is "<project> - <display name>", "Untitled - Bambu Studio" on a fresh runner.
+# The startup splash has no title.
+function Test-MainFrameShown {
+    param([Parameter(Mandatory)][object] $Process)
+    return (@($Process.window_titles | Where-Object { ([string] $_) -match '\S - Bambu Studio$' }).Count -gt 0)
+}
+
+# Install events and Squirrel's stub are not the application. A process whose command line was never
+# seen counts as the application, since an install event is long-lived enough to be seen. Not counted
+# as the phase's start either: a process that was already running before the phase began, and the
+# child with its parent's command line that a faulting process creates at the fault, which is how the
+# copy Windows Error Reporting takes of a faulting process appears.
+#
+# A crash wins over every other classification: an application process ended with a crash exit code
+# (Test-CrashExitCode), or a crash entry for bambu-studio.exe in the phase's Application log. Every
+# such entry is a crash, whatever exit code its process then had: a bambu-studio.exe exit code is
+# known only when a poll caught the process and held its handle, so it cannot decide the verdict. The
+# crash record and the basis give that exit code when it is known, such as the launcher's own -1
+# after a fault while BambuStudio.dll initialised.
+# A visible window counts as a visible start only from a process that was still running at the end,
+# or when it was the main frame.
+function Get-FirstRunClassification {
+    param(
+        [Parameter(Mandatory)][AllowEmptyCollection()][object[]] $Processes,
+        [AllowEmptyCollection()][object[]] $ApplicationEvents = @(),
+        [object] $Since = $null,
+        [object] $Until = $null
+    )
+    $sinceUtc = ConvertTo-UtcTime $Since
+    $untilUtc = ConvertTo-UtcTime $Until
+    $appRoles = @('firstrun', 'app', 'unknown')
+    $byPid = @{}
+    foreach ($process in $Processes) { $byPid[[string] $process.pid] = $process }
+    $lifetime = {
+        param([object] $Process)
+        if ($null -eq $Process.lifetime_ms) { return '' }
+        if ($Process.exit_time_is_bound) { return " within $($Process.lifetime_ms) ms" }
+        return " after $($Process.lifetime_ms) ms"
+    }
+    $titles = {
+        param([object] $Process)
+        $named = @($Process.window_titles | Where-Object { $_ })
+        if ($named.Count -gt 0) { return $named -join ' | ' }
+        return 'untitled'
+    }
+    $exitOf = {
+        param([object] $Process)
+        return [ordered]@{
+            pid = $Process.pid; role = $Process.role; exit_code = $Process.exit_code; exit_code_hex = $Process.exit_code_hex
+            lifetime_ms = $Process.lifetime_ms; visible_window = [bool] $Process.visible_window
+        }
+    }
+
+    # Crash entries for the application from the phase window. A Windows Error Reporting entry with the
+    # report id of an Application Error entry describes the same fault.
+    $entries = @($ApplicationEvents | Where-Object {
+        $_.kind -eq 'crash' -and ([string] $_.application) -ieq 'bambu-studio.exe' -and
+        ($null -eq $sinceUtc -or $_.time -ge $sinceUtc) -and ($null -eq $untilUtc -or $_.time -le $untilUtc) })
+    $reportIds = @($entries | Where-Object { $_.provider -eq 'Application Error' -and $_.report_id } | ForEach-Object { [string] $_.report_id })
+    $faults = [System.Collections.Generic.List[object]]::new()
+    foreach ($entry in $entries) {
+        if ($entry.provider -ne 'Application Error' -and $entry.report_id -and $reportIds -contains [string] $entry.report_id) { continue }
+        $process = if ($null -ne $entry.pid) { $byPid[[string] $entry.pid] } else { $null }
+        $faults.Add([pscustomobject][ordered]@{
+            time = Format-Utc $entry.time; event_id = $entry.id; provider = $entry.provider; event_name = $entry.event_name
+            pid = $entry.pid; role = if ($null -ne $process) { $process.role } else { $null }
+            exception_code = $entry.exception_code; fault_offset = $entry.fault_offset
+            faulting_module = $entry.module; faulting_module_path = $entry.module_path; report_id = $entry.report_id
+            exit_code_hex = if ($null -ne $process) { $process.exit_code_hex } else { $null }
+        })
+    }
+
+    # When each process faulted: the time of its crash entries, or its exit with a crash exit code.
+    $faultTimes = @{}
+    foreach ($fault in $faults) {
+        if ($null -eq $fault.pid) { continue }
+        $key = [string] $fault.pid
+        if (-not $faultTimes.ContainsKey($key)) { $faultTimes[$key] = [System.Collections.Generic.List[datetime]]::new() }
+        $faultTimes[$key].Add((ConvertTo-UtcTime $fault.time))
+    }
+    foreach ($process in $Processes) {
+        if (-not (Test-CrashExitCode $process.exit_code) -or -not $process.exited) { continue }
+        $key = [string] $process.pid
+        if (-not $faultTimes.ContainsKey($key)) { $faultTimes[$key] = [System.Collections.Generic.List[datetime]]::new() }
+        $faultTimes[$key].Add((ConvertTo-UtcTime $process.exited))
+    }
+
+    $notCounted = [System.Collections.Generic.List[object]]::new()
+    foreach ($process in $Processes) {
+        if ($process.role -notin $appRoles) { continue }
+        $created = ConvertTo-UtcTime $process.started
+        if ($null -ne $sinceUtc -and $null -ne $created -and $created -lt $sinceUtc.AddSeconds(-5)) {
+            $notCounted.Add([pscustomobject][ordered]@{ pid = $process.pid; role = $process.role; reason = 'started_before_phase'; of_pid = $null })
+            continue
+        }
+        $parentKey = [string] $process.ppid
+        if ($null -eq $process.ppid -or $null -eq $created -or -not $faultTimes.ContainsKey($parentKey)) { continue }
+        $parent = $byPid[$parentKey]
+        $parentCommand = if ($null -ne $parent) { ([string] $parent.command_line).Trim() } else { '' }
+        $command = ([string] $process.command_line).Trim()
+        $sameCommand = -not $parentCommand -or -not $command -or $parentCommand -ieq $command
+        $atFault = @($faultTimes[$parentKey] | Where-Object { [math]::Abs(($created - $_).TotalSeconds) -le 10 }).Count -gt 0
+        if ($sameCommand -and $atFault) {
+            $notCounted.Add([pscustomobject][ordered]@{ pid = $process.pid; role = $process.role; reason = 'fault_copy'; of_pid = $process.ppid })
+        }
+    }
+    $skipped = @($notCounted | ForEach-Object { [string] $_.pid })
+    $candidates = @($Processes | Where-Object { $_.role -in $appRoles -and $skipped -notcontains [string] $_.pid })
+
+    $notes = [System.Collections.Generic.List[string]]::new()
+    foreach ($skip in $notCounted) {
+        if ($skip.reason -eq 'fault_copy') { $notes.Add("pid $($skip.pid), created by pid $($skip.of_pid) at its fault with the same command line, is not counted") }
+        else { $notes.Add("pid $($skip.pid), which was running before the phase began, is not counted") }
+    }
+    $suffix = if ($notes.Count -gt 0) { '; ' + ($notes -join '; ') } else { '' }
+    $verdict = {
+        param([string] $Classification, [object] $ProcessId, [object] $Exit, [string] $Basis, [object] $Crash)
+        return [ordered]@{
+            classification = $Classification; pid = $ProcessId; exit = $Exit; basis = $Basis + $suffix; crash = $Crash
+            application_faults = $faults.ToArray(); not_counted = $notCounted.ToArray()
+        }
+    }
+
+    # Crashes: application processes with a crash exit code, and every crash entry of the phase.
+    $crashes = [System.Collections.Generic.List[object]]::new()
+    foreach ($process in @($candidates | Where-Object { Test-CrashExitCode $_.exit_code })) {
+        $crashes.Add([ordered]@{ pid = $process.pid; process = $process; fault = $null; time = ConvertTo-UtcTime $process.exited })
+    }
+    foreach ($fault in $faults) {
+        $known = @($crashes | Where-Object { $null -ne $fault.pid -and [string] $_.pid -eq [string] $fault.pid })
+        if ($known.Count -gt 0) {
+            if ($null -eq $known[0].fault) { $known[0].fault = $fault; $known[0].time = ConvertTo-UtcTime $fault.time }
+            continue
+        }
+        $process = if ($null -ne $fault.pid) { $byPid[[string] $fault.pid] } else { $null }
+        $crashes.Add([ordered]@{ pid = $fault.pid; process = $process; fault = $fault; time = ConvertTo-UtcTime $fault.time })
+    }
+    if ($crashes.Count -gt 0) {
+        # The first crash of a process the polls or events recorded explains the phase best.
+        $first = @($crashes | Sort-Object -Property @{ Expression = { $null -eq $_.process } },
+                                                    @{ Expression = { if ($null -ne $_.time) { $_.time } else { [datetime]::MaxValue } } })[0]
+        $process = $first.process
+        $fault = $first.fault
+        $byExit = $null -ne $process -and (Test-CrashExitCode $process.exit_code)
+        $code = if ($null -ne $fault -and $fault.exception_code) { $fault.exception_code } elseif ($byExit) { $process.exit_code_hex } else { $null }
+        $windowTitles = @()
+        if ($null -ne $process) { $windowTitles = @($process.window_titles) }
+        $copies = @($notCounted | Where-Object { $_.reason -eq 'fault_copy' -and [string] $_.of_pid -eq [string] $first.pid } | ForEach-Object { $_.pid })
+        $crash = [ordered]@{
+            pid = $first.pid
+            role = if ($null -ne $process) { $process.role } else { $null }
+            source = if ($byExit -and $null -ne $fault) { 'exit_code_and_application_log' } elseif ($byExit) { 'exit_code' } else { 'application_log' }
+            exception_code = $code
+            fault_offset = if ($null -ne $fault) { $fault.fault_offset } else { $null }
+            faulting_module = if ($null -ne $fault) { $fault.faulting_module } else { $null }
+            faulting_module_path = if ($null -ne $fault) { $fault.faulting_module_path } else { $null }
+            event_time = if ($null -ne $fault) { $fault.time } else { $null }
+            report_id = if ($null -ne $fault) { $fault.report_id } else { $null }
+            exit_code = if ($null -ne $process) { $process.exit_code } else { $null }
+            exit_code_hex = if ($null -ne $process) { $process.exit_code_hex } else { $null }
+            lifetime_ms = if ($null -ne $process) { $process.lifetime_ms } else { $null }
+            window_shown_before_crash = if ($null -ne $process) { [bool] $process.visible_window } else { $null }
+            window_titles = $windowTitles
+            fault_copies = $copies
+            crashes_in_phase = $crashes.Count
+        }
+        $basis = if ($null -eq $first.pid) { 'a bambu-studio.exe process that the Application log does not identify crashed' }
+                 elseif ($null -eq $process) { "pid $($first.pid), which no poll or process event recorded, crashed" }
+                 else { "pid $($first.pid) ($($process.role)) crashed" }
+        if ($code) { $basis += ": exception $code" }
+        if ($crash.faulting_module) { $basis += " in $($crash.faulting_module)" }
+        if ($crash.fault_offset) { $basis += " at offset $($crash.fault_offset)" }
+        if ($null -ne $process) {
+            # The exit code is known only when a poll caught the process; it describes, never decides.
+            if ($null -eq $process.exit_code_hex) {
+                $basis += if ($process.alive_at_end) { '; it was still running at the end' } else { "; it ended$(& $lifetime $process), exit code not captured" }
+            }
+            elseif ($process.exit_code_hex -ne $code) {
+                $basis += "; it then exited with exit code $($process.exit_code_hex)" +
+                          $(if ($process.exit_code_hex -eq '0xFFFFFFFF') { " (the launcher's own -1)" } else { '' }) + (& $lifetime $process)
+            }
+            else { $basis += & $lifetime $process }
+            $basis += if ($process.visible_window) { "; it had shown a visible window ($(& $titles $process)) before the crash" } else { '; it had shown no visible window before the crash' }
+        }
+        if ($crashes.Count -gt 1) { $basis += "; $($crashes.Count - 1) more crash(es) in this phase" }
+        $exit = if ($null -ne $process) { & $exitOf $process } else { $null }
+        return & $verdict 'started_crashed' $first.pid $exit $basis $crash
+    }
+
+    $shown = @(@($candidates | Where-Object { $_.visible_window -and $_.alive_at_end }) +
+               @($candidates | Where-Object { $_.visible_window -and -not $_.alive_at_end -and (Test-MainFrameShown $_) }))
+    if ($shown.Count -gt 0) {
+        $window = $shown[0]
+        $basis = "pid $($window.pid) ($($window.role)) showed a visible window: $(& $titles $window)" +
+                 $(if ($window.ever_foreground) { '; it was the foreground window' } else { '; it was never the foreground window' })
+        if ($window.alive_at_end) { $basis += '; it was still running at the end' }
+        else {
+            $basis += '; it was the main frame, and the process then ended without a crash, exit code ' +
+                      $(if ($null -ne $window.exit_code_hex) { $window.exit_code_hex } else { 'unknown' }) + (& $lifetime $window)
+        }
+        return & $verdict 'started_visible' $window.pid $null $basis $null
     }
     $hidden = @($candidates | Where-Object { $_.alive_at_end })
     if ($hidden.Count -gt 0) {
         $running = $hidden[0]
-        return [ordered]@{
-            classification = 'started_hidden'; pid = $running.pid; exit = $null
-            basis = "pid $($running.pid) ($($running.role)) was still running at the end, seen in $($running.polls) polls, without a visible window"
+        $basis = "pid $($running.pid) ($($running.role)) was still running at the end, seen in $($running.polls) polls, without a visible window"
+        foreach ($ended in @($candidates | Where-Object { $_.visible_window -and -not $_.alive_at_end })) {
+            $basis += "; pid $($ended.pid) ($($ended.role)) had shown a visible window ($(& $titles $ended)) and ended without a crash"
         }
+        return & $verdict 'started_hidden' $running.pid $null $basis $null
     }
     $exited = @($candidates | Where-Object { $_.exited } | Sort-Object -Property exited)
     if ($exited.Count -gt 0) {
-        $ended = $exited[-1]
-        return [ordered]@{
-            classification = 'started_exited'; pid = $ended.pid
-            exit = [ordered]@{ pid = $ended.pid; role = $ended.role; exit_code = $ended.exit_code; exit_code_hex = $ended.exit_code_hex; lifetime_ms = $ended.lifetime_ms }
-            basis = "pid $($ended.pid) ($($ended.role)) ended without a visible window, exit code " +
-                    $(if ($null -ne $ended.exit_code_hex) { $ended.exit_code_hex } else { 'unknown' }) +
-                    $(if ($null -ne $ended.lifetime_ms) { $(if ($ended.exit_time_is_bound) { " within $($ended.lifetime_ms) ms" } else { " after $($ended.lifetime_ms) ms" }) } else { '' })
+        # A process that showed a window and then ended is the one to report: the window is the news.
+        $windowed = @($exited | Where-Object { $_.visible_window })
+        $ended = if ($windowed.Count -gt 0) { $windowed[-1] } else { $exited[-1] }
+        $code = if ($null -ne $ended.exit_code_hex) { $ended.exit_code_hex } else { 'unknown' }
+        $basis = if ($ended.visible_window) {
+            "pid $($ended.pid) ($($ended.role)) showed a visible window ($(& $titles $ended)) and then ended without a crash, exit code $code" + (& $lifetime $ended)
         }
+        else {
+            "pid $($ended.pid) ($($ended.role)) ended without a visible window, exit code $code" + (& $lifetime $ended)
+        }
+        return & $verdict 'started_exited' $ended.pid (& $exitOf $ended) $basis $null
     }
-    return [ordered]@{ classification = 'not_started'; pid = $null; exit = $null; basis = 'no application process was seen' }
+    return & $verdict 'not_started' $null $null 'no application process was seen' $null
 }
 
 # Copies the last MaxCollectedBytes of a text file the application may still be writing.
@@ -570,7 +874,8 @@ function Save-PhaseEvidence {
     New-Item -ItemType Directory -Force -Path $logs | Out-Null
     Set-Content -LiteralPath $eventPath -Value $eventText -Encoding utf8
     $inventory.Add([pscustomobject][ordered]@{ source = 'Application event log'; saved = $eventPath; bytes = (Get-Item -LiteralPath $eventPath).Length })
-    return , $inventory.ToArray()
+    # The event text goes back to the classification too, which reads it with ConvertFrom-ApplicationEventText.
+    return [pscustomobject][ordered]@{ files = $inventory.ToArray(); application_events = $eventText.ToArray() }
 }
 
 # Stops every process started from the install root, so the control start begins from nothing.
@@ -643,8 +948,11 @@ function Invoke-FirstRunPhase {
     $traceLines = @()
     if (Test-Path -LiteralPath $launcherTrace -PathType Leaf) { $traceLines = @(Get-Content -LiteralPath $launcherTrace -Encoding utf8) }
     $processes = Merge-FirstRunProcesses -Samples $samples.ToArray() -Events $events -TraceLines $traceLines -Since $started -StubPath $stubPath
-    $verdict = Get-FirstRunClassification -Processes $processes
-    $files = Save-PhaseEvidence -Directory $directory -Since $started
+    # The evidence first: the Application log entries it collects can make the start a crash.
+    $evidence = Save-PhaseEvidence -Directory $directory -Since $started
+    $collected = [datetime]::UtcNow
+    $applicationEvents = ConvertFrom-ApplicationEventText -Lines $evidence.application_events
+    $verdict = Get-FirstRunClassification -Processes $processes -ApplicationEvents $applicationEvents -Since $started -Until $collected
     $receipt = [ordered]@{
         schema = 1
         arm = $Arm.ToLowerInvariant()
@@ -658,6 +966,9 @@ function Invoke-FirstRunPhase {
         classification = $verdict.classification
         basis = $verdict.basis
         exit = $verdict.exit
+        crash = $verdict.crash
+        application_faults = $verdict.application_faults
+        not_counted = $verdict.not_counted
         started = Format-Utc $started
         trigger_finished = Format-Utc $finished
         ended = Format-Utc ([datetime]::UtcNow)
@@ -666,7 +977,7 @@ function Invoke-FirstRunPhase {
         polls = $samples.Count
         process_events = [ordered]@{ registered = @($registration.identifiers.Keys); errors = $registration.errors.ToArray(); count = @($events).Count }
         processes = $processes
-        files = $files
+        files = $evidence.files
     }
     $receipt | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $directory 'receipt.json') -Encoding utf8
     Write-Host "$Arm/${Name}: $($verdict.classification): $($verdict.basis)"
