@@ -47,13 +47,20 @@ foreach(required_decision
     endif()
 endforeach()
 
-foreach(required_unit_decision
-        "_L\\(\"Object too small\"\\), wxICON_QUESTION \\| wxYES_NO"
-        "int[ \t]+answer = dlg\\.ShowModal\\(\\)"
-        "if \\(answer == wxID_YES\\)")
-    if(NOT plater_source MATCHES "${required_unit_decision}")
-        message(FATAL_ERROR "The import unit-conversion decision is no longer modal: ${required_unit_decision}")
-    endif()
-endforeach()
+# The import unit conversion is no longer a decision. Upstream Bambu Studio
+# ("ENH: convert units when in doubt after loading models", cherry-picked as
+# ec547f893) converts a model that looks saved in metres or in inches to
+# millimetres without asking, and logs it. With no choice left to make there is
+# nothing to keep modal: both conversions run unasked and logged, and the old
+# "Object too small" question must not come back as a modal or any other prompt.
+if(NOT plater_source MATCHES "looks_like_saved_in_meters\\(\\)\\) \\{[ \t\r\n]*BOOST_LOG_TRIVIAL\\(warning\\)[^\n]*[ \t\r\n]*model\\.convert_from_meters\\(true\\);")
+    message(FATAL_ERROR "A model that looks saved in metres is no longer converted unasked and logged")
+endif()
+if(NOT plater_source MATCHES "looks_like_imperial_units\\(\\)\\) \\{[ \t\r\n]*BOOST_LOG_TRIVIAL\\(warning\\)[^\n]*[ \t\r\n]*convert_from_imperial_units\\(model, true\\);")
+    message(FATAL_ERROR "A model that looks saved in inches is no longer converted unasked and logged")
+endif()
+if(plater_source MATCHES "_L\\(\"Object too small\"\\)")
+    message(FATAL_ERROR "The import unit conversion asks again: the Object too small prompt is back")
+endif()
 
 message(STATUS "Non-decision modal paths contract passed")
