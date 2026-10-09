@@ -6,6 +6,7 @@
 
 #include "libslic3r/OllamaSuite/OllamaCore.hpp"
 
+#include <algorithm>
 #include <filesystem>
 #include <fstream>
 
