@@ -1,9 +1,105 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="drop-station-name" content="{{STATION_NAME}}">
-<title>LAN model drop</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="referrer" content="no-referrer">
+  <meta name="drop-station-name" content="{{STATION_NAME}}">
+  <meta name="drop-max-bytes" content="{{MAX_BYTES}}">
+  <meta name="drop-ttl-hours" content="{{TTL_HOURS}}">
+  <meta name="drop-protocol" content="{{PROTOCOL}}">
+  <title>Send a model to Bambu Studio</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="tokens.css">
+  <link rel="stylesheet" href="styles.css">
+  <script type="module" src="app.js"></script>
 </head>
-<body><h1>LAN model drop</h1></body>
+<body>
+  <header class="top-app-bar">
+    <div class="brand">
+      <span class="logo-tile" aria-hidden="true"><span data-icon>deployed_code</span></span>
+      <div class="brand-text">
+        <p class="eyebrow" data-i18n="appName">LAN model drop</p>
+        <h1 id="page-heading" data-i18n="pageTitle">Send a model to Bambu Studio</h1>
+        <p class="station"><span data-icon aria-hidden="true">computer</span><span id="station-line">Sending to Bambu Studio</span></p>
+      </div>
+    </div>
+    <div class="language" role="group" aria-labelledby="language-label">
+      <span id="language-label" class="visually-hidden">Language</span>
+      <div class="segmented">
+        <button type="button" data-mode="en" lang="en" aria-pressed="true">English</button>
+        <button type="button" data-mode="yue_HK" lang="yue-HK" aria-pressed="false">粵語</button>
+        <button type="button" data-mode="bilingual" aria-pressed="false">English + <span lang="yue-HK">粵語</span></button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <form id="drop-form" class="card" novalidate aria-labelledby="form-heading">
+      <h2 id="form-heading" data-i18n="formHeading">Send models</h2>
+
+      <div class="field" id="code-field">
+        <label for="code" data-i18n="codeLabel">Drop code</label>
+        <div class="input-wrap">
+          <span data-icon aria-hidden="true">pin</span>
+          <input id="code" name="code" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="12"
+                 autocomplete="off" autocapitalize="off" spellcheck="false" required
+                 aria-describedby="code-help code-error">
+        </div>
+        <p id="code-help" class="supporting" data-i18n="codeHelp">Shown in Bambu Studio on the computer, in Preferences, LAN model drop.</p>
+        <p id="code-error" class="supporting error" hidden></p>
+      </div>
+
+      <div class="field">
+        <label for="sender" data-i18n="senderLabel">Your name (optional)</label>
+        <div class="input-wrap">
+          <span data-icon aria-hidden="true">person</span>
+          <input id="sender" name="sender" type="text" maxlength="40" autocomplete="nickname" aria-describedby="sender-help">
+        </div>
+        <p id="sender-help" class="supporting" data-i18n="senderHelp">Shown with your models, so the person at the computer knows who sent them.</p>
+      </div>
+
+      <div id="drop-zone" class="drop-zone">
+        <span data-icon aria-hidden="true" class="drop-icon">upload_file</span>
+        <p class="drop-title" data-i18n="dropTitle">Drag models here</p>
+        <p class="drop-hint" id="drop-hint">3MF, STL, STEP, OBJ or AMF</p>
+        <button type="button" id="choose" class="button tonal" aria-describedby="drop-hint">
+          <span data-icon aria-hidden="true">upload_file</span><span data-i18n="chooseFiles">Choose models</span>
+        </button>
+        <input type="file" id="files" multiple hidden>
+      </div>
+
+      <h3 id="list-heading" class="section-label" data-i18n="listLabel">Chosen models</h3>
+      <p id="empty-list" class="empty" data-i18n="emptyList">No models chosen yet.</p>
+      <ul id="file-list" class="file-list" aria-labelledby="list-heading"></ul>
+
+      <div class="actions">
+        <button type="submit" id="send" class="button filled">
+          <span data-icon aria-hidden="true">send</span><span id="send-label">Send</span>
+        </button>
+        <button type="button" id="clear" class="button text">
+          <span data-icon aria-hidden="true">delete_sweep</span><span data-i18n="clearList">Clear list</span>
+        </button>
+      </div>
+      <p id="live" class="live" role="status" aria-live="polite" aria-atomic="true"></p>
+    </form>
+
+    <section class="card" aria-labelledby="how-heading">
+      <h2 id="how-heading" class="card-title"><span data-icon aria-hidden="true">info</span><span data-i18n="howHeading">How it works</span></h2>
+      <ol class="steps">
+        <li><span data-i18n="howStep1">On the computer, open Bambu Studio, Preferences, LAN model drop, and read the drop code.</span></li>
+        <li><span data-i18n="howStep2">Type the code here, choose your models and send them.</span></li>
+        <li><span data-i18n="howStep3">Bambu Studio asks the person at the computer to open or discard each model. Nothing is sliced or printed automatically.</span></li>
+      </ol>
+    </section>
+
+    <section class="card" aria-labelledby="privacy-heading">
+      <h2 id="privacy-heading" class="card-title"><span data-icon aria-hidden="true">lock</span><span data-i18n="privacyHeading">Privacy</span></h2>
+      <p class="body" id="privacy-text">Models go only to this drop box on your local network.</p>
+    </section>
+  </main>
+
+  <footer class="footer"><p id="footer">Bambu Studio MD3 · LAN model drop</p></footer>
+</body>
 </html>
