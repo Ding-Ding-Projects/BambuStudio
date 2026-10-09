@@ -18,6 +18,8 @@
 #include "Widgets/Label.hpp"
 #include "NotificationCenterPanel.hpp"
 #include "NotificationManager.hpp"
+#include "LanModelDrop/LanModelDropStation.hpp"
+#include "format.hpp"
 #include "AppLogo/LogoRender.hpp"
 
 #include <wx/dcmemory.h>
@@ -60,6 +62,7 @@ enum CUSTOM_ID
     ID_HISTORY,
     ID_APPEARANCE,
     ID_NOTIFICATIONS,
+    ID_LAN_DROP,
     ID_TOOL_BAR = 3200,
     ID_AMS_NOTEBOOK,
 };
@@ -181,14 +184,13 @@ static wxBitmap topbar_text_alpha(const wxFont &logical_font, double scale,
 // while anything is unread) in OnSurfaceVariant, with an Error-filled badge
 // carrying the unread count docked at the top-right when `unread` > 0. The
 // count is clamped to "99+" so the badge never grows past the glyph.
-static wxBitmap topbar_bell_bitmap(wxWindow *ref, int unread)
+// A 20 px glyph with an Error-role count badge at its top right (none when count <= 0).
+static wxBitmap topbar_badged_glyph_bitmap(wxWindow *ref, uint32_t glyph_cp, const wxColour &glyph_colour, int unread)
 {
     const int    glyph_px = 20;
     const int    canvas   = 24; // glyph + badge overhang
     const double scale    = topbar_scale(ref);
-    const wxColour glyph_colour = StateColor::semantic(MD3::Role::OnSurfaceVariant);
-    wxBitmap glyph = MaterialIcon::bitmap(ref, unread > 0 ? MaterialIcon::NotificationsActive : MaterialIcon::Notifications,
-                                          glyph_px, glyph_colour);
+    wxBitmap glyph = MaterialIcon::bitmap(ref, glyph_cp, glyph_px, glyph_colour);
     if (unread <= 0)
         return glyph;
 
@@ -218,6 +220,24 @@ static wxBitmap topbar_bell_bitmap(wxWindow *ref, int unread)
         dc.SelectObject(wxNullBitmap);
     }
     return out;
+}
+
+static wxBitmap topbar_bell_bitmap(wxWindow *ref, int unread)
+{
+    return topbar_badged_glyph_bitmap(ref, unread > 0 ? MaterialIcon::NotificationsActive : MaterialIcon::Notifications,
+                                      StateColor::semantic(MD3::Role::OnSurfaceVariant), unread);
+}
+
+// LAN model drop indicator: the LAN glyph in Primary while connected, in Error on a problem and in
+// OnSurfaceVariant while connecting, with the number of received files waiting as its badge.
+static wxBitmap topbar_lan_drop_bitmap(wxWindow *ref)
+{
+    using namespace Slic3r::GUI;
+    const LanModelDrop::View &v = LanModelDrop::view();
+    const MD3::Role colour = v.state == LanModelDrop::LinkState::Connected ? MD3::Role::Primary :
+                             LanModelDrop::is_error_state(v.state)         ? MD3::Role::Error :
+                                                                             MD3::Role::OnSurfaceVariant;
+    return topbar_badged_glyph_bitmap(ref, MaterialIcon::Lan, StateColor::semantic(colour), v.waiting);
 }
 
 // §3.1 brand tile: a 26x26 r8 Primary rounded square carrying the on-primary
@@ -539,7 +559,7 @@ void BBLTopbarArt::DrawButton(wxDC& dc, wxWindow* wnd, const wxAuiToolBarItem& i
         if (state_layer.IsOk()) {
             wxRect state_rect = rect;
             int    radius;
-            if (item_id == ID_APPEARANCE || item_id == ID_NOTIFICATIONS) {
+            if (item_id == ID_APPEARANCE || item_id == ID_NOTIFICATIONS || item_id == ID_LAN_DROP) {
                 // §3.7 appearance button / notification bell: a circular ghost hover disc.
                 const int d = std::max(1, std::min(state_rect.width, state_rect.height) - wnd->FromDIP(4));
                 state_rect  = wxRect(rect.x + (rect.width - d) / 2, rect.y + (rect.height - d) / 2, d, d);
@@ -673,6 +693,14 @@ void BBLTopbar::Init(wxFrame* parent)
     m_title_item->SetAlignment(wxALIGN_CENTRE);
     this->AddSpacer(FromDIP(6));
 
+    // LAN model drop indicator: shown only while the option is on (see apply_lan_drop_visibility);
+    // a click opens the invite dialog. Guarded on the Material Symbols face like the bell.
+    if (MaterialIcon::available()) {
+        m_lan_drop_item   = this->AddTool(ID_LAN_DROP, "", topbar_lan_drop_bitmap(this), wxEmptyString, wxITEM_NORMAL);
+        m_lan_drop_spacer = this->AddSpacer(FromDIP(6));
+        rebuild_lan_drop_indicator();
+    }
+
     // Notification centre bell (circular ghost, unread badge). Guarded on the
     // Material Symbols face like the appearance button below.
     if (MaterialIcon::available()) {
@@ -727,7 +755,7 @@ void BBLTopbar::Init(wxFrame* parent)
     close_btn->SetShortHelp(_L("Close window"));
     SetName(_L("Top bar"));
 
-    Realize();
+    realize_with_hidden_items();
     // m_toolbar_h = this->GetSize().GetHeight();
     m_toolbar_h = FromDIP(MD3::Metrics::top_bar_height);
     SetMinSize({-1, m_toolbar_h});
@@ -748,6 +776,13 @@ void BBLTopbar::Init(wxFrame* parent)
     this->Bind(wxEVT_AUITOOLBAR_TOOL_DROPDOWN, &BBLTopbar::OnHistoryChip, this, ID_HISTORY);
     this->Bind(wxEVT_AUITOOLBAR_TOOL_DROPDOWN, &BBLTopbar::OnAppearanceButton, this, ID_APPEARANCE);
     this->Bind(wxEVT_AUITOOLBAR_TOOL_DROPDOWN, &BBLTopbar::OnNotificationBell, this, ID_NOTIFICATIONS);
+    this->Bind(wxEVT_AUITOOLBAR_TOOL_DROPDOWN, &BBLTopbar::OnLanDropIndicator, this, ID_LAN_DROP);
+    if (m_lan_drop_item)
+        m_lan_drop_listener = LanModelDrop::add_listener([this] {
+            rebuild_lan_drop_indicator();
+            apply_lan_drop_visibility();
+            Refresh(false);
+        });
     this->Bind(wxEVT_AUITOOLBAR_TOOL_DROPDOWN, &BBLTopbar::OnIconize, this, wxID_ICONIZE_FRAME);
     this->Bind(wxEVT_AUITOOLBAR_TOOL_DROPDOWN, &BBLTopbar::OnFullScreen, this, wxID_MAXIMIZE_FRAME);
     this->Bind(wxEVT_AUITOOLBAR_TOOL_DROPDOWN, &BBLTopbar::OnCloseFrame, this, wxID_CLOSE_FRAME);
@@ -778,10 +813,11 @@ void BBLTopbar::Init(wxFrame* parent)
         }
         rebuild_history_chip();
         rebuild_notification_bell();
+        rebuild_lan_drop_indicator();
         if (m_appearance_item)
             m_appearance_item->SetBitmap(MaterialIcon::bitmap(this, MaterialIcon::Palette, 20,
                                                               StateColor::semantic(MD3::Role::OnSurfaceVariant)));
-        Realize();
+        realize_with_hidden_items();
         Refresh(false);
         event.Skip();
     });
@@ -789,6 +825,8 @@ void BBLTopbar::Init(wxFrame* parent)
 
 BBLTopbar::~BBLTopbar()
 {
+    if (m_lan_drop_listener != 0)
+        LanModelDrop::remove_listener(m_lan_drop_listener);
     m_brand_item = nullptr;
     m_file_menu_item = nullptr;
     m_edit_menu_item = nullptr;
@@ -986,6 +1024,48 @@ void BBLTopbar::rebuild_notification_bell()
         : _L("Notifications"));
 }
 
+void BBLTopbar::OnLanDropIndicator(wxAuiToolBarEvent& event)
+{
+    // Opens after the click has been handled, so no modal loop runs inside the toolbar event.
+    wxWindow *frame = m_frame;
+    CallAfter([frame]() { LanModelDrop::open_invite_dialog(frame); });
+}
+
+void BBLTopbar::rebuild_lan_drop_indicator()
+{
+    if (!m_lan_drop_item)
+        return;
+    const LanModelDrop::View &v = LanModelDrop::view();
+    m_lan_drop_item->SetBitmap(topbar_lan_drop_bitmap(this));
+    // TRN: Tooltip and accessible name of the LAN model drop indicator in the title bar.
+    wxString help = format_wxstr(_L("LAN model drop: %1%"), LanModelDrop::state_text(v.state));
+    if (v.waiting > 0)
+        help += " - " + format_wxstr(_L("%1% received files waiting"), v.waiting);
+    help += "\n" + _L("Click to invite someone to send a model.");
+    m_lan_drop_item->SetShortHelp(help);
+}
+
+void BBLTopbar::apply_lan_drop_visibility()
+{
+    const bool shown = LanModelDrop::view().enabled;
+    for (wxAuiToolBarItem *item : {m_lan_drop_item, m_lan_drop_spacer}) {
+        if (item == nullptr || item->GetSizerItem() == nullptr)
+            continue;
+        item->GetSizerItem()->Show(shown);
+        // A hidden sizer item keeps its last rectangle, which painting and hit testing still use.
+        if (!shown)
+            item->GetSizerItem()->SetDimension({-1000, 0}, {0, 0});
+    }
+    if (m_sizer)
+        m_sizer->Layout();
+}
+
+void BBLTopbar::realize_with_hidden_items()
+{
+    Realize();
+    apply_lan_drop_visibility();
+}
+
 void BBLTopbar::rebuild_history_chip()
 {
     if (!m_history_item)
@@ -999,7 +1079,7 @@ void BBLTopbar::SetHistoryInfo(const wxString& branch, const wxString& head)
     m_history_branch = branch.IsEmpty() ? wxString("main") : branch;
     m_history_head   = head;
     rebuild_history_chip();
-    Realize();
+    realize_with_hidden_items();
     Refresh(false);
 }
 
@@ -1110,7 +1190,7 @@ void BBLTopbar::SetBrandLabel(const wxString& label)
     m_brand_item->SetLabel(label);
     // The wordmark width changed, so the fixed-content budget the project chip
     // measures against did too: re-realize and re-fit the chip in one pass.
-    Realize();
+    realize_with_hidden_items();
     update_responsive_title();
     Refresh(false);
 }
@@ -1122,7 +1202,7 @@ void BBLTopbar::RefreshBrandTile()
     const wxBitmap brand = topbar_brand_tile_bitmap(this);
     m_brand_item->SetBitmap(brand);
     m_brand_item->SetHoverBitmap(brand);
-    Realize();
+    realize_with_hidden_items();
     update_responsive_title();
     Refresh(false);
 }
@@ -1172,7 +1252,7 @@ void BBLTopbar::update_responsive_title(int width)
     m_title_item->SetShortHelp(m_full_title);
     if (m_title_item->GetMinSize().GetWidth() != chip_w) {
         m_title_item->SetMinSize({chip_w, -1});
-        Realize();
+        realize_with_hidden_items();
     }
 
     m_title_item->SetLabel(title);
@@ -1210,6 +1290,7 @@ void BBLTopbar::Rescale() {
     // §3.5 history chip + §3.7 appearance button re-rasterize at the new DPI.
     rebuild_history_chip();
     rebuild_notification_bell();
+    rebuild_lan_drop_indicator();
     if (m_appearance_item)
         m_appearance_item->SetBitmap(MaterialIcon::bitmap(this, MaterialIcon::Palette, 20,
                                                           StateColor::semantic(MD3::Role::OnSurfaceVariant)));
@@ -1242,7 +1323,7 @@ void BBLTopbar::Rescale() {
     SetMaxSize({-1, m_toolbar_h});
     SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
-    Realize();
+    realize_with_hidden_items();
     SetSize(GetSize().GetWidth(), m_toolbar_h);
     update_responsive_title(GetSize().GetWidth());
     if (GetParent())

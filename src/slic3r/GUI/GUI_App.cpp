@@ -113,6 +113,7 @@
 #include "Plater.hpp"
 #include "PreferencesHistory.hpp"
 #include "PrinterWatch.hpp"
+#include "LanModelDrop/LanModelDropStation.hpp"
 #include "DimSumSurprise.hpp"
 #include "TtsNarrator.hpp"
 #include "PersonalModes/SchoolRuntime.hpp"
@@ -1642,6 +1643,9 @@ void GUI_App::post_init()
     // AI printer watch (opt-in, local Ollama): periodic live-view summaries.
     PrinterWatch::install();
 
+    // LAN model drop (off by default): polls the drop site on a worker thread while switched on.
+    LanModelDrop::start_after_startup();
+
     // TTS narrator (opt-in, off by default): printer state changes + errors,
     // with optional Home Assistant speakers and alert lights.
     TtsNarrator::install();
@@ -2052,6 +2056,9 @@ void GUI_App::shutdown()
     }
 
     if (m_is_recreating_gui) return;
+    // Before any window is destroyed: cancel, wake and join the LAN model drop worker, and drop the
+    // callbacks it queued for the GUI thread.
+    LanModelDrop::shutdown();
     Schedule::Scheduler::instance().shutdown();
     HomeAssistant::shutdown();
     set_closing(true);
@@ -3476,6 +3483,9 @@ int GUI_App::OnExit()
     m_school_runtime.reset();
     m_narrator_environment.reset();
     TtsNarrator::shutdown();
+    // Normally done in shutdown(); repeated here (it is idempotent) so the worker is joined on
+    // every exit path.
+    LanModelDrop::shutdown();
     if (m_automation_bridge) {
         m_automation_bridge->stop();
         m_automation_bridge.reset();
@@ -5137,6 +5147,8 @@ void GUI_App::recreate_GUI(const wxString &msg_name)
     update_publish_status();
 
     m_is_recreating_gui = false;
+    // Received files still waiting for Open or Discard get their notifications in the new window.
+    LanModelDrop::after_gui_rebuild();
 
 #if defined(__WXOSX__)
     // STUDIO-18472: a GUI rebuild just happened (and trigger_restore_project()

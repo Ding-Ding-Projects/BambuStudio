@@ -80,7 +80,7 @@ void store_palette_size(PaletteSize size,
 const std::vector<const char *> &preference_page_names()
 {
     static const std::vector<const char *> names = {
-        L("Appearance"), L("General"), L("User"), L("3D"), L("Other"), L("Developer Tools"),
+        L("Appearance"), L("General"), L("User"), L("3D"), L("Other"), L("Developer Tools"), L("LAN model drop"),
     };
     return names;
 }
@@ -162,6 +162,13 @@ const std::vector<PreferenceEntry> &preference_entries()
         {"associate_stl", L("Associate .stl files to Bambu Studio"), "", PageOther},
         {"associate_step", L("Associate .step/.stp files to Bambu Studio"), "", PageOther},
         {"severity_level", L("Log Level"), "", PageOther},
+        // LAN model drop ---------------------------------------------------------
+        {"lan_drop_enabled", L("Receive models from the LAN drop site"), L("LAN model drop, off by default"), PageLanDrop},
+        {"lan_drop_invite", L("Invite link and QR code"), L("Copy the link or show the QR code for the LAN drop site"), PageLanDrop},
+        {"lan_drop_status", L("Test connection"), L("LAN model drop status"), PageLanDrop},
+        {"lan_drop_address", L("Drop site address"), L("Where Bambu Studio reaches the LAN drop site"), PageLanDrop},
+        {"lan_drop_station_key", L("Station key"), L("Kept protected with Windows data protection"), PageLanDrop},
+        {"lan_drop_code", L("Drop code"), L("New code stops older links"), PageLanDrop},
         // Developer Tools (non-public builds) ------------------------------------
         {"internal_developer_mode", L("Internal developer mode"), "", PageDeveloper},
         {"enable_ssl_for_mqtt", L("Enable SSL(MQTT)"), "", PageDeveloper},
@@ -214,6 +221,7 @@ const std::vector<Article> &documentation_articles()
     // H1 changed, fails that test.
     static const std::vector<Article> articles = {
         {"docs/features/api/home-assistant-printer-discovery.md", L("Home Assistant printer-discovery API")},
+        {"docs/features/application-integration/lan-model-drop.md", L("LAN model drop")},
         {"docs/features/design-system/clipping-inventory.md", L("Layout clipping inventory")},
         {"docs/features/design-system/generated-visual-showcase.md", L("Generated visual showcase")},
         {"docs/features/design-system/gizmo-rail-svg-icons-completion.md", L("Gizmo rail composite SVG completion")},

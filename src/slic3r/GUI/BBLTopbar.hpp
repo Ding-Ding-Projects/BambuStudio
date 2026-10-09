@@ -42,6 +42,8 @@ public:
     // Notification centre bell: toggles the NotificationCenterPanel popover
     // anchored under the bell (docs/features/workspace/notification-center.md).
     void OnNotificationBell(wxAuiToolBarEvent& event);
+    // LAN model drop indicator: opens the "Invite someone to send a model" dialog.
+    void OnLanDropIndicator(wxAuiToolBarEvent& event);
 
     wxAuiToolBarItem* FindToolByCurrentPosition();
 
@@ -115,6 +117,14 @@ private:
     // this header.
     wxWindow*         m_notification_center{nullptr};
     void rebuild_notification_bell();
+    // LAN model drop indicator, visible only while the option is on. wxAuiToolBar has no hidden
+    // tools, so its sizer items are hidden again after every Realize (realize_with_hidden_items).
+    wxAuiToolBarItem* m_lan_drop_item{nullptr};
+    wxAuiToolBarItem* m_lan_drop_spacer{nullptr};
+    int               m_lan_drop_listener{0};
+    void rebuild_lan_drop_indicator();
+    void apply_lan_drop_visibility();
+    void realize_with_hidden_items();
     wxString          m_history_branch;
     wxString          m_history_head;
 
