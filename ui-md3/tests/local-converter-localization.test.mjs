@@ -146,6 +146,11 @@ test('the panel translates registry text at display time and never shows raw cod
   assert.match(panel, /I18N::apply_localized_text\(\*label, text\.finalize_without_arguments\(\), options\)/);
   assert.match(panel, /wxString cell\(const Text &text\)/);
   assert.doesNotMatch(panel, /update_status\(_L\(/, 'status lines go through the language-mode helpers');
+  // A formatted _L() string can never be paired with its Cantonese by the
+  // bilingual decorator, so formatted copy goes through the helpers too.
+  assert.doesNotMatch(panel, /wxString::Format\(_L\(/, 'formatted copy is built per language');
+  assert.match(panel, /show\(m_rotation_label,format\(fact\(L\("Absolute page rotation: %d degrees\."\)\),degrees\)\)/);
+  assert.match(panel, /action\(body,rotation_row,cell\(format\(fact\(L\("%d degrees"\)\),degrees\)\)/);
 });
 
 test('only non-factual lines take a funny-level voice, per language', async () => {

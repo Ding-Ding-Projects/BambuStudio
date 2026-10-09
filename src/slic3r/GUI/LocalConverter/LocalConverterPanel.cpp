@@ -223,7 +223,7 @@ LocalConverterPanel::LocalConverterPanel(wxWindow *parent, LC::PackageProof proo
     auto *rotation_row=new wxWrapSizer(wxHORIZONTAL);
     m_rotation_label=text(body,_L("Absolute page rotation. Default: 90 degrees.")); m_rotation_label->SetName(_L("PDF rotation degrees"));
     rotation_row->Add(m_rotation_label,0,wxALL|wxALIGN_CENTER_VERTICAL,FromDIP(4));
-    for(std::size_t r=0;r!=kRotations.size();++r){const int degrees=kRotations[r];m_rotation[r]=action(body,rotation_row,wxString::Format(_L("%d degrees"),degrees),[this,degrees]{set_rotation(degrees);});}
+    for(std::size_t r=0;r!=kRotations.size();++r){const int degrees=kRotations[r];m_rotation[r]=action(body,rotation_row,cell(format(fact(L("%d degrees")),degrees)),[this,degrees]{set_rotation(degrees);});}
     pdf_settings->Add(rotation_row,0,wxEXPAND);pdf_rows.emplace_back(rotation_row,_L("PDF rotation degrees"));
     auto *title_row=new wxBoxSizer(wxHORIZONTAL);
     const auto title_label=_L("PDF title for Metadata. Default: empty, which clears the title. Other supported metadata is preserved.");
@@ -357,7 +357,7 @@ void LocalConverterPanel::set_rotation(int degrees)
 {
     m_pdf_rotation = degrees;
     for (std::size_t r = 0; r != kRotations.size(); ++r) { m_rotation[r]->SetVariant(kRotations[r] == degrees ? Button::Variant::Filled : Button::Variant::Outlined); m_rotation[r]->Refresh(); }
-    m_rotation_label->SetLabel(wxString::Format(_L("Absolute page rotation: %d degrees."),degrees));
+    show(m_rotation_label,format(fact(L("Absolute page rotation: %d degrees.")),degrees));
 }
 void LocalConverterPanel::update_status(const Text &message) { show(m_status,message); Layout(); }
 void LocalConverterPanel::refresh_catalog()
