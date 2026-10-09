@@ -472,7 +472,13 @@ void worker_main()
             tracked_session  = cfg.session;
         }
         for (const std::string &id : decided) tracker.queue_delete(id);
-        if (!cfg.usable()) continue;
+        if (!cfg.usable()) {
+            // Never leave a requested test or new code without an answer.
+            const LinkState missing = cfg.address ? LinkState::NeedsStationKey : LinkState::InvalidAddress;
+            if (test) post([generation = cfg.generation, missing] { on_test_result(generation, missing, std::nullopt); });
+            if (new_code) post([generation = cfg.generation, missing] { on_code_result(generation, std::nullopt, false, missing); });
+            continue;
+        }
 
         const CancelWhen polling{true, cfg.identity, cfg.session};
 

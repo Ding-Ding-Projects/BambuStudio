@@ -166,6 +166,8 @@ QrView::QrView(wxWindow *parent, int edge_dip) : wxPanel(parent, wxID_ANY)
     const wxSize edge(FromDIP(edge_dip), FromDIP(edge_dip));
     SetMinSize(edge);
     SetMaxSize(edge);
+    // The accessible name: the window text on Windows, and the name the layout probe reports.
+    SetLabel(_L("QR code of the invite link"));
     SetName(_L("QR code of the invite link"));
     Bind(wxEVT_PAINT, [this](wxPaintEvent &) { render(); });
     Hide();

@@ -122,6 +122,7 @@ private:
     wxAuiToolBarItem* m_lan_drop_item{nullptr};
     wxAuiToolBarItem* m_lan_drop_spacer{nullptr};
     int               m_lan_drop_listener{0};
+    bool              m_lan_drop_shown{false};
     void rebuild_lan_drop_indicator();
     void apply_lan_drop_visibility();
     void realize_with_hidden_items();

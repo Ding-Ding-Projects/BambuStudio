@@ -62,10 +62,12 @@ enum CUSTOM_ID
     ID_HISTORY,
     ID_APPEARANCE,
     ID_NOTIFICATIONS,
-    ID_LAN_DROP,
     ID_TOOL_BAR = 3200,
     ID_AMS_NOTEBOOK,
 };
+// LAN model drop indicator. Outside CUSTOM_ID, whose body is fingerprinted by the shell atlas
+// contract (tests/native_shared_controls/atlas_shell_preserved_functions.json).
+static constexpr int ID_LAN_DROP = ID_AMS_NOTEBOOK + 1;
 
 // Wave 3 (topbar-chrome-raster-to-glyph / titlebar-window-controls-raster):
 // title-bar tool icons are now Material Symbols glyphs rendered to a DPI-correct
@@ -779,8 +781,15 @@ void BBLTopbar::Init(wxFrame* parent)
     this->Bind(wxEVT_AUITOOLBAR_TOOL_DROPDOWN, &BBLTopbar::OnLanDropIndicator, this, ID_LAN_DROP);
     if (m_lan_drop_item)
         m_lan_drop_listener = LanModelDrop::add_listener([this] {
+            const bool   was_shown = m_lan_drop_shown;
+            const wxSize old_size  = m_lan_drop_item->GetBitmap().GetSize();
             rebuild_lan_drop_indicator();
-            apply_lan_drop_visibility();
+            if (was_shown != LanModelDrop::view().enabled || old_size != m_lan_drop_item->GetBitmap().GetSize()) {
+                // The tool appeared, disappeared or gained its badge: lay the bar out again and
+                // re-fit the project chip to the new fixed width.
+                realize_with_hidden_items();
+                update_responsive_title();
+            }
             Refresh(false);
         });
     this->Bind(wxEVT_AUITOOLBAR_TOOL_DROPDOWN, &BBLTopbar::OnIconize, this, wxID_ICONIZE_FRAME);
@@ -1048,6 +1057,7 @@ void BBLTopbar::rebuild_lan_drop_indicator()
 void BBLTopbar::apply_lan_drop_visibility()
 {
     const bool shown = LanModelDrop::view().enabled;
+    m_lan_drop_shown = shown;
     for (wxAuiToolBarItem *item : {m_lan_drop_item, m_lan_drop_spacer}) {
         if (item == nullptr || item->GetSizerItem() == nullptr)
             continue;
