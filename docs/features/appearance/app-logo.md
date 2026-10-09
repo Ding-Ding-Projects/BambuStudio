@@ -1,75 +1,117 @@
-# Application logo presentation
+# App logo
 
-The native logo panel provides three original printer-themed presets, contain and
-cover fitting, numeric horizontal and vertical focal placement, a 0–25% safe-area
-inset, transparency, and an arbitrary background color. It generates real RGBA
-previews at 16, 24, 32 and 64 pixels. Geometry, crops and backgrounds affect the
-rendered result, rather than being decorative controls. Sampling is nearest
-neighbor, so small output can lose detail. Cover fitting crops the source.
+Choose the mark the app shows for itself in **Preferences > Appearance > App logo**.
+The choice changes presentation only. The installed program, its executable
+icon, shortcuts, installer, update feed, application ids and data folder keep
+the shipped identity.
 
-## Integration
+## Where the logo appears
 
-Add `src/slic3r/GUI/AppLogo/LogoPanel.cpp` to the GUI target. The core
-`src/libslic3r/AppLogo/Logo.hpp` is header-only and needs C++17.
+| Surface | Size | When it updates |
+| --- | --- | --- |
+| Title bar tile (left of the menus) | 26 px, scaled for the display | At once |
+| Window and taskbar icon | 16, 20, 24, 32, 40, 48, 64, 128 and 256 px | At once |
+| About dialog banner | 64 px tile over the shipped mark | Next time the dialog opens |
+| Startup screen | 122 px | Next start |
 
-Create `Slic3r::GUI::AppLogoUI::LogoPanel(parent, private_file, changed, translate)`
-inside a scrollable settings host. Supply an existing writable application-private
-directory and a dedicated neutral settings filename. The optional translator takes
-each English label and returns the current language's text. The change callback
-runs only after atomic persistence succeeds. Consumers render via
-`AppLogoUI::bitmap(settings, pixels)`, with an output bound of 256 pixels. The host
-must load the same file and apply the initial state on startup; the constructor
-does not invoke callbacks before the host has finished construction.
+Every size is rendered from the source, never resampled from another size. A
+render is generated at no more than 256 pixels; a larger display surface
+resamples that bounded render up. On the green About banner a transparent logo
+sits on a white rounded tile so it stays visible.
 
-`AppLogoUI::load` rejects oversized, malformed and unsupported-version settings,
-leaving its destination intact. Saving uses `wxTempFile` replacement. A failed
-save restores the previous control values and retains the previous active mark.
-Reset atomically writes the shipped default settings. Only ten bounded numeric
-values are stored. The panel does not modify package identity, application IDs,
-executables, installers, update feeds, or operating-system installed icons.
+## Choosing a source
 
-## Explicit capability limits
+The source list is a radio group: Tab reaches it, the arrow keys, Home and End
+move the selection, and each row reports its radio role, name and checked state
+to screen readers. The search field above it filters the rows; its `.*` toggle
+and tune button give the shared regex builder. When nothing matches, the panel
+says so instead of showing an empty list.
 
-Custom import is visibly disabled. There is no packaged, independently verified
-isolated decoder integration yet. No custom source file is selected or read by
-the panel. PNG, JPEG, GIF, SVG, WebP, animation, compressed BMP, and icon-container
-conversion are unavailable. The internal `decode_bmp` primitive supports only
-exact uncompressed 24-bit BMP with a 40-byte header, bottom-up rows, and no trailing
-content. It is not a sandbox and must not be connected to a user picker directly.
-It is bounded to 4 MiB input, 2048 per dimension, and 1,048,576 decoded pixels;
-its loops are bounded and it does not call an external codec or network API.
-It has no OS CPU deadline or memory/process isolation. A future isolated worker
-must supply those properties and independently validate output before enabling
-custom import. No unsupported format is inferred from a filename.
+| Source | What it shows |
+| --- | --- |
+| Shipped mark (default) | The original artwork on every surface |
+| Green printer, Blue layers, Amber nozzle | Original printer-themed marks drawn from local geometry |
+| Custom image (unavailable) | Listed but disabled; see below |
 
-The panel's controls have accessible names and translation hooks. Full Cantonese,
-bilingual and funny-level catalogs, adjacent regex search, palette integration,
-scheduled settings, per-element editing, privacy-reviewed runtime captures, and
-all actual chrome consumers still require host integration and verification.
-The controls use the existing `ComboBox`, `Button`, `CheckBox`, `SpinInput`,
-`Label` and `MD3ColorPickerDialog` kit. Numeric edits apply on Enter or focus loss;
-arrow edits apply immediately. History is not implemented: the post-save change
-callback is not an atomic history transaction. The host must supply generalized
-appearance history before claiming snapshot/undo support.
-Transparent marks can lose contrast against some backgrounds; the panel discloses
-this and provides an opaque background option. DPI/layout proof is pending.
+Choosing a row applies it immediately and saves it. **Reset to shipped mark**
+restores the shipped artwork everywhere and clears the saved setting.
+
+## Presentation controls
+
+These apply to the presets; with the shipped mark selected they are disabled and
+the panel says why.
+
+- **Image fit**: contain shows the whole mark; cover crops it to fill.
+- **Horizontal and vertical focal point**: where the mark sits, or which part a
+  cover crop keeps (0–100%).
+- **Safe area inset**: 0–25% of empty margin on every side.
+- **Transparent background**, or an opaque **background color** chosen with
+  the shared color picker.
+
+Live previews at 16, 24, 32 and 64 pixels show the same render the surfaces
+use at those sizes. Small sizes use nearest-neighbor sampling, so fine detail can drop out; a
+transparent mark can lose contrast on some backgrounds, which the panel points
+out.
+
+## What is stored
+
+Only ten small numbers are saved, in the `app_logo` key of the app's own
+settings file: the source, the preset, the fit, both focal points, the inset,
+the transparency flag and the background color. No image, file name or path is
+stored. An empty key means the shipped mark. A value that does not parse shows
+the shipped mark, and the panel reports it as invalid without overwriting it
+until you choose a logo or reset. Settings from the earlier one-source format
+still load as their preset.
+
+## States
+
+| State | What the panel says |
+| --- | --- |
+| No custom logo | Shipped mark in use, no custom image loaded |
+| Preset in use | Which preset is in use and that it is saved |
+| Invalid saved value | The shipped mark is shown; the saved value is kept |
+| Applied | Which source was applied and saved |
+| Reset | The shipped mark is restored and the saved setting cleared |
+| Save failed | The previous logo is kept |
+| No search match | No logo source matches the search |
+
+## Custom images
+
+Custom image import is not available yet. The row and the **Import custom image**
+button stay visible and disabled, and no image file is ever opened. The core
+has a bounded decode primitive for exact uncompressed 24-bit BMP files
+(4 MiB, 2048 pixels per side, 1,048,576 pixels), but it is not an isolation
+boundary and is not connected to a file picker. Import, with its loading,
+converted, replace and conversion-failure states, waits for an isolated decoder
+process with operating-system CPU and memory limits and verified conversion.
+
+## Not covered yet
+
+- Scheduled settings, appearance export and import, local history snapshots,
+  command palette teleport and per-element appearance editing do not include the
+  logo yet. The Preferences settings search does find the App logo row.
+- Secondary dialog window icons keep the shipped icon; no notification draws the
+  app mark.
+- Packaged rendering at every display size still needs a capture from a built
+  app.
 
 ## Verification
 
-Run the dependency-free core test with a C++17 compiler:
-
 ```powershell
-g++ -std=c++17 -Wall -Wextra -pedantic -Isrc tests/app_logo/test_logo.cpp -o "$env:TEMP/app-logo-tests.exe"
-& "$env:TEMP/app-logo-tests.exe"
+g++ -std=c++17 -Wall -Wextra -pedantic -Isrc -Itests -Itests/catch2 tests/app_logo/app_logo_tests_main.cpp -o "$env:TEMP/app-logo-model.exe"
+& "$env:TEMP/app-logo-model.exe"
+g++ -std=c++17 -Wall -Wextra -pedantic -Isrc tests/app_logo/test_logo.cpp -o "$env:TEMP/app-logo-core.exe"
+& "$env:TEMP/app-logo-core.exe"
+node --test ui-md3/tests/app-logo-chrome.test.mjs
 ```
 
-Alternatively configure `tests/app_logo` as a standalone CMake project, build it,
-and run CTest. The explicit `require` checks remain active in Release/NDEBUG builds.
+Both C++ targets are registered with CTest (`app_logo_tests`, `app_logo_core`).
+The model test covers the shipped default, reset clearing the key, preset round
+trips, invalid and legacy stored values, the picker catalogue, every chrome
+target size and the render plans for high-DPI displays. The core test covers the
+presets, fit, focal, inset, alpha compositing, settings rollback and the bounded
+BMP primitive. The node test checks that the panel is compiled, hosted and wired
+to every surface, that no identity path reads the key, and that every panel
+string has a Cantonese entry.
 
-The executable checks every preset and supported preview size, exact crop/focal
-pixels, contain letterboxing, alpha compositing, safe-area rendering, settings
-round-trip and corruption rollback, BMP byte signatures, dimensions, truncation,
-input limits and decode rollback. These are core checks only. Native panel build,
-atomic-save failure handling on the target filesystem, keyboard/screen-reader
-behavior, persistence across restart and real packaged rendering remain unverified
-until the parent GUI target is built and exercised.
+Postman is not applicable: this local presentation feature exposes no HTTP API.

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-07 01:44+0000\n"
+"POT-Creation-Date: 2026-10-09 02:36+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -10474,6 +10474,9 @@ msgstr ""
 msgid "Hide explanation"
 msgstr ""
 
+msgid "App logo"
+msgstr ""
+
 msgid "Personal vocabulary"
 msgstr ""
 
@@ -20795,6 +20798,112 @@ msgid "External spools is not supported since Filament Track Switch has been ins
 msgstr ""
 
 msgid "Select Filament && Hotends"
+msgstr ""
+
+msgid "Choose the mark shown in the title bar, the window and taskbar icon, the About dialog and the startup screen. It changes presentation only: the installed app, its shortcuts and its updates keep the shipped identity."
+msgstr ""
+
+msgid "Search logo sources"
+msgstr ""
+
+msgid "Shipped mark"
+msgstr ""
+
+msgid "Green printer"
+msgstr ""
+
+msgid "Blue layers"
+msgstr ""
+
+msgid "Amber nozzle"
+msgstr ""
+
+msgid "Custom image (unavailable)"
+msgstr ""
+
+msgid "Custom images need the isolated image decoder, which this build does not include yet."
+msgstr ""
+
+msgid "No logo source matches your search."
+msgstr ""
+
+msgid "Contain: show the whole mark"
+msgstr ""
+
+msgid "Cover: crop to fill"
+msgstr ""
+
+msgid "Image fit"
+msgstr ""
+
+msgid "Horizontal focal point (%)"
+msgstr ""
+
+msgid "Vertical focal point (%)"
+msgstr ""
+
+msgid "Safe area inset (%)"
+msgstr ""
+
+msgid "Transparent background"
+msgstr ""
+
+msgid "Choose background color"
+msgstr ""
+
+msgid "Background color"
+msgstr ""
+
+msgid "Fit, focal point, safe area and background apply to the presets. The shipped mark keeps its own artwork."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Logo preview at %u pixels"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%u px"
+msgstr ""
+
+msgid "The title bar, the window and taskbar icon, the About dialog and the startup screen show their shipped artwork."
+msgstr ""
+
+msgid "Small sizes use nearest-neighbor sampling, so fine detail can drop out. Cover crops the mark. A transparent mark can lose contrast on some backgrounds; choose an opaque background if it does."
+msgstr ""
+
+msgid "Import custom image (unavailable)"
+msgstr ""
+
+msgid "Reset to shipped mark"
+msgstr ""
+
+msgid "Custom image import is unavailable: this build has no verified isolated image decoder, so no image file is read."
+msgstr ""
+
+msgid "App logo status"
+msgstr ""
+
+msgid "Shipped mark restored. The saved logo setting was cleared."
+msgstr ""
+
+msgid "Saved logo settings are invalid. The shipped mark is shown, and the saved value is kept until you choose a logo or reset."
+msgstr ""
+
+msgid "Shipped mark in use. No custom image loaded."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s in use, saved in your settings. No custom image loaded."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s applied and saved in your settings."
+msgstr ""
+
+msgid "Logo settings applied and saved in your settings."
+msgstr ""
+
+msgid "Unable to save logo settings. The previous logo is kept."
 msgstr ""
 
 msgid "Thin (100)"

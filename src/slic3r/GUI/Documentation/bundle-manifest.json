@@ -25,12 +25,17 @@
     {
       "route": "appearance/README.md",
       "title": "Appearance",
-      "sha256": "3bb99c92ff2113bda61ace9ab140ba787c5ad53331c1de4a61700d4964f86fbd"
+      "sha256": "90739646308188ed817032a37aff35ea411d62cce2ae8728ebc99ed291cf1228"
     },
     {
       "route": "appearance/app-logo.md",
-      "title": "Application logo presentation",
-      "sha256": "c761f15a5acfbd9d3e8c14e8db7e42ffd44de1ffbc827f71e6a1f6d014e1437b"
+      "title": "App logo",
+      "sha256": "e41665f510697fe355dc35a8a2582678b69d2b5a2ede8bd1228771ad6f467824"
+    },
+    {
+      "route": "appearance/app-logo.yue_HK.md",
+      "title": "應用程式標誌",
+      "sha256": "4b2773375924ce09d6a41daa7dc17b17b8bc0524977aa419000d6ea507fa7a03"
     },
     {
       "route": "appearance/native-rendering.md",
@@ -1850,7 +1855,7 @@
       "bytes": 1979
     }
   ],
-  "bundle_sha256": "83f73beaf446ccb7aa0e07b95fb5c875fff6514846b64ea38be78a6e9c61515c",
+  "bundle_sha256": "87c5bb4b5aac7f412b418abbf273bc447d2e75ee5d309caa31709ef60c867bc5",
   "unavailable_references": [
     {
       "source": "api/README.md",
