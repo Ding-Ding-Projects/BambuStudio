@@ -48,7 +48,10 @@ function buildTypes() {
     const input = document.createElement('input');
     input.type = 'checkbox';
     input.id = row.inputId;
-    input.addEventListener('change', () => save((settings) => { settings.types[row.id] = input.checked; }));
+    input.addEventListener('change', () => {
+      const checked = input.checked;
+      save((settings) => { settings.types[row.id] = checked; });
+    });
     const label = document.createElement('label');
     label.htmlFor = row.inputId;
     label.dataset.i18n = row.labelKey;
@@ -61,8 +64,9 @@ function renderTypes() {
   for (const row of typeRows(state.settings)) $(row.inputId).checked = row.checked;
 }
 
-function renderLanguage(t) {
+function renderLanguage(t, settled) {
   const select = $('language');
+  const shown = select.value;
   select.replaceChildren(...languageOptions(t).map((option) => {
     const element = document.createElement('option');
     element.value = option.value;
@@ -70,7 +74,7 @@ function renderLanguage(t) {
     if (option.lang) element.lang = option.lang;
     return element;
   }));
-  select.value = state.settings.language;
+  select.value = settled || !shown ? state.settings.language : shown;
 }
 
 function renderLog(t) {
@@ -120,8 +124,14 @@ function render() {
 
   $('host-name').textContent = HOST_NAME;
   $('extension-id').textContent = chrome.runtime.id;
-  $('enabled').checked = state.settings.enabled;
-  $('notify').checked = state.settings.notifyOnFallback;
+  // While saves are still queued the controls already show the person's
+  // latest choices; showing the stored values now would flick them back.
+  const settled = pendingSaves === 0;
+  if (settled) {
+    $('enabled').checked = state.settings.enabled;
+    $('notify').checked = state.settings.notifyOnFallback;
+    renderTypes();
+  }
   const excluded = $('excluded');
   if (document.activeElement !== excluded && !state.excludedError) excluded.value = state.settings.excludedSites.join('\n');
 
@@ -143,8 +153,7 @@ function render() {
   if (state.status) putText($('status'), t, state.status.key, state.status.substitutions);
   else $('status').textContent = '';
 
-  renderTypes();
-  renderLanguage(t);
+  renderLanguage(t, settled);
   renderLog(t);
 }
 
@@ -153,16 +162,27 @@ function announce(key, substitutions) {
   render();
 }
 
-async function save(change) {
-  const next = normalizeSettings(state.settings);
-  change(next);
-  try {
-    await chrome.storage.local.set({ [SETTINGS_KEY]: normalizeSettings(next) });
-    state.settings = normalizeSettings(next);
-    announce('saved');
-  } catch (error) {
-    announce('saveFailed', [String(error?.message ?? error)]);
-  }
+// Saves run one after another, each starting from the settings the previous
+// one stored, so two quick changes never overwrite each other.
+let saveChain = Promise.resolve();
+let pendingSaves = 0;
+function save(change) {
+  pendingSaves += 1;
+  saveChain = saveChain.then(async () => {
+    const next = normalizeSettings(state.settings);
+    change(next);
+    try {
+      await chrome.storage.local.set({ [SETTINGS_KEY]: normalizeSettings(next) });
+      state.settings = normalizeSettings(next);
+      pendingSaves -= 1;
+      announce('saved');
+    } catch (error) {
+      // The controls return to the stored values once nothing else is queued.
+      pendingSaves -= 1;
+      announce('saveFailed', [String(error?.message ?? error)]);
+    }
+  });
+  return saveChain;
 }
 
 async function saveSites() {
@@ -218,9 +238,20 @@ async function start() {
   }
   await reload();
   buildTypes();
-  $('enabled').addEventListener('change', (event) => save((settings) => { settings.enabled = event.target.checked; }));
-  $('notify').addEventListener('change', (event) => save((settings) => { settings.notifyOnFallback = event.target.checked; }));
-  $('language').addEventListener('change', (event) => save((settings) => { settings.language = event.target.value; }));
+  // Each change keeps the value the person chose when it happened; a render
+  // for an earlier save must not change what a later save stores.
+  $('enabled').addEventListener('change', (event) => {
+    const enabled = event.target.checked;
+    save((settings) => { settings.enabled = enabled; });
+  });
+  $('notify').addEventListener('change', (event) => {
+    const notify = event.target.checked;
+    save((settings) => { settings.notifyOnFallback = notify; });
+  });
+  $('language').addEventListener('change', (event) => {
+    const language = event.target.value;
+    save((settings) => { settings.language = language; });
+  });
   $('save-sites').addEventListener('click', saveSites);
   $('excluded').addEventListener('keydown', (event) => {
     if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {

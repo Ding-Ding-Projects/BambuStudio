@@ -171,7 +171,11 @@ async function launch() {
   register();
 
   const browser = spawn(chromiumPath, [
+    // The browser reaches only the local test server: no sync, updates,
+    // pings or other background traffic.
     '--headless=new', '--no-sandbox', '--disable-gpu', '--no-first-run', '--no-default-browser-check',
+    '--disable-background-networking', '--disable-component-update', '--disable-sync', '--no-pings',
+    '--disable-default-apps', '--disable-domain-reliability',
     `--user-data-dir=${profile}`, '--remote-debugging-port=0',
     `--disable-extensions-except=${extensionDir}`, `--load-extension=${extensionDir}`, 'about:blank',
   ], { stdio: ['ignore', 'ignore', 'pipe'] });
@@ -334,6 +338,12 @@ test('a real Chromium hands model downloads over, keeps everything else, and res
   await waitFor(async () => /Connected to Bambu Studio MD3 test/.test(await options.evaluate("document.getElementById('connection-state').textContent")), 'the connection check');
   assert.equal(await options.evaluate("document.getElementById('extension-id').textContent"), EXTENSION_ID);
   assert.equal(await options.evaluate('document.querySelectorAll("#recent tbody tr").length'), 3);
+  // Two quick changes are both kept.
+  await options.evaluate("document.getElementById('type-gcode').click(); document.getElementById('type-svg').click()");
+  await waitFor(async () => {
+    const stored = await browser.inWorker(`chrome.storage.local.get(${JSON.stringify(SETTINGS_KEY)})`);
+    return stored[SETTINGS_KEY]?.types?.gcode === true && stored[SETTINGS_KEY]?.types?.svg === true;
+  }, 'both type changes to be stored');
   await options.evaluate("(() => { const s = document.getElementById('language'); s.value = 'yue_HK'; s.dispatchEvent(new Event('change')); })()");
   await waitFor(async () => (await options.evaluate("document.getElementById('page-heading').textContent")) === '下載接手設定', 'Cantonese headings');
   assert.equal(await options.evaluate('document.documentElement.lang'), 'yue-HK');
