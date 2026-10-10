@@ -5,8 +5,10 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync, spawnSync } from 'node:child_process';
 
-// Run in an MSVC developer environment. Only the production initializer and
-// production density selection code are compiled, without creating a window.
+// On Windows run in an MSVC developer environment (cl.exe); elsewhere the host
+// C++ compiler (CXX, default c++) compiles the same probe with warnings as
+// errors. Only the production initializer and production density selection
+// code are compiled, without creating a window.
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const revision = process.argv.indexOf('--source-revision');
 const read = file => (revision < 0 ? fs.readFileSync(path.join(root, file), 'utf8') :
@@ -22,7 +24,8 @@ const selectionEnd = tokens.indexOf('inline constexpr int top_bar_height', selec
 assert.ok(selectionStart >= 0 && selectionEnd > selectionStart);
 const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'static-box-radius-'));
 const source = path.join(directory, 'radius.cpp');
-const executable = path.join(directory, 'radius.exe');
+const msvc = process.platform === 'win32';
+const executable = path.join(directory, msvc ? 'radius.exe' : 'radius');
 fs.writeFileSync(source, `#include <cassert>
 #include <iostream>
 namespace MD3 {
@@ -44,14 +47,18 @@ int main() {
     std::cout << "Runtime density initialization: 4 assertions passed\\n";
 }
 `);
-const compiled = spawnSync('cl.exe', ['/nologo', '/std:c++17', '/permissive-', '/EHsc', '/W4', '/WX',
-    source, `/Fo${path.join(directory, 'radius.obj')}`, `/Fe${executable}`], {cwd: directory, encoding: 'utf8'});
+const compiled = msvc
+    ? spawnSync('cl.exe', ['/nologo', '/std:c++17', '/permissive-', '/EHsc', '/W4', '/WX',
+        source, `/Fo${path.join(directory, 'radius.obj')}`, `/Fe${executable}`], {cwd: directory, encoding: 'utf8'})
+    : spawnSync(process.env.CXX ?? 'c++', ['-std=c++17', '-pedantic-errors', '-Wall', '-Wextra', '-Werror',
+        source, '-o', executable], {cwd: directory, encoding: 'utf8'});
 if (compiled.error) throw compiled.error;
 const output = compiled.stdout + compiled.stderr;
 if (process.argv.includes('--expect-narrowing')) {
     assert.notEqual(compiled.status, 0, 'Old declaration must fail compilation');
-    assert.match(output, /C2397/, 'Expected the actual narrowing diagnostic');
-    console.log(`Old production declaration: compiler exit ${compiled.status}, C2397 observed`);
+    // GCC: narrowing conversion; Clang: cannot be narrowed; MSVC: C2397.
+    assert.match(output, msvc ? /C2397/ : /narrowing conversion|cannot be narrowed/, 'Expected the actual narrowing diagnostic');
+    console.log(`Old production declaration: compiler exit ${compiled.status}, ${msvc ? 'C2397' : 'narrowing conversion'} observed`);
     console.log(output.trim());
 } else {
     assert.equal(compiled.status, 0, output);

@@ -196,7 +196,13 @@ foreach(source_file IN ITEMS
                 "m_slice_option_btn->MoveAfterInTabOrder\\(m_slice_btn\\)"
                 "m_print_option_btn->MoveAfterInTabOrder\\(m_print_btn\\)"
                 "m_slice_option_pop_up->Popup\\(m_slice_option_btn\\)"
-                "p->Popup\\(m_print_option_btn\\)")
+                # The print review page reuses this handler for its Output options
+                # action, so the output-mode menu opens at the initiating control
+                # and falls back to the split button itself (print-preparation.md).
+                "auto\\* anchor = dynamic_cast<wxWindow\\*>\\(event\\.GetEventObject\\(\\)\\);"
+                "p->Popup\\(anchor \\? anchor : m_print_option_btn\\)"
+                "case A::OutputOptions: source = m_print_option_btn; break;"
+                "event\\.SetEventObject\\(anchor \\? anchor : source\\);")
             if(NOT source MATCHES "${required_symbol}")
                 message(FATAL_ERROR "MainFrame split-button contract is missing: ${required_symbol}")
             endif()

@@ -66,6 +66,8 @@ cl /nologo /std:c++17 /EHsc /W4 /WX /I"%TEMP%/BambuStudio-atlas-listbox-hover" t
 "%TEMP%/BambuStudio-atlas-listbox-hover/atlas_listbox_hover_tests.exe"
 ```
 
+Run without `--extract`, the same test extracts into a temporary directory, compiles the harness with warnings as errors and executes it: `cl.exe` from an initialized MSVC prompt on Windows, otherwise the host C++ compiler (`CXX`, default `c++`). It passes only when the harness reports 48 assertions and 0 failures; with `--source-revision ed3cbc35d5d3a6b701a5eb7ebfdc69d137684d92` it fails on the same 12 assertions.
+
 This separate correction changes only interrupted-hover invalidation. Reverting it reintroduces stale row paint. Native compilation, timer delivery and rendered hover remain unverified.
 
 This is a separate shared-row appearance and measured-layout unit. Reverting it restores the previous fixed row-height behavior, 13 body-font default, unbounded narrow text rectangle and row state paint. It does not require reverting caller cards, selection models or the neutral palette.

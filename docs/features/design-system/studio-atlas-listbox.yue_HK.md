@@ -1,6 +1,6 @@
 ---
 translation-of: studio-atlas-listbox.md
-source-sha256: e6b5521b8afdc48f1af1971713d88d31ff1a4d356e51bbfd4a356454ee19296f
+source-sha256: 6532d5c29153687cb7747d474201f3e32e5d820340e36a671f42c85d00116acb
 review-status: agent-drafted
 ---
 
@@ -73,6 +73,8 @@ node tests/native_shared_controls/atlas_listbox_hover.test.mjs --extract "$env:T
 cl /nologo /std:c++17 /EHsc /W4 /WX /I"%TEMP%/BambuStudio-atlas-listbox-hover" tests/native_shared_controls/atlas_listbox_hover_tests.cpp /Fe:"%TEMP%/BambuStudio-atlas-listbox-hover/atlas_listbox_hover_tests.exe" /Fo:"%TEMP%/BambuStudio-atlas-listbox-hover/atlas_listbox_hover_tests.obj"
 "%TEMP%/BambuStudio-atlas-listbox-hover/atlas_listbox_hover_tests.exe"
 ```
+
+唔加 `--extract` 執行時，同一個測試會擷取到臨時資料夾，以警告當錯誤編譯測試程式再執行：Windows 用已初始化 MSVC 命令提示字元嘅 `cl.exe`，其他平台用本機 C++ 編譯器（`CXX`，預設 `c++`）。要報告 48 項斷言、0 項失敗先算通過；加上 `--source-revision ed3cbc35d5d3a6b701a5eb7ebfdc69d137684d92` 就會喺同樣 12 項斷言失敗。
 
 呢項獨立修正只改中斷懸停嘅重畫處理。還原會重新引入殘留列畫面。原生編譯、計時器傳遞同實際懸停畫面仍未驗證。
 
