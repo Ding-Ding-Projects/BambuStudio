@@ -129,6 +129,8 @@ function keyNeverLogged(sources) {
   const exchange = body(sources[0], 'Exchange exchange(const WorkerConfig &cfg');
   assert.match(exchange, /\.verbose\(false\)/);
   assert.match(exchange, /\.follow_redirects\(false\)/);
+  // Straight to the drop site, never through a proxy named in the environment.
+  assert.match(exchange, /\.no_proxy\(\)/);
   assert.match(exchange, /\.clear_headers\(\)\s*\.header\("Authorization", authorization\)/);
   assert.match(exchange, /wipe\(authorization\);/);
 }
@@ -176,6 +178,9 @@ function shutdownStops(station, app) {
   assert.ok(appShutdown.indexOf('LanModelDrop::shutdown();') < appShutdown.indexOf('set_closing(true);'));
   assert.match(body(app, 'int GUI_App::OnExit()'), /LanModelDrop::shutdown\(\);/);
   assert.match(body(app, 'void GUI_App::post_init()'), /LanModelDrop::start_after_startup\(\);/);
+  // A process that ends without shutdown() never destroys a joinable thread (std::terminate).
+  assert.match(station, /~WorkerThread\(\)\s*\{\s*if \(thread\.joinable\(\)\) thread\.detach\(\);\s*\}/);
+  assert.match(station, /std::thread\s+&g_thread = g_worker\.thread;/);
   // Transfers in flight are cancelled when stopping.
   assert.match(body(station, 'bool operator()() const'), /if \(g_stopping\.load\(\)\) return true;/);
 }

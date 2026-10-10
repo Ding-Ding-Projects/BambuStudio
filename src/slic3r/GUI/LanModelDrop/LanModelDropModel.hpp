@@ -40,8 +40,10 @@ std::optional<FileType> type_from_name(std::string_view name);
 const char             *type_name(FileType type);
 // By extension, case-insensitive: .3mf .stl .step .stp .obj .amf.
 std::optional<FileType> type_from_extension(std::string_view file_name);
-// Content check that mirrors the container's sniffing rules (defence in depth: the bytes have already
-// passed the container and the SHA-256 check).
+// Content check with the container's own sniffing rules (lan-model-drop/server/sniff.mjs), so a model
+// the container accepted is never refused here (defence in depth: the bytes have already passed the
+// container and the SHA-256 check). Markers are looked for in the first 256 KiB, after an optional
+// UTF-8 byte order mark and leading white space; ASCII STL and OBJ must be text.
 bool content_matches(FileType type, std::string_view bytes);
 
 // ---------------------------------------------------------------------------------------------

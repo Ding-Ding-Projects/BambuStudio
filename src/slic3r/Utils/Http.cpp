@@ -522,6 +522,12 @@ Http& Http::verbose(bool set)
 	return *this;
 }
 
+Http& Http::no_proxy()
+{
+	if (p) { ::curl_easy_setopt(p->curl, CURLOPT_NOPROXY, "*"); }
+	return *this;
+}
+
 Http& Http::size_limit(size_t sizeLimit)
 {
 	if (p) { p->limit = sizeLimit; }

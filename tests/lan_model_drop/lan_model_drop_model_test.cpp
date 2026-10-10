@@ -55,7 +55,7 @@ static void types()
     CHECK(content_matches(FileType::ThreeMF, zip));
     CHECK(!content_matches(FileType::ThreeMF, "solid x facet"));
     CHECK(content_matches(FileType::Step, "ISO-10303-21;\nHEADER;"));
-    CHECK(!content_matches(FileType::Step, " ISO-10303-21;"));
+    CHECK(!content_matches(FileType::Step, "HEADER; ISO-10303-21;"));
     CHECK(content_matches(FileType::Amf, "<?xml version=\"1.0\"?>\n<amf unit=\"mm\">"));
     CHECK(content_matches(FileType::Amf, zip));
     CHECK(!content_matches(FileType::Amf, "<xml/>"));
@@ -71,6 +71,33 @@ static void types()
     CHECK(content_matches(FileType::Obj, "v 1 2 3\n"));
     CHECK(!content_matches(FileType::Obj, "# only a comment\n"));
     CHECK(!content_matches(FileType::Obj, std::string("v 1 2 3\n\0", 9)));
+
+    // The same rules as the drop site's sniffing (lan-model-drop/server/sniff.mjs), so a model the
+    // site accepted is never refused here: an optional UTF-8 byte order mark and leading white space
+    // before the STEP, ASCII STL and AMF markers; "v" followed by a tab or space, after optional
+    // indentation, on any line of an OBJ (LF, CRLF or CR line ends); markers searched in the first
+    // 256 KiB; ASCII STL and OBJ must be text (no control bytes besides tab, LF, FF and CR).
+    const std::string bom("\xEF\xBB\xBF");
+    CHECK(content_matches(FileType::Step, " \r\nISO-10303-21;\nHEADER;"));
+    CHECK(content_matches(FileType::Step, bom + "ISO-10303-21;"));
+    CHECK(!content_matches(FileType::Step, "\x01ISO-10303-21;"));
+    CHECK(content_matches(FileType::Stl, "\n  solid cube\n facet normal 0 0 1\n"));
+    CHECK(content_matches(FileType::Stl, bom + "solid cube\n facet normal 0 0 1\n"));
+    CHECK(!content_matches(FileType::Stl, std::string("solid cube\n facet\x01 normal 0 0 1\n")));
+    CHECK(content_matches(FileType::Amf, bom + "\n<?xml version=\"1.0\"?><amf unit=\"mm\"/>"));
+    CHECK(!content_matches(FileType::Amf, "amf <amf unit=\"mm\"/>"));
+    std::string late_amf = "<?xml version=\"1.0\"?>\n<!--" + std::string(8000, ' ') + "-->\n<amf unit=\"mm\"/>";
+    CHECK(content_matches(FileType::Amf, late_amf));
+    std::string too_late_amf = "<?xml version=\"1.0\"?>\n<!--" + std::string(256 * 1024, ' ') + "-->\n<amf unit=\"mm\"/>";
+    CHECK(!content_matches(FileType::Amf, too_late_amf));
+    CHECK(content_matches(FileType::Obj, "# tabs\nv\t0 0 0\n"));
+    CHECK(content_matches(FileType::Obj, "o cube\n  v 0 0 0\n"));
+    CHECK(content_matches(FileType::Obj, "# old Mac line ends\rv 0 0 0\r"));
+    CHECK(content_matches(FileType::Obj, "# windows\r\nv 0 0 0\r\n"));
+    CHECK(!content_matches(FileType::Obj, "# no vertex\nvn 0 0 1\nvt 0 0\n"));
+    CHECK(!content_matches(FileType::Obj, "# control byte\nv 0 0 0\n\x07"));
+    std::string late_obj = "#" + std::string(256 * 1024, 'x') + "\nv 0 0 0\n";
+    CHECK(!content_matches(FileType::Obj, late_obj));
 }
 
 static void names()

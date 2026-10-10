@@ -111,6 +111,10 @@ public:
 	// historical default (true); requests carrying credentials should disable
 	// it so headers cannot enter stderr or captured diagnostic output.
 	Http& verbose(bool set);
+	// Connects directly, ignoring any proxy named by the http_proxy, https_proxy or all_proxy
+	// environment variables. For requests to a service on the local network that carry a
+	// credential, which must not pass through a proxy.
+	Http& no_proxy();
 	// Sets a maximum size of the data that can be received.
 	// A value of zero sets the default limit, which is is 5MB.
 	Http& size_limit(size_t sizeLimit);

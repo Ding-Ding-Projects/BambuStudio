@@ -89,8 +89,21 @@ struct Shared
     WorkerConfig             config;
 };
 
+// shutdown() joins the worker. Should the process end on a path that skips it, the thread object is
+// detached at static destruction instead of being destroyed while joinable, which would call
+// std::terminate. (By then ExitProcess has already ended the thread itself.)
+struct WorkerThread
+{
+    std::thread thread;
+    ~WorkerThread()
+    {
+        if (thread.joinable()) thread.detach();
+    }
+};
+
 Shared                     g_shared;
-std::thread                g_thread;
+WorkerThread               g_worker;
+std::thread               &g_thread = g_worker.thread;
 std::atomic<bool>          g_stopping{false};
 std::atomic<std::uint64_t> g_identity{0};
 std::atomic<std::uint64_t> g_session{0};
@@ -272,6 +285,8 @@ Exchange exchange(const WorkerConfig &cfg, Method method, const std::string &url
         .timeout_max(timeout_seconds)
         .follow_redirects(false)
         .verbose(false)
+        // Straight to the drop site: the key must not pass through a proxy from the environment.
+        .no_proxy()
         .size_limit(size_limit)
         .on_progress([cancel_when](Http::Progress, bool &cancel) {
             if (cancel_when()) cancel = true;

@@ -151,6 +151,42 @@ bool reserved_device_stem(std::string_view stem)
     return false;
 }
 
+// How much of a received file the content checks look at, as on the drop site.
+constexpr std::size_t kSniffHeadBytes = 256 * 1024;
+
+// Text as the drop site defines it: tab, line feed, form feed, carriage return, visible ASCII and
+// any byte of 0x80 or above (UTF-8 sequences are not validated). NUL and other controls are not.
+bool is_model_text(std::string_view bytes)
+{
+    return std::all_of(bytes.begin(), bytes.end(), [](char c) {
+        const auto u = static_cast<unsigned char>(c);
+        return (u >= 0x20 && u != 0x7F) || u == '\t' || u == '\n' || u == '\f' || u == '\r';
+    });
+}
+
+// The text after an optional UTF-8 byte order mark and leading tabs, line ends, form feeds and spaces.
+std::string_view leading_text(std::string_view head)
+{
+    if (starts_with(head, "\xEF\xBB\xBF")) head.remove_prefix(3);
+    while (!head.empty() && (head.front() == '\t' || head.front() == '\n' || head.front() == '\f' || head.front() == '\r' ||
+                             head.front() == ' '))
+        head.remove_prefix(1);
+    return head;
+}
+
+// A vertex line: at the start or after a line feed or carriage return, optional tabs or spaces,
+// then "v" and a tab or space.
+bool has_obj_vertex_line(std::string_view head)
+{
+    for (std::size_t at = 0; at < head.size(); ++at) {
+        if (at > 0 && head[at - 1] != '\n' && head[at - 1] != '\r') continue;
+        std::size_t i = at;
+        while (i < head.size() && (head[i] == ' ' || head[i] == '\t')) ++i;
+        if (i + 1 < head.size() && head[i] == 'v' && (head[i + 1] == ' ' || head[i + 1] == '\t')) return true;
+    }
+    return false;
+}
+
 using json = nlohmann::json;
 
 std::optional<json> parse_object(std::string_view body)
@@ -284,28 +320,26 @@ std::optional<FileType> type_from_extension(std::string_view file_name)
 
 bool content_matches(FileType type, std::string_view bytes)
 {
+    // The drop site's rules (lan-model-drop/server/sniff.mjs): markers are looked for in the first
+    // 256 KiB, after an optional UTF-8 byte order mark and leading white space.
     static constexpr std::string_view zip("PK\x03\x04", 4);
+    const std::string_view head = bytes.substr(0, kSniffHeadBytes);
+    const std::string_view lead = leading_text(head);
     switch (type) {
     case FileType::ThreeMF: return starts_with(bytes, zip);
-    case FileType::Step: return starts_with(bytes, "ISO-10303-21");
-    case FileType::Amf: {
-        if (starts_with(bytes, zip)) return true;
-        const std::string_view head = bytes.substr(0, 4096);
-        return head.find("<amf") != std::string_view::npos;
-    }
+    case FileType::Step: return starts_with(lead, "ISO-10303-21");
+    case FileType::Amf: return starts_with(bytes, zip) || (starts_with(lead, "<") && lead.find("<amf") != std::string_view::npos);
     case FileType::Stl: {
+        // Binary STL headers may also begin with "solid", so the exact length rule comes first.
         if (bytes.size() >= 84) {
             const auto *p = reinterpret_cast<const unsigned char *>(bytes.data()) + 80;
             const std::uint64_t triangles = std::uint64_t(p[0]) | (std::uint64_t(p[1]) << 8) | (std::uint64_t(p[2]) << 16) |
                                             (std::uint64_t(p[3]) << 24);
             if (84 + 50 * triangles == bytes.size()) return true;
         }
-        return starts_with(bytes, "solid") && bytes.find("facet") != std::string_view::npos;
+        return is_model_text(bytes) && starts_with(lead, "solid") && lead.find("facet") != std::string_view::npos;
     }
-    case FileType::Obj: {
-        if (bytes.find('\0') != std::string_view::npos) return false;
-        return starts_with(bytes, "v ") || bytes.find("\nv ") != std::string_view::npos;
-    }
+    case FileType::Obj: return is_model_text(bytes) && has_obj_vertex_line(head);
     }
     return false;
 }

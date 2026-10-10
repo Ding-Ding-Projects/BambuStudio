@@ -79,7 +79,12 @@ While the option is on, Bambu Studio checks the drop site every 5 seconds. After
 For each new file it downloads the bytes, then checks that the size equals the size the site
 listed, that the SHA-256 digest equals the listed digest (and the `X-Content-SHA256` header when
 present), and that the name keeps an accepted extension that matches the listed type and the
-content (3MF, STL, STEP, OBJ, AMF). The file is saved under the data folder in
+content (3MF, STL, STEP, OBJ, AMF). The content check applies the drop site's own rules, so a model
+the site accepted is never refused here: a ZIP signature for 3MF; the exact binary length or ASCII
+text starting with `solid` and containing `facet` for STL; `ISO-10303-21` for STEP; text with a
+vertex line (`v` and a space or tab, after optional indentation) for OBJ; `<amf` in XML, or a ZIP,
+for AMF. An optional UTF-8 byte order mark and leading white space are allowed, and markers are
+looked for in the first 256 KiB. The file is saved under the data folder in
 `lan-model-drop/received/<id>/<file name>`; the name is reduced to a safe base name first.
 
 A notification then reads "<sender> sent <file> (<size>)", or "Someone sent <file> (<size>)", with
@@ -108,7 +113,9 @@ it; use Save Project as to keep a project somewhere else.
   as unavailable instead of keeping the key in plain text.
 - The key is never logged. Requests carry only `Authorization: Bearer <key>` and `Accept`: the
   application's usual extra headers are removed, redirects are not followed and the transfer trace
-  is off. Copies of the key in memory are overwritten after use. The masked field can be shown with
+  is off. Requests go straight to the drop site, never through a proxy named in the
+  `http_proxy`, `https_proxy` or `all_proxy` environment variables. Copies of the key in memory are
+  overwritten after use. The masked field can be shown with
   the eye button; both fields are excluded from captures, history and exports.
 - All network work runs on one worker thread. Results reach windows only through the event queue
   and only while the main window exists. Shutdown stops the worker before windows are destroyed: it
@@ -135,6 +142,14 @@ it; use Save Project as to keep a project somewhere else.
   logged or saved in the settings, that every request runs on the worker thread and reaches windows
   through the event queue, the shutdown order and that nothing is opened automatically. Every
   contract also runs against a mutated source to prove it can fail.
-- The station sources compile in a Linux syntax check; their Windows-only parts (DPAPI, adapter
-  enumeration, accessibility events) have only been reviewed. A built Windows application talking
-  to a real drop site on a real network has not been observed yet.
+- `node --test tests/lan_model_drop/station_container.test.mjs` runs the station's pure model,
+  through `tests/lan_model_drop/lan_model_drop_station_probe.cpp`, against the real drop service in
+  `lan-model-drop/server`: it drops models of every type (including a byte order mark, indentation
+  and CR line ends), reads the status and the inbox, downloads each file and checks its size,
+  SHA-256 and content, deletes it, rotates the drop code, and builds the invite link from
+  `DROP_PUBLIC_URL` and from a LAN address. It needs the service and g++, and is skipped without
+  them.
+- The station sources compile in a Linux syntax check, and the DPAPI key store and the adapter
+  enumeration also compile with the MinGW cross compiler; the accessibility events have only been
+  reviewed. A built Windows application talking to a real drop site on a real network has not been
+  observed yet.
