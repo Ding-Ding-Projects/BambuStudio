@@ -3,6 +3,7 @@ import {execFileSync, spawnSync} from 'node:child_process';
 import {tmpdir} from 'node:os';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {compileFixture} from './native_fixture_compiler.mjs';
 
 // Run from a supported MSVC developer environment. This builds only a tiny
 // non-window test executable, never the application or its dependencies.
@@ -45,7 +46,7 @@ const cpp=path.join(output,'fixture.cpp'),exe=path.join(output,'fixture.exe');
 writeFileSync(cpp,fixture.replace('// PRODUCTION_METHODS',methods.join('\n\n')));
 console.log('Fixture source: '+(revision ?? 'current working source'));
 console.log('Task-owned output: '+output);
-const compile=spawnSync('cl.exe',['/nologo','/std:c++17','/EHsc','/W4','/I'+root,cpp,'/Fe:'+exe,'/Fo:'+path.join(output,'fixture.obj')],{cwd:output,stdio:'inherit'});
+const compile=compileFixture({source:cpp,exe,cwd:output,include:root});
 if(compile.error) throw compile.error;
 if(compile.status!==0) process.exit(compile.status ?? 1);
 const run=spawnSync(exe,[only],{cwd:output,stdio:'inherit'});

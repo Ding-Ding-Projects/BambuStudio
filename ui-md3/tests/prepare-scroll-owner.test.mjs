@@ -51,7 +51,11 @@ test('section switching settles extents before resetting and repainting', () => 
 });
 
 test('only focused embedded background forwards plain navigation keys', () => {
-    assert.match(scroller, /EnableKeyboardScrolling\(false\)/);
+    // wxScrollHelperBase only offers DisableKeyboardScrolling() (wx 3.2 and the
+    // bundled fork); EnableKeyboardScrolling() does not exist and broke MSVC.
+    const delegate = scroller.split('void MD3ScrolledWindow::SetRevealOwner(')[1].split('\n}')[0];
+    assert.match(delegate, /if \(owner\) \{[\s\S]*?DisableKeyboardScrolling\(\);/);
+    assert.doesNotMatch(scroller, /EnableKeyboardScrolling/);
     const handler = scroller.split('void MD3ScrolledWindow::OnChar(')[1].split('void MD3ScrolledWindow::SetRevealOwner')[0];
     assert.match(handler, /wxWindow::FindFocus\(\) == this && !event.HasAnyModifiers\(\)/);
     assert.match(handler, /case WXK_PAGEUP: case WXK_PAGEDOWN: case WXK_HOME: case WXK_END:/);

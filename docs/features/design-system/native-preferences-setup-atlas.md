@@ -89,6 +89,10 @@ non-window fixture outside the repository. It inserts the actual production
 `build_search_index` and card radius method bodies, plus all three actual card
 initialization statements. Small in-memory substitutes supply window/sizer
 identity and DPI conversion; no native window or application is created.
+The compiler comes from `tests/native_fixture_compiler.mjs`: MSVC `cl.exe` on
+Windows, and `$CXX` (default `c++`) at C++17 with `-Wall -Wextra` on any other
+host, so the Linux contract gate runs the same fixture instead of stopping
+because `cl.exe` is missing.
 
 The original commit fails both independent negative runs: append
 `--baseline=8b0b5e6da19d0ce877a3c5eb770de6945a516e77 --case=rows` to observe

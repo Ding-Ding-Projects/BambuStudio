@@ -139,6 +139,10 @@ test('active setup guides preserve zoom and expose native or compatible actions'
   assert.match(regionGuide, /attr\('aria-pressed', 'true'\)/)
   assert.match(printerGuide, /<button type="button" class="ModelCheckBox"/)
   assert.match(printerGuide, /aria-pressed="false"/)
-  assert.match(filamentGuide, /<button type="button" onClick="CFEdit/)
+  // Custom material rows are built as DOM nodes rather than an HTML string, so
+  // both row actions are real buttons with bound handlers and named labels.
+  assert.match(filamentGuide, /\$\('<button type="button">'\)\.addClass\('CFilament_EditBtn'\)\s*\.attr\('aria-label', [^\n]+\)\s*\.on\('click', function\(\) \{ CFEdit\(id\); \}\)/)
+  assert.match(filamentGuide, /\$\('<button type="button">'\)\.addClass\('CFilament_DeleteBtn'\)\s*\.attr\('aria-label', [^\n]+\)\s*\.on\('click', function\(\) \{ CFDelete\(id, name\); \}\)/)
+  assert.doesNotMatch(filamentGuide, /<(?:div|span|img)[^>]+on(?:click|Click)="CF(?:Edit|Delete)/)
   assert.match(filamentGuide, /attr\('aria-pressed', 'true'\)/)
 })
