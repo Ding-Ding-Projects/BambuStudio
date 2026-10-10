@@ -50,12 +50,12 @@
     {
       "route": "application-integration/lan-model-drop.md",
       "title": "LAN model drop",
-      "sha256": "6fa0cd97dec408f87d3b3a2c4f349ab208401d46dc21cc94a2fb47097ba133db"
+      "sha256": "a9ddcc13f10a01031b8bbab72f05f0c5f22a9a9a529bd5fdfff1e26dfc173703"
     },
     {
       "route": "application-integration/lan-model-drop.yue_HK.md",
       "title": "LAN 模型投遞",
-      "sha256": "7820f6470536ce4c796e46bdda37284c006750081012779b698c8f3a53997338"
+      "sha256": "db91e2feb162fe91a3f1150ee628c5fda098fad849d5ee09140bfd6d33c94e71"
     },
     {
       "route": "application-integration/surface-registry.md",
@@ -1985,7 +1985,7 @@
       "bytes": 1979
     }
   ],
-  "bundle_sha256": "237b4abe1270a01077bb265cf98b788ebc5ac73e8f6e8e0ac7404f0018cdb41a",
+  "bundle_sha256": "d27fd929219d60c791cd5b76a5dbb079b3d8065f6caa34df1bb2e54545668439",
   "unavailable_references": [
     {
       "source": "api/README.md",

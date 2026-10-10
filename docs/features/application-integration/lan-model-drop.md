@@ -117,6 +117,10 @@ it; use Save Project as to keep a project somewhere else.
   `http_proxy`, `https_proxy` or `all_proxy` environment variables. Copies of the key in memory are
   overwritten after use. The masked field can be shown with
   the eye button; both fields are excluded from captures, history and exports.
+- Over `http://` the key and the files travel unencrypted. With `http://localhost:8833` nothing
+  leaves this computer; when the drop site runs on another computer, keep it on a network you trust
+  or put it behind an `https://` reverse proxy and use that address (certificates are verified, so
+  the proxy needs one this computer trusts).
 - All network work runs on one worker thread. Results reach windows only through the event queue
   and only while the main window exists. Shutdown stops the worker before windows are destroyed: it
   sets the cancel flag, aborts a transfer in flight, wakes the worker and waits for it.
