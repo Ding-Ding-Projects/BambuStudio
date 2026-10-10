@@ -197,6 +197,9 @@ function nothingAutomatic(station) {
   const push = body(station, 'void push_waiting_notification(const Waiting &w)');
   assert.match(push, /_u8L\("Open"\)[\s\S]*wxGetApp\(\)\.CallAfter\(\[id\] \{ open_item\(id\); \}\)/);
   assert.match(push, /_u8L\("Discard"\)[\s\S]*discard_item\(id\)/);
+  // A link clicked while the application closes does nothing.
+  assert.match(body(station, 'void open_item(const std::string &id)'), /^\{\s*\/\/[^\n]*\n\s*if \(!gui_alive\(\)\) return;/);
+  assert.match(body(station, 'void discard_item(const std::string &id)'), /^\{\s*if \(!gui_alive\(\) \|\|/);
   // Open, Discard and failed checks remove the file from the drop site.
   assert.match(body(station, 'void open_item(const std::string &id)'), /decide\(id\);/);
   assert.match(body(station, 'void discard_item(const std::string &id)'), /decide\(id\);/);

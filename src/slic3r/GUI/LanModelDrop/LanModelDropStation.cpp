@@ -754,6 +754,8 @@ void forget_waiting(const std::string &id)
 
 void open_item(const std::string &id)
 {
+    // The link's CallAfter may run while the application closes: nothing is loaded then.
+    if (!gui_alive()) return;
     Waiting *w = find_waiting(id);
     if (w == nullptr) return;
     const std::filesystem::path file = w->file;
@@ -776,7 +778,7 @@ void open_item(const std::string &id)
 
 void discard_item(const std::string &id)
 {
-    if (find_waiting(id) == nullptr) return;
+    if (!gui_alive() || find_waiting(id) == nullptr) return;
     forget_waiting(id);
     remove_folder(id);
     decide(id);
