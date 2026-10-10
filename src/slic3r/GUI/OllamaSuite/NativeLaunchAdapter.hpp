@@ -11,6 +11,11 @@ struct NativeLaunchPolicy {
     // Signed executables require matching original-filename metadata and the
     // explicit picker confirmation. Missing metadata needs a reviewed digest.
     std::vector<std::string> reviewed_unsigned_sha256;
+    // Asks the person to register the verified executable (full path, SHA-256) and
+    // answers true only for an explicit Yes. The owning window asks through the
+    // Material message dialog, so the question follows the theme and the language
+    // modes; this adapter shows no window of its own. Without it, nothing registers.
+    std::function<bool(const std::string& path, const std::string& sha256)> confirm_registration;
 };
 struct NativePickerResult {
     std::optional<PickerEvidence> evidence;

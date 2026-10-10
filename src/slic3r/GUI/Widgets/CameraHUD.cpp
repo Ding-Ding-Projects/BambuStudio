@@ -21,6 +21,7 @@
 #include "../I18N.hpp" // _L
 #include "Label.hpp"     // ::Label::Mono_11 (Roboto Mono 11.5/400)
 #include "MD3Motion.hpp" // reduced-motion preference
+#include "MD3Menu.hpp"   // MD3::PopupMenuBelow, the Material menu
 
 namespace Slic3r { namespace GUI {
 
@@ -547,7 +548,8 @@ CameraHUD::CameraHUD(wxWindow *parent)
                 if (auto *media = m_media.get()) static_cast<wxMediaCtrl3 *>(media)->SetZoom(percent / 100.0);
             }, id);
         }
-        m_zoom_percent->PopupMenu(&menu);
+        // The Material menu, opened under the percentage like every kit dropdown.
+        MD3::PopupMenuBelow(m_zoom_percent, &menu);
     });
     zoom_sizer->Add(m_zoom_out, 0, wxALIGN_CENTER_VERTICAL);
     zoom_sizer->Add(m_zoom_percent, 0, wxALIGN_CENTER_VERTICAL);

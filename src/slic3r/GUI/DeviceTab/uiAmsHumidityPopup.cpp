@@ -90,9 +90,11 @@ void uiAmsPercentHumidityDryPopup::Create()
     root->Add(m_body, 1, wxEXPAND);
     SetSizer(root);
 
-    // Seed the existing nominal body before caption adoption. LayoutReadouts then
-    // measures actual content and bounds the scroll viewport to the display area.
-    m_body->SetMinSize(wxSize(FromDIP(400), FromDIP(226)));
+    // Seed the existing nominal body before caption adoption: the 400 x 270 footprint the
+    // popup had with the native frame, less the kit caption strip that Adopt() adds, taken
+    // from the strip itself rather than a number that assumes its height. LayoutReadouts then
+    // measures actual content, adds the strip, and bounds the scroll viewport to the display.
+    m_body->SetMinSize(wxSize(FromDIP(400), FromDIP(270) - MD3DialogCaption::Height(this)));
 
     Fit();
     Layout();

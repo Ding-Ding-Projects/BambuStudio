@@ -9,6 +9,9 @@ namespace Slic3r::GUI::OllamaText {
 // Labels and notices of the Models section's evidence and estimate controls.
 enum class Ui { HardwareEvidence, MeasureAgain, EstimateContext, CachePrecision, SettingsNotSaved, InspectionFinished, MeasuredAgain };
 wxString ui(Ui id);
+// The question asked before a verified executable is registered for a launch profile.
+wxString registration_title();
+wxString registration_question(const std::string &path, const std::string &sha256);
 wxString bytes(std::uint64_t value);
 wxString verdict_text(OllamaSuite::Fit verdict);
 wxString note_text(OllamaSuite::FitNote note);

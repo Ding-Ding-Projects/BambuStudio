@@ -388,12 +388,19 @@ test('the humidity popup has one title, theme colours and a size that includes t
   expect(/SetBackgroundColour\(surface\)/.test(create) && /const wxColour surface = StateColor::semantic\(MD3::Role::SurfaceContainerLowest\);/.test(create),
     'the body sits on the kit surface role');
   expect(/SetForegroundColour\(StateColor::semantic\(MD3::Role::OnSurface\)\)/.test(create), 'the drying label reads in the kit text role');
-  // The strip adds its own height, so the footprint is a floor on the body sizer, taken before
-  // Adopt; a frame-sized pin made before the strip existed would push the last row out.
-  const floor = create.indexOf('m_sizer->SetMinSize(FromDIP(400), FromDIP(270) - MD3DialogCaption::Height(this));');
+  // The strip adds its own height, so the footprint is a floor on the body, taken before Adopt; a
+  // frame-sized pin made before the strip existed would push the last row out. Since the Atlas
+  // humidity change (docs/features/design-system/humidity-details-atlas.md) the body is a scroll
+  // owner (m_body) whose height is measured: the floor seeds that body window, and LayoutReadouts
+  // then sizes the window to the measured content plus the strip, bounded by the display.
+  const floor = create.indexOf('m_body->SetMinSize(wxSize(FromDIP(400), FromDIP(270) - MD3DialogCaption::Height(this)));');
   const adopt = create.indexOf('MD3DialogCaption::Adopt(');
   expect(floor > 0 && adopt > floor, 'the body floor leaves room for the strip and precedes Adopt');
   expect(!/SetM(?:in|ax)Size\(wxSize\(FromDIP\(400\), FromDIP\(270\)\)\)/.test(create), 'the frame pins made before the strip existed are gone');
+  expect(!/SetMinSize\(wxSize\(FromDIP\(400\), FromDIP\(226\)\)\)/.test(create), 'no body floor that hard-codes the strip height');
+  const measured = methodBody('uiAmsPercentHumidityDryPopup', 'LayoutReadouts', files)[0] || '';
+  expect(/m_sizer->CalcMin\(\)\.y \+ MD3DialogCaption::Height\(this\)/.test(measured), 'the measured window height includes the strip');
+  expect(create.indexOf('LayoutReadouts();') > adopt, 'the measured layout runs after Adopt');
   expect(/Refresh\(\);\s*}$/.test(create.trimEnd()) && create.indexOf('Fit();') < adopt, 'nothing is added to the window after Adopt');
 });
 
