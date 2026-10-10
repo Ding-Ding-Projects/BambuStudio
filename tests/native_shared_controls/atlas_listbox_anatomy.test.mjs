@@ -65,7 +65,13 @@ test('font and DPI lifecycle refreshes measurements without overwriting caller f
 });
 test('focus and selected foreground stay paired and inside the rounded row', () => {
     const paint = body(source, 'void ListBox::OnDrawBackground(');
-    assert(paint.includes('selected && HasFocus() && IsEnabled()'));
+    // The ring marks the current row. When every kit list was single-selection
+    // that was the selected row, so this check read 'selected && HasFocus()'.
+    // Extended-selection lists (wxLB_MULTIPLE) move the current row without
+    // selecting it, so the ring now follows IsCurrent(n); see the ListBox
+    // section of docs/features/design-system/kit-widgets-2026-09.md.
+    assert(paint.includes('IsCurrent(n) && HasFocus() && IsEnabled()'));
+    assert(!paint.includes('selected && HasFocus()'));
     assert(paint.includes('focus.Deflate(pen_width)'));
     assert(paint.includes('MD3::Role::SecondaryContainer'));
     assert(paint.includes('MD3::Role::SurfaceContainerLow'));

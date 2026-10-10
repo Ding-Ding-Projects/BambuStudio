@@ -483,9 +483,13 @@ test('the kit ListBox is a list with named rows to screen readers', async () => 
   assert.match(announce, /NotifyEvent\(wxACC_EVENT_OBJECT_SELECTION, this, wxOBJID_CLIENT,/);
   assert.match(announce, /NotifyEvent\(wxACC_EVENT_OBJECT_SELECTIONWITHIN, this, wxOBJID_CLIENT, wxACC_SELF\)/);
   assert.match(announce, /NotifyEvent\(wxACC_EVENT_OBJECT_FOCUS, this, wxOBJID_CLIENT, current \+ 1\)/);
-  assert.match(cppBody(list, 'void ListBox::onKey('), /CallAfter\(\[this\] \{ announce\(\); \}\);/, 'after a key moved the row');
-  assert.match(cppBody(list, 'void ListBox::onLeftDown('), /CallAfter\(\[this\] \{ announce\(\); \}\);/, 'after a click moved the row');
+  assert.match(announce, /NotifyEvent\(wxACC_EVENT_OBJECT_STATECHANGE, this, wxOBJID_CLIENT, int\(row\) \+ 1\)/, 'a flipped check box');
+  const ctor = cppBody(list, 'ListBox::ListBox(wxWindow *parent');
+  for (const type of ['wxEVT_KEY_DOWN', 'wxEVT_LEFT_DOWN', 'wxEVT_LEFT_DCLICK'])
+    assert.match(ctor, new RegExp(`Bind\\(${type}, \\[this\\]\\([^)]*\\) \\{ CallAfter\\(\\[this\\] \\{ announce\\(\\); \\}\\); event\\.Skip\\(\\); \\}\\);`), `after ${type} has moved the row`);
   assert.match(cppBody(list, 'void ListBox::SetSelection(int selection)'), /wxVListBox::SetSelection\(selection\);\s*announce\(\);/, 'after a programmatic selection');
+  const count = cppBody(list, 'void ListBox::SetItemCount(size_t count)');
+  assert.match(count, /wxVListBox::SetItemCount\(count\);[\s\S]*NotifyEvent\(wxACC_EVENT_OBJECT_REORDER, this, wxOBJID_CLIENT, wxACC_SELF\)[\s\S]*announce\(\);/, 'after Set(), Append() or Clear()');
 });
 
 test('every static bitmap is inventoried in the triage CSV, and none is an unaccounted click target', async () => {

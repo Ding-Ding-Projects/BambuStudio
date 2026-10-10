@@ -585,12 +585,12 @@
     {
       "route": "design-system/studio-atlas-listbox.md",
       "title": "Studio Atlas shared list rows",
-      "sha256": "e6b5521b8afdc48f1af1971713d88d31ff1a4d356e51bbfd4a356454ee19296f"
+      "sha256": "557232a85e7ecb94449bb06b705de97dd05dcbab11a7b118212bf38d7f95d8b3"
     },
     {
       "route": "design-system/studio-atlas-listbox.yue_HK.md",
       "title": "Studio Atlas 共用清單列",
-      "sha256": "8940c8b5e9c654e34fb06ff98a35c301ff37c9d46a6e6b26e460246df16b9afc"
+      "sha256": "3b69e557678598b4d07766b3304594b847a94cdb8e3b56dad129180a404113bf"
     },
     {
       "route": "design-system/studio-atlas-selection-controls.md",
@@ -1975,7 +1975,7 @@
       "bytes": 1979
     }
   ],
-  "bundle_sha256": "b4f78757b310726e21ac40f9bd63b893b7466b7068f087902b56d7ebbe57ea55",
+  "bundle_sha256": "108fd90ec4b65a6f53f07152bbd61ac311eb9cd2bc58c730fbd46dd00e7f1472",
   "unavailable_references": [
     {
       "source": "api/README.md",

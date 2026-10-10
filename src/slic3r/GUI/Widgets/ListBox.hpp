@@ -50,6 +50,8 @@ public:
     int      GetSelections(wxArrayInt &selections) const;
     // wxVListBox::SetSelection, then tells screen readers about the change.
     void     SetSelection(int selection);
+    // wxVListBox::SetItemCount, then tells screen readers the rows changed.
+    void     SetItemCount(size_t count) override;
     // The row the keyboard is on, or wxNOT_FOUND; in a multiple-selection
     // list it need not be selected.
     int      GetCurrentRow() const;
@@ -103,6 +105,7 @@ private:
     std::vector<wxString> m_rows;
     int                   m_announced_current { wxNOT_FOUND };
     std::vector<int>      m_announced_selection;
+    std::vector<char>     m_announced_checked;
     int                   m_hover { -1 };
     int                   m_previous_hover { -1 };
     double                m_hover_progress { 1.0 };

@@ -21,11 +21,11 @@ Uncustomized lists use the existing comfortable 14 or compact 13 body font. Each
 
 The rounded row pane has 4 DIP horizontal and 2 DIP vertical insets, with the density's 10 or 8 DIP small radius. Text retains its existing 12 DIP inner padding. Check glyphs retain their 20 DIP size and 8 DIP trailing gap. Their left origin remains 16 DIP, and the existing click boundary remains 36 DIP. Every dimension is converted to pixels once. Width allocation clamps inside the row pane, including a zero-width result when a narrow caller leaves no text space. Empty text rectangles never reach ellipsizing. Glyph drawing is clipped to the actual row rectangle.
 
-Selected rows pair `SecondaryContainer` and `OnSecondaryContainer`, including the check glyph. Disabled selection uses `SurfaceContainerLow` with `OnSurfaceVariant` text/glyphs. Resting unselected rows preserve the control background. Hover uses `SurfaceContainerHigh`; a selected hovered row receives an eight-percent `OnSecondaryContainer` state layer. Focused selected rows receive a 2 DIP `Primary` ring inset inside the rounded pane. Focus gain and loss refresh paint without changing selection.
+Selected rows pair `SecondaryContainer` and `OnSecondaryContainer`, including the check glyph. Disabled selection uses `SurfaceContainerLow` with `OnSurfaceVariant` text/glyphs. Resting unselected rows preserve the control background. Hover uses `SurfaceContainerHigh`; a selected hovered row receives an eight-percent `OnSecondaryContainer` state layer. While the list has focus, the current row (the row the keyboard is on) receives a 2 DIP `Primary` ring inset inside the rounded pane, whether or not it is selected; in a single-selection list the current row is the selected row. Focus gain and loss refresh paint without changing selection.
 
 Hover state updates immediately and paint transitions over the shared 100 ms `short2` duration. The animation is bound to the owning list and stops during destruction, row replacement, clearing or rescaling. Reduced motion paints the terminal state immediately through the existing shared route. Animation callbacks only refresh valid rows; they never select, check, activate or dispatch caller commands.
 
-Long text keeps the existing end ellipsis and complete tooltip. No new labels, translation keys, callback engine or data operation is introduced. Existing native arrow/Home/End/Page navigation, checklist Space handling, glyph clicks, selection and double-click events, and custom scrollbar ownership remain unchanged. This unit does not establish a new keyboard-only full-label disclosure or replace the list's native accessibility implementation.
+Long text keeps the existing end ellipsis and complete tooltip. No new labels, translation keys, callback engine or data operation is introduced. Existing native arrow/Home/End/Page navigation, checklist Space handling, glyph clicks, selection and double-click events, and custom scrollbar ownership remain unchanged. This unit does not establish a new keyboard-only full-label disclosure. A later change gives the list an accessible peer that exposes it as a list of named rows; the ListBox section of [Kit widgets](kit-widgets-2026-09.md) describes it.
 
 ## Focused verification
 
@@ -33,7 +33,7 @@ Long text keeps the existing end ellipsis and complete tooltip. No new labels, t
 node tests/native_shared_controls/atlas_listbox_anatomy.test.mjs --extract "$env:TEMP/BambuStudio-atlas-listbox"
 ```
 
-Nine source checks cover caller reachability, measured fonts, density and DPI lifecycle, preserved checkbox dimensions, selected/focus state pairing, bounded drawing, owner-bound reduced-motion feedback and 17 baseline behavior bodies from `50715f4355e8b845042bd4809bac2da2ce5c40f4`. The row replacement and clear bodies differ only by resetting visual hover state. Negative source checks reject fixed-height text measurement and a changed checkbox padding constant.
+Nine source checks cover caller reachability, measured fonts, density and DPI lifecycle, preserved checkbox dimensions, the current-row focus ring and selected-state pairing, bounded drawing, owner-bound reduced-motion feedback and 17 baseline behavior bodies from `50715f4355e8b845042bd4809bac2da2ce5c40f4`. The row replacement and clear bodies differ only by resetting visual hover state. Negative source checks reject fixed-height text measurement and a changed checkbox padding constant.
 
 The standalone C++ fixture compiles the exact extracted production geometry helpers in an initialized x64 MSVC command prompt:
 

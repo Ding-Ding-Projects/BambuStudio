@@ -242,6 +242,12 @@ ListBox::ListBox(wxWindow *parent, wxWindowID id, const wxSize &size, long style
     });
     Bind(wxEVT_KILL_FOCUS, [this](wxFocusEvent& event) { RefreshAll(); event.Skip(); });
     Bind(wxEVT_DPI_CHANGED, [this](wxDPIChangedEvent& event) { Rescale(); event.Skip(); });
+    // Bound last, so these run first: wxVListBox moves the current row and the
+    // selection, and onKey()/onLeftDown() flip a check, after them, and
+    // announce() reports the result once the event has been handled.
+    Bind(wxEVT_KEY_DOWN, [this](wxKeyEvent& event) { CallAfter([this] { announce(); }); event.Skip(); });
+    Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent& event) { CallAfter([this] { announce(); }); event.Skip(); });
+    Bind(wxEVT_LEFT_DCLICK, [this](wxMouseEvent& event) { CallAfter([this] { announce(); }); event.Skip(); });
 #if wxUSE_ACCESSIBILITY
     SetAccessible(new Accessible(this));
 #endif
@@ -310,9 +316,6 @@ void ListBox::toggle(size_t row)
     if (row >= m_checked.size()) return;
     m_checked[row] = m_checked[row] ? 0 : 1;
     RefreshRow(row);
-#if wxUSE_ACCESSIBILITY
-    wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_STATECHANGE, this, wxOBJID_CLIENT, int(row) + 1);
-#endif
     wxCommandEvent event(wxEVT_CHECKLISTBOX, GetId());
     event.SetEventObject(this);
     event.SetInt(int(row));
@@ -329,8 +332,6 @@ void ListBox::onLeftDown(wxMouseEvent &evt)
             toggle(size_t(row));
     }
     evt.Skip();
-    // wxVListBox moves the current row and the selection after this handler.
-    CallAfter([this] { announce(); });
 }
 
 void ListBox::onKey(wxKeyEvent &evt)
@@ -340,7 +341,6 @@ void ListBox::onKey(wxKeyEvent &evt)
         return;
     }
     evt.Skip();
-    CallAfter([this] { announce(); });
 }
 
 void ListBox::Set(const std::vector<wxString> &rows)
@@ -354,10 +354,6 @@ void ListBox::Set(const std::vector<wxString> &rows)
     SetItemCount(m_rows.size());
     if (GetSelection() != wxNOT_FOUND && size_t(GetSelection()) >= m_rows.size()) SetSelection(wxNOT_FOUND);
     RefreshAll();
-#if wxUSE_ACCESSIBILITY
-    wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_REORDER, this, wxOBJID_CLIENT, wxACC_SELF);
-#endif
-    announce();
 }
 
 void ListBox::Append(const wxString &row)
@@ -366,9 +362,6 @@ void ListBox::Append(const wxString &row)
     m_checked.push_back(0);
     SetItemCount(m_rows.size());
     RefreshRow(m_rows.size() - 1);
-#if wxUSE_ACCESSIBILITY
-    wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_REORDER, this, wxOBJID_CLIENT, wxACC_SELF);
-#endif
 }
 
 void ListBox::Clear()
@@ -382,9 +375,6 @@ void ListBox::Clear()
     SetSelection(wxNOT_FOUND);
     SetItemCount(0);
     RefreshAll();
-#if wxUSE_ACCESSIBILITY
-    wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_REORDER, this, wxOBJID_CLIENT, wxACC_SELF);
-#endif
 }
 
 void ListBox::SetColorScheme(MD3::ColorScheme scheme)
@@ -511,6 +501,18 @@ void ListBox::SetSelection(int selection)
     announce();
 }
 
+void ListBox::SetItemCount(size_t count)
+{
+    wxVListBox::SetItemCount(count);
+    // Set(), Append() and Clear() all land here: the rows were replaced, added
+    // or removed, so screen readers read the children again.
+#if wxUSE_ACCESSIBILITY
+    wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_REORDER, this, wxOBJID_CLIENT, wxACC_SELF);
+#endif
+    m_announced_checked = m_checked; // new rows, not flipped check boxes
+    announce();
+}
+
 int ListBox::GetCurrentRow() const
 {
     if (!HasMultipleSelection()) return GetSelection();
@@ -527,9 +529,18 @@ void ListBox::announce()
     std::vector<int> selection(rows.begin(), rows.end());
     const bool moved = current != m_announced_current;
     const bool selection_changed = selection != m_announced_selection;
+    // Check boxes the user flipped since the last call; replaced rows are
+    // covered by the reorder event instead.
+    std::vector<size_t> flipped;
+    if (m_announced_checked.size() == m_checked.size())
+        for (size_t row = 0; row < m_checked.size(); ++row)
+            if (m_checked[row] != m_announced_checked[row]) flipped.push_back(row);
     m_announced_current = current;
     m_announced_selection = std::move(selection);
+    m_announced_checked = m_checked;
 #if wxUSE_ACCESSIBILITY
+    for (size_t row : flipped)
+        wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_STATECHANGE, this, wxOBJID_CLIENT, int(row) + 1);
     if (selection_changed) {
         // A single selected row is announced as the selection; any other change
         // asks the screen reader to read the selection again.
@@ -543,6 +554,7 @@ void ListBox::announce()
 #else
     wxUnusedVar(moved);
     wxUnusedVar(selection_changed);
+    wxUnusedVar(flipped);
 #endif
 }
 
