@@ -384,9 +384,16 @@ public static class BootstrapMSBuildFixture {
         $pathIndex = [array]::IndexOf($arguments, '--installPath')
         Assert-True ($pathIndex -ge 0 -and $pathIndex + 1 -lt $arguments.Count) `
             'The Visual Studio installer must receive an explicit installation path.'
-        $expectedPath = Join-Path $env:LOCALAPPDATA 'BambuStudioMD3\toolchain\BuildTools2026'
+        $expectedPath = Join-Path $env:LOCALAPPDATA 'BambuBuildTools\VS2026'
         Assert-True ($arguments[$pathIndex + 1] -ceq ('"' + $expectedPath + '"')) `
             'Visual Studio must use the quoted Bambu-owned path, preserving unrelated registrations.'
+        $applicationRoot = [IO.Path]::GetFullPath((Join-Path $env:LOCALAPPDATA 'BambuStudioMD3')).TrimEnd('\') + '\'
+        $actualInstallPath = [IO.Path]::GetFullPath($arguments[$pathIndex + 1].Trim('"'))
+        Assert-True (-not ($actualInstallPath.StartsWith($applicationRoot, [StringComparison]::OrdinalIgnoreCase))) `
+            'The compiler installation must remain outside the directory Squirrel replaces.'
+        $pdfBuilder = Get-Content -LiteralPath (Join-Path $RepositoryRoot 'scripts/windows/Build-LocalPdfTools.ps1') -Raw
+        Assert-True ($pdfBuilder.Contains('BambuBuildTools/VS2026')) `
+            'The PDF build default must use the same installer-independent compiler location.'
         Assert-True ($arguments -contains '--norestart' -and $arguments -notcontains '--force') `
             'Visual Studio bootstrap must not restart the host or force-close applications.'
         Assert-True ($arguments -contains 'Microsoft.VisualStudio.Component.VC.Tools.x86.x64') `

@@ -486,7 +486,10 @@ function Install-VisualCppBuildTools {
     # registration owned by another application. Explicitly select our own
     # stable installation path; never uninstall or repair that other instance.
     # Major 18 on Stable is distinct from a stale major 17 Release registration.
-    $installPath = Join-Path $env:LOCALAPPDATA 'BambuStudioMD3\toolchain\BuildTools2026'
+    # Squirrel replaces its entire package-id directory during a full install.
+    # Keep the registered compiler outside that directory, even before the first
+    # application install. Otherwise Setup attempts to delete protected VS files.
+    $installPath = Join-Path $env:LOCALAPPDATA 'BambuBuildTools\VS2026'
     Write-BuildLog "Installing Visual Studio 2026 Build Tools at '$installPath'. Elevation may be required."
 
     Invoke-SilentInstaller `

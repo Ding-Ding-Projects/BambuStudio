@@ -33,7 +33,7 @@ Git, Visual Studio 2022 or 2026 C++ Build Tools, a complete Windows SDK, CMake, 
 Perl, and 7-Zip. Strawberry Perl supplies the Windows `pkg-config.bat` fallback when the native
 `pkgconfiglite` executable is not present; the build exports that wrapper explicitly so CMake does
 not mistake Strawberry's extensionless helper script for a runnable executable. Existing supported
-installations are reused. Stale Visual Studio registrations whose required files or default x64 compiler are absent are skipped, and product identity comes from the same usable instance as its path. If none is usable (or the SDK is missing), the Microsoft-signed VS 2026 Stable bootstrapper receives the explicit Bambu-owned `%LOCALAPPDATA%\BambuStudioMD3\toolchain\BuildTools2026` installation path and `--norestart`. It does not remove or repair unrelated registrations. Administrator approval can still be required; the bootstrap does not bypass it. Other tool installation uses `winget` silently with package/source agreement
+installations are reused. Stale Visual Studio registrations whose required files or default x64 compiler are absent are skipped, and product identity comes from the same usable instance as its path. If none is usable (or the SDK is missing), the Microsoft-signed VS 2026 Stable bootstrapper receives the explicit Bambu-owned `%LOCALAPPDATA%\BambuBuildTools\VS2026` installation path and `--norestart`. It does not remove or repair unrelated registrations. Administrator approval can still be required; the bootstrap does not bypass it. Other tool installation uses `winget` silently with package/source agreement
 acceptance; the shared toolchain helper retains its publisher and pinned-hash checks for vendor
 fallbacks. The dependency superbuild supplies the product's hash-pinned Node.js and pnpm versions,
 so the workflow does not replace an unrelated system Node installation.
@@ -175,3 +175,9 @@ The dependency producer enables `wxBUILD_RELOCATABLE_INSTALL_PREFIX` and applies
 Reapply the patch in the owned wxWidgets source, reconfigure its setup header, rebuild the affected base object/static library and dependent application output, then run the exact root batch production commands and inspect the final payload. The repair does not modify compiled bytes or loosen publication inspection. No tests, builds, runtime checks or screenshots ran in this source lane.
 
 The wxWidgets dependency is pinned to `a9d946902685b9946d8775f07d2a73a9b5bef394` from `bambulab/wxWidgets`, the clean cached source used to author the relocatable-prefix patch. The upstream commit API returned that exact SHA independently. The producer no longer follows mutable `master`, so a fresh dependency checkout receives the same source revision as the patch baseline.
+
+## Compiler and installer directory separation
+
+Visual Studio bootstrap and the PDF build default use %LOCALAPPDATA%\BambuBuildTools\VS2026, outside Squirrel's %LOCALAPPDATA%\BambuStudioMD3 destination. A full Squirrel install replaces that destination. Placing a registered compiler there caused Setup to fail while deleting protected compiler files, before application installation began.
+
+The helper regression checks the actual bootstrap arguments, requires the compiler path to stay outside the Squirrel destination, and checks the PDF build default. Existing registered compiler instances are reused for builds, never renamed or deleted by bootstrap. An existing affected machine needs a supported Visual Studio uninstall/reinstall migration, with administrator consent when required; changing the source does not migrate that machine automatically.

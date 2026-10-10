@@ -1,3 +1,7 @@
+Installer repair, 9 October 2026: a registered Visual Studio compiler inside the Squirrel install destination prevented `md3-v234` Setup from replacing that directory. The compiler bootstrap and PDF build default now use `%LOCALAPPDATA%\BambuBuildTools\VS2026`, outside the installer destination. The affected local instance was migrated through Microsoft's installer, and the unchanged released Setup completed successfully. The installed application remained running with an isolated profile. [Repair evidence](docs/evidence/installer-toolchain-separation/receipt.json) and [bootstrap behavior](docs/features/releases/windows-one-click-build.md#compiler-and-installer-directory-separation) distinguish this focused verification from broader product acceptance.
+
+![Installed md3-v234 application after the compiler directory migration](docs/evidence/installer-toolchain-separation/installed-v234.png)
+
 All reviewed local source continuations are integrated, and only the primary working directory remains registered. The [closeout report](docs/integration/closeout-20261006.md) records passing hosted workflows, verified backup consolidation, and two retained directory remnants. [Issue 60](https://github.com/Ding-Ding-Projects/BambuStudio/issues/60) tracks unfinished native and website acceptance; source integration is not product acceptance.
 
 > [!IMPORTANT]

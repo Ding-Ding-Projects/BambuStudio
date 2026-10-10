@@ -1,3 +1,11 @@
+## Installer destination isolation, 9 October 2026
+
+- [x] Move future Visual Studio bootstrap and PDF compiler defaults outside Squirrel's replaceable product directory.
+- [x] Verify the bootstrap path regression passes, rejects the old path, and passes after restoration.
+- [x] Migrate the affected machine through the Microsoft installer and install unchanged md3-v234 successfully.
+- [x] Inspect the installed main window with an isolated profile and retain release-bound capture evidence.
+- [x] Verify md3-v234 hosted interactive, control, and silent startup diagnostics remain visible and running.
+
 ## Dependency flag re-embedding, 7 October 2026
 
 - [x] Deliver release path maps as C/C++ compile options so no dependency re-embeds a native backslash root from `CMAKE_C_FLAGS` or `CMAKE_CXX_FLAGS` (libpng `genout.cmake`).

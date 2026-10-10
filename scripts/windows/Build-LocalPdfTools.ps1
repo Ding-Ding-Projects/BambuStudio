@@ -4,7 +4,7 @@ param(
     [Parameter(Mandatory)][string]$Destination,
     [Parameter(Mandatory)][string]$BuildRoot,
     [string]$SdkDestination,
-    [string]$CompilerRoot = (Join-Path $env:LOCALAPPDATA 'BambuStudioMD3/toolchain/BuildTools2026'),
+    [string]$CompilerRoot = (Join-Path $env:LOCALAPPDATA 'BambuBuildTools/VS2026'),
     [string]$CacheDirectory = (Join-Path $PSScriptRoot '../../artifacts/local-pdf-cache'),
     [ValidateRange(1,16)][int]$Parallel = 2,
     [switch]$Offline

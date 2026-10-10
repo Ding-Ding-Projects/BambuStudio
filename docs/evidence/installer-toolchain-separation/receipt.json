@@ -1,0 +1,17 @@
+{
+  "timezone": "America/Toronto",
+  "captureSha256": "23e010063ebc1ab25683c1cb608bd840ecf0638baf292a45bccf60c0b857f526",
+  "width": 1186,
+  "applicationObservation": "main window alive at capture",
+  "route": "cheap-lowlevel-headless",
+  "captureEndUtc": "2026-10-10T01:15:32.5798458+00:00",
+  "captureStartUtc": "2026-10-10T01:15:32.3821732+00:00",
+  "packageVersion": "2.8.4857",
+  "releaseTag": "md3-v234",
+  "privacy": "signed out, no personal records or machine paths",
+  "sourceCommit": "a91317a5be02716e09b392ed21392e522c89b39a",
+  "profile": "isolated test profile",
+  "installedExeSha256": "1eee48a97738ae969c913d2874defb67dde6c1b64d01755c698c491a5db64b6f",
+  "setupSha256": "b7d0a3add92750e13352fdeb03e22b3eb0fd0261d51912753bde5f1bb0bde5a1",
+  "height": 792
+}

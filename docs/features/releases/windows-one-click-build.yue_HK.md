@@ -1,6 +1,6 @@
 ---
 translation-of: windows-one-click-build.md
-source-sha256: b5c9d823140317ada9c7e41e77a1d9cfef494d6f320029b34afbbdaf5bbbdcfc
+source-sha256: 907b18e1b0014e8d17eadda259623215e855ba74b220d91c8696c9e2cee2f685
 review-status: agent-drafted
 ---
 
@@ -131,3 +131,9 @@ CMake 引導會先保留 PATH 入面已經符合支援最低版本、又低過�
 喺自己擁有嘅 wxWidgets 源碼重新套用修補，重新設定佢嘅 setup 標頭，重建受影響嘅 base 物件／靜態程式庫同依賴佢嘅應用程式輸出，然後執行確切嘅根目錄批次生產指令，再檢查最終有效負載。呢個修復唔會改已編譯嘅位元組，亦唔會放寬發佈檢查。呢條源碼線冇執行測試、構建、執行階段檢查或者截圖。
 
 wxWidgets 依賴釘住 `bambulab/wxWidgets` 嘅 `a9d946902685b9946d8775f07d2a73a9b5bef394`，即係用嚟寫可搬遷前綴修補嘅乾淨快取源碼。上游提交 API 亦獨立傳回同一個確切 SHA。產生器唔再跟住會變嘅 `master`，所以全新嘅依賴簽出會攞到同修補基準一樣嘅源碼版本。
+
+## 編譯工具同安裝目錄分開
+
+Visual Studio 引導程式同 PDF 構建預設使用 %LOCALAPPDATA%\BambuBuildTools\VS2026，放喺 Squirrel 嘅 %LOCALAPPDATA%\BambuStudioMD3 安裝目錄之外。完整安裝會替換成個產品目錄；之前編譯工具放咗喺入面，Setup 刪除受保護嘅工具檔案時就失敗，未開始安裝應用程式。
+
+回歸檢查會讀實際引導參數，要求編譯工具唔可以放喺 Squirrel 目錄入面，亦檢查 PDF 構建預設位置。已有註冊工具可以繼續用嚟構建，引導程式唔會改名或者刪除佢。受影響嘅電腦需要透過 Visual Studio 正式解除安裝及重新安裝，必要時由用戶同意管理員權限；改源碼唔會自動搬走舊工具。
