@@ -44820,3 +44820,13 @@ msgstr "已安裝嘅旁白語音"
 #. review-status: agent-drafted
 msgid "Normal delivery: 0"
 msgstr "正常：0"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Check"
+msgstr "剔選"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Uncheck"
+msgstr "取消剔選"

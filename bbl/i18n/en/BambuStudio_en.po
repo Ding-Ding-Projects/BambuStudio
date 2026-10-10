@@ -28986,3 +28986,9 @@ msgstr ""
 
 msgid "Normal delivery: 0"
 msgstr ""
+
+msgid "Uncheck"
+msgstr ""
+
+msgid "Check"
+msgstr ""

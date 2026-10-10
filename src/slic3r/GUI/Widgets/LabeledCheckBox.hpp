@@ -14,7 +14,10 @@ class Label;
 // dialogs already use — GetValue/SetValue/IsChecked, SetLabel, SetFont,
 // SetForegroundColour, SetToolTip, Enable — and re-emits wxEVT_CHECKBOX from
 // itself when the glyph toggles or the label is clicked, so existing
-// Bind(wxEVT_CHECKBOX, …) handlers keep working unchanged.
+// Bind(wxEVT_CHECKBOX, …) handlers keep working unchanged. The glyph takes the
+// keyboard focus and has no text of its own, so it carries an accessible peer
+// that answers as the stock check box did: named by the row, check box role,
+// checked state, and a default action that toggles.
 class LabeledCheckBox : public wxPanel
 {
 public:
@@ -40,6 +43,17 @@ public:
 
 private:
     void emitChange();
+    // What a label click and a screen reader's default action do: flip the
+    // value and emit wxEVT_CHECKBOX, as the user toggling the glyph does.
+    void toggleByUser();
+    // The name screen readers announce for the focusable glyph: a name a
+    // caller gave the glyph or the row with SetName(), else the row label as
+    // it is shown, else the tooltip.
+    wxString accessibleName() const;
+
+#if wxUSE_ACCESSIBILITY
+    class Accessible;
+#endif
 
     CheckBox *m_check { nullptr };
     Label    *m_label { nullptr };

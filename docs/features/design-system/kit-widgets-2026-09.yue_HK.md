@@ -1,6 +1,6 @@
 ---
 translation-of: kit-widgets-2026-09.md
-source-sha256: 919304f0dc22a59c25306677ecd85552873540d71b298ee7d8adbd965ccc5fd5
+source-sha256: 4fb4f6882d95bc91d01c87531da5609f89a8fea0c733f2dd908f25542965063c
 review-status: agent-drafted
 ---
 
@@ -22,6 +22,14 @@ review-status: agent-drafted
 
 **網站。** FeedDirectionDialog、CalibrationWizardPresetPage（階段對同每個位置選擇器）、SavePresetDialog、元素鎖精靈（解鎖方式同時長）、本機支援工單（類別）、排程設定（數值來源）。
 
+## LabeledCheckBox 無障礙（`src/slic3r/GUI/Widgets/LabeledCheckBox.{hpp,cpp}`）
+
+**行為。** 取代原生 `wxCheckBox` 嘅一列：工具組件 `CheckBox` 字形，後面跟住一個 `Label`。字形攞鍵盤焦點，撳 Space 會切換佢；撳字形或者標籤都會切換；每次用戶切換都會由嗰列發出 `wxEVT_CHECKBOX`。
+
+**無障礙。** 字形係一個冇自己文字嘅原生按鈕，而 wxWidgets 唔會自動幫視窗建立無障礙物件，所以淨係 `SetName()` 從來去唔到讀屏軟件。因此字形帶住一個 `wxAccessible` 對等物：角色 `ROLE_SYSTEM_CHECKBUTTON`，狀態有可聚焦 / 焦點 / 已剔 / 不可用 / 不可見，預設動作係「剔選」或者「取消剔選」，效果同撳一下一樣，會切換同發出 `wxEVT_CHECKBOX`。名稱喺每次被問嘅時候先計：調用者用 `SetName()` 幫字形或者成列設定嘅名；冇就用嗰列顯示緊嘅標籤（套用個人詞彙，去走助記符）；再冇就用提示文字。`SetLabel()` 會發出名稱改變事件，每次切換都會發出狀態改變事件。
+
+**網站。** 所有 `LabeledCheckBox`，包括排程設定（啟用、每日、七日星期、三個來源同意列同布林數值編輯器）、身份記錄嘅動作篩選，同元素鎖精靈嘅聲明。
+
 ## TextArea（`src/slic3r/GUI/Widgets/TextArea.{hpp,cpp}`）
 
 **行為。** 工具組件多行欄位：一個邊框容器裝著一個無邊界原生編輯器通過 `GetTextCtrl()` 到達。OutlineVariant 1 px 喺休息、初級 2 px 當編輯器有焦點、`radius_tiny` 角、SurfaceContainerLowest 填充當可編輯同 SurfaceContainerLow 當唯讀。`SetMonospace(true)` 交換編輯器到 Roboto Mono 用於 JSON、日誌同腳本。`SetMinLines()` 驅動最佳尺寸當父級唔尺寸欄位。
@@ -34,9 +42,13 @@ review-status: agent-drafted
 
 **行為。** 一個所有者繪製 `wxVListBox` 繪製帶著下拉選單解剖：SurfaceContainer 欄位、圓形 SurfaceContainerHigh 懸停窗格、SecondaryContainer 選擇活動計劃中嘅窗格、OnSurface 文字喺工具組件主體面孔。原生鍵盤模型同 `wxEVT_LISTBOX` 被繼承。長列省略喺末尾同懸停列暴露其完整文字作為提示。
 
-**延伸選取。** 用 `wxLB_MULTIPLE` 建立嘅清單取代用 `wxLB_EXTENDED` 建立嘅 `wxListBox`：`wxVListBox` 提供延伸選取模式（撳一下揀一列，Ctrl+撳一下切換一列，Shift+撳一下同 Shift+方向鍵延伸範圍，Space 切換目前嗰列），而 `GetSelections()` 喺兩種模式都按次序交返已揀嘅列，同 `wxListBox::GetSelections()` 一樣。`SetSelection(n)` 會將第 `n` 列加入多重選取，`Clear()` 會清空佢。
+**延伸選取。** 用 `wxLB_MULTIPLE` 建立嘅清單取代用 `wxLB_EXTENDED` 建立嘅 `wxListBox`：`wxVListBox` 提供延伸選取模式（撳一下揀一列，Ctrl+撳一下切換一列，Shift+撳一下同 Shift+方向鍵延伸範圍，Ctrl+方向鍵移動目前嗰列但唔會揀佢，Ctrl+Space 切換目前嗰列，單獨撳 Space 就淨係揀目前嗰列），而 `GetSelections()` 喺兩種模式都按次序交返已揀嘅列，同 `wxListBox::GetSelections()` 一樣。`SetSelection(n)` 會將第 `n` 列加入多重選取，`Clear()` 會清空佢。
 
-**失敗模式。** 焦點環畫喺已揀嘅列上面。喺多重選取清單入面，Ctrl+方向鍵移動目前嗰列但唔會揀佢，嗰列要揀咗先會有焦點環。
+**焦點環。** 清單有鍵盤焦點嘅時候，目前嗰列（即係鍵盤所在嗰列）入面會畫一個 2 px 嘅 Primary 環，唔理嗰列有冇揀到；其他已揀嘅列就淨係保留 SecondaryContainer 底色。單選清單入面，目前嗰列就係已揀嗰列。要揀兩列唔相連嘅列，用 Ctrl+方向鍵移過去，再喺每一列撳 Ctrl+Space。
+
+**無障礙。** 清單帶住一個 `wxAccessible` 對等物，好似原生清單咁樣向讀屏軟件交代自己：角色 `ROLE_SYSTEM_LIST`，名稱用 `SetName()` 設定嘅名；每一列係一個 `ROLE_SYSTEM_LISTITEM` 子項，名稱係嗰列嘅文字，狀態有可揀、已揀、焦點（清單有焦點時嘅目前嗰列）、已剔（剔選列）、畫面外（捲咗出視窗）同不可用。多重選取清單仲會標明可多選同可延伸選取。對等物會報告每列位置、點擊測試、鍵盤焦點同已揀嘅列；當按鍵或者撳滑鼠移動咗目前嗰列或者改咗選取，以及 `SetSelection()` 之後，清單都會發出焦點同選取事件。
+
+**失敗模式。** 多重選取清單啱啱清空再填過之後，未有目前嗰列，要等按鍵或者撳滑鼠先會有，所以佢第一次攞到焦點嘅時候唔會見到焦點環。
 
 **網站。** 智能家庭實體清單；排程設定嘅規則（延伸選取）、可用設定、設定選項同時區；驗證器項目、本機支援工單同身份記錄版本（延伸選取）。
 

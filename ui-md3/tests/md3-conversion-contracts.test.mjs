@@ -426,6 +426,68 @@ test('the only list is the kit ListBox, drawn with the DropDown row anatomy', as
   ]) assert.ok(stripComments(await read(file)).includes(needle), `${file} must keep extended selection on the kit list: ${needle}`);
 });
 
+// The body of the C++ function whose definition starts with signature, up to
+// the closing brace at the start of a line.
+function cppBody(source, signature) {
+  const at = source.indexOf(signature);
+  assert.ok(at >= 0, `${signature} must exist`);
+  const end = source.indexOf('\n}', at);
+  return source.slice(at, end < 0 ? undefined : end + 2);
+}
+
+test('the kit ListBox rings the current row, selected or not', async () => {
+  // In a multiple-selection list Ctrl+arrows move the current row without
+  // selecting it and Ctrl+Space toggles that row, so the row has to show
+  // where the keyboard is before it is selected. The stock list box drew its
+  // focus rectangle on the current row; so does the kit list.
+  const list = stripComments(await read('Widgets', 'ListBox.cpp'));
+  const background = cppBody(list, 'void ListBox::OnDrawBackground(');
+  assert.match(background, /const bool keyboard = IsCurrent\(n\) && HasFocus\(\) && IsEnabled\(\);/, 'the ring follows the current row');
+  assert.match(background, /if \(!selected && hover <= 0\.0 && !keyboard\) return;/, 'an unselected current row is still painted');
+  assert.match(background, /if \(keyboard\) \{[\s\S]*?DrawRoundedRectangle\(focus/, 'the ring is drawn for the current row');
+  assert.doesNotMatch(background, /selected && HasFocus\(\)/, 'a selected row that is not current keeps only its pane');
+  // The keyboard model is wxVListBox's: plain Space selects only the current
+  // row, Ctrl+Space toggles it. Nothing may document it the other way round.
+  const header = await read('Widgets', 'ListBox.hpp');
+  assert.doesNotMatch(header, /(?<!Ctrl\+)Space\s+toggles\s+the\s+current\s+row/, 'ListBox.hpp must not say plain Space toggles');
+  assert.match(header, /Ctrl\+Space toggles\s*\/\/\s*the current row and Space alone selects only the current row/);
+  for (const doc of ['kit-widgets-2026-09.md', 'kit-widgets-2026-09.yue_HK.md']) {
+    const text = await readFile(path.join(repoDir, 'docs', 'features', 'design-system', doc), 'utf8');
+    assert.doesNotMatch(text, /(?<!Ctrl\+)Space\s+toggles\s+the\s+current\s+row|that\s+row\s+shows\s+no\s+ring/, `${doc} must describe the current-row ring and Ctrl+Space`);
+  }
+  const english = await readFile(path.join(repoDir, 'docs', 'features', 'design-system', 'kit-widgets-2026-09.md'), 'utf8');
+  assert.match(english, /Ctrl\+Space\s+toggles\s+the\s+current\s+row/);
+  assert.match(english, /Space\s+alone\s+selects\s+only\s+the\s+current\s+row/);
+  const cantonese = await readFile(path.join(repoDir, 'docs', 'features', 'design-system', 'kit-widgets-2026-09.yue_HK.md'), 'utf8');
+  assert.doesNotMatch(cantonese, /(?<!Ctrl\+)Space 切換目前嗰列|揀咗先會有焦點環/, 'the Cantonese twin says the same');
+  assert.match(cantonese, /Ctrl\+Space 切換目前嗰列/);
+});
+
+test('the kit ListBox is a list with named rows to screen readers', async () => {
+  // An owner-drawn wxVListBox is one generic window to Windows: without a peer
+  // a screen reader found an unnamed client area with no rows, where the stock
+  // wxListBox it replaced exposed a named list of named, selectable items.
+  const list = stripComments(await read('Widgets', 'ListBox.cpp'));
+  assert.match(list, /class ListBox::Accessible final : public wxWindowAccessible/);
+  assert.match(cppBody(list, 'ListBox::ListBox(wxWindow *parent'), /SetAccessible\(new Accessible\(this\)\);/, 'every kit list carries the peer');
+  assert.match(list, /\*count = int\(m_list->GetCount\(\)\);/, 'one child per row');
+  assert.match(list, /\*role = child_id == wxACC_SELF \? wxROLE_SYSTEM_LIST : wxROLE_SYSTEM_LISTITEM;/);
+  assert.match(list, /\*name = m_list->GetName\(\);/, 'the list is named by SetName()');
+  assert.match(list, /\*name = m_list->GetString\(unsigned\(i\)\);/, 'a row is named by its text');
+  assert.match(list, /if \(m_list->IsSelected\(size_t\(i\)\)\) \*state \|= wxACC_STATE_SYSTEM_SELECTED;/);
+  assert.match(list, /if \(m_list->HasFocus\(\) && m_list->IsCurrent\(size_t\(i\)\)\) \*state \|= wxACC_STATE_SYSTEM_FOCUSED;/);
+  assert.match(list, /if \(m_list->HasMultipleSelection\(\)\) \*state \|= wxACC_STATE_SYSTEM_MULTISELECTABLE \| wxACC_STATE_SYSTEM_EXTSELECTABLE;/);
+  assert.match(list, /if \(m_list->m_checks && m_list->IsChecked\(unsigned\(i\)\)\) \*state \|= wxACC_STATE_SYSTEM_CHECKED;/);
+  // Moves and selection changes are announced as the stock list announced them.
+  const announce = cppBody(list, 'void ListBox::announce()');
+  assert.match(announce, /NotifyEvent\(wxACC_EVENT_OBJECT_SELECTION, this, wxOBJID_CLIENT,/);
+  assert.match(announce, /NotifyEvent\(wxACC_EVENT_OBJECT_SELECTIONWITHIN, this, wxOBJID_CLIENT, wxACC_SELF\)/);
+  assert.match(announce, /NotifyEvent\(wxACC_EVENT_OBJECT_FOCUS, this, wxOBJID_CLIENT, current \+ 1\)/);
+  assert.match(cppBody(list, 'void ListBox::onKey('), /CallAfter\(\[this\] \{ announce\(\); \}\);/, 'after a key moved the row');
+  assert.match(cppBody(list, 'void ListBox::onLeftDown('), /CallAfter\(\[this\] \{ announce\(\); \}\);/, 'after a click moved the row');
+  assert.match(cppBody(list, 'void ListBox::SetSelection(int selection)'), /wxVListBox::SetSelection\(selection\);\s*announce\(\);/, 'after a programmatic selection');
+});
+
 test('every static bitmap is inventoried in the triage CSV, and none is an unaccounted click target', async () => {
   // The CSV is the hand-reviewed allowlist. A site missing from it is a static
   // bitmap nobody has judged; a clickable one must either have become a Button
@@ -641,6 +703,30 @@ test('LabeledCheckBox is a registered kit widget that re-emits wxEVT_CHECKBOX', 
   const cpp = stripComments(await read('Widgets', 'LabeledCheckBox.cpp'));
   assert.ok(cpp.includes('wxCommandEvent event(wxEVT_CHECKBOX, GetId());'), 'the row must emit wxEVT_CHECKBOX so old handlers keep working');
   assert.ok(cpp.includes('new CheckBox(this)') && cpp.includes('new Label(this, label)'), 'the row is the kit CheckBox glyph plus a Label');
+});
+
+test('the LabeledCheckBox glyph is a named check box to screen readers', async () => {
+  // The glyph is the native BUTTON that takes the keyboard focus and it has no
+  // window text, so without a peer Windows announced an unnamed button where
+  // the stock wxCheckBox announced its label. wx creates no accessible object
+  // by default (wxWindow::CreateAccessible returns NULL), so SetName() alone
+  // never reaches a screen reader.
+  const cpp = stripComments(await read('Widgets', 'LabeledCheckBox.cpp'));
+  assert.match(cpp, /class LabeledCheckBox::Accessible final : public wxWindowAccessible/);
+  assert.match(cppBody(cpp, 'LabeledCheckBox::LabeledCheckBox('), /m_check->SetAccessible\(new Accessible\(m_check, this\)\);/, 'the focusable glyph carries the peer');
+  assert.match(cpp, /\*role = wxROLE_SYSTEM_CHECKBUTTON;/);
+  assert.match(cpp, /\*name = m_row->accessibleName\(\);/);
+  assert.match(cpp, /if \(glyph->GetValue\(\)\) \*state \|= wxACC_STATE_SYSTEM_CHECKED;/);
+  assert.match(cpp, /if \(glyph->HasFocus\(\)\) \*state \|= wxACC_STATE_SYSTEM_FOCUSED;/);
+  assert.match(cpp, /\*action_name = m_row->GetValue\(\) \? _L\("Uncheck"\) : _L\("Check"\);/);
+  assert.match(cpp, /m_row->toggleByUser\(\);/, 'the default action toggles like a click and emits wxEVT_CHECKBOX');
+  // The name follows the row: an explicit SetName() on the glyph or the row,
+  // else the label as the row shows it, else the tooltip. Read live, so a
+  // relabelled row (language switch) is never announced by its old text.
+  const name = cppBody(cpp, 'wxString LabeledCheckBox::accessibleName() const');
+  assert.match(name, /m_check->GetName\(\)[\s\S]*GetName\(\)[\s\S]*m_label->GetUnwrappedLabel\(\)[\s\S]*GetToolTipText\(\)/);
+  assert.match(cppBody(cpp, 'void LabeledCheckBox::SetLabel('), /NotifyEvent\(wxACC_EVENT_OBJECT_NAMECHANGE, m_check, wxOBJID_CLIENT, wxACC_SELF\)/);
+  assert.match(cppBody(cpp, 'void LabeledCheckBox::emitChange()'), /NotifyEvent\(wxACC_EVENT_OBJECT_STATECHANGE, m_check, wxOBJID_CLIENT, wxACC_SELF\)/);
 });
 
 test('every owned dialog is on the MD3 caption shell; only frames keep native chrome', async () => {

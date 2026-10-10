@@ -21,12 +21,18 @@ namespace Slic3r { namespace GUI {
 // used wxListBox::Set/GetSelection keep working. Long rows ellipsize at the
 // end; the full text is the row's tooltip so nothing is unreachable. Its
 // scrollbar is the kit scrollbar (MD3ScrollBars), not the Windows one.
-// Rows use density minima and measured caller fonts. Keyboard focus has an
-// inset ring; hover paint uses owner-bound, reduced-motion-aware feedback.
+// Rows use density minima and measured caller fonts. The keyboard focus ring
+// sits on the current row, selected or not; hover paint uses owner-bound,
+// reduced-motion-aware feedback.
 // Created with wxLB_MULTIPLE it replaces a wxListBox with wxLB_EXTENDED:
 // wxVListBox then gives the extended model (a click selects one row,
 // Ctrl+click toggles a row, Shift+click and Shift+arrows extend the range,
-// Space toggles the current row) and GetSelections() reports the rows.
+// Ctrl+arrows move the current row without selecting it, Ctrl+Space toggles
+// the current row and Space alone selects only the current row) and
+// GetSelections() reports the rows.
+// Screen readers get the list a stock wxListBox gave them through an
+// accessible peer: a named list whose rows are its children, each named by its
+// text with its selected, focused and checked states.
 class ListBox : public wxVListBox
 {
 public:
@@ -42,6 +48,11 @@ public:
     // The selected rows in ascending order, in either selection mode, as
     // wxListBox::GetSelections() reported them; returns their count.
     int      GetSelections(wxArrayInt &selections) const;
+    // wxVListBox::SetSelection, then tells screen readers about the change.
+    void     SetSelection(int selection);
+    // The row the keyboard is on, or wxNOT_FOUND; in a multiple-selection
+    // list it need not be selected.
+    int      GetCurrentRow() const;
 
     // Recolor the selected pane to a workspace accent (Preview / Device).
     void SetColorScheme(MD3::ColorScheme scheme);
@@ -81,8 +92,17 @@ private:
     int  checkWidth() const;
     void toggle(size_t row);
     void animateHover(int previous);
+    // Raise the accessibility events for a change of the current row or the
+    // selection since the last call, as the stock list box did.
+    void announce();
+
+#if wxUSE_ACCESSIBILITY
+    class Accessible;
+#endif
 
     std::vector<wxString> m_rows;
+    int                   m_announced_current { wxNOT_FOUND };
+    std::vector<int>      m_announced_selection;
     int                   m_hover { -1 };
     int                   m_previous_hover { -1 };
     double                m_hover_progress { 1.0 };
