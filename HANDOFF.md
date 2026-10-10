@@ -1,5 +1,91 @@
 # Bambu Studio handoff
 
+## Release repair, Material conversion and LAN model drop, 10 October 2026
+
+Objective: keep the updater and startup working, make every element Material Design 3, and add a LAN site where other people send a model to Bambu Studio MD3 on this computer, with the option visible in the app and an invite link plus QR code. The session stopped at the owner's request (usage limit) and the cloud container was about to be deleted, so every piece of work below is pushed; nothing exists only locally.
+
+On main and verified:
+- 7d882d1e and 48855ebb: when the releases API refuses or fails (GitHub answers 403 or 429 to a shared address), an installed copy with automatic updates on still runs Update.exe, which reads its own RELEASES feed. Pinned by tests/app_update_check_policy_test.cpp and ui-md3/tests/app-auto-update.test.mjs. The first version failed the MSVC build (C2678, a const by-copy lambda capture); 48855ebb fixed it with a faithful g++ reproduction.
+- e4370790 (merged in a91317a5): every close of md3-v231 to md3-v233 crashed (a hide event reached a destroyed check box during window teardown). Pinned by ui-md3/tests/widget-teardown-show-handlers.test.mjs.
+- Hosted proof: self-update diagnostic run 38020503512 installed md3-v234, which updated itself to md3-v235 (classification updated_staged, every package file verified, ready banner recorded, next start ran 2.8.4858), and closing an unsaved project produced no Application Error. Issue #46 is closed with that evidence. The API answered normally in that run, so the refused-API fallback is proven by tests only.
+
+Pushed but not on main (continue from these):
+- Material wave 3, four branches, each turning its failing contracts green with every review passing: gap/md3-dialogs-w3 92db95d7, gap/md3-shared-controls-w3 8ea90530, gap/md3-layout-w3 f42b8ed1, gap/md3-conversion-w3 480eb132 (labels, radios, text fields, the kit ListBox with screen-reader support and a caret ring, scroll bars, message boxes, dialog captions, shared controls, layout and clipping). Together they turn about 25 checks that fail on main green.
+- integrate/md3-w3 53368f07: the four merged onto main 1933a1d3; stopped before its regression fixes and reviews. Verify the merges and regenerated files before relying on it. Still to fix there, each with a test: SpinInput Up stops one below the maximum and cannot type negatives; re-selecting the current value source clears consent in Scheduled settings; the Project history store filter keeps stale text after a reload; the camera zoom button opens a stock menu and no longer announces the zoom value; the ListBox comment about Space is wrong.
+- Material wave 4 plan: design/md3-uncovered-elements-2026-10-09.json lists 55 elements no contract covers yet (custom-painted colours, ImGui canvas widgets, device and ink dialogs, web pages, native date and time pickers), grouped into five units with disjoint files.
+- LAN model drop site: gap/lan-drop-site-w1 5698fc9b, folder lan-model-drop/ (Node.js 22 with no third-party packages, pinned base image, non-root, read-only, all capabilities dropped, health check), tests under tests/lan_model_drop/, docs/features/application-integration/lan-model-drop-site.md and its Cantonese twin. Built and exercised in Docker. One blocking security finding is open: a cross-site POST without X-Drop-Code counts as a wrong code, so any web page can lock senders out; count only requests that carry the header, and reject requests without it before counting.
+- LAN model drop station in the app: gap/lan-drop-app-w1 bd072c69 (Preferences section, invite link with Copy link, QR code and New link, File menu item, command palette entry, status indicator, polling worker, DPAPI-protected station key, Open/Discard notifications, Cantonese, docs). Its top commit is an unverified work-in-progress snapshot of an interrupted review fix, and that commit's message contains one private term: integrate this branch with a squash so the message does not reach main, then delete the branch. Still to do: the station-side reviews and fixes, interop of both halves against the running container, integration, release, and starting the container with Docker Desktop on the owner's computer.
+
+Branches fully merged into main that the owner should delete on GitHub (the session's proxy refuses branch deletion): listed below.
+
+Merged branches to delete (each is an ancestor of origin/main 1933a1d3):
+
+- `chore/workflow-rewire-20261006`
+- `codex/hosted-behavior-verifier`
+- `codex/hosted-startup-stack`
+- `codex/official-feature-reapply`
+- `codex/official-native-reapply`
+- `docs/feature-gap-ledger-20261007`
+- `docs/readme-screenshots-20261009`
+- `feature/mcp-integration`
+- `feature/native-print-workflow`
+- `feature/readme-screenshots-20261007`
+- `feature/ui-integration`
+- `fix/app-update-check-20261006`
+- `fix/cantonese-coverage-20261009`
+- `fix/cantonese-coverage-recovery-20261003`
+- `fix/compile-sweep-20261007`
+- `fix/deps-pathmap-escape-20261007`
+- `fix/diagnose-self-update-20261009`
+- `fix/diagnostic-crash-classification-20261009`
+- `fix/installer-first-run-20261006`
+- `fix/native-link-wiring-20261006`
+- `fix/registry-msvc-20261008`
+- `fix/second-start-crash-20261009`
+- `fix/self-update-lifted-helpers-20261009`
+- `fix/shutdown-crash-20261009`
+- `fix/source-group-test-wrap-20261007`
+- `fix/source-group-tree-20261007`
+- `fix/startup-crash-20261008`
+- `fix/update-check-fallback-20261009`
+- `fix/update-fallback-msvc-20261009`
+- `gap/blank-editors-w1`
+- `gap/collapse-filters-w1`
+- `gap/critic-funny-level-first-run-disclosure-w1`
+- `gap/download-handoff-w1`
+- `gap/file-converter-w1`
+- `gap/logo-customization-w1`
+- `gap/ollama-suite-w1`
+- `gap/regex-search-w1`
+- `gap/sanitized-instruction-copy-w1`
+- `gap/unlock-ladder-w1`
+- `integrate/batch2-20261007`
+- `integrate/jerjer-20261009`
+- `integrate/upstream-development-20261006`
+- `task/build-bootstrap-20261006`
+- `task/delivery-automation-20261005`
+- `task/delivery-bulk-20261005`
+- `task/delivery-continuity-20261005`
+- `task/delivery-delivery-20261005`
+- `task/delivery-import-20261005`
+- `task/delivery-offline-20261005`
+- `task/delivery-responsive-20261005`
+- `task/delivery-schedule-20261005`
+- `task/delivery-surface-20261005`
+- `task/delivery-updater-20261005`
+- `task/embedded-atlas-20261006`
+- `task/main-build-report-20261006`
+- `task/native-build-20261006`
+- `task/native-feature-ledger`
+- `task/native-interaction-plan-20261006`
+- `task/native-monitor-atlas-20261006`
+- `task/native-navigation-chrome-20261006`
+- `task/native-overlays-atlas-20261006`
+- `task/native-renderer-atlas-20261006`
+- `task/native-review-ledger-20261006`
+- `task/native-review-tuples-20261006`
+- `task/upstream-development-20261006`
+
 ## Native redesign continuation merged into main, 7 October 2026
 
 The preserved redesign and preparation line `task/upstream-development-20261006` (tip `1fa14f33a025e58f2a82ef4e21d4edeff027c6ea`, 193 commits after merge base `cc059003d362b87d53786152ee8c28621d9c2813`) is now merged into main on top of `2f66e245a116f515ba8022db45a74e7d63bb58a8`. Before merging, `feature/native-print-workflow`, `task/embedded-atlas-20261006` and all nine `task/native-*` branches were each proven to be ancestors of that tip; no other remote branch carried commits outside main or the tip.
