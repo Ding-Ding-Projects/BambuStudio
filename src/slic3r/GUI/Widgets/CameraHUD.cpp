@@ -1,6 +1,5 @@
 #include "CameraHUD.hpp"
 #include "../wxMediaCtrl3.h"
-#include <wx/button.h>
 #include <wx/menu.h>
 
 #include <algorithm>
@@ -19,6 +18,7 @@
 #endif
 
 #include "../I18N.hpp" // _L
+#include "Button.hpp"
 #include "Label.hpp"     // ::Label::Mono_11 (Roboto Mono 11.5/400)
 #include "MD3Motion.hpp" // reduced-motion preference
 #include "MD3Menu.hpp"   // MD3::PopupMenuBelow, the Material menu
@@ -533,12 +533,12 @@ CameraHUD::CameraHUD(wxWindow *parent)
     m_zoom_reset = new CameraHUDChip(this, MaterialIcon::Refresh, "");
     m_zoom_reset->SetName(_L("Reset camera view"));
     m_zoom_reset->SetToolTip(_L("Reset camera view (0)"));
-    m_zoom_percent = new wxButton(this, wxID_ANY, "100%", wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT);
-    m_zoom_percent->SetForegroundColour(Glyph());
+    // A kit text Button on the HUD's own chip tones (the HUD is dark camera
+    // chrome in every theme, so the theme-following variants do not apply).
+    m_zoom_percent = new Button(this, "100%");
     m_zoom_percent->SetName(_L("Camera zoom percentage"));
-    m_zoom_percent->SetMinSize(wxSize(FromDIP(60), FromDIP(kChipDIP)));
-    m_zoom_percent->SetBackgroundColour(ChipBg());
     m_zoom_percent->SetToolTip(_L("Choose camera zoom percentage"));
+    style_zoom_percent();
     m_zoom_percent->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) {
         wxMenu menu;
         for (int percent : {100, 125, 150, 200, 300, 400, 500}) {
@@ -705,6 +705,20 @@ bool CameraHUD::Enable(bool enable)
     return ret;
 }
 
+void CameraHUD::style_zoom_percent()
+{
+    m_zoom_percent->SetFont(::Label::Mono_13);
+    m_zoom_percent->SetBackgroundColor(StateColor(std::make_pair(ChipPress(), (int) StateColor::Pressed),
+                                                  std::make_pair(ChipHover(), (int) StateColor::Hovered),
+                                                  std::make_pair(ChipBg(), (int) StateColor::Normal)));
+    m_zoom_percent->SetBorderColor(StateColor(std::make_pair(FocusRing(), (int) StateColor::Focused),
+                                              std::make_pair(ChipBg(), (int) StateColor::Normal)));
+    m_zoom_percent->SetTextColor(StateColor(std::make_pair(GlyphMuted(), (int) StateColor::Disabled),
+                                            std::make_pair(Glyph(), (int) StateColor::Normal)));
+    m_zoom_percent->SetCornerRadius(FromDIP(kChipDIP) / 2);
+    m_zoom_percent->SetMinSize(wxSize(FromDIP(60), FromDIP(kChipDIP)));
+}
+
 void CameraHUD::msw_rescale()
 {
     SetBackgroundColour(CardBg());
@@ -713,9 +727,8 @@ void CameraHUD::msw_rescale()
     for (auto *chip : {m_zoom_out, m_zoom_in, m_zoom_reset})
         if (chip) chip->msw_rescale();
     if (m_zoom_percent) {
-        m_zoom_percent->SetMinSize(wxSize(FromDIP(60), FromDIP(kChipDIP)));
-        m_zoom_percent->SetForegroundColour(Glyph());
-        m_zoom_percent->SetBackgroundColour(ChipBg());
+        style_zoom_percent();
+        m_zoom_percent->Rescale();
     }
 #else
     SetMinSize(wxSize(-1, FromDIP(kHudHeight)));

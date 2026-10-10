@@ -5,10 +5,10 @@
 #include "../Widgets/SearchField.hpp"
 #include "../Widgets/Button.hpp"
 #include "../Widgets/CollapsibleFilterBar.hpp"
+#include "../Widgets/Label.hpp"
+#include "../Widgets/MD3ScrolledWindow.hpp"
 #include "../Widgets/MD3Tokens.hpp"
-#include <wx/scrolwin.h>
 #include <wx/sizer.h>
-#include <wx/stattext.h>
 #include <wx/datetime.h>
 
 namespace Slic3r::GUI {
@@ -49,15 +49,15 @@ StatusHubPanel::StatusHubPanel(wxWindow* parent) : wxPanel(parent), m_timer(this
     m_retry->SetVariant(Button::Variant::Filled);
     m_retry->SetMinSize(wxSize(-1, FromDIP(44)));
     outer->Add(m_retry, 0, wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(12));
-    m_body = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL);
+    m_body = new MD3ScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL);
     m_body->SetScrollRate(0, FromDIP(12));
     auto* rows = new wxBoxSizer(wxVERTICAL);
     for (int i = 0; i < 10; ++i) {
-        auto* text = new wxStaticText(m_body, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, wxST_NO_AUTORESIZE);
+        auto* text = new Label(m_body, wxEmptyString, wxST_NO_AUTORESIZE);
         rows->Add(text, 0, wxEXPAND | wxALL, FromDIP(8));
         m_rows.push_back({text, {}});
     }
-    m_empty = new wxStaticText(m_body, wxID_ANY, _L("No matching evidence."));
+    m_empty = new Label(m_body, _L("No matching evidence."));
     rows->Add(m_empty, 0, wxALL, FromDIP(8));
     m_body->SetSizer(rows);
     outer->Add(m_body, 1, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(12));

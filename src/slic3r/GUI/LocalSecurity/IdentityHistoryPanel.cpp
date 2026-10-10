@@ -2,13 +2,13 @@
 #include "../Widgets/Button.hpp"
 #include "../Widgets/CollapsibleFilterBar.hpp"
 #include "../Widgets/Label.hpp"
+#include "../Widgets/LabeledCheckBox.hpp"
+#include "../Widgets/ListBox.hpp"
+#include "../Widgets/MD3ScrolledWindow.hpp"
 #include "../Widgets/TextInput.hpp"
 #include "../Widgets/SearchField.hpp"
 #include "../Widgets/SuperConfirmGate.hpp"
-#include <wx/listbox.h>
 #include <wx/sizer.h>
-#include <wx/scrolwin.h>
-#include <wx/checkbox.h>
 #include <wx/datetime.h>
 #include <openssl/crypto.h>
 
@@ -26,7 +26,7 @@ std::optional<wxDateTime> date(const wxString& input){if(input.empty())return {}
 IdentityHistoryPanel::IdentityHistoryPanel(wxWindow* parent,std::shared_ptr<IdentityHistory> history,Hooks hooks,RestoreIdentity restore)
     :wxPanel(parent),m_history(std::move(history)),m_hooks(std::move(hooks)),m_restore(std::move(restore)),m_actions(7,true),m_timer(this){
     if(!m_history||!m_hooks.text||!m_hooks.factual_text||!m_hooks.notify||!m_hooks.register_surface||!m_hooks.register_sensitive||!m_hooks.record_label||!m_hooks.record_factual_label||!m_hooks.record_tooltip||!m_hooks.record_name)throw Failure(Error::InvalidInput);
-    auto root=new wxBoxSizer(wxVERTICAL);auto scroll=new wxScrolledWindow(this);scroll->SetScrollRate(0,FromDIP(12));auto body=new wxBoxSizer(wxVERTICAL);
+    auto root=new wxBoxSizer(wxVERTICAL);auto scroll=new MD3ScrolledWindow(this);scroll->SetScrollRate(0,FromDIP(12));auto body=new wxBoxSizer(wxVERTICAL);
     const char* disclosure="History has its own credential. Snapshots remain encrypted; this view never reveals authenticator secrets, passwords, PINs or codes.";auto notice=new Label(scroll,m_hooks.factual_text(disclosure),LB_AUTO_WRAP);m_hooks.record_factual_label(notice,disclosure);body->Add(notice,0,wxEXPAND|wxBOTTOM,FromDIP(8));
     auto password=entry(scroll,body,m_hooks,"History password",true);auto confirmation=entry(scroll,body,m_hooks,"Confirm new history password",true);
     button(scroll,body,m_hooks,"Create protected history",[this,password,confirmation]{safely([&]{auto answer=take(password),repeat=take(confirmation);if(answer.size()!=repeat.size()||CRYPTO_memcmp(answer.data(),repeat.data(),answer.size())!=0)throw Failure(Error::Authentication);m_history->initialize(CredentialKind::Password,answer);m_answer=std::move(answer);m_expires=std::chrono::steady_clock::now()+std::chrono::minutes(5);read_page();m_status->SetLabel(t(m_hooks,"Protected history was created. Existing histories are never overwritten by this action."));});});
@@ -38,9 +38,9 @@ IdentityHistoryPanel::IdentityHistoryPanel(wxWindow* parent,std::shared_ptr<Iden
     m_from=entry(filter_body,filter_sizer,m_hooks,"From date (YYYY-MM-DD, local time)");m_to=entry(filter_body,filter_sizer,m_hooks,"Through date (YYYY-MM-DD, local time)");m_from->SetMaxLength(10);m_to->SetMaxLength(10);
     for(auto date_field:{m_from,m_to})date_field->Bind(wxEVT_TEXT,[this](wxCommandEvent& event){update_active_filters();event.Skip();});
     button(filter_body,filter_sizer,m_hooks,"Apply date filters",[this]{safely([this]{filter();});});
-    for(unsigned i=0;i<7;++i){auto choice=new wxCheckBox(filter_body,wxID_ANY,t(m_hooks,action_name(static_cast<HistoryAction>(i))));m_hooks.record_label(choice,action_name(static_cast<HistoryAction>(i)));choice->SetValue(true);choice->Bind(wxEVT_CHECKBOX,[this,i](wxCommandEvent& event){m_actions[i]=event.IsChecked();update_active_filters();safely([this]{filter();});});filter_sizer->Add(choice,0,wxEXPAND|wxBOTTOM,FromDIP(4));}
+    for(unsigned i=0;i<7;++i){auto choice=new LabeledCheckBox(filter_body,t(m_hooks,action_name(static_cast<HistoryAction>(i))));m_hooks.record_label(choice,action_name(static_cast<HistoryAction>(i)));choice->SetValue(true);choice->Bind(wxEVT_CHECKBOX,[this,i](wxCommandEvent& event){m_actions[i]=event.IsChecked();update_active_filters();safely([this]{filter();});});filter_sizer->Add(choice,0,wxEXPAND|wxBOTTOM,FromDIP(4));}
     body->Add(m_filters->GetSectionSizer(),0,wxEXPAND|wxBOTTOM,FromDIP(8));
-    m_list=new wxListBox(scroll,wxID_ANY,wxDefaultPosition,FromDIP(wxSize(420,200)),0,nullptr,wxLB_EXTENDED);m_list->SetName(t(m_hooks,"Redacted history revisions"));m_hooks.record_name(m_list,"Redacted history revisions");body->Add(m_list,0,wxEXPAND|wxBOTTOM,FromDIP(8));
+    m_list=new ListBox(scroll,wxID_ANY,FromDIP(wxSize(420,200)),wxLB_MULTIPLE);m_list->SetMinSize(FromDIP(wxSize(-1,200)));m_list->SetName(t(m_hooks,"Redacted history revisions"));m_hooks.record_name(m_list,"Redacted history revisions");body->Add(m_list,0,wxEXPAND|wxBOTTOM,FromDIP(8));
     button(scroll,body,m_hooks,"Previous history page",[this]{safely([this]{require_session();m_offset=m_offset>=10?m_offset-10:0;read_page();});});
     button(scroll,body,m_hooks,"Next history page",[this]{safely([this]{require_session();if(m_offset>=10000||m_rows.size()<10)throw Failure(Error::InvalidInput);m_offset+=10;read_page();});});
     button(scroll,body,m_hooks,"Compare two selected revisions",[this]{safely([this]{require_session();wxArrayInt selection;m_list->GetSelections(selection);if(selection.size()!=2)throw Failure(Error::InvalidInput);auto diff=IdentityHistory::redacted_diff(m_rows.at(m_visible.at(selection[0])),m_rows.at(m_visible.at(selection[1])));m_status->SetLabel(t(m_hooks,diff.same_identity?"Both revisions belong to the same identity.":"These revisions belong to different identities.")+" "+t(m_hooks,diff.action_changed?"Their recorded actions differ. Snapshot contents are omitted.":"Their recorded actions match. Snapshot contents are omitted."));});});

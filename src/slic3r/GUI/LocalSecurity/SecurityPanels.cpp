@@ -2,16 +2,15 @@
 #include "PairingQr.hpp"
 #include "../Widgets/Button.hpp"
 #include "../Widgets/Label.hpp"
+#include "../Widgets/LabeledCheckBox.hpp"
+#include "../Widgets/ListBox.hpp"
+#include "../Widgets/MD3ScrolledWindow.hpp"
+#include "../Widgets/SpinInput.hpp"
 #include "../Widgets/TextInput.hpp"
 #include "../Widgets/SearchField.hpp"
 #include "../Widgets/MD3DialogChrome.hpp"
 #include "../Widgets/SuperConfirmGate.hpp"
-#include <wx/listbox.h>
 #include <wx/sizer.h>
-#include <wx/scrolwin.h>
-#include <wx/radiobut.h>
-#include <wx/checkbox.h>
-#include <wx/spinctrl.h>
 #include <wx/clipbrd.h>
 #include <wx/dataobj.h>
 #include <wx/display.h>
@@ -65,9 +64,9 @@ public:
 AuthenticatorPanel::AuthenticatorPanel(wxWindow* parent,std::shared_ptr<AuthenticatorStore> store,Hooks hooks)
     :wxPanel(parent),m_store(std::move(store)),m_hooks(std::move(hooks)),m_timer(this){
     require_hooks(m_hooks);if(!m_store)throw Failure(Error::InvalidInput);
-    auto root=new wxBoxSizer(wxVERTICAL);auto scroll=new wxScrolledWindow(this);scroll->SetScrollRate(0,FromDIP(12));auto body=new wxBoxSizer(wxVERTICAL);
+    auto root=new wxBoxSizer(wxVERTICAL);auto scroll=new MD3ScrolledWindow(this);scroll->SetScrollRate(0,FromDIP(12));auto body=new wxBoxSizer(wxVERTICAL);
     m_search=search(scroll,body,m_hooks,"Search authenticator entries",[this]{filter();});
-    m_list=new wxListBox(scroll,wxID_ANY,wxDefaultPosition,FromDIP(wxSize(350,160)),0,nullptr,wxLB_EXTENDED);m_list->SetName(text(m_hooks,"Authenticator entries"));m_hooks.record_name(m_list,"Authenticator entries");body->Add(m_list,0,wxEXPAND|wxBOTTOM,FromDIP(8));
+    m_list=new ListBox(scroll,wxID_ANY,FromDIP(wxSize(350,160)),wxLB_MULTIPLE);m_list->SetMinSize(FromDIP(wxSize(-1,160)));m_list->SetName(text(m_hooks,"Authenticator entries"));m_hooks.record_name(m_list,"Authenticator entries");body->Add(m_list,0,wxEXPAND|wxBOTTOM,FromDIP(8));
     m_code=new Label(scroll,text(m_hooks,"Select an entry to show its current code."));m_hooks.register_sensitive(m_code);auto font=m_code->GetFont();font.SetPointSize(26);m_code->SetFont(font);body->Add(m_code,0,wxEXPAND);
     m_countdown=new Label(scroll,wxString());body->Add(m_countdown,0,wxEXPAND|wxBOTTOM,FromDIP(8));
     action(scroll,body,m_hooks,"Copy current code",[this]{safely([this]{auto id=selected();copy(wxString::FromUTF8(m_store->code(id,seconds()).current));});});
@@ -107,7 +106,7 @@ void LockWizard::Open(wxWindow* anchor,std::shared_ptr<ElementLock> lock,wxStrin
 LockWizard::LockWizard(wxWindow* anchor,std::shared_ptr<ElementLock> lock,wxString target,wxString recovery,Hooks hooks)
     :wxDialog(anchor,wxID_ANY,target,wxDefaultPosition,wxDefaultSize,wxBORDER_NONE|wxRESIZE_BORDER),m_lock(std::move(lock)),m_hooks(std::move(hooks)),m_anchor(anchor){
     require_hooks(m_hooks);if(!m_lock||!anchor||recovery.empty())throw Failure(Error::InvalidInput);
-    auto root=new wxBoxSizer(wxVERTICAL);root->Add(new MD3DialogCaption(this,target),0,wxEXPAND);auto scroll=new wxScrolledWindow(this);scroll->SetScrollRate(0,FromDIP(12));auto body=new wxBoxSizer(wxVERTICAL);
+    auto root=new wxBoxSizer(wxVERTICAL);root->Add(new MD3DialogCaption(this,target),0,wxEXPAND);auto scroll=new MD3ScrolledWindow(this);scroll->SetScrollRate(0,FromDIP(12));auto body=new wxBoxSizer(wxVERTICAL);
     auto search_field=search(scroll,body,m_hooks,"Search lock settings",[]{});
     body->Add(factual_label(scroll,m_hooks,"This is a toy lock, not a security boundary. To reset, close the application and delete its local application-data folder yourself:"),0,wxEXPAND|wxBOTTOM,FromDIP(8));
     auto path=new TextInput(scroll,recovery,{}, {},wxDefaultPosition,wxDefaultSize,wxTE_READONLY);path->GetTextCtrl()->SetName(text(m_hooks,"Recovery folder"));m_hooks.record_name(path->GetTextCtrl(),"Recovery folder");body->Add(path,0,wxEXPAND|wxBOTTOM,FromDIP(8));
@@ -124,7 +123,7 @@ LockWizard::LockWizard(wxWindow* anchor,std::shared_ptr<ElementLock> lock,wxStri
         action(scroll,body,m_hooks,"Lock again",[this]{m_lock->relock();refresh_prompt();});
     }else{
         const char* policies[]={"PIN","Password","PIN plus password","Password plus TOTP","PIN plus TOTP","Password plus PIN plus TOTP"};
-        std::vector<wxRadioButton*> options;for(unsigned i=0;i<6;++i){auto b=new wxRadioButton(scroll,wxID_ANY,text(m_hooks,policies[i]),wxDefaultPosition,wxDefaultSize,i==0?wxRB_GROUP:0);m_hooks.record_label(b,policies[i]);body->Add(b,0,wxEXPAND|wxBOTTOM,FromDIP(6));options.push_back(b);}options[0]->SetValue(true);
+        std::vector<LabeledRadioButton*> options;for(unsigned i=0;i<6;++i){auto b=new LabeledRadioButton(scroll,text(m_hooks,policies[i]));m_hooks.record_label(b,policies[i]);m_policy_group.Add(b);body->Add(b,0,wxEXPAND|wxBOTTOM,FromDIP(6));options.push_back(b);}m_policy_group.SetSelection(0);
         auto pin=field(scroll,body,m_hooks,"New PIN (4 to 32 digits)",true);auto password=field(scroll,body,m_hooks,"New password (8 to 1024 UTF-8 bytes)",true);auto otp=field(scroll,body,m_hooks,"TOTP pairing URI for this element",true);auto confirm=field(scroll,body,m_hooks,"Current TOTP code to confirm",true);
         auto generated=std::make_shared<std::optional<Enrollment>>();auto qr=new PairingQrView(scroll,m_hooks);body->Add(qr,0,wxEXPAND|wxBOTTOM,FromDIP(8));
         auto manual_key=field(scroll,body,m_hooks,"One-time manual setup key",false);manual_key->SetEditable(false);manual_key->Hide();m_hooks.register_sensitive(manual_key);
@@ -132,9 +131,9 @@ LockWizard::LockWizard(wxWindow* anchor,std::shared_ptr<ElementLock> lock,wxStri
         action(scroll,body,m_hooks,"Generate a local pairing secret",[this,generated,otp,qr,manual_key,target]{safely([&]{Enrollment e;e.issuer="Bambu Studio";e.account=utf8(target);if(e.account.size()>256)e.account="Local element";e.secret=random_secret(20);*generated=std::move(e);otp->ChangeValue(wxString::FromUTF8(pairing_uri(**generated)));qr->Clear();manual_key->ChangeValue({});manual_key->Hide();m_status->SetLabel(text(m_hooks,"A new secret was generated locally. Reveal the QR or manual key, pair it, then type a current code before creating the lock."));Layout();});});
         action(scroll,body,m_hooks,"Reveal registration QR and manual key",[this,generated,qr,manual_key,scroll]{safely([&]{if(!*generated)throw Failure(Error::Missing);qr->Reveal(**generated);manual_key->ChangeValue(wxString::FromUTF8(encode_base32((**generated).secret)));manual_key->Show();scroll->Layout();scroll->FitInside();});});
         action(scroll,body,m_hooks,"Hide registration QR and manual key",[qr,manual_key,scroll]{qr->Clear();manual_key->ChangeValue({});manual_key->Hide();scroll->Layout();scroll->FitInside();});
-        const char* durations[]={"This surface only","A set number of minutes","Until the application closes"};std::vector<wxRadioButton*> duration;for(unsigned i=0;i<3;++i){auto b=new wxRadioButton(scroll,wxID_ANY,text(m_hooks,durations[i]),wxDefaultPosition,wxDefaultSize,i==0?wxRB_GROUP:0);m_hooks.record_label(b,durations[i]);body->Add(b,0,wxEXPAND|wxBOTTOM,FromDIP(6));duration.push_back(b);}duration[0]->SetValue(true);
-        auto minutes=new wxSpinCtrl(scroll,wxID_ANY,"5",wxDefaultPosition,wxDefaultSize,wxSP_ARROW_KEYS,1,1440,5);minutes->SetName(text(m_hooks,"Unlock minutes"));m_hooks.record_name(minutes,"Unlock minutes");body->Add(minutes,0,wxEXPAND|wxBOTTOM,FromDIP(8));
-        auto disclosure=new wxCheckBox(scroll,wxID_ANY,m_hooks.factual_text("This is a toy lock, and the recovery folder is shown above."));m_hooks.record_factual_label(disclosure,"This is a toy lock, and the recovery folder is shown above.");body->Add(disclosure,0,wxEXPAND|wxBOTTOM,FromDIP(8));
+        const char* durations[]={"This surface only","A set number of minutes","Until the application closes"};std::vector<LabeledRadioButton*> duration;for(unsigned i=0;i<3;++i){auto b=new LabeledRadioButton(scroll,text(m_hooks,durations[i]));m_hooks.record_label(b,durations[i]);m_duration_group.Add(b);body->Add(b,0,wxEXPAND|wxBOTTOM,FromDIP(6));duration.push_back(b);}m_duration_group.SetSelection(0);
+        auto minutes=new SpinInput(scroll,"5",wxEmptyString,wxDefaultPosition,wxDefaultSize,0,1,1440,5);minutes->SetName(text(m_hooks,"Unlock minutes"));m_hooks.record_name(minutes,"Unlock minutes");minutes->GetTextCtrl()->SetName(text(m_hooks,"Unlock minutes"));m_hooks.record_name(minutes->GetTextCtrl(),"Unlock minutes");body->Add(minutes,0,wxEXPAND|wxBOTTOM,FromDIP(8));
+        auto disclosure=new LabeledCheckBox(scroll,m_hooks.factual_text("This is a toy lock, and the recovery folder is shown above."));m_hooks.record_factual_label(disclosure,"This is a toy lock, and the recovery folder is shown above.");body->Add(disclosure,0,wxEXPAND|wxBOTTOM,FromDIP(8));
         action(scroll,body,m_hooks,"Create this element's lock",[this,options,duration,pin,password,otp,confirm,minutes,disclosure]{safely([&]{if(!disclosure->GetValue())throw Failure(Error::InvalidInput);LockEnrollment e;for(unsigned i=0;i<options.size();++i)if(options[i]->GetValue())e.settings.policy=static_cast<Policy>(i);for(unsigned i=0;i<duration.size();++i)if(duration[i]->GetValue())e.settings.duration=static_cast<Duration>(i);e.settings.minutes=minutes->GetValue();e.pin=secret(pin);e.password=secret(password);if(!otp->IsEmpty()){auto raw=otp->GetValue().ToUTF8();e.otp=parse_otpauth(std::string_view(raw.data(),raw.length()));otp->ChangeValue({});}e.confirmation_code=utf8(confirm->GetValue());confirm->ChangeValue({});m_lock->create(std::move(e),seconds());m_hooks.notify(text(m_hooks,"The element is now locked."));close();});});
     }
     action(scroll,body,m_hooks,"Forgotten your password? Open Support Tickets",[this]{if(m_hooks.open_support){m_lock->cancel();m_hooks.open_support();close();}else m_status->SetLabel(text(m_hooks,"Support Tickets is not registered. The recovery folder above remains available."));});
@@ -151,12 +150,12 @@ void LockWizard::close(){m_lock->cancel();if(m_answer)m_answer->ChangeValue({});
 
 SupportTicketsPanel::SupportTicketsPanel(wxWindow* parent,std::shared_ptr<SupportTickets> store,std::filesystem::path folder,Hooks hooks)
     :wxPanel(parent),m_store(std::move(store)),m_folder(std::move(folder)),m_hooks(std::move(hooks)){
-    require_hooks(m_hooks);if(!m_store||!m_folder.is_absolute())throw Failure(Error::InvalidInput);auto root=new wxBoxSizer(wxVERTICAL);auto scroll=new wxScrolledWindow(this);scroll->SetScrollRate(0,FromDIP(12));auto body=new wxBoxSizer(wxVERTICAL);
+    require_hooks(m_hooks);if(!m_store||!m_folder.is_absolute())throw Failure(Error::InvalidInput);auto root=new wxBoxSizer(wxVERTICAL);auto scroll=new MD3ScrolledWindow(this);scroll->SetScrollRate(0,FromDIP(12));auto body=new wxBoxSizer(wxVERTICAL);
     // This disclosure is factual, outside the comedic-response formatter.
     body->Add(factual_label(scroll,m_hooks,"Nothing is sent anywhere. No ticket exists outside this machine. No network request is made, no data is collected, and nobody is reading it."),0,wxEXPAND|wxBOTTOM,FromDIP(8));
-    m_search=search(scroll,body,m_hooks,"Search local support tickets",[this]{refresh();});m_list=new wxListBox(scroll,wxID_ANY,wxDefaultPosition,FromDIP(wxSize(350,180)),0,nullptr,wxLB_EXTENDED);m_list->SetName(text(m_hooks,"Local support tickets"));m_hooks.record_name(m_list,"Local support tickets");body->Add(m_list,0,wxEXPAND|wxBOTTOM,FromDIP(8));
-    const char* categories[]={"Forgotten answer","Missing authenticator","Local data reset"};std::vector<wxRadioButton*> category;for(unsigned i=0;i<3;++i){auto b=new wxRadioButton(scroll,wxID_ANY,text(m_hooks,categories[i]),wxDefaultPosition,wxDefaultSize,i==0?wxRB_GROUP:0);m_hooks.record_label(b,categories[i]);category.push_back(b);body->Add(b,0,wxEXPAND|wxBOTTOM,FromDIP(6));}category[0]->SetValue(true);
-    auto description=field(scroll,body,m_hooks,"Description (do not include credentials)");description->SetMaxLength(160);auto severity=new wxSpinCtrl(scroll,wxID_ANY,"1",wxDefaultPosition,wxDefaultSize,wxSP_ARROW_KEYS,1,5,1);severity->SetName(text(m_hooks,"Fictional severity"));m_hooks.record_name(severity,"Fictional severity");body->Add(severity,0,wxEXPAND|wxBOTTOM,FromDIP(8));
+    m_search=search(scroll,body,m_hooks,"Search local support tickets",[this]{refresh();});m_list=new ListBox(scroll,wxID_ANY,FromDIP(wxSize(350,180)),wxLB_MULTIPLE);m_list->SetMinSize(FromDIP(wxSize(-1,180)));m_list->SetName(text(m_hooks,"Local support tickets"));m_hooks.record_name(m_list,"Local support tickets");body->Add(m_list,0,wxEXPAND|wxBOTTOM,FromDIP(8));
+    const char* categories[]={"Forgotten answer","Missing authenticator","Local data reset"};std::vector<LabeledRadioButton*> category;for(unsigned i=0;i<3;++i){auto b=new LabeledRadioButton(scroll,text(m_hooks,categories[i]));m_hooks.record_label(b,categories[i]);m_category_group.Add(b);category.push_back(b);body->Add(b,0,wxEXPAND|wxBOTTOM,FromDIP(6));}m_category_group.SetSelection(0);
+    auto description=field(scroll,body,m_hooks,"Description (do not include credentials)");description->SetMaxLength(160);auto severity=new SpinInput(scroll,"1",wxEmptyString,wxDefaultPosition,wxDefaultSize,0,1,5,1);severity->SetName(text(m_hooks,"Fictional severity"));m_hooks.record_name(severity,"Fictional severity");severity->GetTextCtrl()->SetName(text(m_hooks,"Fictional severity"));m_hooks.record_name(severity->GetTextCtrl(),"Fictional severity");body->Add(severity,0,wxEXPAND|wxBOTTOM,FromDIP(8));
     action(scroll,body,m_hooks,"Create local ticket",[this,category,description,severity]{safely([&]{unsigned c=0;for(unsigned i=0;i<category.size();++i)if(category[i]->GetValue())c=i;m_store->create(static_cast<TicketCategory>(c),severity->GetValue(),utf8(description->GetValue()));description->ChangeValue({});refresh();});});
     action(scroll,body,m_hooks,"Advance selected tickets",[this]{safely([this]{wxArrayInt rows;m_list->GetSelections(rows);if(rows.empty())throw Failure(Error::InvalidInput);for(auto row:rows)m_store->advance(m_visible.at(row));refresh();m_status->SetLabel(text(m_hooks,"The local desk reviewed the manual. Resolution: open the application-data folder and delete it yourself to reset."));});});
     action(scroll,body,m_hooks,"Remove selected tickets",[this]{safely([this]{wxArrayInt rows;m_list->GetSelections(rows);if(rows.empty())throw Failure(Error::InvalidInput);std::vector<std::string> ids;SuperConfirmGate::Spec spec;spec.action=text(m_hooks,"Remove local tickets");spec.consequence=text(m_hooks,"Selected local ticket records will be removed. Application data will not be deleted.");for(auto row:rows){ids.push_back(m_visible.at(row));spec.affected.push_back(m_list->GetString(row));}wxWeakRef<SupportTicketsPanel> self(this);SuperConfirmGate::Show(m_list,spec,[self,ids]{if(self)self->safely([&]{for(const auto& id:ids)self->m_store->remove(id);self->refresh();});});});});

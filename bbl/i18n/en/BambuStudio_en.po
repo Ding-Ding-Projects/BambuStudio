@@ -28993,3 +28993,9 @@ msgstr ""
 #, possible-c-format, possible-boost-format
 msgid "Register this executable for the selected local profile?\n\n%s\n\nSHA256: %s\n\nRegistration does not launch it. A separate launch review is required."
 msgstr ""
+
+msgid "Uncheck"
+msgstr ""
+
+msgid "Check"
+msgstr ""

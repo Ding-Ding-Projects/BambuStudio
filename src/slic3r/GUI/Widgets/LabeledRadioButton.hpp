@@ -92,6 +92,11 @@ public:
 private:
     void onMemberSelected(wxCommandEvent &evt);
     void onMemberKey(wxKeyEvent &evt);
+    // Bound with this group as the handler, so the destructor can unbind it:
+    // a group that is a member of the window owning the rows is destroyed
+    // before wx destroys those rows, and a handler left behind would then
+    // run against the destroyed group.
+    void onMemberDestroyed(wxWindowDestroyEvent &evt);
     void moveTo(int index);
 
     std::vector<LabeledRadioButton *> m_buttons;

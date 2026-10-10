@@ -322,6 +322,18 @@ test('every radio is the kit LabeledRadioButton, which carries the radio role an
   assert.match(widget, /wxCommandEvent event\(wxEVT_RADIOBUTTON, GetId\(\)\);/, 'activation must emit wxEVT_RADIOBUTTON from the row');
   assert.match(widget, /case WXK_UP: case WXK_LEFT:\s+moveTo\(here - 1\)/, 'RadioGroup must move selection with the arrow keys');
   assert.match(widget, /new RadioBox\(this\)/, 'the row must draw the kit RadioBox glyph');
+  // A group that is a member of the window owning its rows dies before wx destroys
+  // the rows, so its destroy handler must be one the destructor can unbind.
+  assert.match(widget, /button->Bind\(wxEVT_DESTROY, &RadioGroup::onMemberDestroyed, this\);/, 'the group binds its destroy handler as a member');
+  assert.match(widget, /b->Unbind\(wxEVT_DESTROY, &RadioGroup::onMemberDestroyed, this\);/, 'and unbinds it when the group is destroyed');
+  assert.doesNotMatch(widget, /Bind\(wxEVT_DESTROY, \[this/, 'no destroy lambda may outlive the group');
+  // The converted radio sets keep one group each, owned by their window.
+  for (const [file, needle] of [
+    ['ScheduledSettings/Panel.cpp', 'm_source.Add(row);'],
+    ['LocalSecurity/SecurityPanels.cpp', 'm_policy_group.Add(b);'],
+    ['LocalSecurity/SecurityPanels.cpp', 'm_duration_group.Add(b);'],
+    ['LocalSecurity/SecurityPanels.cpp', 'm_category_group.Add(b);'],
+  ]) assert.ok(stripComments(await read(file)).includes(needle), `${file} must group its kit radio rows: ${needle}`);
   const cmake = await readFile(path.join(repoDir, 'src', 'slic3r', 'CMakeLists.txt'), 'utf8');
   assert.match(cmake, /^\s*GUI\/Widgets\/LabeledRadioButton\.cpp\s*$/m, 'LabeledRadioButton.cpp must be registered');
   const page = stripComments(await read('CalibrationWizardPage.hpp'));
@@ -353,6 +365,8 @@ test('every text field is a kit TextInput or TextArea; native editors exist only
     'the editor must stay MSW-colour-safe, as the kit TextCtrl is');
   const cmake = await readFile(path.join(repoDir, 'src', 'slic3r', 'CMakeLists.txt'), 'utf8');
   assert.match(cmake, /^\s*GUI\/Widgets\/TextArea\.cpp\s*$/m, 'TextArea.cpp must be registered');
+  // The scheduled-settings access token stays a password field on the kit.
+  assert.ok(stripComments(await read('ScheduledSettings', 'Panel.cpp')).includes('m_secret=text_field(p,ps,wxTE_PASSWORD,'), 'the access token must stay a password TextInput');
   for (const [file, needle] of [
     ['UpdateDialogs.cpp', 'new TextArea(this, from_u8(update.change_log)'],
     ['MsgDialog.cpp', 'm_script_text = new TextArea('],
@@ -391,13 +405,91 @@ test('the only list is the kit ListBox, drawn with the DropDown row anatomy', as
   assertOnlyAllowed(await sitesOf(/new wxListBox\(/g), new Set(), 'wxListBox');
   const list = stripComments(await read('Widgets', 'ListBox.cpp'));
   assert.match(list, /class ListBox : public wxVListBox|ListBox::ListBox\(wxWindow \*parent/, 'ListBox must be the owner-drawn wxVListBox');
-  assert.match(list, /MD3::Role::SecondaryContainer, m_scheme/, 'the selected pane must be SecondaryContainer in the active scheme');
+  // A disabled list keeps its selection visible on SurfaceContainerLow
+  // (ed3cbc35d, "Refine shared list row anatomy and focus feedback").
+  assert.match(list, /IsEnabled\(\) \? MD3::Role::SecondaryContainer : MD3::Role::SurfaceContainerLow, m_scheme\)/, 'the selected pane must be SecondaryContainer in the active scheme');
   assert.match(list, /MD3::Role::SurfaceContainerHigh/, 'the hover pane must be SurfaceContainerHigh');
   assert.match(list, /wxControl::Ellipsize\(m_rows\[n\], dc, wxELLIPSIZE_END/, 'long rows must ellipsize, with the full text in the tooltip');
   assert.match(list, /SetToolTip\(row >= 0/, 'the hovered row must expose its full text as the tooltip');
   const cmake = await readFile(path.join(repoDir, 'src', 'slic3r', 'CMakeLists.txt'), 'utf8');
   assert.match(cmake, /^\s*GUI\/Widgets\/ListBox\.cpp\s*$/m, 'ListBox.cpp must be registered');
   assert.ok(stripComments(await read('SmartHomeDialog.cpp')).includes('m_list = new ListBox(m_scroll'), 'SmartHome must use the kit ListBox');
+  // Lists that were wxLB_EXTENDED keep extended selection: wxVListBox gives the
+  // extended model for wxLB_MULTIPLE, and GetSelections() reports the rows.
+  assert.match(list, /^int ListBox::GetSelections\(wxArrayInt &selections\) const/m, 'ListBox must report its selected rows');
+  assert.match(list, /for \(int row = GetFirstSelected\(cookie\); row != wxNOT_FOUND; row = GetNextSelected\(cookie\)\)/, 'in either selection mode');
+  for (const [file, needle] of [
+    ['ScheduledSettings/Panel.cpp', 'm_rules=new ListBox(scroll,wxID_ANY,FromDIP(wxSize(300,110)),wxLB_MULTIPLE);'],
+    ['LocalSecurity/SecurityPanels.cpp', 'm_list=new ListBox(scroll,wxID_ANY,FromDIP(wxSize(350,160)),wxLB_MULTIPLE);'],
+    ['LocalSecurity/SecurityPanels.cpp', 'm_list=new ListBox(scroll,wxID_ANY,FromDIP(wxSize(350,180)),wxLB_MULTIPLE);'],
+    ['LocalSecurity/IdentityHistoryPanel.cpp', 'm_list=new ListBox(scroll,wxID_ANY,FromDIP(wxSize(420,200)),wxLB_MULTIPLE);'],
+  ]) assert.ok(stripComments(await read(file)).includes(needle), `${file} must keep extended selection on the kit list: ${needle}`);
+});
+
+// The body of the C++ function whose definition starts with signature, up to
+// the closing brace at the start of a line.
+function cppBody(source, signature) {
+  const at = source.indexOf(signature);
+  assert.ok(at >= 0, `${signature} must exist`);
+  const end = source.indexOf('\n}', at);
+  return source.slice(at, end < 0 ? undefined : end + 2);
+}
+
+test('the kit ListBox rings the current row, selected or not', async () => {
+  // In a multiple-selection list Ctrl+arrows move the current row without
+  // selecting it and Ctrl+Space toggles that row, so the row has to show
+  // where the keyboard is before it is selected. The stock list box drew its
+  // focus rectangle on the current row; so does the kit list.
+  const list = stripComments(await read('Widgets', 'ListBox.cpp'));
+  const background = cppBody(list, 'void ListBox::OnDrawBackground(');
+  assert.match(background, /const bool keyboard = IsCurrent\(n\) && HasFocus\(\) && IsEnabled\(\);/, 'the ring follows the current row');
+  assert.match(background, /if \(!selected && hover <= 0\.0 && !keyboard\) return;/, 'an unselected current row is still painted');
+  assert.match(background, /if \(keyboard\) \{[\s\S]*?DrawRoundedRectangle\(focus/, 'the ring is drawn for the current row');
+  assert.doesNotMatch(background, /selected && HasFocus\(\)/, 'a selected row that is not current keeps only its pane');
+  // The keyboard model is wxVListBox's: plain Space selects only the current
+  // row, Ctrl+Space toggles it. Nothing may document it the other way round.
+  const header = await read('Widgets', 'ListBox.hpp');
+  assert.doesNotMatch(header, /(?<!Ctrl\+)Space\s+toggles\s+the\s+current\s+row/, 'ListBox.hpp must not say plain Space toggles');
+  assert.match(header, /Ctrl\+Space toggles\s*\/\/\s*the current row and Space alone selects only the current row/);
+  for (const doc of ['kit-widgets-2026-09.md', 'kit-widgets-2026-09.yue_HK.md']) {
+    const text = await readFile(path.join(repoDir, 'docs', 'features', 'design-system', doc), 'utf8');
+    assert.doesNotMatch(text, /(?<!Ctrl\+)Space\s+toggles\s+the\s+current\s+row|that\s+row\s+shows\s+no\s+ring/, `${doc} must describe the current-row ring and Ctrl+Space`);
+  }
+  const english = await readFile(path.join(repoDir, 'docs', 'features', 'design-system', 'kit-widgets-2026-09.md'), 'utf8');
+  assert.match(english, /Ctrl\+Space\s+toggles\s+the\s+current\s+row/);
+  assert.match(english, /Space\s+alone\s+selects\s+only\s+the\s+current\s+row/);
+  const cantonese = await readFile(path.join(repoDir, 'docs', 'features', 'design-system', 'kit-widgets-2026-09.yue_HK.md'), 'utf8');
+  assert.doesNotMatch(cantonese, /(?<!Ctrl\+)Space 切換目前嗰列|揀咗先會有焦點環/, 'the Cantonese twin says the same');
+  assert.match(cantonese, /Ctrl\+Space 切換目前嗰列/);
+});
+
+test('the kit ListBox is a list with named rows to screen readers', async () => {
+  // An owner-drawn wxVListBox is one generic window to Windows: without a peer
+  // a screen reader found an unnamed client area with no rows, where the stock
+  // wxListBox it replaced exposed a named list of named, selectable items.
+  const list = stripComments(await read('Widgets', 'ListBox.cpp'));
+  assert.match(list, /class ListBox::Accessible final : public wxWindowAccessible/);
+  assert.match(cppBody(list, 'ListBox::ListBox(wxWindow *parent'), /SetAccessible\(new Accessible\(this\)\);/, 'every kit list carries the peer');
+  assert.match(list, /\*count = int\(m_list->GetCount\(\)\);/, 'one child per row');
+  assert.match(list, /\*role = child_id == wxACC_SELF \? wxROLE_SYSTEM_LIST : wxROLE_SYSTEM_LISTITEM;/);
+  assert.match(list, /\*name = m_list->GetName\(\);/, 'the list is named by SetName()');
+  assert.match(list, /\*name = m_list->GetString\(unsigned\(i\)\);/, 'a row is named by its text');
+  assert.match(list, /if \(m_list->IsSelected\(size_t\(i\)\)\) \*state \|= wxACC_STATE_SYSTEM_SELECTED;/);
+  assert.match(list, /if \(m_list->HasFocus\(\) && m_list->IsCurrent\(size_t\(i\)\)\) \*state \|= wxACC_STATE_SYSTEM_FOCUSED;/);
+  assert.match(list, /if \(m_list->HasMultipleSelection\(\)\) \*state \|= wxACC_STATE_SYSTEM_MULTISELECTABLE \| wxACC_STATE_SYSTEM_EXTSELECTABLE;/);
+  assert.match(list, /if \(m_list->m_checks && m_list->IsChecked\(unsigned\(i\)\)\) \*state \|= wxACC_STATE_SYSTEM_CHECKED;/);
+  // Moves and selection changes are announced as the stock list announced them.
+  const announce = cppBody(list, 'void ListBox::announce()');
+  assert.match(announce, /NotifyEvent\(wxACC_EVENT_OBJECT_SELECTION, this, wxOBJID_CLIENT,/);
+  assert.match(announce, /NotifyEvent\(wxACC_EVENT_OBJECT_SELECTIONWITHIN, this, wxOBJID_CLIENT, wxACC_SELF\)/);
+  assert.match(announce, /NotifyEvent\(wxACC_EVENT_OBJECT_FOCUS, this, wxOBJID_CLIENT, current \+ 1\)/);
+  assert.match(announce, /NotifyEvent\(wxACC_EVENT_OBJECT_STATECHANGE, this, wxOBJID_CLIENT, int\(row\) \+ 1\)/, 'a flipped check box');
+  const ctor = cppBody(list, 'ListBox::ListBox(wxWindow *parent');
+  for (const type of ['wxEVT_KEY_DOWN', 'wxEVT_LEFT_DOWN', 'wxEVT_LEFT_DCLICK'])
+    assert.match(ctor, new RegExp(`Bind\\(${type}, \\[this\\]\\([^)]*\\) \\{ CallAfter\\(\\[this\\] \\{ announce\\(\\); \\}\\); event\\.Skip\\(\\); \\}\\);`), `after ${type} has moved the row`);
+  assert.match(cppBody(list, 'void ListBox::SetSelection(int selection)'), /wxVListBox::SetSelection\(selection\);\s*announce\(\);/, 'after a programmatic selection');
+  const count = cppBody(list, 'void ListBox::SetItemCount(size_t count)');
+  assert.match(count, /wxVListBox::SetItemCount\(count\);[\s\S]*NotifyEvent\(wxACC_EVENT_OBJECT_REORDER, this, wxOBJID_CLIENT, wxACC_SELF\)[\s\S]*announce\(\);/, 'after Set(), Append() or Clear()');
 });
 
 test('every static bitmap is inventoried in the triage CSV, and none is an unaccounted click target', async () => {
@@ -617,6 +709,30 @@ test('LabeledCheckBox is a registered kit widget that re-emits wxEVT_CHECKBOX', 
   assert.ok(cpp.includes('new CheckBox(this)') && cpp.includes('new Label(this, label)'), 'the row is the kit CheckBox glyph plus a Label');
 });
 
+test('the LabeledCheckBox glyph is a named check box to screen readers', async () => {
+  // The glyph is the native BUTTON that takes the keyboard focus and it has no
+  // window text, so without a peer Windows announced an unnamed button where
+  // the stock wxCheckBox announced its label. wx creates no accessible object
+  // by default (wxWindow::CreateAccessible returns NULL), so SetName() alone
+  // never reaches a screen reader.
+  const cpp = stripComments(await read('Widgets', 'LabeledCheckBox.cpp'));
+  assert.match(cpp, /class LabeledCheckBox::Accessible final : public wxWindowAccessible/);
+  assert.match(cppBody(cpp, 'LabeledCheckBox::LabeledCheckBox('), /m_check->SetAccessible\(new Accessible\(m_check, this\)\);/, 'the focusable glyph carries the peer');
+  assert.match(cpp, /\*role = wxROLE_SYSTEM_CHECKBUTTON;/);
+  assert.match(cpp, /\*name = m_row->accessibleName\(\);/);
+  assert.match(cpp, /if \(glyph->GetValue\(\)\) \*state \|= wxACC_STATE_SYSTEM_CHECKED;/);
+  assert.match(cpp, /if \(glyph->HasFocus\(\)\) \*state \|= wxACC_STATE_SYSTEM_FOCUSED;/);
+  assert.match(cpp, /\*action_name = m_row->GetValue\(\) \? _L\("Uncheck"\) : _L\("Check"\);/);
+  assert.match(cpp, /m_row->toggleByUser\(\);/, 'the default action toggles like a click and emits wxEVT_CHECKBOX');
+  // The name follows the row: an explicit SetName() on the glyph or the row,
+  // else the label as the row shows it, else the tooltip. Read live, so a
+  // relabelled row (language switch) is never announced by its old text.
+  const name = cppBody(cpp, 'wxString LabeledCheckBox::accessibleName() const');
+  assert.match(name, /m_check->GetName\(\)[\s\S]*GetName\(\)[\s\S]*m_label->GetUnwrappedLabel\(\)[\s\S]*GetToolTipText\(\)/);
+  assert.match(cppBody(cpp, 'void LabeledCheckBox::SetLabel('), /NotifyEvent\(wxACC_EVENT_OBJECT_NAMECHANGE, m_check, wxOBJID_CLIENT, wxACC_SELF\)/);
+  assert.match(cppBody(cpp, 'void LabeledCheckBox::emitChange()'), /NotifyEvent\(wxACC_EVENT_OBJECT_STATECHANGE, m_check, wxOBJID_CLIENT, wxACC_SELF\)/);
+});
+
 test('every owned dialog is on the MD3 caption shell; only frames keep native chrome', async () => {
   const allowedNative = new Set([
     'ModelMall.cpp',              // DPIFrame window, not a dialog
@@ -670,14 +786,25 @@ test('the ParamsPanel header sizer carries one stretch spacer and a fixed title 
   // stretch spacers of 2, 1 and 12 reported 56 x 16 + fixed = 1271px, which
   // the sidebar scroller took as its virtual width and cut every row at the
   // sidebar edge.
+  //
+  // The header has since been split into a context row (m_mode_sizer: icon,
+  // title, actions) and a scope row (m_scope_sizer), both inside the vertical
+  // m_header_sizer the top panel owns (760222830, "Refresh Prepare inspector
+  // hierarchy and list presentation"). The fix has to hold for each row.
   const src = await read('ParamsPanel.cpp');
-  const at = src.indexOf('m_mode_sizer = new wxBoxSizer( wxHORIZONTAL );');
+  const at = src.indexOf('m_mode_sizer = new wxBoxSizer(wxHORIZONTAL);');
   assert.ok(at > 0, 'the header sizer is built in create_layout');
-  const block = src.slice(at, src.indexOf('m_top_panel->SetSizer(m_mode_sizer);', at));
+  const end = src.indexOf('m_top_panel->SetSizer(m_header_sizer);', at);
+  assert.ok(end > at, 'the top panel owns the two-row header sizer');
+  const block = src.slice(at, end);
   assert.match(block, /^\s*m_mode_sizer->Add\( m_title_label, 0, wxALIGN_CENTER \);/m, 'the title is a fixed item');
-  const stretch = block.match(/AddStretchSpacer\(/g) || [];
-  assert.equal(stretch.length, 1, 'exactly one stretch spacer in the header');
-  assert.match(block, /^\s*m_mode_sizer->AddStretchSpacer\(1\);/m, 'and it is proportion 1');
+  for (const row of ['m_mode_sizer', 'm_scope_sizer']) {
+    const stretch = block.match(new RegExp(`${row}->AddStretchSpacer\\(`, 'g')) || [];
+    assert.equal(stretch.length, 1, `exactly one stretch spacer in ${row}`);
+    assert.match(block, new RegExp(`^\\s*${row}->AddStretchSpacer\\(1\\);`, 'm'), `and it is proportion 1 in ${row}`);
+    const proportional = [...block.matchAll(new RegExp(`${row}->Add\\(\\s*[^,()]+,\\s*[1-9]\\d*\\s*,`, 'g'))].map((m) => m[0]);
+    assert.deepEqual(proportional, [], `${row} holds no proportional item beside its spacer`);
+  }
 });
 
 test('every process setting is shown: no Simple/Advanced filter or flip remains', async () => {
@@ -736,11 +863,23 @@ test('the Squirrel package version carries a strictly increasing build number', 
   // and sorts prerelease labels lexically); the one-click build resolves N.
   const squirrel = await readFile(path.join(repoDir, 'scripts', 'windows', 'Invoke-SquirrelPackage.ps1'), 'utf8');
   assert.match(squirrel, /^\s*\[int\] \$ReleaseNumber = 0/m, 'the packaging script accepts a release number');
-  assert.match(squirrel, /^\s*return \('\{0\}\.\{1\}\.\{2\}' -f \$base\[0\], \$base\[1\], \(\(\[int\] \$base\[2\]\) \* 1000 \+ \$ReleaseNumber\)\)/m, 'the release number is folded into the patch part');
+  // The patch part is computed as a [long] and range-checked before it forms the
+  // version (63863c84a, "Keep Squirrel package versions above published delivery").
+  assert.match(squirrel, /^\s*if \(\$ReleaseNumber -gt 0\) \{ \$patch = \$patch \* 1000L \+ \$ReleaseNumber \}/m, 'the release number is folded into the patch part');
+  assert.match(squirrel, /^\s*if \(\$patch -gt \[int\]::MaxValue\) \{ throw /m, 'and the folded patch part must fit a version component');
+  assert.match(squirrel, /^\s*\$candidate = \[version\] \('\{0\}\.\{1\}\.\{2\}' -f \$base\[0\], \$base\[1\], \$patch\)/m, 'which forms the package version');
+  // A candidate at or below the previously published package moves one past it,
+  // so the number never walks backwards.
+  assert.match(squirrel, /^\s*if \(\$candidate -le \$previous\) \{/m, 'a candidate that does not exceed the previous package is raised');
+  assert.match(squirrel, /^\s*\$candidate = \[version\] \('\{0\}\.\{1\}\.\{2\}' -f \$previous\.Major, \$previous\.Minor, \(\$previous\.Build \+ 1\)\)/m, 'to one past the previous package');
   assert.match(squirrel, /^\$normalizedVersion = ConvertTo-SquirrelVersion -Version \$ProductVersion -ReleaseNumber \$ReleaseNumber/m, 'the package version uses it');
   const build = await readFile(path.join(repoDir, 'scripts', 'windows', 'Invoke-OneClickBuild.ps1'), 'utf8');
   assert.match(build, /^function Resolve-ReleaseNumber \{/m, 'the one-click build resolves the release number');
-  assert.match(build, /-ReleaseNumber \$releaseNumber -IconPath/m, 'and passes it to the packaging script');
+  // The packaging script runs through Invoke-LoggedNativeCommand with an argument
+  // array (c523fe3a7, "Capture both native build diagnostic streams").
+  const packageCall = build.split('\n').find((line) => line.includes("'scripts\\windows\\Invoke-SquirrelPackage.ps1'"));
+  assert.ok(packageCall, 'the one-click build runs the packaging script');
+  assert.match(packageCall, /'-ReleaseNumber', \$releaseNumber,/, 'and passes it to the packaging script');
   const workflow = await readFile(path.join(repoDir, '.github', 'workflows', 'build_bambu.yml'), 'utf8');
   assert.match(workflow, /^\s*-ReleaseNumber \$releaseNumber `$/m, 'the hosted packaging step passes a build number too');
   // Hosted builds take N from the workflow's run number. "Highest md3-v tag plus

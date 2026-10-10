@@ -11,7 +11,6 @@
 #include <nlohmann/json.hpp>
 #include <fstream>
 #include <set>
-#include <wx/choice.h>
 #include <wx/textctrl.h>
 #include <wx/wfstream.h>
 #include <wx/zipstrm.h>
@@ -30,6 +29,7 @@
 #include "Plater.hpp"
 #include "Widgets/Button.hpp"
 #include "Widgets/CollapsibleFilterBar.hpp"
+#include "Widgets/ComboBox.hpp"
 #include "Widgets/Label.hpp"
 #include "Widgets/MaterialIcon.hpp"
 #include "Widgets/MD3Dialog.hpp"
@@ -364,21 +364,28 @@ void ProjectHistoryDialog::create_ui()
     filter_sizer->Add(m_search_field, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(8));
     auto *filters = new wxFlexGridSizer(2, 4, FromDIP(6), FromDIP(8));
     filters->AddGrowableCol(1); filters->AddGrowableCol(3);
-    m_category_filter = new wxChoice(filter_body, wxID_ANY);
+    // Kit read-only ComboBoxes and TextInput fields: the filters draw as the
+    // kit select and text fields, and keep their items, hints and events.
+    m_category_filter = new ComboBox(filter_body, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, wxCB_READONLY);
     for (const auto &name : {_L("All categories"), _L("Project"), _L("Preferences"), _L("Preset"), _L("Draft"), _L("Printer"), _L("Appearance"), _L("Scheduled settings")}) m_category_filter->Append(name);
     m_category_filter->SetSelection(0);
-    m_status_filter = new wxChoice(filter_body, wxID_ANY);
+    m_status_filter = new ComboBox(filter_body, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, wxCB_READONLY);
     for (const auto &name : {_L("All statuses"), _L("Active"), _L("Unknown"), _L("Resolved")}) m_status_filter->Append(name);
     m_status_filter->SetSelection(0);
-    m_device_filter = new wxTextCtrl(filter_body, wxID_ANY); m_device_filter->SetHint(_L("Device identifier"));
-    m_store_filter = new wxChoice(filter_body, wxID_ANY); m_store_filter->Append(_L("Current project")); m_store_filter->SetSelection(0);
-    m_from_filter = new wxTextCtrl(filter_body, wxID_ANY); m_from_filter->SetHint(_L("From YYYY-MM-DD"));
-    m_to_filter = new wxTextCtrl(filter_body, wxID_ANY); m_to_filter->SetHint(_L("Through YYYY-MM-DD"));
-    for (auto *control : std::vector<wxWindow*>{m_category_filter, m_status_filter, m_device_filter, m_store_filter, m_from_filter, m_to_filter}) {
+    auto *device_field = new TextInput(filter_body, wxEmptyString, wxEmptyString, wxEmptyString);
+    m_device_filter = device_field->GetTextCtrl(); m_device_filter->SetHint(_L("Device identifier")); m_device_filter->SetName(_L("Device identifier"));
+    m_store_filter = new ComboBox(filter_body, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, wxCB_READONLY);
+    m_store_filter->Append(_L("Current project")); m_store_filter->SetSelection(0);
+    auto *from_field = new TextInput(filter_body, wxEmptyString, wxEmptyString, wxEmptyString);
+    m_from_filter = from_field->GetTextCtrl(); m_from_filter->SetHint(_L("From YYYY-MM-DD")); m_from_filter->SetName(_L("From YYYY-MM-DD"));
+    auto *to_field = new TextInput(filter_body, wxEmptyString, wxEmptyString, wxEmptyString);
+    m_to_filter = to_field->GetTextCtrl(); m_to_filter->SetHint(_L("Through YYYY-MM-DD")); m_to_filter->SetName(_L("Through YYYY-MM-DD"));
+    for (auto *control : std::vector<wxWindow*>{m_category_filter, m_status_filter, device_field, m_store_filter, from_field, to_field})
         filters->Add(control, 1, wxEXPAND);
-        control->Bind(wxEVT_TEXT, [this](wxCommandEvent &) { populate_versions(); update_selection(); });
-        control->Bind(wxEVT_CHOICE, [this](wxCommandEvent &) { populate_versions(); update_selection(); });
-    }
+    for (ComboBox *choice : {m_category_filter, m_status_filter, m_store_filter})
+        choice->Bind(wxEVT_COMBOBOX, [this](wxCommandEvent &) { populate_versions(); update_selection(); });
+    for (wxTextCtrl *field : {m_device_filter, m_from_filter, m_to_filter})
+        field->Bind(wxEVT_TEXT, [this](wxCommandEvent &) { populate_versions(); update_selection(); });
     m_submit_button = new Button(filter_body, _L("Search")); m_submit_button->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { submit_search(); });
     filters->Add(m_submit_button, 0, wxEXPAND); filter_sizer->Add(filters, 0, wxEXPAND | wxALL, FromDIP(8));
     list_sizer->Add(m_filters->GetSectionSizer(), 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(8));
@@ -822,7 +829,7 @@ void ProjectHistoryDialog::update_active_filters()
     if (!query.IsEmpty())
         active.push_back(query);
     // Index 0 of both choices is the "All ..." entry that filters nothing.
-    for (wxChoice *choice : {m_category_filter, m_status_filter})
+    for (ComboBox *choice : {m_category_filter, m_status_filter})
         if (choice->GetSelection() > 0)
             active.push_back(choice->GetStringSelection());
     if (!m_device_filter->GetValue().IsEmpty())

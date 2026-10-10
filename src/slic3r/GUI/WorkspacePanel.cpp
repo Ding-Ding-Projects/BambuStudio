@@ -199,7 +199,8 @@ void WorkspacePanel::create_ui()
     };
     const auto heading = [this, padding](wxWindow *page, wxSizer *sizer, const wxString &label) {
         auto *title = new Label(page, ::Label::Head_16, label, LB_AUTO_WRAP);
-        title->SetMinSize(wxSize(1, -1));
+        // The sizer owns the width; the label wraps to whatever it is given.
+        title->SetMinSize(wxSize(0, -1));
         m_headings.push_back(title);
         m_spacing.emplace_back(sizer->Add(title, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, padding), false);
     };
@@ -207,7 +208,7 @@ void WorkspacePanel::create_ui()
     auto *overview_sizer = new wxBoxSizer(wxVERTICAL);
     heading(overview_page, overview_sizer, _L("Overview"));
     m_overview = new Label(overview_page, wxEmptyString, LB_AUTO_WRAP);
-    m_overview->SetMinSize(wxSize(1, -1));
+    m_overview->SetMinSize(wxSize(0, -1));
     m_spacing.emplace_back(overview_sizer->Add(m_overview, 0, wxEXPAND | wxALL, padding), false);
     auto *overview_actions = new wxWrapSizer(wxHORIZONTAL);
     auto *rename = new Button(overview_page, _L("Rename workspace"));

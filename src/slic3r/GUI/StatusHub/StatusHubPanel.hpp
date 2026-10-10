@@ -6,8 +6,8 @@
 class SearchField;
 class CollapsibleFilterBar;
 class Button;
-class wxStaticText;
-class wxScrolledWindow;
+class Label;
+class MD3ScrolledWindow;
 
 namespace Slic3r::GUI {
 class StatusHubPanel final : public wxPanel {
@@ -21,9 +21,9 @@ private:
     CollapsibleFilterBar* m_filters = nullptr;
     SearchField* m_search = nullptr;
     Button* m_retry = nullptr;
-    wxScrolledWindow* m_body = nullptr;
-    wxStaticText* m_empty = nullptr;
-    struct Row { wxStaticText* text; wxString full_text; };
+    MD3ScrolledWindow* m_body = nullptr;
+    Label* m_empty = nullptr;
+    struct Row { Label* text; wxString full_text; };
     std::vector<Row> m_rows;
 };
 }

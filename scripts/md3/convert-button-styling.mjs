@@ -94,6 +94,28 @@ function resolve(arg, src, before) {
   return src.slice(start, i + 1);
 }
 
+// A wxColour assembled channel by channel through the kit motion helper,
+//
+//     wxColour(MD3::Motion::color_channel(surface.Red(), container.Red(), t), ...)
+//
+// is an interpolation between two colours, not a palette literal. It is
+// role-derived when every colour whose channels it reads is a local initialised
+// from an MD3 role (the nearest `name = ...;` before the site, holding
+// MD3::Role:: and no legacy token or literal); such a blend is rewritten to the
+// helper call alone so the legacy-literal test below does not see a wxColour(.
+// Anything it cannot verify is left as it is, and so stays unclassified.
+function roleBlends(expr, src, before) {
+  if (!/wxColou?r\(\s*MD3::Motion::color_channel\(/.test(expr)) return expr;
+  const names = new Set([...expr.matchAll(/\b([A-Za-z_]\w*)\.(?:Red|Green|Blue)\(\)/g)].map((m) => m[1]));
+  for (const id of names) {
+    const re = new RegExp(`\\b${id}\\s*=\\s*([^;]+);`, 'g');
+    let init = null, m;
+    while ((m = re.exec(src)) && m.index < before) init = m[1];
+    if (!init || !/MD3::Role::/.test(init) || /ThemeColor::|wxColou?r\(|\*wx(WHITE|BLACK)|#[0-9a-fA-F]{6}/.test(init)) return expr;
+  }
+  return expr.replace(/wxColou?r\(\s*(MD3::Motion::color_channel\()/g, '$1');
+}
+
 // Light-mode values of the legacy ThemeColor tokens (Widgets/StateColor.hpp).
 const THEME = {
   BrandGreen: '#146c2e', BrandGreenHovered: '#1a7d38', BrandGreenPressed: '#0d5322', Warning: '#FF6F00',
@@ -205,7 +227,7 @@ for (const file of await walk(guiRoot)) {
       let k = j;
       while (depth > 0 && k + 1 < lines.length) { k++; arg += ' ' + lines[k].trim(); depth = parenDepth('(' + arg); }
       const before = lines.slice(0, j).reduce((n, l) => n + l.length + nl.length, 0);
-      setters.push({ kind: mm[3], arg, resolved: resolve(arg, src, before), from: j, to: k });
+      setters.push({ kind: mm[3], arg, resolved: roleBlends(resolve(arg, src, before), src, before), from: j, to: k });
       j = k + 1;
     }
     const variant = classify(setters, name, ctx);

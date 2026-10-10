@@ -44830,3 +44830,13 @@ msgstr "檢查執行檔登記"
 #. review-status: agent-drafted
 msgid "Register this executable for the selected local profile?\n\n%s\n\nSHA256: %s\n\nRegistration does not launch it. A separate launch review is required."
 msgstr "要唔要將呢個執行檔登記到所揀嘅本機設定檔？\n\n%s\n\nSHA256：%s\n\n登記唔會啟動佢，啟動前仲要另外檢查一次。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Check"
+msgstr "剔選"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Uncheck"
+msgstr "取消剔選"

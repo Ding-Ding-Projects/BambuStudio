@@ -415,12 +415,12 @@
     {
       "route": "design-system/kit-widgets-2026-09.md",
       "title": "Kit widgets added in the every-element sweep (2026-09-05)",
-      "sha256": "126c0d1b2d062453911ca741130513d49ac415f2d43069deee22ff85c770daef"
+      "sha256": "4fb4f6882d95bc91d01c87531da5609f89a8fea0c733f2dd908f25542965063c"
     },
     {
       "route": "design-system/kit-widgets-2026-09.yue_HK.md",
       "title": "喺每元素掃過中添加嘅工具組件（2026-09-05）",
-      "sha256": "cc8bb79bbd8c354e9922b58fd4213b423b9a38805fb1dfc21a45cb716ddf139a"
+      "sha256": "3c77ec4e8632f870003f51c3f4996f50ccfab0f70922dc60631c47b07ad7ef7d"
     },
     {
       "route": "design-system/layout-probe.md",
@@ -585,12 +585,12 @@
     {
       "route": "design-system/studio-atlas-listbox.md",
       "title": "Studio Atlas shared list rows",
-      "sha256": "6532d5c29153687cb7747d474201f3e32e5d820340e36a671f42c85d00116acb"
+      "sha256": "fc2438b93b6378677303f2cfcf50715b81c83b5d623f7675ed7f51d1b1cbc31e"
     },
     {
       "route": "design-system/studio-atlas-listbox.yue_HK.md",
       "title": "Studio Atlas 共用清單列",
-      "sha256": "2355c5adc2cafda995da0a2b207ca0900d8d6f91bf188e45cab2f278bb93727f"
+      "sha256": "bbea754aa1e94c2f694549d8c6359f5f93e160b96e87fe5bbe8bd1698fba9269"
     },
     {
       "route": "design-system/studio-atlas-selection-controls.md",
@@ -1975,7 +1975,7 @@
       "bytes": 1979
     }
   ],
-  "bundle_sha256": "118f3fff8bb4ab8807d24d45093f7d3788076c7989a03fbd6d1ba3941bd642f2",
+  "bundle_sha256": "38a9ff6154d2358e1ac59db0efc4c8fb7eb8c9c84a626514c07762ddc82a61c3",
   "unavailable_references": [
     {
       "source": "api/README.md",

@@ -8,11 +8,12 @@
 #include <wx/weakref.h>
 #include <functional>
 #include "../Widgets/SuperConfirmState.hpp"
+#include "../Widgets/LabeledRadioButton.hpp"
 
 class SearchField;
 class Label;
-class wxListBox;
 class wxTextCtrl;
+namespace Slic3r::GUI { class ListBox; }
 
 namespace Slic3r::GUI::LocalSecurityUI {
 struct Hooks {
@@ -56,7 +57,7 @@ private:
     std::shared_ptr<LocalSecurity::AuthenticatorStore> m_store;
     Hooks m_hooks;
     SearchField* m_search{};
-    wxListBox* m_list{};
+    ListBox* m_list{};
     Label* m_status{};
     Label* m_code{};
     Label* m_countdown{};
@@ -83,6 +84,9 @@ private:
     wxWeakRef<wxWindow> m_anchor;
     wxTextCtrl* m_answer{};
     Label* m_status{};
+    // Mutual exclusion and arrow-key navigation for the kit radio rows.
+    RadioGroup m_policy_group;
+    RadioGroup m_duration_group;
 };
 
 class SupportTicketsPanel final : public wxPanel {
@@ -96,8 +100,9 @@ private:
     std::filesystem::path m_folder;
     Hooks m_hooks;
     SearchField* m_search{};
-    wxListBox* m_list{};
+    ListBox* m_list{};
     Label* m_status{};
     std::vector<std::string> m_visible;
+    RadioGroup m_category_group;
 };
 }

@@ -22,10 +22,32 @@ A 2 px Primary focus ring is painted around the glyph. The glyph itself is not f
 `Rescale()` on DPI change; `SetLabel("")` hides the label for glyph-only rows.
 
 **Failure modes.** A row added to two groups is ignored by the second `Add()`. Destroying a member
-removes it from its group. Programmatic `SetValue()` never emits.
+removes it from its group. Programmatic `SetValue()` never emits. A group that is a member of the
+window owning its rows is destroyed before wx destroys those rows; its destructor unbinds every
+handler it added, the destroy handler included, so no row event reaches the destroyed group.
 
 **Sites.** FeedDirectionDialog, CalibrationWizardPresetPage (stage pair and per-slot selectors),
-SavePresetDialog.
+SavePresetDialog, the element lock wizard (unlock policy and duration), local support tickets
+(category), Scheduled settings (value source).
+
+## LabeledCheckBox accessibility (`src/slic3r/GUI/Widgets/LabeledCheckBox.{hpp,cpp}`)
+
+**Behaviour.** The stock `wxCheckBox` replacement: the kit `CheckBox` glyph followed by a `Label`.
+The glyph takes the keyboard focus and Space toggles it; a click on the glyph or on the label toggles
+it; every user toggle emits `wxEVT_CHECKBOX` from the row.
+
+**Accessibility.** The glyph is a native button with no text of its own, and wxWidgets creates no
+accessible object for a window unless one is set, so `SetName()` alone never reached a screen reader.
+The glyph therefore carries a `wxAccessible` peer: role `ROLE_SYSTEM_CHECKBUTTON`, states focusable /
+focused / checked / unavailable / invisible, and the default action "Check" or "Uncheck", which
+toggles and emits `wxEVT_CHECKBOX` like a click. The name is worked out each time it is asked for: a
+name a caller set on the glyph or on the row with `SetName()`, otherwise the row label as the row
+shows it (personal vocabulary applied, mnemonics removed), otherwise the tooltip. `SetLabel()` raises
+a name-change event and every toggle raises a state-change event.
+
+**Sites.** Every `LabeledCheckBox`, among them Scheduled settings (Enabled, Every day, the seven
+weekdays, the three source consent rows and the Boolean value editor), the identity history action
+filters and the element lock wizard disclosure.
 
 ## TextArea (`src/slic3r/GUI/Widgets/TextArea.{hpp,cpp}`)
 
@@ -48,7 +70,34 @@ field, rounded SurfaceContainerHigh hover pane, SecondaryContainer selected pane
 scheme, OnSurface text in the kit body face. Native keyboard model and `wxEVT_LISTBOX` are inherited.
 Long rows ellipsize at the end and the hovered row exposes its full text as the tooltip.
 
-**Sites.** Smart home entity list.
+**Extended selection.** Created with `wxLB_MULTIPLE`, the list replaces a `wxListBox` created with
+`wxLB_EXTENDED`: `wxVListBox` supplies the extended model (a click selects one row, Ctrl+click
+toggles a row, Shift+click and Shift+arrows extend the range, Ctrl+arrows move the current row
+without selecting it, Ctrl+Space toggles the current row, and Space alone selects only the current
+row) and `GetSelections()` returns the selected rows in ascending order in either mode, as
+`wxListBox::GetSelections()` did. `SetSelection(n)` adds row `n` to a multiple selection, and
+`Clear()` empties it.
+
+**Focus ring.** While the list has keyboard focus, a 2 px Primary ring is drawn inside the current
+row, the row the keyboard is on, whether or not that row is selected; other selected rows keep only
+their SecondaryContainer pane. In a single-selection list the current row is the selected row. To
+pick two rows that are not next to each other, move with Ctrl+arrows and press Ctrl+Space on each.
+
+**Accessibility.** The list carries a `wxAccessible` peer, as the stock list box exposed itself: role
+`ROLE_SYSTEM_LIST` with the name given by `SetName()`, one `ROLE_SYSTEM_LISTITEM` child per row,
+named by the row text, with the states selectable, selected, focused (the current row while the list
+has focus), checked (check-box rows), offscreen (scrolled out of view) and unavailable. A
+multiple-selection list is also multiselectable and extended-selectable. The peer reports row
+locations, hit tests, keyboard focus and the selection, and the list raises focus and selection
+events after a key or click moves the current row or changes the selection, and after
+`SetSelection()`.
+
+**Failure modes.** A multiple-selection list that was just cleared and refilled has no current row
+until a key or click sets one, so it shows no ring when it first takes focus.
+
+**Sites.** Smart home entity list; Scheduled settings rules (extended selection), available
+settings, setting choices and timezones; authenticator entries, local support tickets and identity
+history revisions (extended selection).
 
 ## Button::SetIconBitmap and ScalableBitmap(wxWindow*, wxBitmap)
 

@@ -33,7 +33,7 @@ private:
     unsigned m_offset=0;
     CollapsibleFilterBar* m_filters{};
     SearchField* m_search{};
-    wxListBox* m_list{};
+    ListBox* m_list{};
     wxTextCtrl* m_from{};
     wxTextCtrl* m_to{};
     Label* m_status{};

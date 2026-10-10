@@ -1,6 +1,6 @@
 ---
 translation-of: studio-atlas-listbox.md
-source-sha256: 6532d5c29153687cb7747d474201f3e32e5d820340e36a671f42c85d00116acb
+source-sha256: fc2438b93b6378677303f2cfcf50715b81c83b5d623f7675ed7f51d1b1cbc31e
 review-status: agent-drafted
 ---
 
@@ -29,11 +29,11 @@ review-status: agent-drafted
 
 圓角列面板水平縮入 4 DIP、垂直縮入 2 DIP，使用密度嘅 10 或 8 DIP 小圓角。文字保留原有 12 DIP 內距。核取圖示保留 20 DIP 尺寸同後方 8 DIP 間距，左方起點維持 16 DIP，原有點擊界線維持 36 DIP。每個尺寸只轉換一次像素。寬度分配限制喺列面板內；窄呼叫端冇文字空間時，結果可以係零寬度。空文字矩形唔會送入省略處理。圖示繪畫限制喺實際列矩形內。
 
-選取列配對 `SecondaryContainer` 同 `OnSecondaryContainer`，核取圖示亦一樣。停用嘅選取使用 `SurfaceContainerLow`，文字／圖示使用 `OnSurfaceVariant`。未選取靜止列保留控件背景。懸停使用 `SurfaceContainerHigh`；已選取懸停列加八百分比 `OnSecondaryContainer` 狀態層。已有焦點嘅選取列，喺圓角面板內加 2 DIP `Primary` 焦點環。取得或失去焦點只更新繪畫，唔改選取。
+選取列配對 `SecondaryContainer` 同 `OnSecondaryContainer`，核取圖示亦一樣。停用嘅選取使用 `SurfaceContainerLow`，文字／圖示使用 `OnSurfaceVariant`。未選取靜止列保留控件背景。懸停使用 `SurfaceContainerHigh`；已選取懸停列加八百分比 `OnSecondaryContainer` 狀態層。清單有焦點嘅時候，目前嗰列（即係鍵盤所在嗰列）會喺圓角面板內加 2 DIP `Primary` 焦點環，唔理嗰列有冇揀到；單選清單入面，目前嗰列就係已選取嗰列。取得或失去焦點只更新繪畫，唔改選取。
 
 懸停狀態即時更新，繪畫透過共用 100 ms `short2` 時長轉換。動畫綁定擁有清單，銷毀、替換列、清空或重新縮放時停止。減少動態效果透過原有共用路徑即時繪畫終點狀態。動畫回呼只更新有效列，唔會選取、核取、啟動或派發呼叫端指令。
 
-長文字保留原有尾端省略號同完整工具提示。冇新增標籤、翻譯鍵、回呼引擎或資料操作。原有原生方向鍵／Home／End／Page 導航、核對清單 Space 處理、圖示點擊、選取同雙擊事件，以及自訂捲軸擁有權保持不變。本單元冇建立新嘅純鍵盤完整標籤顯示方式，亦冇取代清單原生無障礙實作。
+長文字保留原有尾端省略號同完整工具提示。冇新增標籤、翻譯鍵、回呼引擎或資料操作。原有原生方向鍵／Home／End／Page 導航、核對清單 Space 處理、圖示點擊、選取同雙擊事件，以及自訂捲軸擁有權保持不變。本單元冇建立新嘅純鍵盤完整標籤顯示方式。之後嘅一次改動為清單加咗無障礙對等物，將佢顯示成一個有名嘅列組成嘅清單；詳情見 [工具組件](kit-widgets-2026-09.md) 嘅 ListBox 一節。
 
 ## 針對性驗證
 
@@ -41,7 +41,7 @@ review-status: agent-drafted
 node tests/native_shared_controls/atlas_listbox_anatomy.test.mjs --extract "$env:TEMP/BambuStudio-atlas-listbox"
 ```
 
-九項原始碼檢查涵蓋呼叫端可到達性、字型量度、密度同 DPI 生命週期、核取尺寸保留、選取／焦點狀態配對、有界限繪畫、綁定擁有者嘅減少動態效果回饋，以及對照 `50715f4355e8b845042bd4809bac2da2ce5c40f4` 嘅 17 個基準行為函式內容。替換列同清空函式只多咗重設懸停視覺狀態。負面原始碼檢查會拒絕固定高度文字量度同已改變嘅核取內距常數。
+九項原始碼檢查涵蓋呼叫端可到達性、字型量度、密度同 DPI 生命週期、核取尺寸保留、目前嗰列嘅焦點環同選取狀態配對、有界限繪畫、綁定擁有者嘅減少動態效果回饋，以及對照 `50715f4355e8b845042bd4809bac2da2ce5c40f4` 嘅 17 個基準行為函式內容。替換列同清空函式只多咗重設懸停視覺狀態。負面原始碼檢查會拒絕固定高度文字量度同已改變嘅核取內距常數。
 
 獨立 C++ 測試喺已初始化 x64 MSVC 命令提示字元，編譯直接擷取嘅正式幾何輔助函式：
 
