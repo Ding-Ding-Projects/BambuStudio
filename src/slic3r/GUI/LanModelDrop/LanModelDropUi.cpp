@@ -1,6 +1,7 @@
 #include "LanModelDropUi.hpp"
 #include "LanModelDropStation.hpp"
 
+#include "../BilingualDecorator.hpp"
 #include "../GUI_App.hpp"
 #include "../I18N.hpp"
 #include "../MainFrame.hpp"
@@ -47,15 +48,6 @@ Label *body_label(wxWindow *parent, const wxString &text, MD3::Role colour = MD3
     label->SetForegroundColour(role(colour));
     label->Wrap(parent->FromDIP(kWrap));
     return label;
-}
-
-// Returns true when the text changed.
-bool set_wrapped(Label *label, const wxString &text)
-{
-    if (label == nullptr || label->GetUnwrappedLabel() == text) return false;
-    label->SetLabel(text);
-    label->Wrap(label->GetParent()->FromDIP(kWrap));
-    return true;
 }
 
 bool show(wxWindow *window, bool shown)
@@ -168,6 +160,26 @@ public:
 } // namespace
 
 // ---------------------------------------------------------------------------------------------
+// LiveText
+// ---------------------------------------------------------------------------------------------
+
+// Read once, at creation, before the decorator has seen the label.
+LiveText::LiveText(Label *label) : m_label(label)
+{
+    if (m_label != nullptr) m_english = m_label->GetUnwrappedLabel();
+}
+
+bool LiveText::set(const wxString &english)
+{
+    if (m_label == nullptr || english == m_english) return false;
+    m_english = english;
+    m_label->SetLabel(english);
+    m_label->Wrap(m_label->GetParent()->FromDIP(kWrap));
+    I18N::refresh_bilingual_decoration(m_label);
+    return true;
+}
+
+// ---------------------------------------------------------------------------------------------
 // QrView
 // ---------------------------------------------------------------------------------------------
 
@@ -264,8 +276,8 @@ InvitePanel::InvitePanel(wxWindow *parent, const Options &options) : wxPanel(par
             apply_settings();
         });
     }
-    m_pending_note = body_label(this, wxEmptyString, MD3::Role::OnSurfaceVariant);
-    outer->Add(m_pending_note, 0, wxBOTTOM, gap);
+    m_pending_note = LiveText(body_label(this, wxEmptyString, MD3::Role::OnSurfaceVariant));
+    outer->Add(m_pending_note.get(), 0, wxBOTTOM, gap);
 
     // Link, actions and the QR code of exactly that link.
     m_link_area = new wxPanel(this, wxID_ANY);
@@ -293,8 +305,8 @@ InvitePanel::InvitePanel(wxWindow *parent, const Options &options) : wxPanel(par
     actions->Add(m_new_link, 0, wxRIGHT, gap);
     actions->Add(m_larger, 0);
     column->Add(actions, 0, wxBOTTOM, gap);
-    m_fixed_note = body_label(m_link_area, wxEmptyString, MD3::Role::OnSurfaceVariant, ::Label::Body_12);
-    column->Add(m_fixed_note, 0, wxBOTTOM, FromDIP(4));
+    m_fixed_note = LiveText(body_label(m_link_area, wxEmptyString, MD3::Role::OnSurfaceVariant, ::Label::Body_12));
+    column->Add(m_fixed_note.get(), 0, wxBOTTOM, FromDIP(4));
     auto *lan_row = new wxBoxSizer(wxHORIZONTAL);
     m_lan_label = body_label(m_link_area, _L("Address of this computer"), MD3::Role::OnSurface, ::Label::Body_12);
     m_lan_choice = new ComboBox(m_link_area, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(180), -1), 0, nullptr,
@@ -303,22 +315,22 @@ InvitePanel::InvitePanel(wxWindow *parent, const Options &options) : wxPanel(par
     lan_row->Add(m_lan_label, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, gap);
     lan_row->Add(m_lan_choice, 0, wxALIGN_CENTER_VERTICAL);
     column->Add(lan_row, 0, wxBOTTOM, FromDIP(4));
-    m_manual = body_label(m_link_area, wxEmptyString, MD3::Role::OnSurface, ::Label::Body_12);
-    column->Add(m_manual, 0, wxBOTTOM, FromDIP(4));
-    m_source_note = body_label(m_link_area, wxEmptyString, MD3::Role::OnSurfaceVariant, ::Label::Body_12);
-    column->Add(m_source_note, 0);
+    m_manual = LiveText(body_label(m_link_area, wxEmptyString, MD3::Role::OnSurface, ::Label::Body_12));
+    column->Add(m_manual.get(), 0, wxBOTTOM, FromDIP(4));
+    m_source_note = LiveText(body_label(m_link_area, wxEmptyString, MD3::Role::OnSurfaceVariant, ::Label::Body_12));
+    column->Add(m_source_note.get(), 0);
     link_row->Add(column, 1, wxEXPAND);
     m_link_area->SetSizer(link_row);
     outer->Add(m_link_area, 0, wxEXPAND | wxBOTTOM, gap);
 
     // Polite announcements (copied, renewed) for screen readers and for everyone else.
-    m_live = body_label(this, wxEmptyString, MD3::Role::Primary, ::Label::Body_12);
-    outer->Add(m_live, 0, wxBOTTOM, FromDIP(4));
+    m_live = LiveText(body_label(this, wxEmptyString, MD3::Role::Primary, ::Label::Body_12));
+    outer->Add(m_live.get(), 0, wxBOTTOM, FromDIP(4));
 
     auto *waiting_row = new wxBoxSizer(wxHORIZONTAL);
-    m_waiting_label = body_label(this, wxEmptyString, MD3::Role::OnSurface);
+    m_waiting_label = LiveText(body_label(this, wxEmptyString, MD3::Role::OnSurface));
     m_show_waiting  = kit_button(this, _L("Show them"), Button::Variant::Text);
-    waiting_row->Add(m_waiting_label, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, gap);
+    waiting_row->Add(m_waiting_label.get(), 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, gap);
     waiting_row->Add(m_show_waiting, 0, wxALIGN_CENTER_VERTICAL);
     outer->Add(waiting_row, 0);
 
@@ -348,13 +360,13 @@ InvitePanel::~InvitePanel() { remove_listener(m_listener); }
 
 void InvitePanel::announce(const wxString &text)
 {
-    m_live->SetLabel(text);
+    const bool changed = m_live.set(text);
     m_live->SetName(text);
-    m_live->Wrap(FromDIP(kWrap));
+    // Announced again even when the words are the same (a second Copy link).
 #if wxUSE_ACCESSIBILITY
-    wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_NAMECHANGE, m_live, wxOBJID_CLIENT, wxACC_SELF);
+    wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_NAMECHANGE, m_live.get(), wxOBJID_CLIENT, wxACC_SELF);
 #endif
-    relayout(this, m_options.offer_turn_on);
+    if (changed) relayout(this, m_options.offer_turn_on);
 }
 
 void InvitePanel::copy_link()
@@ -396,8 +408,8 @@ void InvitePanel::refresh()
         else
             pending = format_wxstr(_L("Waiting for the drop site to send its code. %1%"), status_text(v));
     }
-    changed |= set_wrapped(m_pending_note, pending);
-    changed |= show(m_pending_note, !pending.empty());
+    changed |= m_pending_note.set(pending);
+    changed |= show(m_pending_note.get(), !pending.empty());
 
     changed |= show(m_link_area, has_link);
     const wxString link = has_link ? wxString::FromUTF8(v.link) : wxString();
@@ -415,8 +427,8 @@ void InvitePanel::refresh()
         fixed = _L("The drop site's code is fixed by DROP_CODE, so New link cannot change it. Change DROP_CODE on the drop site to stop older links.");
     else if (v.code_failed)
         fixed = _L("The drop site did not make a new code. Older links still work.");
-    changed |= set_wrapped(m_fixed_note, fixed);
-    changed |= show(m_fixed_note, !fixed.empty());
+    changed |= m_fixed_note.set(fixed);
+    changed |= show(m_fixed_note.get(), !fixed.empty());
 
     const auto &choices = v.invite.choices;
     const bool  several = v.invite.source == InviteSource::LanAddress && choices.size() > 1;
@@ -436,17 +448,16 @@ void InvitePanel::refresh()
         if (m_lan_choice->GetSelection() != index) m_lan_choice->SetSelection(index);
     }
     // For someone who types rather than scans: the address and the code separately.
-    changed |= set_wrapped(m_manual, has_link ? format_wxstr(_L("Or open %1% and type the drop code %2%."), v.invite.base, v.drop_code)
-                                              : wxString());
-    changed |= set_wrapped(m_source_note, has_link ? invite_source_text(v) : wxString());
+    changed |= m_manual.set(has_link ? format_wxstr(_L("Or open %1% and type the drop code %2%."), v.invite.base, v.drop_code) : wxString());
+    changed |= m_source_note.set(has_link ? invite_source_text(v) : wxString());
 
     if (m_waiting_for_code && !v.busy_code) {
         m_waiting_for_code = false;
         if (!v.drop_code.empty() && v.drop_code != m_code_before) announce(_L("New link ready. Older links no longer work."));
     }
 
-    changed |= set_wrapped(m_waiting_label, v.waiting > 0 ? format_wxstr(_L("%1% received files waiting for Open or Discard."), v.waiting) : wxString());
-    changed |= show(m_waiting_label, v.waiting > 0);
+    changed |= m_waiting_label.set(v.waiting > 0 ? format_wxstr(_L("%1% received files waiting for Open or Discard."), v.waiting) : wxString());
+    changed |= show(m_waiting_label.get(), v.waiting > 0);
     changed |= show(m_show_waiting, v.waiting > 0);
 
     if (changed) {
@@ -476,11 +487,11 @@ public:
     {
         auto *row = new wxBoxSizer(wxHORIZONTAL);
         auto *texts = new wxBoxSizer(wxVERTICAL);
-        m_status = body_label(this, wxEmptyString);
+        m_status = LiveText(body_label(this, wxEmptyString));
         m_status->SetName(_L("LAN model drop status"));
-        m_test_result = body_label(this, wxEmptyString, MD3::Role::OnSurfaceVariant, ::Label::Body_12);
-        texts->Add(m_status, 0);
-        texts->Add(m_test_result, 0, wxTOP, FromDIP(2));
+        m_test_result = LiveText(body_label(this, wxEmptyString, MD3::Role::OnSurfaceVariant, ::Label::Body_12));
+        texts->Add(m_status.get(), 0);
+        texts->Add(m_test_result.get(), 0, wxTOP, FromDIP(2));
         m_test = kit_button(this, _L("Test connection"), Button::Variant::Outlined);
         row->AddSpacer(FromDIP(kRowLeft));
         row->Add(texts, 1, wxALIGN_CENTER_VERTICAL);
@@ -494,24 +505,24 @@ protected:
     void update_view() override
     {
         const View &v       = view();
-        bool        changed = set_wrapped(m_status, status_text(v));
+        bool        changed = m_status.set(status_text(v));
         wxString    result;
         if (v.busy_test) result = _L("Testing the connection...");
         else if (v.tested) result = format_wxstr(_L("Test result: %1%"), state_text(v.test_state));
-        const bool result_changed = set_wrapped(m_test_result, result);
+        const bool result_changed = m_test_result.set(result);
         changed |= result_changed;
-        changed |= show(m_test_result, !result.empty());
+        changed |= show(m_test_result.get(), !result.empty());
         m_test->Enable(!v.busy_test);
 #if wxUSE_ACCESSIBILITY
-        if (result_changed) wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_NAMECHANGE, m_test_result, wxOBJID_CLIENT, wxACC_SELF);
+        if (result_changed) wxAccessible::NotifyEvent(wxACC_EVENT_OBJECT_NAMECHANGE, m_test_result.get(), wxOBJID_CLIENT, wxACC_SELF);
 #endif
         if (changed) relayout(this, false);
     }
 
 private:
-    Label  *m_status      = nullptr;
-    Label  *m_test_result = nullptr;
-    Button *m_test        = nullptr;
+    LiveText m_status;
+    LiveText m_test_result;
+    Button  *m_test = nullptr;
 };
 
 class AddressRow : public ViewRow
@@ -533,9 +544,8 @@ public:
         row->Add(title, 1, wxALIGN_CENTER_VERTICAL);
         row->Add(m_input, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(kRowRight));
         outer->Add(row, 0, wxEXPAND);
-        m_hint = body_label(this, _L("The address Bambu Studio uses to reach the drop site, for example http://localhost:8833 when it runs on this computer."),
-                            MD3::Role::OnSurfaceVariant, ::Label::Body_12);
-        outer->Add(m_hint, 0, wxLEFT | wxTOP, FromDIP(kRowLeft));
+        m_hint = LiveText(body_label(this, address_hint(), MD3::Role::OnSurfaceVariant, ::Label::Body_12));
+        outer->Add(m_hint.get(), 0, wxLEFT | wxTOP, FromDIP(kRowLeft));
         SetSizer(outer);
         m_input->GetTextCtrl()->Bind(wxEVT_TEXT_ENTER, [this](wxCommandEvent &e) {
             save();
@@ -558,13 +568,14 @@ private:
         const std::string text   = m_input->GetTextCtrl()->GetValue().ToUTF8().data();
         const auto        parsed = parse_base_address(text);
         if (!parsed) {
-            set_wrapped(m_hint, _L("This address is not valid. Use http:// or https://, a host name or IPv4 address, and an optional port, "
-                                   "for example http://localhost:8833."));
-            m_hint->SetForegroundColour(role(MD3::Role::Error));
-            relayout(this, false);
+            if (m_hint.set(_L("This address is not valid. Use http:// or https://, a host name or IPv4 address, and an optional port, "
+                              "for example http://localhost:8833."))) {
+                m_hint->SetForegroundColour(role(MD3::Role::Error));
+                relayout(this, false);
+            }
             return;
         }
-        if (set_wrapped(m_hint, _L("The address Bambu Studio uses to reach the drop site, for example http://localhost:8833 when it runs on this computer."))) {
+        if (m_hint.set(address_hint())) {
             m_hint->SetForegroundColour(role(MD3::Role::OnSurfaceVariant));
             relayout(this, false);
         }
@@ -576,8 +587,13 @@ private:
         apply_settings();
     }
 
+    static wxString address_hint()
+    {
+        return _L("The address Bambu Studio uses to reach the drop site, for example http://localhost:8833 when it runs on this computer.");
+    }
+
     TextInput *m_input = nullptr;
-    Label     *m_hint  = nullptr;
+    LiveText   m_hint;
 };
 
 class KeyRow : public ViewRow
@@ -618,8 +634,8 @@ public:
         row->Add(m_save, 0, wxALIGN_CENTER_VERTICAL | wxLEFT | wxRIGHT, FromDIP(kRowRight) / 2);
         row->AddSpacer(FromDIP(kRowRight) / 2);
         outer->Add(row, 0, wxEXPAND);
-        m_note = body_label(this, wxEmptyString, MD3::Role::OnSurfaceVariant, ::Label::Body_12);
-        outer->Add(m_note, 0, wxLEFT | wxTOP, FromDIP(kRowLeft));
+        m_note = LiveText(body_label(this, wxEmptyString, MD3::Role::OnSurfaceVariant, ::Label::Body_12));
+        outer->Add(m_note.get(), 0, wxLEFT | wxTOP, FromDIP(kRowLeft));
         // The command is the drop site's own; it is not translated.
         outer->Add(body_label(this,
                               format_wxstr(_L("Read the key on the computer that runs the drop site with: %1%"),
@@ -651,7 +667,7 @@ protected:
         else
             note = _L("No station key is saved.");
         if (!m_message.empty()) note = m_message + "\n" + note;
-        if (set_wrapped(m_note, note)) relayout(this, false);
+        if (m_note.set(note)) relayout(this, false);
     }
 
 private:
@@ -704,7 +720,7 @@ private:
     TextInput *m_plain   = nullptr;
     Button    *m_toggle  = nullptr;
     Button    *m_save    = nullptr;
-    Label     *m_note    = nullptr;
+    LiveText   m_note;
     bool       m_showing = false;
     wxString   m_message;
 };
@@ -716,12 +732,12 @@ public:
     {
         auto *row   = new wxBoxSizer(wxHORIZONTAL);
         auto *title = body_label(this, _L("Drop code"));
-        m_code      = body_label(this, wxEmptyString, MD3::Role::OnSurface, ::Label::Mono_14);
+        m_code      = LiveText(body_label(this, wxEmptyString, MD3::Role::OnSurface, ::Label::Mono_14));
         m_code->SetName(_L("Drop code"));
         m_new = kit_button(this, _L("New code"), Button::Variant::Outlined);
         row->AddSpacer(FromDIP(kRowLeft));
         row->Add(title, 1, wxALIGN_CENTER_VERTICAL);
-        row->Add(m_code, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(12));
+        row->Add(m_code.get(), 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(12));
         row->Add(m_new, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(kRowRight));
         SetSizer(row);
         m_new->Bind(wxEVT_BUTTON, [](wxCommandEvent &) { request_new_code(); });
@@ -732,15 +748,21 @@ protected:
     void update_view() override
     {
         const View &v = view();
-        const bool  changed = set_wrapped(m_code, v.drop_code.empty() ? _L("Not known yet") : wxString::FromUTF8(v.drop_code));
+        const bool  changed = m_code.set(v.drop_code.empty() ? _L("Not known yet") : wxString::FromUTF8(v.drop_code));
         m_new->Enable(v.enabled && !v.drop_code.empty() && !v.fixed_code && !v.busy_code);
-        m_new->SetToolTip(v.fixed_code ? _L("The code is fixed by DROP_CODE on the drop site.") : _L("Make a new code; links with the old one stop working."));
+        // The decorator adds the Cantonese to the tooltip too: set only when the English changes.
+        const wxString tip = v.fixed_code ? _L("The code is fixed by DROP_CODE on the drop site.") : _L("Make a new code; links with the old one stop working.");
+        if (tip != m_tip) {
+            m_tip = tip;
+            m_new->SetToolTip(tip);
+        }
         if (changed) relayout(this, false);
     }
 
 private:
-    Label  *m_code = nullptr;
-    Button *m_new  = nullptr;
+    LiveText m_code;
+    Button  *m_new = nullptr;
+    wxString m_tip;
 };
 
 } // namespace

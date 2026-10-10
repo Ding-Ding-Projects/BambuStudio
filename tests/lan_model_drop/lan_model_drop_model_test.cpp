@@ -450,17 +450,56 @@ static void presentation_and_tracking()
     CHECK(!tracker.retry_later(kId1));
     CHECK(tracker.taken(kId1));
     // Deletes stay pending until confirmed, and an item waiting for removal is never fetched again.
-    tracker.queue_delete(kId2);
+    const std::string site_a = "http://localhost:8833";
+    const std::string site_b = "http://192.0.2.20:8833";
+    tracker.queue_delete(kId2, site_a);
     CHECK(tracker.fresh({a, b}).empty());
-    CHECK(tracker.pending_deletes() == std::vector<std::string>{kId2});
+    CHECK(tracker.pending_deletes(site_a) == std::vector<std::string>{kId2});
     tracker.prune({});
-    CHECK(tracker.pending_deletes().size() == 1 && tracker.taken(kId2) && !tracker.taken(kId1));
-    tracker.delete_confirmed(kId2);
-    CHECK(tracker.pending_deletes().empty());
+    CHECK(tracker.pending_deletes(site_a).size() == 1 && tracker.taken(kId2) && !tracker.taken(kId1));
+    // A delete belongs to the site that listed the item: another site is never asked, and its
+    // answer never settles it (the original site would otherwise keep the file and list it again).
+    CHECK(tracker.pending_deletes(site_b).empty());
+    tracker.delete_confirmed(kId2, site_b);
+    CHECK(tracker.delete_pending(kId2) && tracker.pending_deletes(site_a) == std::vector<std::string>{kId2});
+    // The same item listed by a second address of the same container is owed there too.
+    tracker.queue_delete(kId2, site_b);
+    tracker.queue_delete(kId2, site_b);
+    CHECK(tracker.pending_deletes(site_b) == std::vector<std::string>{kId2});
+    CHECK((tracker.all_pending_deletes() == std::vector<PendingDelete>{{kId2, site_a}, {kId2, site_b}}));
+    tracker.delete_confirmed(kId2, site_a);
+    CHECK(tracker.pending_deletes(site_a).empty() && tracker.delete_pending(kId2));
+    tracker.delete_confirmed(kId2, site_b);
+    CHECK(!tracker.delete_pending(kId2) && tracker.all_pending_deletes().empty());
     tracker.prune({});
     CHECK(!tracker.taken(kId2));
-    tracker.queue_delete("not-an-id");
-    CHECK(tracker.pending_deletes().empty());
+    tracker.queue_delete("not-an-id", site_a);
+    tracker.queue_delete(kId1, "http://localhost:8833/");     // not a normalized base
+    tracker.queue_delete(kId1, "");
+    CHECK(tracker.all_pending_deletes().empty());
+
+    // Pending deletes survive a restart as "<id> <base>" lines.
+    const std::vector<PendingDelete> pending = {{kId1, site_a}, {kId2, site_b}};
+    const std::string saved = format_pending_deletes(pending);
+    CHECK(saved == kId1 + " " + site_a + "\n" + kId2 + " " + site_b + "\n");
+    CHECK(parse_pending_deletes(saved) == pending);
+    CHECK(parse_pending_deletes("").empty());
+    // Bad lines are skipped, repeats once, CRLF accepted.
+    const std::string messy = kId1 + " " + site_a + "\r\n" + "garbage\n" + kId1 + " " + site_a + "\n" + kId2 + "  " + site_b + "\n" +
+                              "../../x " + site_a + "\n" + kId2 + " http://user@host\n" + kId2 + " " + site_b;
+    CHECK((parse_pending_deletes(messy) == std::vector<PendingDelete>{{kId1, site_a}, {kId2, site_b}}));
+    // At most kMaxPendingDeletes entries, the newest kept.
+    std::string many;
+    InboxTracker bounded;
+    for (std::size_t i = 0; i <= kMaxPendingDeletes; ++i) {
+        std::string id(32, '0');
+        for (std::size_t n = i, at = 31; n > 0; n /= 16, --at) id[at] = "0123456789abcdef"[n % 16];
+        many += id + " " + site_a + "\n";
+        bounded.queue_delete(id, site_a);
+    }
+    const auto kept = parse_pending_deletes(many);
+    CHECK(kept.size() == kMaxPendingDeletes && kept.front().id == std::string(31, '0') + "1");
+    CHECK(bounded.all_pending_deletes().size() == kMaxPendingDeletes && !bounded.delete_pending(std::string(32, '0')));
 }
 
 int main()

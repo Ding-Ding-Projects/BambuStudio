@@ -250,28 +250,52 @@ std::string distinct_text(const std::string &text, const std::vector<std::string
 // Which listed items still need work
 // ---------------------------------------------------------------------------------------------
 
+// A DELETE the station still owes a drop site: the item and the base address (BaseAddress::base) of
+// the site that listed it.
+struct PendingDelete
+{
+    std::string id;
+    std::string base;
+    bool operator==(const PendingDelete &other) const { return id == other.id && base == other.base; }
+};
+constexpr std::size_t kMaxPendingDeletes = 1000;
+// One "<id> <base>" line per entry, in the given order.
+std::string format_pending_deletes(const std::vector<PendingDelete> &pending);
+// The entries of format_pending_deletes text. A line that is not exactly a 32-digit lowercase
+// hexadecimal id, one space and a base address as parse_base_address writes it is skipped, and so
+// is a repeat; when there are more than kMaxPendingDeletes, the last ones are kept.
+std::vector<PendingDelete> parse_pending_deletes(std::string_view text);
+
 class InboxTracker
 {
 public:
-    // Items of a fresh listing that were never taken, in listing order. Taking them is separate so a
-    // stopped worker never marks an item it did not start.
+    // Items of a fresh listing that were never taken and have no pending delete, in listing order.
+    // Taking them is separate so a stopped worker never marks an item it did not start.
     std::vector<InboxItem> fresh(const std::vector<InboxItem> &listed) const;
     void take(const std::string &id);
     // A download that failed for a network reason: returns true when the item may be tried again on
     // a later poll, false once kMaxDownloadAttempts were used (the caller then gives it up).
     bool retry_later(const std::string &id);
-    // The item must be removed from the container (opened, discarded or refused).
-    void queue_delete(const std::string &id);
-    std::vector<std::string> pending_deletes() const;
-    void delete_confirmed(const std::string &id);
+    // The item must be removed from the drop site at `base`, the site that listed it (opened,
+    // discarded or refused). Only that site is asked, whatever address is configured when the
+    // request goes out; another site's answer never settles it. At most kMaxPendingDeletes are kept,
+    // the oldest dropped first.
+    void queue_delete(const std::string &id, const std::string &base);
+    // The ids owed to the site at `base`, oldest first.
+    std::vector<std::string> pending_deletes(const std::string &base) const;
+    // Every pending delete, oldest first (what the station keeps on disk across restarts).
+    const std::vector<PendingDelete> &all_pending_deletes() const { return m_deletes; }
+    // True when a delete of `id` is owed to any site.
+    bool delete_pending(const std::string &id) const;
+    void delete_confirmed(const std::string &id, const std::string &base);
     // Forget taken ids the container no longer lists, unless a delete is still pending.
     void prune(const std::vector<InboxItem> &listed);
     bool taken(const std::string &id) const { return m_taken.count(id) != 0; }
 
 private:
-    std::set<std::string>      m_taken;
-    std::set<std::string>      m_deletes;
-    std::map<std::string, int> m_attempts;
+    std::set<std::string>       m_taken;
+    std::vector<PendingDelete>  m_deletes;
+    std::map<std::string, int>  m_attempts;
 };
 
 }}} // namespace Slic3r::GUI::LanModelDrop

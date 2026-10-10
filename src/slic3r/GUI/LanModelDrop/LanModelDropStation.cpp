@@ -14,6 +14,7 @@
 #endif
 
 #include "LanModelDropStation.hpp"
+#include "LanModelDropFiles.hpp"
 
 #include "../GUI_App.hpp"
 #include "../I18N.hpp"
@@ -69,6 +70,7 @@ struct WorkerConfig
     std::optional<BaseAddress> address;
     std::string                key; // secret: wiped when replaced, never logged
     std::filesystem::path      received_root;
+    std::filesystem::path      pending_file; // the deletes the drop sites have not confirmed yet
 
     WorkerConfig() = default;
     WorkerConfig(const WorkerConfig &) = default;
@@ -85,7 +87,7 @@ struct Shared
     bool                     poll_now = false;
     bool                     test     = false;
     bool                     new_code = false;
-    std::vector<std::string> decided; // ids the user opened or discarded: DELETE them
+    std::vector<PendingDelete> decided; // items the user opened or discarded: DELETE them at their site
     WorkerConfig             config;
 };
 
@@ -124,6 +126,7 @@ struct Waiting
     std::string           sender;
     std::uint64_t         bytes = 0;
     std::string           text; // the notification text, distinct among waiting files
+    std::string           base; // the drop site that listed it, which alone is asked to delete it
 };
 
 struct GuiState
@@ -135,6 +138,7 @@ struct GuiState
     int                                   next_listener = 1;
     std::vector<std::string>              lan_candidates;
     bool                                  lan_read = false;
+    std::set<std::string>                 decided; // opened or discarded this session
 };
 
 GuiState &gui()
@@ -146,12 +150,13 @@ GuiState &gui()
 std::filesystem::path data_root() { return std::filesystem::u8path(data_dir()); }
 std::filesystem::path drop_root() { return data_root() / "lan-model-drop"; }
 std::filesystem::path received_root() { return drop_root() / "received"; }
+std::filesystem::path pending_file() { return drop_root() / "pending-deletes.txt"; }
 std::filesystem::path key_file() { return station_key_file(data_root()); }
 
-// A received file waits for the user while this marker is in its folder. Folders that still carry
-// it at the next start were never opened: they are removed, and the file arrives again from the
-// container if it still holds it. An opened file keeps its folder (the project may point at it).
-constexpr const char *kWaitingMarker = ".waiting";
+// A received file waits for the user while LanModelDropFiles.hpp's marker is in its folder. Folders
+// that still carry it at the next start were never opened: they are removed, and the file arrives
+// again from the container if it still holds it. An opened file keeps its folder (the project may
+// point at it), and the station never writes into it or removes it again.
 
 AppConfig *config() { return wxGetApp().app_config; }
 
@@ -322,7 +327,7 @@ enum class Refusal { None, Size, Checksum, Type, Listing };
 
 struct Download
 {
-    enum class Kind { Ok, Refused, Retry, Gone, Unauthorized } kind = Kind::Retry;
+    enum class Kind { Ok, Refused, Retry, Gone, Unauthorized, Exists } kind = Kind::Retry;
     Refusal               refusal = Refusal::None;
     std::filesystem::path file;
 };
@@ -332,33 +337,6 @@ long download_timeout(std::uint64_t bytes)
     // At least 128 KiB/s, plus room to connect; at most an hour.
     const std::uint64_t seconds = 30 + bytes / (128 * 1024);
     return static_cast<long>(std::min<std::uint64_t>(seconds, 3600));
-}
-
-bool write_received(const std::filesystem::path &folder, const std::string &file_name, const std::string &bytes,
-                    std::filesystem::path &file)
-{
-    std::error_code ec;
-    std::filesystem::create_directories(folder, ec);
-    if (ec) return false;
-    { std::ofstream marker(folder / kWaitingMarker, std::ios::binary | std::ios::trunc); }
-    file = folder / std::filesystem::u8path(file_name);
-    std::filesystem::path partial = file;
-    partial += ".part";
-    {
-        std::ofstream out(partial, std::ios::binary | std::ios::trunc);
-        out.write(bytes.data(), static_cast<std::streamsize>(bytes.size()));
-        out.close();
-        if (!out) {
-            std::filesystem::remove(partial, ec);
-            return false;
-        }
-    }
-    std::filesystem::rename(partial, file, ec);
-    if (ec) {
-        std::filesystem::remove(partial, ec);
-        return false;
-    }
-    return true;
 }
 
 Download download(const WorkerConfig &cfg, const InboxItem &item, const CancelWhen &cancel_when)
@@ -395,12 +373,13 @@ Download download(const WorkerConfig &cfg, const InboxItem &item, const CancelWh
         result.refusal = Refusal::Type;
         return result;
     }
-    if (!write_received(cfg.received_root / item.id, item.file_name, e.body, result.file)) {
-        // A local disk problem is not the sender's fault: keep the file on the drop site.
-        result.kind = Download::Kind::Retry;
-        return result;
+    // Saved under a name of the station's own first, and never into a folder that already exists.
+    switch (write_received(cfg.received_root, item.id, item.file_name, item.type, e.body, result.file)) {
+    case WriteResult::Written: result.kind = Download::Kind::Ok; break;
+    case WriteResult::Exists: result.kind = Download::Kind::Exists; break;
+    // A local disk problem is not the sender's fault: keep the file on the drop site.
+    case WriteResult::Failed: result.kind = Download::Kind::Retry; break;
     }
-    result.kind = Download::Kind::Ok;
     return result;
 }
 
@@ -411,7 +390,7 @@ Download download(const WorkerConfig &cfg, const InboxItem &item, const CancelWh
 void on_link_state(std::uint64_t generation, LinkState state, std::optional<StationStatus> status);
 void on_test_result(std::uint64_t generation, LinkState state, std::optional<StationStatus> status);
 void on_code_result(std::uint64_t generation, std::optional<std::string> code, bool fixed, LinkState failure);
-void on_received(InboxItem item, std::filesystem::path file);
+void on_received(InboxItem item, std::filesystem::path file, std::string base);
 void on_refused(InboxItem item, Refusal refusal);
 void on_given_up(InboxItem item);
 
@@ -436,11 +415,14 @@ LinkState test_station(const WorkerConfig &cfg, StationStatus &status)
 
 void flush_deletes(const WorkerConfig &cfg, InboxTracker &tracker, const CancelWhen &cancel_when)
 {
-    for (const std::string &id : tracker.pending_deletes()) {
+    // Only what this site listed: a delete owed to another address waits until that address is
+    // configured again, since this site's 204 for an id it never held would settle nothing.
+    const std::string &base = cfg.address->base;
+    for (const std::string &id : tracker.pending_deletes(base)) {
         if (cancel_when()) return;
         const Exchange e = exchange(cfg, Method::Delete, file_url(*cfg.address, id), 16 * 1024, 15, cancel_when);
         // 204 also when the file is already gone; 404 means the same thing.
-        if (success(e) || e.http_status == 404) tracker.delete_confirmed(id);
+        if (success(e) || e.http_status == 404) tracker.delete_confirmed(id, base);
         else return; // try again on the next round
     }
 }
@@ -452,11 +434,20 @@ void worker_main()
     std::uint64_t tracked_session  = 0;
     int           failures         = 0;
     Clock::time_point next_poll    = Clock::now();
+    // The deletes the drop sites have not confirmed are kept on disk, so a decision outlives a restart
+    // or an address change and the item never comes back as new.
+    bool        pending_loaded = false;
+    std::string pending_saved;
+    const auto  keep_pending = [&tracker, &pending_saved](const WorkerConfig &cfg) {
+        if (cfg.pending_file.empty()) return;
+        const std::string now = format_pending_deletes(tracker.all_pending_deletes());
+        if (now != pending_saved && save_pending_deletes(cfg.pending_file, tracker.all_pending_deletes())) pending_saved = now;
+    };
 
     for (;;) {
-        WorkerConfig             cfg;
-        bool                     test = false, new_code = false;
-        std::vector<std::string> decided;
+        WorkerConfig               cfg;
+        bool                       test = false, new_code = false;
+        std::vector<PendingDelete> decided;
         {
             std::unique_lock<std::mutex> lock(g_shared.mutex);
             const auto ready = [] {
@@ -477,15 +468,23 @@ void worker_main()
             }
         }
 
-        // A new address, key or session starts a fresh inbox, keeping the deletes the user decided.
+        // A new address, key or session starts a fresh inbox, keeping the deletes still owed, each to
+        // the site that listed the item.
         if (cfg.identity != tracked_identity || cfg.session != tracked_session) {
-            const auto pending = tracker.pending_deletes();
-            tracker            = InboxTracker{};
-            for (const std::string &id : pending) tracker.queue_delete(id);
+            const std::vector<PendingDelete> pending = tracker.all_pending_deletes();
+            tracker = InboxTracker{};
+            for (const PendingDelete &p : pending) tracker.queue_delete(p.id, p.base);
             tracked_identity = cfg.identity;
             tracked_session  = cfg.session;
         }
-        for (const std::string &id : decided) tracker.queue_delete(id);
+        if (!pending_loaded && !cfg.pending_file.empty()) {
+            pending_loaded                            = true;
+            const std::vector<PendingDelete> restored = load_pending_deletes(cfg.pending_file);
+            for (const PendingDelete &p : restored) tracker.queue_delete(p.id, p.base);
+            pending_saved = format_pending_deletes(restored);
+        }
+        for (const PendingDelete &d : decided) tracker.queue_delete(d.id, d.base);
+        keep_pending(cfg);
         if (!cfg.usable()) {
             // Never leave a requested test or new code without an answer.
             const LinkState missing = cfg.address ? LinkState::NeedsStationKey : LinkState::InvalidAddress;
@@ -511,12 +510,17 @@ void worker_main()
             const LinkState failure = code ? LinkState::Connected : (success(e) ? LinkState::ProtocolNotSupported : classify_failure(e));
             post([generation = cfg.generation, code, fixed, failure] { on_code_result(generation, code, fixed, failure); });
         }
+        const std::string &base = cfg.address->base;
         if (!cfg.enabled) {
-            if (!tracker.pending_deletes().empty()) flush_deletes(cfg, tracker, CancelWhen{false, 0, 0});
+            if (!tracker.pending_deletes(base).empty()) {
+                flush_deletes(cfg, tracker, CancelWhen{false, 0, 0});
+                keep_pending(cfg);
+            }
             continue;
         }
 
         flush_deletes(cfg, tracker, polling);
+        keep_pending(cfg);
         if (Clock::now() < next_poll) continue;
 
         StationStatus status;
@@ -541,11 +545,17 @@ void worker_main()
         post([generation = cfg.generation, status] { on_link_state(generation, LinkState::Connected, status); });
 
         tracker.prune(listing.items);
+        // An item already decided whose delete is owed to another address is listed here as well
+        // (the same drop site under a second address): this site owes the delete too.
+        for (const InboxItem &item : listing.items)
+            if (tracker.delete_pending(item.id)) tracker.queue_delete(item.id, base);
         // Entries the container lists with an unusable name, size, digest, stamp or type are removed
         // without being downloaded.
         for (const std::string &id : listing.invalid_ids) {
-            if (tracker.taken(id)) continue;
-            tracker.queue_delete(id);
+            const bool known = tracker.taken(id) || tracker.delete_pending(id);
+            if (tracker.delete_pending(id)) tracker.queue_delete(id, base);
+            if (known) continue;
+            tracker.queue_delete(id, base);
             InboxItem unnamed;
             unnamed.id = id;
             post([unnamed] { on_refused(unnamed, Refusal::Listing); });
@@ -553,13 +563,23 @@ void worker_main()
         for (const InboxItem &item : tracker.fresh(listing.items)) {
             if (polling()) break;
             tracker.take(item.id);
+            // Never downloaded over a folder of its own: one that waits is shown already, and one that
+            // was opened belongs to the user, so only the drop site's copy has to go.
+            const ReceivedState local = received_state(cfg.received_root, item.id);
+            if (local == ReceivedState::Waiting) continue;
+            if (local == ReceivedState::Opened) {
+                tracker.queue_delete(item.id, base);
+                continue;
+            }
             const Download d = download(cfg, item, polling);
             if (d.kind == Download::Kind::Ok) {
                 BOOST_LOG_TRIVIAL(info) << "LAN model drop: received item " << item.id << " (" << item.bytes << " bytes)";
-                post([item, file = d.file] { on_received(item, file); });
+                post([item, file = d.file, base] { on_received(item, file, base); });
+            } else if (d.kind == Download::Kind::Exists) {
+                if (received_state(cfg.received_root, item.id) == ReceivedState::Opened) tracker.queue_delete(item.id, base);
             } else if (d.kind == Download::Kind::Refused) {
                 BOOST_LOG_TRIVIAL(warning) << "LAN model drop: refused item " << item.id << " (check " << static_cast<int>(d.refusal) << ")";
-                tracker.queue_delete(item.id);
+                tracker.queue_delete(item.id, base);
                 post([item, refusal = d.refusal] { on_refused(item, refusal); });
             } else if (d.kind == Download::Kind::Unauthorized) {
                 tracker.retry_later(item.id);
@@ -575,6 +595,7 @@ void worker_main()
             // Gone: the sender's file expired or was removed meanwhile; prune forgets it.
         }
         flush_deletes(cfg, tracker, polling);
+        keep_pending(cfg);
         next_poll = Clock::now() + std::chrono::seconds(kPollSeconds);
     }
 }
@@ -606,14 +627,25 @@ void apply_status(View &v, const StationStatus &status)
     v.queued       = status.queued;
 }
 
+// What a poll can change in the view.
+bool same_poll_view(const View &a, const View &b)
+{
+    return a.state == b.state && a.station_name == b.station_name && a.drop_code == b.drop_code && a.public_url == b.public_url &&
+           a.queued == b.queued && a.link == b.link && a.invite.source == b.invite.source && a.invite.base == b.invite.base &&
+           a.invite.chosen == b.invite.chosen && a.invite.choices == b.invite.choices;
+}
+
 void on_link_state(std::uint64_t generation, LinkState state, std::optional<StationStatus> status)
 {
     if (generation != gui().generation || !gui().view.enabled) return;
     View &v = gui().view;
+    const View before = v;
     v.state = state;
     if (status) apply_status(v, *status);
     recompute_invite();
-    notify_listeners();
+    // Every poll reports, every 5 seconds; the windows hear of it only when what they show changed,
+    // so an unchanged poll sets no text and lays nothing out again.
+    if (!same_poll_view(before, v)) notify_listeners();
 }
 
 void on_test_result(std::uint64_t generation, LinkState state, std::optional<StationStatus> status)
@@ -649,13 +681,6 @@ std::string notification_text(const Waiting &w)
                             : format(_u8L("%1% sent %2% (%3%)"), w.sender, w.file_name, size);
 }
 
-void remove_folder(const std::string &id)
-{
-    if (!is_item_id(id)) return;
-    std::error_code ec;
-    std::filesystem::remove_all(received_root() / id, ec);
-}
-
 Waiting *find_waiting(const std::string &id)
 {
     auto &list = gui().waiting;
@@ -663,10 +688,13 @@ Waiting *find_waiting(const std::string &id)
     return it == list.end() ? nullptr : &*it;
 }
 
-void decide(const std::string &id)
+// The user opened or discarded the item: the site that listed it is asked to delete its copy, and
+// the item is never offered again in this session.
+void decide(const std::string &id, const std::string &base)
 {
+    gui().decided.insert(id);
     ensure_worker();
-    wake_worker([&id](Shared &s) { s.decided.push_back(id); });
+    wake_worker([&id, &base](Shared &s) { s.decided.push_back({id, base}); });
 }
 
 void open_item(const std::string &id);
@@ -692,11 +720,18 @@ void push_waiting_notification(const Waiting &w)
         });
 }
 
-void on_received(InboxItem item, std::filesystem::path file)
+void on_received(InboxItem item, std::filesystem::path file, std::string base)
 {
+    if (gui().decided.count(item.id) != 0) {
+        // Decided while this copy was on its way (a poll that began before the decision): it goes,
+        // and the delete is owed to this site as well.
+        remove_waiting(received_root(), item.id);
+        decide(item.id, base);
+        return;
+    }
     if (!gui().view.enabled) {
         // Switched off while the file was on its way: it stays on the drop site for next time.
-        remove_folder(item.id);
+        remove_waiting(received_root(), item.id);
         return;
     }
     if (find_waiting(item.id) != nullptr) return;
@@ -706,6 +741,7 @@ void on_received(InboxItem item, std::filesystem::path file)
     w.file_name = item.file_name;
     w.sender    = item.sender;
     w.bytes     = item.bytes;
+    w.base      = std::move(base);
     std::vector<std::string> texts;
     for (const Waiting &other : gui().waiting) texts.push_back(other.text);
     w.text = distinct_text(notification_text(w), texts);
@@ -716,7 +752,8 @@ void on_received(InboxItem item, std::filesystem::path file)
 
 void on_refused(InboxItem item, Refusal refusal)
 {
-    remove_folder(item.id);
+    // Nothing of a refused file was saved, so there is nothing to remove here; a copy received
+    // earlier under the same id stays with the user.
     NotificationManager *manager = notifications();
     if (manager == nullptr) return;
     std::string reason;
@@ -759,11 +796,13 @@ void open_item(const std::string &id)
     Waiting *w = find_waiting(id);
     if (w == nullptr) return;
     const std::filesystem::path file = w->file;
+    const std::string           base = w->base;
     forget_waiting(id);
-    decide(id);
-    std::error_code ec;
-    std::filesystem::remove(file.parent_path() / kWaitingMarker, ec);
+    // From here on the folder is the user's: the station never writes into it or removes it again.
+    mark_opened(file);
+    decide(id, base);
     notify_listeners();
+    std::error_code ec;
     MainFrame *frame  = wxGetApp().mainframe;
     Plater    *plater = wxGetApp().plater();
     if (frame == nullptr || plater == nullptr || !std::filesystem::is_regular_file(file, ec)) return;
@@ -779,23 +818,11 @@ void open_item(const std::string &id)
 void discard_item(const std::string &id)
 {
     if (!gui_alive() || find_waiting(id) == nullptr) return;
+    const std::string base = find_waiting(id)->base;
     forget_waiting(id);
-    remove_folder(id);
-    decide(id);
+    remove_waiting(received_root(), id);
+    decide(id, base);
     notify_listeners();
-}
-
-void clean_unopened_downloads()
-{
-    std::error_code ec;
-    const std::filesystem::path root = received_root();
-    if (!std::filesystem::is_directory(root, ec)) return;
-    for (std::filesystem::directory_iterator it(root, ec), end; !ec && it != end; it.increment(ec)) {
-        const std::string name = it->path().filename().u8string();
-        std::error_code   inner;
-        if (is_item_id(name) && std::filesystem::exists(it->path() / kWaitingMarker, inner))
-            std::filesystem::remove_all(it->path(), inner);
-    }
 }
 
 } // namespace
@@ -872,6 +899,7 @@ void apply_settings()
         wipe(c.key);
         c.key           = key;
         c.received_root = received_root();
+        c.pending_file  = pending_file();
         s.poll_now      = true;
         generation      = c.generation;
         g_identity.store(c.identity);
@@ -898,7 +926,7 @@ void apply_settings()
 
 void start_after_startup()
 {
-    clean_unopened_downloads();
+    clean_unopened(received_root());
     apply_settings();
 }
 

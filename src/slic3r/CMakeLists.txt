@@ -914,6 +914,8 @@ list(APPEND SLIC3R_GUI_SOURCES
     GUI/PrinterWatch.hpp
     GUI/LanModelDrop/LanModelDropModel.cpp
     GUI/LanModelDrop/LanModelDropModel.hpp
+    GUI/LanModelDrop/LanModelDropFiles.cpp
+    GUI/LanModelDrop/LanModelDropFiles.hpp
     GUI/LanModelDrop/LanModelDropKeyStore.cpp
     GUI/LanModelDrop/LanModelDropKeyStore.hpp
     GUI/LanModelDrop/LanModelDropStation.cpp

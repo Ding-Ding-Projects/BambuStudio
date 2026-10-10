@@ -20,6 +20,7 @@ const src = {
   ui: read('src/slic3r/GUI/LanModelDrop/LanModelDropUi.cpp'),
   keyStore: read('src/slic3r/GUI/LanModelDrop/LanModelDropKeyStore.cpp'),
   model: read('src/slic3r/GUI/LanModelDrop/LanModelDropModel.cpp'),
+  files: read('src/slic3r/GUI/LanModelDrop/LanModelDropFiles.cpp'),
   prefs: read('src/slic3r/GUI/Preferences.cpp'),
   mainFrame: read('src/slic3r/GUI/MainFrame.cpp'),
   palette: read('src/slic3r/GUI/CommandPalette.cpp'),
@@ -200,10 +201,64 @@ function nothingAutomatic(station) {
   // A link clicked while the application closes does nothing.
   assert.match(body(station, 'void open_item(const std::string &id)'), /^\{\s*\/\/[^\n]*\n\s*if \(!gui_alive\(\)\) return;/);
   assert.match(body(station, 'void discard_item(const std::string &id)'), /^\{\s*if \(!gui_alive\(\) \|\|/);
-  // Open, Discard and failed checks remove the file from the drop site.
-  assert.match(body(station, 'void open_item(const std::string &id)'), /decide\(id\);/);
-  assert.match(body(station, 'void discard_item(const std::string &id)'), /decide\(id\);/);
-  assert.match(body(station, 'void worker_main()'), /Download::Kind::Refused\) \{[\s\S]*?tracker\.queue_delete\(item\.id\);/);
+  // Open, Discard and failed checks remove the file from the drop site that listed it.
+  assert.match(body(station, 'void open_item(const std::string &id)'), /decide\(id, base\);/);
+  assert.match(body(station, 'void discard_item(const std::string &id)'), /decide\(id, base\);/);
+  assert.match(body(station, 'void worker_main()'), /Download::Kind::Refused\) \{[\s\S]*?tracker\.queue_delete\(item\.id, base\);/);
+}
+
+// A received folder that waits is never downloaded into again, and one that was opened belongs to
+// the user: the station never writes into it, never brings its marker back and never removes it.
+// Each delete goes only to the site that listed the item, and pending deletes are kept on disk.
+function receivedFolders(station, files) {
+  const worker = body(station, 'void worker_main()');
+  const fresh = worker.slice(worker.indexOf('for (const InboxItem &item : tracker.fresh(listing.items))'));
+  const check = fresh.indexOf('received_state(cfg.received_root, item.id)');
+  assert.ok(check > 0 && check < fresh.indexOf('download(cfg, item, polling)'), 'the folder is checked before the download');
+  assert.match(fresh, /if \(local == ReceivedState::Waiting\) continue;/);
+  assert.match(fresh, /if \(local == ReceivedState::Opened\) \{\s*tracker\.queue_delete\(item\.id, base\);\s*continue;\s*\}/);
+  assert.match(body(station, 'Download download(const WorkerConfig &cfg'),
+    /write_received\(cfg\.received_root, item\.id, item\.file_name, item\.type, e\.body, result\.file\)/);
+  // The station itself never writes a file or makes a path from a sender's name.
+  assert.doesNotMatch(code(station), /ofstream|u8path\((item\.)?file_name\)/);
+  assert.match(body(station, 'void open_item(const std::string &id)'), /mark_opened\(file\);/);
+  assert.doesNotMatch(code(station), /remove_all\(/);
+  // Deletes are tied to their site and survive a restart.
+  const flush = body(station, 'void flush_deletes(const WorkerConfig &cfg');
+  assert.match(flush, /tracker\.pending_deletes\(base\)/);
+  assert.match(flush, /tracker\.delete_confirmed\(id, base\)/);
+  assert.match(worker, /load_pending_deletes\(cfg\.pending_file\)/);
+  assert.match(worker, /save_pending_deletes\(cfg\.pending_file, tracker\.all_pending_deletes\(\)\)/);
+  // On disk: an existing folder is never written into; the bytes go to the station's own name first.
+  const write = body(files, 'WriteResult write_received(');
+  assert.match(write, /case ReceivedState::Waiting:\s*case ReceivedState::Opened: return WriteResult::Exists;/);
+  assert.match(write, /if \(!fs::create_directory\(folder, ec\)\) return ec \? WriteResult::Failed : WriteResult::Exists;/);
+  assert.match(write, /write_file\(incoming, bytes\)/);
+  assert.ok(write.indexOf('write_file(incoming, bytes)') < write.indexOf('is_clean_file_name(file_name)'));
+  assert.match(body(files, 'void remove_waiting('), /if \(received_state\(root, id\) != ReceivedState::Waiting\) return;/);
+}
+
+// Bilingual mode: the decorator writes English and Cantonese into a label, so a live label is never
+// compared with what it shows. Each keeps the English it was given; an unchanged poll sets nothing
+// and lays nothing out, and the station tells the windows only when a poll changed the view.
+function liveLabels(ui, station) {
+  const plain = code(ui);
+  assert.equal((plain.match(/GetUnwrappedLabel\(\)/g) || []).length, 1, 'read once, when the LiveText is made');
+  assert.match(body(ui, 'LiveText::LiveText(Label *label)'), /m_english = m_label->GetUnwrappedLabel\(\);/);
+  assert.doesNotMatch(plain, /GetLabel\(\)\s*[!=]=|[!=]=\s*[\w>.-]*GetLabel\(\)/);
+  const set = body(ui, 'bool LiveText::set(const wxString &english)');
+  assert.match(set, /if \(m_label == nullptr \|\| english == m_english\) return false;/);
+  assert.match(set, /I18N::refresh_bilingual_decoration\(m_label\);/);
+  // Only LiveText::set and the QR view's fixed accessible name set label text.
+  assert.equal((plain.match(/\bSetLabel\(/g) || []).length, 2);
+  assert.doesNotMatch(plain, /\bset_wrapped\(/);
+  for (const name of ['m_pending_note', 'm_manual', 'm_source_note', 'm_fixed_note', 'm_live', 'm_waiting_label'])
+    assert.match(read('src/slic3r/GUI/LanModelDrop/LanModelDropUi.hpp'), new RegExp(`LiveText\\s+${name};`));
+  // A tooltip the decorator extends is set only when its English changes.
+  assert.match(body(ui, 'class CodeRow'), /if \(tip != m_tip\) \{\s*m_tip = tip;\s*m_new->SetToolTip\(tip\);/);
+  const link = body(station, 'void on_link_state(std::uint64_t generation');
+  assert.match(link, /const View before = v;/);
+  assert.match(link, /if \(!same_poll_view\(before, v\)\) notify_listeners\(\);/);
 }
 
 function invite(ui, station) {
@@ -230,8 +285,13 @@ const contracts = [
   ['the station key is never logged', () => keyNeverLogged([src.station, src.keyStore, src.ui, src.model]), () => keyNeverLogged([src.station.replace('BOOST_LOG_TRIVIAL(info) << "LAN model drop: received item "', 'BOOST_LOG_TRIVIAL(info) << cfg.key << "LAN model drop: received item "'), src.keyStore, src.ui, src.model])],
   ['all HTTP runs on the worker thread and reaches windows through CallAfter', () => workerThreadHttp(src.station), () => workerThreadHttp(src.station.replace('void test_connection()\n{', 'void test_connection()\n{\n    exchange(cfg, Method::Get, std::string(), 0, 0, CancelWhen{});'))],
   ['shutdown cancels, wakes and joins the worker before windows go', () => shutdownStops(src.station, src.app), () => shutdownStops(src.station, src.app.replace('    LanModelDrop::shutdown();\n    Schedule::Scheduler::instance().shutdown();', '    Schedule::Scheduler::instance().shutdown();'))],
-  ['nothing is opened, sliced or printed automatically', () => nothingAutomatic(src.station), () => nothingAutomatic(src.station.replace('post([item, file = d.file] { on_received(item, file); });', 'post([item, file = d.file] { on_received(item, file); open_item(item.id); });'))],
+  ['nothing is opened, sliced or printed automatically', () => nothingAutomatic(src.station), () => nothingAutomatic(src.station.replace('post([item, file = d.file, base] { on_received(item, file, base); });', 'post([item, file = d.file, base] { on_received(item, file, base); open_item(item.id); });'))],
   ['the invite shows exactly one link as text and as a QR code, with kit widgets only', () => invite(src.ui, src.station), () => invite(src.ui.replace('m_qr->SetText(has_link ? v.link : std::string())', 'm_qr->SetText(v.invite.base)'), src.station)],
+  ['an opened or waiting received folder is never written again, and deletes go only to their own site', () => receivedFolders(src.station, src.files), () => receivedFolders(src.station.replace('if (local == ReceivedState::Opened) {', 'if (false) {'), src.files)],
+  ['an opened received folder is never written again: the on-disk rule', () => receivedFolders(src.station, src.files), () => receivedFolders(src.station, src.files.replace('case ReceivedState::Waiting:\n    case ReceivedState::Opened: return WriteResult::Exists;', 'case ReceivedState::Waiting:\n    case ReceivedState::Opened: break;'))],
+  ['deletes go only to the site that listed the item', () => receivedFolders(src.station, src.files), () => receivedFolders(src.station.replace('tracker.pending_deletes(base)', 'tracker.pending_deletes(tracker.all_pending_deletes().front().base)'), src.files)],
+  ['live labels keep their English, so bilingual text holds between polls', () => liveLabels(src.ui, src.station), () => liveLabels(src.ui.replace('if (m_label == nullptr || english == m_english) return false;', 'if (m_label == nullptr || m_label->GetUnwrappedLabel() == english) return false;'), src.station)],
+  ['an unchanged poll does not refresh the windows', () => liveLabels(src.ui, src.station), () => liveLabels(src.ui, src.station.replace('if (!same_poll_view(before, v)) notify_listeners();', 'notify_listeners();'))],
 ];
 
 for (const [name, check, mutant] of contracts) {

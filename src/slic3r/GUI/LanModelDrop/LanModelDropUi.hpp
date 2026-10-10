@@ -7,6 +7,7 @@
 #include <string>
 
 #include <wx/panel.h>
+#include <wx/string.h>
 
 class Button;
 class ComboBox;
@@ -14,6 +15,26 @@ class Label;
 class TextInput;
 
 namespace Slic3r { namespace GUI { namespace LanModelDrop {
+
+// A label whose English text follows the station view. In bilingual mode the decorator writes the
+// English with the Cantonese into the label itself, so the label is never asked what it shows: the
+// English it was last given is kept here, and setting the same English again does nothing (no text
+// set back to English only, no layout, no dialog refit). A real change asks the decorator for a pass
+// at once, so the Cantonese follows within a tick instead of the next sweep.
+class LiveText
+{
+public:
+    LiveText() = default;
+    explicit LiveText(Label *label);
+    // Sets and wraps the text; returns true when the English changed.
+    bool set(const wxString &english);
+    Label *operator->() const { return m_label; }
+    Label *get() const { return m_label; }
+
+private:
+    Label   *m_label = nullptr;
+    wxString m_english;
+};
 
 // The QR code of one text, drawn with the bundled encoder (LocalSecurity/PairingQr): black modules
 // on white with a four-module quiet zone in both themes. Hidden while there is no text.
@@ -60,7 +81,7 @@ private:
 
     Label     *m_off_note      = nullptr;
     Button    *m_turn_on       = nullptr;
-    Label     *m_pending_note  = nullptr;
+    LiveText   m_pending_note;
     wxPanel   *m_link_area     = nullptr;
     QrView    *m_qr            = nullptr;
     TextInput *m_link          = nullptr;
@@ -69,11 +90,11 @@ private:
     Button    *m_larger        = nullptr;
     Label     *m_lan_label     = nullptr;
     ComboBox  *m_lan_choice    = nullptr;
-    Label     *m_manual        = nullptr;
-    Label     *m_source_note   = nullptr;
-    Label     *m_fixed_note    = nullptr;
-    Label     *m_live          = nullptr;
-    Label     *m_waiting_label = nullptr;
+    LiveText   m_manual;
+    LiveText   m_source_note;
+    LiveText   m_fixed_note;
+    LiveText   m_live;
+    LiveText   m_waiting_label;
     Button    *m_show_waiting  = nullptr;
 };
 

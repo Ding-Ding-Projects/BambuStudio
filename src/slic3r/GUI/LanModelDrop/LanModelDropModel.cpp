@@ -847,11 +847,50 @@ std::string distinct_text(const std::string &text, const std::vector<std::string
 
 // ---------------------------------------------------------------------------------------------
 
+namespace {
+
+// A base address exactly as parse_base_address writes it.
+bool is_normal_base(std::string_view base)
+{
+    const auto parsed = parse_base_address(base);
+    return parsed && parsed->base == base;
+}
+
+} // namespace
+
+std::string format_pending_deletes(const std::vector<PendingDelete> &pending)
+{
+    std::string out;
+    for (const PendingDelete &p : pending) out += p.id + " " + p.base + "\n";
+    return out;
+}
+
+std::vector<PendingDelete> parse_pending_deletes(std::string_view text)
+{
+    std::vector<PendingDelete> out;
+    std::size_t start = 0;
+    while (start < text.size()) {
+        std::size_t end = text.find('\n', start);
+        if (end == std::string_view::npos) end = text.size();
+        std::string_view line = text.substr(start, end - start);
+        start = end + 1;
+        if (!line.empty() && line.back() == '\r') line.remove_suffix(1);
+        const std::size_t space = line.find(' ');
+        if (space == std::string_view::npos) continue;
+        PendingDelete entry{std::string(line.substr(0, space)), std::string(line.substr(space + 1))};
+        if (!is_item_id(entry.id) || !is_normal_base(entry.base)) continue;
+        if (std::find(out.begin(), out.end(), entry) != out.end()) continue;
+        out.push_back(std::move(entry));
+    }
+    if (out.size() > kMaxPendingDeletes) out.erase(out.begin(), out.end() - static_cast<std::ptrdiff_t>(kMaxPendingDeletes));
+    return out;
+}
+
 std::vector<InboxItem> InboxTracker::fresh(const std::vector<InboxItem> &listed) const
 {
     std::vector<InboxItem> out;
     for (const InboxItem &item : listed)
-        if (m_taken.count(item.id) == 0 && m_deletes.count(item.id) == 0) out.push_back(item);
+        if (m_taken.count(item.id) == 0 && !delete_pending(item.id)) out.push_back(item);
     return out;
 }
 
@@ -868,24 +907,41 @@ bool InboxTracker::retry_later(const std::string &id)
     return true;
 }
 
-void InboxTracker::queue_delete(const std::string &id)
+void InboxTracker::queue_delete(const std::string &id, const std::string &base)
 {
-    if (!is_item_id(id)) return;
+    if (!is_item_id(id) || !is_normal_base(base)) return;
     m_taken.insert(id);
-    m_deletes.insert(id);
     m_attempts.erase(id);
+    const PendingDelete entry{id, base};
+    if (std::find(m_deletes.begin(), m_deletes.end(), entry) != m_deletes.end()) return;
+    m_deletes.push_back(entry);
+    if (m_deletes.size() > kMaxPendingDeletes) m_deletes.erase(m_deletes.begin());
 }
 
-std::vector<std::string> InboxTracker::pending_deletes() const { return {m_deletes.begin(), m_deletes.end()}; }
+std::vector<std::string> InboxTracker::pending_deletes(const std::string &base) const
+{
+    std::vector<std::string> out;
+    for (const PendingDelete &p : m_deletes)
+        if (p.base == base) out.push_back(p.id);
+    return out;
+}
 
-void InboxTracker::delete_confirmed(const std::string &id) { m_deletes.erase(id); }
+bool InboxTracker::delete_pending(const std::string &id) const
+{
+    return std::any_of(m_deletes.begin(), m_deletes.end(), [&id](const PendingDelete &p) { return p.id == id; });
+}
+
+void InboxTracker::delete_confirmed(const std::string &id, const std::string &base)
+{
+    m_deletes.erase(std::remove(m_deletes.begin(), m_deletes.end(), PendingDelete{id, base}), m_deletes.end());
+}
 
 void InboxTracker::prune(const std::vector<InboxItem> &listed)
 {
     std::set<std::string> present;
     for (const InboxItem &item : listed) present.insert(item.id);
     for (auto it = m_taken.begin(); it != m_taken.end();) {
-        if (present.count(*it) == 0 && m_deletes.count(*it) == 0) {
+        if (present.count(*it) == 0 && !delete_pending(*it)) {
             m_attempts.erase(*it);
             it = m_taken.erase(it);
         } else
