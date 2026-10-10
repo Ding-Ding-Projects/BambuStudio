@@ -50,11 +50,24 @@ bool content_matches(FileType type, std::string_view bytes);
 // Names and fields
 // ---------------------------------------------------------------------------------------------
 
-// Base name only; control characters and <>:"/\|?* removed; trimmed; trailing dots removed; a
-// Windows device name (CON, PRN, AUX, NUL, COM1-9, LPT1-9) gets a leading underscore; at most 200
-// characters with the extension kept. Empty when the name is not valid UTF-8 or does not keep an
-// accepted extension with a non-empty stem. Never used as anything but the last path component.
+// Base name only; control characters and <>:"/\|?* removed; trimmed; trailing dots removed; at most
+// 200 characters with the extension kept; then a name Windows would take for a device gets a leading
+// underscore (see is_windows_reserved_name: "COM3 .x.stl" becomes "_COM3 .x.stl"). Empty when the
+// name is not valid UTF-8 or does not keep an accepted extension with a non-empty stem. Applying it
+// again changes nothing. Never used as anything but the last path component.
 std::string sanitize_file_name(std::string_view raw);
+// True when Windows would not treat `name` as an ordinary file in a folder: empty, "." or "..", not
+// valid UTF-8, a trailing dot or space, a control character or one of <>:"/\|?*, or a device name.
+// Windows opens a device whenever the part before the first dot, trailing spaces removed, is CON,
+// PRN, AUX, NUL, CONIN$, CONOUT$, COM0-9 or LPT0-9 in any case, or COM or LPT followed by a
+// superscript one, two or three (U+00B9, U+00B2, U+00B3), whatever follows: "COM3 .x.stl.part" is
+// the serial port COM3.
+bool is_windows_reserved_name(std::string_view name);
+// A name the station may save a received file under as it is: sanitize_file_name leaves it unchanged
+// and it is not reserved.
+bool is_clean_file_name(std::string_view name);
+// The name a received file is saved under when its own cannot be used: "model.<type>".
+std::string fallback_file_name(FileType type);
 // Control and bidirectional-override characters removed, trimmed, at most 40 characters. Invalid
 // UTF-8 sequences are dropped.
 std::string sanitize_sender(std::string_view raw);

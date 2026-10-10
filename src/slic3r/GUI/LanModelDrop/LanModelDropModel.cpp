@@ -143,12 +143,30 @@ void trim(std::vector<char32_t> &codes)
     codes.erase(codes.begin(), codes.begin() + static_cast<std::ptrdiff_t>(first));
 }
 
-bool reserved_device_stem(std::string_view stem)
+// Windows takes a last path component for a device when the part before its first dot, with trailing
+// spaces removed, is a device name in any case: "COM3 .x.stl" opens the serial port COM3. The names
+// are CON, PRN, AUX, NUL, CONIN$, CONOUT$, COM and LPT followed by a digit or by a superscript one,
+// two or three (CPython's ntpath.isreserved encodes the same rule; COM0 and LPT0 are on Microsoft's
+// list of names not to use, so they count too). Any space-like character counts as a space here.
+bool is_device_name(const std::vector<char32_t> &name)
 {
-    const std::string s = lower(stem);
-    if (s == "con" || s == "prn" || s == "aux" || s == "nul") return true;
-    if (s.size() == 4 && (starts_with(s, "com") || starts_with(s, "lpt")) && s[3] >= '1' && s[3] <= '9') return true;
-    return false;
+    std::size_t end = static_cast<std::size_t>(std::find(name.begin(), name.end(), U'.') - name.begin());
+    while (end > 0 && is_space(name[end - 1])) --end;
+    std::u32string base;
+    for (std::size_t i = 0; i < end; ++i) {
+        const char32_t c = name[i];
+        base.push_back(c >= U'a' && c <= U'z' ? static_cast<char32_t>(c - U'a' + U'A') : c);
+    }
+    if (base == U"CON" || base == U"PRN" || base == U"AUX" || base == U"NUL" || base == U"CONIN$" || base == U"CONOUT$")
+        return true;
+    if (base.size() != 4 || (base.compare(0, 3, U"COM") != 0 && base.compare(0, 3, U"LPT") != 0)) return false;
+    const char32_t n = base[3];
+    return (n >= U'0' && n <= U'9') || n == 0xB9 || n == 0xB2 || n == 0xB3;
+}
+
+void trim_trailing_dots_and_spaces(std::vector<char32_t> &codes)
+{
+    while (!codes.empty() && (codes.back() == U'.' || is_space(codes.back()))) codes.pop_back();
 }
 
 // How much of a received file the content checks look at, as on the drop site.
@@ -361,26 +379,52 @@ std::string sanitize_file_name(std::string_view raw)
     }
     trim(kept);
     // Windows drops trailing dots and spaces from a name, which could change its extension.
-    while (!kept.empty() && (kept.back() == '.' || is_space(kept.back()))) kept.pop_back();
+    trim_trailing_dots_and_spaces(kept);
 
-    std::string name = encode_all(kept);
-    const auto  type = type_from_extension(name);
+    const std::string name = encode_all(kept);
+    const auto        type = type_from_extension(name);
     if (!type) return {};
-    const std::size_t dot = name.rfind('.');
-    std::string extension = name.substr(dot);
+    const std::string extension = name.substr(name.rfind('.'));
     std::vector<char32_t> stem(kept.begin(), kept.end() - static_cast<std::ptrdiff_t>(extension.size()));
     if (std::all_of(stem.begin(), stem.end(), is_space)) return {};
-    {
-        const std::string stem_text = encode_all(stem);
-        if (reserved_device_stem(std::string_view(stem_text).substr(0, stem_text.find('.')))) stem.insert(stem.begin(), U'_');
-    }
     const std::size_t room = kMaxFileNameChars - extension.size();
     if (stem.size() > room) {
         stem.resize(room);
-        while (!stem.empty() && (stem.back() == '.' || is_space(stem.back()))) stem.pop_back();
+        trim_trailing_dots_and_spaces(stem);
         if (stem.empty()) return {};
     }
+    // After the cut, which can leave a device name ("COM1" followed by spaces): a leading underscore
+    // makes it an ordinary name, since no device name starts with one.
+    if (is_device_name(stem)) {
+        stem.insert(stem.begin(), U'_');
+        if (stem.size() > room) {
+            stem.pop_back();
+            trim_trailing_dots_and_spaces(stem);
+        }
+    }
     return encode_all(stem) + extension;
+}
+
+bool is_windows_reserved_name(std::string_view name)
+{
+    std::vector<char32_t> codes;
+    if (name.empty() || name == "." || name == ".." || !decode_all(name, codes, /*strict*/ true)) return true;
+    if (codes.back() == U'.' || codes.back() == U' ') return true;
+    for (char32_t c : codes)
+        if (c < 0x20 || c == U'<' || c == U'>' || c == U':' || c == U'"' || c == U'/' || c == U'\\' || c == U'|' || c == U'?' ||
+            c == U'*')
+            return true;
+    return is_device_name(codes);
+}
+
+bool is_clean_file_name(std::string_view name)
+{
+    return !name.empty() && sanitize_file_name(name) == name && !is_windows_reserved_name(name);
+}
+
+std::string fallback_file_name(FileType type)
+{
+    return std::string("model.") + type_name(type);
 }
 
 std::string sanitize_sender(std::string_view raw)

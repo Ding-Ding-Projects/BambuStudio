@@ -112,9 +112,50 @@ static void names()
     CHECK(sanitize_file_name("bad.stl.") == "bad.stl");
     CHECK(sanitize_file_name("CON.stl") == "_CON.stl");
     CHECK(sanitize_file_name("lpt1.3mf") == "_lpt1.3mf");
-    CHECK(sanitize_file_name("com0.3mf") == "com0.3mf");
     CHECK(sanitize_file_name("console.stl") == "console.stl");
     CHECK(sanitize_file_name("nul.backup.obj") == "_nul.backup.obj");
+    // Windows opens a device, not a file, when the part of the last component before its first dot,
+    // with trailing spaces removed, is a device name in any case: "COM3 .x.stl" (and its
+    // "COM3 .x.stl.part") is the serial port COM3. The device names are CON, PRN, AUX, NUL, CONIN$,
+    // CONOUT$, COM0-9, LPT0-9 and the superscript COM1-3 and LPT1-3.
+    CHECK(sanitize_file_name("COM3 .x.stl") == "_COM3 .x.stl");
+    CHECK(sanitize_file_name("LPT1 .print.stl") == "_LPT1 .print.stl");
+    CHECK(sanitize_file_name("con .stl") == "_con .stl");
+    CHECK(sanitize_file_name("Aux   .  .step") == "_Aux   .  .step");
+    CHECK(sanitize_file_name("CONOUT$.stl") == "_CONOUT$.stl");
+    CHECK(sanitize_file_name("conin$.obj") == "_conin$.obj");
+    CHECK(sanitize_file_name(u8"COM¹.stl") == u8"_COM¹.stl");
+    CHECK(sanitize_file_name(u8"com² .x.amf") == u8"_com² .x.amf");
+    CHECK(sanitize_file_name(u8"LPT³.3mf") == u8"_LPT³.3mf");
+    CHECK(sanitize_file_name("com0.3mf") == "_com0.3mf");
+    CHECK(sanitize_file_name("LPT0 .stl") == "_LPT0 .stl");
+    CHECK(sanitize_file_name("COM10.stl") == "COM10.stl");
+    CHECK(sanitize_file_name("CONOUT.stl") == "CONOUT.stl");
+    CHECK(sanitize_file_name(u8"COM⁴.stl") == u8"COM⁴.stl"); // superscript four is no device
+    // The name is checked after it is cut to length: here the cut leaves "COM1" and spaces.
+    CHECK(sanitize_file_name("COM1" + std::string(300, ' ') + "x.stl") == "_COM1.stl");
+    CHECK(sanitize_file_name("COM1 ." + std::string(300, 'x') + ".stl").size() == 200);
+    CHECK(sanitize_file_name("COM1 ." + std::string(300, 'x') + ".stl").substr(0, 7) == "_COM1 .");
+    // The same rule as a check on any name, including the station's own ".part" names.
+    for (const char *reserved : {"COM3 .x.stl", "COM3 .x.stl.part", "LPT1 .print.stl", "CONOUT$.stl", "con .stl", "nul",
+                                 "NUL.tar.gz", "prn", "aux.obj", "com0.3mf", "Lpt9", "x.stl ", "x.stl.", "a:b.stl", "a?.stl",
+                                 "", ".", "..", "tab\t.stl"})
+        CHECK(is_windows_reserved_name(reserved));
+    CHECK(is_windows_reserved_name(u8"COM¹.stl") && is_windows_reserved_name(u8"lpt² .3mf"));
+    CHECK(is_windows_reserved_name(std::string("bad\xff.stl")));
+    for (const char *ordinary : {"Bracket.stl", "_COM3 .x.stl", "COM10.stl", "console.stl", "CONOUT.stl", ".waiting",
+                                 "model.stl", "nul_.stl", "LPT.stl"})
+        CHECK(!is_windows_reserved_name(ordinary));
+    // Cleaning is stable, and its result is never a reserved name.
+    for (const std::string &raw : {std::string("COM3 .x.stl"), std::string("con .stl"), std::string(u8"COM³.obj"),
+                                   std::string("  spaced  name .obj  "), std::string("COM1") + std::string(300, ' ') + "x.stl",
+                                   std::string("COM1 .") + std::string(300, 'x') + ".stl", std::string(u8"齒輪 支架.stl")}) {
+        const std::string clean = sanitize_file_name(raw);
+        CHECK(!clean.empty() && sanitize_file_name(clean) == clean && !is_windows_reserved_name(clean) && is_clean_file_name(clean));
+    }
+    CHECK(!is_clean_file_name("COM3 .x.stl") && !is_clean_file_name("a/b.stl") && !is_clean_file_name("x.exe") && !is_clean_file_name(""));
+    CHECK(fallback_file_name(FileType::Stl) == "model.stl" && fallback_file_name(FileType::ThreeMF) == "model.3mf" &&
+          fallback_file_name(FileType::Step) == "model.step");
     CHECK(sanitize_file_name(u8"齒輪 支架.stl") == u8"齒輪 支架.stl");
     // A right-to-left override could make "model\u202Elts.exe" look like something else.
     CHECK(sanitize_file_name(u8"evil\u202Egnp.stl") == "evilgnp.stl");
