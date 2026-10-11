@@ -57,6 +57,7 @@
 #include "AppLogo/LogoRender.hpp"
 #include "FilamentScanner.hpp"
 #include "SmartHomeDialog.hpp"
+#include "LanModelDrop/LanModelDropStation.hpp"
 #include "WebViewDialog.hpp"
 #include "../Utils/Process.hpp"
 #include "../Utils/ExternalEditor.hpp"
@@ -4641,6 +4642,17 @@ void MainFrame::init_menubar_as_editor()
         append_menu_item(fileMenu, wxID_ANY, _L("Smart home") + dots,
             _L("Home Assistant speakers, media controls, TTS narrator and alert lights"),
             [this](wxCommandEvent&) { SmartHomeDialog(this).ShowModal(); }, "", nullptr,
+            []() { return true; }, this);
+
+        // LAN model drop (docs/features/application-integration/lan-model-drop.md): the settings
+        // section, and the invite someone opens to send a model to this computer.
+        append_menu_item(fileMenu, wxID_ANY, _L("LAN model drop") + dots,
+            _L("Receive 3D models that people on your local network send through the drop site"),
+            [](wxCommandEvent&) { LanModelDrop::open_preferences_section(); }, "", nullptr,
+            []() { return true; }, this);
+        append_menu_item(fileMenu, wxID_ANY, _L("Invite someone to send a model") + dots,
+            _L("Show the link and QR code of the LAN drop site"),
+            [this](wxCommandEvent&) { LanModelDrop::open_invite_dialog(this); }, "", nullptr,
             []() { return true; }, this);
 
         append_menu_item(fileMenu, wxID_ANY, _L("Local model suite") + dots,

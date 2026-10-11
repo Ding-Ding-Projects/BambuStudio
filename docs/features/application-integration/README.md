@@ -71,6 +71,15 @@ compiled DLL pins and executes the real sandbox capability probe before enabling
 PDF operations. The native destination and packaging integration have not yet
 passed a full build.
 
+## LAN model drop
+
+Preferences has a LAN model drop section of its own, off by default. While it is on, a worker
+thread collects 3D models that people on the local network send through the drop site container,
+checks their size, SHA-256 and type, and shows each one with Open and Discard; nothing is opened
+automatically. The invite gives a link and the QR code of exactly that link. File, LAN model drop
+and File, Invite someone to send a model, the command palette and a title-bar indicator reach it.
+See [LAN model drop](lan-model-drop.md).
+
 ## Live surfaces and sensitive controls
 
 The application registers its main frame and each native service root with the
@@ -148,6 +157,14 @@ destination. No live delivery or inbox-action execution is claimed here.
 Material Designer had no callable creation/export/handoff tool in this lane. The
 controls extend the application's existing native component route. This is a
 recorded availability limit, not a claim of design-reference parity.
+
+## LAN model drop site
+
+The [LAN model drop site](lan-model-drop-site.md) is a small web page in a
+Docker container on the local network where other people send 3D models to
+Bambu Studio MD3 on this computer. The Windows installation ships its folder
+beside the application; the article covers starting it with Docker Desktop,
+the firewall, the station key, settings, updates, and privacy and security.
 
 Related: [personal presentation services](../personal-modes/README.md),
 [narration service](../personal-modes/narration.md).

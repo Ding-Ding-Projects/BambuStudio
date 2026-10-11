@@ -522,6 +522,12 @@ Http& Http::verbose(bool set)
 	return *this;
 }
 
+Http& Http::no_proxy()
+{
+	if (p) { ::curl_easy_setopt(p->curl, CURLOPT_NOPROXY, "*"); }
+	return *this;
+}
+
 Http& Http::size_limit(size_t sizeLimit)
 {
 	if (p) { p->limit = sizeLimit; }
@@ -538,6 +544,16 @@ Http& Http::header(std::string name, const std::string &value)
 		name.push_back(':');
 	}
 	p->headerlist = curl_slist_append(p->headerlist, name.c_str());
+	return *this;
+}
+
+Http& Http::clear_headers()
+{
+	if (p) {
+		::curl_slist_free_all(p->headerlist);
+		p->headerlist = nullptr;
+	}
+
 	return *this;
 }
 

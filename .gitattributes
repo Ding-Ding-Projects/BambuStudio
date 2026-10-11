@@ -1,1 +1,3 @@
 src/slic3r/GUI/DeviceWeb/device_page/src/routeTree.gen.ts text eol=lf
+# Captured container answers and the exact model bytes sent: compared byte for byte, never converted.
+tests/lan_model_drop/container_fixtures/** -text
