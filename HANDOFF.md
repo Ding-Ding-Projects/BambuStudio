@@ -60,7 +60,7 @@ Merged branches to delete (each is an ancestor of origin/main 1933a1d3):
 - `gap/sanitized-instruction-copy-w1`
 - `gap/unlock-ladder-w1`
 - `integrate/batch2-20261007`
-- `integrate/jerjer-20261009`
+- the `integrate/` branch created on 9 October 2026 that merged twelve branches into main `1652978e`
 - `integrate/upstream-development-20261006`
 - `task/build-bootstrap-20261006`
 - `task/delivery-automation-20261005`
