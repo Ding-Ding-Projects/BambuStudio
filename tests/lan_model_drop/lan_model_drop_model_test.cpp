@@ -510,6 +510,66 @@ static void presentation_and_tracking()
     CHECK(bounded.all_pending_deletes().size() == kMaxPendingDeletes && !bounded.delete_pending(std::string(32, '0')));
 }
 
+// The station's verdicts on a file download, a delete and a new drop code
+// (tests/lan_model_drop/container_fixtures.test.mjs drives the same functions with real answers).
+static void verdicts()
+{
+    const std::string bytes = "solid t\n facet normal 0 0 1\n endfacet\nendsolid t\n";
+    // SHA-256 of `bytes`, written out so the test needs no digest code of its own.
+    const std::string digest = "40db89ae531eb41efa1f3d9fe79f2531e3a6b108f4cd50df427e1735a32e3614";
+    InboxItem item;
+    item.id        = kId1;
+    item.file_name = "cube.stl";
+    item.bytes     = bytes.size();
+    item.sha256    = digest;
+    item.type      = FileType::Stl;
+    const std::string headers = "HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: " +
+                                std::to_string(bytes.size()) + "\r\nX-Content-SHA256: " + digest + "\r\n\r\n";
+    const Exchange ok{true, 200, bytes};
+    CHECK(judge_download(item, ok, headers, digest) == DownloadVerdict::Accept);
+    // The announced digest is compared without regard to case, and is optional.
+    std::string upper = headers;
+    upper.replace(upper.find(digest), digest.size(), std::string("40DB89AE531EB41EFA1F3D9FE79F2531E3A6B108F4CD50DF427E1735A32E3614"));
+    CHECK(judge_download(item, ok, upper, digest) == DownloadVerdict::Accept);
+    CHECK(judge_download(item, ok, "HTTP/1.1 200 OK\r\n\r\n", digest) == DownloadVerdict::Accept);
+    // Refusals: size, either digest, the listed name or type, and content that is not the type.
+    CHECK(judge_download(item, {true, 200, bytes + "x"}, headers, digest) == DownloadVerdict::RefuseSize);
+    CHECK(judge_download(item, ok, headers, kSha) == DownloadVerdict::RefuseChecksum);
+    std::string other = headers;
+    other.replace(other.find(digest), digest.size(), kSha);
+    CHECK(judge_download(item, ok, other, digest) == DownloadVerdict::RefuseChecksum);
+    InboxItem renamed = item;
+    renamed.file_name = "cube.obj";
+    CHECK(judge_download(renamed, ok, headers, digest) == DownloadVerdict::RefuseType);
+    InboxItem retyped = item;
+    retyped.type = FileType::Step;
+    retyped.file_name = "cube.step";
+    CHECK(judge_download(retyped, ok, headers, digest) == DownloadVerdict::RefuseType);
+    // Answers that say nothing about the file.
+    CHECK(judge_download(item, {false, 0, ""}, "", "") == DownloadVerdict::Retry);
+    CHECK(judge_download(item, {true, 404, "{\"ok\":false,\"error\":\"not_found\"}"}, "", "") == DownloadVerdict::Gone);
+    CHECK(judge_download(item, {true, 401, "{\"ok\":false,\"error\":\"unauthorized\"}"}, "", "") == DownloadVerdict::Unauthorized);
+    CHECK(judge_download(item, {true, 403, ""}, "", "") == DownloadVerdict::Unauthorized);
+    CHECK(judge_download(item, {true, 500, ""}, "", "") == DownloadVerdict::Retry);
+    CHECK(judge_download(item, {true, 302, ""}, "", "") == DownloadVerdict::Retry);
+
+    CHECK(delete_settled({true, 204, ""}));
+    CHECK(delete_settled({true, 200, ""}));
+    CHECK(delete_settled({true, 404, "{\"ok\":false,\"error\":\"not_found\"}"}));
+    CHECK(!delete_settled({false, 0, ""}));
+    CHECK(!delete_settled({true, 401, ""}));
+    CHECK(!delete_settled({true, 500, ""}));
+
+    const NewCodeOutcome renewed = classify_new_code({true, 200, "{\"dropCode\":\"654321\"}"});
+    CHECK(renewed.code == std::optional<std::string>("654321") && !renewed.fixed && renewed.failure == LinkState::Connected);
+    const NewCodeOutcome fixed = classify_new_code({true, 409, "{\"ok\":false,\"error\":\"fixed_code\"}"});
+    CHECK(!fixed.code && fixed.fixed);
+    const NewCodeOutcome garbled = classify_new_code({true, 200, "<html>"});
+    CHECK(!garbled.code && !garbled.fixed && garbled.failure == LinkState::ProtocolNotSupported);
+    CHECK(classify_new_code({true, 401, ""}).failure == LinkState::WrongStationKey);
+    CHECK(classify_new_code({false, 0, ""}).failure == LinkState::NotReachable);
+}
+
 int main()
 {
     types();
@@ -519,6 +579,7 @@ int main()
     addresses();
     invites();
     presentation_and_tracking();
+    verdicts();
     std::cout << "lan_model_drop_model_test: " << assertions << " assertions passed\n";
     return 0;
 }

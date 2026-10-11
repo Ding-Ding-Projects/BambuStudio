@@ -607,6 +607,37 @@ LinkState classify_status(const Exchange &exchange, StationStatus *status)
     return LinkState::Connected;
 }
 
+DownloadVerdict judge_download(const InboxItem &item, const Exchange &exchange, std::string_view raw_headers,
+                               std::string_view body_sha256)
+{
+    if (!exchange.completed) return DownloadVerdict::Retry; // network failure or cancelled
+    if (exchange.http_status == 404) return DownloadVerdict::Gone;
+    if (exchange.http_status == 401 || exchange.http_status == 403) return DownloadVerdict::Unauthorized;
+    if (exchange.http_status < 200 || exchange.http_status >= 300) return DownloadVerdict::Retry;
+    if (exchange.body.size() != item.bytes) return DownloadVerdict::RefuseSize;
+    std::string announced = header_value(raw_headers, "X-Content-SHA256");
+    for (char &c : announced) c = ascii_lower(c);
+    if (body_sha256 != item.sha256 || (!announced.empty() && announced != item.sha256)) return DownloadVerdict::RefuseChecksum;
+    const auto by_name = type_from_extension(item.file_name);
+    if (!by_name || *by_name != item.type || !content_matches(item.type, exchange.body)) return DownloadVerdict::RefuseType;
+    return DownloadVerdict::Accept;
+}
+
+bool delete_settled(const Exchange &exchange)
+{
+    return exchange.completed && ((exchange.http_status >= 200 && exchange.http_status < 300) || exchange.http_status == 404);
+}
+
+NewCodeOutcome classify_new_code(const Exchange &exchange)
+{
+    NewCodeOutcome outcome;
+    const bool ok = exchange.completed && exchange.http_status >= 200 && exchange.http_status < 300;
+    if (ok) outcome.code = parse_drop_code(exchange.body);
+    outcome.fixed   = exchange.completed && exchange.http_status == 409;
+    outcome.failure = outcome.code ? LinkState::Connected : (ok ? LinkState::ProtocolNotSupported : classify_failure(exchange));
+    return outcome;
+}
+
 bool is_error_state(LinkState state)
 {
     switch (state) {

@@ -163,6 +163,33 @@ LinkState classify_status(const Exchange &exchange, StationStatus *status = null
 LinkState classify_failure(const Exchange &exchange);
 bool      is_error_state(LinkState state);
 
+// What the station makes of GET /api/station/files/<id>, before anything is written to disk.
+// `raw_headers` are the response header lines as received (X-Content-SHA256 is checked when present);
+// `body_sha256` is the SHA-256 of `exchange.body` in lowercase hexadecimal (only read for a 2xx).
+enum class DownloadVerdict {
+    Accept,         // every check passed: save it and offer it to the user
+    Retry,          // no answer, or one that says nothing about the file: try again on a later poll
+    Gone,           // 404: the drop site no longer holds it (expired or removed meanwhile)
+    Unauthorized,   // 401 or 403: the station key is not accepted
+    RefuseSize,     // not as many bytes as the inbox listed
+    RefuseChecksum, // the SHA-256 differs from the inbox listing or from X-Content-SHA256
+    RefuseType      // the listed name or the content is not the listed model type
+};
+DownloadVerdict judge_download(const InboxItem &item, const Exchange &exchange, std::string_view raw_headers,
+                               std::string_view body_sha256);
+// DELETE /api/station/files/<id> is settled by any 2xx (204 also when the file was already gone) and
+// by 404; anything else is tried again later.
+bool delete_settled(const Exchange &exchange);
+// POST /api/station/drop-code: the new code from a 2xx answer; `fixed` for 409 (DROP_CODE fixes the
+// code); otherwise `failure` says what went wrong (Connected when a code arrived).
+struct NewCodeOutcome
+{
+    std::optional<std::string> code;
+    bool                       fixed   = false;
+    LinkState                  failure = LinkState::Connected;
+};
+NewCodeOutcome classify_new_code(const Exchange &exchange);
+
 // Delay before the next poll: 5 s while healthy, doubling after each consecutive failure up to 60 s.
 int next_poll_delay_seconds(int consecutive_failures);
 

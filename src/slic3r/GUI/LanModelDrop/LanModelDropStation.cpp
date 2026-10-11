@@ -345,33 +345,16 @@ Download download(const WorkerConfig &cfg, const InboxItem &item, const CancelWh
     std::string headers;
     const Exchange e = exchange(cfg, Method::Get, file_url(*cfg.address, item.id), static_cast<std::size_t>(item.bytes) + 1,
                                 download_timeout(item.bytes), cancel_when, &headers);
-    if (!e.completed) return result; // network failure or cancelled: try again later
-    if (e.http_status == 404) {
-        result.kind = Download::Kind::Gone;
-        return result;
-    }
-    if (e.http_status == 401 || e.http_status == 403) {
-        result.kind = Download::Kind::Unauthorized;
-        return result;
-    }
-    if (!success(e)) return result;
-
-    result.kind = Download::Kind::Refused;
-    if (e.body.size() != item.bytes) {
-        result.refusal = Refusal::Size;
-        return result;
-    }
-    std::string announced = header_value(headers, "X-Content-SHA256");
-    std::transform(announced.begin(), announced.end(), announced.begin(),
-                   [](char c) { return (c >= 'A' && c <= 'F') ? static_cast<char>(c - 'A' + 'a') : c; });
-    if (sha256_hex(e.body) != item.sha256 || (!announced.empty() && announced != item.sha256)) {
-        result.refusal = Refusal::Checksum;
-        return result;
-    }
-    const auto by_name = type_from_extension(item.file_name);
-    if (!by_name || *by_name != item.type || !content_matches(item.type, e.body)) {
-        result.refusal = Refusal::Type;
-        return result;
+    // The size, the SHA-256 (the listing's and X-Content-SHA256) and the type are judged by the pure
+    // model, which tests/lan_model_drop/container_fixtures.test.mjs drives with real container answers.
+    switch (judge_download(item, e, headers, success(e) ? sha256_hex(e.body) : std::string())) {
+    case DownloadVerdict::Accept: break;
+    case DownloadVerdict::Retry: return result; // network failure, cancelled or no usable answer: try again later
+    case DownloadVerdict::Gone: result.kind = Download::Kind::Gone; return result;
+    case DownloadVerdict::Unauthorized: result.kind = Download::Kind::Unauthorized; return result;
+    case DownloadVerdict::RefuseSize: result.kind = Download::Kind::Refused; result.refusal = Refusal::Size; return result;
+    case DownloadVerdict::RefuseChecksum: result.kind = Download::Kind::Refused; result.refusal = Refusal::Checksum; return result;
+    case DownloadVerdict::RefuseType: result.kind = Download::Kind::Refused; result.refusal = Refusal::Type; return result;
     }
     // Saved under a name of the station's own first, and never into a folder that already exists.
     switch (write_received(cfg.received_root, item.id, item.file_name, item.type, e.body, result.file)) {
@@ -422,7 +405,7 @@ void flush_deletes(const WorkerConfig &cfg, InboxTracker &tracker, const CancelW
         if (cancel_when()) return;
         const Exchange e = exchange(cfg, Method::Delete, file_url(*cfg.address, id), 16 * 1024, 15, cancel_when);
         // 204 also when the file is already gone; 404 means the same thing.
-        if (success(e) || e.http_status == 404) tracker.delete_confirmed(id, base);
+        if (delete_settled(e)) tracker.delete_confirmed(id, base);
         else return; // try again on the next round
     }
 }
@@ -504,11 +487,9 @@ void worker_main()
         }
         if (new_code) {
             const CancelWhen once{false, 0, 0};
-            const Exchange   e = exchange(cfg, Method::Post, drop_code_url(*cfg.address), 16 * 1024, 15, once);
-            std::optional<std::string> code = success(e) ? parse_drop_code(e.body) : std::nullopt;
-            const bool      fixed   = e.completed && e.http_status == 409;
-            const LinkState failure = code ? LinkState::Connected : (success(e) ? LinkState::ProtocolNotSupported : classify_failure(e));
-            post([generation = cfg.generation, code, fixed, failure] { on_code_result(generation, code, fixed, failure); });
+            const Exchange       e       = exchange(cfg, Method::Post, drop_code_url(*cfg.address), 16 * 1024, 15, once);
+            const NewCodeOutcome outcome = classify_new_code(e);
+            post([generation = cfg.generation, outcome] { on_code_result(generation, outcome.code, outcome.fixed, outcome.failure); });
         }
         const std::string &base = cfg.address->base;
         if (!cfg.enabled) {
