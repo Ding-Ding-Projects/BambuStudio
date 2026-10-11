@@ -112,11 +112,35 @@ test('wrong codes spread over more than a minute do not lock the address', async
   assert.equal((await drop(service.port, { code: service.code, fileName: 'cube.obj', body: OBJ })).status, 201);
 });
 
-test('a missing drop code counts as a wrong code', async (t) => {
+// A plain cross-site POST from any web page can reach this service without
+// the X-Drop-Code header (a custom header needs a CORS preflight, which this
+// service never grants). Counting such requests would let any page a sender
+// visits lock that sender out, so they are refused without touching the lockout.
+test('a missing drop code is 400 and never counts toward the lockout', async (t) => {
   const service = await startDrop(t);
-  const response = await drop(service.port, { fileName: 'cube.obj', body: OBJ });
-  assert.equal(response.status, 401);
-  assert.equal(errorOf(response), 'wrong_code');
+  for (let attempt = 1; attempt <= 6; attempt += 1) {
+    const response = await drop(service.port, { fileName: 'cube.obj', body: OBJ });
+    assert.equal(response.status, 400, `attempt ${attempt}`);
+    assert.equal(errorOf(response), 'bad_request');
+  }
+  assert.equal((await drop(service.port, { code: service.code, fileName: 'cube.obj', body: OBJ })).status, 201);
+  assert.ok(!service.logs.some((line) => /locked out/.test(line)));
+});
+
+test('a request a browser marks as cross-site is refused and never counts toward the lockout', async (t) => {
+  const service = await startDrop(t);
+  const wrong = service.code === '000000' ? '111111' : '000000';
+  for (let attempt = 1; attempt <= 6; attempt += 1) {
+    const response = await drop(service.port, { code: wrong, fileName: 'cube.obj', body: OBJ, headers: { 'Sec-Fetch-Site': 'cross-site' } });
+    assert.equal(response.status, 400, `attempt ${attempt}`);
+    assert.equal(errorOf(response), 'bad_request');
+  }
+  const crossSiteRight = await drop(service.port, { code: service.code, fileName: 'cube.obj', body: OBJ, headers: { 'Sec-Fetch-Site': 'cross-site' } });
+  assert.equal(crossSiteRight.status, 400);
+  // The drop page itself is same-origin, and older browsers send no Sec-Fetch-Site at all.
+  assert.equal((await drop(service.port, { code: service.code, fileName: 'cube.obj', body: OBJ, headers: { 'Sec-Fetch-Site': 'same-origin' } })).status, 201);
+  assert.equal((await drop(service.port, { code: service.code, fileName: 'cube.obj', body: OBJ })).status, 201);
+  assert.ok(!service.logs.some((line) => /locked out/.test(line)));
 });
 
 test('a lockout belongs to one client address', async (t) => {

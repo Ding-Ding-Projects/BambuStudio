@@ -224,8 +224,14 @@ export function createDropService(config, options = {}) {
     if (!/^\d+$/.test(length) || !Number.isSafeInteger(Number(length))) return refuse(req, res, 400, 'bad_request');
     const declared = Number(length);
 
+    // Only a request that carries X-Drop-Code can count as a wrong code. A page on
+    // another site can send a plain cross-site POST without it (a custom header
+    // needs a CORS preflight, which this service never grants), and browsers mark
+    // cross-site requests with Sec-Fetch-Site. Counting those would let any web
+    // page a sender visits lock that sender out, so they are refused untouched.
     const code = req.headers['x-drop-code'];
-    if (typeof code !== 'string' || !secretsEqual(code.trim(), dropCode.code)) {
+    if (typeof code !== 'string' || req.headers['sec-fetch-site'] === 'cross-site') return refuse(req, res, 400, 'bad_request');
+    if (!secretsEqual(code.trim(), dropCode.code)) {
       limiter.recordWrongCode(address);
       if (limiter.lockedFor(address) > 0) log(`locked out ${address} for ${LOCKOUT_MS / 60000} minutes after repeated wrong drop codes`);
       return refuse(req, res, 401, 'wrong_code');

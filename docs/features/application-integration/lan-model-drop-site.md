@@ -232,7 +232,10 @@ keeps checking at a slower pace.
   its fonts and icons are bundled, and it has no analytics. The container
   needs no internet access once the image is built.
 - **The drop code.** Senders need the current drop code. Five wrong codes
-  within a minute lock that device out for five minutes. In an invite link
+  within a minute lock that device out for five minutes. Only a request that
+  carries the drop code can count: one without it, or one the browser marks as
+  coming from another website, is refused and never counts, so a web page a
+  sender happens to visit cannot lock that sender out. In an invite link
   the code travels after `#`, which browsers never send to a server or pass
   on to other sites, and the page removes it from the address bar as soon as
   it opens. Anyone who has a current link can send models until you choose
