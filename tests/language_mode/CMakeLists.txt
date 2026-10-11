@@ -5,6 +5,7 @@ add_executable(language_mode_tests
     bilingual_registry_tests.cpp
     ${PROJECT_SOURCE_DIR}/src/slic3r/GUI/LanguageMode.cpp
     ${PROJECT_SOURCE_DIR}/src/slic3r/GUI/PersonalVocabulary.cpp
+    ${PROJECT_SOURCE_DIR}/src/slic3r/GUI/PersonalVocabularySchema.cpp
     ${PROJECT_SOURCE_DIR}/src/slic3r/GUI/BilingualRegistry.cpp
 )
 

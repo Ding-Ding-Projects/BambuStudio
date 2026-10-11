@@ -1,5 +1,7 @@
 #pragma once
 
+#include "PersonalVocabularySchema.hpp"
+
 #include <filesystem>
 #include <functional>
 #include <string>
@@ -11,16 +13,20 @@
 class wxWindow;
 
 namespace Slic3r::GUI::PersonalVocabulary {
-constexpr std::size_t max_bytes = 1024 * 1024;
-constexpr std::size_t max_entries = 2048;
-constexpr std::size_t max_text_bytes = 512;
 using Entries = std::vector<std::pair<std::wstring, std::wstring>>;
 
-// Pure parser: never includes input, keys, values or filenames in diagnostics.
-bool parse(std::string_view bytes, Entries &result);
-bool load(const std::filesystem::path &file);
+// Pure parser over the rules in PersonalVocabularySchema.hpp: never includes
+// input, keys, values or filenames in diagnostics. On rejection result is
+// unchanged and reason, when given, names the first rule that failed.
+bool parse(std::string_view bytes, Entries &result, Rejection *reason = nullptr);
+// Validates the selected file, then saves it as the private copy and applies
+// it. A rejected file changes nothing.
+bool load(const std::filesystem::path &file, Rejection *reason = nullptr);
 bool clear();
 bool loaded();
+// Why the private copy saved on this device was not used at startup, or
+// Rejection::None when there was no copy or it passed validation.
+Rejection cache_rejection();
 void initialize();
 void refresh();
 void observe(wxWindow *window, std::function<void()> refresh_display);

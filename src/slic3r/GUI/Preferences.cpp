@@ -2304,6 +2304,33 @@ private:
     }
 };
 
+// One sentence naming the rule a personal vocabulary file broke. The limits
+// come from the parser constants, so the text cannot drift from the rules.
+static wxString vocabulary_rejection_text(PersonalVocabulary::Rejection reason)
+{
+    using PersonalVocabulary::Rejection;
+    switch (reason) {
+    case Rejection::Unreadable: return _L("The file could not be read.");
+    case Rejection::TooLarge:
+        return wxString::Format(_L("The file is larger than %d KiB."), int(PersonalVocabulary::max_file_bytes / 1024));
+    case Rejection::Malformed: return _L("The file is not valid JSON saved as UTF-8.");
+    case Rejection::TooDeep:
+        return wxString::Format(_L("The file nests objects or lists more than %d levels deep."), int(PersonalVocabulary::max_depth));
+    case Rejection::DuplicateKey: return _L("The file repeats a key inside one object.");
+    case Rejection::UnsupportedVersion: return _L("The file must use schemaVersion 1.");
+    case Rejection::UnexpectedField: return _L("The file must contain only schemaVersion and an entries object.");
+    case Rejection::NonStringValue: return _L("Every entry value must be text.");
+    case Rejection::KeyTooLong:
+        return wxString::Format(_L("An entry key is longer than %d characters."), int(PersonalVocabulary::max_key_code_points));
+    case Rejection::ValueTooLong:
+        return wxString::Format(_L("An entry value is longer than %d characters."), int(PersonalVocabulary::max_value_code_points));
+    case Rejection::UnsafeText: return _L("An entry is blank, contains control or text-direction characters, or uses a reserved name.");
+    case Rejection::CacheUnavailable: return _L("The file is valid, but this device could not save its private copy.");
+    case Rejection::None: break;
+    }
+    return wxString();
+}
+
 wxWindow *PreferencesDialog::create_appearance_tab()
 {
     auto        scrolled = new ScrollPanel(m_book);
@@ -2790,7 +2817,10 @@ wxWindow *PreferencesDialog::create_appearance_tab()
     wording_title->SetName("personal-vocabulary-title");
     wording_sizer->Add(wording_title, 0, wxEXPAND | wxALL, FromDIP(12));
     auto *wording_description = new Label(wording,
-        _L("Load a version 1 JSON file to change display wording on this device. Original data, logs and exports keep their original wording."),
+        _L("Load a version 1 JSON file to change display wording on this device. Original data, logs and exports keep their original wording.") +
+            "\n" + wxString::Format(_L("A file can be up to %d KiB, with keys up to %d characters and values up to %d characters."),
+                int(PersonalVocabulary::max_file_bytes / 1024), int(PersonalVocabulary::max_key_code_points),
+                int(PersonalVocabulary::max_value_code_points)),
         LB_AUTO_WRAP);
     wording_sizer->Add(wording_description, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(12));
     auto *wording_status = new Label(wording, wxEmptyString, LB_AUTO_WRAP);
@@ -2803,12 +2833,18 @@ wxWindow *PreferencesDialog::create_appearance_tab()
         wording_sizer->Add(button, 0, wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(12));
     }
     wording_sizer->Add(wording_status, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(12));
-    auto refresh_wording = [wording_load, wording_clear, wording_status, scrolled](bool failed) {
+    // problem is empty for the plain no-file and loaded states; otherwise it
+    // says what failed and what is shown now.
+    auto refresh_wording = [wording_load, wording_clear, wording_status, scrolled](wxString problem) {
         const bool active = PersonalVocabulary::loaded();
         wording_load->SetLabel(active ? _L("Replace JSON") : _L("Load JSON"));
         wording_clear->Enable(true);
-        wording_status->SetLabel(failed
-            ? _L("The vocabulary file could not be applied. Use valid version 1 JSON within the supported size limits.")
+        const auto saved = PersonalVocabulary::cache_rejection();
+        if (problem.empty() && !active && saved != PersonalVocabulary::Rejection::None)
+            problem = _L("The vocabulary saved on this device did not pass validation, so original wording is shown.") + "\n" +
+                vocabulary_rejection_text(saved);
+        const bool failed = !problem.empty();
+        wording_status->SetLabel(failed ? problem
             : active ? _L("Personal vocabulary is active on this device.") : _L("Original wording is active."));
         wording_status->SetForegroundColour(StateColor::semantic(failed ? MD3::Role::Error : MD3::Role::OnSurfaceVariant));
         scrolled->Layout();
@@ -2819,16 +2855,19 @@ wxWindow *PreferencesDialog::create_appearance_tab()
         wxFileDialog picker(this, _L("Load personal vocabulary"), wxEmptyString, wxEmptyString,
             _L("JSON files (*.json)|*.json"), wxFD_OPEN | wxFD_FILE_MUST_EXIST);
         if (picker.ShowModal() != wxID_OK) return;
-        const bool applied = PersonalVocabulary::load(std::filesystem::path(picker.GetPath().ToStdWstring()));
-        refresh_wording(!applied);
+        auto reason = PersonalVocabulary::Rejection::None;
+        const bool applied = PersonalVocabulary::load(std::filesystem::path(picker.GetPath().ToStdWstring()), &reason);
+        refresh_wording(applied ? wxString()
+            : _L("The vocabulary file was not applied, and the wording on screen has not changed.") + "\n" + vocabulary_rejection_text(reason));
     });
     wording_clear->Bind(wxEVT_BUTTON, [refresh_wording](wxCommandEvent &) {
         if (PersonalModes::school_presentation_suppressed.load()) return;
-        refresh_wording(!PersonalVocabulary::clear());
+        refresh_wording(PersonalVocabulary::clear() ? wxString()
+            : _L("The saved vocabulary could not be removed from this device, so nothing changed."));
     });
     sizer->Add(wording, 0, wxEXPAND | wxALL, FromDIP(16));
     register_option_row("personal_vocabulary", nullptr, wording);
-    refresh_wording(false);
+    refresh_wording(wxString());
     }
 
     sizer->AddSpacer(FromDIP(20));
