@@ -61,10 +61,10 @@ void StateHandler::transition(int previous_states)
     // The element's own timing for this state change (appearance editor,
     // Animation and transition tab), else the Material short2 standard
     // transition. Reduced motion still settles at once inside Anim::Play.
-    namespace Motion = Slic3r::GUI::ElementMotion;
-    const Motion::Timing timing = Slic3r::GUI::ElementStyle::motion_for(
+    namespace ElementMotion = Slic3r::GUI::ElementMotion;
+    const ElementMotion::Timing timing = Slic3r::GUI::ElementStyle::motion_for(
         Slic3r::GUI::ElementStyle::element_id_of(owner_.get()),
-        Motion::trigger_for_change(previous_states, states()), MD3::Motion::short2);
+        ElementMotion::trigger_for_change(previous_states, states()), MD3::Motion::short2);
     motion_.Play(timing.total_ms(), [this, timing](double t) {
         progress_ = timing.progress(t);
         if (owner_) owner_->Refresh(false);

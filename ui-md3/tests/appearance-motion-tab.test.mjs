@@ -149,7 +149,7 @@ function consumerProblems(s) {
   const problems = [];
   // State transitions: the element's own timing for the state that changed.
   const transition = s.stateHandler.match(/void StateHandler::transition\(int previous_states\)\n\{[\s\S]*?\n\}/)?.[0] ?? '';
-  if (!/ElementStyle::motion_for\(\s*Slic3r::GUI::ElementStyle::element_id_of\(owner_\.get\(\)\),\s*Motion::trigger_for_change\(previous_states, states\(\)\), MD3::Motion::short2\)/.test(transition)) problems.push('StateHandler must read the element motion for the changed state');
+  if (!/ElementStyle::motion_for\(\s*Slic3r::GUI::ElementStyle::element_id_of\(owner_\.get\(\)\),\s*ElementMotion::trigger_for_change\(previous_states, states\(\)\), MD3::Motion::short2\)/.test(transition)) problems.push('StateHandler must read the element motion for the changed state');
   if (!/motion_\.Play\(timing\.total_ms\(\), \[this, timing\]\(double t\) \{\s*progress_ = timing\.progress\(t\);/.test(transition)) problems.push('StateHandler must play the resolved timing');
   if (!/&MD3::Motion::easeLinear, owner_\.get\(\)\);/.test(transition)) problems.push('StateHandler must shape progress itself through a linear animator');
   if (!/progress_ >= 1\.0 \|\| MD3::Motion::reduced\(\)/.test(s.stateHandler)) problems.push('StateHandler must keep painting final colours under reduced motion');
