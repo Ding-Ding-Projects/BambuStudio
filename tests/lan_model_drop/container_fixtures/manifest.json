@@ -64,7 +64,7 @@
    "name": "default",
    "env": {},
    "port": 18852,
-   "startedAt": "2026-10-11T19:12:04Z",
+   "startedAt": "2026-10-11T19:21:16Z",
    "health": {
     "label": "01-health",
     "request": "GET /healthz",
@@ -79,7 +79,7 @@
     "head": "default/02-status-empty.head",
     "body": "default/02-status-empty.body"
    },
-   "dropCode": "460070",
+   "dropCode": "009910",
    "page": {
     "invite": {
      "code": true,
@@ -132,11 +132,11 @@
        "Content-Type": "model/3mf",
        "Host": "127.0.0.1:18852",
        "Origin": "http://127.0.0.1:18852",
-       "X-Drop-Code": "460070",
+       "X-Drop-Code": "009910",
        "X-Drop-Filename": "Bracket%20v2.3mf",
        "X-Drop-Sender": "Mo%20Li"
       },
-      "responseBody": "{\"ok\":true,\"id\":\"325462875d3c9f26251cdb3b9c9eaa94\"}"
+      "responseBody": "{\"ok\":true,\"id\":\"6d536da82c31c0827ef5a0e459854a13\"}"
      },
      {
       "via": "page",
@@ -147,11 +147,11 @@
        "Content-Length": "284",
        "Host": "127.0.0.1:18852",
        "Origin": "http://127.0.0.1:18852",
-       "X-Drop-Code": "460070",
+       "X-Drop-Code": "009910",
        "X-Drop-Filename": "binary%20part.STL",
        "X-Drop-Sender": "Mo%20Li"
       },
-      "responseBody": "{\"ok\":true,\"id\":\"92f01aa10ebf978f8f1d11a02f817714\"}"
+      "responseBody": "{\"ok\":true,\"id\":\"b6c245a6dc059d95c98c7e16dee99994\"}"
      },
      {
       "via": "page",
@@ -162,11 +162,11 @@
        "Content-Length": "215",
        "Host": "127.0.0.1:18852",
        "Origin": "http://127.0.0.1:18852",
-       "X-Drop-Code": "460070",
+       "X-Drop-Code": "009910",
        "X-Drop-Filename": "clip.stp",
        "X-Drop-Sender": "Mo%20Li"
       },
-      "responseBody": "{\"ok\":true,\"id\":\"b89b41bdd12fb60fe76d4b79af0ea62b\"}"
+      "responseBody": "{\"ok\":true,\"id\":\"b58acb7278484b7ff82f6a06262ae226\"}"
      },
      {
       "via": "page",
@@ -177,11 +177,11 @@
        "Content-Length": "216",
        "Host": "127.0.0.1:18852",
        "Origin": "http://127.0.0.1:18852",
-       "X-Drop-Code": "460070",
+       "X-Drop-Code": "009910",
        "X-Drop-Filename": "housing.step",
        "X-Drop-Sender": "Mo%20Li"
       },
-      "responseBody": "{\"ok\":true,\"id\":\"8e0edff98d797ccb096536c9b30655e4\"}"
+      "responseBody": "{\"ok\":true,\"id\":\"39ac4b7049a2593b77e3679112a8afd5\"}"
      },
      {
       "via": "page",
@@ -193,11 +193,11 @@
        "Content-Type": "application/x-tgif",
        "Host": "127.0.0.1:18852",
        "Origin": "http://127.0.0.1:18852",
-       "X-Drop-Code": "460070",
+       "X-Drop-Code": "009910",
        "X-Drop-Filename": "mesh.obj",
        "X-Drop-Sender": "Mo%20Li"
       },
-      "responseBody": "{\"ok\":true,\"id\":\"12c5d2219147aa972d3068504d2b643e\"}"
+      "responseBody": "{\"ok\":true,\"id\":\"982515a114000d995c49fa85a435f82f\"}"
      },
      {
       "via": "page",
@@ -208,11 +208,11 @@
        "Content-Length": "704",
        "Host": "127.0.0.1:18852",
        "Origin": "http://127.0.0.1:18852",
-       "X-Drop-Code": "460070",
+       "X-Drop-Code": "009910",
        "X-Drop-Filename": "model.amf",
        "X-Drop-Sender": "Mo%20Li"
       },
-      "responseBody": "{\"ok\":true,\"id\":\"ec59cee5a4ff9bbf79612bc0b80d4d73\"}"
+      "responseBody": "{\"ok\":true,\"id\":\"090aa45b8581a337a038deefa854c79e\"}"
      },
      {
       "via": "page",
@@ -223,11 +223,11 @@
        "Content-Length": "346",
        "Host": "127.0.0.1:18852",
        "Origin": "http://127.0.0.1:18852",
-       "X-Drop-Code": "460070",
+       "X-Drop-Code": "009910",
        "X-Drop-Filename": "zipped%20model.amf",
        "X-Drop-Sender": "Mo%20Li"
       },
-      "responseBody": "{\"ok\":true,\"id\":\"0583c65e3bf4bd17118eb7cb2449823f\"}"
+      "responseBody": "{\"ok\":true,\"id\":\"0fbdb1d681b41175eeb8b7bd42ef4277\"}"
      },
      {
       "via": "page",
@@ -239,11 +239,11 @@
        "Content-Type": "model/stl",
        "Host": "127.0.0.1:18852",
        "Origin": "http://127.0.0.1:18852",
-       "X-Drop-Code": "460070",
+       "X-Drop-Code": "009910",
        "X-Drop-Filename": "%E7%AB%8B%E6%96%B9%E9%AB%94%20cube.stl",
        "X-Drop-Sender": "Mo%20Li"
       },
-      "responseBody": "{\"ok\":true,\"id\":\"3d06f5e00c90b3790a4429a8df02f32e\"}"
+      "responseBody": "{\"ok\":true,\"id\":\"63107154d82d11edcdbce942fcf11d68\"}"
      }
     ]
    },
@@ -261,7 +261,7 @@
       "Accept: */*",
       "Origin: http://127.0.0.1:18852",
       "Content-Type: model/3mf",
-      "X-Drop-Code: 460070",
+      "X-Drop-Code: 009910",
       "X-Drop-Filename: Bracket%20v2.3mf",
       "X-Drop-Sender: Ada",
       "Content-Length: 1008"
@@ -290,7 +290,7 @@
       "Accept: */*",
       "Origin: http://127.0.0.1:18852",
       "Content-Type: model/stl",
-      "X-Drop-Code: 460070",
+      "X-Drop-Code: 009910",
       "X-Drop-Filename: %E7%AB%8B%E6%96%B9%E9%AB%94%20cube.stl",
       "X-Drop-Sender: %E9%99%B3%E5%A4%A7%E6%96%87",
       "Content-Length: 452"
@@ -318,7 +318,7 @@
       "User-Agent: curl/8.5.0",
       "Accept: */*",
       "Origin: http://127.0.0.1:18852",
-      "X-Drop-Code: 460070",
+      "X-Drop-Code: 009910",
       "X-Drop-Filename: binary%20part.STL",
       "X-Drop-Sender: Bob%20%F0%9F%99%82",
       "Content-Length: 284"
@@ -346,7 +346,7 @@
       "User-Agent: curl/8.5.0",
       "Accept: */*",
       "Origin: http://127.0.0.1:18852",
-      "X-Drop-Code: 460070",
+      "X-Drop-Code: 009910",
       "X-Drop-Filename: housing.step",
       "Content-Length: 216"
      ],
@@ -373,7 +373,7 @@
       "User-Agent: curl/8.5.0",
       "Accept: */*",
       "Origin: http://127.0.0.1:18852",
-      "X-Drop-Code: 460070",
+      "X-Drop-Code: 009910",
       "X-Drop-Filename: clip.stp",
       "X-Drop-Sender: Mo%20Li",
       "Content-Length: 215"
@@ -402,7 +402,7 @@
       "Accept: */*",
       "Origin: http://127.0.0.1:18852",
       "Content-Type: application/x-tgif",
-      "X-Drop-Code: 460070",
+      "X-Drop-Code: 009910",
       "X-Drop-Filename: mesh.obj",
       "X-Drop-Sender: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
       "Content-Length: 89"
@@ -430,7 +430,7 @@
       "User-Agent: curl/8.5.0",
       "Accept: */*",
       "Origin: http://127.0.0.1:18852",
-      "X-Drop-Code: 460070",
+      "X-Drop-Code: 009910",
       "X-Drop-Filename: model.amf",
       "X-Drop-Sender: Lab%20PC%202",
       "Content-Length: 704"
@@ -458,7 +458,7 @@
       "User-Agent: curl/8.5.0",
       "Accept: */*",
       "Origin: http://127.0.0.1:18852",
-      "X-Drop-Code: 460070",
+      "X-Drop-Code: 009910",
       "X-Drop-Filename: zipped%20model.amf",
       "Content-Length: 346"
      ],
@@ -486,7 +486,7 @@
       "Accept: */*",
       "Origin: http://127.0.0.1:18852",
       "Content-Type: model/stl",
-      "X-Drop-Code: 460070",
+      "X-Drop-Code: 009910",
       "X-Drop-Filename: Part%3A%20%22v3%22%3F.stl",
       "Content-Length: 452"
      ],
@@ -514,7 +514,7 @@
       "Accept: */*",
       "Origin: http://127.0.0.1:18852",
       "Content-Type: model/stl",
-      "X-Drop-Code: 460070",
+      "X-Drop-Code: 009910",
       "X-Drop-Filename: CON.stl",
       "Content-Length: 452"
      ],
@@ -542,7 +542,7 @@
       "Accept: */*",
       "Origin: http://127.0.0.1:18852",
       "Content-Type: model/stl",
-      "X-Drop-Code: 460070",
+      "X-Drop-Code: 009910",
       "X-Drop-Filename: COM3%20.x.stl",
       "Content-Length: 452"
      ],
@@ -570,7 +570,7 @@
       "Accept: */*",
       "Origin: http://127.0.0.1:18852",
       "Content-Type: model/stl",
-      "X-Drop-Code: 460070",
+      "X-Drop-Code: 009910",
       "X-Drop-Filename: a%E2%80%AEb.stl",
       "Content-Length: 452"
      ],
@@ -598,7 +598,7 @@
       "Accept: */*",
       "Origin: http://127.0.0.1:18852",
       "Content-Type: model/stl",
-      "X-Drop-Code: 460070",
+      "X-Drop-Code: 009910",
       "X-Drop-Filename: %E2%80%AE%E2%80%AE.stl",
       "Content-Length: 452"
      ],
@@ -625,7 +625,7 @@
       "Accept: */*",
       "Origin: http://127.0.0.1:18852",
       "Content-Type: model/stl",
-      "X-Drop-Code: 460070",
+      "X-Drop-Code: 009910",
       "X-Drop-Filename: %E2%80%8B.stl",
       "Content-Length: 452"
      ],
@@ -680,7 +680,7 @@
       "Accept: */*",
       "Origin: http://127.0.0.1:18852",
       "Content-Type: text/plain",
-      "X-Drop-Code: 460070",
+      "X-Drop-Code: 009910",
       "X-Drop-Filename: notes.txt",
       "Content-Length: 25"
      ],
@@ -707,7 +707,7 @@
       "Accept: */*",
       "Origin: http://127.0.0.1:18852",
       "Content-Type: model/3mf",
-      "X-Drop-Code: 460070",
+      "X-Drop-Code: 009910",
       "X-Drop-Filename: fake.3mf",
       "Content-Length: 30"
      ],
@@ -734,7 +734,7 @@
       "Accept: */*",
       "Origin: http://127.0.0.1:18852",
       "Content-Type: model/stl",
-      "X-Drop-Code: 460070",
+      "X-Drop-Code: 009910",
       "X-Drop-Filename: %E7%AB%8B%E6%96%B9%E9%AB%94%20cube.stl",
       "X-Drop-Sender: yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy",
       "Content-Length: 452"
@@ -762,7 +762,7 @@
       "Accept: */*",
       "Origin: http://127.0.0.1:18852",
       "Content-Type: model/stl",
-      "X-Drop-Code: 460070",
+      "X-Drop-Code: 009910",
       "X-Drop-Filename: %E7%AB%8B%E6%96%B9%E9%AB%94%20cube.stl",
       "Transfer-Encoding: chunked"
      ],
@@ -789,7 +789,7 @@
       "Accept: */*",
       "Origin: http://127.0.0.1:18852",
       "Content-Type: model/stl",
-      "X-Drop-Code: 460070",
+      "X-Drop-Code: 009910",
       "X-Drop-Filename: %E7%AB%8B%E6%96%B9%E9%AB%94%20cube.stl",
       "Content-Length: 452"
      ],
@@ -935,140 +935,140 @@
    "files": [
     {
      "label": "24-file",
-     "request": "GET /api/station/files/325462875d3c9f26251cdb3b9c9eaa94",
+     "request": "GET /api/station/files/6d536da82c31c0827ef5a0e459854a13",
      "status": 200,
      "head": "default/24-file.head",
      "body": "default/24-file.body"
     },
     {
      "label": "25-file",
-     "request": "GET /api/station/files/92f01aa10ebf978f8f1d11a02f817714",
+     "request": "GET /api/station/files/b6c245a6dc059d95c98c7e16dee99994",
      "status": 200,
      "head": "default/25-file.head",
      "body": "default/25-file.body"
     },
     {
      "label": "26-file",
-     "request": "GET /api/station/files/b89b41bdd12fb60fe76d4b79af0ea62b",
+     "request": "GET /api/station/files/b58acb7278484b7ff82f6a06262ae226",
      "status": 200,
      "head": "default/26-file.head",
      "body": "default/26-file.body"
     },
     {
      "label": "27-file",
-     "request": "GET /api/station/files/8e0edff98d797ccb096536c9b30655e4",
+     "request": "GET /api/station/files/39ac4b7049a2593b77e3679112a8afd5",
      "status": 200,
      "head": "default/27-file.head",
      "body": "default/27-file.body"
     },
     {
      "label": "28-file",
-     "request": "GET /api/station/files/12c5d2219147aa972d3068504d2b643e",
+     "request": "GET /api/station/files/982515a114000d995c49fa85a435f82f",
      "status": 200,
      "head": "default/28-file.head",
      "body": "default/28-file.body"
     },
     {
      "label": "29-file",
-     "request": "GET /api/station/files/ec59cee5a4ff9bbf79612bc0b80d4d73",
+     "request": "GET /api/station/files/090aa45b8581a337a038deefa854c79e",
      "status": 200,
      "head": "default/29-file.head",
      "body": "default/29-file.body"
     },
     {
      "label": "30-file",
-     "request": "GET /api/station/files/0583c65e3bf4bd17118eb7cb2449823f",
+     "request": "GET /api/station/files/0fbdb1d681b41175eeb8b7bd42ef4277",
      "status": 200,
      "head": "default/30-file.head",
      "body": "default/30-file.body"
     },
     {
      "label": "31-file",
-     "request": "GET /api/station/files/3d06f5e00c90b3790a4429a8df02f32e",
+     "request": "GET /api/station/files/63107154d82d11edcdbce942fcf11d68",
      "status": 200,
      "head": "default/31-file.head",
      "body": "default/31-file.body"
     },
     {
      "label": "32-file",
-     "request": "GET /api/station/files/289aefba2ca369d3ec2127b1b7cff9e1",
+     "request": "GET /api/station/files/f50e20b3cdc0d370f53b820e4984f7a3",
      "status": 200,
      "head": "default/32-file.head",
      "body": "default/32-file.body"
     },
     {
      "label": "33-file",
-     "request": "GET /api/station/files/4a88283f855b3cb8fa43a9dbf76b9555",
+     "request": "GET /api/station/files/8c948b90713d175cfd0a8fa01c876e68",
      "status": 200,
      "head": "default/33-file.head",
      "body": "default/33-file.body"
     },
     {
      "label": "34-file",
-     "request": "GET /api/station/files/e8e8ba528008e2154de8a3bfd124e71f",
+     "request": "GET /api/station/files/75f339fdedcda7fea409110a3205aea7",
      "status": 200,
      "head": "default/34-file.head",
      "body": "default/34-file.body"
     },
     {
      "label": "35-file",
-     "request": "GET /api/station/files/310aecffafe8289ec95189eb3b77aea4",
+     "request": "GET /api/station/files/5b91382a65827626f6aab8b0ad3c9f07",
      "status": 200,
      "head": "default/35-file.head",
      "body": "default/35-file.body"
     },
     {
      "label": "36-file",
-     "request": "GET /api/station/files/f00728afd1608d6b4a0a199d7270cf6a",
+     "request": "GET /api/station/files/5884e314f0a6109693ff167bc408063c",
      "status": 200,
      "head": "default/36-file.head",
      "body": "default/36-file.body"
     },
     {
      "label": "37-file",
-     "request": "GET /api/station/files/bbf8be029b88ebd295bc593c5578eb18",
+     "request": "GET /api/station/files/c2899fb4c36ba34ec0fab23042cb6993",
      "status": 200,
      "head": "default/37-file.head",
      "body": "default/37-file.body"
     },
     {
      "label": "38-file",
-     "request": "GET /api/station/files/c0963dac3054b29a8108b62ac2fc05a2",
+     "request": "GET /api/station/files/3d266c87c0d8f4170f4ecb3c04b41b51",
      "status": 200,
      "head": "default/38-file.head",
      "body": "default/38-file.body"
     },
     {
      "label": "39-file",
-     "request": "GET /api/station/files/9e97a7e582e98f596efa105ebc78418a",
+     "request": "GET /api/station/files/22c47ca920766773766f7a4cab9314a7",
      "status": 200,
      "head": "default/39-file.head",
      "body": "default/39-file.body"
     },
     {
      "label": "40-file",
-     "request": "GET /api/station/files/b99ab6e98d8c8f8b4a5fd91d88774d50",
+     "request": "GET /api/station/files/9517151a17537388a4c82e234c77d5d9",
      "status": 200,
      "head": "default/40-file.head",
      "body": "default/40-file.body"
     },
     {
      "label": "41-file",
-     "request": "GET /api/station/files/50e3a6ee6d9a00f9df563156814193a6",
+     "request": "GET /api/station/files/a13c1cbe07a99e209a4e17ab84427c70",
      "status": 200,
      "head": "default/41-file.head",
      "body": "default/41-file.body"
     },
     {
      "label": "42-file",
-     "request": "GET /api/station/files/1e28099f909b0d596728f8216f896a91",
+     "request": "GET /api/station/files/ec04a128ef34c756795830d2e6801a7c",
      "status": 200,
      "head": "default/42-file.head",
      "body": "default/42-file.body"
     },
     {
      "label": "43-file",
-     "request": "GET /api/station/files/9e4933ff9f9713d3e73a5558bc4e10a0",
+     "request": "GET /api/station/files/6392165acbc681a4577601faee7bac3c",
      "status": 200,
      "head": "default/43-file.head",
      "body": "default/43-file.body"
@@ -1090,7 +1090,7 @@
    },
    "fileNoKey": {
     "label": "46-file-no-key",
-    "request": "GET /api/station/files/325462875d3c9f26251cdb3b9c9eaa94",
+    "request": "GET /api/station/files/6d536da82c31c0827ef5a0e459854a13",
     "status": 401,
     "head": "default/46-file-no-key.head",
     "body": "default/46-file-no-key.body"
@@ -1119,140 +1119,140 @@
    "deletes": [
     {
      "label": "51-delete",
-     "request": "DELETE /api/station/files/325462875d3c9f26251cdb3b9c9eaa94",
+     "request": "DELETE /api/station/files/6d536da82c31c0827ef5a0e459854a13",
      "status": 204,
      "head": "default/51-delete.head",
      "body": "default/51-delete.body"
     },
     {
      "label": "52-delete",
-     "request": "DELETE /api/station/files/92f01aa10ebf978f8f1d11a02f817714",
+     "request": "DELETE /api/station/files/b6c245a6dc059d95c98c7e16dee99994",
      "status": 204,
      "head": "default/52-delete.head",
      "body": "default/52-delete.body"
     },
     {
      "label": "53-delete",
-     "request": "DELETE /api/station/files/b89b41bdd12fb60fe76d4b79af0ea62b",
+     "request": "DELETE /api/station/files/b58acb7278484b7ff82f6a06262ae226",
      "status": 204,
      "head": "default/53-delete.head",
      "body": "default/53-delete.body"
     },
     {
      "label": "54-delete",
-     "request": "DELETE /api/station/files/8e0edff98d797ccb096536c9b30655e4",
+     "request": "DELETE /api/station/files/39ac4b7049a2593b77e3679112a8afd5",
      "status": 204,
      "head": "default/54-delete.head",
      "body": "default/54-delete.body"
     },
     {
      "label": "55-delete",
-     "request": "DELETE /api/station/files/12c5d2219147aa972d3068504d2b643e",
+     "request": "DELETE /api/station/files/982515a114000d995c49fa85a435f82f",
      "status": 204,
      "head": "default/55-delete.head",
      "body": "default/55-delete.body"
     },
     {
      "label": "56-delete",
-     "request": "DELETE /api/station/files/ec59cee5a4ff9bbf79612bc0b80d4d73",
+     "request": "DELETE /api/station/files/090aa45b8581a337a038deefa854c79e",
      "status": 204,
      "head": "default/56-delete.head",
      "body": "default/56-delete.body"
     },
     {
      "label": "57-delete",
-     "request": "DELETE /api/station/files/0583c65e3bf4bd17118eb7cb2449823f",
+     "request": "DELETE /api/station/files/0fbdb1d681b41175eeb8b7bd42ef4277",
      "status": 204,
      "head": "default/57-delete.head",
      "body": "default/57-delete.body"
     },
     {
      "label": "58-delete",
-     "request": "DELETE /api/station/files/3d06f5e00c90b3790a4429a8df02f32e",
+     "request": "DELETE /api/station/files/63107154d82d11edcdbce942fcf11d68",
      "status": 204,
      "head": "default/58-delete.head",
      "body": "default/58-delete.body"
     },
     {
      "label": "59-delete",
-     "request": "DELETE /api/station/files/289aefba2ca369d3ec2127b1b7cff9e1",
+     "request": "DELETE /api/station/files/f50e20b3cdc0d370f53b820e4984f7a3",
      "status": 204,
      "head": "default/59-delete.head",
      "body": "default/59-delete.body"
     },
     {
      "label": "60-delete",
-     "request": "DELETE /api/station/files/4a88283f855b3cb8fa43a9dbf76b9555",
+     "request": "DELETE /api/station/files/8c948b90713d175cfd0a8fa01c876e68",
      "status": 204,
      "head": "default/60-delete.head",
      "body": "default/60-delete.body"
     },
     {
      "label": "61-delete",
-     "request": "DELETE /api/station/files/e8e8ba528008e2154de8a3bfd124e71f",
+     "request": "DELETE /api/station/files/75f339fdedcda7fea409110a3205aea7",
      "status": 204,
      "head": "default/61-delete.head",
      "body": "default/61-delete.body"
     },
     {
      "label": "62-delete",
-     "request": "DELETE /api/station/files/310aecffafe8289ec95189eb3b77aea4",
+     "request": "DELETE /api/station/files/5b91382a65827626f6aab8b0ad3c9f07",
      "status": 204,
      "head": "default/62-delete.head",
      "body": "default/62-delete.body"
     },
     {
      "label": "63-delete",
-     "request": "DELETE /api/station/files/f00728afd1608d6b4a0a199d7270cf6a",
+     "request": "DELETE /api/station/files/5884e314f0a6109693ff167bc408063c",
      "status": 204,
      "head": "default/63-delete.head",
      "body": "default/63-delete.body"
     },
     {
      "label": "64-delete",
-     "request": "DELETE /api/station/files/bbf8be029b88ebd295bc593c5578eb18",
+     "request": "DELETE /api/station/files/c2899fb4c36ba34ec0fab23042cb6993",
      "status": 204,
      "head": "default/64-delete.head",
      "body": "default/64-delete.body"
     },
     {
      "label": "65-delete",
-     "request": "DELETE /api/station/files/c0963dac3054b29a8108b62ac2fc05a2",
+     "request": "DELETE /api/station/files/3d266c87c0d8f4170f4ecb3c04b41b51",
      "status": 204,
      "head": "default/65-delete.head",
      "body": "default/65-delete.body"
     },
     {
      "label": "66-delete",
-     "request": "DELETE /api/station/files/9e97a7e582e98f596efa105ebc78418a",
+     "request": "DELETE /api/station/files/22c47ca920766773766f7a4cab9314a7",
      "status": 204,
      "head": "default/66-delete.head",
      "body": "default/66-delete.body"
     },
     {
      "label": "67-delete",
-     "request": "DELETE /api/station/files/b99ab6e98d8c8f8b4a5fd91d88774d50",
+     "request": "DELETE /api/station/files/9517151a17537388a4c82e234c77d5d9",
      "status": 204,
      "head": "default/67-delete.head",
      "body": "default/67-delete.body"
     },
     {
      "label": "68-delete",
-     "request": "DELETE /api/station/files/50e3a6ee6d9a00f9df563156814193a6",
+     "request": "DELETE /api/station/files/a13c1cbe07a99e209a4e17ab84427c70",
      "status": 204,
      "head": "default/68-delete.head",
      "body": "default/68-delete.body"
     },
     {
      "label": "69-delete",
-     "request": "DELETE /api/station/files/1e28099f909b0d596728f8216f896a91",
+     "request": "DELETE /api/station/files/ec04a128ef34c756795830d2e6801a7c",
      "status": 204,
      "head": "default/69-delete.head",
      "body": "default/69-delete.body"
     },
     {
      "label": "70-delete",
-     "request": "DELETE /api/station/files/9e4933ff9f9713d3e73a5558bc4e10a0",
+     "request": "DELETE /api/station/files/6392165acbc681a4577601faee7bac3c",
      "status": 204,
      "head": "default/70-delete.head",
      "body": "default/70-delete.body"
@@ -1261,14 +1261,14 @@
    "deletesAgain": [
     {
      "label": "71-delete-again",
-     "request": "DELETE /api/station/files/325462875d3c9f26251cdb3b9c9eaa94",
+     "request": "DELETE /api/station/files/6d536da82c31c0827ef5a0e459854a13",
      "status": 204,
      "head": "default/71-delete-again.head",
      "body": "default/71-delete-again.body"
     },
     {
      "label": "72-delete-again",
-     "request": "DELETE /api/station/files/92f01aa10ebf978f8f1d11a02f817714",
+     "request": "DELETE /api/station/files/b6c245a6dc059d95c98c7e16dee99994",
      "status": 204,
      "head": "default/72-delete-again.head",
      "body": "default/72-delete-again.body"
@@ -1277,14 +1277,14 @@
    "filesGone": [
     {
      "label": "73-file-gone",
-     "request": "GET /api/station/files/325462875d3c9f26251cdb3b9c9eaa94",
+     "request": "GET /api/station/files/6d536da82c31c0827ef5a0e459854a13",
      "status": 404,
      "head": "default/73-file-gone.head",
      "body": "default/73-file-gone.body"
     },
     {
      "label": "74-file-gone",
-     "request": "GET /api/station/files/92f01aa10ebf978f8f1d11a02f817714",
+     "request": "GET /api/station/files/b6c245a6dc059d95c98c7e16dee99994",
      "status": 404,
      "head": "default/74-file-gone.head",
      "body": "default/74-file-gone.body"
@@ -1297,7 +1297,7 @@
     "head": "default/75-inbox-empty.head",
     "body": "default/75-inbox-empty.body"
    },
-   "finishedAt": "2026-10-11T19:12:12Z"
+   "finishedAt": "2026-10-11T19:21:27Z"
   },
   {
    "name": "custom",
@@ -1311,7 +1311,7 @@
     "DROP_QUEUE_MAX_BYTES": "2048"
    },
    "port": 18852,
-   "startedAt": "2026-10-11T19:12:13Z",
+   "startedAt": "2026-10-11T19:21:27Z",
    "expect": {
     "stationName": "\u4e01\u4e01\u6253\u5370\u5ba4 Bambu Studio MD3 on the workshop PC by the window ok",
     "dropCode": "4321",
@@ -1463,14 +1463,14 @@
    "files": [
     {
      "label": "09-file",
-     "request": "GET /api/station/files/8686a408fe5a97113a0e396a6824c885",
+     "request": "GET /api/station/files/833accda470d76ef6dfe8506e61f4b8f",
      "status": 200,
      "head": "custom/09-file.head",
      "body": "custom/09-file.body"
     },
     {
      "label": "10-file",
-     "request": "GET /api/station/files/90e7e6a68914a9dac2bb90c667e82044",
+     "request": "GET /api/station/files/3a12c8ac9ccff2100cd8dc94bf922f4c",
      "status": 200,
      "head": "custom/10-file.head",
      "body": "custom/10-file.body"
@@ -1486,14 +1486,14 @@
    "deletes": [
     {
      "label": "12-delete",
-     "request": "DELETE /api/station/files/8686a408fe5a97113a0e396a6824c885",
+     "request": "DELETE /api/station/files/833accda470d76ef6dfe8506e61f4b8f",
      "status": 204,
      "head": "custom/12-delete.head",
      "body": "custom/12-delete.body"
     },
     {
      "label": "13-delete",
-     "request": "DELETE /api/station/files/90e7e6a68914a9dac2bb90c667e82044",
+     "request": "DELETE /api/station/files/3a12c8ac9ccff2100cd8dc94bf922f4c",
      "status": 204,
      "head": "custom/13-delete.head",
      "body": "custom/13-delete.body"
@@ -1506,7 +1506,7 @@
     "head": "custom/14-inbox-empty.head",
     "body": "custom/14-inbox-empty.body"
    },
-   "finishedAt": "2026-10-11T19:12:19Z"
+   "finishedAt": "2026-10-11T19:21:34Z"
   }
  ],
  "refusedSettings": [
@@ -1538,7 +1538,7 @@
    "exitCode": 2,
    "expectedExitCode": 2,
    "message": [
-    "lan-model-drop: DROP_PUBLIC_URL must be an http:// or https:// address without a user name, password, query or fragment, for example http://192.0.2.20:8833. The host must be a name of letters, digits and hyphens, an IPv4 address or an IPv6 address in brackets, the port 1 to 65535, and the whole address at most 1024 characters."
+    "lan-model-drop: DROP_PUBLIC_URL must be an http:// or https:// address without a user name, password, query or fragment, for example http://192.0.2.20:8833. The host must be a name of letters, digits and hyphens, an IPv4 address or an IPv6 address in brackets, the port 1 to 65535, the path plain address characters without empty parts, and the whole address at most 1024 characters."
    ]
   },
   {
@@ -1548,7 +1548,7 @@
    "exitCode": 2,
    "expectedExitCode": 2,
    "message": [
-    "lan-model-drop: DROP_PUBLIC_URL must be an http:// or https:// address without a user name, password, query or fragment, for example http://192.0.2.20:8833. The host must be a name of letters, digits and hyphens, an IPv4 address or an IPv6 address in brackets, the port 1 to 65535, and the whole address at most 1024 characters."
+    "lan-model-drop: DROP_PUBLIC_URL must be an http:// or https:// address without a user name, password, query or fragment, for example http://192.0.2.20:8833. The host must be a name of letters, digits and hyphens, an IPv4 address or an IPv6 address in brackets, the port 1 to 65535, the path plain address characters without empty parts, and the whole address at most 1024 characters."
    ]
   },
   {
@@ -1558,7 +1558,7 @@
    "exitCode": 2,
    "expectedExitCode": 2,
    "message": [
-    "lan-model-drop: DROP_PUBLIC_URL must be an http:// or https:// address without a user name, password, query or fragment, for example http://192.0.2.20:8833. The host must be a name of letters, digits and hyphens, an IPv4 address or an IPv6 address in brackets, the port 1 to 65535, and the whole address at most 1024 characters."
+    "lan-model-drop: DROP_PUBLIC_URL must be an http:// or https:// address without a user name, password, query or fragment, for example http://192.0.2.20:8833. The host must be a name of letters, digits and hyphens, an IPv4 address or an IPv6 address in brackets, the port 1 to 65535, the path plain address characters without empty parts, and the whole address at most 1024 characters."
    ]
   }
  ],

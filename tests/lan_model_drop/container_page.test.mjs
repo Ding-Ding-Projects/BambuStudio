@@ -74,7 +74,7 @@ test('the sender page from the container sends every chosen model, and its reque
   const browser = spawn(env.CHROMIUM_PATH, [
     '--headless=new', '--no-sandbox', '--disable-gpu', '--no-first-run', '--no-default-browser-check',
     '--disable-background-networking', '--disable-component-update', '--disable-sync', '--no-pings',
-    '--disable-default-apps', '--disable-domain-reliability', '--lang=en-US',
+    '--disable-default-apps', '--disable-domain-reliability', '--disable-breakpad', '--disable-crash-reporter', '--lang=en-US',
     `--user-data-dir=${profile}`, '--remote-debugging-port=0', 'about:blank',
   ], { stdio: ['ignore', 'ignore', 'pipe'], env: { ...env, TMPDIR: root, LANG: 'C.UTF-8', LC_ALL: 'C.UTF-8' } });
   const exited = new Promise((resolve) => browser.once('exit', resolve));
@@ -84,7 +84,12 @@ test('the sender page from the container sends every chosen model, and its reque
     devtools?.socket.close();
     browser.kill('SIGKILL');
     await exited;
-    fs.rmSync(root, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 });
+    // Best effort: a helper process Chromium started may still be writing into its profile.
+    try {
+      fs.rmSync(root, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 });
+    } catch {
+      // Left in the temporary folder.
+    }
   });
   const active = path.join(profile, 'DevToolsActivePort');
   const [port, socketPath] = await waitFor(() => fs.existsSync(active) && fs.readFileSync(active, 'utf8').trim().split('\n'), 'DevTools');
