@@ -798,6 +798,8 @@ list(APPEND SLIC3R_GUI_SOURCES
     GUI/Appearance/ElementMotion.hpp
     GUI/Appearance/AppearanceEditorPopover.cpp
     GUI/Appearance/AppearanceEditorPopover.hpp
+    GUI/Appearance/AppearanceMotionPage.cpp
+    GUI/Appearance/AppearanceMotionPage.hpp
     GUI/Presets/BlankEditorPresets.cpp
     GUI/Presets/BlankEditorPresets.hpp
     GUI/Presets/StartFromPicker.cpp

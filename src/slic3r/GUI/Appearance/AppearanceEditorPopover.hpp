@@ -8,9 +8,10 @@
 // from its anchor, and returns focus to the anchor when it closes.
 //
 // Sections (tabs inside the card): Typography, Colours, Shape & spacing,
-// Presets. Every change writes the registry (ElementStyle) at once, so the
-// anchor and every other adopted window re-style live, and the file under
-// data_dir()/appearance is saved.
+// Presets, Animation and transition (AppearanceMotionPage). Every change
+// writes the registry (ElementStyle) at once, so the anchor and every other
+// adopted window re-style live, and the file under data_dir()/appearance is
+// saved.
 //
 // Opening routes:
 //   * "Edit appearance..." in every Material context menu (via
@@ -45,6 +46,7 @@ namespace Slic3r { namespace GUI {
 
 class ListBox;
 class AppearanceDecimalField;
+class AppearanceMotionPage;
 
 class AppearanceEditorPopover : public wxFrame
 {
@@ -61,7 +63,8 @@ public:
     // Re-target the open card to another element (rebuilds the controls).
     void retarget(wxWindow *anchor, const std::string &element_id);
 
-    // Select a section by index: 0 Typography, 1 Colours, 2 Shape, 3 Presets.
+    // Select a section by index: 0 Typography, 1 Colours, 2 Shape, 3 Presets,
+    // 4 Animation and transition.
     void show_section(int index);
 
 private:
@@ -73,6 +76,7 @@ private:
     void build_colours(wxWindow *page);
     void build_shape(wxWindow *page);
     void build_presets(wxWindow *page);
+    void build_motion(wxWindow *page);
     void refresh_from_registry();
     void refresh_font_list();
     void refresh_preset_list();
@@ -148,6 +152,9 @@ private:
     int                      m_preset_page_width { -1 };
 
     std::map<std::string, Button *> m_reset_buttons; // key -> per-property reset
+
+    // Animation and transition
+    AppearanceMotionPage *m_motion { nullptr };
 
     static AppearanceEditorPopover *s_current;
 };

@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <functional>
 #include <cmath>
+#include <iterator>
 #include <set>
 
 #include <wx/dcbuffer.h>
@@ -17,6 +18,7 @@
 #include <wx/wrapsizer.h>
 #include <wx/spinctrl.h>
 
+#include "AppearanceMotionPage.hpp"
 #include "ElementStyle.hpp"
 #include "slic3r/GUI/GUI.hpp"
 #include "slic3r/GUI/I18N.hpp"
@@ -255,7 +257,14 @@ AppearanceEditorPopover *AppearanceEditorPopover::open_for(wxWindow *anchor, con
     }
     s_current = new AppearanceEditorPopover(anchor, element_id);
     s_current->Show();
-    MD3::Motion::FadeIn(s_current, MD3::Motion::short2);
+    // The card's own opening fade is a window entrance of the element
+    // "appearance-editor", edited on its Animation and transition tab.
+    const char *card = AppearanceMotionPage::editor_card_id();
+    ElementStyle::registry().register_id(card, _L("Appearance editor"));
+    const ElementMotion::Timing entrance = ElementStyle::entrance_for(s_current, card, MD3::Motion::short2);
+    MD3::Motion::FadeIn(s_current, entrance.total_ms(), [entrance](double t) { return entrance.progress(t); });
+    if (s_current->m_motion)
+        s_current->m_motion->retarget(); // the entrance is known now
     if (!s_current->m_section_buttons.empty())
         s_current->m_section_buttons[0]->SetFocus();
     return s_current;
@@ -312,6 +321,8 @@ void AppearanceEditorPopover::retarget(wxWindow *anchor, const std::string &elem
     m_id     = element_id;
     m_last_anchor_rect = wxRect();
     refresh_from_registry();
+    if (m_motion)
+        m_motion->retarget();
     Refresh(); // redraw child previews against the newly selected element
     place();
 }
@@ -336,6 +347,11 @@ void AppearanceEditorPopover::place()
         return;
     const wxRect anchor_rect = anchor->GetScreenRect();
     m_last_anchor_rect       = anchor_rect;
+    // Editing one of this card's own controls: the anchor moves with the card,
+    // so placing beside it again would chase it across the screen. Stay put.
+    for (wxWindow *w = anchor; w; w = w->GetParent())
+        if (w == this)
+            return;
     int idx = wxDisplay::GetFromWindow(anchor);
     if (idx == wxNOT_FOUND)
         idx = 0;
@@ -475,8 +491,9 @@ void AppearanceEditorPopover::build()
 
     // Section tabs.
     auto *tabs = new wxWrapSizer(wxHORIZONTAL);
-    const wxString names[] = {_L("Typography"), _L("Colours"), _L("Shape & spacing"), _L("Presets")};
-    for (int i = 0; i < 4; ++i) {
+    const wxString names[] = {_L("Typography"), _L("Colours"), _L("Shape & spacing"), _L("Presets"),
+                              _L("Animation and transition")};
+    for (int i = 0; i < static_cast<int>(std::size(names)); ++i) {
         auto *b = new Button(this, names[i]);
         b->SetVariant(i == 0 ? Button::Variant::Tonal : Button::Variant::Text);
         b->SetButtonSize(Button::Size::Small);
@@ -506,6 +523,7 @@ void AppearanceEditorPopover::build()
     add_page(_L("Colours"), &AppearanceEditorPopover::build_colours);
     add_page(_L("Shape & spacing"), &AppearanceEditorPopover::build_shape);
     add_page(_L("Presets"), &AppearanceEditorPopover::build_presets);
+    add_page(_L("Animation and transition"), &AppearanceEditorPopover::build_motion);
     root->Add(m_book, 1, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(10));
 
     // Footer: element reset, global reset.
@@ -877,6 +895,15 @@ void AppearanceEditorPopover::build_presets(wxWindow *page)
         if (page->GetClientSize().x != m_preset_page_width)
             reflow_preset_page();
     });
+}
+
+void AppearanceEditorPopover::build_motion(wxWindow *page)
+{
+    // The motion page reads m_id by reference, so retargeting needs no rebuild.
+    m_motion = new AppearanceMotionPage(page, m_id, [this]() { return m_anchor.get(); });
+    auto *s = new wxBoxSizer(wxVERTICAL);
+    s->Add(m_motion, 1, wxEXPAND);
+    page->SetSizer(s);
 }
 
 void AppearanceEditorPopover::show_section(int index)
