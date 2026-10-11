@@ -26,6 +26,7 @@
 // and nlohmann::json so tests/appearance can exercise it without GUI_App; the
 // wxWindow adopter (ElementStyle::apply and friends) lives beside it.
 
+#include "ElementMotion.hpp"
 #include "StyleMetrics.hpp"
 
 #include <cstdint>
@@ -67,7 +68,9 @@ inline constexpr const char *margin         = "margin";        // number, px
 
 // Every key above, in display order.
 const std::vector<std::string> &all();
-// True when `key` is one of the known properties.
+// True when `key` is one of the known properties above or one of the
+// eighteen per-element motion keys ("motion.<trigger>.<field>", see
+// ElementMotion.hpp), which resolve through the same layers.
 bool is_known(const std::string &key);
 } // namespace StyleProp
 
@@ -217,6 +220,31 @@ public:
     // Typed, finite, bounded geometry for owner-drawn widget paint/layout sites.
     static StyleMetrics metrics_for(const std::string &id, const StyleMetrics &base = {});
 
+    // --- Motion --------------------------------------------------------------
+    // The timing a consumer plays for `trigger` of element `id`: each of
+    // duration, delay and easing resolves through the same layers as every
+    // other property; unset or invalid fields keep the consumer's Material
+    // default (`default_duration_ms`, standard curve, no delay). An empty id
+    // is the default. Reduced motion is the consumer's own check
+    // (MD3::Motion::reduced()) and always wins.
+    static ElementMotion::Timing   motion_for(const std::string &id, ElementMotion::Trigger trigger,
+                                              int default_duration_ms);
+    // The same resolution with what was stored for each field and why an
+    // invalid one was not used, for the editor.
+    static ElementMotion::Resolved motion_state(const std::string &id, ElementMotion::Trigger trigger,
+                                                int default_duration_ms);
+    // Entrance consumers (a top-level window fading in) call this when they
+    // start: it records that `window` has an entrance, under `id` (empty when
+    // the window is not an adopted element), and returns its timing.
+    static ElementMotion::Timing entrance_for(wxWindow *window, const std::string &id, int default_duration_ms);
+    struct EntranceInfo
+    {
+        bool        has_entrance { false }; // an entrance consumer has run for the window
+        std::string id;                     // the element id its timing is read from
+        int         default_duration_ms { 0 };
+    };
+    static EntranceInfo entrance_of(const wxWindow *window);
+
     // --- Adopter -----------------------------------------------------------
     // Register `window` under `id`: remembers the window's current font and
     // colours as the base, applies the resolved style now, re-applies on every
@@ -231,6 +259,8 @@ public:
     // The id `window` (or its nearest adopted ancestor) was adopted under;
     // empty when none.
     static std::string element_id_of(const wxWindow *window);
+    // The id `window` itself was adopted under, without the ancestor walk.
+    static std::string own_id_of(const wxWindow *window);
     static wxString    display_name_of(const std::string &id);
     // Re-apply the style to every adopted window (after a theme flip, for
     // example, when the remembered base colours went stale).

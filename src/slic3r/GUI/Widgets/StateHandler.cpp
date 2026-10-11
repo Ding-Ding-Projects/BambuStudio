@@ -1,6 +1,15 @@
 #include <wx/window.h>
 #include "StateHandler.hpp"
 #include "StateMotionMath.hpp"
+#include "../Appearance/ElementMotion.hpp"
+#include "../Appearance/ElementStyle.hpp"
+
+// The motion model names triggers by these bits; keep them in step.
+static_assert(StateHandler::Enabled == Slic3r::GUI::ElementMotion::kEnabledBit, "motion trigger bit");
+static_assert(StateHandler::Checked == Slic3r::GUI::ElementMotion::kCheckedBit, "motion trigger bit");
+static_assert(StateHandler::Focused == Slic3r::GUI::ElementMotion::kFocusedBit, "motion trigger bit");
+static_assert(StateHandler::Hovered == Slic3r::GUI::ElementMotion::kHoveredBit, "motion trigger bit");
+static_assert(StateHandler::Pressed == Slic3r::GUI::ElementMotion::kPressedBit, "motion trigger bit");
 
 wxDEFINE_EVENT(EVT_ENABLE_CHANGED, wxCommandEvent);
 
@@ -49,10 +58,17 @@ void StateHandler::transition(int previous_states)
     for (const auto *color : colors_) starts[color] = colorFor(*color, previous_states);
     from_colors_ = std::move(starts);
     progress_ = 0.0;
-    motion_.Play(MD3::Motion::short2, [this](double t) {
-        progress_ = t;
+    // The element's own timing for this state change (appearance editor,
+    // Animation and transition tab), else the Material short2 standard
+    // transition. Reduced motion still settles at once inside Anim::Play.
+    namespace Motion = Slic3r::GUI::ElementMotion;
+    const Motion::Timing timing = Slic3r::GUI::ElementStyle::motion_for(
+        Slic3r::GUI::ElementStyle::element_id_of(owner_.get()),
+        Motion::trigger_for_change(previous_states, states()), MD3::Motion::short2);
+    motion_.Play(timing.total_ms(), [this, timing](double t) {
+        progress_ = timing.progress(t);
         if (owner_) owner_->Refresh(false);
-    }, nullptr, &MD3::Motion::easeStandard, owner_.get());
+    }, nullptr, &MD3::Motion::easeLinear, owner_.get());
 }
 
 void StateHandler::attach(StateColor const &color)

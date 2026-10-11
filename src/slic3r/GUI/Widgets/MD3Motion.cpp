@@ -1,4 +1,5 @@
 #include "MD3Motion.hpp"
+#include "MD3EasingMath.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -13,41 +14,20 @@
 
 namespace MD3 { namespace Motion {
 
-namespace {
-double bezierCoordinate(double t, double a, double b, double c, double d)
-{
-    const double s = 1.0 - t;
-    return s*s*s*a + 3.0*s*s*t*b + 3.0*s*t*t*c + t*t*t*d;
-}
-
-double bezierAtX(double x, double x0, double y0, double x1, double y1,
-                 double x2, double y2, double x3, double y3)
-{
-    double lo = 0.0, hi = 1.0;
-    for (int i = 0; i < 32; ++i) {
-        const double mid = (lo + hi) * 0.5;
-        if (bezierCoordinate(mid, x0, x1, x2, x3) < x) lo = mid;
-        else hi = mid;
-    }
-    return bezierCoordinate((lo + hi) * 0.5, y0, y1, y2, y3);
-}
-} // namespace
-
 double easeStandard(double t)
 {
-    if (t <= 0.0) return 0.0;
-    if (t >= 1.0) return 1.0;
-    return bezierAtX(t, 0, 0, 0.2, 0, 0, 1, 1, 1);
+    return Math::standard(t);
 }
 
 double easeEmphasized(double t)
 {
-    if (t <= 0.0) return 0.0;
-    if (t >= 1.0) return 1.0;
     // Material's emphasized path uses two connected cubic segments.
-    if (t <= 0.166666)
-        return bezierAtX(t, 0, 0, 0.05, 0, 0.133333, 0.06, 0.166666, 0.4);
-    return bezierAtX(t, 0.166666, 0.4, 0.208333, 0.82, 0.25, 1, 1, 1);
+    return Math::emphasized(t);
+}
+
+double easeLinear(double t)
+{
+    return t <= 0.0 ? 0.0 : (t >= 1.0 ? 1.0 : t);
 }
 
 namespace {
@@ -150,6 +130,11 @@ void Anim::Notify()
 
 void FadeIn(wxWindow *window, int duration_ms)
 {
+    FadeIn(window, duration_ms, [](double t) { return easeStandard(t); });
+}
+
+void FadeIn(wxWindow *window, int total_ms, std::function<double(double)> progress)
+{
     if (window == nullptr)
         return;
 #ifdef _WIN32
@@ -161,18 +146,22 @@ void FadeIn(wxWindow *window, int duration_ms)
         ::SetWindowLongW(hwnd, GWL_EXSTYLE, ::GetWindowLongW(hwnd, GWL_EXSTYLE) & ~WS_EX_LAYERED);
         return;
     }
+    if (!progress)
+        progress = [](double t) { return easeStandard(t); };
     ::SetWindowLongW(hwnd, GWL_EXSTYLE, ::GetWindowLongW(hwnd, GWL_EXSTYLE) | WS_EX_LAYERED);
     ::SetLayeredWindowAttributes(hwnd, 0, (BYTE) kEntranceFloorAlpha, LWA_ALPHA);
     auto *anim = new Anim();
     wxWeakRef<wxWindow> ref(window);
-    anim->Play(duration_ms,
-        [ref](double t) {
+    anim->Play(total_ms,
+        [ref, progress](double t) {
             if (!ref)
                 return;
             HWND h = (HWND) ref->GetHWND();
             if (h == nullptr)
                 return;
-            const BYTE alpha = (BYTE) std::max<long>(kEntranceFloorAlpha, std::lround(255.0 * t));
+            // The final frame is always fully opaque, whatever the curve returns.
+            const double shown = t >= 1.0 ? 1.0 : std::clamp(progress(t), 0.0, 1.0);
+            const BYTE alpha = (BYTE) std::max<long>(kEntranceFloorAlpha, std::lround(255.0 * shown));
             ::SetLayeredWindowAttributes(h, 0, alpha, LWA_ALPHA);
             if (t >= 1.0) // drop the layered style once opaque (avoids DWM cost)
                 ::SetWindowLongW(h, GWL_EXSTYLE, ::GetWindowLongW(h, GWL_EXSTYLE) & ~WS_EX_LAYERED);
@@ -180,7 +169,7 @@ void FadeIn(wxWindow *window, int duration_ms)
         // Deferred delete: done() can fire synchronously from inside Play()
         // (reduced motion), so the Anim must never delete itself re-entrantly.
         [anim]() { wxTheApp->CallAfter([anim]() { delete anim; }); },
-        &easeStandard, window,
+        &easeLinear, window,
         [anim]() { wxTheApp->CallAfter([anim]() { delete anim; }); });
 
     // wxTimer::Start can fail (no event loop yet, timer exhaustion). Without
@@ -190,7 +179,8 @@ void FadeIn(wxWindow *window, int duration_ms)
         ::SetWindowLongW(hwnd, GWL_EXSTYLE, ::GetWindowLongW(hwnd, GWL_EXSTYLE) & ~WS_EX_LAYERED);
     }
 #else
-    (void) duration_ms;
+    (void) total_ms;
+    (void) progress;
 #endif
 }
 

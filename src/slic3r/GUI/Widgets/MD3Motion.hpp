@@ -34,6 +34,9 @@ bool reduced();
 // Easing — md.sys.motion.easing.standard / .emphasized (decelerate flavour).
 double easeStandard(double t);
 double easeEmphasized(double t);
+// Identity curve, for callers that shape progress themselves (per-element
+// timing with a delay or a custom easing; see Appearance/ElementMotion.hpp).
+double easeLinear(double t);
 
 // One animation: drives `tick(eased01)` at ~60fps for `duration_ms`, then
 // `tick(1.0)` and `done()`. Restarting an in-flight Anim cancels the old run
@@ -79,6 +82,10 @@ private:
 // from transparent over `duration_ms` via MSW layered-window alpha (no-op
 // jump under reduced motion / non-MSW). The Anim is self-owned.
 void FadeIn(wxWindow *window, int duration_ms = medium1);
+// The same fade over `total_ms`, with `progress` mapping the elapsed fraction
+// (0..1) to opacity progress. It must return 1 at 1 so the window always ends
+// fully opaque.
+void FadeIn(wxWindow *window, int total_ms, std::function<double(double)> progress);
 
 } } // namespace MD3::Motion
 

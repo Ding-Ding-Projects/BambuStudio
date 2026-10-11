@@ -4,9 +4,12 @@
 #include "MD3Motion.hpp"
 
 #include "slic3r/GUI/I18N.hpp"
+#include "slic3r/GUI/Appearance/ElementStyle.hpp"
 #include "MD3Tokens.hpp"
 #include "MaterialIcon.hpp"
 #include "StateColor.hpp"
+
+#include <algorithm>
 
 #include <wx/dcbuffer.h>
 #include <wx/dialog.h>
@@ -53,6 +56,9 @@ void MD3TransientEntrance::Stop()
 void MD3TransientEntrance::Show(wxWindow *owner, int duration_ms)
 {
     Stop();
+    // Record the entrance for the appearance editor's Window entrance
+    // section, even when reduced motion will skip the fade below.
+    Slic3r::GUI::ElementStyle::entrance_for(owner, Slic3r::GUI::ElementStyle::own_id_of(owner), duration_ms);
     m_owner = owner;
     const auto generation = m_generation;
     // wxEVT_SHOW can precede native visibility. Only the visual entrance is
@@ -75,11 +81,17 @@ void MD3TransientEntrance::Begin(int duration_ms)
     if (!::SetWindowLongPtrW(hwnd, GWL_EXSTYLE, style | WS_EX_LAYERED) && ::GetLastError()) return;
     m_native_handle = hwnd;
     if (!::SetLayeredWindowAttributes(hwnd, 0, 64, LWA_ALPHA)) { Restore(); return; }
-    m_anim.Play(duration_ms, [this](double t) {
+    // The window's own entrance timing when it is an adopted element (the
+    // appearance editor's Window entrance section), else the call site's
+    // Material duration with the standard curve.
+    const auto timing = Slic3r::GUI::ElementStyle::entrance_for(
+        m_owner.get(), Slic3r::GUI::ElementStyle::own_id_of(m_owner.get()), duration_ms);
+    m_anim.Play(timing.total_ms(), [this, timing](double t) {
         if (!m_owner || m_owner->GetHWND() != m_native_handle) return;
         const auto h = static_cast<HWND>(m_native_handle);
-        ::SetLayeredWindowAttributes(h, 0, static_cast<BYTE>(64 + 191 * t), LWA_ALPHA);
-    }, [this]() { Restore(); }, &MD3::Motion::easeStandard, m_owner.get(),
+        const double shown = t >= 1.0 ? 1.0 : std::clamp(timing.progress(t), 0.0, 1.0);
+        ::SetLayeredWindowAttributes(h, 0, static_cast<BYTE>(64 + 191 * shown), LWA_ALPHA);
+    }, [this]() { Restore(); }, &MD3::Motion::easeLinear, m_owner.get(),
        [this]() { m_native_handle = nullptr; });
 #else
     (void) duration_ms;
