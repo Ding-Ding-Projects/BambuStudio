@@ -216,6 +216,7 @@ public:
     wxWindow* create_user_tab();
     wxWindow* create_3d_tab();
     wxWindow* create_other_tab();
+    wxWindow* create_lan_drop_tab();
     wxWindow* create_developer_tab();
     wxBoxSizer *create_bottom_buttons();
     void on_reset_all_warnings();

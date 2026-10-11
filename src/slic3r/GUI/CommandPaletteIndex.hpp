@@ -74,6 +74,7 @@ enum PreferencePage : int {
     Page3D         = 3,
     PageOther      = 4,
     PageDeveloper  = 5,
+    PageLanDrop    = 6, // LAN model drop (its own section, after Other)
 };
 
 const std::vector<const char *> &preference_page_names();

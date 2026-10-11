@@ -12,6 +12,7 @@
 #include "FeatureServices/PresentationRoutes.hpp"
 #include "Documentation/OfflineDocumentation.hpp"
 #include "I18N.hpp"
+#include "LanModelDrop/LanModelDropStation.hpp"
 #include "MainFrame.hpp"
 #include "Notebook.hpp"
 #include "Plater.hpp"
@@ -246,6 +247,17 @@ void CommandPalette::collect_entries()
     m_entries.push_back({MaterialIcon::Search, _L("Search in settings"),
                          _L("Find any print / filament / printer parameter"),
                          [this]() { wxGetApp().sidebar().search(); }});
+
+    // LAN model drop: the invite dialog and the Preferences section.
+    m_entries.push_back({MaterialIcon::Lan, _L("Invite someone to send a model"),
+                         _L("Link and QR code for the LAN drop site, so someone on your network can send a 3D model"),
+                         [this]() {
+                             MainFrame *frame = m_frame;
+                             frame->CallAfter([frame]() { LanModelDrop::open_invite_dialog(frame); });
+                         }});
+    m_entries.push_back({MaterialIcon::Lan, _L("LAN model drop settings"),
+                         _L("Receive models from the LAN drop site: switch, address, station key and status"),
+                         []() { LanModelDrop::open_preferences_section(); }});
 
     m_entries.push_back({MaterialIcon::Undo, _L("Restore original imported geometry"),
                          _L("Restore unchanged meshes reduced by automatic model import simplification"),

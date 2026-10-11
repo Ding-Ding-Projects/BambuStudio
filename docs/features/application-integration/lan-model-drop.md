@@ -1,0 +1,187 @@
+# LAN model drop
+
+People on your local network can send a 3D model to the Bambu Studio on this computer from a phone
+or a laptop browser. A small site runs in a Docker container (the `lan-model-drop` service in the
+`lan-model-drop/` folder of this repository); Bambu Studio is the station that collects what
+arrives. Every model waits for you: nothing is opened, sliced or printed until you choose Open.
+
+The option is off by default.
+
+## Where to find it
+
+- **Preferences, LAN model drop.** A section of its own in the Preferences strip, after Other. It
+  holds the switch **Receive models from the LAN drop site**, the invite, and the connection rows.
+- **File, LAN model drop...** opens that section on the switch.
+- **File, Invite someone to send a model...** opens the invite dialog.
+- **Command palette (Ctrl+Shift+F).** "Invite someone to send a model", "LAN model drop settings"
+  and every row of the section ("Receive models from the LAN drop site", "Invite link and QR code",
+  "Test connection", "Drop site address", "Station key", "Drop code") land on the exact row.
+- **Settings search** in Preferences finds the same rows.
+- **Title bar.** While the option is on, a LAN indicator sits left of the notification bell. It is
+  Primary while connected, Error on a problem and neutral while connecting, carries the number of
+  received files waiting as a badge, and opens the invite dialog. Its tooltip is its accessible
+  name and states the status.
+
+## Setting it up
+
+1. Start the drop site on a computer of your network (usually this one) as its README describes,
+   for example `docker compose up -d` in `lan-model-drop/`. It publishes port 8833 by default.
+2. Read its station key on that computer:
+   `docker compose exec lan-model-drop node server/station-key.mjs`.
+3. In Bambu Studio open **File, LAN model drop...**, switch on **Receive models from the LAN drop
+   site**, paste the key into **Station key** and press **Save key** (or Enter).
+4. Leave **Drop site address** at `http://localhost:8833` when the container runs on this computer,
+   or enter the address Bambu Studio reaches it at, such as `http://my-nas.local:8833`. The field
+   accepts `http://` or `https://`, a host name or an IPv4 address and an optional port; anything
+   else is refused with an explanation and not saved.
+5. **Test connection** checks `/healthz` and then the station status with the key. The status line
+   reads Connected (with the station name), Not reachable, Wrong station key, Protocol not
+   supported, Station key needed, Address not valid or Protected key storage unavailable.
+
+## The invite
+
+The invite is what you hand to the person who sends the model. It appears in the Preferences
+section right under the switch, so it is the first thing shown once the option is on, and in the
+dialog **Invite someone to send a model**, which offers **Turn on LAN model drop** while the option
+is off and then moves focus to **Copy link** as soon as the link exists.
+
+- **The link** is `<base>/#code=<drop code>`, shown as selectable text. The drop code travels in the
+  fragment, so it reaches neither server logs nor a Referer header; the site reads it, fills the
+  code field and removes the fragment from the address bar.
+- **The base**, in this order: the container's public URL when it reports one (`publicUrl` from
+  `DROP_PUBLIC_URL`, for a reverse proxy or a fixed name); otherwise the configured address when it
+  is not a loopback address; otherwise `http://<this computer's private LAN IPv4>:<port>` with the
+  configured scheme and port. When this computer has several private IPv4 addresses (10/8,
+  172.16/12, 192.168/16), **Address of this computer** lets you pick one; the choice is remembered.
+  Loopback, link-local, multicast and public addresses are never offered. A line under the link says
+  which base is in use. With no usable base the invite says so instead of showing a link.
+- Under the link, the base and the drop code are also shown on their own ("Or open ... and type the
+  drop code ..."), for someone who types them rather than scans or clicks.
+- **Copy link** puts exactly that link on the clipboard and announces "Link copied to the
+  clipboard." to screen readers.
+- **The QR code** encodes exactly the same link with the bundled encoder (the one the local security
+  pairing uses), black on white with a four-module quiet zone in both themes. Its accessible name is
+  "QR code of the invite link". **Show larger QR code**, or a click on the code, opens a large view
+  for a phone held further away.
+- **New link** asks the container for a new drop code (`POST /api/station/drop-code`), so links with
+  the old code stop working. When `DROP_CODE` fixes the code the button is disabled and the invite
+  explains how to change it on the drop site.
+- The link appears once Bambu Studio has the current drop code from the station status; until then
+  the invite explains what it is waiting for.
+
+The **Drop code** row shows the same code with a **New code** button.
+
+## When a model arrives
+
+While the option is on, Bambu Studio checks the drop site every 5 seconds. After an error it waits
+10, 20, 40 and then 60 seconds between attempts, and returns to 5 seconds once it reaches the site.
+
+For each new file it downloads the bytes, then checks that the size equals the size the site
+listed, that the SHA-256 digest equals the listed digest (and the `X-Content-SHA256` header when
+present), and that the name keeps an accepted extension that matches the listed type and the
+content (3MF, STL, STEP, OBJ, AMF). The content check applies the drop site's own rules, so a model
+the site accepted is never refused here: a ZIP signature for 3MF; the exact binary length or ASCII
+text starting with `solid` and containing `facet` for STL; `ISO-10303-21` for STEP; text with a
+vertex line (`v` and a space or tab, after optional indentation) for OBJ; `<amf` in XML, or a ZIP,
+for AMF. An optional UTF-8 byte order mark and leading white space are allowed, and markers are
+looked for in the first 256 KiB.
+
+The file is saved under the data folder in `lan-model-drop/received/<id>/<file name>`. The bytes are
+first written under a temporary name of Bambu Studio's own and then renamed, so no name a sender
+chose is ever opened for writing, and the folder must not exist yet (an empty one left by an
+interrupted write is replaced). The name is reduced to a safe
+base name first: any folder part, control characters, `<>:"/\|?*` and trailing dots and spaces go.
+A name Windows would take for a device then gets a leading underscore. Windows opens a device
+instead of a file whenever the part of a name before its first dot, with trailing spaces removed,
+is CON, PRN, AUX, NUL, CONIN$, CONOUT$, COM0 to COM9 or LPT0 to LPT9 in any case, or COM or LPT
+followed by a superscript 1, 2 or 3, so `COM3 .x.stl` is saved as `_COM3 .x.stl`. A name that still
+cannot be used, or that would make the path longer than 259 characters, is replaced by
+`model.<type>`, such as `model.stl`. The notification shows the cleaned name.
+
+A notification then reads "<sender> sent <file> (<size>)", or "Someone sent <file> (<size>)", with
+two links:
+
+- **Open** loads the file through the same path as a file dropped on the window, so the usual
+  questions about an unsaved project or opening a 3MF as a project still apply. Bambu Studio then
+  asks the drop site to delete its copy.
+- **Discard** removes the local copy and asks the drop site to delete its copy.
+
+Closing the notification leaves the file waiting. The invite shows how many files are waiting with
+**Show them**, which shows their notifications again. A file that fails a check is refused with a
+warning that says why, and is deleted from the drop site. A file that cannot be downloaded after
+three tries stays on the drop site until it expires; switching the option off and on tries again.
+Files that were never opened are removed from the data folder at the next start and arrive again
+if the drop site still holds them. An opened file keeps its folder, because the project may point at
+it; use Save Project as to keep a project somewhere else. Bambu Studio never writes into an opened
+file's folder again and never removes it: when the drop site lists that file once more (because its
+delete did not get through), it is not downloaded again, only deleted from the drop site.
+
+The deletes a drop site has not confirmed yet are kept in `lan-model-drop/pending-deletes.txt` in
+the data folder (one item id and drop site address per line, at most 1000), so they survive a
+restart. Each delete goes only to the address that listed the file: after the address changes, a
+delete owed to the old address waits until that address is set again, and a file the new address
+lists that was already decided is deleted there as well.
+
+## Security and privacy
+
+- The station key is a secret. It is stored only as a Windows DPAPI blob for the current Windows
+  account (`CryptProtectData` with purpose entropy, user interface forbidden) in
+  `lan-model-drop/station-key.dpapi` in the data folder, never in the settings file. Another
+  account, or a copy of the folder on another computer, cannot decrypt it; a full data-folder
+  backup therefore carries only that blob, never the key in clear. Other systems report the storage
+  as unavailable instead of keeping the key in plain text.
+- The key is never logged. Requests carry only `Authorization: Bearer <key>` and `Accept`: the
+  application's usual extra headers are removed, redirects are not followed and the transfer trace
+  is off. Requests go straight to the drop site, never through a proxy named in the
+  `http_proxy`, `https_proxy` or `all_proxy` environment variables. Copies of the key in memory are
+  overwritten after use. The masked field can be shown with
+  the eye button; both fields are excluded from captures, history and exports.
+- Over `http://` the key and the files travel unencrypted. With `http://localhost:8833` nothing
+  leaves this computer; when the drop site runs on another computer, keep it on a network you trust
+  or put it behind an `https://` reverse proxy and use that address (certificates are verified, so
+  the proxy needs one this computer trusts).
+- All network work runs on one worker thread. Results reach windows only through the event queue
+  and only while the main window exists. Shutdown stops the worker before windows are destroyed: it
+  sets the cancel flag, aborts a transfer in flight, wakes the worker and waits for it.
+- Nothing is opened, sliced or printed automatically. There is no analytics or telemetry.
+
+## Settings
+
+| Key | Meaning |
+| --- | --- |
+| `lan_drop_enabled` | The switch; off unless `true` |
+| `lan_drop_address` | The drop site address, default `http://localhost:8833` |
+| `lan_drop_invite_ipv4` | The private LAN address chosen for the invite link |
+
+## Verification
+
+- `node --test tests/lan_model_drop/model_native.test.mjs` builds
+  `tests/lan_model_drop/lan_model_drop_model_test.cpp` with `g++ -std=c++17 -Wall -Wextra -Werror`
+  against the wx-free model and runs it: protocol parsing and validation, accepted types and content,
+  file and sender names (every Windows device-name form), the backoff schedule, status
+  classification, addresses, the invite base and link, the inbox tracker and the pending deletes. It
+  also builds `tests/lan_model_drop/lan_model_drop_files_test.cpp` with the received-files code and
+  runs it in a scratch folder: an opened folder is never written into again or removed, the bytes
+  go to a temporary name before the rename, device names and long paths fall back to
+  `model.<type>`, the clean-up at start, and the pending deletes on disk.
+- `node --test tests/lan_model_drop/app_wiring.test.mjs` reads the sources and checks the visible
+  section, the menu items, the palette rows, the indicator, DPAPI storage, that the key is never
+  logged or saved in the settings, that every request runs on the worker thread and reaches windows
+  through the event queue, the shutdown order and that nothing is opened automatically. It also
+  checks that a received folder that waits or was opened is never downloaded into, that deletes go
+  only to the site that listed the file and are kept on disk, and that a poll which changes nothing
+  sets no text and lays nothing out, so the Cantonese of bilingual mode stays on the live rows. Every
+  contract also runs against a mutated source to prove it can fail.
+- `node --test tests/lan_model_drop/station_container.test.mjs` runs the station's pure model,
+  through `tests/lan_model_drop/lan_model_drop_station_probe.cpp`, against the real drop service in
+  `lan-model-drop/server`: it drops models of every type (including a byte order mark, indentation
+  and CR line ends), reads the status and the inbox, downloads each file and checks its size,
+  SHA-256 and content, deletes it, rotates the drop code, and builds the invite link from
+  `DROP_PUBLIC_URL` and from a LAN address. It also sends names Windows takes for devices
+  (`COM3 .x.stl`, `LPT1 .print.stl`, `CONOUT$.stl`, `COM¹.stl` and others), which the service lists
+  as they are, and checks that none of them is the name a file is written under. It needs the
+  service and g++, and is skipped without them.
+- The station sources compile in a Linux syntax check, and the DPAPI key store and the adapter
+  enumeration also compile with the MinGW cross compiler; the accessibility events have only been
+  reviewed. A built Windows application talking to a real drop site on a real network has not been
+  observed yet.

@@ -111,6 +111,10 @@ public:
 	// historical default (true); requests carrying credentials should disable
 	// it so headers cannot enter stderr or captured diagnostic output.
 	Http& verbose(bool set);
+	// Connects directly, ignoring any proxy named by the http_proxy, https_proxy or all_proxy
+	// environment variables. For requests to a service on the local network that carry a
+	// credential, which must not pass through a proxy.
+	Http& no_proxy();
 	// Sets a maximum size of the data that can be received.
 	// A value of zero sets the default limit, which is is 5MB.
 	Http& size_limit(size_t sizeLimit);
@@ -118,6 +122,10 @@ public:
 	Http& header(std::string name, const std::string &value);
 	// Removes a header field.
 	Http& remove_header(std::string name);
+	// Drops every header field set so far, including the global extra headers the constructor
+	// adds (see set_extra_headers). A request to a local service then carries only the fields its
+	// protocol defines, not the cloud client's identity headers.
+	Http& clear_headers();
 	// Authorization by HTTP digest, based on RFC2617.
 	Http& auth_digest(const std::string &user, const std::string &password);
     // Basic HTTP authorization

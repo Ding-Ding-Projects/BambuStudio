@@ -313,6 +313,7 @@ TEST_CASE("Hand-written list of surfaces that MUST be reachable from the palette
         "max_recent_count", "backup_interval", "developer_mode",
         "printer_watch_enabled", "printer_watch_model", "printer_watch_interval",
         "associate_3mf", "severity_level",
+        "lan_drop_enabled", "lan_drop_invite", "lan_drop_address", "lan_drop_station_key", "lan_drop_code",
     };
     const std::set<std::string> keys = catalog_keys();
     for (const std::string &key : must_have_settings) {
@@ -352,6 +353,7 @@ TEST_CASE("Hand-written list of surfaces that MUST be reachable from the palette
         "docs/features/workspace/non-blocking-notifications.md",
         "docs/features/prepare/dockable-sidebar.md",
         "docs/features/releases/windows-native-installer.md",
+        "docs/features/application-integration/lan-model-drop.md",
     };
     for (const std::string &path : must_have_articles) {
         const auto it = std::find_if(documentation_articles().begin(), documentation_articles().end(),

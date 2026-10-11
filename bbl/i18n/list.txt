@@ -409,3 +409,5 @@ src/slic3r/GUI/PrinterWebView.cpp
 src/libslic3r/GCode/PostProcessor.cpp
 src/slic3r/GUI/Bulk/BulkActionPreviewDialog.cpp
 src/slic3r/GUI/Bulk/BulkRenameDialog.cpp
+src/slic3r/GUI/LanModelDrop/LanModelDropStation.cpp
+src/slic3r/GUI/LanModelDrop/LanModelDropUi.cpp

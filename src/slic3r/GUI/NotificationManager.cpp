@@ -2022,6 +2022,7 @@ std::string NotificationManager::type_name(NotificationType type)
     case NotificationType::BBLArcFittingInfo: return "BBLArcFittingInfo";
     case NotificationType::BBLCalibExtruderMismatch: return "BBLCalibExtruderMismatch";
     case NotificationType::ProjectHistoryFailure: return "ProjectHistoryFailure";
+    case NotificationType::LanModelDropReceived: return "LanModelDropReceived";
     case NotificationType::AppUpdateReady: return "AppUpdateReady";
     default: return "notification_" + std::to_string(static_cast<int>(type));
     }
@@ -2131,6 +2132,25 @@ void NotificationManager::push_app_update_ready_notification(const std::string& 
 	data.second_hypertext = notes_text;
 	data.second_callback = std::move(notes_callback);
 	push_notification_data(data, 0);
+}
+
+void NotificationManager::push_lan_model_drop_notification(const std::string& text,
+                                                           const std::string& open_text, std::function<bool(wxEvtHandler*)> open_callback,
+                                                           const std::string& discard_text, std::function<bool(wxEvtHandler*)> discard_callback)
+{
+	// Duration 0: the important-level look without a fade, so the file waits for the user's choice.
+	NotificationData data{ NotificationType::LanModelDropReceived, NotificationLevel::ImportantNotificationLevel, 0,
+	                       text, open_text, std::move(open_callback) };
+	data.second_hypertext = discard_text;
+	data.second_callback = std::move(discard_callback);
+	push_notification_data(data, 0);
+}
+
+void NotificationManager::close_lan_model_drop_notification(const std::string& text)
+{
+	for (std::unique_ptr<PopNotification> &notification : m_pop_notifications)
+		if (notification->get_type() == NotificationType::LanModelDropReceived && notification->compare_text(text))
+			notification->close();
 }
 
 void NotificationManager::push_delayed_notification(const NotificationType type, std::function<bool(void)> condition_callback, int64_t initial_delay, int64_t delay_interval)
