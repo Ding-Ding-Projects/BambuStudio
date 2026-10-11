@@ -8,7 +8,7 @@ import {test, before} from 'node:test';
 import assert from 'node:assert/strict';
 import {spawnSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
-import {existsSync, mkdtempSync, rmSync, writeFileSync} from 'node:fs';
+import {existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -34,6 +34,7 @@ before(async () => {
     '-std=c++17', '-Wall', '-Wextra', '-Werror', '-Isrc',
     'tests/lan_model_drop/lan_model_drop_station_probe.cpp',
     'src/slic3r/GUI/LanModelDrop/LanModelDropModel.cpp',
+    'src/slic3r/GUI/LanModelDrop/LanModelDropFiles.cpp',
     '-o', exe,
   ], {cwd: repo, encoding: 'utf8'});
   assert.equal(build.status, 0, build.stderr);
@@ -163,6 +164,46 @@ test('the station reads the real service: status, inbox, each file with its SHA-
 
   const empty = await stationRequest(d.port, d.key, 'GET', '/api/station/inbox');
   assert.deepEqual(probe('inbox', file(empty.body)), {ok: true, items: [], invalid: [], unusable: 0});
+});
+
+// A sender who knows the drop code chooses the file name. Windows opens a device instead of a file
+// whenever the part of a name before its first dot, trailing spaces removed, is a device name: the
+// service lets "COM3 .x.stl" through as it is, so the station has to make the name safe itself
+// before anything is written. The bytes go to a name of the station's own and are then renamed to a
+// name that is never a device; the folder holds nothing else.
+test('a name Windows takes for a device is never the name a received file is written under', {skip}, async (t) => {
+  const d = await h.startDrop(t);
+  const devices = ['COM3 .x.stl', 'LPT1 .print.stl', 'CONOUT$.stl', 'conin$ .stl', 'COM\u00b9.stl', 'lpt\u00b3 .x.stl', 'con .stl', 'Aux.stl'];
+  for (const name of devices) assert.deepEqual(probe('reserved', name), {reserved: true}, name);
+  for (const name of devices) {
+    const res = await h.drop(d.port, {code: d.code, fileName: name, body: h.ASCII_STL});
+    assert.equal(res.status, 201, `${name}: ${res.body}`);
+  }
+  const inbox = await stationRequest(d.port, d.key, 'GET', '/api/station/inbox');
+  const listed = probe('inbox', file(inbox.body));
+  assert.equal(listed.items.length, devices.length);
+  assert.deepEqual(listed.invalid, []);
+  const received = path.join(work, `received-${++serial}`);
+  mkdirSync(received);
+  for (const [i, item] of listed.items.entries()) {
+    const raw = inbox.json.items[i].fileName;
+    assert.deepEqual(probe('reserved', item.fileName), {reserved: false}, `${raw} -> ${item.fileName}`);
+    const res = await download(d.port, d.key, item.id);
+    assert.equal(res.status, 200);
+    const saved = probe('save', received, item.id, item.fileName, item.type, file(res.body));
+    assert.equal(saved.result, 'Written', raw);
+    assert.equal(saved.file, item.fileName, raw);
+    assert.deepEqual(probe('reserved', saved.file), {reserved: false}, saved.file);
+    assert.deepEqual(saved.names, ['.waiting', saved.file].sort(), raw);
+    // Even the name exactly as the service listed it is never written: it becomes model.stl.
+    const direct = probe('save', received, `${item.id.slice(0, 31)}${item.id[31] === 'f' ? '0' : 'f'}`, raw, item.type, file(res.body));
+    assert.equal(direct.result, 'Written', raw);
+    assert.ok(raw === item.fileName ? direct.file === raw : direct.file === 'model.stl', `${raw} -> ${direct.file}`);
+  }
+  // Listed again (a lost DELETE): the folder exists, so nothing is written over it.
+  const first = listed.items[0];
+  const again = probe('save', received, first.id, first.fileName, first.type, file(Buffer.from('other bytes')));
+  assert.equal(again.result, 'Exists');
 });
 
 test('every model the service accepts passes the station checks', {skip}, async (t) => {

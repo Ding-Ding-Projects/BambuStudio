@@ -84,8 +84,19 @@ the site accepted is never refused here: a ZIP signature for 3MF; the exact bina
 text starting with `solid` and containing `facet` for STL; `ISO-10303-21` for STEP; text with a
 vertex line (`v` and a space or tab, after optional indentation) for OBJ; `<amf` in XML, or a ZIP,
 for AMF. An optional UTF-8 byte order mark and leading white space are allowed, and markers are
-looked for in the first 256 KiB. The file is saved under the data folder in
-`lan-model-drop/received/<id>/<file name>`; the name is reduced to a safe base name first.
+looked for in the first 256 KiB.
+
+The file is saved under the data folder in `lan-model-drop/received/<id>/<file name>`. The bytes are
+first written under a temporary name of Bambu Studio's own and then renamed, so no name a sender
+chose is ever opened for writing, and the folder must not exist yet (an empty one left by an
+interrupted write is replaced). The name is reduced to a safe
+base name first: any folder part, control characters, `<>:"/\|?*` and trailing dots and spaces go.
+A name Windows would take for a device then gets a leading underscore. Windows opens a device
+instead of a file whenever the part of a name before its first dot, with trailing spaces removed,
+is CON, PRN, AUX, NUL, CONIN$, CONOUT$, COM0 to COM9 or LPT0 to LPT9 in any case, or COM or LPT
+followed by a superscript 1, 2 or 3, so `COM3 .x.stl` is saved as `_COM3 .x.stl`. A name that still
+cannot be used, or that would make the path longer than 259 characters, is replaced by
+`model.<type>`, such as `model.stl`. The notification shows the cleaned name.
 
 A notification then reads "<sender> sent <file> (<size>)", or "Someone sent <file> (<size>)", with
 two links:
@@ -101,7 +112,15 @@ warning that says why, and is deleted from the drop site. A file that cannot be 
 three tries stays on the drop site until it expires; switching the option off and on tries again.
 Files that were never opened are removed from the data folder at the next start and arrive again
 if the drop site still holds them. An opened file keeps its folder, because the project may point at
-it; use Save Project as to keep a project somewhere else.
+it; use Save Project as to keep a project somewhere else. Bambu Studio never writes into an opened
+file's folder again and never removes it: when the drop site lists that file once more (because its
+delete did not get through), it is not downloaded again, only deleted from the drop site.
+
+The deletes a drop site has not confirmed yet are kept in `lan-model-drop/pending-deletes.txt` in
+the data folder (one item id and drop site address per line, at most 1000), so they survive a
+restart. Each delete goes only to the address that listed the file: after the address changes, a
+delete owed to the old address waits until that address is set again, and a file the new address
+lists that was already decided is deleted there as well.
 
 ## Security and privacy
 
@@ -139,20 +158,29 @@ it; use Save Project as to keep a project somewhere else.
 - `node --test tests/lan_model_drop/model_native.test.mjs` builds
   `tests/lan_model_drop/lan_model_drop_model_test.cpp` with `g++ -std=c++17 -Wall -Wextra -Werror`
   against the wx-free model and runs it: protocol parsing and validation, accepted types and content,
-  file and sender names, the backoff schedule, status classification, addresses, the invite base and
-  link, and the inbox tracker.
+  file and sender names (every Windows device-name form), the backoff schedule, status
+  classification, addresses, the invite base and link, the inbox tracker and the pending deletes. It
+  also builds `tests/lan_model_drop/lan_model_drop_files_test.cpp` with the received-files code and
+  runs it in a scratch folder: an opened folder is never written into again or removed, the bytes
+  go to a temporary name before the rename, device names and long paths fall back to
+  `model.<type>`, the clean-up at start, and the pending deletes on disk.
 - `node --test tests/lan_model_drop/app_wiring.test.mjs` reads the sources and checks the visible
   section, the menu items, the palette rows, the indicator, DPAPI storage, that the key is never
   logged or saved in the settings, that every request runs on the worker thread and reaches windows
-  through the event queue, the shutdown order and that nothing is opened automatically. Every
+  through the event queue, the shutdown order and that nothing is opened automatically. It also
+  checks that a received folder that waits or was opened is never downloaded into, that deletes go
+  only to the site that listed the file and are kept on disk, and that a poll which changes nothing
+  sets no text and lays nothing out, so the Cantonese of bilingual mode stays on the live rows. Every
   contract also runs against a mutated source to prove it can fail.
 - `node --test tests/lan_model_drop/station_container.test.mjs` runs the station's pure model,
   through `tests/lan_model_drop/lan_model_drop_station_probe.cpp`, against the real drop service in
   `lan-model-drop/server`: it drops models of every type (including a byte order mark, indentation
   and CR line ends), reads the status and the inbox, downloads each file and checks its size,
   SHA-256 and content, deletes it, rotates the drop code, and builds the invite link from
-  `DROP_PUBLIC_URL` and from a LAN address. It needs the service and g++, and is skipped without
-  them.
+  `DROP_PUBLIC_URL` and from a LAN address. It also sends names Windows takes for devices
+  (`COM3 .x.stl`, `LPT1 .print.stl`, `CONOUT$.stl`, `COM¹.stl` and others), which the service lists
+  as they are, and checks that none of them is the name a file is written under. It needs the
+  service and g++, and is skipped without them.
 - The station sources compile in a Linux syntax check, and the DPAPI key store and the adapter
   enumeration also compile with the MinGW cross compiler; the accessibility events have only been
   reviewed. A built Windows application talking to a real drop site on a real network has not been

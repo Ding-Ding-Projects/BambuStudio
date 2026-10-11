@@ -1,8 +1,9 @@
 // Command-line probe over the LAN model drop station's pure model
-// (src/slic3r/GUI/LanModelDrop/LanModelDropModel.cpp), so tests/lan_model_drop/station_container.test.mjs
-// can hand it what the real drop service answers and see exactly what the application would make of
-// it: the connection state, the inbox entries, the content check, the announced SHA-256, a new drop
-// code and the invite link. Each command prints one line of JSON.
+// (src/slic3r/GUI/LanModelDrop/LanModelDropModel.cpp) and its received files on disk
+// (LanModelDropFiles.cpp), so tests/lan_model_drop/station_container.test.mjs can hand it what the
+// real drop service answers and see exactly what the application would make of it: the connection
+// state, the inbox entries, the content check, the announced SHA-256, a new drop code, the invite
+// link and the name a received file is written under. Each command prints one line of JSON.
 //
 //   probe health  <body file>
 //   probe status  <http status> <body file>
@@ -12,10 +13,15 @@
 //   probe content <3mf|stl|step|obj|amf> <file>
 //   probe header  <raw header file> <name>
 //   probe invite  <public url> <configured address> <comma-separated LAN IPv4s> <preferred IPv4> <drop code>
+//   probe save    <received folder> <id> <listed file name> <3mf|stl|step|obj|amf> <file>
+//   probe reserved <name>                           (would Windows take it for a device or refuse it?)
+#include "../../src/slic3r/GUI/LanModelDrop/LanModelDropFiles.hpp"
 #include "../../src/slic3r/GUI/LanModelDrop/LanModelDropModel.hpp"
 
 #include <nlohmann/json.hpp>
 
+#include <algorithm>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <iterator>
@@ -125,6 +131,23 @@ int run(const std::vector<std::string> &args)
         out["base"]    = base.base;
         out["choices"] = base.choices;
         out["link"]    = invite_link(base.base, args.at(5));
+    } else if (command == "save") {
+        const auto type = type_from_name(args.at(4));
+        if (!type) throw std::runtime_error("unknown type " + args.at(4));
+        std::filesystem::path file;
+        const WriteResult     result = write_received(std::filesystem::u8path(args.at(1)), args.at(2), args.at(3), *type,
+                                                      read_file(args.at(5)), file);
+        out["result"] = result == WriteResult::Written ? "Written" : result == WriteResult::Exists ? "Exists" : "Failed";
+        out["file"]   = file.filename().u8string();
+        std::vector<std::string> names;
+        std::error_code          ec;
+        for (std::filesystem::directory_iterator it(std::filesystem::u8path(args.at(1)) / args.at(2), ec), end; !ec && it != end;
+             it.increment(ec))
+            names.push_back(it->path().filename().u8string());
+        std::sort(names.begin(), names.end());
+        out["names"] = names;
+    } else if (command == "reserved") {
+        out["reserved"] = is_windows_reserved_name(args.at(1));
     } else {
         std::cerr << "unknown command: " << command << "\n";
         return 2;
