@@ -53,6 +53,9 @@ private:
     wxTimePickerCtrl *m_start=nullptr,*m_end=nullptr;
     // The value source rows; the selection is the SourceKind.
     RadioGroup m_source;
+    // The source the rows last showed, set with every programmatic selection, so
+    // re-choosing it (the rows emit on every activation) keeps the consent box.
+    int m_source_kind=0;
     Label* m_status=nullptr;
     Label* m_live=nullptr;
     wxTimer m_live_timer;

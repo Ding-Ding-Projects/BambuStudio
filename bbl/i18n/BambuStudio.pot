@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-10 04:42+0000\n"
+"POT-Creation-Date: 2026-10-11 17:36+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -24866,6 +24866,9 @@ msgstr ""
 msgid "Move Y down %d mm"
 msgstr ""
 
+msgid "Camera zoom percentage"
+msgstr ""
+
 msgid "Zoom out"
 msgstr ""
 
@@ -24882,9 +24885,6 @@ msgid "Reset camera view"
 msgstr ""
 
 msgid "Reset camera view (0)"
-msgstr ""
-
-msgid "Camera zoom percentage"
 msgstr ""
 
 msgid "Choose camera zoom percentage"

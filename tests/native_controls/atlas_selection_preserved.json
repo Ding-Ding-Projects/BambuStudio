@@ -4,7 +4,7 @@
     {
       "file": "SpinInput.cpp",
       "name": "void SpinInput::Create(",
-      "sha256": "4c23ae2cb1325a3f6363a3e81bd1efdf3dc6b623677a582f149c1937c41a24ee"
+      "sha256": "dd7e5aae5e709fbbe0cadc336b4cb2c7a3a9a3478f2855c8bd6bb0f31a64fae9"
     },
     {
       "file": "SpinInput.cpp",
@@ -24,7 +24,7 @@
     {
       "file": "SpinInput.cpp",
       "name": "void SpinInput::SetRange(",
-      "sha256": "b3a1d2371d791192cdd5e4ef030953a34edcceab5584a19f242ae4210b35dc61"
+      "sha256": "6df897826cdd1aebff7f7f1a1d6b67e81dc42b2e10c17a58f89b4799043304e2"
     },
     {
       "file": "SpinInput.cpp",
@@ -64,7 +64,7 @@
     {
       "file": "SpinInput.cpp",
       "name": "void SpinInput::keyPressed(",
-      "sha256": "dcff01f00734cbc071b2856e3af9ba07fed8f6247936685f923c8bdd928ae351"
+      "sha256": "4427a6ee9cef5bebb8fe30cf5aad6cf81f7862f890e28caf76543f8f8c9f1d52"
     },
     {
       "file": "SpinInput.cpp",

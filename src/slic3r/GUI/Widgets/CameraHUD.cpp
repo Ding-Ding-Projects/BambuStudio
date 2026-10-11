@@ -45,6 +45,16 @@ bool is_activation_key(int key_code)
     return key_code == WXK_SPACE || key_code == WXK_RETURN || key_code == WXK_NUMPAD_ENTER;
 }
 
+// The zoom percentage chip shows the zoom and carries it in its accessible
+// name ("Camera zoom percentage, 125%"): the stock button's text was its name,
+// and the kit Button prefers a SetName() name, so both change together here.
+void show_zoom_percent(Button *chip, int percent)
+{
+    const wxString label = wxString::Format("%d%%", percent);
+    chip->SetLabel(label);
+    chip->SetName(wxString::Format(_L("%s, %s"), _L("Camera zoom percentage"), label));
+}
+
 #if wxUSE_ACCESSIBILITY
 class CameraHUDChipAccessible final : public wxWindowAccessible
 {
@@ -536,7 +546,7 @@ CameraHUD::CameraHUD(wxWindow *parent)
     // A kit text Button on the HUD's own chip tones (the HUD is dark camera
     // chrome in every theme, so the theme-following variants do not apply).
     m_zoom_percent = new Button(this, "100%");
-    m_zoom_percent->SetName(_L("Camera zoom percentage"));
+    show_zoom_percent(m_zoom_percent, 100);
     m_zoom_percent->SetToolTip(_L("Choose camera zoom percentage"));
     style_zoom_percent();
     m_zoom_percent->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) {
@@ -599,7 +609,7 @@ void CameraHUD::AttachMedia(wxWindow *media)
     m_media = media;
     if (media) {
         media->Bind(EVT_MEDIA_CTRL_VIEW_CHANGED, &CameraHUD::on_view_changed, this);
-        m_zoom_percent->SetLabel(wxString::Format("%d%%", int(static_cast<wxMediaCtrl3 *>(media)->GetZoom() * 100 + .5)));
+        show_zoom_percent(m_zoom_percent, int(static_cast<wxMediaCtrl3 *>(media)->GetZoom() * 100 + .5));
     }
     for (auto *chip : {m_zoom_out, m_zoom_in, m_zoom_reset}) chip->Enable(media != nullptr);
     m_zoom_percent->Enable(media != nullptr);
@@ -610,7 +620,7 @@ void CameraHUD::AttachMedia(wxWindow *media)
 
 void CameraHUD::on_view_changed(wxCommandEvent &evt)
 {
-    if (m_zoom_percent) m_zoom_percent->SetLabel(wxString::Format("%d%%", evt.GetInt()));
+    if (m_zoom_percent) show_zoom_percent(m_zoom_percent, evt.GetInt());
     evt.Skip();
 }
 

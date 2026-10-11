@@ -52,6 +52,23 @@ AtlasSpinAllocation atlasSpinAllocation(int width, int height, int text_height,
     return {entry_x, (height - entry_height) / 2, entry_width, entry_height,
             pad_x, pad_y, height - pad_y - step_height, step_width, step_height};
 }
+
+// Whether typing `ch` over the selection [from, to) of `text` keeps the field a
+// whole number, as wxSpinCtrl allowed: digits, and a minus sign only as the
+// first character, only once and only when the range reaches below zero.
+// Control keys, navigation (no character) and Delete always pass, as they did
+// through wxTextValidator. Pasted text is not filtered here; Enter and leaving
+// the field read the text back and clamp it (onTextEnter).
+bool spinAcceptsChar(const wxString &text, long from, long to, int ch, int min)
+{
+    if (ch < WXK_SPACE || ch == WXK_DELETE)
+        return true;
+    // The text after the replaced selection already starts with a sign.
+    const bool sign_follows = to >= 0 && size_t(to) < text.length() && text[size_t(to)] == '-';
+    if (ch >= '0' && ch <= '9')
+        return !(from == 0 && sign_follows);
+    return ch == '-' && min < 0 && from == 0 && !sign_follows;
+}
 } // namespace
 
 wxDEFINE_EVENT(EVT_SPINCTRL_TEXT, wxCommandEvent);
@@ -118,7 +135,7 @@ void SpinInput::Create(wxWindow *parent,
     wxWindow::SetLabel(label);
     state_handler.attach({&label_color, &text_color});
     state_handler.update_binds();
-    text_ctrl = new TextCtrl(this, wxID_ANY, text, {20, 4}, wxDefaultSize, style | wxBORDER_NONE | wxTE_PROCESS_ENTER, wxTextValidator(wxFILTER_DIGITS));
+    text_ctrl = new TextCtrl(this, wxID_ANY, text, {20, 4}, wxDefaultSize, style | wxBORDER_NONE | wxTE_PROCESS_ENTER);
     // ValueField value in the native wxDC Roboto Mono face at 12.5/500 (Label::Mono_12
     // is 12.5/400; bump to Medium for the 500 weight) -- not the ImGui atlas mono.
     wxFont mono_value = Label::Mono_12;
@@ -132,6 +149,14 @@ void SpinInput::Create(wxWindow *parent,
     text_ctrl->Bind(wxEVT_KILL_FOCUS, &SpinInput::onTextLostFocus, this);
     text_ctrl->Bind(wxEVT_TEXT_ENTER, &SpinInput::onTextEnter, this);
     text_ctrl->Bind(wxEVT_KEY_DOWN, &SpinInput::keyPressed, this);
+    // Typed characters: one rule that reads the current minimum, so a negative
+    // range takes a leading minus and nothing else that is not a digit.
+    text_ctrl->Bind(wxEVT_CHAR, [this](wxKeyEvent &event) {
+        long from = 0, to = 0;
+        text_ctrl->GetSelection(&from, &to);
+        if (spinAcceptsChar(text_ctrl->GetValue(), from, to, int(event.GetUnicodeKey()), this->min))
+            event.Skip();
+    });
     // A right-click reaches the Material text menu (MD3::EnableTextContextMenus), not the native one.
     text_ctrl->Bind(wxEVT_SET_FOCUS, [this](wxFocusEvent &e) {
         e.Skip();
@@ -212,8 +237,6 @@ void SpinInput::SetRange(int min, int max)
 {
     this->min = min;
     this->max = max;
-    if (min < 0)
-        text_ctrl->SetValidator(wxTextValidator(wxFILTER_NUMERIC));
 }
 
 void SpinInput::DoSetToolTipText(wxString const &tip)
@@ -444,19 +467,25 @@ void SpinInput::keyPressed(wxKeyEvent &event)
 {
     switch (event.GetKeyCode()) {
     case WXK_UP:
-    case WXK_DOWN:
+    case WXK_DOWN: {
         long value;
         if (!text_ctrl->GetValue().ToLong(&value)) { value = val; }
+        // Pull a typed value back into the range, then step: Up reaches the
+        // maximum and Down the minimum, as wxSpinCtrl did.
+        if (value < min) value = min;
+        else if (value > max) value = max;
         if (event.GetKeyCode() == WXK_DOWN && value > min) {
             --value;
-        } else if (event.GetKeyCode() == WXK_UP && value + 1 < max) {
+        } else if (event.GetKeyCode() == WXK_UP && value < max) {
             ++value;
         }
-        if (value != val) {
-            SetValue(value);
+        const bool changed = value != val;
+        if (changed || text_ctrl->GetValue() != wxString::FromDouble(value))
+            SetValue(int(value));
+        if (changed)
             sendSpinEvent();
-        }
         break;
+    }
     default: event.Skip(); break;
     }
 }

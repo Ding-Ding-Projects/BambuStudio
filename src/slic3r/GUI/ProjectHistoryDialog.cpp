@@ -771,7 +771,9 @@ void ProjectHistoryDialog::finish_list(ProjectHistoryListResult result)
     }
 
     m_bulk.retain_listed(loaded_ids());
-    const wxString selected_store=m_store_filter->GetStringSelection(); m_store_filter->Clear();
+    // The kit ComboBox keeps its shown text through Clear() (wxChoice did not), so the shown
+    // store is reset with the list: with no stores the field and the filter chip agree.
+    const wxString selected_store=m_store_filter->GetStringSelection(); m_store_filter->Clear(); m_store_filter->SetValue(wxEmptyString);
     std::vector<std::string> stores;
     for(const auto &origin:m_origins)if(origin.manager && std::find(stores.begin(),stores.end(),origin.name)==stores.end()){stores.push_back(origin.name);m_store_filter->Append(wxString::FromUTF8(origin.name));}
     if(!stores.empty()){m_store_filter->SetSelection(0);const int index=m_store_filter->FindString(selected_store);if(index!=wxNOT_FOUND)m_store_filter->SetSelection(index);}
