@@ -1,0 +1,1577 @@
+{
+ "about": "Answers of a real lan-model-drop container (docker compose), captured by tests/lan_model_drop/container_capture.py and read by container_fixtures.test.mjs and lan_model_drop_container_interop_test.cpp. Each exchange is the raw response header lines as libcurl hands them to the station (.head) and the body (.body).",
+ "protocol": 1,
+ "samples": [
+  {
+   "file": "samples/bracket-v2.3mf",
+   "name": "Bracket v2.3mf",
+   "type": "3mf",
+   "bytes": 1008,
+   "sha256": "90b54e3ece5851baf3373f14f9d06f5d163a322f634c6f45439dd9b7b9b34dbb"
+  },
+  {
+   "file": "samples/cube-ascii.stl",
+   "name": "\u7acb\u65b9\u9ad4 cube.stl",
+   "type": "stl",
+   "bytes": 452,
+   "sha256": "9aaeda9d535a793af4e9369a269313a64c03a6be7e469aa0e1b3530df81d7b9f"
+  },
+  {
+   "file": "samples/part-binary.stl",
+   "name": "binary part.STL",
+   "type": "stl",
+   "bytes": 284,
+   "sha256": "c2ef8bbcfa96391ab59eca6c63cf9f3764501b578702240f28a1faac1eb2f1d0"
+  },
+  {
+   "file": "samples/housing.step",
+   "name": "housing.step",
+   "type": "step",
+   "bytes": 216,
+   "sha256": "bba65e7879879b59f710c63bb3621ff1d4b45a4695f02e140b6354b4be0fb897"
+  },
+  {
+   "file": "samples/clip-bom.stp",
+   "name": "clip.stp",
+   "type": "step",
+   "bytes": 215,
+   "sha256": "c9e4de348f6ca18a5b000cf637a63f332edf08fe3f1d9af7a2f990ea997385a6"
+  },
+  {
+   "file": "samples/mesh.obj",
+   "name": "mesh.obj",
+   "type": "obj",
+   "bytes": 89,
+   "sha256": "2826d63c2182c07de6b7fb53f3e07ae0bc19a8cf0cc8cfc9abc2f05f54ed9113"
+  },
+  {
+   "file": "samples/model.amf",
+   "name": "model.amf",
+   "type": "amf",
+   "bytes": 704,
+   "sha256": "15bcb2432dfc5c6880489c5b7cfca638c0c6c793c8ca70654e47ed2b5fe180e8"
+  },
+  {
+   "file": "samples/zipped-model.amf",
+   "name": "zipped model.amf",
+   "type": "amf",
+   "bytes": 346,
+   "sha256": "6b462b42830e3f49906b1fb5216da08df06f4cc819e6e21c579ade725fad6ba7"
+  }
+ ],
+ "scenarios": [
+  {
+   "name": "default",
+   "env": {},
+   "port": 18852,
+   "startedAt": "2026-10-11T19:12:04Z",
+   "health": {
+    "label": "01-health",
+    "request": "GET /healthz",
+    "status": 200,
+    "head": "default/01-health.head",
+    "body": "default/01-health.body"
+   },
+   "statusEmpty": {
+    "label": "02-status-empty",
+    "request": "GET /api/station/status",
+    "status": 200,
+    "head": "default/02-status-empty.head",
+    "body": "default/02-status-empty.body"
+   },
+   "dropCode": "460070",
+   "page": {
+    "invite": {
+     "code": true,
+     "fragmentRemoved": true
+    },
+    "sender": "  Mo   Li  ",
+    "rows": [
+     {
+      "name": "Bracket v2.3mf",
+      "status": "sent"
+     },
+     {
+      "name": "binary part.STL",
+      "status": "sent"
+     },
+     {
+      "name": "clip.stp",
+      "status": "sent"
+     },
+     {
+      "name": "housing.step",
+      "status": "sent"
+     },
+     {
+      "name": "mesh.obj",
+      "status": "sent"
+     },
+     {
+      "name": "model.amf",
+      "status": "sent"
+     },
+     {
+      "name": "zipped model.amf",
+      "status": "sent"
+     },
+     {
+      "name": "\u7acb\u65b9\u9ad4 cube.stl",
+      "status": "sent"
+     }
+    ],
+    "live": "Sent 8 of 8. The person at the computer decides what happens next; nothing is printed by itself.",
+    "drops": [
+     {
+      "via": "page",
+      "name": "Bracket v2.3mf",
+      "status": 201,
+      "requestHeaders": {
+       "Accept": "*/*",
+       "Content-Length": "1008",
+       "Content-Type": "model/3mf",
+       "Host": "127.0.0.1:18852",
+       "Origin": "http://127.0.0.1:18852",
+       "X-Drop-Code": "460070",
+       "X-Drop-Filename": "Bracket%20v2.3mf",
+       "X-Drop-Sender": "Mo%20Li"
+      },
+      "responseBody": "{\"ok\":true,\"id\":\"325462875d3c9f26251cdb3b9c9eaa94\"}"
+     },
+     {
+      "via": "page",
+      "name": "binary part.STL",
+      "status": 201,
+      "requestHeaders": {
+       "Accept": "*/*",
+       "Content-Length": "284",
+       "Host": "127.0.0.1:18852",
+       "Origin": "http://127.0.0.1:18852",
+       "X-Drop-Code": "460070",
+       "X-Drop-Filename": "binary%20part.STL",
+       "X-Drop-Sender": "Mo%20Li"
+      },
+      "responseBody": "{\"ok\":true,\"id\":\"92f01aa10ebf978f8f1d11a02f817714\"}"
+     },
+     {
+      "via": "page",
+      "name": "clip.stp",
+      "status": 201,
+      "requestHeaders": {
+       "Accept": "*/*",
+       "Content-Length": "215",
+       "Host": "127.0.0.1:18852",
+       "Origin": "http://127.0.0.1:18852",
+       "X-Drop-Code": "460070",
+       "X-Drop-Filename": "clip.stp",
+       "X-Drop-Sender": "Mo%20Li"
+      },
+      "responseBody": "{\"ok\":true,\"id\":\"b89b41bdd12fb60fe76d4b79af0ea62b\"}"
+     },
+     {
+      "via": "page",
+      "name": "housing.step",
+      "status": 201,
+      "requestHeaders": {
+       "Accept": "*/*",
+       "Content-Length": "216",
+       "Host": "127.0.0.1:18852",
+       "Origin": "http://127.0.0.1:18852",
+       "X-Drop-Code": "460070",
+       "X-Drop-Filename": "housing.step",
+       "X-Drop-Sender": "Mo%20Li"
+      },
+      "responseBody": "{\"ok\":true,\"id\":\"8e0edff98d797ccb096536c9b30655e4\"}"
+     },
+     {
+      "via": "page",
+      "name": "mesh.obj",
+      "status": 201,
+      "requestHeaders": {
+       "Accept": "*/*",
+       "Content-Length": "89",
+       "Content-Type": "application/x-tgif",
+       "Host": "127.0.0.1:18852",
+       "Origin": "http://127.0.0.1:18852",
+       "X-Drop-Code": "460070",
+       "X-Drop-Filename": "mesh.obj",
+       "X-Drop-Sender": "Mo%20Li"
+      },
+      "responseBody": "{\"ok\":true,\"id\":\"12c5d2219147aa972d3068504d2b643e\"}"
+     },
+     {
+      "via": "page",
+      "name": "model.amf",
+      "status": 201,
+      "requestHeaders": {
+       "Accept": "*/*",
+       "Content-Length": "704",
+       "Host": "127.0.0.1:18852",
+       "Origin": "http://127.0.0.1:18852",
+       "X-Drop-Code": "460070",
+       "X-Drop-Filename": "model.amf",
+       "X-Drop-Sender": "Mo%20Li"
+      },
+      "responseBody": "{\"ok\":true,\"id\":\"ec59cee5a4ff9bbf79612bc0b80d4d73\"}"
+     },
+     {
+      "via": "page",
+      "name": "zipped model.amf",
+      "status": 201,
+      "requestHeaders": {
+       "Accept": "*/*",
+       "Content-Length": "346",
+       "Host": "127.0.0.1:18852",
+       "Origin": "http://127.0.0.1:18852",
+       "X-Drop-Code": "460070",
+       "X-Drop-Filename": "zipped%20model.amf",
+       "X-Drop-Sender": "Mo%20Li"
+      },
+      "responseBody": "{\"ok\":true,\"id\":\"0583c65e3bf4bd17118eb7cb2449823f\"}"
+     },
+     {
+      "via": "page",
+      "name": "\u7acb\u65b9\u9ad4 cube.stl",
+      "status": 201,
+      "requestHeaders": {
+       "Accept": "*/*",
+       "Content-Length": "452",
+       "Content-Type": "model/stl",
+       "Host": "127.0.0.1:18852",
+       "Origin": "http://127.0.0.1:18852",
+       "X-Drop-Code": "460070",
+       "X-Drop-Filename": "%E7%AB%8B%E6%96%B9%E9%AB%94%20cube.stl",
+       "X-Drop-Sender": "Mo%20Li"
+      },
+      "responseBody": "{\"ok\":true,\"id\":\"3d06f5e00c90b3790a4429a8df02f32e\"}"
+     }
+    ]
+   },
+   "drops": [
+    {
+     "label": "03-drop-3mf",
+     "request": "POST /api/drop",
+     "status": 201,
+     "head": "default/03-drop-3mf.head",
+     "body": "default/03-drop-3mf.body",
+     "requestLines": [
+      "POST /api/drop HTTP/1.1",
+      "Host: 127.0.0.1:18852",
+      "User-Agent: curl/8.5.0",
+      "Accept: */*",
+      "Origin: http://127.0.0.1:18852",
+      "Content-Type: model/3mf",
+      "X-Drop-Code: 460070",
+      "X-Drop-Filename: Bracket%20v2.3mf",
+      "X-Drop-Sender: Ada",
+      "Content-Length: 1008"
+     ],
+     "via": "curl",
+     "name": "Bracket v2.3mf",
+     "sender": "Ada",
+     "contentType": "model/3mf",
+     "expect": {
+      "status": 201,
+      "sample": "samples/bracket-v2.3mf",
+      "stationFileName": "Bracket v2.3mf",
+      "stationSender": "Ada"
+     }
+    },
+    {
+     "label": "04-drop-stl",
+     "request": "POST /api/drop",
+     "status": 201,
+     "head": "default/04-drop-stl.head",
+     "body": "default/04-drop-stl.body",
+     "requestLines": [
+      "POST /api/drop HTTP/1.1",
+      "Host: 127.0.0.1:18852",
+      "User-Agent: curl/8.5.0",
+      "Accept: */*",
+      "Origin: http://127.0.0.1:18852",
+      "Content-Type: model/stl",
+      "X-Drop-Code: 460070",
+      "X-Drop-Filename: %E7%AB%8B%E6%96%B9%E9%AB%94%20cube.stl",
+      "X-Drop-Sender: %E9%99%B3%E5%A4%A7%E6%96%87",
+      "Content-Length: 452"
+     ],
+     "via": "curl",
+     "name": "\u7acb\u65b9\u9ad4 cube.stl",
+     "sender": "\u9673\u5927\u6587",
+     "contentType": "model/stl",
+     "expect": {
+      "status": 201,
+      "sample": "samples/cube-ascii.stl",
+      "stationFileName": "\u7acb\u65b9\u9ad4 cube.stl",
+      "stationSender": "\u9673\u5927\u6587"
+     }
+    },
+    {
+     "label": "05-drop-stl",
+     "request": "POST /api/drop",
+     "status": 201,
+     "head": "default/05-drop-stl.head",
+     "body": "default/05-drop-stl.body",
+     "requestLines": [
+      "POST /api/drop HTTP/1.1",
+      "Host: 127.0.0.1:18852",
+      "User-Agent: curl/8.5.0",
+      "Accept: */*",
+      "Origin: http://127.0.0.1:18852",
+      "X-Drop-Code: 460070",
+      "X-Drop-Filename: binary%20part.STL",
+      "X-Drop-Sender: Bob%20%F0%9F%99%82",
+      "Content-Length: 284"
+     ],
+     "via": "curl",
+     "name": "binary part.STL",
+     "sender": "Bob \ud83d\ude42",
+     "contentType": "",
+     "expect": {
+      "status": 201,
+      "sample": "samples/part-binary.stl",
+      "stationFileName": "binary part.STL",
+      "stationSender": "Bob \ud83d\ude42"
+     }
+    },
+    {
+     "label": "06-drop-step",
+     "request": "POST /api/drop",
+     "status": 201,
+     "head": "default/06-drop-step.head",
+     "body": "default/06-drop-step.body",
+     "requestLines": [
+      "POST /api/drop HTTP/1.1",
+      "Host: 127.0.0.1:18852",
+      "User-Agent: curl/8.5.0",
+      "Accept: */*",
+      "Origin: http://127.0.0.1:18852",
+      "X-Drop-Code: 460070",
+      "X-Drop-Filename: housing.step",
+      "Content-Length: 216"
+     ],
+     "via": "curl",
+     "name": "housing.step",
+     "sender": "",
+     "contentType": "",
+     "expect": {
+      "status": 201,
+      "sample": "samples/housing.step",
+      "stationFileName": "housing.step",
+      "stationSender": ""
+     }
+    },
+    {
+     "label": "07-drop-step",
+     "request": "POST /api/drop",
+     "status": 201,
+     "head": "default/07-drop-step.head",
+     "body": "default/07-drop-step.body",
+     "requestLines": [
+      "POST /api/drop HTTP/1.1",
+      "Host: 127.0.0.1:18852",
+      "User-Agent: curl/8.5.0",
+      "Accept: */*",
+      "Origin: http://127.0.0.1:18852",
+      "X-Drop-Code: 460070",
+      "X-Drop-Filename: clip.stp",
+      "X-Drop-Sender: Mo%20Li",
+      "Content-Length: 215"
+     ],
+     "via": "curl",
+     "name": "clip.stp",
+     "sender": "Mo Li",
+     "contentType": "",
+     "expect": {
+      "status": 201,
+      "sample": "samples/clip-bom.stp",
+      "stationFileName": "clip.stp",
+      "stationSender": "Mo Li"
+     }
+    },
+    {
+     "label": "08-drop-obj",
+     "request": "POST /api/drop",
+     "status": 201,
+     "head": "default/08-drop-obj.head",
+     "body": "default/08-drop-obj.body",
+     "requestLines": [
+      "POST /api/drop HTTP/1.1",
+      "Host: 127.0.0.1:18852",
+      "User-Agent: curl/8.5.0",
+      "Accept: */*",
+      "Origin: http://127.0.0.1:18852",
+      "Content-Type: application/x-tgif",
+      "X-Drop-Code: 460070",
+      "X-Drop-Filename: mesh.obj",
+      "X-Drop-Sender: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "Content-Length: 89"
+     ],
+     "via": "curl",
+     "name": "mesh.obj",
+     "sender": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+     "contentType": "application/x-tgif",
+     "expect": {
+      "status": 201,
+      "sample": "samples/mesh.obj",
+      "stationFileName": "mesh.obj",
+      "stationSender": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+     }
+    },
+    {
+     "label": "09-drop-amf",
+     "request": "POST /api/drop",
+     "status": 201,
+     "head": "default/09-drop-amf.head",
+     "body": "default/09-drop-amf.body",
+     "requestLines": [
+      "POST /api/drop HTTP/1.1",
+      "Host: 127.0.0.1:18852",
+      "User-Agent: curl/8.5.0",
+      "Accept: */*",
+      "Origin: http://127.0.0.1:18852",
+      "X-Drop-Code: 460070",
+      "X-Drop-Filename: model.amf",
+      "X-Drop-Sender: Lab%20PC%202",
+      "Content-Length: 704"
+     ],
+     "via": "curl",
+     "name": "model.amf",
+     "sender": "Lab PC 2",
+     "contentType": "",
+     "expect": {
+      "status": 201,
+      "sample": "samples/model.amf",
+      "stationFileName": "model.amf",
+      "stationSender": "Lab PC 2"
+     }
+    },
+    {
+     "label": "10-drop-amf",
+     "request": "POST /api/drop",
+     "status": 201,
+     "head": "default/10-drop-amf.head",
+     "body": "default/10-drop-amf.body",
+     "requestLines": [
+      "POST /api/drop HTTP/1.1",
+      "Host: 127.0.0.1:18852",
+      "User-Agent: curl/8.5.0",
+      "Accept: */*",
+      "Origin: http://127.0.0.1:18852",
+      "X-Drop-Code: 460070",
+      "X-Drop-Filename: zipped%20model.amf",
+      "Content-Length: 346"
+     ],
+     "via": "curl",
+     "name": "zipped model.amf",
+     "sender": "",
+     "contentType": "",
+     "expect": {
+      "status": 201,
+      "sample": "samples/zipped-model.amf",
+      "stationFileName": "zipped model.amf",
+      "stationSender": ""
+     }
+    },
+    {
+     "label": "11-drop-name",
+     "request": "POST /api/drop",
+     "status": 201,
+     "head": "default/11-drop-name.head",
+     "body": "default/11-drop-name.body",
+     "requestLines": [
+      "POST /api/drop HTTP/1.1",
+      "Host: 127.0.0.1:18852",
+      "User-Agent: curl/8.5.0",
+      "Accept: */*",
+      "Origin: http://127.0.0.1:18852",
+      "Content-Type: model/stl",
+      "X-Drop-Code: 460070",
+      "X-Drop-Filename: Part%3A%20%22v3%22%3F.stl",
+      "Content-Length: 452"
+     ],
+     "via": "curl",
+     "name": "Part: \"v3\"?.stl",
+     "sender": "",
+     "contentType": "model/stl",
+     "expect": {
+      "status": 201,
+      "sample": "samples/cube-ascii.stl",
+      "stationFileName": "Part v3.stl",
+      "stationSender": ""
+     }
+    },
+    {
+     "label": "12-drop-name",
+     "request": "POST /api/drop",
+     "status": 201,
+     "head": "default/12-drop-name.head",
+     "body": "default/12-drop-name.body",
+     "requestLines": [
+      "POST /api/drop HTTP/1.1",
+      "Host: 127.0.0.1:18852",
+      "User-Agent: curl/8.5.0",
+      "Accept: */*",
+      "Origin: http://127.0.0.1:18852",
+      "Content-Type: model/stl",
+      "X-Drop-Code: 460070",
+      "X-Drop-Filename: CON.stl",
+      "Content-Length: 452"
+     ],
+     "via": "curl",
+     "name": "CON.stl",
+     "sender": "",
+     "contentType": "model/stl",
+     "expect": {
+      "status": 201,
+      "sample": "samples/cube-ascii.stl",
+      "stationFileName": "_CON.stl",
+      "stationSender": ""
+     }
+    },
+    {
+     "label": "13-drop-name",
+     "request": "POST /api/drop",
+     "status": 201,
+     "head": "default/13-drop-name.head",
+     "body": "default/13-drop-name.body",
+     "requestLines": [
+      "POST /api/drop HTTP/1.1",
+      "Host: 127.0.0.1:18852",
+      "User-Agent: curl/8.5.0",
+      "Accept: */*",
+      "Origin: http://127.0.0.1:18852",
+      "Content-Type: model/stl",
+      "X-Drop-Code: 460070",
+      "X-Drop-Filename: COM3%20.x.stl",
+      "Content-Length: 452"
+     ],
+     "via": "curl",
+     "name": "COM3 .x.stl",
+     "sender": "",
+     "contentType": "model/stl",
+     "expect": {
+      "status": 201,
+      "sample": "samples/cube-ascii.stl",
+      "stationFileName": "_COM3 .x.stl",
+      "stationSender": ""
+     }
+    },
+    {
+     "label": "14-drop-name",
+     "request": "POST /api/drop",
+     "status": 201,
+     "head": "default/14-drop-name.head",
+     "body": "default/14-drop-name.body",
+     "requestLines": [
+      "POST /api/drop HTTP/1.1",
+      "Host: 127.0.0.1:18852",
+      "User-Agent: curl/8.5.0",
+      "Accept: */*",
+      "Origin: http://127.0.0.1:18852",
+      "Content-Type: model/stl",
+      "X-Drop-Code: 460070",
+      "X-Drop-Filename: a%E2%80%AEb.stl",
+      "Content-Length: 452"
+     ],
+     "via": "curl",
+     "name": "a\u202eb.stl",
+     "sender": "",
+     "contentType": "model/stl",
+     "expect": {
+      "status": 201,
+      "sample": "samples/cube-ascii.stl",
+      "stationFileName": "ab.stl",
+      "stationSender": ""
+     }
+    },
+    {
+     "label": "15-drop-name",
+     "request": "POST /api/drop",
+     "status": 400,
+     "head": "default/15-drop-name.head",
+     "body": "default/15-drop-name.body",
+     "requestLines": [
+      "POST /api/drop HTTP/1.1",
+      "Host: 127.0.0.1:18852",
+      "User-Agent: curl/8.5.0",
+      "Accept: */*",
+      "Origin: http://127.0.0.1:18852",
+      "Content-Type: model/stl",
+      "X-Drop-Code: 460070",
+      "X-Drop-Filename: %E2%80%AE%E2%80%AE.stl",
+      "Content-Length: 452"
+     ],
+     "via": "curl",
+     "name": "\u202e\u202e.stl",
+     "sender": "",
+     "contentType": "model/stl",
+     "expect": {
+      "status": 400,
+      "error": "bad_request",
+      "siteReason": "reasonName"
+     }
+    },
+    {
+     "label": "16-drop-name",
+     "request": "POST /api/drop",
+     "status": 400,
+     "head": "default/16-drop-name.head",
+     "body": "default/16-drop-name.body",
+     "requestLines": [
+      "POST /api/drop HTTP/1.1",
+      "Host: 127.0.0.1:18852",
+      "User-Agent: curl/8.5.0",
+      "Accept: */*",
+      "Origin: http://127.0.0.1:18852",
+      "Content-Type: model/stl",
+      "X-Drop-Code: 460070",
+      "X-Drop-Filename: %E2%80%8B.stl",
+      "Content-Length: 452"
+     ],
+     "via": "curl",
+     "name": "\u200b.stl",
+     "sender": "",
+     "contentType": "model/stl",
+     "expect": {
+      "status": 400,
+      "error": "bad_request",
+      "siteReason": "reasonName"
+     }
+    },
+    {
+     "label": "17-drop-wrong-code",
+     "request": "POST /api/drop",
+     "status": 401,
+     "head": "default/17-drop-wrong-code.head",
+     "body": "default/17-drop-wrong-code.body",
+     "requestLines": [
+      "POST /api/drop HTTP/1.1",
+      "Host: 127.0.0.1:18852",
+      "User-Agent: curl/8.5.0",
+      "Accept: */*",
+      "Origin: http://127.0.0.1:18852",
+      "Content-Type: model/stl",
+      "X-Drop-Code: 000000",
+      "X-Drop-Filename: %E7%AB%8B%E6%96%B9%E9%AB%94%20cube.stl",
+      "Content-Length: 452"
+     ],
+     "via": "curl",
+     "name": "\u7acb\u65b9\u9ad4 cube.stl",
+     "sender": "",
+     "contentType": "model/stl",
+     "expect": {
+      "status": 401,
+      "error": "wrong_code",
+      "siteReason": "reasonWrongCode",
+      "siteStop": true
+     }
+    },
+    {
+     "label": "18-drop-not-a-model",
+     "request": "POST /api/drop",
+     "status": 415,
+     "head": "default/18-drop-not-a-model.head",
+     "body": "default/18-drop-not-a-model.body",
+     "requestLines": [
+      "POST /api/drop HTTP/1.1",
+      "Host: 127.0.0.1:18852",
+      "User-Agent: curl/8.5.0",
+      "Accept: */*",
+      "Origin: http://127.0.0.1:18852",
+      "Content-Type: text/plain",
+      "X-Drop-Code: 460070",
+      "X-Drop-Filename: notes.txt",
+      "Content-Length: 25"
+     ],
+     "via": "curl",
+     "name": "notes.txt",
+     "sender": "",
+     "contentType": "text/plain",
+     "expect": {
+      "status": 415,
+      "error": "unsupported_type",
+      "siteReason": "reasonType"
+     }
+    },
+    {
+     "label": "19-drop-fake-3mf",
+     "request": "POST /api/drop",
+     "status": 415,
+     "head": "default/19-drop-fake-3mf.head",
+     "body": "default/19-drop-fake-3mf.body",
+     "requestLines": [
+      "POST /api/drop HTTP/1.1",
+      "Host: 127.0.0.1:18852",
+      "User-Agent: curl/8.5.0",
+      "Accept: */*",
+      "Origin: http://127.0.0.1:18852",
+      "Content-Type: model/3mf",
+      "X-Drop-Code: 460070",
+      "X-Drop-Filename: fake.3mf",
+      "Content-Length: 30"
+     ],
+     "via": "curl",
+     "name": "fake.3mf",
+     "sender": "",
+     "contentType": "model/3mf",
+     "expect": {
+      "status": 415,
+      "error": "unsupported_type",
+      "siteReason": "reasonType"
+     }
+    },
+    {
+     "label": "20-drop-long-sender",
+     "request": "POST /api/drop",
+     "status": 400,
+     "head": "default/20-drop-long-sender.head",
+     "body": "default/20-drop-long-sender.body",
+     "requestLines": [
+      "POST /api/drop HTTP/1.1",
+      "Host: 127.0.0.1:18852",
+      "User-Agent: curl/8.5.0",
+      "Accept: */*",
+      "Origin: http://127.0.0.1:18852",
+      "Content-Type: model/stl",
+      "X-Drop-Code: 460070",
+      "X-Drop-Filename: %E7%AB%8B%E6%96%B9%E9%AB%94%20cube.stl",
+      "X-Drop-Sender: yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy",
+      "Content-Length: 452"
+     ],
+     "via": "curl",
+     "name": "\u7acb\u65b9\u9ad4 cube.stl",
+     "sender": "yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy",
+     "contentType": "model/stl",
+     "expect": {
+      "status": 400,
+      "error": "bad_request",
+      "siteReason": "reasonName"
+     }
+    },
+    {
+     "label": "21-drop-no-length",
+     "request": "POST /api/drop",
+     "status": 411,
+     "head": "default/21-drop-no-length.head",
+     "body": "default/21-drop-no-length.body",
+     "requestLines": [
+      "POST /api/drop HTTP/1.1",
+      "Host: 127.0.0.1:18852",
+      "User-Agent: curl/8.5.0",
+      "Accept: */*",
+      "Origin: http://127.0.0.1:18852",
+      "Content-Type: model/stl",
+      "X-Drop-Code: 460070",
+      "X-Drop-Filename: %E7%AB%8B%E6%96%B9%E9%AB%94%20cube.stl",
+      "Transfer-Encoding: chunked"
+     ],
+     "via": "curl",
+     "name": "\u7acb\u65b9\u9ad4 cube.stl",
+     "sender": "",
+     "contentType": "model/stl",
+     "expect": {
+      "status": 411,
+      "error": "length_required",
+      "siteReason": "reasonServer"
+     }
+    },
+    {
+     "label": "50-drop-old-code",
+     "request": "POST /api/drop",
+     "status": 401,
+     "head": "default/50-drop-old-code.head",
+     "body": "default/50-drop-old-code.body",
+     "requestLines": [
+      "POST /api/drop HTTP/1.1",
+      "Host: 127.0.0.1:18852",
+      "User-Agent: curl/8.5.0",
+      "Accept: */*",
+      "Origin: http://127.0.0.1:18852",
+      "Content-Type: model/stl",
+      "X-Drop-Code: 460070",
+      "X-Drop-Filename: %E7%AB%8B%E6%96%B9%E9%AB%94%20cube.stl",
+      "Content-Length: 452"
+     ],
+     "via": "curl",
+     "name": "\u7acb\u65b9\u9ad4 cube.stl",
+     "sender": "",
+     "contentType": "model/stl",
+     "expect": {
+      "status": 401,
+      "error": "wrong_code",
+      "siteReason": "reasonWrongCode",
+      "siteStop": true
+     }
+    },
+    {
+     "label": "76-drop-lockout",
+     "request": "POST /api/drop",
+     "status": 401,
+     "head": "default/76-drop-lockout.head",
+     "body": "default/76-drop-lockout.body",
+     "requestLines": [
+      "POST /api/drop HTTP/1.1",
+      "Host: 127.0.0.1:18852",
+      "User-Agent: curl/8.5.0",
+      "Accept: */*",
+      "Origin: http://127.0.0.1:18852",
+      "Content-Type: model/stl",
+      "X-Drop-Code: 000000",
+      "X-Drop-Filename: %E7%AB%8B%E6%96%B9%E9%AB%94%20cube.stl",
+      "Content-Length: 452"
+     ],
+     "via": "curl",
+     "name": "\u7acb\u65b9\u9ad4 cube.stl",
+     "sender": "",
+     "contentType": "model/stl",
+     "expect": {
+      "status": 401,
+      "error": "wrong_code",
+      "siteReason": "reasonWrongCode",
+      "siteStop": true
+     }
+    },
+    {
+     "label": "77-drop-lockout",
+     "request": "POST /api/drop",
+     "status": 401,
+     "head": "default/77-drop-lockout.head",
+     "body": "default/77-drop-lockout.body",
+     "requestLines": [
+      "POST /api/drop HTTP/1.1",
+      "Host: 127.0.0.1:18852",
+      "User-Agent: curl/8.5.0",
+      "Accept: */*",
+      "Origin: http://127.0.0.1:18852",
+      "Content-Type: model/stl",
+      "X-Drop-Code: 000000",
+      "X-Drop-Filename: %E7%AB%8B%E6%96%B9%E9%AB%94%20cube.stl",
+      "Content-Length: 452"
+     ],
+     "via": "curl",
+     "name": "\u7acb\u65b9\u9ad4 cube.stl",
+     "sender": "",
+     "contentType": "model/stl",
+     "expect": {
+      "status": 401,
+      "error": "wrong_code",
+      "siteReason": "reasonWrongCode",
+      "siteStop": true
+     }
+    },
+    {
+     "label": "78-drop-lockout",
+     "request": "POST /api/drop",
+     "status": 401,
+     "head": "default/78-drop-lockout.head",
+     "body": "default/78-drop-lockout.body",
+     "requestLines": [
+      "POST /api/drop HTTP/1.1",
+      "Host: 127.0.0.1:18852",
+      "User-Agent: curl/8.5.0",
+      "Accept: */*",
+      "Origin: http://127.0.0.1:18852",
+      "Content-Type: model/stl",
+      "X-Drop-Code: 000000",
+      "X-Drop-Filename: %E7%AB%8B%E6%96%B9%E9%AB%94%20cube.stl",
+      "Content-Length: 452"
+     ],
+     "via": "curl",
+     "name": "\u7acb\u65b9\u9ad4 cube.stl",
+     "sender": "",
+     "contentType": "model/stl",
+     "expect": {
+      "status": 401,
+      "error": "wrong_code",
+      "siteReason": "reasonWrongCode",
+      "siteStop": true
+     }
+    },
+    {
+     "label": "79-drop-lockout",
+     "request": "POST /api/drop",
+     "status": 429,
+     "head": "default/79-drop-lockout.head",
+     "body": "default/79-drop-lockout.body",
+     "requestLines": [
+      "POST /api/drop HTTP/1.1",
+      "Host: 127.0.0.1:18852",
+      "User-Agent: curl/8.5.0",
+      "Accept: */*",
+      "Origin: http://127.0.0.1:18852",
+      "Content-Type: model/stl",
+      "X-Drop-Code: 000000",
+      "X-Drop-Filename: %E7%AB%8B%E6%96%B9%E9%AB%94%20cube.stl",
+      "Content-Length: 452"
+     ],
+     "via": "curl",
+     "name": "\u7acb\u65b9\u9ad4 cube.stl",
+     "sender": "",
+     "contentType": "model/stl",
+     "expect": {
+      "status": 429,
+      "error": "too_many_attempts",
+      "siteReason": "reasonLocked",
+      "siteStop": true,
+      "siteLockMinutes": 5
+     }
+    }
+   ],
+   "status": {
+    "label": "22-status",
+    "request": "GET /api/station/status",
+    "status": 200,
+    "head": "default/22-status.head",
+    "body": "default/22-status.body"
+   },
+   "inbox": {
+    "label": "23-inbox",
+    "request": "GET /api/station/inbox",
+    "status": 200,
+    "head": "default/23-inbox.head",
+    "body": "default/23-inbox.body"
+   },
+   "files": [
+    {
+     "label": "24-file",
+     "request": "GET /api/station/files/325462875d3c9f26251cdb3b9c9eaa94",
+     "status": 200,
+     "head": "default/24-file.head",
+     "body": "default/24-file.body"
+    },
+    {
+     "label": "25-file",
+     "request": "GET /api/station/files/92f01aa10ebf978f8f1d11a02f817714",
+     "status": 200,
+     "head": "default/25-file.head",
+     "body": "default/25-file.body"
+    },
+    {
+     "label": "26-file",
+     "request": "GET /api/station/files/b89b41bdd12fb60fe76d4b79af0ea62b",
+     "status": 200,
+     "head": "default/26-file.head",
+     "body": "default/26-file.body"
+    },
+    {
+     "label": "27-file",
+     "request": "GET /api/station/files/8e0edff98d797ccb096536c9b30655e4",
+     "status": 200,
+     "head": "default/27-file.head",
+     "body": "default/27-file.body"
+    },
+    {
+     "label": "28-file",
+     "request": "GET /api/station/files/12c5d2219147aa972d3068504d2b643e",
+     "status": 200,
+     "head": "default/28-file.head",
+     "body": "default/28-file.body"
+    },
+    {
+     "label": "29-file",
+     "request": "GET /api/station/files/ec59cee5a4ff9bbf79612bc0b80d4d73",
+     "status": 200,
+     "head": "default/29-file.head",
+     "body": "default/29-file.body"
+    },
+    {
+     "label": "30-file",
+     "request": "GET /api/station/files/0583c65e3bf4bd17118eb7cb2449823f",
+     "status": 200,
+     "head": "default/30-file.head",
+     "body": "default/30-file.body"
+    },
+    {
+     "label": "31-file",
+     "request": "GET /api/station/files/3d06f5e00c90b3790a4429a8df02f32e",
+     "status": 200,
+     "head": "default/31-file.head",
+     "body": "default/31-file.body"
+    },
+    {
+     "label": "32-file",
+     "request": "GET /api/station/files/289aefba2ca369d3ec2127b1b7cff9e1",
+     "status": 200,
+     "head": "default/32-file.head",
+     "body": "default/32-file.body"
+    },
+    {
+     "label": "33-file",
+     "request": "GET /api/station/files/4a88283f855b3cb8fa43a9dbf76b9555",
+     "status": 200,
+     "head": "default/33-file.head",
+     "body": "default/33-file.body"
+    },
+    {
+     "label": "34-file",
+     "request": "GET /api/station/files/e8e8ba528008e2154de8a3bfd124e71f",
+     "status": 200,
+     "head": "default/34-file.head",
+     "body": "default/34-file.body"
+    },
+    {
+     "label": "35-file",
+     "request": "GET /api/station/files/310aecffafe8289ec95189eb3b77aea4",
+     "status": 200,
+     "head": "default/35-file.head",
+     "body": "default/35-file.body"
+    },
+    {
+     "label": "36-file",
+     "request": "GET /api/station/files/f00728afd1608d6b4a0a199d7270cf6a",
+     "status": 200,
+     "head": "default/36-file.head",
+     "body": "default/36-file.body"
+    },
+    {
+     "label": "37-file",
+     "request": "GET /api/station/files/bbf8be029b88ebd295bc593c5578eb18",
+     "status": 200,
+     "head": "default/37-file.head",
+     "body": "default/37-file.body"
+    },
+    {
+     "label": "38-file",
+     "request": "GET /api/station/files/c0963dac3054b29a8108b62ac2fc05a2",
+     "status": 200,
+     "head": "default/38-file.head",
+     "body": "default/38-file.body"
+    },
+    {
+     "label": "39-file",
+     "request": "GET /api/station/files/9e97a7e582e98f596efa105ebc78418a",
+     "status": 200,
+     "head": "default/39-file.head",
+     "body": "default/39-file.body"
+    },
+    {
+     "label": "40-file",
+     "request": "GET /api/station/files/b99ab6e98d8c8f8b4a5fd91d88774d50",
+     "status": 200,
+     "head": "default/40-file.head",
+     "body": "default/40-file.body"
+    },
+    {
+     "label": "41-file",
+     "request": "GET /api/station/files/50e3a6ee6d9a00f9df563156814193a6",
+     "status": 200,
+     "head": "default/41-file.head",
+     "body": "default/41-file.body"
+    },
+    {
+     "label": "42-file",
+     "request": "GET /api/station/files/1e28099f909b0d596728f8216f896a91",
+     "status": 200,
+     "head": "default/42-file.head",
+     "body": "default/42-file.body"
+    },
+    {
+     "label": "43-file",
+     "request": "GET /api/station/files/9e4933ff9f9713d3e73a5558bc4e10a0",
+     "status": 200,
+     "head": "default/43-file.head",
+     "body": "default/43-file.body"
+    }
+   ],
+   "statusWrongKey": {
+    "label": "44-status-wrong-key",
+    "request": "GET /api/station/status",
+    "status": 401,
+    "head": "default/44-status-wrong-key.head",
+    "body": "default/44-status-wrong-key.body"
+   },
+   "inboxNoKey": {
+    "label": "45-inbox-no-key",
+    "request": "GET /api/station/inbox",
+    "status": 401,
+    "head": "default/45-inbox-no-key.head",
+    "body": "default/45-inbox-no-key.body"
+   },
+   "fileNoKey": {
+    "label": "46-file-no-key",
+    "request": "GET /api/station/files/325462875d3c9f26251cdb3b9c9eaa94",
+    "status": 401,
+    "head": "default/46-file-no-key.head",
+    "body": "default/46-file-no-key.body"
+   },
+   "fileUnknown": {
+    "label": "47-file-unknown",
+    "request": "GET /api/station/files/00000000000000000000000000000000",
+    "status": 404,
+    "head": "default/47-file-unknown.head",
+    "body": "default/47-file-unknown.body"
+   },
+   "newCode": {
+    "label": "48-new-code",
+    "request": "POST /api/station/drop-code",
+    "status": 200,
+    "head": "default/48-new-code.head",
+    "body": "default/48-new-code.body"
+   },
+   "statusNewCode": {
+    "label": "49-status-new-code",
+    "request": "GET /api/station/status",
+    "status": 200,
+    "head": "default/49-status-new-code.head",
+    "body": "default/49-status-new-code.body"
+   },
+   "deletes": [
+    {
+     "label": "51-delete",
+     "request": "DELETE /api/station/files/325462875d3c9f26251cdb3b9c9eaa94",
+     "status": 204,
+     "head": "default/51-delete.head",
+     "body": "default/51-delete.body"
+    },
+    {
+     "label": "52-delete",
+     "request": "DELETE /api/station/files/92f01aa10ebf978f8f1d11a02f817714",
+     "status": 204,
+     "head": "default/52-delete.head",
+     "body": "default/52-delete.body"
+    },
+    {
+     "label": "53-delete",
+     "request": "DELETE /api/station/files/b89b41bdd12fb60fe76d4b79af0ea62b",
+     "status": 204,
+     "head": "default/53-delete.head",
+     "body": "default/53-delete.body"
+    },
+    {
+     "label": "54-delete",
+     "request": "DELETE /api/station/files/8e0edff98d797ccb096536c9b30655e4",
+     "status": 204,
+     "head": "default/54-delete.head",
+     "body": "default/54-delete.body"
+    },
+    {
+     "label": "55-delete",
+     "request": "DELETE /api/station/files/12c5d2219147aa972d3068504d2b643e",
+     "status": 204,
+     "head": "default/55-delete.head",
+     "body": "default/55-delete.body"
+    },
+    {
+     "label": "56-delete",
+     "request": "DELETE /api/station/files/ec59cee5a4ff9bbf79612bc0b80d4d73",
+     "status": 204,
+     "head": "default/56-delete.head",
+     "body": "default/56-delete.body"
+    },
+    {
+     "label": "57-delete",
+     "request": "DELETE /api/station/files/0583c65e3bf4bd17118eb7cb2449823f",
+     "status": 204,
+     "head": "default/57-delete.head",
+     "body": "default/57-delete.body"
+    },
+    {
+     "label": "58-delete",
+     "request": "DELETE /api/station/files/3d06f5e00c90b3790a4429a8df02f32e",
+     "status": 204,
+     "head": "default/58-delete.head",
+     "body": "default/58-delete.body"
+    },
+    {
+     "label": "59-delete",
+     "request": "DELETE /api/station/files/289aefba2ca369d3ec2127b1b7cff9e1",
+     "status": 204,
+     "head": "default/59-delete.head",
+     "body": "default/59-delete.body"
+    },
+    {
+     "label": "60-delete",
+     "request": "DELETE /api/station/files/4a88283f855b3cb8fa43a9dbf76b9555",
+     "status": 204,
+     "head": "default/60-delete.head",
+     "body": "default/60-delete.body"
+    },
+    {
+     "label": "61-delete",
+     "request": "DELETE /api/station/files/e8e8ba528008e2154de8a3bfd124e71f",
+     "status": 204,
+     "head": "default/61-delete.head",
+     "body": "default/61-delete.body"
+    },
+    {
+     "label": "62-delete",
+     "request": "DELETE /api/station/files/310aecffafe8289ec95189eb3b77aea4",
+     "status": 204,
+     "head": "default/62-delete.head",
+     "body": "default/62-delete.body"
+    },
+    {
+     "label": "63-delete",
+     "request": "DELETE /api/station/files/f00728afd1608d6b4a0a199d7270cf6a",
+     "status": 204,
+     "head": "default/63-delete.head",
+     "body": "default/63-delete.body"
+    },
+    {
+     "label": "64-delete",
+     "request": "DELETE /api/station/files/bbf8be029b88ebd295bc593c5578eb18",
+     "status": 204,
+     "head": "default/64-delete.head",
+     "body": "default/64-delete.body"
+    },
+    {
+     "label": "65-delete",
+     "request": "DELETE /api/station/files/c0963dac3054b29a8108b62ac2fc05a2",
+     "status": 204,
+     "head": "default/65-delete.head",
+     "body": "default/65-delete.body"
+    },
+    {
+     "label": "66-delete",
+     "request": "DELETE /api/station/files/9e97a7e582e98f596efa105ebc78418a",
+     "status": 204,
+     "head": "default/66-delete.head",
+     "body": "default/66-delete.body"
+    },
+    {
+     "label": "67-delete",
+     "request": "DELETE /api/station/files/b99ab6e98d8c8f8b4a5fd91d88774d50",
+     "status": 204,
+     "head": "default/67-delete.head",
+     "body": "default/67-delete.body"
+    },
+    {
+     "label": "68-delete",
+     "request": "DELETE /api/station/files/50e3a6ee6d9a00f9df563156814193a6",
+     "status": 204,
+     "head": "default/68-delete.head",
+     "body": "default/68-delete.body"
+    },
+    {
+     "label": "69-delete",
+     "request": "DELETE /api/station/files/1e28099f909b0d596728f8216f896a91",
+     "status": 204,
+     "head": "default/69-delete.head",
+     "body": "default/69-delete.body"
+    },
+    {
+     "label": "70-delete",
+     "request": "DELETE /api/station/files/9e4933ff9f9713d3e73a5558bc4e10a0",
+     "status": 204,
+     "head": "default/70-delete.head",
+     "body": "default/70-delete.body"
+    }
+   ],
+   "deletesAgain": [
+    {
+     "label": "71-delete-again",
+     "request": "DELETE /api/station/files/325462875d3c9f26251cdb3b9c9eaa94",
+     "status": 204,
+     "head": "default/71-delete-again.head",
+     "body": "default/71-delete-again.body"
+    },
+    {
+     "label": "72-delete-again",
+     "request": "DELETE /api/station/files/92f01aa10ebf978f8f1d11a02f817714",
+     "status": 204,
+     "head": "default/72-delete-again.head",
+     "body": "default/72-delete-again.body"
+    }
+   ],
+   "filesGone": [
+    {
+     "label": "73-file-gone",
+     "request": "GET /api/station/files/325462875d3c9f26251cdb3b9c9eaa94",
+     "status": 404,
+     "head": "default/73-file-gone.head",
+     "body": "default/73-file-gone.body"
+    },
+    {
+     "label": "74-file-gone",
+     "request": "GET /api/station/files/92f01aa10ebf978f8f1d11a02f817714",
+     "status": 404,
+     "head": "default/74-file-gone.head",
+     "body": "default/74-file-gone.body"
+    }
+   ],
+   "inboxEmpty": {
+    "label": "75-inbox-empty",
+    "request": "GET /api/station/inbox",
+    "status": 200,
+    "head": "default/75-inbox-empty.head",
+    "body": "default/75-inbox-empty.body"
+   },
+   "finishedAt": "2026-10-11T19:12:12Z"
+  },
+  {
+   "name": "custom",
+   "env": {
+    "DROP_STATION_NAME": "\u4e01\u4e01\u6253\u5370\u5ba4 Bambu Studio MD3 on the workshop PC by the window ok",
+    "DROP_CODE": "4321",
+    "DROP_PUBLIC_URL": "https://Print.Example.test/drop/",
+    "DROP_TTL_HOURS": "0.5",
+    "DROP_MAX_BYTES": "1024",
+    "DROP_QUEUE_MAX_FILES": "2",
+    "DROP_QUEUE_MAX_BYTES": "2048"
+   },
+   "port": 18852,
+   "startedAt": "2026-10-11T19:12:13Z",
+   "expect": {
+    "stationName": "\u4e01\u4e01\u6253\u5370\u5ba4 Bambu Studio MD3 on the workshop PC by the window ok",
+    "dropCode": "4321",
+    "publicUrl": "https://print.example.test/drop",
+    "maxBytes": 1024,
+    "ttlHours": 0.5,
+    "link": "https://print.example.test/drop/#code=4321"
+   },
+   "health": {
+    "label": "01-health",
+    "request": "GET /healthz",
+    "status": 200,
+    "head": "custom/01-health.head",
+    "body": "custom/01-health.body"
+   },
+   "statusEmpty": {
+    "label": "02-status-empty",
+    "request": "GET /api/station/status",
+    "status": 200,
+    "head": "custom/02-status-empty.head",
+    "body": "custom/02-status-empty.body"
+   },
+   "dropCode": "4321",
+   "drops": [
+    {
+     "label": "03-drop-too-large",
+     "request": "POST /api/drop",
+     "status": 413,
+     "head": "custom/03-drop-too-large.head",
+     "body": "custom/03-drop-too-large.body",
+     "requestLines": [
+      "POST /api/drop HTTP/1.1",
+      "Host: 127.0.0.1:18852",
+      "User-Agent: curl/8.5.0",
+      "Accept: */*",
+      "Origin: http://127.0.0.1:18852",
+      "Content-Type: model/stl",
+      "X-Drop-Code: 4321",
+      "X-Drop-Filename: big%20tetra.stl",
+      "Content-Length: 1262"
+     ],
+     "via": "curl",
+     "name": "big tetra.stl",
+     "sender": "",
+     "contentType": "model/stl",
+     "expect": {
+      "status": 413,
+      "error": "too_large",
+      "siteReason": "reasonTooLarge"
+     }
+    },
+    {
+     "label": "04-drop",
+     "request": "POST /api/drop",
+     "status": 201,
+     "head": "custom/04-drop.head",
+     "body": "custom/04-drop.body",
+     "requestLines": [
+      "POST /api/drop HTTP/1.1",
+      "Host: 127.0.0.1:18852",
+      "User-Agent: curl/8.5.0",
+      "Accept: */*",
+      "Origin: http://127.0.0.1:18852",
+      "X-Drop-Code: 4321",
+      "X-Drop-Filename: mesh.obj",
+      "X-Drop-Sender: Ada",
+      "Content-Length: 89"
+     ],
+     "via": "curl",
+     "name": "mesh.obj",
+     "sender": "Ada",
+     "contentType": "",
+     "expect": {
+      "status": 201,
+      "sample": "samples/mesh.obj",
+      "stationFileName": "mesh.obj",
+      "stationSender": "Ada"
+     }
+    },
+    {
+     "label": "05-drop",
+     "request": "POST /api/drop",
+     "status": 201,
+     "head": "custom/05-drop.head",
+     "body": "custom/05-drop.body",
+     "requestLines": [
+      "POST /api/drop HTTP/1.1",
+      "Host: 127.0.0.1:18852",
+      "User-Agent: curl/8.5.0",
+      "Accept: */*",
+      "Origin: http://127.0.0.1:18852",
+      "X-Drop-Code: 4321",
+      "X-Drop-Filename: model.amf",
+      "Content-Length: 704"
+     ],
+     "via": "curl",
+     "name": "model.amf",
+     "sender": "",
+     "contentType": "",
+     "expect": {
+      "status": 201,
+      "sample": "samples/model.amf",
+      "stationFileName": "model.amf",
+      "stationSender": ""
+     }
+    },
+    {
+     "label": "06-drop-queue-full",
+     "request": "POST /api/drop",
+     "status": 507,
+     "head": "custom/06-drop-queue-full.head",
+     "body": "custom/06-drop-queue-full.body",
+     "requestLines": [
+      "POST /api/drop HTTP/1.1",
+      "Host: 127.0.0.1:18852",
+      "User-Agent: curl/8.5.0",
+      "Accept: */*",
+      "Origin: http://127.0.0.1:18852",
+      "X-Drop-Code: 4321",
+      "X-Drop-Filename: housing.step",
+      "Content-Length: 216"
+     ],
+     "via": "curl",
+     "name": "housing.step",
+     "sender": "",
+     "contentType": "",
+     "expect": {
+      "status": 507,
+      "error": "queue_full",
+      "siteReason": "reasonFull",
+      "siteStop": true
+     }
+    }
+   ],
+   "status": {
+    "label": "07-status",
+    "request": "GET /api/station/status",
+    "status": 200,
+    "head": "custom/07-status.head",
+    "body": "custom/07-status.body"
+   },
+   "inbox": {
+    "label": "08-inbox",
+    "request": "GET /api/station/inbox",
+    "status": 200,
+    "head": "custom/08-inbox.head",
+    "body": "custom/08-inbox.body"
+   },
+   "files": [
+    {
+     "label": "09-file",
+     "request": "GET /api/station/files/8686a408fe5a97113a0e396a6824c885",
+     "status": 200,
+     "head": "custom/09-file.head",
+     "body": "custom/09-file.body"
+    },
+    {
+     "label": "10-file",
+     "request": "GET /api/station/files/90e7e6a68914a9dac2bb90c667e82044",
+     "status": 200,
+     "head": "custom/10-file.head",
+     "body": "custom/10-file.body"
+    }
+   ],
+   "newCode": {
+    "label": "11-new-code",
+    "request": "POST /api/station/drop-code",
+    "status": 409,
+    "head": "custom/11-new-code.head",
+    "body": "custom/11-new-code.body"
+   },
+   "deletes": [
+    {
+     "label": "12-delete",
+     "request": "DELETE /api/station/files/8686a408fe5a97113a0e396a6824c885",
+     "status": 204,
+     "head": "custom/12-delete.head",
+     "body": "custom/12-delete.body"
+    },
+    {
+     "label": "13-delete",
+     "request": "DELETE /api/station/files/90e7e6a68914a9dac2bb90c667e82044",
+     "status": 204,
+     "head": "custom/13-delete.head",
+     "body": "custom/13-delete.body"
+    }
+   ],
+   "inboxEmpty": {
+    "label": "14-inbox-empty",
+    "request": "GET /api/station/inbox",
+    "status": 200,
+    "head": "custom/14-inbox-empty.head",
+    "body": "custom/14-inbox-empty.body"
+   },
+   "finishedAt": "2026-10-11T19:12:19Z"
+  }
+ ],
+ "refusedSettings": [
+  {
+   "env": {
+    "DROP_MAX_BYTES": "2147483649",
+    "DROP_QUEUE_MAX_BYTES": "4294967296"
+   },
+   "exitCode": 2,
+   "expectedExitCode": 2,
+   "message": [
+    "lan-model-drop: DROP_MAX_BYTES must be between 1 and 2147483648, the largest model Bambu Studio takes."
+   ]
+  },
+  {
+   "env": {
+    "DROP_QUEUE_MAX_FILES": "1001"
+   },
+   "exitCode": 2,
+   "expectedExitCode": 2,
+   "message": [
+    "lan-model-drop: DROP_QUEUE_MAX_FILES must be between 1 and 1000, the most models Bambu Studio lists at once."
+   ]
+  },
+  {
+   "env": {
+    "DROP_PUBLIC_URL": "http://drop_box.lan:8833"
+   },
+   "exitCode": 2,
+   "expectedExitCode": 2,
+   "message": [
+    "lan-model-drop: DROP_PUBLIC_URL must be an http:// or https:// address without a user name, password, query or fragment, for example http://192.0.2.20:8833. The host must be a name of letters, digits and hyphens, an IPv4 address or an IPv6 address in brackets, the port 1 to 65535, and the whole address at most 1024 characters."
+   ]
+  },
+  {
+   "env": {
+    "DROP_PUBLIC_URL": "http://print.example.test:0"
+   },
+   "exitCode": 2,
+   "expectedExitCode": 2,
+   "message": [
+    "lan-model-drop: DROP_PUBLIC_URL must be an http:// or https:// address without a user name, password, query or fragment, for example http://192.0.2.20:8833. The host must be a name of letters, digits and hyphens, an IPv4 address or an IPv6 address in brackets, the port 1 to 65535, and the whole address at most 1024 characters."
+   ]
+  },
+  {
+   "env": {
+    "DROP_PUBLIC_URL": "https://print.example.test//drop"
+   },
+   "exitCode": 2,
+   "expectedExitCode": 2,
+   "message": [
+    "lan-model-drop: DROP_PUBLIC_URL must be an http:// or https:// address without a user name, password, query or fragment, for example http://192.0.2.20:8833. The host must be a name of letters, digits and hyphens, an IPv4 address or an IPv6 address in brackets, the port 1 to 65535, and the whole address at most 1024 characters."
+   ]
+  }
+ ],
+ "baseImage": "node:22.23.3-alpine3.24@sha256:0a7108bf6c7bf5de370ffb1a3ed6be93d405b43ff159f681a8d18c0e2bc2e402",
+ "acceptedLimits": {
+  "env": {
+   "DROP_MAX_BYTES": "2147483648",
+   "DROP_QUEUE_MAX_FILES": "1000"
+  },
+  "exitCode": 0,
+  "config": {
+   "maxBytes": 2147483648,
+   "queueMaxFiles": 1000
+  }
+ }
+}

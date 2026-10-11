@@ -1,0 +1,17 @@
+HTTP/1.1 200 OK
+Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'
+X-Content-Type-Options: nosniff
+Referrer-Policy: no-referrer
+X-Frame-Options: DENY
+Cross-Origin-Opener-Policy: same-origin
+Cross-Origin-Resource-Policy: same-origin
+Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
+Content-Type: application/octet-stream
+Content-Length: 216
+Content-Disposition: attachment; filename*=UTF-8''housing.step
+X-Content-SHA256: bba65e7879879b59f710c63bb3621ff1d4b45a4695f02e140b6354b4be0fb897
+Cache-Control: no-store
+Date: Sun, 11 Oct 2026 19:12:12 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+

@@ -122,7 +122,7 @@ export function normalizePublicUrl(raw) {
   }
   const href = url.href.replace(/\/+$/u, '');
   if (!stationHost(url.hostname) || url.port === '0' || !STATION_PATH.test(url.pathname.replace(/\/+$/u, '')) || href.length > 1024) {
-    throw new ConfigError(`${problem}. The host must be a name of letters, digits and hyphens, an IPv4 address or an IPv6 address in brackets, the port 1 to 65535, and the whole address at most 1024 characters`);
+    throw new ConfigError(`${problem}. The host must be a name of letters, digits and hyphens, an IPv4 address or an IPv6 address in brackets, the port 1 to 65535, and the whole address at most 1024 characters.`);
   }
   return href;
 }

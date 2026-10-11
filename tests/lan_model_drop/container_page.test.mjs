@@ -48,6 +48,7 @@ class DevTools {
         else resolve(message.result);
       } else {
         this.events.push(message);
+        this.onEvent?.(message);
       }
     });
     this.opened = new Promise((resolve, reject) => {
@@ -92,12 +93,25 @@ test('the sender page from the container sends every chosen model, and its reque
   const { targetId } = await devtools.send('Target.createTarget', { url: 'about:blank' });
   const { sessionId } = await devtools.send('Target.attachToTarget', { targetId, flatten: true });
   const page = (method, params) => devtools.send(method, params, sessionId);
+  // Each drop's answer is read when it arrives (the inspector does not keep answers marked
+  // no-store), then passed on to the page unchanged.
+  const bodies = new Map();
+  devtools.onEvent = (message) => {
+    if (message.sessionId !== sessionId || message.method !== 'Fetch.requestPaused') return;
+    const { requestId, networkId } = message.params;
+    bodies.set(networkId, (async () => {
+      const answer = await page('Fetch.getResponseBody', { requestId });
+      await page('Fetch.continueResponse', { requestId });
+      return answer.base64Encoded ? Buffer.from(answer.body, 'base64').toString('utf8') : answer.body;
+    })());
+  };
   const evaluate = async (expression) => {
     const result = await page('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true });
     if (result.exceptionDetails) throw new Error(`page threw: ${result.exceptionDetails.exception?.description ?? result.exceptionDetails.text}`);
     return result.result.value;
   };
   for (const domain of ['Network', 'Page', 'DOM', 'Runtime']) await page(`${domain}.enable`);
+  await page('Fetch.enable', { patterns: [{ urlPattern: '*/api/drop', requestStage: 'Response' }] });
 
   // The invite link fills the code and leaves the address bar.
   await page('Page.navigate', { url: `${base}/#code=${env.LAN_DROP_PAGE_CODE}` });
@@ -137,7 +151,8 @@ test('the sender page from the container sends every chosen model, and its reque
   }
   const requests = [];
   for (const [requestId, record] of drops) {
-    const { body } = await page('Network.getResponseBody', { requestId });
+    assert.ok(bodies.has(requestId), `the answer to ${record.url} arrived`);
+    const body = await bodies.get(requestId);
     requests.push({ ...record, requestHeaders: extra.get(requestId) ?? null, body });
   }
   assert.equal(requests.length, files.length, 'one request per chosen model');

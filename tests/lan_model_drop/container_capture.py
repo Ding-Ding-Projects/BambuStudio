@@ -497,7 +497,9 @@ class Capture:
             flags = []
             for name, value in env.items():
                 flags += ["-e", f"{name}={value}"]
-            run = self.compose("run", "--rm", "--no-deps", "-T", *flags, "lan-model-drop", check=False, capture=True)
+            # The image's own command, stopped after 20 seconds should the service start after all.
+            run = self.compose("run", "--rm", "--no-deps", "-T", *flags, "lan-model-drop", "timeout", "20", "node", "server/main.mjs",
+                               check=False, capture=True)
             message = run.stderr.decode("utf-8").strip().splitlines()
             self.manifest["refusedSettings"].append({"env": env, "exitCode": run.returncode, "expectedExitCode": expected,
                                                      "message": [line for line in message if line.startswith("lan-model-drop:")]})
