@@ -21,6 +21,8 @@ constexpr int           kPollSeconds       = 5;
 constexpr int           kMaxBackoffSeconds = 60;
 constexpr std::size_t   kMaxFileNameChars  = 200;
 constexpr std::size_t   kMaxSenderChars    = 40;
+// The drop site cuts DROP_STATION_NAME to 60 characters (lan-model-drop/server/config.mjs).
+constexpr std::size_t   kMaxStationNameChars = 60;
 constexpr std::size_t   kMaxInboxItems     = 1000;
 // Hard station-side cap for one file, whatever the container advertises (its own default is 256 MiB
 // per file and 2 GiB for the whole queue).
@@ -71,6 +73,9 @@ std::string fallback_file_name(FileType type);
 // Control and bidirectional-override characters removed, trimmed, at most 40 characters. Invalid
 // UTF-8 sequences are dropped.
 std::string sanitize_sender(std::string_view raw);
+// The same cleaning for the station name a status answer reports, at most 60 characters: the drop
+// site's own limit, so a name it reports in full is shown in full.
+std::string sanitize_station_name(std::string_view raw);
 
 bool is_item_id(std::string_view id);        // exactly 32 lowercase hexadecimal digits
 bool is_sha256_hex(std::string_view digest); // exactly 64 lowercase hexadecimal digits

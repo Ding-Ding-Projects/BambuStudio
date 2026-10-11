@@ -427,7 +427,11 @@ std::string fallback_file_name(FileType type)
     return std::string("model.") + type_name(type);
 }
 
-std::string sanitize_sender(std::string_view raw)
+namespace {
+
+// Display text from the drop site: control and bidirectional-override characters removed, trimmed,
+// at most `limit` characters; invalid UTF-8 sequences dropped.
+std::string sanitize_display_text(std::string_view raw, std::size_t limit)
 {
     std::vector<char32_t> codes;
     decode_all(raw, codes, /*strict*/ false);
@@ -435,12 +439,18 @@ std::string sanitize_sender(std::string_view raw)
     for (char32_t c : codes)
         if (!is_control(c) && !is_format_override(c)) kept.push_back(c);
     trim(kept);
-    if (kept.size() > kMaxSenderChars) {
-        kept.resize(kMaxSenderChars);
+    if (kept.size() > limit) {
+        kept.resize(limit);
         trim(kept);
     }
     return encode_all(kept);
 }
+
+} // namespace
+
+std::string sanitize_sender(std::string_view raw) { return sanitize_display_text(raw, kMaxSenderChars); }
+
+std::string sanitize_station_name(std::string_view raw) { return sanitize_display_text(raw, kMaxStationNameChars); }
 
 bool is_item_id(std::string_view id) { return is_lower_hex(id, 32); }
 bool is_sha256_hex(std::string_view digest) { return is_lower_hex(digest, 64); }
@@ -556,7 +566,7 @@ std::optional<StationStatus> parse_status(std::string_view body)
     // invite falls back to the configured or the LAN address.
     std::string public_url;
     if (read_string(*object, "publicUrl", public_url)) status.public_url = normalize_public_url(public_url);
-    status.station_name = sanitize_sender(status.station_name);
+    status.station_name = sanitize_station_name(status.station_name);
     return status;
 }
 

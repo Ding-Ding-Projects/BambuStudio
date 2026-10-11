@@ -179,6 +179,10 @@ static void names()
     CHECK(sanitize_sender(u8"陳大文") == u8"陳大文");
     CHECK(sanitize_sender(u8"x\u202Ey") == "xy");
     CHECK(sanitize_sender(std::string(60, 'z')) == std::string(40, 'z'));
+    // The station name keeps the drop site's own limit of 60 characters, cleaned the same way.
+    CHECK(sanitize_station_name(std::string(60, 'z')) == std::string(60, 'z'));
+    CHECK(sanitize_station_name(std::string(70, 'z')) == std::string(60, 'z'));
+    CHECK(sanitize_station_name(u8" Lab\u202E PC\u2069 ") == "Lab PC");
     CHECK(sanitize_sender(std::string("ok\xff")) == "ok");
     CHECK(sanitize_sender("").empty());
 
@@ -274,6 +278,10 @@ static void status_messages()
     CHECK(parse_status(head + "\"ttlHours\":0.5}") && parse_status(head + "\"ttlHours\":0.5}")->ttl_hours == 0.5);
     CHECK(!parse_status(head + "\"ttlHours\":0}") && !parse_status(head + "\"ttlHours\":-1}") && !parse_status(head + "\"ttlHours\":\"24\"}"));
     CHECK(parse_status(head + "\"ttlHours\":24,\"publicUrl\":null}")->public_url.empty());
+    // A station name of 41 to 60 characters, which the drop site reports in full, is shown in full.
+    const std::string long_name = std::string(u8"\u4E01\u4E01\u6253\u5370\u5BA4 ") + std::string(54, 'n');
+    CHECK(parse_status("{\"protocol\":1,\"stationName\":\"" + long_name + "\",\"dropCode\":\"123456\",\"queued\":0,"
+                       "\"queuedBytes\":0,\"maxBytes\":1024,\"ttlHours\":24}")->station_name == long_name);
     CHECK(parse_status(head + "\"ttlHours\":24,\"publicUrl\":\"https://Drop.Example.org/models/\"}")->public_url ==
           "https://drop.example.org/models");
     CHECK(parse_status(head + "\"ttlHours\":24,\"publicUrl\":\"https://user:pw@drop.example.org\"}")->public_url.empty());

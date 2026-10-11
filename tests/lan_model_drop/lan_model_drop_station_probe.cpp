@@ -15,6 +15,7 @@
 //   probe invite  <public url> <configured address> <comma-separated LAN IPv4s> <preferred IPv4> <drop code>
 //   probe save    <received folder> <id> <listed file name> <3mf|stl|step|obj|amf> <file>
 //   probe reserved <name>                           (would Windows take it for a device or refuse it?)
+//   probe public-url <url>                          (the station's reading of a reported publicUrl)
 #include "../../src/slic3r/GUI/LanModelDrop/LanModelDropFiles.hpp"
 #include "../../src/slic3r/GUI/LanModelDrop/LanModelDropModel.hpp"
 
@@ -148,6 +149,8 @@ int run(const std::vector<std::string> &args)
         out["names"] = names;
     } else if (command == "reserved") {
         out["reserved"] = is_windows_reserved_name(args.at(1));
+    } else if (command == "public-url") {
+        out["url"] = normalize_public_url(args.at(1));
     } else {
         std::cerr << "unknown command: " << command << "\n";
         return 2;
