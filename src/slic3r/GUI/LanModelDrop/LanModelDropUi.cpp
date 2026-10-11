@@ -634,6 +634,10 @@ public:
         row->Add(m_save, 0, wxALIGN_CENTER_VERTICAL | wxLEFT | wxRIGHT, FromDIP(kRowRight) / 2);
         row->AddSpacer(FromDIP(kRowRight) / 2);
         outer->Add(row, 0, wxEXPAND);
+        // The outcome of Save key and the note under it are separate labels: each holds one catalogue
+        // message, so bilingual mode can show the Cantonese of both.
+        m_outcome = LiveText(body_label(this, wxEmptyString, MD3::Role::OnSurfaceVariant, ::Label::Body_12));
+        outer->Add(m_outcome.get(), 0, wxLEFT | wxTOP, FromDIP(kRowLeft));
         m_note = LiveText(body_label(this, wxEmptyString, MD3::Role::OnSurfaceVariant, ::Label::Body_12));
         outer->Add(m_note.get(), 0, wxLEFT | wxTOP, FromDIP(kRowLeft));
         // The command is the drop site's own; it is not translated.
@@ -666,8 +670,10 @@ protected:
             note = _L("Saved for this Windows account, protected with Windows data protection. It is never shown in logs or exports.");
         else
             note = _L("No station key is saved.");
-        if (!m_message.empty()) note = m_message + "\n" + note;
-        if (m_note.set(note)) relayout(this, false);
+        bool changed = m_outcome.set(m_message);
+        changed |= show(m_outcome.get(), !m_message.empty());
+        changed |= m_note.set(note);
+        if (changed) relayout(this, false);
     }
 
 private:
@@ -720,6 +726,7 @@ private:
     TextInput *m_plain   = nullptr;
     Button    *m_toggle  = nullptr;
     Button    *m_save    = nullptr;
+    LiveText   m_outcome; // what the last Save key did
     LiveText   m_note;
     bool       m_showing = false;
     wxString   m_message;

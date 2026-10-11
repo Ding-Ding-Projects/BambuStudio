@@ -254,6 +254,11 @@ function liveLabels(ui, station) {
   assert.doesNotMatch(plain, /\bset_wrapped\(/);
   for (const name of ['m_pending_note', 'm_manual', 'm_source_note', 'm_fixed_note', 'm_live', 'm_waiting_label'])
     assert.match(read('src/slic3r/GUI/LanModelDrop/LanModelDropUi.hpp'), new RegExp(`LiveText\\s+${name};`));
+  // Each live label holds one catalogue message: the outcome of Save key is not joined to the note.
+  const keyRow = body(ui, 'class KeyRow');
+  assert.match(keyRow, /m_outcome\.set\(m_message\)/);
+  assert.match(keyRow, /m_note\.set\(note\)/);
+  assert.doesNotMatch(keyRow, /m_message \+/);
   // A tooltip the decorator extends is set only when its English changes.
   assert.match(body(ui, 'class CodeRow'), /if \(tip != m_tip\) \{\s*m_tip = tip;\s*m_new->SetToolTip\(tip\);/);
   const link = body(station, 'void on_link_state(std::uint64_t generation');
@@ -292,6 +297,7 @@ const contracts = [
   ['deletes go only to the site that listed the item', () => receivedFolders(src.station, src.files), () => receivedFolders(src.station.replace('tracker.pending_deletes(base)', 'tracker.pending_deletes(tracker.all_pending_deletes().front().base)'), src.files)],
   ['live labels keep their English, so bilingual text holds between polls', () => liveLabels(src.ui, src.station), () => liveLabels(src.ui.replace('if (m_label == nullptr || english == m_english) return false;', 'if (m_label == nullptr || m_label->GetUnwrappedLabel() == english) return false;'), src.station)],
   ['an unchanged poll does not refresh the windows', () => liveLabels(src.ui, src.station), () => liveLabels(src.ui, src.station.replace('if (!same_poll_view(before, v)) notify_listeners();', 'notify_listeners();'))],
+  ['the outcome of Save key keeps its own label, so both messages show their Cantonese', () => liveLabels(src.ui, src.station), () => liveLabels(src.ui.replace('bool changed = m_outcome.set(m_message);', 'bool changed = m_outcome.set(wxString());\n        if (!m_message.empty()) note = m_message + "\\n" + note;'), src.station)],
 ];
 
 for (const [name, check, mutant] of contracts) {
