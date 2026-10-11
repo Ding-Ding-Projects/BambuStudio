@@ -181,6 +181,26 @@ lists that was already decided is deleted there as well.
   (`COM3 .x.stl`, `LPT1 .print.stl`, `CONOUT$.stl`, `COM¹.stl` and others), which the service lists
   as they are, and checks that none of them is the name a file is written under. It needs the
   service and g++, and is skipped without them.
+- `node --test tests/lan_model_drop/station_agreement.test.mjs` checks that the two halves accept
+  the same things: a file or sender name the station would clean down to nothing (characters that
+  reorder or hide text, zero-width space) is refused by the drop site with 400 while the sender is
+  still on the page; `DROP_MAX_BYTES` and `DROP_QUEUE_MAX_FILES` stop at the station's own limits
+  (2 GiB per model, 1000 inbox entries, read from `LanModelDropModel.hpp`); every `DROP_PUBLIC_URL`
+  the site accepts reaches the invite link exactly as the site reports it; and a station name of up
+  to the site's 60 characters is shown in full. Each of these disagreed before.
+- `node --test tests/lan_model_drop/container_fixtures.test.mjs` replays answers captured from a real
+  container. `tests/lan_model_drop/container_capture.py` builds `lan-model-drop` with Docker Compose,
+  sends every sample model (3MF, ASCII and binary STL, STEP and STP, OBJ, XML and zipped AMF) through
+  the real sender page in headless Chromium and again with curl using the page's headers, drives the
+  station API as the station does, starts the container a second time with every setting changed,
+  and keeps each answer with its raw header lines in `tests/lan_model_drop/container_fixtures/`.
+  `lan_model_drop_container_interop_test.cpp` feeds them through the station's pure model and checks
+  every field and verdict: status, every inbox entry against the bytes sent and a SHA-256 of its
+  own, each download judged (`judge_download`) and saved, wrong and missing keys, unknown and
+  removed files, the new and the fixed drop code (`classify_new_code`), DELETE
+  (`delete_settled`) and both invite links. The same answers go through the sender page's own
+  outcome rules and invite reader, and the requests curl sent are compared with the protocol
+  headers Chromium sent.
 - The station sources compile in a Linux syntax check, and the DPAPI key store and the adapter
   enumeration also compile with the MinGW cross compiler; the accessibility events have only been
   reviewed. A built Windows application talking to a real drop site on a real network has not been

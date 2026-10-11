@@ -160,9 +160,9 @@ need and run `docker compose up -d` again. Every setting is optional.
 | --- | --- | --- |
 | `DROP_PORT` | 8833 | Port on this computer that people open |
 | `DROP_STATION_NAME` | Bambu Studio | Name shown on the page ("Sending to ...") |
-| `DROP_MAX_BYTES` | 268435456 (256 MB) | Largest model accepted |
+| `DROP_MAX_BYTES` | 268435456 (256 MB) | Largest model accepted, at most 2147483648 (2 GB), the largest Bambu Studio takes |
 | `DROP_TTL_HOURS` | 24 | Hours a model waits for Bambu Studio before it is removed (at most 720) |
-| `DROP_QUEUE_MAX_FILES` | 50 | Most models waiting at once |
+| `DROP_QUEUE_MAX_FILES` | 50 | Most models waiting at once, at most 1000, the most Bambu Studio lists |
 | `DROP_QUEUE_MAX_BYTES` | 2147483648 (2 GB) | Most bytes waiting at once |
 | `DROP_STATION_KEY` | generated | Station key, 16 to 512 visible characters without spaces |
 | `DROP_CODE` | random, 6 digits | A fixed drop code of 4 to 12 digits; it cannot be renewed from Bambu Studio |
@@ -171,7 +171,12 @@ need and run `docker compose up -d` again. Every setting is optional.
 An invalid value stops the container with a message in
 `docker compose logs` instead of being guessed. `DROP_PUBLIC_URL` must be an
 `http://` or `https://` address without a user name, password, query or
-fragment.
+fragment. Its host must be a name of letters, digits and hyphens, an IPv4
+address or an IPv6 address in brackets, its port 1 to 65535, its path plain
+address characters without empty parts, and the whole address at most 1024
+characters. That is exactly what Bambu Studio puts into an invite link, so an
+address it could not use stops the container instead of being left out of the
+invite without a word.
 
 ### Change the port
 
@@ -237,8 +242,11 @@ keeps checking at a slower pace.
   share your `.env`. Bambu Studio stores it protected for your Windows user
   account.
 - **What is accepted.** Only 3MF, STL, STEP, OBJ and AMF, checked by file
-  name and by content, up to the size limits. File names are cleaned and only
-  shown; models are stored under random names. Bambu Studio checks the size,
+  name and by content, up to the size limits. File names are cleaned (control
+  characters, characters that reorder or hide text, and `<>:"/\|?*` are
+  removed) and only shown; models are stored under random names. A name with
+  nothing left after cleaning is refused while the sender is still on the
+  page. Bambu Studio checks the size,
   the SHA-256 and the type again after downloading, and opens a model only
   when you choose **Open**.
 - **Plain HTTP.** The page uses HTTP on your local network. People on the same
@@ -269,6 +277,14 @@ tests in `tests/lan_model_drop/`: every accepted type and refusal, the
 station API, the invite link handling in a real headless Chromium, the
 container definition and the Windows install rule. The container was built
 and run with Docker Engine on Linux, exercised as a sender and as the
-station, and reported healthy. Running it under Docker Desktop on Windows,
+station, and reported healthy. Both halves were also run together:
+`tests/lan_model_drop/container_capture.py` builds the container with Docker
+Compose, sends every sample model through the real page in headless Chromium
+and again with curl using the page's own headers, drives the station API the
+way Bambu Studio does, and keeps every answer in
+`tests/lan_model_drop/container_fixtures/`. `container_fixtures.test.mjs` reads
+those answers with Bambu Studio's own station code and with the page's own
+answer handling, so a change to one half that the other would not understand
+fails the tests. Running it under Docker Desktop on Windows,
 the firewall rule, and sending from a real phone on a real network still need
 to be observed on a Windows computer.

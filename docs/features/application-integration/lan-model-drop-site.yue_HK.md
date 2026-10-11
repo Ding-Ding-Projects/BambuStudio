@@ -1,6 +1,6 @@
 ---
 translation-of: lan-model-drop-site.md
-source-sha256: 194807a7d1ebb6674760da132ed825acf0502aa86bdf691ad71615bd6f103c1d
+source-sha256: 6e4e50a401c93c17d225da0237e2ad5ec14dd7e42f32ada18203c3ee6a1205a8
 review-status: agent-drafted
 ---
 
@@ -152,9 +152,9 @@ docker compose exec lan-model-drop node server/station-key.mjs
 | --- | --- | --- |
 | `DROP_PORT` | 8833 | 人哋打開嘅呢部電腦嘅埠 |
 | `DROP_STATION_NAME` | Bambu Studio | 網頁上面顯示嘅名稱（「傳送去 ...」） |
-| `DROP_MAX_BYTES` | 268435456（256 MB） | 接受嘅最大模型 |
+| `DROP_MAX_BYTES` | 268435456（256 MB） | 接受嘅最大模型，最多 2147483648（2 GB），即係 Bambu Studio 收得嘅最大模型 |
 | `DROP_TTL_HOURS` | 24 | 模型等 Bambu Studio 攞走嘅鐘數，過咗就移除（最多 720） |
-| `DROP_QUEUE_MAX_FILES` | 50 | 同一時間最多等緊嘅模型數目 |
+| `DROP_QUEUE_MAX_FILES` | 50 | 同一時間最多等緊嘅模型數目，最多 1000 個，即係 Bambu Studio 一次列得出嘅最多數目 |
 | `DROP_QUEUE_MAX_BYTES` | 2147483648（2 GB） | 同一時間最多等緊嘅位元組 |
 | `DROP_STATION_KEY` | 自動產生 | 接收站金鑰，16 至 512 個可見字元，唔可以有空格 |
 | `DROP_CODE` | 隨機 6 個數字 | 固定投遞碼，4 至 12 個數字；Bambu Studio 唔可以更新佢 |
@@ -162,7 +162,10 @@ docker compose exec lan-model-drop node server/station-key.mjs
 
 數值唔啱嘅話，容器會停止，並喺 `docker compose logs` 留低訊息，唔會估你想點。
 `DROP_PUBLIC_URL` 一定要係 `http://` 或者 `https://` 地址，唔可以有用戶名、密碼、
-查詢或者片段。
+查詢或者片段。主機一定要係由英文字母、數字同連字號組成嘅名稱、IPv4 地址，或者用方括號
+包住嘅 IPv6 地址；埠係 1 至 65535；路徑只可以用普通地址字元，唔可以有空白嘅一段；成個
+地址最多 1024 個字元。呢個正正係 Bambu Studio 放入邀請連結嘅寫法，所以佢用唔到嘅地址會
+令容器停止，而唔係一聲不響噉喺邀請入面漏咗。
 
 ### 改埠
 
@@ -217,7 +220,9 @@ Compose 項目永遠叫 `lan-model-drop`，所以呢個指令會取代舊容器�
   模型，所以千祈唔好放入邀請，亦唔好分享你嘅 `.env`。Bambu Studio 會為你嘅 Windows
   用戶帳戶加密保存佢。
 - **接受乜嘢。** 只接受 3MF、STL、STEP、OBJ 同 AMF，按檔名同內容檢查，而且唔可以
-  超過大小上限。檔名會整理過，只用嚟顯示；模型用隨機名稱儲存。Bambu Studio 下載
+  超過大小上限。檔名會整理過（移除控制字元、會調轉或者收埋文字嘅字元，同埋
+  `<>:"/\|?*`），只用嚟顯示；模型用隨機名稱儲存。整理之後乜都唔剩嘅檔名，會喺寄件人
+  仲喺網頁度嘅時候就拒絕。Bambu Studio 下載
   之後會再檢查大小、SHA-256 同類型，只會喺你揀 **開啟** 先開啟模型。
 - **普通 HTTP。** 個網頁喺你嘅本地網絡用 HTTP。同一個網絡嘅人睇到傳緊乜，而嗰度
   知道投遞碼嘅人都可以傳模型。請喺你信任嘅網絡使用。其他情況，請將佢放喺 HTTPS
@@ -242,5 +247,10 @@ Compose 項目永遠叫 `lan-model-drop`，所以呢個指令會取代舊容器�
 服務、網頁同容器設定由 `tests/lan_model_drop/` 入面嘅自動測試覆蓋：每種接受嘅類型
 同拒絕、接收站 API、喺真嘅無頭 Chromium 入面處理邀請連結、容器定義同 Windows
 安裝規則。容器已經喺 Linux 嘅 Docker Engine 建立同運行，以寄件人同接收站身份試過，
-並報告健康。喺 Windows 用 Docker Desktop 運行、防火牆規則，同埋喺真網絡用真手機
+並報告健康。兩邊亦都一齊行過：`tests/lan_model_drop/container_capture.py` 用 Docker
+Compose 建立容器，經無頭 Chromium 入面真正嘅網頁傳送每個樣本模型，再用網頁自己嘅標頭
+經 curl 傳多一次，照 Bambu Studio 嘅做法行接收站 API，並將每個回覆保存喺
+`tests/lan_model_drop/container_fixtures/`。`container_fixtures.test.mjs` 用 Bambu Studio
+自己嘅接收站程式碼同網頁自己嘅回覆處理去讀呢啲回覆，所以任何一邊改咗而另一邊睇唔明，
+測試就會失敗。喺 Windows 用 Docker Desktop 運行、防火牆規則，同埋喺真網絡用真手機
 傳送，仲要喺 Windows 電腦上面觀察。

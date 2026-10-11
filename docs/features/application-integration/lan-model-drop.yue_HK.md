@@ -1,6 +1,6 @@
 ---
 translation-of: lan-model-drop.md
-source-sha256: 514576e2ded124e7624dfb1e724ee9294c22ddde4c0b5734ebebc74d9f45103a
+source-sha256: a6f584ce68d47fd8d2a9e7e2f8802ed2509e0c08bb4b455c94fa7b9e7f81e982
 review-status: agent-drafted
 ---
 
@@ -151,5 +151,19 @@ AUX、NUL、CONIN$、CONOUT$、COM0 至 COM9 或者 LPT0 至 LPT9（大細楷都
   邀請連結。佢亦都會傳送 Windows 當成裝置嘅名稱（`COM3 .x.stl`、`LPT1 .print.stl`、`CONOUT$.stl`、
   `COM¹.stl` 等等），投遞服務會照原樣列出，再檢查冇一個會成為寫入檔案用嘅名稱。佢需要投遞服務同 g++，
   冇嘅話會略過。
+- `node --test tests/lan_model_drop/station_agreement.test.mjs` 會檢查兩邊接受嘅嘢係咪一樣：接收站會清理到
+  乜都唔剩嘅檔名或者寄件人名稱（會調轉或者收埋文字嘅字元、零寬空格），投遞網站會喺寄件人仲喺網頁度嘅時候
+  用 400 拒絕；`DROP_MAX_BYTES` 同 `DROP_QUEUE_MAX_FILES` 唔可以超過接收站自己嘅上限（每個模型 2 GiB、
+  收件匣 1000 項，由 `LanModelDropModel.hpp` 讀出）；網站接受嘅每個 `DROP_PUBLIC_URL`，都會照網站報告嘅
+  樣子放入邀請連結；網站最多 60 個字元嘅接收站名稱會完整顯示。以前呢幾樣全部都唔夾。
+- `node --test tests/lan_model_drop/container_fixtures.test.mjs` 會重播由真正容器擷取嘅回覆。
+  `tests/lan_model_drop/container_capture.py` 用 Docker Compose 建立 `lan-model-drop`，經無頭 Chromium
+  入面真正嘅寄件網頁傳送每個樣本模型（3MF、ASCII 同二進制 STL、STEP 同 STP、OBJ、XML 同壓縮 AMF），再用
+  網頁嘅標頭經 curl 傳多一次，照接收站嘅做法行接收站 API，再改晒所有設定第二次啟動容器，然後將每個回覆連同
+  原始標頭行保存喺 `tests/lan_model_drop/container_fixtures/`。`lan_model_drop_container_interop_test.cpp`
+  將佢哋交畀接收站嘅純邏輯，逐個欄位同判斷核對：狀態、每項收件匣記錄對比傳送嘅位元組同自己計嘅 SHA-256、
+  每次下載嘅判斷（`judge_download`）同儲存、錯誤或者冇金鑰、唔存在同已移除嘅檔案、新嘅同固定嘅投遞碼
+  （`classify_new_code`）、DELETE（`delete_settled`），同埋兩條邀請連結。同一批回覆亦都會經寄件網頁自己嘅
+  結果規則同邀請讀取，而 curl 傳送嘅請求會同 Chromium 傳送嘅協定標頭比較。
 - 接收站原始碼喺 Linux 語法檢查編譯得到，DPAPI 金鑰儲存同網絡介面列舉亦都用 MinGW 交叉編譯器編譯得到；
   無障礙事件只係人手審閱過。未試過喺真正網絡上，用已建置嘅 Windows 程式連接真正嘅投遞網站。
