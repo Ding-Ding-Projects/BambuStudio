@@ -796,10 +796,10 @@ list(APPEND SLIC3R_GUI_SOURCES
     GUI/Appearance/ElementStyle.hpp
     GUI/Appearance/ElementMotion.cpp
     GUI/Appearance/ElementMotion.hpp
-    GUI/Appearance/AppearanceEditorPopover.cpp
-    GUI/Appearance/AppearanceEditorPopover.hpp
     GUI/Appearance/AppearanceMotionPage.cpp
     GUI/Appearance/AppearanceMotionPage.hpp
+    GUI/Appearance/AppearanceEditorPopover.cpp
+    GUI/Appearance/AppearanceEditorPopover.hpp
     GUI/Presets/BlankEditorPresets.cpp
     GUI/Presets/BlankEditorPresets.hpp
     GUI/Presets/StartFromPicker.cpp

@@ -25,7 +25,7 @@
     {
       "route": "appearance/README.md",
       "title": "Appearance",
-      "sha256": "90739646308188ed817032a37aff35ea411d62cce2ae8728ebc99ed291cf1228"
+      "sha256": "c38c74d250df61d1de6eced5b373872ce01d5aa36a2dec4623ad2e790b47ddd0"
     },
     {
       "route": "appearance/app-logo.md",
@@ -36,6 +36,16 @@
       "route": "appearance/app-logo.yue_HK.md",
       "title": "應用程式標誌",
       "sha256": "4b2773375924ce09d6a41daa7dc17b17b8bc0524977aa419000d6ea507fa7a03"
+    },
+    {
+      "route": "appearance/motion-editor.md",
+      "title": "Animation and transition",
+      "sha256": "aadc59322cdd68c8b4a8c434b96e8d5707dc19a363a179ec5d193e571eee0710"
+    },
+    {
+      "route": "appearance/motion-editor.yue_HK.md",
+      "title": "動畫同轉場",
+      "sha256": "607513aa6f746cfe8b43fbbdaa0d2acda3ac0d8dd6fe6ecda6299b99274f55b2"
     },
     {
       "route": "appearance/native-rendering.md",
@@ -1975,7 +1985,7 @@
       "bytes": 1979
     }
   ],
-  "bundle_sha256": "0844452092527eab6c491a30d617f91deb31a160f85bc046bc74915d3e3277c1",
+  "bundle_sha256": "4d66cb6053616059d82ca72d58d62d6a4e6e8f8565232b21794669db3f775044",
   "unavailable_references": [
     {
       "source": "api/README.md",
@@ -2045,6 +2055,16 @@
     {
       "source": "api/home-assistant-printer-discovery.yue_HK.md",
       "target": "postman/home-assistant-printer-discovery.postman_collection.json",
+      "kind": "link"
+    },
+    {
+      "source": "appearance/motion-editor.md",
+      "target": "../../../design/native-appearance/motion-capability-inventory.json",
+      "kind": "link"
+    },
+    {
+      "source": "appearance/motion-editor.yue_HK.md",
+      "target": "../../../design/native-appearance/motion-capability-inventory.json",
       "kind": "link"
     },
     {

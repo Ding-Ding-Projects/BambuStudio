@@ -700,7 +700,7 @@ void AppearanceMotionPage::refresh()
 {
     refresh_reduced();
     if (m_state_target)
-        m_state_target->SetLabel(wxString::Format(_L("For %s (%s). Kit buttons, fields, lists and cards play these when the state changes."),
+        m_state_target->SetLabel(wxString::Format(_L("For %s (%s). Buttons, fields, lists and cards play these when this state changes."),
                                                   ElementStyle::display_name_of(m_id), wxString::FromUTF8(m_id)));
     if (m_state_target)
         m_state_target->Wrap(FromDIP(kWrapDip));

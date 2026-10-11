@@ -44865,3 +44865,1338 @@ msgstr "呢個打印板要重新切片，先可以傳送。"
 #. review-status: agent-drafted
 msgid "Apply the nozzle moves with Swap, or undo them, before sending."
 msgstr "傳送之前，請用「交換」套用噴嘴調整，或者復原返啲調整。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Appearance editor"
+msgstr "外觀編輯器"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Animation and transition"
+msgstr "動畫同轉場"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Appearance editor heading"
+msgstr "外觀編輯器標題"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Appearance editor button"
+msgstr "外觀編輯器按鈕"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Reset %s to the inherited or Material default value"
+msgstr "將%s重設為繼承值或者 Material Design 預設值"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "duration"
+msgstr "時長"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "delay"
+msgstr "延遲"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "easing"
+msgstr "緩動"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "%s duration in milliseconds"
+msgstr "%s時長（毫秒）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "How long the transition runs, from 0 to 10000 milliseconds."
+msgstr "轉場行幾耐，由 0 至 10000 毫秒。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Duration (ms)"
+msgstr "時長（毫秒）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "%s delay in milliseconds"
+msgstr "%s延遲（毫秒）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Wait before the transition starts. A negative delay starts it part of the way through."
+msgstr "轉場開始之前等幾耐。負數延遲會由中途開始。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Delay (ms)"
+msgstr "延遲（毫秒）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Custom (type it below)"
+msgstr "自訂（喺下面輸入）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "%s easing curve"
+msgstr "%s緩動曲線"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Easing"
+msgstr "緩動"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Easing function"
+msgstr "緩動函數"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "%s easing function"
+msgstr "%s緩動函數"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "A named curve, cubic-bezier(x1, y1, x2, y2), steps(count, jump-end) or a linear() stop list. Press Enter to apply."
+msgstr "具名曲線、cubic-bezier(x1, y1, x2, y2)、steps(count, jump-end) 或者 linear() 停點列表。撳 Enter 套用。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Motion value problem"
+msgstr "動畫數值問題"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "%s timing summary"
+msgstr "%s時間摘要"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "%s ms"
+msgstr "%s 毫秒"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Material default"
+msgstr "Material Design 預設"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "set for this element"
+msgstr "為呢個元素設定"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "inherited"
+msgstr "繼承"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "%s: %s (%s)"
+msgstr "%s：%s（%s）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The stored %s %s is not used: %s"
+msgstr "已儲存嘅%s %s 冇用到：%s"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Total active time: %d ms. It plays once and ends on the new state."
+msgstr "總運行時間：%d 毫秒。佢會播一次，然後停喺新狀態。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Not applied: %s"
+msgstr "未套用：%s"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Motion curve preview"
+msgstr "動畫曲線預覽"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "%d ms"
+msgstr "%d 毫秒"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Interface motion status"
+msgstr "介面動畫狀態"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "State transitions"
+msgstr "狀態轉場"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Trigger"
+msgstr "觸發"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "State change to edit"
+msgstr "要編輯嘅狀態變化"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "State transition"
+msgstr "狀態轉場"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Play this transition in the preview. Playing again restarts it."
+msgstr "喺預覽度播呢個轉場。再播一次會由頭開始。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Play reversed"
+msgstr "倒轉播放"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Play the way back toward the starting colour, as leaving the state does."
+msgstr "向返起始顏色播返轉頭，同離開狀態時一樣。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Stop the preview where it is."
+msgstr "喺目前位置停低預覽。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Preview speed"
+msgstr "預覽速度"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Full speed"
+msgstr "全速"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Half speed"
+msgstr "半速"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Quarter speed"
+msgstr "四分一速"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Slows the preview only. The element always plays its own timing."
+msgstr "淨係減慢預覽。元素本身一定照自己嘅時間播。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Preview position (ms)"
+msgstr "預覽位置（毫秒）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Preview position in milliseconds"
+msgstr "預覽位置（毫秒）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Seek the preview to this moment of the transition."
+msgstr "將預覽跳去轉場嘅呢一刻。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Solid: this element. Dashed: the Material default. The shaded part is the delay; the strip shows the colour at the playhead."
+msgstr "實線：呢個元素。虛線：Material Design 預設。陰影部分係延遲；色帶顯示播放位置嗰刻嘅顏色。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Window entrance"
+msgstr "視窗進場"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Changes"
+msgstr "變更"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Reset element motion"
+msgstr "重設元素動畫"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Drop every motion value of this element; inherited and Material defaults apply again"
+msgstr "移除呢個元素嘅所有動畫數值；繼承值同 Material Design 預設會重新生效"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Every change is saved at once and kept in Version history, where any earlier appearance can be restored."
+msgstr "每個變更都會即刻儲存，並保留喺版本記錄；喺嗰度可以還原任何較早嘅外觀。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Kept but not applied"
+msgstr "保留但未套用"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Motion values kept but not applied"
+msgstr "保留但未套用嘅動畫數值"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Renderer capabilities"
+msgstr "繪製程式功能"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "%d motion capabilities work on this element's renderer; %d are unavailable and listed with the reason."
+msgstr "呢個元素嘅繪製程式支援 %d 項動畫功能；%d 項不可用，並列明原因。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Search motion capabilities"
+msgstr "搜尋動畫功能"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Available: %s"
+msgstr "可用：%s"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "For %s (%s). Buttons, fields, lists and cards play these when this state changes."
+msgstr "適用於 %s（%s）。呢個狀態變化時，按鈕、欄位、列表同卡片會播呢啲設定。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Reduced motion is on (Preferences > Interface motion or the Windows animation setting). Every transition shows its final state at once, the preview included. The values below are kept for when motion is allowed again."
+msgstr "減少動畫已開啟（偏好設定 > 介面動畫，或者 Windows 動畫設定）。所有轉場會即刻顯示最終狀態，預覽都一樣。下面嘅數值會保留，等可以再播動畫時用。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Motion plays as set below. Preferences > Interface motion and the Windows animation setting decide first: when either reduces motion, every transition shows its final state at once."
+msgstr "動畫會照下面嘅設定播放。偏好設定 > 介面動畫同 Windows 動畫設定優先：任何一個減少動畫，所有轉場都會即刻顯示最終狀態。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The window that contains this element opens without an entrance animation, so there is nothing to edit here. Dialogs with the Material caption, the command palette, the regex builder, menus and this editor fade in."
+msgstr "包含呢個元素嘅視窗打開時冇進場動畫，所以呢度冇嘢可以編輯。用 Material Design 標題列嘅對話框、指令面板、正則表達式建立器、選單同呢個編輯器會淡入。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The window that contains this element fades in over %d ms, but it is not an adopted element, so its entrance cannot be edited yet."
+msgstr "包含呢個元素嘅視窗會用 %d 毫秒淡入，但佢唔係已登記嘅元素，所以暫時未可以編輯佢嘅進場。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Entrance of %s (%s): the window fades in from a quarter of full opacity when it opens."
+msgstr "%s（%s）嘅進場：視窗打開時由四分一不透明度淡入。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "%s = %s: this version does not use this motion setting. It stays in the file for export and import."
+msgstr "%s = %s：呢個版本唔會用呢項動畫設定。佢會留喺檔案入面，方便匯出同匯入。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "%s = %s: %s The Material default plays instead."
+msgstr "%s = %s：%s 會改為播 Material Design 預設。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Nothing is waiting here: every stored motion value of this element is in use."
+msgstr "呢度冇嘢等緊：呢個元素所有已儲存嘅動畫數值都用緊。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "reset motion of %s"
+msgstr "重設 %s 嘅動畫"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "%s %s of %s"
+msgstr "%s%s（%s）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Undo: %s"
+msgstr "復原：%s"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Nothing to undo"
+msgstr "冇嘢可以復原"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Redo: %s"
+msgstr "重做：%s"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Nothing to redo"
+msgstr "冇嘢可以重做"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Hover"
+msgstr "懸停"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Focus"
+msgstr "焦點"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Enable and disable"
+msgstr "啟用同停用"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Entrance"
+msgstr "進場"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Standard decelerate"
+msgstr "標準減速"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Standard accelerate"
+msgstr "標準加速"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Emphasized"
+msgstr "強調"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Emphasized decelerate"
+msgstr "強調減速"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Emphasized accelerate"
+msgstr "強調加速"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Linear"
+msgstr "線性"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Ease"
+msgstr "緩和"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Ease in"
+msgstr "緩入"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Ease out"
+msgstr "緩出"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Ease in and out"
+msgstr "緩入緩出"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The easing is empty. Choose a curve or type one."
+msgstr "緩動係空白。請揀一條曲線或者自己輸入。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "cubic-bezier() needs four numbers: x1, y1, x2, y2."
+msgstr "cubic-bezier() 需要四個數字：x1、y1、x2、y2。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "In cubic-bezier(), x1 and x2 must be from 0 to 1."
+msgstr "cubic-bezier() 入面，x1 同 x2 一定要喺 0 至 1 之間。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "In cubic-bezier(), y1 and y2 must be from -5 to 5."
+msgstr "cubic-bezier() 入面，y1 同 y2 一定要喺 -5 至 5 之間。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "steps() needs a whole number of steps from 1 to 100, optionally followed by jump-start, jump-end, jump-none, jump-both, start or end."
+msgstr "steps() 需要 1 至 100 嘅整數步數，後面可以加 jump-start、jump-end、jump-none、jump-both、start 或者 end。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "steps() with jump-none needs at least 2 steps."
+msgstr "steps() 用 jump-none 時最少要 2 步。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "linear() needs 2 to 64 stops, each a number optionally followed by one or two percentages."
+msgstr "linear() 需要 2 至 64 個停點，每個係一個數字，後面可以加一至兩個百分比。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Unknown easing. Use a Material curve, linear, ease, cubic-bezier(), steps() or linear()."
+msgstr "唔認得呢個緩動。請用 Material Design 曲線、linear、ease、cubic-bezier()、steps() 或者 linear()。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Duration must be a number of milliseconds from 0 to 10000."
+msgstr "時長一定要係 0 至 10000 嘅毫秒數。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Delay must be a number of milliseconds from -10000 to 10000."
+msgstr "延遲一定要係 -10000 至 10000 嘅毫秒數。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Easing must be text, such as standard or cubic-bezier(0.2, 0, 0, 1)."
+msgstr "緩動一定要係文字，例如 standard 或者 cubic-bezier(0.2, 0, 0, 1)。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Tracks, properties and keyframes"
+msgstr "軌道、屬性同關鍵影格"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Timing and easing"
+msgstr "時間同緩動"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Timeline and playback"
+msgstr "時間軸同播放"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Transitions and triggers"
+msgstr "轉場同觸發"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Reversibility and access"
+msgstr "還原同無障礙"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The native renderer draws each element as one surface without layers, so motion cannot target a layer."
+msgstr "原生繪製程式將每個元素畫成一個冇圖層嘅表面，所以動畫唔可以針對某個圖層。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Animation tracks"
+msgstr "動畫軌道"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Each element runs one animation per trigger. There is no track to create, name, duplicate, reorder, mute, solo, group or remove."
+msgstr "每個元素每種觸發只會行一個動畫。冇軌道可以建立、命名、複製、重新排序、靜音、獨奏、分組或者移除。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Exact element and state"
+msgstr "指定元素同狀態"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Each trigger edits the transition of this exact element when that state changes. Buttons, fields, lists and cards play it."
+msgstr "每種觸發編輯嘅係呢個指定元素喺該狀態變化時嘅轉場。按鈕、欄位、列表同卡片會播佢。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "State colours"
+msgstr "狀態顏色"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "A state transition animates every state colour of the element together: the background, border and text of buttons, fields and boxes."
+msgstr "狀態轉場會一齊動畫化元素嘅所有狀態顏色：按鈕、欄位同方框嘅背景、邊框同文字。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Window opacity"
+msgstr "視窗不透明度"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "An entrance fades a top-level window in from a quarter of full opacity: dialogs with the Material caption, the command palette, the regex builder, menus and this editor."
+msgstr "進場會令頂層視窗由四分一不透明度淡入：用 Material Design 標題列嘅對話框、指令面板、正則表達式建立器、選單同呢個編輯器。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Per-property transition list"
+msgstr "逐個屬性嘅轉場列表"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The state animation does not know which colour is the background, border or text, so it cannot animate one and change another at once."
+msgstr "狀態動畫唔知邊個顏色係背景、邊框定文字，所以唔可以動畫化其中一個，同時即刻改另一個。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Transform, size and position"
+msgstr "變形、大細同位置"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Native windows have no transform, scale or rotation, and layout is whole-pixel sizer geometry, so these cannot be animated."
+msgstr "原生視窗冇變形、縮放或者旋轉，而版面係整數像素嘅排版幾何，所以呢啲唔可以做動畫。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Opacity of a control"
+msgstr "控制項嘅不透明度"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Only top-level windows can be translucent here. A control inside a window cannot fade."
+msgstr "呢度淨係頂層視窗可以半透明。視窗入面嘅控制項唔可以淡入淡出。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Shape, spacing and typography"
+msgstr "形狀、間距同字型"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Radius, spacing and font values cannot be interpolated by this renderer, so they change at once."
+msgstr "呢個繪製程式唔可以內插圓角、間距同字型數值，所以佢哋會即刻改變。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Custom properties"
+msgstr "自訂屬性"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The native renderer has no custom properties to animate."
+msgstr "原生繪製程式冇自訂屬性可以做動畫。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Computed starting value"
+msgstr "計算出嚟嘅起始值"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "A transition starts from the colour on screen, so an interrupted transition continues from where it was instead of jumping."
+msgstr "轉場會由畫面上嘅顏色開始，所以被打斷嘅轉場會由原本位置繼續，唔會跳。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Explicit start and end values"
+msgstr "指定起始同結束值"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Start and end colours come from the element's state colours, set on the Colours tab and by the theme. A transition cannot name other values."
+msgstr "起始同結束顏色嚟自元素嘅狀態顏色，由「顏色」分頁同主題設定。轉場唔可以指定其他數值。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Interpolation and composition"
+msgstr "內插同合成"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Colours always interpolate per red, green, blue and alpha channel and replace each other. There is no other colour space and no add or accumulate mode."
+msgstr "顏色一定係逐個紅、綠、藍同透明度通道內插，並互相取代。冇其他色彩空間，亦冇疊加或者累積模式。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Keyframes, markers and segments"
+msgstr "關鍵影格、標記同分段"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Each animation plays one segment from start to end. There are no keyframes or markers to add, select, copy, move or reorder, and no hold or per-segment easing; steps() gives an evenly stepped transition."
+msgstr "每個動畫由頭到尾只播一段。冇關鍵影格或者標記可以新增、選擇、複製、移動或者重新排序，亦冇停留或者逐段緩動；steps() 可以做平均分步嘅轉場。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Motion paths"
+msgstr "動畫路徑"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Nothing moves along a path in the native renderer."
+msgstr "原生繪製程式入面冇嘢會沿住路徑移動。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Duration"
+msgstr "時長"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "From 0 to 10000 ms. 16 ms or less shows the final state at once, because animations draw about every 16 ms."
+msgstr "由 0 至 10000 毫秒。16 毫秒或以下會即刻顯示最終狀態，因為動畫大約每 16 毫秒畫一次。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Automatic duration"
+msgstr "自動時長"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "An unset duration uses the Material duration: 100 ms for state changes and the window's own duration for entrances."
+msgstr "未設定嘅時長會用 Material Design 時長：狀態變化係 100 毫秒，進場就用視窗自己嘅時長。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Delay"
+msgstr "延遲"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "From 0 to 10000 ms. The element keeps its starting colour or entrance opacity until the delay ends."
+msgstr "由 0 至 10000 毫秒。延遲完結之前，元素會保持起始顏色或者進場不透明度。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Negative delay"
+msgstr "負數延遲"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Down to -10000 ms. The transition starts part of the way through."
+msgstr "最低 -10000 毫秒。轉場會由中途開始。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "End delay"
+msgstr "結束延遲"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "A transition settles the moment it ends; there is no end-delay phase."
+msgstr "轉場一完結就即刻定格；冇結束延遲階段。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Repeat count, infinite repeat and repeat delay"
+msgstr "重複次數、無限重複同重複延遲"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "State transitions and entrances play once by definition, and an endless repeat would be continuous motion."
+msgstr "狀態轉場同進場本身只播一次，而無限重複就會變成持續動畫。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Direction, fill and iteration start"
+msgstr "方向、填充同迭代起點"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Each transition plays once forward, holds its start during the delay and its target afterwards. Without repeats there is no alternate, reverse or iteration start; a negative delay starts part of the way through."
+msgstr "每個轉場向前播一次，延遲期間保持起點，之後保持目標。冇重複就冇交替、倒轉或者迭代起點；負數延遲會由中途開始。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Playback rate"
+msgstr "播放速率"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "There is no per-element playback rate, and no zero or negative rate. The Interface motion preference and Windows can only turn motion off."
+msgstr "冇逐個元素嘅播放速率，亦冇零或者負數速率。介面動畫偏好設定同 Windows 只可以關閉動畫。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Global motion setting"
+msgstr "全域動畫設定"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Preferences > Interface motion and the Windows animation setting decide first. When either reduces motion, these values are kept but not played."
+msgstr "偏好設定 > 介面動畫同 Windows 動畫設定優先決定。任何一個減少動畫，呢啲數值會保留但唔會播。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Global speed level"
+msgstr "全域速度級別"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "This app has no animated rainbow colour and no global speed level yet, so there is nothing for a per-element value to compete with."
+msgstr "呢個應用程式暫時冇動態彩虹色，亦冇全域速度級別，所以冇嘢會同逐個元素嘅數值衝突。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Named curves"
+msgstr "具名曲線"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Material standard and emphasized curves with their accelerate and decelerate forms, linear, ease, ease in, ease out and ease in and out."
+msgstr "Material Design 標準同強調曲線，連埋佢哋嘅加速同減速版本、線性、緩和、緩入、緩出同緩入緩出。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Cubic Bezier"
+msgstr "三次 Bezier"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "cubic-bezier(x1, y1, x2, y2) with x from 0 to 1 and y from -5 to 5, typed as four numbers in the easing field."
+msgstr "cubic-bezier(x1, y1, x2, y2)，x 由 0 至 1，y 由 -5 至 5，喺緩動欄輸入四個數字。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Dragging Bezier handles"
+msgstr "拖拉 Bezier 控制點"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Not built yet. Type the four numbers in the easing field; the curve preview redraws at once."
+msgstr "暫時未做。請喺緩動欄輸入四個數字；曲線預覽會即刻重畫。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Linear stop lists"
+msgstr "線性停點列表"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "linear() with 2 to 64 stops, each a number with up to two percentages."
+msgstr "linear() 有 2 至 64 個停點，每個係一個數字，最多加兩個百分比。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Steps"
+msgstr "分步"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "steps(count, position) with 1 to 100 steps and jump-start, jump-end, jump-none or jump-both."
+msgstr "steps(count, position)，1 至 100 步，配 jump-start、jump-end、jump-none 或者 jump-both。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Spring and physics"
+msgstr "彈簧同物理"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Animations here are time-based with a fixed duration; there is no spring or physics solver."
+msgstr "呢度嘅動畫係按時間同固定時長行；冇彈簧或者物理運算。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Computed timing"
+msgstr "計算出嚟嘅時間"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The tab states the total active time of the selected transition. Nothing repeats, so nothing is infinite."
+msgstr "呢個分頁會列明所揀轉場嘅總運行時間。冇嘢會重複，所以冇嘢係無限。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Validation"
+msgstr "驗證"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Out-of-range or malformed values are refused when typed. An invalid value from a file is listed on this tab and the Material default plays instead."
+msgstr "超出範圍或者格式錯誤嘅數值，輸入時會被拒絕。檔案入面嘅無效數值會列喺呢個分頁，並改為播 Material Design 預設。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Precision and units"
+msgstr "精確度同單位"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Times are whole milliseconds in the fields, and a fractional value from a file is kept until you change it. Curve numbers keep the precision you type."
+msgstr "欄位入面嘅時間係整數毫秒，檔案入面帶小數嘅數值會保留到你改佢為止。曲線數字會保持你輸入嘅精確度。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Curve and time ruler"
+msgstr "曲線同時間尺"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The preview draws the selected transition against a time ruler, with the delay shaded."
+msgstr "預覽會對住時間尺畫出所揀嘅轉場，延遲部分會加陰影。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Seek and scrub"
+msgstr "跳轉同拖動"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Type a preview position in milliseconds to see the curve and colour at that moment."
+msgstr "輸入預覽位置（毫秒），就可以睇到嗰一刻嘅曲線同顏色。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Play, stop and restart"
+msgstr "播放、停止同重新開始"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Plays the selected transition in the preview with the same arithmetic the element uses. Playing again restarts it."
+msgstr "用同元素一樣嘅計算方法喺預覽播所揀嘅轉場。再播一次會由頭開始。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Plays the way back toward the starting colour, as leaving the state does."
+msgstr "向返起始顏色播返轉頭，同離開狀態時一樣。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Plays the preview at full, half or quarter speed. It changes the preview only, never the element."
+msgstr "以全速、半速或者四分一速播預覽。淨係改預覽，永遠唔會改元素。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Before and after"
+msgstr "之前同之後"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The preview draws the Material default as a dashed curve beside your timing."
+msgstr "預覽會喺你嘅時間旁邊用虛線畫出 Material Design 預設。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Zoom and loop preview"
+msgstr "縮放同循環預覽"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The preview fits one transition to the card, so there is nothing to zoom. It does not loop, because looping would be continuous motion."
+msgstr "預覽會將一個轉場放啱入卡片，所以冇嘢要縮放。佢唔會循環，因為循環就會變成持續動畫。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Document, scroll and view timelines"
+msgstr "文件、捲動同檢視時間軸"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Native windows have no document clock, scroll timeline or view timeline. Every animation runs on the interface timer from the moment its trigger fires."
+msgstr "原生視窗冇文件時鐘、捲動時間軸或者檢視時間軸。每個動畫由觸發嗰刻開始用介面計時器運行。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Sequencing, stagger and groups"
+msgstr "排序、錯開同分組"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Without tracks, each animation starts independently when its own trigger fires. Offsets, dependencies, stagger and parallel groups cannot be expressed."
+msgstr "冇軌道嘅話，每個動畫喺自己觸發時獨立開始。偏移、依賴、錯開同平行分組都表達唔到。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Overlapping properties"
+msgstr "重疊屬性"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Only one transition runs per element at a time, so there is no overlap to order, add or accumulate."
+msgstr "每個元素同一時間只會行一個轉場，所以冇重疊需要排序、疊加或者累積。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Interruption"
+msgstr "中斷"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "A new state change interrupts the running transition and starts from the colour on screen. The interrupted one reports nothing."
+msgstr "新嘅狀態變化會打斷運行緊嘅轉場，並由畫面上嘅顏色開始。被打斷嗰個唔會回報任何嘢。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Cancellation"
+msgstr "取消"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "A hidden element settles at its final state and a closed one cancels its transition. Reduced motion settles every transition at once."
+msgstr "隱藏咗嘅元素會定喺最終狀態，關閉咗嘅就會取消轉場。減少動畫會令所有轉場即刻定格。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Completion"
+msgstr "完成"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Transitions never report completion. State, focus and input change at once and never wait for an animation."
+msgstr "轉場永遠唔會回報完成。狀態、焦點同輸入會即刻改變，永遠唔會等動畫。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The pointer enters or leaves the element."
+msgstr "指標進入或者離開元素。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The element gains or loses keyboard focus."
+msgstr "元素得到或者失去鍵盤焦點。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "A pointer button goes down or up on the element."
+msgstr "喺元素上面撳落或者放開指標按鈕。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "A toggle button or check is turned on or off."
+msgstr "切換按鈕或者剔選開啟或者關閉。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The element becomes available or unavailable."
+msgstr "元素變成可用或者不可用。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "A dialog, popup or this editor opens. Edit it in the Window entrance section for the window that contains this element."
+msgstr "對話框、彈出視窗或者呢個編輯器打開。喺包含呢個元素嘅視窗嘅「視窗進場」部分編輯。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Exit"
+msgstr "退場"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Windows and popups close at once; nothing waits for an exit animation."
+msgstr "視窗同彈出視窗會即刻關閉；冇嘢會等退場動畫。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Validation, loading, success, warning and error states"
+msgstr "驗證、載入、成功、警告同錯誤狀態"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Controls have no such states to animate. Messages, progress bars and colours show them at once."
+msgstr "控制項冇呢啲狀態可以做動畫。訊息、進度列同顏色會即刻顯示佢哋。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Gestures, other events and scroll progress"
+msgstr "手勢、其他事件同捲動進度"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Animations start only on hover, focus, press, selection and enable changes."
+msgstr "動畫只會喺懸停、焦點、撳、選擇同啟用變化時開始。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Thresholds, debounce and re-entry"
+msgstr "門檻、防抖同重入"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "A trigger fires on the native event itself. A repeated trigger restarts from the colour on screen."
+msgstr "觸發會喺原生事件本身發生。重複觸發會由畫面上嘅顏色重新開始。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Priority"
+msgstr "優先次序"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "When several states change in one event, press wins, then selection, focus, hover and enable."
+msgstr "一個事件改咗幾個狀態時，撳最優先，跟住係選擇、焦點、懸停同啟用。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Inheritance and overrides"
+msgstr "繼承同覆寫"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "An unset value comes from the parent element (the id before a slash), then the active preset, then the Material default."
+msgstr "未設定嘅數值會嚟自父元素（斜線之前嘅 ID），然後係活躍預設，再然後係 Material Design 預設。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Discrete transitions"
+msgstr "離散轉場"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Values that cannot be interpolated change at once; there is no setting to delay or step them."
+msgstr "唔可以內插嘅數值會即刻改變；冇設定可以延遲或者分步。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Visual only"
+msgstr "只限視覺"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Triggers only change how a state change looks. They never run code, reach the network, sign in, or stand in for an operation finishing."
+msgstr "觸發只會改狀態變化嘅樣子。佢哋永遠唔會執行程式碼、連網絡、登入，或者代替操作完成。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Reset a value"
+msgstr "重設一個數值"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Each value has its own reset to the inherited or default value."
+msgstr "每個數值都有自己嘅重設，返去繼承值或者預設值。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Drops every motion value of this element in one action. Reset element and Reset all at the bottom still reset everything."
+msgstr "一個動作移除呢個元素所有動畫數值。底部嘅「重設元素」同「全部重設」仍然會重設所有嘢。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Undo and redo"
+msgstr "復原同重做"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Undo and Redo step through the motion edits made in this editor, across elements."
+msgstr "「復原」同「重做」會逐步行過喺呢個編輯器做嘅動畫編輯，跨元素都得。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Every motion change is saved and recorded in Version history with the rest of the appearance, and can be restored there."
+msgstr "每個動畫變更都會同其餘外觀一齊儲存同記錄喺版本記錄，並可以喺嗰度還原。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Named presets"
+msgstr "具名預設"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Save as preset keeps motion values with the other element styles, and a preset states every motion value it sets."
+msgstr "「另存為預設」會同其他元素樣式一齊保留動畫數值，而預設會列明佢設定嘅每個動畫數值。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Import and export"
+msgstr "匯入同匯出"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Exported themes carry motion values. Import checks them and lists invalid values."
+msgstr "匯出嘅主題會帶埋動畫數值。匯入時會檢查，並列出無效數值。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Unknown settings kept"
+msgstr "保留未知設定"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "A motion setting this version does not understand stays in the file and is listed on this tab, never silently dropped."
+msgstr "呢個版本唔明白嘅動畫設定會留喺檔案入面，並列喺呢個分頁，永遠唔會靜靜雞丟棄。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Copy and paste style"
+msgstr "複製同貼上樣式"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The appearance editor has no copy and paste style yet, for motion or any other property."
+msgstr "外觀編輯器暫時未有複製同貼上樣式，動畫或者其他屬性都未有。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Scheduled settings switch application settings by rule; element styles, motion included, cannot be scheduled yet."
+msgstr "排程設定會按規則切換應用程式設定；元素樣式（包括動畫）暫時未可以排程。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Keyboard and screen reader"
+msgstr "鍵盤同螢幕閱讀器"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Every value is a named field reached with Tab, with numbers instead of dragging. Ctrl+Page Up and Ctrl+Page Down switch tabs."
+msgstr "每個數值都係有名嘅欄位，用 Tab 就去到，用數字代替拖拉。Ctrl+Page Up 同 Ctrl+Page Down 切換分頁。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Search with the regex builder"
+msgstr "用正則表達式建立器搜尋"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Search this list in plain text or with the regular-expression builder beside the search field."
+msgstr "用純文字，或者用搜尋欄旁邊嘅正則表達式建立器搜尋呢個列表。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Command palette teleport"
+msgstr "指令面板直達"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The command palette does not list individual appearance properties yet."
+msgstr "指令面板暫時未列出個別外觀屬性。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Reduced motion"
+msgstr "減少動畫"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Reduced motion settles the element and the preview at once. Your values are kept for when motion is allowed again."
+msgstr "減少動畫會令元素同預覽即刻定格。你嘅數值會保留，等可以再播動畫時用。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Without motion"
+msgstr "唔使動畫"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The curve, the time ruler and the written timing describe the transition without playing it."
+msgstr "曲線、時間尺同文字時間會描述轉場，唔使播佢。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "This editor's own controls"
+msgstr "呢個編輯器自己嘅控制項"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The editor's tabs and buttons are elements with their own ids; right-click one to edit its motion. The editor's opening fade is a window entrance."
+msgstr "編輯器嘅分頁同按鈕都係有自己 ID 嘅元素；喺上面撳右掣就可以編輯佢嘅動畫。編輯器打開時嘅淡入係視窗進場。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Hover duration (ms)"
+msgstr "懸停時長（毫秒）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Hover delay (ms)"
+msgstr "懸停延遲（毫秒）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Hover easing"
+msgstr "懸停緩動"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Focus duration (ms)"
+msgstr "焦點時長（毫秒）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Focus delay (ms)"
+msgstr "焦點延遲（毫秒）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Focus easing"
+msgstr "焦點緩動"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Press duration (ms)"
+msgstr "撳時長（毫秒）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Press delay (ms)"
+msgstr "撳延遲（毫秒）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Press easing"
+msgstr "撳緩動"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Selection duration (ms)"
+msgstr "選擇時長（毫秒）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Selection delay (ms)"
+msgstr "選擇延遲（毫秒）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Selection easing"
+msgstr "選擇緩動"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Enable and disable duration (ms)"
+msgstr "啟用同停用時長（毫秒）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Enable and disable delay (ms)"
+msgstr "啟用同停用延遲（毫秒）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Enable and disable easing"
+msgstr "啟用同停用緩動"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Entrance duration (ms)"
+msgstr "進場時長（毫秒）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Entrance delay (ms)"
+msgstr "進場延遲（毫秒）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Entrance easing"
+msgstr "進場緩動"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Reset element motion: %s"
+msgstr "重設元素動畫：%s"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Undo element motion: %s"
+msgstr "復原元素動畫：%s"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Redo element motion: %s"
+msgstr "重做元素動畫：%s"

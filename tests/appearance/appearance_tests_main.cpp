@@ -1,5 +1,7 @@
 #include <catch_main.hpp>
 
+#include <algorithm>
+
 #include <wx/filename.h>
 #include <wx/init.h>
 #include <wx/stdpaths.h>
@@ -319,4 +321,87 @@ TEST_CASE("Typed paint metrics consume inherited overrides and reject unbounded 
     CHECK(reset.radius == 8);
     CHECK(reset.padding == 6);
     reg.reset_all();
+}
+
+// ---------------------------------------------------------------------------
+// Per-element motion (Animation and transition tab): the eighteen motion keys
+// are ordinary, known style properties that resolve through the same layers,
+// survive save, export and import, and are reported when a file holds an
+// invalid value. ElementMotion's own grammar and arithmetic are covered by
+// element_motion_standalone.cpp.
+// ---------------------------------------------------------------------------
+namespace ElementMotion = Slic3r::GUI::ElementMotion;
+using Slic3r::GUI::ElementStyle;
+
+TEST_CASE("Motion keys are known properties and resolve through every layer", "[appearance][motion]")
+{
+    for (const std::string &key : ElementMotion::all_keys())
+        CHECK(StyleProp::is_known(key));
+    CHECK_FALSE(StyleProp::is_known("motion.hover.iterationCount"));
+    CHECK(StyleProp::all().size() == 16); // the paint catalogue itself is unchanged
+
+    StyleRegistry reg;
+    reg.set("toolbar", "motion.hover.duration", 250);
+    reg.set("toolbar/save", "motion.hover.easing", "emphasized");
+    CHECK(reg.resolve("toolbar/save", "motion.hover.duration") == 250); // parent id
+    CHECK(reg.resolve("toolbar/save", "motion.hover.easing") == "emphasized");
+    CHECK(reg.resolve("toolbar", "motion.hover.easing").is_null());
+
+    StylePreset calm;
+    calm[StyleRegistry::kEveryElement] = StyleBag{{"motion.press.delay", 40}};
+    REQUIRE(reg.save_preset("Calm", calm));
+    REQUIRE(reg.set_active_preset("Calm"));
+    CHECK(reg.resolve("anything", "motion.press.delay") == 40); // preset "*"
+
+    reg.reset_property("toolbar", "motion.hover.duration");
+    CHECK(reg.resolve("toolbar/save", "motion.hover.duration").is_null());
+}
+
+TEST_CASE("Motion values round trip and invalid ones are reported but kept", "[appearance][motion]")
+{
+    StyleRegistry a;
+    a.set("dialog", "motion.entrance.duration", 180);
+    a.set("dialog", "motion.entrance.easing", "linear(0, 0.3 25%, 1)");
+    a.set("dialog", "motion.hover.iterationCount", 3); // portable input this version does not use
+    const std::string text = a.dump();
+
+    StyleRegistry b;
+    StyleLoadReport r = b.parse(text);
+    REQUIRE(r.ok);
+    CHECK(b.dump() == text);
+    CHECK(std::find(r.unknown_properties.begin(), r.unknown_properties.end(), "dialog.motion.hover.iterationCount") !=
+          r.unknown_properties.end());
+
+    StyleRegistry c;
+    r = c.parse(R"({"schema": 1, "elements": {"btn": {"motion.hover.delay": "soon", "motion.focus.duration": 90}}})");
+    REQUIRE(r.ok);
+    bool reported = false;
+    for (const std::string &entry : r.unknown_properties)
+        reported = reported || entry.rfind("btn.motion.hover.delay (", 0) == 0;
+    CHECK(reported);
+    CHECK(c.resolve("btn", "motion.hover.delay") == "soon"); // kept verbatim, never dropped
+    for (const std::string &entry : r.unknown_properties)
+        CHECK(entry.find("motion.focus.duration") == std::string::npos); // valid values are not reported
+}
+
+TEST_CASE("ElementStyle::motion_for plays stored values and keeps defaults otherwise", "[appearance][motion]")
+{
+    StyleRegistry &live = ElementStyle::registry();
+    live.reset_all();
+    CHECK(ElementStyle::motion_for("", ElementMotion::Trigger::Hover, 100) == ElementMotion::material_default(100));
+    live.set("motion-test", "motion.press.duration", 300);
+    live.set("motion-test", "motion.press.delay", 20);
+    live.set("motion-test", "motion.press.easing", "steps(3, jump-end)");
+    live.set("motion-test", "motion.focus.duration", -4); // invalid
+    const ElementMotion::Timing press = ElementStyle::motion_for("motion-test/child", ElementMotion::Trigger::Press, 100);
+    CHECK(press.duration_ms == 300);
+    CHECK(press.delay_ms == 20);
+    CHECK(press.easing.to_string() == "steps(3, jump-end)");
+    CHECK(press.total_ms() == 320);
+    const ElementMotion::Resolved focus = ElementStyle::motion_state("motion-test", ElementMotion::Trigger::Focus, 100);
+    CHECK(focus.timing == ElementMotion::material_default(100));
+    CHECK_FALSE(focus.fields[0].valid);
+    CHECK(ElementStyle::motion_for("motion-test", ElementMotion::Trigger::Hover, 250).duration_ms == 250);
+    CHECK_FALSE(ElementStyle::entrance_of(nullptr).has_entrance);
+    live.reset_all();
 }

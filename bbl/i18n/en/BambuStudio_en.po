@@ -29015,3 +29015,830 @@ msgstr ""
 
 msgid "Apply the nozzle moves with Swap, or undo them, before sending."
 msgstr ""
+
+msgid "Appearance editor"
+msgstr ""
+
+msgid "Animation and transition"
+msgstr ""
+
+msgid "Appearance editor heading"
+msgstr ""
+
+msgid "Appearance editor button"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Reset %s to the inherited or Material default value"
+msgstr ""
+
+msgid "duration"
+msgstr ""
+
+msgid "delay"
+msgstr ""
+
+msgid "easing"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s duration in milliseconds"
+msgstr ""
+
+msgid "How long the transition runs, from 0 to 10000 milliseconds."
+msgstr ""
+
+msgid "Duration (ms)"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s delay in milliseconds"
+msgstr ""
+
+msgid "Wait before the transition starts. A negative delay starts it part of the way through."
+msgstr ""
+
+msgid "Delay (ms)"
+msgstr ""
+
+msgid "Custom (type it below)"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s easing curve"
+msgstr ""
+
+msgid "Easing"
+msgstr ""
+
+msgid "Easing function"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s easing function"
+msgstr ""
+
+msgid "A named curve, cubic-bezier(x1, y1, x2, y2), steps(count, jump-end) or a linear() stop list. Press Enter to apply."
+msgstr ""
+
+msgid "Motion value problem"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s timing summary"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s ms"
+msgstr ""
+
+msgid "Material default"
+msgstr ""
+
+msgid "set for this element"
+msgstr ""
+
+msgid "inherited"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s: %s (%s)"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The stored %s %s is not used: %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Total active time: %d ms. It plays once and ends on the new state."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Not applied: %s"
+msgstr ""
+
+msgid "Motion curve preview"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%d ms"
+msgstr ""
+
+msgid "Interface motion status"
+msgstr ""
+
+msgid "State transitions"
+msgstr ""
+
+msgid "Trigger"
+msgstr ""
+
+msgid "State change to edit"
+msgstr ""
+
+msgid "State transition"
+msgstr ""
+
+msgid "Play this transition in the preview. Playing again restarts it."
+msgstr ""
+
+msgid "Play reversed"
+msgstr ""
+
+msgid "Play the way back toward the starting colour, as leaving the state does."
+msgstr ""
+
+msgid "Stop the preview where it is."
+msgstr ""
+
+msgid "Preview speed"
+msgstr ""
+
+msgid "Full speed"
+msgstr ""
+
+msgid "Half speed"
+msgstr ""
+
+msgid "Quarter speed"
+msgstr ""
+
+msgid "Slows the preview only. The element always plays its own timing."
+msgstr ""
+
+msgid "Preview position (ms)"
+msgstr ""
+
+msgid "Preview position in milliseconds"
+msgstr ""
+
+msgid "Seek the preview to this moment of the transition."
+msgstr ""
+
+msgid "Solid: this element. Dashed: the Material default. The shaded part is the delay; the strip shows the colour at the playhead."
+msgstr ""
+
+msgid "Window entrance"
+msgstr ""
+
+msgid "Changes"
+msgstr ""
+
+msgid "Reset element motion"
+msgstr ""
+
+msgid "Drop every motion value of this element; inherited and Material defaults apply again"
+msgstr ""
+
+msgid "Every change is saved at once and kept in Version history, where any earlier appearance can be restored."
+msgstr ""
+
+msgid "Kept but not applied"
+msgstr ""
+
+msgid "Motion values kept but not applied"
+msgstr ""
+
+msgid "Renderer capabilities"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%d motion capabilities work on this element's renderer; %d are unavailable and listed with the reason."
+msgstr ""
+
+msgid "Search motion capabilities"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Available: %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "For %s (%s). Buttons, fields, lists and cards play these when this state changes."
+msgstr ""
+
+msgid "Reduced motion is on (Preferences > Interface motion or the Windows animation setting). Every transition shows its final state at once, the preview included. The values below are kept for when motion is allowed again."
+msgstr ""
+
+msgid "Motion plays as set below. Preferences > Interface motion and the Windows animation setting decide first: when either reduces motion, every transition shows its final state at once."
+msgstr ""
+
+msgid "The window that contains this element opens without an entrance animation, so there is nothing to edit here. Dialogs with the Material caption, the command palette, the regex builder, menus and this editor fade in."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The window that contains this element fades in over %d ms, but it is not an adopted element, so its entrance cannot be edited yet."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Entrance of %s (%s): the window fades in from a quarter of full opacity when it opens."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s = %s: this version does not use this motion setting. It stays in the file for export and import."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s = %s: %s The Material default plays instead."
+msgstr ""
+
+msgid "Nothing is waiting here: every stored motion value of this element is in use."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "reset motion of %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s %s of %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Undo: %s"
+msgstr ""
+
+msgid "Nothing to undo"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Redo: %s"
+msgstr ""
+
+msgid "Nothing to redo"
+msgstr ""
+
+msgid "Hover"
+msgstr ""
+
+msgid "Focus"
+msgstr ""
+
+msgid "Enable and disable"
+msgstr ""
+
+msgid "Entrance"
+msgstr ""
+
+msgid "Standard decelerate"
+msgstr ""
+
+msgid "Standard accelerate"
+msgstr ""
+
+msgid "Emphasized"
+msgstr ""
+
+msgid "Emphasized decelerate"
+msgstr ""
+
+msgid "Emphasized accelerate"
+msgstr ""
+
+msgid "Linear"
+msgstr ""
+
+msgid "Ease"
+msgstr ""
+
+msgid "Ease in"
+msgstr ""
+
+msgid "Ease out"
+msgstr ""
+
+msgid "Ease in and out"
+msgstr ""
+
+msgid "The easing is empty. Choose a curve or type one."
+msgstr ""
+
+msgid "cubic-bezier() needs four numbers: x1, y1, x2, y2."
+msgstr ""
+
+msgid "In cubic-bezier(), x1 and x2 must be from 0 to 1."
+msgstr ""
+
+msgid "In cubic-bezier(), y1 and y2 must be from -5 to 5."
+msgstr ""
+
+msgid "steps() needs a whole number of steps from 1 to 100, optionally followed by jump-start, jump-end, jump-none, jump-both, start or end."
+msgstr ""
+
+msgid "steps() with jump-none needs at least 2 steps."
+msgstr ""
+
+msgid "linear() needs 2 to 64 stops, each a number optionally followed by one or two percentages."
+msgstr ""
+
+msgid "Unknown easing. Use a Material curve, linear, ease, cubic-bezier(), steps() or linear()."
+msgstr ""
+
+msgid "Duration must be a number of milliseconds from 0 to 10000."
+msgstr ""
+
+msgid "Delay must be a number of milliseconds from -10000 to 10000."
+msgstr ""
+
+msgid "Easing must be text, such as standard or cubic-bezier(0.2, 0, 0, 1)."
+msgstr ""
+
+msgid "Tracks, properties and keyframes"
+msgstr ""
+
+msgid "Timing and easing"
+msgstr ""
+
+msgid "Timeline and playback"
+msgstr ""
+
+msgid "Transitions and triggers"
+msgstr ""
+
+msgid "Reversibility and access"
+msgstr ""
+
+msgid "The native renderer draws each element as one surface without layers, so motion cannot target a layer."
+msgstr ""
+
+msgid "Animation tracks"
+msgstr ""
+
+msgid "Each element runs one animation per trigger. There is no track to create, name, duplicate, reorder, mute, solo, group or remove."
+msgstr ""
+
+msgid "Exact element and state"
+msgstr ""
+
+msgid "Each trigger edits the transition of this exact element when that state changes. Buttons, fields, lists and cards play it."
+msgstr ""
+
+msgid "State colours"
+msgstr ""
+
+msgid "A state transition animates every state colour of the element together: the background, border and text of buttons, fields and boxes."
+msgstr ""
+
+msgid "Window opacity"
+msgstr ""
+
+msgid "An entrance fades a top-level window in from a quarter of full opacity: dialogs with the Material caption, the command palette, the regex builder, menus and this editor."
+msgstr ""
+
+msgid "Per-property transition list"
+msgstr ""
+
+msgid "The state animation does not know which colour is the background, border or text, so it cannot animate one and change another at once."
+msgstr ""
+
+msgid "Transform, size and position"
+msgstr ""
+
+msgid "Native windows have no transform, scale or rotation, and layout is whole-pixel sizer geometry, so these cannot be animated."
+msgstr ""
+
+msgid "Opacity of a control"
+msgstr ""
+
+msgid "Only top-level windows can be translucent here. A control inside a window cannot fade."
+msgstr ""
+
+msgid "Shape, spacing and typography"
+msgstr ""
+
+msgid "Radius, spacing and font values cannot be interpolated by this renderer, so they change at once."
+msgstr ""
+
+msgid "Custom properties"
+msgstr ""
+
+msgid "The native renderer has no custom properties to animate."
+msgstr ""
+
+msgid "Computed starting value"
+msgstr ""
+
+msgid "A transition starts from the colour on screen, so an interrupted transition continues from where it was instead of jumping."
+msgstr ""
+
+msgid "Explicit start and end values"
+msgstr ""
+
+msgid "Start and end colours come from the element's state colours, set on the Colours tab and by the theme. A transition cannot name other values."
+msgstr ""
+
+msgid "Interpolation and composition"
+msgstr ""
+
+msgid "Colours always interpolate per red, green, blue and alpha channel and replace each other. There is no other colour space and no add or accumulate mode."
+msgstr ""
+
+msgid "Keyframes, markers and segments"
+msgstr ""
+
+msgid "Each animation plays one segment from start to end. There are no keyframes or markers to add, select, copy, move or reorder, and no hold or per-segment easing; steps() gives an evenly stepped transition."
+msgstr ""
+
+msgid "Motion paths"
+msgstr ""
+
+msgid "Nothing moves along a path in the native renderer."
+msgstr ""
+
+msgid "Duration"
+msgstr ""
+
+msgid "From 0 to 10000 ms. 16 ms or less shows the final state at once, because animations draw about every 16 ms."
+msgstr ""
+
+msgid "Automatic duration"
+msgstr ""
+
+msgid "An unset duration uses the Material duration: 100 ms for state changes and the window's own duration for entrances."
+msgstr ""
+
+msgid "Delay"
+msgstr ""
+
+msgid "From 0 to 10000 ms. The element keeps its starting colour or entrance opacity until the delay ends."
+msgstr ""
+
+msgid "Negative delay"
+msgstr ""
+
+msgid "Down to -10000 ms. The transition starts part of the way through."
+msgstr ""
+
+msgid "End delay"
+msgstr ""
+
+msgid "A transition settles the moment it ends; there is no end-delay phase."
+msgstr ""
+
+msgid "Repeat count, infinite repeat and repeat delay"
+msgstr ""
+
+msgid "State transitions and entrances play once by definition, and an endless repeat would be continuous motion."
+msgstr ""
+
+msgid "Direction, fill and iteration start"
+msgstr ""
+
+msgid "Each transition plays once forward, holds its start during the delay and its target afterwards. Without repeats there is no alternate, reverse or iteration start; a negative delay starts part of the way through."
+msgstr ""
+
+msgid "Playback rate"
+msgstr ""
+
+msgid "There is no per-element playback rate, and no zero or negative rate. The Interface motion preference and Windows can only turn motion off."
+msgstr ""
+
+msgid "Global motion setting"
+msgstr ""
+
+msgid "Preferences > Interface motion and the Windows animation setting decide first. When either reduces motion, these values are kept but not played."
+msgstr ""
+
+msgid "Global speed level"
+msgstr ""
+
+msgid "This app has no animated rainbow colour and no global speed level yet, so there is nothing for a per-element value to compete with."
+msgstr ""
+
+msgid "Named curves"
+msgstr ""
+
+msgid "Material standard and emphasized curves with their accelerate and decelerate forms, linear, ease, ease in, ease out and ease in and out."
+msgstr ""
+
+msgid "Cubic Bezier"
+msgstr ""
+
+msgid "cubic-bezier(x1, y1, x2, y2) with x from 0 to 1 and y from -5 to 5, typed as four numbers in the easing field."
+msgstr ""
+
+msgid "Dragging Bezier handles"
+msgstr ""
+
+msgid "Not built yet. Type the four numbers in the easing field; the curve preview redraws at once."
+msgstr ""
+
+msgid "Linear stop lists"
+msgstr ""
+
+msgid "linear() with 2 to 64 stops, each a number with up to two percentages."
+msgstr ""
+
+msgid "Steps"
+msgstr ""
+
+msgid "steps(count, position) with 1 to 100 steps and jump-start, jump-end, jump-none or jump-both."
+msgstr ""
+
+msgid "Spring and physics"
+msgstr ""
+
+msgid "Animations here are time-based with a fixed duration; there is no spring or physics solver."
+msgstr ""
+
+msgid "Computed timing"
+msgstr ""
+
+msgid "The tab states the total active time of the selected transition. Nothing repeats, so nothing is infinite."
+msgstr ""
+
+msgid "Validation"
+msgstr ""
+
+msgid "Out-of-range or malformed values are refused when typed. An invalid value from a file is listed on this tab and the Material default plays instead."
+msgstr ""
+
+msgid "Precision and units"
+msgstr ""
+
+msgid "Times are whole milliseconds in the fields, and a fractional value from a file is kept until you change it. Curve numbers keep the precision you type."
+msgstr ""
+
+msgid "Curve and time ruler"
+msgstr ""
+
+msgid "The preview draws the selected transition against a time ruler, with the delay shaded."
+msgstr ""
+
+msgid "Seek and scrub"
+msgstr ""
+
+msgid "Type a preview position in milliseconds to see the curve and colour at that moment."
+msgstr ""
+
+msgid "Play, stop and restart"
+msgstr ""
+
+msgid "Plays the selected transition in the preview with the same arithmetic the element uses. Playing again restarts it."
+msgstr ""
+
+msgid "Plays the way back toward the starting colour, as leaving the state does."
+msgstr ""
+
+msgid "Plays the preview at full, half or quarter speed. It changes the preview only, never the element."
+msgstr ""
+
+msgid "Before and after"
+msgstr ""
+
+msgid "The preview draws the Material default as a dashed curve beside your timing."
+msgstr ""
+
+msgid "Zoom and loop preview"
+msgstr ""
+
+msgid "The preview fits one transition to the card, so there is nothing to zoom. It does not loop, because looping would be continuous motion."
+msgstr ""
+
+msgid "Document, scroll and view timelines"
+msgstr ""
+
+msgid "Native windows have no document clock, scroll timeline or view timeline. Every animation runs on the interface timer from the moment its trigger fires."
+msgstr ""
+
+msgid "Sequencing, stagger and groups"
+msgstr ""
+
+msgid "Without tracks, each animation starts independently when its own trigger fires. Offsets, dependencies, stagger and parallel groups cannot be expressed."
+msgstr ""
+
+msgid "Overlapping properties"
+msgstr ""
+
+msgid "Only one transition runs per element at a time, so there is no overlap to order, add or accumulate."
+msgstr ""
+
+msgid "Interruption"
+msgstr ""
+
+msgid "A new state change interrupts the running transition and starts from the colour on screen. The interrupted one reports nothing."
+msgstr ""
+
+msgid "Cancellation"
+msgstr ""
+
+msgid "A hidden element settles at its final state and a closed one cancels its transition. Reduced motion settles every transition at once."
+msgstr ""
+
+msgid "Completion"
+msgstr ""
+
+msgid "Transitions never report completion. State, focus and input change at once and never wait for an animation."
+msgstr ""
+
+msgid "The pointer enters or leaves the element."
+msgstr ""
+
+msgid "The element gains or loses keyboard focus."
+msgstr ""
+
+msgid "A pointer button goes down or up on the element."
+msgstr ""
+
+msgid "A toggle button or check is turned on or off."
+msgstr ""
+
+msgid "The element becomes available or unavailable."
+msgstr ""
+
+msgid "A dialog, popup or this editor opens. Edit it in the Window entrance section for the window that contains this element."
+msgstr ""
+
+msgid "Exit"
+msgstr ""
+
+msgid "Windows and popups close at once; nothing waits for an exit animation."
+msgstr ""
+
+msgid "Validation, loading, success, warning and error states"
+msgstr ""
+
+msgid "Controls have no such states to animate. Messages, progress bars and colours show them at once."
+msgstr ""
+
+msgid "Gestures, other events and scroll progress"
+msgstr ""
+
+msgid "Animations start only on hover, focus, press, selection and enable changes."
+msgstr ""
+
+msgid "Thresholds, debounce and re-entry"
+msgstr ""
+
+msgid "A trigger fires on the native event itself. A repeated trigger restarts from the colour on screen."
+msgstr ""
+
+msgid "Priority"
+msgstr ""
+
+msgid "When several states change in one event, press wins, then selection, focus, hover and enable."
+msgstr ""
+
+msgid "Inheritance and overrides"
+msgstr ""
+
+msgid "An unset value comes from the parent element (the id before a slash), then the active preset, then the Material default."
+msgstr ""
+
+msgid "Discrete transitions"
+msgstr ""
+
+msgid "Values that cannot be interpolated change at once; there is no setting to delay or step them."
+msgstr ""
+
+msgid "Visual only"
+msgstr ""
+
+msgid "Triggers only change how a state change looks. They never run code, reach the network, sign in, or stand in for an operation finishing."
+msgstr ""
+
+msgid "Reset a value"
+msgstr ""
+
+msgid "Each value has its own reset to the inherited or default value."
+msgstr ""
+
+msgid "Drops every motion value of this element in one action. Reset element and Reset all at the bottom still reset everything."
+msgstr ""
+
+msgid "Undo and redo"
+msgstr ""
+
+msgid "Undo and Redo step through the motion edits made in this editor, across elements."
+msgstr ""
+
+msgid "Every motion change is saved and recorded in Version history with the rest of the appearance, and can be restored there."
+msgstr ""
+
+msgid "Named presets"
+msgstr ""
+
+msgid "Save as preset keeps motion values with the other element styles, and a preset states every motion value it sets."
+msgstr ""
+
+msgid "Import and export"
+msgstr ""
+
+msgid "Exported themes carry motion values. Import checks them and lists invalid values."
+msgstr ""
+
+msgid "Unknown settings kept"
+msgstr ""
+
+msgid "A motion setting this version does not understand stays in the file and is listed on this tab, never silently dropped."
+msgstr ""
+
+msgid "Copy and paste style"
+msgstr ""
+
+msgid "The appearance editor has no copy and paste style yet, for motion or any other property."
+msgstr ""
+
+msgid "Scheduled settings switch application settings by rule; element styles, motion included, cannot be scheduled yet."
+msgstr ""
+
+msgid "Keyboard and screen reader"
+msgstr ""
+
+msgid "Every value is a named field reached with Tab, with numbers instead of dragging. Ctrl+Page Up and Ctrl+Page Down switch tabs."
+msgstr ""
+
+msgid "Search with the regex builder"
+msgstr ""
+
+msgid "Search this list in plain text or with the regular-expression builder beside the search field."
+msgstr ""
+
+msgid "Command palette teleport"
+msgstr ""
+
+msgid "The command palette does not list individual appearance properties yet."
+msgstr ""
+
+msgid "Reduced motion"
+msgstr ""
+
+msgid "Reduced motion settles the element and the preview at once. Your values are kept for when motion is allowed again."
+msgstr ""
+
+msgid "Without motion"
+msgstr ""
+
+msgid "The curve, the time ruler and the written timing describe the transition without playing it."
+msgstr ""
+
+msgid "This editor's own controls"
+msgstr ""
+
+msgid "The editor's tabs and buttons are elements with their own ids; right-click one to edit its motion. The editor's opening fade is a window entrance."
+msgstr ""
+
+msgid "Hover duration (ms)"
+msgstr ""
+
+msgid "Hover delay (ms)"
+msgstr ""
+
+msgid "Hover easing"
+msgstr ""
+
+msgid "Focus duration (ms)"
+msgstr ""
+
+msgid "Focus delay (ms)"
+msgstr ""
+
+msgid "Focus easing"
+msgstr ""
+
+msgid "Press duration (ms)"
+msgstr ""
+
+msgid "Press delay (ms)"
+msgstr ""
+
+msgid "Press easing"
+msgstr ""
+
+msgid "Selection duration (ms)"
+msgstr ""
+
+msgid "Selection delay (ms)"
+msgstr ""
+
+msgid "Selection easing"
+msgstr ""
+
+msgid "Enable and disable duration (ms)"
+msgstr ""
+
+msgid "Enable and disable delay (ms)"
+msgstr ""
+
+msgid "Enable and disable easing"
+msgstr ""
+
+msgid "Entrance duration (ms)"
+msgstr ""
+
+msgid "Entrance delay (ms)"
+msgstr ""
+
+msgid "Entrance easing"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Reset element motion: %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Undo element motion: %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Redo element motion: %s"
+msgstr ""
