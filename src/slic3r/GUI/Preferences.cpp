@@ -2816,11 +2816,13 @@ wxWindow *PreferencesDialog::create_appearance_tab()
     auto *wording_title = new Label(wording, _L("Personal vocabulary"));
     wording_title->SetName("personal-vocabulary-title");
     wording_sizer->Add(wording_title, 0, wxEXPAND | wxALL, FromDIP(12));
-    auto *wording_description = new Label(wording,
+    // Text joined from several translated sentences is registered as interface
+    // copy, so the label stays eligible for the display vocabulary.
+    auto *wording_description = new Label(wording, PersonalVocabulary::remember(
         _L("Load a version 1 JSON file to change display wording on this device. Original data, logs and exports keep their original wording.") +
             "\n" + wxString::Format(_L("A file can be up to %d KiB, with keys up to %d characters and values up to %d characters."),
                 int(PersonalVocabulary::max_file_bytes / 1024), int(PersonalVocabulary::max_key_code_points),
-                int(PersonalVocabulary::max_value_code_points)),
+                int(PersonalVocabulary::max_value_code_points))),
         LB_AUTO_WRAP);
     wording_sizer->Add(wording_description, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(12));
     auto *wording_status = new Label(wording, wxEmptyString, LB_AUTO_WRAP);
@@ -2844,7 +2846,7 @@ wxWindow *PreferencesDialog::create_appearance_tab()
             problem = _L("The vocabulary saved on this device did not pass validation, so original wording is shown.") + "\n" +
                 vocabulary_rejection_text(saved);
         const bool failed = !problem.empty();
-        wording_status->SetLabel(failed ? problem
+        wording_status->SetLabel(failed ? PersonalVocabulary::remember(problem)
             : active ? _L("Personal vocabulary is active on this device.") : _L("Original wording is active."));
         wording_status->SetForegroundColour(StateColor::semantic(failed ? MD3::Role::Error : MD3::Role::OnSurfaceVariant));
         scrolled->Layout();

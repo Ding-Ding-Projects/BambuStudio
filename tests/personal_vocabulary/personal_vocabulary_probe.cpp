@@ -27,6 +27,8 @@ int main(int argc, char **argv)
     // The private copy, written directly only to model a stale or damaged cache.
     const auto cache = root / "private-display" / "vocabulary.json";
     auto write_to = [](const std::filesystem::path &path, const std::string &json) {
+        std::error_code ignored;
+        std::filesystem::create_directories(path.parent_path(), ignored);
         std::ofstream file(path, std::ios::binary); file << json; file.close(); return bool(file); };
     auto write = [&](const std::string &json) { return write_to(input, json); };
     auto shown = [&] { return PV::display(PV::remember("Open item")); };
