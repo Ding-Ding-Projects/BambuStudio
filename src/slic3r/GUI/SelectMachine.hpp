@@ -38,6 +38,7 @@
 #include "BBLStatusBar.hpp"
 #include "BBLStatusBarPrint.hpp"
 #include "PrePrintChecker.hpp"
+#include "SendPrintReadiness.hpp"
 #include "Widgets/Label.hpp"
 #include "Widgets/Button.hpp"
 #include "Widgets/StaticBox.hpp"
@@ -158,13 +159,17 @@ public:
             m_ops = ops;
             selected_key = "";
 
-            auto width = ops.size() * PRINT_OPT_WIDTH + FromDIP(8);
-            auto height = FromDIP(22) + FromDIP(8);
-            SetMinSize(wxSize(width, height));
-            SetMaxSize(wxSize(width, height));
+            update_size();
             Refresh();
         }
     };
+    // The switch is 30 DIP high; PrintOption sizes its row from this.
+    void update_size() {
+        auto width = m_ops.size() * PRINT_OPT_WIDTH + FromDIP(8);
+        auto height = FromDIP(22) + FromDIP(8);
+        SetMinSize(wxSize(width, height));
+        SetMaxSize(wxSize(width, height));
+    }
 
     bool is_enabled() const { return m_enable; }
     void enable(bool able) {
@@ -234,6 +239,10 @@ public:
 
     // override funcs
     bool  CanBeFocused() const override { return false; }
+
+private:
+    // At least 28 DIP, and never lower than the switch, so it is not clipped.
+    void update_row_height();
 
 private:
     void OnPaint(wxPaintEvent &event);
@@ -624,6 +633,16 @@ private:
     void update_material_item_pos(MachineObject* obj_);
     void refresh_quick_swap_controls();
     void apply_quick_swap(bool reslice);
+    // A nozzle move made here that Swap has not applied yet; Send is blocked
+    // while one is pending and the dialog says why.
+    bool quick_swap_pending() const;
+    void add_quick_swap_pending_notice();
+
+    // The plate or plates this dialog sends (m_print_plate_idx; every plate for
+    // Print all), not whichever plate happens to be current.
+    SendReadinessVerdict send_plate_readiness() const;
+    bool can_slice_again_from_dialog() const;
+    void slice_again_from_dialog();
 
     /* update scroll area size*/
     void update_scroll_area_size();

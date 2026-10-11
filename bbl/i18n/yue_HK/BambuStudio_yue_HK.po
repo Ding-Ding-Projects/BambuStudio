@@ -44840,3 +44840,28 @@ msgstr "剔選"
 #. review-status: agent-drafted
 msgid "Uncheck"
 msgstr "取消剔選"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Slice again"
+msgstr "重新切片"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Plate %d needs to be sliced again before it can be sent."
+msgstr "打印板 %d 要重新切片，先可以傳送。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Slicing cannot start from here right now. Slice the plate in Prepare, then send it again."
+msgstr "暫時未能喺呢度開始切片。請喺「準備」頁面切片打印板，然後再傳送。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "This plate needs to be sliced again before it can be sent."
+msgstr "呢個打印板要重新切片，先可以傳送。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Apply the nozzle moves with Swap, or undo them, before sending."
+msgstr "傳送之前，請用「交換」套用噴嘴調整，或者復原返啲調整。"

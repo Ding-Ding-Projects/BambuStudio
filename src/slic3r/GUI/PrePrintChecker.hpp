@@ -114,6 +114,7 @@ enum PrintDialogStatus : unsigned int {
     PrintStatusNeedConsistencyUpgrading,
     PrintStatusNotSupportedPrintAll,
     PrintStatusBlankPlate,
+    PrintStatusPlateNeedsSlicing,
     PrintStatusUnsupportedPrinter,
     PrintStatusRackReading,
     PrintStatusRackNozzleMappingWaiting,
@@ -166,6 +167,7 @@ enum PrintDialogStatus : unsigned int {
     PrintStatusTPUUnsuggestCali,
     PrintStatusPrintTimeEstimateWarning,
     PrintStatusSmartNozzleBlobNeedAuto,
+    PrintStatusQuickSwapPending,
     PrintStatusFilamentWarningEnd,
 
     PrintStatusWarningEnd,//->end error<-

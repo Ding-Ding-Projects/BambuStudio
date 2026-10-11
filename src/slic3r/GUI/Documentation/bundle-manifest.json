@@ -1580,12 +1580,12 @@
     {
       "route": "windows/print-actions.md",
       "title": "Plate print actions and material mapping",
-      "sha256": "de5a9332882a661ced8ed36f2dfb4babad3b968ba56b1a6103c5b04b25b42013"
+      "sha256": "1537df8340062331f16abf172ccbbb5565167f13f578d663571236e1268f010c"
     },
     {
       "route": "windows/print-actions.yue_HK.md",
       "title": "打印盤操作同材料映射",
-      "sha256": "e4a2102e74651df7681911d892fd38c7ad022e32a431f6cc0d8b17f23be3f513"
+      "sha256": "be92e568c41912e6dcc835f4ad539f092e97b591f9ef48322907d5aee985fc96"
     },
     {
       "route": "windows/print-simulation.md",
@@ -1900,12 +1900,12 @@
     {
       "route": "workspace/project-version-history.md",
       "title": "Project version history",
-      "sha256": "6f84b9da554756e909ed09fbd055aad459647a3002dfbc892fa4972ebf857d05"
+      "sha256": "2a37fe0f580e2a391a3eca2571b7a3198aaf6fbb327156baafab2aa7affb2f83"
     },
     {
       "route": "workspace/project-version-history.yue_HK.md",
       "title": "項目版本歷史",
-      "sha256": "11702edc366f051c753b2270d94859718b353d4fa58dcd21c56f6c0bd2c023de"
+      "sha256": "01c568f2283165a0cc8fe0747b079c12a1b7823ed91e45b4a9de5465a9a6dd91"
     },
     {
       "route": "workspace/readable-dates.md",
@@ -1975,7 +1975,7 @@
       "bytes": 1979
     }
   ],
-  "bundle_sha256": "38a9ff6154d2358e1ac59db0efc4c8fb7eb8c9c84a626514c07762ddc82a61c3",
+  "bundle_sha256": "02c4c9e0c752fa40115b3e9c2a8558a1038ddabd9ef849e1ac8e5e97bd983994",
   "unavailable_references": [
     {
       "source": "api/README.md",

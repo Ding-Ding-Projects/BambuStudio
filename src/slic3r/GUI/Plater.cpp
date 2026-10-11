@@ -147,6 +147,7 @@
 #include "Jobs/BoostThreadWorker.hpp"
 #include "BackgroundSlicingProcess.hpp"
 #include "SelectMachine.hpp"
+#include "SendPrintReadiness.hpp"
 #include "SendMultiMachinePage.hpp"
 #include "SendToPrinter.hpp"
 #include "PublishDialog.hpp"
@@ -9842,11 +9843,16 @@ Plater::priv::priv(Plater *q, MainFrame *main_frame)
     panels.push_back(assemble_view);
 
     this->background_process_timer.SetOwner(this->q, 0);
+    // Bound to this timer's id only. The Plater also owns the project-history
+    // timers, bound earlier in this constructor. wx searches dynamic handlers
+    // newest first and this handler never skips, so bound to every id it took
+    // their ticks, they never reached their own handlers, and each tick
+    // re-applied the background process instead.
     this->q->Bind(wxEVT_TIMER, [this](wxTimerEvent &evt)
     {
         if (!this->suppressed_backround_processing_update)
             this->update_restart_background_process(false, false);
-    });
+    }, this->background_process_timer.GetId());
 
     update();
     // Orca: Make sidebar dockable. All four edges are enabled so the Prepare
@@ -24544,15 +24550,13 @@ bool Plater::validate_print_setup_filament_maps(int expected_plate_index, const 
         reason = _L("The printer nozzle configuration is unavailable.");
         return false;
     }
-    const auto volumes = plate->get_real_filament_volume_maps(project_config);
+    // apply_print_setup_filament_maps() stores exactly these types.
+    const auto required_types = quick_swap_volume_types(maps, plate->get_real_filament_volume_maps(project_config),
+        volume_option->values, static_cast<int>(nvtHybrid), static_cast<int>(nvtStandard));
     for (int extruder = 0; extruder < 2; ++extruder) {
-        const auto volume_type = static_cast<NozzleVolumeType>(volume_option->values[extruder]);
         for (int filament : used) {
             if (maps[filament - 1] != extruder + 1) continue;
-            const auto required_type = volume_type == nvtHybrid
-                ? static_cast<NozzleVolumeType>(static_cast<size_t>(filament) <= volumes.size()
-                    ? volumes[filament - 1] : static_cast<int>(nvtStandard))
-                : volume_type;
+            const auto required_type = static_cast<NozzleVolumeType>(required_types[filament - 1]);
             if (wxGetApp().preset_bundle->extruder_nozzle_stat.get_extruder_nozzle_count(extruder, required_type) == 0) {
                 reason = wxString::Format(_L("The %s extruder has no available nozzle of the required type."),
                     extruder == 0 ? _L("left") : _L("right"));
@@ -24567,20 +24571,29 @@ bool Plater::validate_print_setup_filament_maps(int expected_plate_index, const 
         return false;
     }
 
-    const auto original_mode = plate->get_filament_map_mode();
-    const auto original_maps = plate->get_filament_maps();
+    // The printable and printable-area checks read the plate itself, so the
+    // proposed maps are written to it for the duration of the checks only. This
+    // runs every time print setup opens, so it must leave the plate exactly as
+    // it was: the slice-written nozzle and volume maps are part of what the
+    // next background apply compares, and losing any of them discards the
+    // slice. Save the four keys exactly, present or absent, and put them back
+    // the same way. Never go through set_filament_map_mode() here, in either
+    // direction: it erases filament_map, filament_nozzle_map and
+    // filament_volume_map whenever the effective mode changes.
+    DynamicPrintConfig& plate_config = *plate->config();
+    const ConfigKeySnapshot<DynamicPrintConfig, ConfigOption> saved(plate_config,
+        {"filament_map_mode", "filament_map", "filament_nozzle_map", "filament_volume_map"});
     auto restore = [&] {
-        if (original_maps.empty()) plate->clear_filament_map();
-        else plate->set_filament_maps(original_maps);
-        if (original_mode == fmmDefault) plate->clear_filament_map_mode();
-        else plate->set_filament_map_mode(original_mode);
+        saved.restore(plate_config);
+        if (!saved.matches(plate_config))
+            BOOST_LOG_TRIVIAL(error) << __FUNCTION__ << ": the plate's filament maps were not restored exactly";
     };
     wxString filament_error;
     bool filament_ok = false;
     ObjectFilamentResults object_results;
     auto state = ModelInstancePVS_Inside;
     try {
-        plate->set_filament_map_mode(fmmManual);
+        plate_config.option<ConfigOptionEnum<FilamentMapMode>>("filament_map_mode", true)->value = fmmManual;
         plate->set_filament_maps(maps);
         filament_ok = plate->check_filament_printable(wxGetApp().preset_bundle->full_config(), filament_error);
         state = canvas->check_volumes_outside_state(&object_results);
@@ -24610,13 +24623,25 @@ bool Plater::validate_print_setup_filament_maps(int expected_plate_index, const 
 bool Plater::apply_print_setup_filament_maps(int expected_plate_index, const std::vector<int>& expected_maps,
                                              const std::vector<int>& maps)
 {
-    wxString reason;
-    if (maps == expected_maps || !validate_print_setup_filament_maps(expected_plate_index, expected_maps, maps, reason))
+    if (!p || !wxGetApp().preset_bundle || maps == expected_maps)
         return false;
     PartPlate* plate = p->partplate_list.get_curr_plate();
+    if (!plate)
+        return false;
     const auto& project_config = wxGetApp().preset_bundle->project_config;
+    // Read the real volume maps before anything below can change the plate.
+    const auto real_volumes = plate->get_real_filament_volume_maps(project_config);
 
-    const auto volumes = plate->get_real_filament_volume_maps(project_config);
+    wxString reason;
+    if (!validate_print_setup_filament_maps(expected_plate_index, expected_maps, maps, reason))
+        return false;
+    const auto* volume_option = project_config.option<ConfigOptionEnumsGeneric>("nozzle_volume_type");
+    if (!volume_option)
+        return false;
+    // The types the validation checked: a moved material takes its new
+    // nozzle's type, or keeps its own on a hybrid nozzle.
+    const auto volumes = quick_swap_volume_types(maps, real_volumes, volume_option->values,
+        static_cast<int>(nvtHybrid), static_cast<int>(nvtStandard));
     cancel_pending_print_after_slice();
     plate->set_filament_map_mode(fmmManual);
     plate->set_filament_maps(maps);

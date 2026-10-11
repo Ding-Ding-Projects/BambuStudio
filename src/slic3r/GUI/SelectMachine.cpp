@@ -720,7 +720,8 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
         wxDefaultSize, wxDefaultPosition, wxBU_EXACTFIT | wxNO_BORDER, true);
     if (folder_btn_use_glyph)
         m_timelapse_folder_btn->SetBitmap(MaterialIcon::bitmap(m_timelapse_folder_btn, MaterialIcon::FolderOpen, 16, StateColor::semantic(MD3::Role::OnSurfaceVariant)));
-    m_timelapse_folder_btn->SetBackgroundColour(ThemeColor::White);
+    // The surface of the Timelapse row it sits in (PrintOption), for the current theme.
+    m_timelapse_folder_btn->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
     m_timelapse_folder_btn->SetToolTip(_L("Select timelapse storage location"));
     m_timelapse_folder_btn->Hide();
     m_timelapse_folder_btn->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) {
@@ -2077,6 +2078,9 @@ void SelectMachineDialog::show_status(PrintDialogStatus status, std::vector<wxSt
     } else if (status == PrintDialogStatus::PrintStatusBlankPlate) {
         Enable_Refresh_Button(true);
         Enable_Send_Button(false);
+    } else if (status == PrintDialogStatus::PrintStatusPlateNeedsSlicing) {
+        Enable_Refresh_Button(true);
+        Enable_Send_Button(false);
     } else if (status == PrintDialogStatus::PrintStatusNotSupportedPrintAll) {
         Enable_Refresh_Button(true);
         Enable_Send_Button(false);
@@ -2144,6 +2148,11 @@ void SelectMachineDialog::show_status(PrintDialogStatus status, std::vector<wxSt
 
     /*enter perpare mode*/
     prepare_mode(false);
+    if (status == PrintDialogStatus::PrintStatusPlateNeedsSlicing && can_slice_again_from_dialog()) {
+        m_pre_print_checker.add_with_link(status, msg.empty() ? m_pre_print_checker.get_pre_state_msg(status) : msg,
+                                          _L("Slice again"), [this]() { slice_again_from_dialog(); }, style);
+        return;
+    }
     m_pre_print_checker.add(status, msg, tips, wiki_url, style);
 
 }
@@ -2307,9 +2316,14 @@ void SelectMachineDialog::on_reselect_dialog_btn_clicked(wxMouseEvent&)
 
 void SelectMachineDialog::on_ok_btn(wxCommandEvent &event)
 {
-    if (m_print_type == FROM_NORMAL && !m_pending_filaments_map.empty() &&
-        m_pending_filaments_map != m_filaments_map)
+    // Send is disabled while a nozzle move is pending; if a click still gets
+    // here, refuse visibly instead of doing nothing.
+    if (quick_swap_pending()) {
+        Enable_Send_Button(false);
+        add_quick_swap_pending_notice();
+        update_print_status_msg();
         return;
+    }
     BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << ": on_ok_btn";
 
     bool has_slice_warnings = false;
@@ -3925,6 +3939,7 @@ void SelectMachineDialog::update_by_obj(MachineObject* obj_)
 
     update_option_dynamic_state(obj_);
     update_show_status(obj_);
+    add_quick_swap_pending_notice();
     update_print_status_msg();
     //update_scroll_area_size();/*STUDIO-12867 the page maybe blank in some platform. FIXME*/
 
@@ -4199,10 +4214,19 @@ void SelectMachineDialog::update_show_status(MachineObject* obj_)
     if (get_status() == PrintDialogStatus::PrintStatusRefreshingMachineList || get_status() == PrintDialogStatus::PrintStatusSending) return;
 
     /*no valid gcode file*/
+    // A plate whose slice was invalidated after it was sliced is not empty: say
+    // which one it is, and only call a plate empty when it has nothing to print.
     if (m_print_type == PrintFromType::FROM_NORMAL) {
-        PartPlate* plate = m_plater->get_partplate_list().get_curr_plate();
-        if (plate && !plate->is_valid_gcode_file()) {
+        const SendReadinessVerdict verdict = send_plate_readiness();
+        if (verdict.readiness == SendReadiness::EmptyPlate) {
             show_status(PrintDialogStatus::PrintStatusBlankPlate);
+            return;
+        }
+        if (verdict.readiness == SendReadiness::NeedsSlice) {
+            std::vector<wxString> params;
+            if (m_print_plate_idx == PLATE_ALL_IDX)
+                params.push_back(wxString::Format(_L("Plate %d needs to be sliced again before it can be sent."), verdict.plate_index + 1));
+            show_status(PrintDialogStatus::PrintStatusPlateNeedsSlicing, params);
             return;
         }
     }
@@ -4541,9 +4565,18 @@ void SelectMachineDialog::Enable_Refresh_Button(bool en)
 
 void SelectMachineDialog::Enable_Send_Button(bool en)
 {
-    if (en && m_print_type == FROM_NORMAL && !m_pending_filaments_map.empty() &&
-        m_pending_filaments_map != m_filaments_map)
+    const bool swap_pending = quick_swap_pending();
+    if (swap_pending)
         en = false;
+    // The disabled Send button shows its tooltip on hover; give the reason.
+    const wxString send_tip = swap_pending ? m_pre_print_checker.get_pre_state_msg(PrintDialogStatus::PrintStatusQuickSwapPending)
+                                           : wxString();
+    if (m_button_ensure->GetToolTipText() != send_tip) {
+        if (send_tip.empty())
+            m_button_ensure->UnsetToolTip();
+        else
+            m_button_ensure->SetToolTip(send_tip);
+    }
     if (!en) {
         if (m_button_ensure->IsEnabled()) {
             m_button_ensure->Disable();
@@ -4609,6 +4642,10 @@ void SelectMachineDialog::on_dpi_changed(const wxRect &suggested_rect)
     for(auto opt : m_checkbox_list)
     {
         opt.second->msw_rescale();
+    }
+    if (m_timelapse_folder_btn) {
+        m_timelapse_folder_btn->msw_rescale();
+        update_timelapse_folder_btn_icon();
     }
 
     m_mapping_popup.msw_rescale();
@@ -5044,10 +5081,16 @@ void SelectMachineDialog::refresh_quick_swap_controls()
         }
         button->Bind(wxEVT_BUTTON, [this, id](wxCommandEvent&) {
             m_pending_filaments_map[id] = m_pending_filaments_map[id] == 1 ? 2 : 1;
-            CallAfter([this] { refresh_quick_swap_controls(); });
+            CallAfter([this] {
+                refresh_quick_swap_controls();
+                // Re-check now rather than on the next refresh tick: a move
+                // blocks Send with its reason, and undoing the last move gives
+                // Send back whatever state the printer checks allow.
+                update_by_obj(get_current_machine());
+            });
         });
     }
-    const bool changed = m_pending_filaments_map != m_filaments_map;
+    const bool changed = quick_swap_pending();
     m_quick_swap->Enable(changed);
     m_quick_swap_reslice->Enable(changed);
     if (changed) Enable_Send_Button(false);
@@ -5057,10 +5100,61 @@ void SelectMachineDialog::refresh_quick_swap_controls()
     Layout();
 }
 
+bool SelectMachineDialog::quick_swap_pending() const
+{
+    return m_print_type == FROM_NORMAL && Slic3r::GUI::quick_swap_pending(m_pending_filaments_map, m_filaments_map);
+}
+
+void SelectMachineDialog::add_quick_swap_pending_notice()
+{
+    if (!quick_swap_pending())
+        return;
+    m_pre_print_checker.add(PrintDialogStatus::PrintStatusQuickSwapPending, wxEmptyString, wxEmptyString, wxEmptyString,
+                            prePrintInfoStyle::Default);
+    Enable_Send_Button(false);
+}
+
+SendReadinessVerdict SelectMachineDialog::send_plate_readiness() const
+{
+    PartPlateList& plates = m_plater->get_partplate_list();
+    std::vector<SendPlateFacts> facts;
+    auto add = [&facts](int index, PartPlate* plate) {
+        if (plate)
+            facts.push_back({index, plate->has_printable_instances(), plate->is_valid_gcode_file()});
+    };
+    if (m_print_plate_idx == PLATE_ALL_IDX) {
+        for (int index = 0; index < plates.get_plate_count(); ++index)
+            add(index, plates.get_plate(index));
+    } else if (m_print_plate_idx >= 0) {
+        add(m_print_plate_idx, plates.get_plate(m_print_plate_idx));
+    } else {
+        add(plates.get_curr_plate_index(), plates.get_curr_plate());
+    }
+    return classify_send_plates(facts);
+}
+
+bool SelectMachineDialog::can_slice_again_from_dialog() const
+{
+    // The Slice and print action slices the current plate and reopens print
+    // setup for it, so it is offered only when that is the plate being sent.
+    return m_print_type == FROM_NORMAL && !m_is_in_sending_mode && m_print_plate_idx >= 0 &&
+        m_print_plate_idx == m_plater->get_partplate_list().get_curr_plate_index();
+}
+
+void SelectMachineDialog::slice_again_from_dialog()
+{
+    if (!can_slice_again_from_dialog())
+        return;
+    EndModal(wxID_CLOSE);
+    if (!wxGetApp().mainframe->request_slice_and_print())
+        MessageDialog(wxGetApp().mainframe,
+            _L("Slicing cannot start from here right now. Slice the plate in Prepare, then send it again."),
+            _L("Send print job"), wxOK | wxICON_INFORMATION).ShowModal();
+}
+
 void SelectMachineDialog::apply_quick_swap(bool reslice)
 {
-    if (m_print_type != FROM_NORMAL || m_is_in_sending_mode ||
-        m_pending_filaments_map == m_filaments_map) return;
+    if (m_is_in_sending_mode || !quick_swap_pending()) return;
     Plater* plater = wxGetApp().plater();
     const int plate_index = m_print_plate_idx;
     const auto expected = m_filaments_map;
@@ -5670,6 +5764,10 @@ void SelectMachineDialog::sys_color_changed()
     // The kit Button resolves its glyph tone for the current theme itself.
     m_rename_button->SetGlyph(MaterialIcon::Edit, FromDIP(20));
     m_rename_button->Refresh();
+    if (m_timelapse_folder_btn) {
+        m_timelapse_folder_btn->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
+        update_timelapse_folder_btn_icon();
+    }
 }
 
 bool SelectMachineDialog::Show(bool show)
@@ -7474,9 +7572,6 @@ bool SelectMachineDialog::is_used_filament(int fila_logic_id) const
 #endif //__WINDOWS__
      Bind(wxEVT_PAINT, &PrintOption::OnPaint, this);
 
-     SetMinSize(wxSize(-1, FromDIP(28)));
-     SetMaxSize(wxSize(-1, FromDIP(28)));
-
      m_ops = ops;
      m_param = param;
      m_full_title = title;
@@ -7499,6 +7594,7 @@ bool SelectMachineDialog::is_used_filament(int fila_logic_id) const
 
      m_printoption_item = new PrintOptionItem(this, m_ops, param);
      m_printoption_item->SetFont(Label::Body_13);
+     update_row_height();
 
      sizer->Add(m_printoption_title, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
      sizer->Add(m_printoption_tips, 0, wxLEFT | wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, FromDIP(2));
@@ -7520,6 +7616,7 @@ void PrintOption::insert_extra_widget(wxWindow* widget)
     wxSizer* sizer = GetSizer();
     if (!sizer || !widget) return;
     widget->Reparent(this);
+    widget->SetBackgroundColour(GetBackgroundColour());
     sizer->Insert(1, widget, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(4));
     Layout();
 }
@@ -7685,11 +7782,24 @@ void PrintOption::OnTipsButtonClicked(wxCommandEvent &event)
     }
 }
 
+void PrintOption::update_row_height()
+{
+    // The row used to be a fixed 28 DIP while its switch is 30 DIP high, so the
+    // switch lost a pixel row at the top and bottom.
+    const int row_height = std::max(FromDIP(28), m_printoption_item ? m_printoption_item->GetMinSize().GetHeight() : 0);
+    SetMinSize(wxSize(-1, row_height));
+    SetMaxSize(wxSize(-1, row_height));
+}
+
 void PrintOption::msw_rescale()
 {
     m_printoption_item->msw_rescale();
     m_printoption_tips->msw_rescale();
+    m_printoption_tips->SetMinSize(wxSize(FromDIP(18), FromDIP(18)));
+    m_printoption_tips->SetMaxSize(wxSize(FromDIP(18), FromDIP(18)));
+    update_row_height();
     update_title_display();
+    Layout();
 }
 
 PrintOptionItem::PrintOptionItem(wxWindow* parent, std::vector<POItem> ops, std::string param)
@@ -7882,6 +7992,7 @@ void PrintOptionItem::msw_rescale()
     m_selected_bk_dark.msw_rescale();
     m_selected_disabled_bk.msw_rescale();
     m_selected_disabled_bk_dark.msw_rescale();
+    update_size();
     Refresh();
 }
 

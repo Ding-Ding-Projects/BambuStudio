@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-11 17:36+0000\n"
+"POT-Creation-Date: 2026-10-11 18:45+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -12707,6 +12707,9 @@ msgstr ""
 msgid "The current printer does not support timelapse in Instant Mode when printing By-Object."
 msgstr ""
 
+msgid "Slice again"
+msgstr ""
+
 msgid "Errors"
 msgstr ""
 
@@ -12809,6 +12812,10 @@ msgid "both extruders"
 msgstr ""
 
 #, possible-c-format, possible-boost-format
+msgid "Plate %d needs to be sliced again before it can be sent."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
 msgid "[ %s ] requires printing in a high-temperature environment. Reminder to close the door if not already closed."
 msgstr ""
 
@@ -12846,6 +12853,9 @@ msgstr ""
 
 #, possible-c-format, possible-boost-format
 msgid "Move material %d left"
+msgstr ""
+
+msgid "Slicing cannot start from here right now. Slice the plate in Prepare, then send it again."
 msgstr ""
 
 msgid "Swap nozzle assignment"
@@ -12996,6 +13006,12 @@ msgid "Cannot send the print job to a printer whose firmware is required to get 
 msgstr ""
 
 msgid "Cannot send the print job for empty plate"
+msgstr ""
+
+msgid "This plate needs to be sliced again before it can be sent."
+msgstr ""
+
+msgid "Apply the nozzle moves with Swap, or undo them, before sending."
 msgstr ""
 
 msgid "Storage needs to be inserted to record timelapse."

@@ -28999,3 +28999,19 @@ msgstr ""
 
 msgid "Check"
 msgstr ""
+
+msgid "Slice again"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Plate %d needs to be sliced again before it can be sent."
+msgstr ""
+
+msgid "Slicing cannot start from here right now. Slice the plate in Prepare, then send it again."
+msgstr ""
+
+msgid "This plate needs to be sliced again before it can be sent."
+msgstr ""
+
+msgid "Apply the nozzle moves with Swap, or undo them, before sending."
+msgstr ""

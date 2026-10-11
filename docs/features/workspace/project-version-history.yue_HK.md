@@ -1,6 +1,6 @@
 ---
 translation-of: project-version-history.md
-source-sha256: 6f84b9da554756e909ed09fbd055aad459647a3002dfbc892fa4972ebf857d05
+source-sha256: 2a37fe0f580e2a391a3eca2571b7a3198aaf6fbb327156baafab2aa7affb2f83
 review-status: agent-drafted
 ---
 
@@ -12,7 +12,7 @@ review-status: agent-drafted
 
 ## 行為
 
-- **擷取**：編輯同設定變更會排計一個防抖快照 (`Plater::priv::schedule_project_history_capture`)；手動儲存會擷取剛剛儲存嘅存檔。自動擷取使用決定性匯出 (`SaveStrategy::Deterministic`)，所以未改動嘅項目會去重到同一個 blob。手動儲存會首先匯出一個無歷史嘅模型快照、提交咗嗰個快照、然後附加可到達嘅歷史物件到已儲存嘅存檔。
+- **擷取**：編輯同設定變更會排計一個防抖快照 (`Plater::priv::schedule_project_history_capture`)；手動儲存會擷取剛剛儲存嘅存檔。自動擷取使用決定性匯出 (`SaveStrategy::Deterministic`)，所以未改動嘅項目會去重到同一個 blob。手動儲存會首先匯出一個無歷史嘅模型快照、提交咗嗰個快照、然後附加可到達嘅歷史物件到已儲存嘅存檔。防抖計時器同提交輪詢計時器由 Plater 擁有，並綁定到佢哋自己嘅計時器 ID。Plater 嘅背景處理計時器處理程序只綁定到自己嘅計時器 ID；以前佢綁定到所有 ID，會最先執行而且從來唔會跳過，所以搶走咗佢哋嘅計時事件。
 - **儲存** (`src/libslic3r/ProjectHistoryManager.{hpp,cpp}`)：libgit2 v1.9.3 光禿倉庫喺 `<data_dir>/project_history/v1/<sha256(project identity)>` 底下，每提交一個完整 `.3mf` blob，由一個單一序列化工作線程寫入。未命名嘅工作階段會得到一個按工作階段身份，喺另儲存時會遷移。
 - **便攜存檔**：`Metadata/bambu_project_history.json` 識別格式版本、穩定文件 ID、活躍頭部、保留血統、包路徑、位元組長度同 SHA-256。`Metadata/bambu_project_history.pack` 儲存可到達嘅 libgit2 物件。開啟時，應用程式驗證有界項目、包摘要、有界展開物件大小、提交圖形、物件類型同快照樹，然後先將歷史匯入本地快取。損壞嘅歷史載體會被拒絕，而有效嘅目前模型幾何仲然會載入。另儲存時會分配一個新文件 ID 同繼承已驗證嘅圖形。持有同一個文件 ID 嘅第二個路徑喺儲存時會收到一個新 ID，而原始嘅仲然存在，所以複製嘅項目可以獨立發散。如果原始路徑已經消失，ID 會跟隨已移動嘅檔案。本地擁有者標記儲存喺 `<data_dir>/project_history/document-identities` 底下。
 - **儲存發佈**：完成嘅模型同歷史被組合喺目的地旁邊，並在原子替換之前重新開啟以進行驗證。失敗嘅原子替換會保留前面嘅存檔、已驗證嘅歷史承載分階段存檔同無歷史嘅待批快照以供復原。模型快照唔包含嵌入式歷史，避免遞迴增長。便攜包限制喺 512 MiB，清單限制喺 16 KiB。在 libgit2 攝入包之前，流式預檢允許最多 100,000 個物件、每個展開物件或增量結果 2 GiB（因此每個快照）同總共 8 GiB 展開物件位元組。佢使用一個固定 64 KiB 解膨脹緩衝區。超出限制嘅歷史會阻止便攜發佈，直到透過刻意保留操作進行減少；前面嘅存檔保持完整。

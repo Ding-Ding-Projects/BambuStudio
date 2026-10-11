@@ -13,6 +13,10 @@ synced or pushed anywhere; no `.git` appears in the user's own folders.
   (`SaveStrategy::Deterministic`) so unchanged projects dedupe to the same
   blob. Manual saves first export a history-free model snapshot, commit that
   snapshot, and then attach the reachable history objects to the saved archive.
+  The debounce and commit-poll timers are owned by the Plater and bound to
+  their own timer ids. The Plater's background-process timer handler is bound
+  to its own timer id only; bound to every id it ran first, never skipped, and
+  so took their ticks.
 - **Storage** (`src/libslic3r/ProjectHistoryManager.{hpp,cpp}`): libgit2
   v1.9.3 bare repositories under
   `<data_dir>/project_history/v1/<sha256(project identity)>`, one full `.3mf`
