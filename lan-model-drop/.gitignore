@@ -1,0 +1,2 @@
+# A local .env can hold the station key; it never belongs in the repository.
+.env

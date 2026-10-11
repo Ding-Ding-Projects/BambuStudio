@@ -1,0 +1,103 @@
+/* Bambu Studio MD3 design tokens for the LAN model drop sender page.
+   Values are copied from ui-md3/design-system/tokens (colors.css,
+   density.css, typography.css) and src/slic3r/GUI/Widgets/MD3Tokens.hpp;
+   tests/lan_model_drop/site.test.mjs keeps them identical. The page follows
+   the device's light or dark setting. Fonts are bundled: nothing is loaded
+   from the internet. */
+
+@font-face {
+  font-family: 'Roboto';
+  src: url('fonts/Roboto-Regular.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 300 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Roboto';
+  src: url('fonts/Roboto-Medium.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Roboto';
+  src: url('fonts/Roboto-Bold.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 600 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Roboto Mono';
+  src: url('fonts/RobotoMono-Regular.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 400 500;
+  font-display: swap;
+}
+/* Only the icons this page shows: scripts/md3/subset_lan_drop_icons.py. */
+@font-face {
+  font-family: 'Material Symbols Outlined';
+  src: url('fonts/MaterialSymbolsOutlined-subset.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+}
+
+/* Light colour roles (brand scheme). */
+:root {
+  color-scheme: light dark;
+  --md-surface:#faf8fd; --md-surface-dim:#dad9e0; --md-surface-bright:#faf8fd;
+  --md-sc-lowest:#ffffff; --md-sc-low:#f4f2f9; --md-sc:#eeedf3; --md-sc-high:#e8e7ee; --md-sc-highest:#e2e1e9;
+  --md-on-surface:#1a1b1f; --md-on-surface-variant:#44464e; --md-outline:#75777f; --md-outline-variant:#c5c6d0;
+  --md-inverse-surface:#2f3036; --md-inverse-on:#f1f0f7; --md-inverse-primary:#8bd89b;
+  --md-error:#ba1a1a; --md-error-container:#ffdad6; --md-on-error:#ffffff; --md-on-error-container:#410002;
+  --md-scrim:rgba(0,0,0,.32); --md-shadow:rgba(0,0,0,.16);
+  --md-primary:#146c2e; --md-on-primary:#ffffff; --md-primary-container:#a6f4b8; --md-on-primary-container:#00210c;
+  --md-accent:#146c2e; --md-secondary-container:#d7e8d9; --md-on-secondary-container:#0e1f13;
+}
+
+/* Dark colour roles. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --md-surface:#1b1c21; --md-surface-dim:#161619; --md-surface-bright:#3b3c43;
+    --md-sc-lowest:#131317; --md-sc-low:#202127; --md-sc:#25262b; --md-sc-high:#2f3036; --md-sc-highest:#393a41;
+    --md-on-surface:#e8e7ee; --md-on-surface-variant:#cdced8; --md-outline:#94959f; --md-outline-variant:#4a4c54;
+    --md-inverse-surface:#e3e2e9; --md-inverse-on:#2f3036; --md-inverse-primary:#146c2e;
+    --md-error:#ffb4ab; --md-error-container:#93000a; --md-on-error:#690005; --md-on-error-container:#ffdad6;
+    --md-scrim:rgba(0,0,0,.6); --md-shadow:rgba(0,0,0,.5);
+    --md-primary:#8bd89b; --md-on-primary:#00391a; --md-primary-container:#095228; --md-on-primary-container:#a6f4b8;
+    --md-accent:#8bd89b; --md-secondary-container:#2b3a2f; --md-on-secondary-container:#cfe9d3;
+  }
+}
+
+/* Comfortable density, elevation and the type scale. */
+:root {
+  --gap:12px; --pad:16px; --row:40px; --fs:14px; --radius:16px; --radius-s:10px;
+  --md-elev-1:0 1px 2px var(--md-shadow);
+  --md-elev-2:0 2px 6px var(--md-shadow);
+  --md-elev-3:0 3px 10px var(--md-shadow);
+  --md-font:'Roboto',system-ui,sans-serif;
+  --md-font-mono:'Roboto Mono',monospace;
+  --md-font-yue:'Roboto','Noto Sans HK','Microsoft JhengHei UI','Microsoft JhengHei','PingFang HK',system-ui,sans-serif;
+  --md-type-headline:23px;
+  --md-type-page-title:20px;
+  --md-type-section-title:16px;
+  --md-type-card-title:15px;
+  --md-type-body:14px;
+  --md-type-body-s:13.5px;
+  --md-type-body-xs:12.5px;
+  --md-type-caption:11.5px;
+  --md-type-label:11px;
+  --md-motion:.15s ease;
+}
+
+/* More contrast when the device asks for it. */
+@media (prefers-contrast: more) {
+  :root {
+    --md-outline-variant:var(--md-outline);
+    --md-on-surface-variant:var(--md-on-surface);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --md-motion:0s; }
+}

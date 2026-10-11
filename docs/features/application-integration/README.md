@@ -149,5 +149,13 @@ Material Designer had no callable creation/export/handoff tool in this lane. The
 controls extend the application's existing native component route. This is a
 recorded availability limit, not a claim of design-reference parity.
 
+## LAN model drop site
+
+The [LAN model drop site](lan-model-drop-site.md) is a small web page in a
+Docker container on the local network where other people send 3D models to
+Bambu Studio MD3 on this computer. The Windows installation ships its folder
+beside the application; the article covers starting it with Docker Desktop,
+the firewall, the station key, settings, updates, and privacy and security.
+
 Related: [personal presentation services](../personal-modes/README.md),
 [narration service](../personal-modes/narration.md).

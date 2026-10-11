@@ -1,0 +1,59 @@
+# LAN model drop for Bambu Studio MD3.
+#
+#   docker compose up -d                 start it (builds the image the first time)
+#   docker compose exec lan-model-drop node server/station-key.mjs
+#                                        print the station key for Bambu Studio
+#   docker compose down                  stop it (queued models and the key stay)
+#
+# Settings go in a .env file next to this one; .env.example lists them all.
+
+# A fixed project name: the same container and data volume whichever folder
+# this file is run from, so a new version's folder takes over the old one.
+name: lan-model-drop
+
+services:
+  lan-model-drop:
+    build:
+      context: .
+    # Built here from this folder, never pulled: a localhost/ name cannot be
+    # fetched from a public registry.
+    image: localhost/bambu-studio-md3/lan-model-drop:1
+    restart: unless-stopped
+    # Published on every network interface of this computer, so phones and
+    # laptops on the same network can open the page.
+    ports:
+      - "${DROP_PORT:-8833}:8080"
+    environment:
+      DROP_STATION_NAME: ${DROP_STATION_NAME:-Bambu Studio}
+      DROP_MAX_BYTES: ${DROP_MAX_BYTES:-268435456}
+      DROP_TTL_HOURS: ${DROP_TTL_HOURS:-24}
+      DROP_QUEUE_MAX_FILES: ${DROP_QUEUE_MAX_FILES:-50}
+      DROP_QUEUE_MAX_BYTES: ${DROP_QUEUE_MAX_BYTES:-2147483648}
+      DROP_STATION_KEY: ${DROP_STATION_KEY:-}
+      DROP_CODE: ${DROP_CODE:-}
+      DROP_PUBLIC_URL: ${DROP_PUBLIC_URL:-}
+    volumes:
+      - drop-data:/data
+    # Locked down: the program cannot change itself or gain privileges, and
+    # it writes only to the data volume and a small temporary folder.
+    user: node
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777,noexec,nosuid,nodev
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 256m
+    memswap_limit: 256m
+    cpus: 1.0
+    pids_limit: 64
+    stop_grace_period: 10s
+    logging:
+      driver: json-file
+      options:
+        max-size: 1m
+        max-file: "3"
+
+volumes:
+  drop-data:
