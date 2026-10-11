@@ -1580,12 +1580,12 @@
     {
       "route": "windows/print-actions.md",
       "title": "Plate print actions and material mapping",
-      "sha256": "1537df8340062331f16abf172ccbbb5565167f13f578d663571236e1268f010c"
+      "sha256": "1a66e4089f7ee426f50a5ae9aa99ffd36b063e1436dc2479ddfb5d8b5217d927"
     },
     {
       "route": "windows/print-actions.yue_HK.md",
       "title": "打印盤操作同材料映射",
-      "sha256": "be92e568c41912e6dcc835f4ad539f092e97b591f9ef48322907d5aee985fc96"
+      "sha256": "b3685bc60d8457c168749207911bb61a8b5ec335d32a0a5381e960b0a7e8b7a8"
     },
     {
       "route": "windows/print-simulation.md",
@@ -1975,7 +1975,7 @@
       "bytes": 1979
     }
   ],
-  "bundle_sha256": "02c4c9e0c752fa40115b3e9c2a8558a1038ddabd9ef849e1ac8e5e97bd983994",
+  "bundle_sha256": "0844452092527eab6c491a30d617f91deb31a160f85bc046bc74915d3e3277c1",
   "unavailable_references": [
     {
       "source": "api/README.md",

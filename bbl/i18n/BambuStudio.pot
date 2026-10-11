@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-11 18:45+0000\n"
+"POT-Creation-Date: 2026-10-11 19:23+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -12707,9 +12707,6 @@ msgstr ""
 msgid "The current printer does not support timelapse in Instant Mode when printing By-Object."
 msgstr ""
 
-msgid "Slice again"
-msgstr ""
-
 msgid "Errors"
 msgstr ""
 
@@ -13036,6 +13033,9 @@ msgid "How to install"
 msgstr ""
 
 msgid "Upgrade"
+msgstr ""
+
+msgid "Slice again"
 msgstr ""
 
 msgid "Sending system info"

@@ -18,7 +18,9 @@ import { fileURLToPath } from 'node:url';
 // Plater that swallowed the project-history timers' ticks.
 //
 // These contracts pin the fix in the sources, so they run without a build.
-// tests/send_print_readiness_test.cpp executes the decisions themselves.
+// tests/send_print_readiness_test.cpp executes the decisions themselves, and
+// the registry case in tests/language_mode/bilingual_registry_tests.cpp
+// executes why the stale-slice message and Slice again are separate labels.
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const gui = (name) => path.join(root, 'src', 'slic3r', 'GUI', name);
@@ -28,7 +30,32 @@ const stripComments = (text) => text
   .replace(/^[ \t]*\/\/.*$/gm, '')
   .replace(/[ \t]+\/\/[^"\n]*$/gm, '');
 const files = ['Plater.cpp', 'SelectMachine.cpp', 'SelectMachine.hpp', 'PrePrintChecker.hpp', 'PrePrintChecker.cpp'];
-const sources = Object.fromEntries(files.map((name) => [name, stripComments(readFileSync(gui(name), 'utf8'))]));
+const sources = {
+  ...Object.fromEntries(files.map((name) => [name, stripComments(readFileSync(gui(name), 'utf8'))])),
+  // The executed registry case for the stale-slice labels, and the Cantonese
+  // catalogue its pairs come from (kept raw: a .po has no C++ comments).
+  'bilingual_registry_tests.cpp': stripComments(readFileSync(path.join(root, 'tests', 'language_mode', 'bilingual_registry_tests.cpp'), 'utf8')),
+  'BambuStudio_yue_HK.po': readFileSync(path.join(root, 'bbl', 'i18n', 'yue_HK', 'BambuStudio_yue_HK.po'), 'utf8').replace(/\r\n/g, '\n'),
+};
+
+// msgid -> msgstr for the context-free singular entries of a .po catalogue.
+const poEntries = (text) => {
+  const unquote = (s) => s.replace(/\\(.)/g, (_, c) => ({ n: '\n', t: '\t' }[c] ?? c));
+  const entries = new Map();
+  for (const entry of text.split(/\n{2,}/)) {
+    const parts = { msgctxt: null, msgid: null, msgstr: null };
+    let field = null;
+    for (const line of entry.split('\n')) {
+      const start = line.match(/^(msgctxt|msgid|msgstr) "(.*)"$/);
+      const more = line.match(/^"(.*)"$/);
+      if (start) { field = start[1]; parts[field] = unquote(start[2]); }
+      else if (more && field) parts[field] += unquote(more[1]);
+      else field = null;
+    }
+    if (parts.msgctxt === null && parts.msgid && parts.msgstr !== null) entries.set(parts.msgid, parts.msgstr);
+  }
+  return entries;
+};
 
 // Brace-balanced body that starts at the first `{` after `signature`.
 const block = (code, signature) => {
@@ -142,14 +169,82 @@ const checks = {
 
     const show = block(dialog, 'void SelectMachineDialog::show_status(');
     assert.match(show, /status == PrintDialogStatus::PrintStatusPlateNeedsSlicing\) \{\s*Enable_Refresh_Button\(true\);\s*Enable_Send_Button\(false\);/);
-    assert.match(show, /PrintStatusPlateNeedsSlicing && can_slice_again_from_dialog\(\)\) \{\s*m_pre_print_checker\.add_with_link\([\s\S]*?_L\("Slice again"\), \[this\]\(\) \{ slice_again_from_dialog\(\); \}/,
-      'the stale-slice message offers Slice again');
 
     const can = block(dialog, 'bool SelectMachineDialog::can_slice_again_from_dialog() const');
     assert.match(can, /m_print_plate_idx == m_plater->get_partplate_list\(\)\.get_curr_plate_index\(\)/,
       'Slice again is offered only for the plate the Slice and print action slices');
     const slice = block(dialog, 'void SelectMachineDialog::slice_again_from_dialog()');
     order(slice, ['can_slice_again_from_dialog()', 'EndModal(wxID_CLOSE);', 'request_slice_and_print()', 'MessageDialog(']);
+  },
+
+  // In bilingual mode the message panel's label "message Slice again" found no
+  // Cantonese: the registry looks up a label whole and never splits it. The
+  // message is now one catalogue string on its own label, and Slice again is a
+  // control of its own after it.
+  sliceAgainOwnControl(src) {
+    const dialog = src['SelectMachine.cpp'];
+    const show = block(dialog, 'void SelectMachineDialog::show_status(');
+    assert.match(show, /if \(status == PrintDialogStatus::PrintStatusPlateNeedsSlicing && can_slice_again_from_dialog\(\)\)\s*style = style \| prePrintInfoStyle::BtnSliceAgain;\s*m_pre_print_checker\.add\(status, msg, tips, wiki_url, style\);\s*\}$/,
+      'the stale-slice message is added as itself, flagged for its action');
+    assert.doesNotMatch(show, /add_with_link\(/, 'show_status never joins a message and an action into one label');
+    assert.doesNotMatch(dialog, /_L\("Slice again"\)/, 'the dialog never puts the action text into a message');
+
+    const styles = block(src['PrePrintChecker.hpp'], 'enum class prePrintInfoStyle : int');
+    const values = new Map([...styles.matchAll(/(\w+)\s*=\s*(0x[0-9a-fA-F]+|\d+)/g)].map((m) => [m[1], Number(m[2])]));
+    const flag = values.get('BtnSliceAgain');
+    assert.ok(flag > 0 && (flag & (flag - 1)) === 0, 'BtnSliceAgain is one bit');
+    for (const [name, value] of values)
+      if (name !== 'BtnSliceAgain') assert.equal(value & flag, 0, `${name} shares no bit with BtnSliceAgain`);
+
+    const panel = src['PrePrintChecker.cpp'];
+    const update = block(panel, 'bool PrinterMsgPanel::UpdateInfos(');
+    assert.match(update, /else if \(!info\.link_callback && info\.wiki_url\.empty\(\)\)\s*\{\s*label->SetLabel\(info\.msg\);\s*\}/,
+      'a message without a link is a label of its own text');
+    assert.doesNotMatch(update, /Slice again|BtnSliceAgain/, 'the action never enters the message label');
+
+    const append = block(panel, 'void PrinterMsgPanel::AppendStyles(const prePrintInfo& info)');
+    const action = between(append, 'if (info.testStyle(prePrintInfoStyle::BtnSliceAgain)) {', 'if (info.testStyle(prePrintInfoStyle::NozzleState))');
+    const button = action.match(/auto\* (\w+) = new Button\(this, _L\("Slice again"\)\);/);
+    assert.ok(button, 'Slice again is a kit Button of its own, which takes keyboard focus');
+    const name = button[1];
+    assert.match(action, new RegExp(`${name}->SetVariant\\(Button::Variant::Text\\);`), 'an MD3 text button');
+    assert.match(action, new RegExp(`${name}->Bind\\(wxEVT_BUTTON, \\[this\\]\\(wxCommandEvent&\\) \\{`), 'click, Space and Enter all run it');
+    assert.match(action, /if \(SelectMachineDialog\* dialog = m_select_dialog\)\s*dialog->CallAfter\(\[dialog\] \{ dialog->slice_again_from_dialog\(\); \}\);/,
+      'the action runs after the button event, which the action can outlive');
+    assert.match(action, new RegExp(`m_ctrl_btns\\.push_back\\(${name}\\);`), 'the button is rescaled with the panel');
+    assert.match(action, new RegExp(`(\\w+)->Add\\(${name}, 0, wxLEFT, FromDIP\\(4\\)\\);[\\s\\S]*m_sizer->Add\\(\\1, 0, wxLEFT\\);`),
+      'the button has its own row after the message');
+
+    const header = src['SelectMachine.hpp'];
+    const access = between(header, 'MachineObject* get_current_machine() const;', 'void EnableEditing(bool enable);');
+    order(access, ['bool can_slice_again_from_dialog() const;', 'void slice_again_from_dialog();', 'private:']);
+  },
+
+  // Both labels the panel shows for a stale slice have Cantonese, and the
+  // executed registry case (tests/language_mode/bilingual_registry_tests.cpp)
+  // pairs exactly these strings as the catalogue does.
+  staleSliceLabelsTranslated(src) {
+    const message = src['PrePrintChecker.cpp'].match(/case PrintStatusPlateNeedsSlicing: return _L\("([^"]+)"\);/);
+    const action = src['PrePrintChecker.cpp'].match(/new Button\(this, _L\("(Slice again)"\)\)/);
+    assert.ok(message && action, 'the stale-slice message and its action are catalogue strings');
+    const catalogue = poEntries(src['BambuStudio_yue_HK.po']);
+    for (const english of [message[1], action[1]])
+      assert.ok(catalogue.get(english), `the Cantonese catalogue translates "${english}"`);
+
+    const test = block(src['bilingual_registry_tests.cpp'],
+      'TEST_CASE("Bilingual registry finds a message and its action only as separate labels"');
+    const literal = (variable) => {
+      const found = test.match(new RegExp(`const wxString ${variable}\\s*=\\s*(?:u8\\()?"([^"]*)"\\)?;`));
+      assert.ok(found, `the registry case defines ${variable}`);
+      return found[1];
+    };
+    assert.equal(literal('message'), message[1], 'the registry case uses the message the panel shows');
+    assert.equal(literal('action'), action[1], 'the registry case uses the action the panel shows');
+    assert.equal(literal('message_cantonese'), catalogue.get(message[1]), 'with the catalogue Cantonese of the message');
+    assert.equal(literal('action_cantonese'), catalogue.get(action[1]), 'with the catalogue Cantonese of the action');
+    assert.match(test, /REQUIRE\(registry\.lookup\(message\) == message_cantonese\);/);
+    assert.match(test, /REQUIRE\(registry\.lookup\(action\) == action_cantonese\);/);
+    assert.match(test, /REQUIRE\(registry\.lookup\(message \+ " " \+ action\)\.empty\(\)\);/);
   },
 
   sendNeverSilent(src) {
@@ -216,6 +311,19 @@ test('each contract rejects the defect it pins', () => {
     ['truthfulPlateStatus', 'SelectMachine.cpp', 'const SendReadinessVerdict verdict = send_plate_readiness();',
       'PartPlate* plate = m_plater->get_partplate_list().get_curr_plate(); const SendReadinessVerdict verdict = send_plate_readiness();'],
     ['truthfulPlateStatus', 'SelectMachine.cpp', 'for (int index = 0; index < plates.get_plate_count(); ++index)', 'for (int index = plates.get_curr_plate_index(); index <= plates.get_curr_plate_index(); ++index)'],
+    ['sliceAgainOwnControl', 'SelectMachine.cpp',
+      '    if (status == PrintDialogStatus::PrintStatusPlateNeedsSlicing && can_slice_again_from_dialog())\n        style = style | prePrintInfoStyle::BtnSliceAgain;\n',
+      '    if (status == PrintDialogStatus::PrintStatusPlateNeedsSlicing && can_slice_again_from_dialog()) {\n' +
+      '        m_pre_print_checker.add_with_link(status, msg.empty() ? m_pre_print_checker.get_pre_state_msg(status) : msg,\n' +
+      '                                          _L("Slice again"), [this]() { slice_again_from_dialog(); }, style);\n' +
+      '        return;\n    }\n'],
+    ['sliceAgainOwnControl', 'PrePrintChecker.cpp', 'label->SetLabel(info.msg);', 'label->SetLabel(info.testStyle(prePrintInfoStyle::BtnSliceAgain) ? info.msg + " " + _L("Slice again") : info.msg);'],
+    ['sliceAgainOwnControl', 'PrePrintChecker.cpp', 'auto* slice_again = new Button(this, _L("Slice again"));', 'auto* slice_again = new Label(this, _L("Slice again"));'],
+    ['sliceAgainOwnControl', 'PrePrintChecker.cpp', 'dialog->CallAfter([dialog] { dialog->slice_again_from_dialog(); });', 'dialog->slice_again_from_dialog();'],
+    ['sliceAgainOwnControl', 'PrePrintChecker.hpp', 'BtnSliceAgain = 0x040,', 'BtnSliceAgain = 0x020,'],
+    ['staleSliceLabelsTranslated', 'BambuStudio_yue_HK.po', 'msgid "Slice again"\nmsgstr "重新切片"', 'msgid "Slice again"\nmsgstr ""'],
+    ['staleSliceLabelsTranslated', 'bilingual_registry_tests.cpp', 'u8("重新切片");', 'u8("再切片");'],
+    ['staleSliceLabelsTranslated', 'bilingual_registry_tests.cpp', 'REQUIRE(registry.lookup(message + " " + action).empty());', 'REQUIRE(!registry.lookup(message).empty());'],
     ['sendNeverSilent', 'SelectMachine.cpp', '        add_quick_swap_pending_notice();\n        update_print_status_msg();\n        return;', '        return;'],
     ['sendNeverSilent', 'SelectMachine.cpp', '                update_by_obj(get_current_machine());\n', ''],
     ['timelapseRow', 'SelectMachine.cpp', '    update_row_height();\n    update_title_display();', '    update_title_display();'],

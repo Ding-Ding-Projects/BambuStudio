@@ -81,3 +81,26 @@ TEST_CASE("Bilingual registry records nothing outside bilingual mode", "[Bilingu
     fresh(true);
     REQUIRE(registry.lookup("Save").empty()); // reset clears everything
 }
+
+TEST_CASE("Bilingual registry finds a message and its action only as separate labels", "[BilingualRegistry]")
+{
+    // Print setup's stale-slice message and its Slice again action, paired as
+    // the Cantonese catalogue pairs them. ui-md3/tests/send-dialog-stale-slice.test.mjs
+    // checks these pairs against bbl/i18n/yue_HK/BambuStudio_yue_HK.po.
+    const wxString message           = "This plate needs to be sliced again before it can be sent.";
+    const wxString message_cantonese = u8("呢個打印板要重新切片，先可以傳送。");
+    const wxString action            = "Slice again";
+    const wxString action_cantonese  = u8("重新切片");
+
+    BilingualRegistry &registry = fresh();
+    registry.record(message, message_cantonese);
+    registry.record(action, action_cantonese);
+
+    // Two labels, as the message panel shows them: each finds its Cantonese.
+    REQUIRE(registry.lookup(message) == message_cantonese);
+    REQUIRE(registry.lookup(action) == action_cantonese);
+
+    // One label joining them, as the panel draws a message added with a link:
+    // no exact entry, suffix or template matches, so it stays English only.
+    REQUIRE(registry.lookup(message + " " + action).empty());
+}

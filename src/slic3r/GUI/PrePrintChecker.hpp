@@ -30,6 +30,8 @@ enum class prePrintInfoStyle : int
     BtnInstallFanF000 = 0x008,
     BtnJumpToUpgrade = 0x010,
     BtnSwitchNozzleBlobAuto = 0x020,
+    // A Slice again action after the message, as a control of its own.
+    BtnSliceAgain = 0x040,
 };
 
 inline constexpr prePrintInfoStyle operator|(prePrintInfoStyle a, prePrintInfoStyle b) noexcept

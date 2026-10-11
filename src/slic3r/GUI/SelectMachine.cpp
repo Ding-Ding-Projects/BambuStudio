@@ -2148,11 +2148,11 @@ void SelectMachineDialog::show_status(PrintDialogStatus status, std::vector<wxSt
 
     /*enter perpare mode*/
     prepare_mode(false);
-    if (status == PrintDialogStatus::PrintStatusPlateNeedsSlicing && can_slice_again_from_dialog()) {
-        m_pre_print_checker.add_with_link(status, msg.empty() ? m_pre_print_checker.get_pre_state_msg(status) : msg,
-                                          _L("Slice again"), [this]() { slice_again_from_dialog(); }, style);
-        return;
-    }
+    // Slice again is a control of its own after the message (PrinterMsgPanel),
+    // never text joined to it: the message stays one catalogue string, so
+    // bilingual mode finds its Cantonese.
+    if (status == PrintDialogStatus::PrintStatusPlateNeedsSlicing && can_slice_again_from_dialog())
+        style = style | prePrintInfoStyle::BtnSliceAgain;
     m_pre_print_checker.add(status, msg, tips, wiki_url, style);
 
 }

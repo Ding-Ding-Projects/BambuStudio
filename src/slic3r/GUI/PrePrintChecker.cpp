@@ -5,6 +5,7 @@
 #include "GUI_Utils.hpp"
 #include "I18N.hpp"
 #include "SelectMachine.hpp"
+#include "Widgets/Button.hpp"
 
 #include "DeviceManager.hpp"
 #include "slic3r/GUI/DeviceCore/DevNozzleSystem.h"
@@ -405,6 +406,29 @@ void PrinterMsgPanel::AppendStyles(const prePrintInfo& info)
         }
 
         m_sizer->Add(btn_sizer, 0, wxLEFT);
+        m_sizer->AddSpacer(FromDIP(4));
+    }
+
+    if (info.testStyle(prePrintInfoStyle::BtnSliceAgain)) {
+        // Its own control after the message, never text joined to it: the
+        // message and the action each stay one catalogue string, so bilingual
+        // mode finds the Cantonese of both, and the action takes keyboard focus.
+        auto* slice_again = new Button(this, _L("Slice again"));
+        slice_again->SetVariant(Button::Variant::Text);
+        slice_again->SetButtonSize(Button::Size::Small);
+        slice_again->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) {
+            // Out of the button's own event: the action closes print setup and
+            // may show a message, and this panel can be rebuilt meanwhile.
+            if (SelectMachineDialog* dialog = m_select_dialog)
+                dialog->CallAfter([dialog] { dialog->slice_again_from_dialog(); });
+        });
+        m_ctrl_btns.push_back(slice_again);
+
+        // The Small text button pads its label 16 DIP, so the label lines up
+        // with the message text, 20 DIP in (2 + the 16 DIP icon + 2).
+        wxBoxSizer* action_sizer = new wxBoxSizer(wxHORIZONTAL);
+        action_sizer->Add(slice_again, 0, wxLEFT, FromDIP(4));
+        m_sizer->Add(action_sizer, 0, wxLEFT);
         m_sizer->AddSpacer(FromDIP(4));
     }
 

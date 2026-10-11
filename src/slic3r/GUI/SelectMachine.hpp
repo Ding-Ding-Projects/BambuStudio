@@ -603,6 +603,12 @@ public:
     Plater* get_plater() const { return m_plater; }
     MachineObject* get_current_machine() const;
 
+    // Slice again, offered after the stale-slice message (PrinterMsgPanel):
+    // closes print setup and runs the Slice and print action for the plate
+    // being sent, which must be the current one.
+    bool can_slice_again_from_dialog() const;
+    void slice_again_from_dialog();
+
 private:
     void EnableEditing(bool enable);
 
@@ -641,8 +647,6 @@ private:
     // The plate or plates this dialog sends (m_print_plate_idx; every plate for
     // Print all), not whichever plate happens to be current.
     SendReadinessVerdict send_plate_readiness() const;
-    bool can_slice_again_from_dialog() const;
-    void slice_again_from_dialog();
 
     /* update scroll area size*/
     void update_scroll_area_size();
