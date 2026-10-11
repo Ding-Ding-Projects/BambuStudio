@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-11 19:23+0000\n"
+"POT-Creation-Date: 2026-10-11 19:50+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -11552,6 +11552,46 @@ msgstr ""
 msgid "Sample"
 msgstr ""
 
+msgid "The file could not be read."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The file is larger than %d KiB."
+msgstr ""
+
+msgid "The file is not valid JSON saved as UTF-8."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The file nests objects or lists more than %d levels deep."
+msgstr ""
+
+msgid "The file repeats a key inside one object."
+msgstr ""
+
+msgid "The file must use schemaVersion 1."
+msgstr ""
+
+msgid "The file must contain only schemaVersion and an entries object."
+msgstr ""
+
+msgid "Every entry value must be text."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "An entry key is longer than %d characters."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "An entry value is longer than %d characters."
+msgstr ""
+
+msgid "An entry is blank, contains control or text-direction characters, or uses a reserved name."
+msgstr ""
+
+msgid "The file is valid, but this device could not save its private copy."
+msgstr ""
+
 msgid "Light"
 msgstr ""
 
@@ -11654,6 +11694,10 @@ msgstr ""
 msgid "Load a version 1 JSON file to change display wording on this device. Original data, logs and exports keep their original wording."
 msgstr ""
 
+#, possible-c-format, possible-boost-format
+msgid "A file can be up to %d KiB, with keys up to %d characters and values up to %d characters."
+msgstr ""
+
 msgid "Load JSON"
 msgstr ""
 
@@ -11663,7 +11707,7 @@ msgstr ""
 msgid "Replace JSON"
 msgstr ""
 
-msgid "The vocabulary file could not be applied. Use valid version 1 JSON within the supported size limits."
+msgid "The vocabulary saved on this device did not pass validation, so original wording is shown."
 msgstr ""
 
 msgid "Personal vocabulary is active on this device."
@@ -11676,6 +11720,12 @@ msgid "Load personal vocabulary"
 msgstr ""
 
 msgid "JSON files (*.json)|*.json"
+msgstr ""
+
+msgid "The vocabulary file was not applied, and the wording on screen has not changed."
+msgstr ""
+
+msgid "The saved vocabulary could not be removed from this device, so nothing changed."
 msgstr ""
 
 msgid "General Settings"

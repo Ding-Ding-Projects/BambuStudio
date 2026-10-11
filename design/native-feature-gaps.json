@@ -115,17 +115,17 @@
       "id": "personal-vocabulary",
       "group": "language-voice",
       "auditStatus": "partial",
-      "summary": "Preferences (Appearance page) always shows a Personal vocabulary box, except under School mode. It has Load/Replace JSON, a Clear button, a semantic wxFileDialog picker, and localized no-file, loaded and invalid status text. The parser enforces schema version 1, a 1 MiB limit, depth 3, 2048 entries and 512-byte strings. It rejects duplicate and unsafe keys and unknown fields, and never applies a rejected file partially. The validated cache is written atomically to a private local app-data folder that stores no source path. Replacements are applied only at display adapters (Label painting, Button including its accessible name, DropDown, MD3Menu, canvas menu labels, SurfaceRegistry), and the profile export skips the cache path. Five things are missing. The palette has no vocabulary entries. Label accessible names, native wx controls, tooltips, window titles, notifications and general ImGui text bypass the transform. Embedded WebView2 pages have neither the control nor the transform. Exports and history views do not say that vocabulary data was omitted. Tests cover only parsing and bounds. Palette registration is tracked under the language family.",
+      "summary": "Preferences (Appearance page) always shows a Personal vocabulary box, except under School mode. It has Load/Replace JSON, a Clear button, a semantic wxFileDialog picker, and localized no-file, loaded and invalid status text. The parser enforces schema version 1, a 256 KiB UTF-8 file limit, nesting depth 8, keys up to 160 and values up to 1,000 Unicode code points, and no fixed entry count, and names the failed rule in the invalid status. It rejects duplicate and unsafe keys and unknown fields, and never applies a rejected file partially. The validated cache is written atomically to a private local app-data folder that stores no source path. Replacements are applied only at display adapters (Label painting, Button including its accessible name, DropDown, MD3Menu, canvas menu labels, SurfaceRegistry), and the profile export skips the cache path. Five things are missing. The palette has no vocabulary entries. Label accessible names, native wx controls, tooltips, window titles, notifications and general ImGui text bypass the transform. Embedded WebView2 pages have neither the control nor the transform. Exports and history views do not say that vocabulary data was omitted. Tests cover parsing, every file bound at and one over its limit, restart persistence and stale or damaged saved copies, but not the visible control, no-network behaviour or absence from logs and exports. Palette registration is tracked under the language family.",
       "evidence": [
-        "src/slic3r/GUI/PersonalVocabulary.hpp:13-35 (bounds and API)",
-        "src/slic3r/GUI/PersonalVocabulary.cpp:122-160 (parse), 162-218 (initialize/load/clear, atomic private cache), 236-245 (display bypassed under School mode)",
-        "src/slic3r/GUI/Preferences.cpp:2768-2815 (control, states, register_option_row 'personal_vocabulary')",
+        "src/slic3r/GUI/PersonalVocabularySchema.hpp (file contract and limits), src/slic3r/GUI/PersonalVocabularySchema.cpp:62-117 (whole-file validation), src/slic3r/GUI/PersonalVocabulary.hpp (API)",
+        "src/slic3r/GUI/PersonalVocabulary.cpp:159-172 (parse), 174-263 (initialize with saved-copy revalidation, load, clear, atomic private cache), 290-297 (display bypassed under School mode)",
+        "src/slic3r/GUI/Preferences.cpp:2309-2332 (rejection reasons), 2812-2871 (control, states, register_option_row 'personal_vocabulary')",
         "src/slic3r/GUI/Widgets/Label.cpp:678-790 (paint-only replacement; native label text and accessible name keep the original)",
         "src/slic3r/GUI/Widgets/Button.cpp:95-110 (accessible name replaced), 226, 817, 987",
         "src/slic3r/GUI/Widgets/DropDown.cpp, src/slic3r/GUI/Widgets/MD3Menu.cpp, src/slic3r/GUI/ImGuiWrapper.cpp:109-118, src/slic3r/GUI/FeatureServices/SurfaceRegistry.cpp:234-242",
         "src/slic3r/GUI/ConfigProfilesDialog.cpp:89 (cache excluded from profile archive)",
         "src/slic3r/GUI/Export/ExportDatasets.cpp:127 (generic omission statement only)",
-        "tests/personal_vocabulary/personal_vocabulary_tests.cpp, tests/personal_vocabulary/native_display_contract.cmake",
+        "tests/personal_vocabulary/personal_vocabulary_tests.cpp, tests/personal_vocabulary/personal_vocabulary_schema_test.cpp, tests/personal_vocabulary/personal_vocabulary_probe.cpp, tests/personal_vocabulary/native_display_contract.cmake, ui-md3/tests/personal-vocabulary-limits.test.mjs",
         "docs/features/windows/personal-vocabulary.md + personal-vocabulary.yue_HK.md; docs/features/pages/personal-wording.md + .yue_HK.md",
         "ui-md3/site/wording.js (site control)",
         "resources/web (no vocabulary control or transform in any embedded page)"
@@ -2394,7 +2394,11 @@
       ],
       "status": "open",
       "landedIn": null,
-      "testReferences": [],
+      "testReferences": [
+        "tests/personal_vocabulary/personal_vocabulary_schema_test.cpp",
+        "tests/personal_vocabulary/personal_vocabulary_probe.cpp",
+        "ui-md3/tests/personal-vocabulary-limits.test.mjs"
+      ],
       "documentationReferences": [],
       "runtimeEvidence": [],
       "note": null

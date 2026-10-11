@@ -115,7 +115,7 @@ class ScriptedFlow:
 
     def __init__(self, scratch, corrupt=None):
         self.scratch, self.corrupt = scratch, corrupt
-        self.mapping, self.status = "original", "original"
+        self.mapping, self.status, self.reason = "original", "original", None
         self.inputs, self.captures, self.getter_checks = [], 1, 0  # Existing native-ready image.
 
     def open_vocabulary(self, prefix):
@@ -137,6 +137,7 @@ class ScriptedFlow:
             value = None
         if value is None or value["schemaVersion"] != 1:
             self.status = "rejected"
+            self.reason = "The file is not valid JSON saved as UTF-8." if value is None else "The file must use schemaVersion 1."
             if self.corrupt == prefix:
                 self.mapping = "unexpected replacement"
         else:
@@ -150,9 +151,11 @@ class ScriptedFlow:
         self.captures += 1
         return self.mapping
 
-    def prose_status(self, text):
-        return ((text == "Personal vocabulary is active on this device." and self.status == "active") or
-                (text.startswith("The vocabulary file could not be applied.") and self.status == "rejected"))
+    def prose_status(self, *texts):
+        # A rejection status is the headline sentence followed by the failed rule.
+        rejected = ("The vocabulary file was not applied, and the wording on screen has not changed.", self.reason)
+        return ((texts == ("Personal vocabulary is active on this device.",) and self.status == "active") or
+                (texts == rejected and self.status == "rejected"))
 
     def candidates(self, name):
         return name == "Personal vocabulary" or (name == "Load JSON" and self.mapping == "original") or (

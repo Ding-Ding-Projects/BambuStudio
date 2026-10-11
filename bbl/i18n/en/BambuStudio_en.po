@@ -29015,3 +29015,56 @@ msgstr ""
 
 msgid "Apply the nozzle moves with Swap, or undo them, before sending."
 msgstr ""
+
+msgid "The file could not be read."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The file is larger than %d KiB."
+msgstr ""
+
+msgid "The file is not valid JSON saved as UTF-8."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The file nests objects or lists more than %d levels deep."
+msgstr ""
+
+msgid "The file repeats a key inside one object."
+msgstr ""
+
+msgid "The file must use schemaVersion 1."
+msgstr ""
+
+msgid "The file must contain only schemaVersion and an entries object."
+msgstr ""
+
+msgid "Every entry value must be text."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "An entry key is longer than %d characters."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "An entry value is longer than %d characters."
+msgstr ""
+
+msgid "An entry is blank, contains control or text-direction characters, or uses a reserved name."
+msgstr ""
+
+msgid "The file is valid, but this device could not save its private copy."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "A file can be up to %d KiB, with keys up to %d characters and values up to %d characters."
+msgstr ""
+
+msgid "The vocabulary saved on this device did not pass validation, so original wording is shown."
+msgstr ""
+
+msgid "The vocabulary file was not applied, and the wording on screen has not changed."
+msgstr ""
+
+msgid "The saved vocabulary could not be removed from this device, so nothing changed."
+msgstr ""

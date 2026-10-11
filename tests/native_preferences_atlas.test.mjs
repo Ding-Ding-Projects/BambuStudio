@@ -16,8 +16,19 @@ function literals(source){return tokens(source).filter(t=>t.startsWith('"'));}
 // between an addition's markers is set aside; every other call and literal in
 // the file stays fingerprinted against the baseline.
 // - The App logo section of the appearance tab: ui-md3/tests/app-logo-chrome.test.mjs.
-const additions={'Preferences.cpp':[/\n[ \t]*\/\/ ---- App logo \(presentation-only mark\)[\s\S]*?\n[ \t]*register_option_row\(AppLogo::config_key, logo_line\);\n/]};
-const current=p=>(additions[p]||[]).reduce((source,marker)=>source.replace(marker,'\n'),read(p));
+// - The personal vocabulary rejection reasons: ui-md3/tests/personal-vocabulary-limits.test.mjs.
+const additions={'Preferences.cpp':[/\n[ \t]*\/\/ ---- App logo \(presentation-only mark\)[\s\S]*?\n[ \t]*register_option_row\(AppLogo::config_key, logo_line\);\n/,
+ /\n\/\/ One sentence naming the rule a personal vocabulary file broke\.[\s\S]*?\nstatic wxString vocabulary_rejection_text\(PersonalVocabulary::Rejection reason\)\n\{[\s\S]*?\n\}\n/]};
+// Deliberate changes to baseline code, each owned by its own contract test. The
+// marked text is set aside in both the current file and the baseline, so the
+// rest of the file, including the option registration, stays fingerprinted.
+// - The personal vocabulary description, status and load/clear handlers:
+//   ui-md3/tests/personal-vocabulary-limits.test.mjs.
+const changes={'Preferences.cpp':[/\n[ \t]*auto \*wording_description = new Label\(wording,[\s\S]*?LB_AUTO_WRAP\);\n/,
+ /\n[ \t]*auto refresh_wording = \[[\s\S]*?\n[ \t]*wording_clear->Bind\(wxEVT_BUTTON, \[refresh_wording\]\(wxCommandEvent &\) \{[\s\S]*?\n[ \t]*\}\);\n/]};
+const setAside=(source,markers)=>markers.reduce((text,marker)=>{assert.match(text,marker);return text.replace(marker,'\n');},source);
+const current=p=>setAside(setAside(read(p),additions[p]||[]),changes[p]||[]);
+const baselineOf=p=>setAside(old(p),changes[p]||[]);
 function cardContract(project,preferences,schedules){
  assert.match(project,/new StaticBox\(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL\)/);
  assert.match(project,/new Button\(navigation, _L\("Online projects"\)\)/);
@@ -33,14 +44,15 @@ function cardContract(project,preferences,schedules){
  assert.match(schedules,/outer->Add\(card, 0, wxEXPAND/);
  assert.match(schedules,/SetSizer\(outer\)/);
 }
-test('all six anchors retain bindings, registered options and value routes',()=>{for(const p of paths)assert.deepEqual(calls(current(p)),calls(old(p)),p);});
-test('all six anchors retain every literal and localization key',()=>{for(const p of paths)assert.deepEqual(literals(current(p)),literals(old(p)),p);});
+test('all six anchors retain bindings, registered options and value routes',()=>{for(const p of paths)assert.deepEqual(calls(current(p)),calls(baselineOf(p)),p);});
+test('all six anchors retain every literal and localization key',()=>{for(const p of paths)assert.deepEqual(literals(current(p)),literals(baselineOf(p)),p);});
 test('an addition carve-out covers only its own block',()=>{
  const p=current('Preferences.cpp');
- assert.doesNotMatch(p.replace(/^\s*#include[^\n]*/gm,''),/AppLogo|App logo/);
+ assert.doesNotMatch(p.replace(/^\s*#include[^\n]*/gm,''),/AppLogo|App logo|vocabulary_rejection_text|refresh_wording =/);
  assert.match(p,/register_option_row\("personal_vocabulary", nullptr, wording\)/);
+ assert.match(p,/auto \*wording_status = new Label\(wording, wxEmptyString, LB_AUTO_WRAP\);/);
  const tampered=read('Preferences.cpp').replace('register_option_row("personal_vocabulary", nullptr, wording);','');
- assert.notDeepEqual(calls(additions['Preferences.cpp'].reduce((s,m)=>s.replace(m,'\n'),tampered)),calls(old('Preferences.cpp')));
+ assert.notDeepEqual(calls(setAside(setAside(tampered,additions['Preferences.cpp']),changes['Preferences.cpp'])),calls(baselineOf('Preferences.cpp')));
 });
 test('project, preferences and schedules retain owned child containment and keyboard traversal',()=>{cardContract(read(paths[0]),read(paths[1]),read(paths[5]));});
 test('footer and destination action groups wrap without stretch spacers',()=>{
