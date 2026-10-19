@@ -12,8 +12,8 @@ On the branch and verified on Linux:
 - `b3927730` the two articles with Cantonese twins, the category indexes, a paragraph in the print actions article, the regenerated documentation bundle. `check_translated_content.py` reports the same 21 pre-existing problems as the base tree and none new.
 - `bf640f14` the tabbed README with both features first and `docs/integration/readme-status-archive-20261019.md` holding the old status log verbatim.
 
-Not verified:
-- The hosted Windows build. Runs 873 to 877 of "Windows build and release" were in progress on the branch when this was written (the first was at "Build slicer Win"). The g++ syntax check on Linux cannot compile `#ifdef _WIN32` blocks or MSVC-only constructs, so the hosted build is the only native verdict. Read it; if it is red, fix on the branch and push again.
+Verified by the hosted build, then not verified:
+- The hosted Windows build of the code commits is green: runs 873 (`aa27ab45`), 874 (`de1c809f`), 875 (`4ae74103`) and 876 (`c98e08f8`) of "Windows build and release" completed with success, so the MSVC compile, the Cantonese catalog verification and the Squirrel package contract passed for the express print mode and the Melody creator. Runs 877 (`b3927730`, documentation) and 878 (`bf640f14`, README) were still in progress when this was written; they change no C++ apart from the regenerated documentation bundle header.
 - The dialogs in the running application, screenshots, and a physical printer. The express start G-code was read for seven families, not printed. The M1006 parameter meaning and the tick length are inferred from the stock tunes and can only be confirmed by ear on a printer.
 - `scripts/i18n/test_untranslated_literals.py` is red on the base tree (62 findings); this branch adds none.
 

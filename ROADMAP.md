@@ -8,7 +8,7 @@ Branch `claude/bambu-express-print-mode-jkx766`, commits `aa27ab45`, `de1c809f`,
 - [x] Add the Melody creator: the M1006 model (229 fixture assertions), the Material dialog, the File menu item, catalog registration with 79 English and Cantonese messages, and the localization contract.
 - [x] Write both feature articles with Cantonese twins, index them, extend the print actions article, regenerate the offline bundle.
 - [x] Rewrite the README as a tabbed page with both features first and the old status log archived verbatim.
-- [ ] Read the hosted Windows build verdict for the branch (runs 873 to 877 were in progress at the time of writing); fix and push again if it is red.
+- [x] Read the hosted Windows build verdict for the code commits: runs 873 (`aa27ab45`), 874 (`de1c809f`), 875 (`4ae74103`) and 876 (`c98e08f8`) of "Windows build and release" completed with success. Runs 877 and 878 (documentation and README only) were still in progress at the time of writing.
 - [ ] Run the dialogs in the built application on a Windows host and capture them: the Express print mode row, the forced-off rows, Slice again after a toggle, the Melody creator with a preset loaded.
 - [ ] Play an express start and a melody on a physical printer; confirm the M1006 parameter meaning and the tick length, and correct the article if they differ.
 - [ ] Push the wiki pages (Express-Print-Mode, Melody-Creator, Home entry) that this session wrote but could not push: the wiki repository is outside the session's authorized set.
