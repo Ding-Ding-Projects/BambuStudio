@@ -368,6 +368,7 @@ src/slic3r/GUI/ProjectHistoryDialog.cpp
 src/slic3r/GUI/ProjectTabBar.cpp
 src/slic3r/GUI/SingleChoiceDialog.cpp
 src/slic3r/GUI/SmartHomeDialog.cpp
+src/slic3r/GUI/Melody/MelodyCreatorDialog.cpp
 src/slic3r/GUI/StopPrintGate.cpp
 src/slic3r/GUI/SurfaceDrag.cpp
 src/slic3r/GUI/SysInfoDialog.cpp

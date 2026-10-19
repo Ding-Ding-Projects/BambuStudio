@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-19 17:19+0000\n"
+"POT-Creation-Date: 2026-10-19 17:31+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -6729,6 +6729,12 @@ msgid "Smart home"
 msgstr ""
 
 msgid "Home Assistant speakers, media controls, TTS narrator and alert lights"
+msgstr ""
+
+msgid "Melody creator"
+msgstr ""
+
+msgid "Compose a tune the printer plays, preview it, send it to the printer or add it to the start or end G-code"
 msgstr ""
 
 msgid "Local model suite"
@@ -24808,6 +24814,265 @@ msgstr ""
 msgid "Home Assistant returned additional speakers and lights beyond the %d-entity safety limit. Those additional entities are not shown."
 msgstr ""
 
+msgid "Bambu Lab X1 start"
+msgstr ""
+
+msgid "Bambu Lab X1 finish"
+msgstr ""
+
+msgid "Bambu Lab A1 start"
+msgstr ""
+
+msgid "Bambu Lab A1 mini start"
+msgstr ""
+
+msgid "Bambu Lab H2D start"
+msgstr ""
+
+msgid "Bambu Lab H2D finish"
+msgstr ""
+
+msgid "C major scale"
+msgstr ""
+
+msgid "Add at least one step."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "A melody can have at most %d steps."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The name can have at most %d characters."
+msgstr ""
+
+msgid "Every note must be between C#-1 and G9, or empty for silence."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Every duration must be between 0 and %d ticks."
+msgstr ""
+
+msgid "Every volume must be between 0 and 100."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The tick length must be between %d and %d milliseconds."
+msgstr ""
+
+msgid "Compose a tune the printer plays through M1006: three voices per step, each with a note, a duration in ticks and a volume."
+msgstr ""
+
+msgid "Melody name"
+msgstr ""
+
+msgid "My tune"
+msgstr ""
+
+msgid "Tick length (ms, preview only)"
+msgstr ""
+
+msgid "Tick length"
+msgstr ""
+
+msgid "How long one firmware tick lasts in the preview. The printer's own tick length is not documented; adjust this until the preview matches what the printer plays."
+msgstr ""
+
+msgid "Start from"
+msgstr ""
+
+msgid "Empty melody"
+msgstr ""
+
+msgid "Steps: one line per time step, three voices. A note is written like C4 or F#3; leave it empty for silence."
+msgstr ""
+
+msgid "Melody steps"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Note %d"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Ticks %d"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Volume %d"
+msgstr ""
+
+msgid "Add step"
+msgstr ""
+
+msgid "Append a silent step after the last one"
+msgstr ""
+
+msgid "Duplicate"
+msgstr ""
+
+msgid "Copy the selected step below itself"
+msgstr ""
+
+msgid "Move up"
+msgstr ""
+
+msgid "Move the selected step one earlier"
+msgstr ""
+
+msgid "Move down"
+msgstr ""
+
+msgid "Move the selected step one later"
+msgstr ""
+
+msgid "Remove the selected step"
+msgstr ""
+
+msgid "Quick notation (first voice): notes with an optional /ticks, r for a rest, for example c4 e4/5 g4/20 r c5"
+msgstr ""
+
+msgid "Quick notation"
+msgstr ""
+
+msgid "Replace steps"
+msgstr ""
+
+msgid "Replace every step with the notes typed on the left"
+msgstr ""
+
+msgid "Open a melody file (.json)"
+msgstr ""
+
+msgid "Save the melody as a file (.json)"
+msgstr ""
+
+msgid "Copy G-code"
+msgstr ""
+
+msgid "Copy the M1006 block to the clipboard"
+msgstr ""
+
+msgid "Add to start G-code"
+msgstr ""
+
+msgid "Put the melody into the printer preset's start G-code (an earlier melody block is replaced)"
+msgstr ""
+
+msgid "start G-code"
+msgstr ""
+
+msgid "Add to end G-code"
+msgstr ""
+
+msgid "Put the melody into the printer preset's end G-code (an earlier melody block is replaced)"
+msgstr ""
+
+msgid "end G-code"
+msgstr ""
+
+msgid "Play the melody on this computer with square waves"
+msgstr ""
+
+msgid "Play on printer"
+msgstr ""
+
+msgid "Send the melody to the selected printer now (it must be idle)"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "\"%s\" is not a note. Write a letter, an optional # or b and an octave, such as C4 or F#3."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "A duration is a whole number of ticks from 0 to %d."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "A volume is a whole number from 0 to %d."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%d steps, about %.1f s at %d ms per tick."
+msgstr ""
+
+msgid "Select a step first."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Token %d of the quick notation could not be read. Use notes such as c4, f#3/8 or r/5."
+msgstr ""
+
+msgid "Type some notes first, for example c4 e4 g4 c5/20."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Playing the preview: %d steps, about %.1f s. The printer's own sound differs."
+msgstr ""
+
+msgid "The preview cannot play on this computer. Play on printer still works."
+msgstr ""
+
+msgid "Select a printer on the Device page first."
+msgstr ""
+
+msgid "The selected printer is not connected."
+msgstr ""
+
+msgid "The printer is printing. Play the melody when it is idle."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The printer did not accept the melody (code %d)."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Melody sent to %s."
+msgstr ""
+
+msgid "The melody G-code is on the clipboard."
+msgstr ""
+
+msgid "The clipboard is not available right now."
+msgstr ""
+
+msgid "The printer settings are not available right now."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The melody replaced the earlier one in the printer preset's %s. Save the preset to keep it."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The melody was added to the end of the printer preset's %s. Save the preset to keep it."
+msgstr ""
+
+msgid "Save melody"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Could not write %s."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Saved %s."
+msgstr ""
+
+msgid "Open melody"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s is not a melody file."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s cannot be used: %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Opened %s."
+msgstr ""
+
 msgid "Stop print - safety interlock"
 msgstr ""
 
@@ -26702,12 +26967,6 @@ msgid "Checklist"
 msgstr ""
 
 msgid "Edit / due date / link"
-msgstr ""
-
-msgid "Move up"
-msgstr ""
-
-msgid "Move down"
 msgstr ""
 
 msgid "Export JSON"

@@ -57,6 +57,7 @@
 #include "AppLogo/LogoRender.hpp"
 #include "FilamentScanner.hpp"
 #include "SmartHomeDialog.hpp"
+#include "Melody/MelodyCreatorDialog.hpp"
 #include "WebViewDialog.hpp"
 #include "../Utils/Process.hpp"
 #include "../Utils/ExternalEditor.hpp"
@@ -4641,6 +4642,11 @@ void MainFrame::init_menubar_as_editor()
         append_menu_item(fileMenu, wxID_ANY, _L("Smart home") + dots,
             _L("Home Assistant speakers, media controls, TTS narrator and alert lights"),
             [this](wxCommandEvent&) { SmartHomeDialog(this).ShowModal(); }, "", nullptr,
+            []() { return true; }, this);
+
+        append_menu_item(fileMenu, wxID_ANY, _L("Melody creator") + dots,
+            _L("Compose a tune the printer plays, preview it, send it to the printer or add it to the start or end G-code"),
+            [this](wxCommandEvent&) { MelodyCreatorDialog(this).ShowModal(); }, "", nullptr,
             []() { return true; }, this);
 
         append_menu_item(fileMenu, wxID_ANY, _L("Local model suite") + dots,

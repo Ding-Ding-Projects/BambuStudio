@@ -959,6 +959,9 @@ list(APPEND SLIC3R_GUI_SOURCES
     GUI/Schedule/ScheduleRuleStart.hpp
     GUI/SmartHomeDialog.cpp
     GUI/SmartHomeDialog.hpp
+    GUI/Melody/MelodyModel.hpp
+    GUI/Melody/MelodyCreatorDialog.cpp
+    GUI/Melody/MelodyCreatorDialog.hpp
     GUI/third_party/qrcodegen.cpp
     GUI/third_party/qrcodegen.hpp
     GUI/ModelPreviewDialog.hpp

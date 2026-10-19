@@ -44890,3 +44890,398 @@ msgstr "打印全部打印板嘅時候，請喺流程設定入面更改快速開
 #. review-status: agent-drafted
 msgid "Skips bed leveling, the nozzle wipe, the vibration check, flow and nozzle offset calibration, the detections and the start sound. Heating, homing, filament loading, the purge line and the temperature waits are kept. Turning it on or off changes the process preset, so the plate is sliced again before it is sent."
 msgstr "跳過熱床調平、抹噴嘴、震動檢查、流量同噴嘴偏移校準、各項偵測同開機音樂。加熱、歸零、入墨、清料線同等溫會保留。開關呢個選項會更改流程預設，所以傳送之前打印板會重新切片。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Melody creator"
+msgstr "旋律製作器"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Compose a tune the printer plays, preview it, send it to the printer or add it to the start or end G-code"
+msgstr "編寫一段打印機播放嘅旋律，可以預覽、傳送去打印機，或者加入開始或者結束 G-code"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Bambu Lab X1 start"
+msgstr "Bambu Lab X1 開始"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Bambu Lab X1 finish"
+msgstr "Bambu Lab X1 完成"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Bambu Lab A1 start"
+msgstr "Bambu Lab A1 開始"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Bambu Lab A1 mini start"
+msgstr "Bambu Lab A1 mini 開始"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Bambu Lab H2D start"
+msgstr "Bambu Lab H2D 開始"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Bambu Lab H2D finish"
+msgstr "Bambu Lab H2D 完成"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "C major scale"
+msgstr "C 大調音階"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Add at least one step."
+msgstr "請至少加入一個步驟。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "A melody can have at most %d steps."
+msgstr "一段旋律最多只可以有 %d 個步驟。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "The name can have at most %d characters."
+msgstr "名稱最多只可以有 %d 個字元。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Every note must be between C#-1 and G9, or empty for silence."
+msgstr "每個音符必須喺 C#-1 同 G9 之間，留空即係靜音。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Every duration must be between 0 and %d ticks."
+msgstr "每個時值必須喺 0 同 %d 個 tick 之間。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Every volume must be between 0 and 100."
+msgstr "每個音量必須喺 0 同 100 之間。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "The tick length must be between %d and %d milliseconds."
+msgstr "Tick 長度必須喺 %d 同 %d 毫秒之間。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Compose a tune the printer plays through M1006: three voices per step, each with a note, a duration in ticks and a volume."
+msgstr "編寫一段打印機用 M1006 播放嘅旋律：每個步驟有三個聲部，每個聲部有音符、以 tick 計嘅時值同音量。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Melody name"
+msgstr "旋律名稱"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "My tune"
+msgstr "我嘅旋律"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Tick length (ms, preview only)"
+msgstr "Tick 長度（毫秒，只影響預覽）"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Tick length"
+msgstr "Tick 長度"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "How long one firmware tick lasts in the preview. The printer's own tick length is not documented; adjust this until the preview matches what the printer plays."
+msgstr "預覽入面一個韌體 tick 嘅長度。打印機本身嘅 tick 長度冇文件記載；調校到預覽同打印機播放嘅一樣為止。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Start from"
+msgstr "由呢個開始"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Empty melody"
+msgstr "空白旋律"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Steps: one line per time step, three voices. A note is written like C4 or F#3; leave it empty for silence."
+msgstr "步驟：每行一個時間步驟，三個聲部。音符寫法例如 C4 或者 F#3；留空即係靜音。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Melody steps"
+msgstr "旋律步驟"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Note %d"
+msgstr "音符 %d"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Ticks %d"
+msgstr "Tick %d"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Volume %d"
+msgstr "音量 %d"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Add step"
+msgstr "加入步驟"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Append a silent step after the last one"
+msgstr "喺最後一個步驟之後加一個靜音步驟"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Duplicate"
+msgstr "複製"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Copy the selected step below itself"
+msgstr "將選取嘅步驟複製一份放喺佢下面"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Move the selected step one earlier"
+msgstr "將選取嘅步驟移前一格"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Move the selected step one later"
+msgstr "將選取嘅步驟移後一格"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Remove the selected step"
+msgstr "移除選取嘅步驟"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Quick notation (first voice): notes with an optional /ticks, r for a rest, for example c4 e4/5 g4/20 r c5"
+msgstr "快速記譜（第一聲部）：音符後面可以加 /tick 數，r 代表休止，例如 c4 e4/5 g4/20 r c5"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Quick notation"
+msgstr "快速記譜"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Replace steps"
+msgstr "取代步驟"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Replace every step with the notes typed on the left"
+msgstr "用左邊輸入嘅音符取代全部步驟"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Open a melody file (.json)"
+msgstr "開啟旋律檔案（.json）"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Save the melody as a file (.json)"
+msgstr "將旋律儲存做檔案（.json）"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Copy G-code"
+msgstr "複製 G-code"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Copy the M1006 block to the clipboard"
+msgstr "將 M1006 區塊複製到剪貼簿"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Add to start G-code"
+msgstr "加入開始 G-code"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Put the melody into the printer preset's start G-code (an earlier melody block is replaced)"
+msgstr "將旋律放入打印機預設嘅開始 G-code（之前嘅旋律區塊會被取代）"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "start G-code"
+msgstr "開始 G-code"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Add to end G-code"
+msgstr "加入結束 G-code"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Put the melody into the printer preset's end G-code (an earlier melody block is replaced)"
+msgstr "將旋律放入打印機預設嘅結束 G-code（之前嘅旋律區塊會被取代）"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "end G-code"
+msgstr "結束 G-code"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Play the melody on this computer with square waves"
+msgstr "用方波喺呢部電腦播放旋律"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Play on printer"
+msgstr "喺打印機播放"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Send the melody to the selected printer now (it must be idle)"
+msgstr "即刻將旋律傳送去選取嘅打印機（打印機必須閒置）"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "\"%s\" is not a note. Write a letter, an optional # or b and an octave, such as C4 or F#3."
+msgstr "「%s」唔係音符。請寫一個字母、可選嘅 # 或者 b，再加八度，例如 C4 或者 F#3。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "A duration is a whole number of ticks from 0 to %d."
+msgstr "時值係 0 到 %d 之間嘅整數 tick。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "A volume is a whole number from 0 to %d."
+msgstr "音量係 0 到 %d 之間嘅整數。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "%d steps, about %.1f s at %d ms per tick."
+msgstr "%d 個步驟，大約 %.1f 秒（每 tick %d 毫秒）。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Select a step first."
+msgstr "請先選取一個步驟。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Token %d of the quick notation could not be read. Use notes such as c4, f#3/8 or r/5."
+msgstr "快速記譜第 %d 個記號讀唔到。請用 c4、f#3/8 或者 r/5 呢類音符。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Type some notes first, for example c4 e4 g4 c5/20."
+msgstr "請先輸入一啲音符，例如 c4 e4 g4 c5/20。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Playing the preview: %d steps, about %.1f s. The printer's own sound differs."
+msgstr "播放緊預覽：%d 個步驟，大約 %.1f 秒。打印機本身嘅聲音會唔同。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "The preview cannot play on this computer. Play on printer still works."
+msgstr "呢部電腦播放唔到預覽。「喺打印機播放」仍然可以用。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Select a printer on the Device page first."
+msgstr "請先喺設備頁面選取一部打印機。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "The selected printer is not connected."
+msgstr "選取嘅打印機未連接。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "The printer is printing. Play the melody when it is idle."
+msgstr "打印機打印緊。等佢閒置先播放旋律。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "The printer did not accept the melody (code %d)."
+msgstr "打印機冇接受旋律（代碼 %d）。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Melody sent to %s."
+msgstr "旋律已經傳送去 %s。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "The melody G-code is on the clipboard."
+msgstr "旋律 G-code 已經喺剪貼簿。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "The clipboard is not available right now."
+msgstr "剪貼簿而家用唔到。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "The printer settings are not available right now."
+msgstr "打印機設定而家用唔到。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "The melody replaced the earlier one in the printer preset's %s. Save the preset to keep it."
+msgstr "旋律已經取代打印機預設 %s 入面之前嗰段。儲存預設先會保留。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "The melody was added to the end of the printer preset's %s. Save the preset to keep it."
+msgstr "旋律已經加到打印機預設 %s 嘅結尾。儲存預設先會保留。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Save melody"
+msgstr "儲存旋律"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Could not write %s."
+msgstr "寫入唔到 %s。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Saved %s."
+msgstr "已儲存 %s。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Open melody"
+msgstr "開啟旋律"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "%s is not a melody file."
+msgstr "%s 唔係旋律檔案。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "%s cannot be used: %s"
+msgstr "%s 用唔到：%s"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Opened %s."
+msgstr "已開啟 %s。"
