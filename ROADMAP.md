@@ -900,3 +900,13 @@ truth; the counts here are a snapshot.
 - [ ] Verify archive filename coverage and remove only eligible merged inactive candidates.
 - [x] Restore 6,131 proven zero-filled files and the index to the unchanged committed HEAD after preserving original bytes.
 - [x] Verify exact archive filename coverage and the post-preservation administrative supplement.
+
+
+## Repository maintenance, 19 October 2026
+
+- [x] Inventory and preserve all eleven checked-out source states and Git administration in a verified owner-managed backup.
+- [x] Fast-forward local main and prove all ten delivery source tips are already included in remote main.
+- [x] Retire the ten verified delivery remote branches, local branches and linked checkouts.
+- [x] Restore and verify tracked resources after the cleanup directory-link incident.
+- [x] Retain the seven remote histories outside main and the other ownership-unverified remote refs.
+- [ ] Remove three ignored dependency source directories and redundant temporary archive files, blocked by automatic approval review; retained in place.
