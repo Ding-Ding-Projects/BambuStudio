@@ -44865,3 +44865,13 @@ msgstr "呢個打印板要重新切片，先可以傳送。"
 #. review-status: agent-drafted
 msgid "Apply the nozzle moves with Swap, or undo them, before sending."
 msgstr "傳送之前，請用「交換」套用噴嘴調整，或者復原返啲調整。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Express print mode"
+msgstr "快速開印模式"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Skip the optional pre-print preparation of Bambu Lab printers: bed leveling, nozzle wipe, vibration (mech mode) check, flow calibration, nozzle offset calibration, camera, laser and build plate detection, the start sound and cog noise reduction. Heating, one homing pass, AMS filament loading, the purge line and the temperature waits are kept. Print setup then sends the job with bed leveling, flow calibration and nozzle offset calibration off. Use it only on a printer that was leveled and calibrated recently, because the first layer is not corrected. It has no effect on other printers or on a custom start G-code without express guards. Default: off."
+msgstr "跳過 Bambu Lab 打印機開印前嘅可選準備步驟：熱床調平、抹噴嘴、震動（機械模式）檢查、流量校準、噴嘴偏移校準、鏡頭、激光同打印板檢測、開機音樂同齒輪降噪。加熱、一次歸零、墨水機入墨、清料線同等溫會保留。之後打印設定會以熱床調平、流量校準同噴嘴偏移校準全部關閉嘅狀態傳送任務。只好喺最近已經調平同校準過嘅打印機上使用，因為第一層唔會再修正。對其他打印機或者冇快速守衛嘅自訂開始 G-code 冇影響。預設：關閉。"

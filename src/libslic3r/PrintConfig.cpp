@@ -3702,6 +3702,19 @@ void PrintConfigDef::init_fff_params()
     def->mode    = comAdvanced;
     def->set_default_value(new ConfigOptionBool(false));
 
+    def          = this->add("express_print_mode", coBool);
+    def->label   = L("Express print mode");
+    def->tooltip = L("Skip the optional pre-print preparation of Bambu Lab printers: bed leveling, nozzle wipe, "
+                     "vibration (mech mode) check, flow calibration, nozzle offset calibration, camera, laser and "
+                     "build plate detection, the start sound and cog noise reduction. Heating, one homing pass, AMS "
+                     "filament loading, the purge line and the temperature waits are kept. Print setup then sends the "
+                     "job with bed leveling, flow calibration and nozzle offset calibration off. Use it only on a "
+                     "printer that was leveled and calibrated recently, because the first layer is not corrected. "
+                     "It has no effect on other printers or on a custom start G-code without express guards. "
+                     "Default: off.");
+    def->mode    = comSimple;
+    def->set_default_value(new ConfigOptionBool(false));
+
     def          = this->add("enable_order_independent_overlap_carving", coBool);
     def->label   = L("Order-independent overlap carving");
     def->tooltip = L("When enabled, overlapping model parts are carved by bounding-box size so smaller embedded parts are not removed by larger parts due to volume order.");

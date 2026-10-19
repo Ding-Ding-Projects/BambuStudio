@@ -178,6 +178,7 @@ bool Print::invalidate_state_by_config_options(const ConfigOptionResolver & /* n
         "slow_down_layer_time",
         "standby_temperature_delta",
         "machine_start_gcode",
+        "express_print_mode",
         "filament_start_gcode",
         "change_filament_gcode",
         "wipe",

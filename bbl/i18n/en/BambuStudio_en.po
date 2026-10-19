@@ -29015,3 +29015,9 @@ msgstr ""
 
 msgid "Apply the nozzle moves with Swap, or undo them, before sending."
 msgstr ""
+
+msgid "Express print mode"
+msgstr ""
+
+msgid "Skip the optional pre-print preparation of Bambu Lab printers: bed leveling, nozzle wipe, vibration (mech mode) check, flow calibration, nozzle offset calibration, camera, laser and build plate detection, the start sound and cog noise reduction. Heating, one homing pass, AMS filament loading, the purge line and the temperature waits are kept. Print setup then sends the job with bed leveling, flow calibration and nozzle offset calibration off. Use it only on a printer that was leveled and calibrated recently, because the first layer is not corrected. It has no effect on other printers or on a custom start G-code without express guards. Default: off."
+msgstr ""

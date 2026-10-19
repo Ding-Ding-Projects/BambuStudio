@@ -35,6 +35,11 @@ static const float DRAW_ARC_TOLERANCE = 0.0125f;            //0.0125mm tolerance
 static const float DEFAULT_ACCELERATION = 1500.0f; // Prusa Firmware 1_75mm_MK2
 static const float DEFAULT_RETRACT_ACCELERATION = 1500.0f; // Prusa Firmware 1_75mm_MK2
 static const float DEFAULT_TRAVEL_ACCELERATION = 1250.0f;
+// Express print mode keeps only homing, filament loading, the purge line and the
+// temperature waits, so the usual preparation allowance (bed leveling, nozzle
+// wipe and mech-mode check) no longer applies. The estimator does not model
+// those remaining steps, so a fixed allowance stands in for them.
+static const float EXPRESS_PREPARE_COMPENSATION_TIME = 60.0f;
 
 static const size_t MIN_EXTRUDERS_COUNT = 5;
 static const float DEFAULT_FILAMENT_DIAMETER = 1.75f;
@@ -2016,7 +2021,9 @@ void GCodeProcessor::apply_config(const PrintConfig& config)
                                               m_time_processor.filament_unload_times);
     m_time_processor.extruder_change_times = static_cast<float>(config.machine_switch_extruder_time.value);
     m_time_processor.hotend_change_times = static_cast<float>(config.machine_hotend_change_time.value);
-    m_time_processor.prepare_compensation_time = static_cast<float>(config.machine_prepare_compensation_time.value);
+    m_time_processor.prepare_compensation_time = (s_IsBBLPrinter && config.express_print_mode.value)
+        ? EXPRESS_PREPARE_COMPENSATION_TIME
+        : static_cast<float>(config.machine_prepare_compensation_time.value);
 
     for (size_t i = 0; i < static_cast<size_t>(PrintEstimatedStatistics::ETimeMode::Count); ++i) {
         float max_acceleration = get_option_value(m_time_processor.machine_limits.machine_max_acceleration_extruding, i);
@@ -2360,6 +2367,9 @@ void GCodeProcessor::apply_config(const DynamicPrintConfig& config)
     const ConfigOptionFloat* machine_prepare_compensation_time = config.option<ConfigOptionFloat>("machine_prepare_compensation_time");
     if (machine_prepare_compensation_time != nullptr)
         m_time_processor.prepare_compensation_time = static_cast<float>(machine_prepare_compensation_time->value);
+    const ConfigOptionBool* express_print_mode = config.option<ConfigOptionBool>("express_print_mode");
+    if (s_IsBBLPrinter && express_print_mode != nullptr && express_print_mode->value)
+        m_time_processor.prepare_compensation_time = EXPRESS_PREPARE_COMPENSATION_TIME;
 
     if (m_flavor == gcfMarlinLegacy || m_flavor == gcfMarlinFirmware || m_flavor == gcfKlipper) {
         const ConfigOptionFloatsNullable* machine_max_acceleration_x = config.option<ConfigOptionFloatsNullable>("machine_max_acceleration_x");
