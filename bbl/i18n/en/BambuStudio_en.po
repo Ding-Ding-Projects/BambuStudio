@@ -29021,3 +29021,12 @@ msgstr ""
 
 msgid "Skip the optional pre-print preparation of Bambu Lab printers: bed leveling, nozzle wipe, vibration (mech mode) check, flow calibration, nozzle offset calibration, camera, laser and build plate detection, the start sound and cog noise reduction. Heating, one homing pass, AMS filament loading, the purge line and the temperature waits are kept. Print setup then sends the job with bed leveling, flow calibration and nozzle offset calibration off. Use it only on a printer that was leveled and calibrated recently, because the first layer is not corrected. It has no effect on other printers or on a custom start G-code without express guards. Default: off."
 msgstr ""
+
+msgid "Skips bed leveling, the nozzle wipe, the vibration check, flow and nozzle offset calibration, the detections and the start sound. Heating, homing, filament loading, the purge line and the temperature waits are kept. Turning it on or off changes the process preset, so the plate is sliced again before it is sent."
+msgstr ""
+
+msgid "Change Express print mode in the process settings while printing all plates."
+msgstr ""
+
+msgid "Turned off by Express print mode."
+msgstr ""

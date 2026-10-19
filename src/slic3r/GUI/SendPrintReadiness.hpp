@@ -9,7 +9,8 @@
 // - whether a nozzle move made in the dialog is still waiting to be applied;
 // - which nozzle volume type a quick swap checks and then stores per material;
 // - the exact snapshot of the plate keys that the swap check writes for a
-//   moment, so that opening the dialog never changes the plate.
+//   moment, so that opening the dialog never changes the plate;
+// - which preparation choices the job carries when Express print mode is on.
 
 #include <cstddef>
 #include <memory>
@@ -147,6 +148,43 @@ private:
     };
     std::vector<Entry> m_entries;
 };
+
+// The preparation choices print setup sends with a job: the on/off bools the
+// network plugin reads (task_bed_leveling, task_flow_cali) and the three-state
+// values (0 off, 1 on, 2 auto) of the bed leveling, flow calibration and
+// nozzle offset calibration rows.
+struct PrintPrepareChoice
+{
+    bool bed_leveling_on{false};
+    bool flow_cali_on{false};
+    int  bed_leveling{0};
+    int  flow_cali{0};
+    int  nozzle_offset_cali{0};
+
+    bool operator==(const PrintPrepareChoice &other) const
+    {
+        return bed_leveling_on == other.bed_leveling_on && flow_cali_on == other.flow_cali_on &&
+               bed_leveling == other.bed_leveling && flow_cali == other.flow_cali &&
+               nozzle_offset_cali == other.nozzle_offset_cali;
+    }
+};
+
+// Express print mode (process option express_print_mode) skips the optional
+// preparation. The G-code half is done by the start G-code guards; this is
+// the send half: every preparation flag goes off, "auto" included, whatever
+// the rows show. Off, the user's choices pass through unchanged.
+inline PrintPrepareChoice apply_express_print_mode(bool express, const PrintPrepareChoice &chosen)
+{
+    return express ? PrintPrepareChoice{} : chosen;
+}
+
+// The express row of print setup writes the process preset and the plate is
+// sliced again, so it can act only when Slice again can: a normal send of the
+// current plate while nothing is being sent.
+inline bool express_toggle_enabled(bool from_normal, bool sending, bool current_plate_selected)
+{
+    return from_normal && !sending && current_plate_selected;
+}
 
 }} // namespace Slic3r::GUI
 

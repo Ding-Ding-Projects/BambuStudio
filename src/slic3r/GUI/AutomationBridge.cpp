@@ -404,7 +404,9 @@ struct AutomationBridge::State : std::enable_shared_from_this<AutomationBridge::
             if(params.connection_type=="lan" && (params.dev_ip.empty() || params.password.empty())) throw Rejected("not_ready","LAN printer must be paired with an address and access credential");
             params.filename=file.u8string(); params.config_filename=params.filename; params.plate_index=plate_idx+1; params.project_name=p->get_project_name().ToStdString(); params.task_name=params.project_name;
             params.ams_mapping=a["amsMapping"].dump(); params.nozzle_mapping=a["nozzleMapping"].dump();
-            params.task_use_ams=a.value("useAms",false); params.task_bed_leveling=a.value("bedLeveling",true);
+            // Express print mode in the sliced preset sends bed leveling off unless the caller asks for it.
+            auto express_opt=full.option<ConfigOptionBool>("express_print_mode"); const bool express=express_opt && express_opt->value;
+            params.task_use_ams=a.value("useAms",false); params.task_bed_leveling=a.value("bedLeveling",!express);
             params.use_ssl_for_ftp=true; params.use_ssl_for_mqtt=true; params.print_type="from_plater";
             TaskSettings settings; settings.max_sending_at_same_time=1; settings.sending_interval=0;
 

@@ -15,6 +15,7 @@
 #include "GUI_App.hpp"
 #include "GUI_Preview.hpp"
 #include "MainFrame.hpp"
+#include "Tab.hpp"
 #include "format.hpp"
 #include "Widgets/ProgressDialog.hpp"
 #include "Widgets/RoundedRectangle.hpp"
@@ -645,7 +646,7 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
         wxPostEvent(plater, evt);
     });
 
-    m_check_ext_change_assist = new CheckBox(m_scroll_area, wxID_ANY);
+    m_check_ext_change_assist = new ::CheckBox(m_scroll_area, wxID_ANY);
     m_check_ext_change_assist->SetValue(false);
     m_check_ext_change_assist->SetBackgroundColour(ThemeColor::White);
     m_check_ext_change_assist->SetToolTip(_L("Manually change external spool during printing for multi-color printing"));
@@ -740,6 +741,14 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
         e.Skip();
     });
 
+    m_option_express = new PrintOption(
+        m_options_other, _L("Express print mode"),
+        _L("Skips bed leveling, the nozzle wipe, the vibration check, flow and nozzle offset calibration, the detections and the start sound. "
+           "Heating, homing, filament loading, the purge line and the temperature waits are kept. "
+           "Turning it on or off changes the process preset, so the plate is sliced again before it is sent."),
+        ops_no_auto, "express_print_mode");
+    m_option_express->Bind(EVT_SWITCH_PRINT_OPTION, &SelectMachineDialog::on_express_option_changed, this);
+
     auto option_auto_bed_level = new PrintOption(
         m_options_other, _L("Auto Bed Leveling"),
         _L("This checks the flatness of heatbed. Leveling makes extruded height uniform.\n*Automatic mode: Run a leveling check(about 10 seconds). Skip if surface is fine."),
@@ -806,6 +815,7 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     auto options_sizer = new wxBoxSizer(wxVERTICAL);
 
     m_sizer_options = new wxGridSizer(0, 2, FromDIP(5), FromDIP(10));
+    m_sizer_options->Add(m_option_express, 0, wxEXPAND);
     m_sizer_options->Add(option_timelapse, 0, wxEXPAND);
     m_sizer_options->Add(option_auto_bed_level, 0, wxEXPAND);
     m_sizer_options->Add(option_flow_dynamics_cali, 0, wxEXPAND);
@@ -876,7 +886,10 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     for (auto print_opt : m_checkbox_list_order) {
         print_opt->Bind(EVT_SWITCH_PRINT_OPTION, [this](auto& e) { save_option_vals(); e.Skip();});
     }
+    // Laid out first, after the per-printer rows got their AppConfig binding.
+    m_checkbox_list_order.push_front(m_option_express);
 
+    m_option_express->Hide();
     option_auto_bed_level->Hide();
     option_flow_dynamics_cali->Hide();
     option_nozzle_offset_cali_cali->Hide();
@@ -2669,9 +2682,13 @@ void SelectMachineDialog::update_option_opts(MachineObject *obj)
     if (!obj)
     {
         for (auto opt : m_checkbox_list) { opt.second->Hide(); }
+        m_option_express->Hide();
         update_options_layout();
         return;
     }
+
+    /*express print mode: a normal send only, the SD card view has no preset to write*/
+    m_option_express->Show(m_print_type == FROM_NORMAL);
 
     /*timelapse*/
     m_checkbox_list["timelapse"]->Show();
@@ -3219,6 +3236,77 @@ void SelectMachineDialog::update_option_dynamic_state(MachineObject *obj)
         m_options_other->Layout();
         m_options_other->Fit();
     }
+
+    apply_express_print_mode_to_options(obj);
+}
+
+bool SelectMachineDialog::express_print_mode_in_preset() const
+{
+    const PresetBundle* bundle = wxGetApp().preset_bundle;
+    if (!bundle) return false;
+    const ConfigOption* opt = bundle->prints.get_edited_preset().config.option("express_print_mode");
+    return opt && opt->getBool();
+}
+
+bool SelectMachineDialog::can_toggle_express_print_mode() const
+{
+    return express_toggle_enabled(m_print_type == FROM_NORMAL, m_is_in_sending_mode,
+                                  m_print_plate_idx >= 0 && m_print_plate_idx == m_plater->get_partplate_list().get_curr_plate_index());
+}
+
+void SelectMachineDialog::apply_express_print_mode_to_options(MachineObject *obj)
+{
+    if (!obj || !m_option_express) return;
+    const bool express = express_print_mode_in_preset();
+    m_option_express->setValue(express ? "on" : "off");
+    const bool can_toggle = can_toggle_express_print_mode();
+    m_option_express->enable(can_toggle);
+    m_option_express->update_tooltip_options_area(can_toggle ? wxString(wxEmptyString)
+                                                             : _L("Change Express print mode in the process settings while printing all plates."));
+
+    const wxString forced_tip = _L("Turned off by Express print mode.");
+    for (const char* key : {"bed_leveling", "flow_cali", "nozzle_offset_cali"}) {
+        PrintOption* row = m_checkbox_list[key];
+        if (!row) continue;
+        if (express) {
+            row->setValue("off");
+            row->enable(false);
+            row->update_tooltip_options_area(forced_tip);
+        } else {
+            row->enable(true);
+            if (row->getParam() == "nozzle_offset_cali" && obj->GetNozzleSystem()->GetNozzleRack()->IsSupported())
+                row->update_tooltip_options_area(S_RACK_NOZZLE_OFFSET_CALI_WARNING);
+            else
+                row->update_tooltip_options_area(wxEmptyString);
+        }
+    }
+}
+
+void SelectMachineDialog::on_express_option_changed(wxCommandEvent &event)
+{
+    event.Skip();
+    if (!m_option_express) return;
+    if (!can_toggle_express_print_mode()) {
+        m_option_express->restoreValue();
+        return;
+    }
+    const bool on = m_option_express->getValue() == "on";
+    if (on == express_print_mode_in_preset()) return;
+
+    // Write the process preset. Tab::load_config marks it modified and the
+    // Plater invalidates the G-code export, so print setup reports the plate
+    // as needing a new slice and offers Slice again.
+    DynamicPrintConfig cfg;
+    cfg.set_key_value("express_print_mode", new ConfigOptionBool(on));
+    if (Tab* tab = wxGetApp().get_tab(Preset::TYPE_PRINT))
+        tab->load_config(cfg);
+
+    MachineObject* obj = get_current_machine();
+    if (!on && obj)
+        load_option_vals(obj); // the rows return to their saved per-printer values
+    else
+        apply_express_print_mode_to_options(obj);
+    CallAfter([this] { update_by_obj(get_current_machine()); });
 }
 
 void SelectMachineDialog::save_option_vals()
@@ -3471,17 +3559,30 @@ void SelectMachineDialog::on_send_print()
         m_print_job->task_timelapse_use_internal = (m_timelapse_storage == "internal");
     }
 
+    // Express print mode sends every preparation flag off; the start G-code
+    // guards did the G-code half when the plate was sliced with the preset.
+    const bool express = express_print_mode_in_preset();
+    const PrintPrepareChoice prepare = apply_express_print_mode(express, PrintPrepareChoice{
+        m_checkbox_list["bed_leveling"]->getValue() == "on",
+        m_checkbox_list["flow_cali"]->getValue() == "on",
+        m_checkbox_list["bed_leveling"]->getValueInt(),
+        m_checkbox_list["flow_cali"]->getValueInt(),
+        m_checkbox_list["nozzle_offset_cali"]->getValueInt()});
+    BOOST_LOG_TRIVIAL(info) << "send_job: express_print_mode=" << express
+                            << " bed_leveling=" << prepare.bed_leveling << " flow_cali=" << prepare.flow_cali
+                            << " nozzle_offset_cali=" << prepare.nozzle_offset_cali;
+
     m_print_job->set_print_config(
         MachineBedTypeString[0],
-        (m_checkbox_list["bed_leveling"]->getValue() == "on"),
-        (m_checkbox_list["flow_cali"]->getValue() == "on"),
+        prepare.bed_leveling_on,
+        prepare.flow_cali_on,
         false,
         timelapse_option,
         true,
         m_ext_change_assist,
-        m_checkbox_list["bed_leveling"]->getValueInt(),
-        m_checkbox_list["flow_cali"]->getValueInt(),
-        m_checkbox_list["nozzle_offset_cali"]->getValueInt(),
+        prepare.bed_leveling,
+        prepare.flow_cali,
+        prepare.nozzle_offset_cali,
          (m_pa_value_switch->GetValue() ? 0 : 1)
     );
 

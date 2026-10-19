@@ -343,6 +343,9 @@ private:
 
     std::unordered_map<string, PrintOption*> m_checkbox_list;
     std::list<PrintOption*>                  m_checkbox_list_order;
+    // Express print mode mirrors the process preset, never AppConfig, so it is
+    // laid out with the rows but kept out of m_checkbox_list.
+    PrintOption*                             m_option_express{nullptr};
 
     std::shared_ptr<int>                m_token = std::make_shared<int>(0);
     std::vector<wxString>               m_bedtype_list;
@@ -609,6 +612,11 @@ public:
     bool can_slice_again_from_dialog() const;
     void slice_again_from_dialog();
 
+    // Express print mode: the row writes the process preset (which invalidates
+    // the slice, so Slice again follows) and forces the preparation rows off.
+    bool express_print_mode_in_preset() const;
+    bool can_toggle_express_print_mode() const;
+
 private:
     void EnableEditing(bool enable);
 
@@ -663,6 +671,7 @@ private:
     void save_option_vals();
     void save_option_vals(MachineObject *obj);
     void check_tpu_aero_flow_cali(MachineObject* obj);
+    void apply_express_print_mode_to_options(MachineObject* obj);
 
     // material items
     void clear_material_infos();
@@ -674,6 +683,7 @@ private:
     // option events
     void on_flow_pa_caliation_option_changed(wxCommandEvent& event);
     void on_nozzle_offset_option_changed(wxCommandEvent& event);
+    void on_express_option_changed(wxCommandEvent& event);
     void on_pa_value_switch_changed(wxCommandEvent &event);
 
     // get mapping nozzle display string for rack

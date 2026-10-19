@@ -230,12 +230,35 @@ static void snapshot_assertions()
     }
 }
 
+static void express_assertions()
+{
+    // Off: the choices pass through unchanged, auto included.
+    PrintPrepareChoice chosen{true, true, 2, 2, 2};
+    CHECK(apply_express_print_mode(false, chosen) == chosen);
+    PrintPrepareChoice partial{false, true, 0, 1, 2};
+    CHECK(apply_express_print_mode(false, partial) == partial);
+    // On: every preparation flag is off, whatever the rows show.
+    const PrintPrepareChoice off{};
+    CHECK(apply_express_print_mode(true, chosen) == off);
+    CHECK(apply_express_print_mode(true, partial) == off);
+    CHECK(apply_express_print_mode(true, off) == off);
+    const PrintPrepareChoice sent = apply_express_print_mode(true, chosen);
+    CHECK(!sent.bed_leveling_on && !sent.flow_cali_on);
+    CHECK(sent.bed_leveling == 0 && sent.flow_cali == 0 && sent.nozzle_offset_cali == 0);
+    // The row toggles only when Slice again can act.
+    CHECK(express_toggle_enabled(true, false, true));
+    CHECK(!express_toggle_enabled(false, false, true)); // SD card view
+    CHECK(!express_toggle_enabled(true, true, true));   // sending
+    CHECK(!express_toggle_enabled(true, false, false)); // Print all, or another plate
+}
+
 int main()
 {
     readiness_assertions();
     swap_gate_assertions();
     volume_type_assertions();
     snapshot_assertions();
+    express_assertions();
     std::cout << assertions << " send print readiness assertions passed\n";
     return 0;
 }

@@ -547,6 +547,15 @@ void SendMultiMachinePage::refresh_user_device()
     Fit();
 }
 
+// The process preset the sliced plates were made with.
+static bool express_print_mode_in_preset()
+{
+    const PresetBundle* bundle = wxGetApp().preset_bundle;
+    if (!bundle) return false;
+    const ConfigOption* opt = bundle->prints.get_edited_preset().config.option("express_print_mode");
+    return opt && opt->getBool();
+}
+
 BBL::PrintParams SendMultiMachinePage::request_params(MachineObject* obj)
 {
     BBL::PrintParams params;
@@ -554,6 +563,12 @@ BBL::PrintParams SendMultiMachinePage::request_params(MachineObject* obj)
     //get all setting
     bool bed_leveling = app_config->get("print", "bed_leveling") == "1" ? true : false;
     bool flow_cali = app_config->get("print", "flow_cali") == "1" ? true : false;
+    // Express print mode (process preset) sends the preparation off; the saved
+    // check box values are kept for the next ordinary send.
+    if (express_print_mode_in_preset()) {
+        bed_leveling = false;
+        flow_cali    = false;
+    }
     bool timelapse = app_config->get("print", "timelapse") == "1" ? true : false;
     auto use_ams = false;
 
@@ -1921,6 +1936,16 @@ void SendMultiMachinePage::on_timer(wxTimerEvent& event)
     for (auto it = m_device_items.begin(); it != m_device_items.end(); it++) {
         it->second->sync_state();
         it->second->Refresh();
+    }
+
+    // Express print mode greys out the preparation check boxes it overrides.
+    const bool express = express_print_mode_in_preset();
+    for (const char* key : {"bed_leveling", "flow_cali"}) {
+        auto it = m_checkbox_map.find(key);
+        if (it == m_checkbox_map.end() || !it->second) continue;
+        if (it->second->IsEnabled() == !express) continue;
+        it->second->Enable(!express);
+        it->second->SetToolTip(express ? _L("Turned off by Express print mode.") : wxString(wxEmptyString));
     }
 }
 
