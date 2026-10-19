@@ -1,6 +1,6 @@
 ---
 translation-of: README.md
-source-sha256: f5e93614d1b656060f444db8d96492cf869829ddea6b8d171ea066135d622ec2
+source-sha256: 46b9322fb16b7860b8ea230a28a464896f55d34e9c8ac536a605d5b27a0f2a97
 review-status: agent-drafted
 ---
 
@@ -30,6 +30,7 @@ review-status: agent-drafted
 - [破壞性動作超級確認（兩鍵 + 完整滑動）](super-confirmation.md)
 - [打印模擬播放（進給速率真實）](print-simulation.md)
 - [板打印動作同材料對應](print-actions.md)
+- [快速開印模式](express-print-mode.md)：跳過可選嘅開印前準備，保留加熱、歸零、入墨、清料線同等溫。
 - [LAN 場發送同設備資格](lan-farm-sending.md)
 - [AI 打印機監察（本地模型）](ai-printer-watch.md)
 - [AI 墨水掃描器（QR 手機上傳 → AMS 插槽）](ai-filament-scanner.md)

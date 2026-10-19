@@ -665,12 +665,12 @@
     {
       "route": "device/README.md",
       "title": "Device features",
-      "sha256": "5624ae9c4393f55cea4e61bf012a5d419f194b3162b22cae40e6489d09bf965a"
+      "sha256": "b97a0cc04924df60aad90990225db9e9a89464ffd4efcfd16e65fa902f89a11b"
     },
     {
       "route": "device/README.yue_HK.md",
       "title": "設備功能",
-      "sha256": "8d1fea491f8f92752e18edec41cac7d5eab1f264b8cf2340d5a8a937d2cf24f6"
+      "sha256": "53d2152038d9e3b6aaf3c9ed810af7702a59ed448aee58dc13b36b55e34fb4e9"
     },
     {
       "route": "device/farm-lan.md",
@@ -681,6 +681,16 @@
       "route": "device/farm-lan.yue_HK.md",
       "title": "區域網絡打印機群組",
       "sha256": "4b3936c2d9679ba369acdddc91d1268670dfb97e4c1e4348cce87d3387801543"
+    },
+    {
+      "route": "device/printer-melody.md",
+      "title": "Printer melodies",
+      "sha256": "c82ab8442d31f524a3aaa1465c3bbf63db33db9b2f479115f231de502e209d10"
+    },
+    {
+      "route": "device/printer-melody.yue_HK.md",
+      "title": "打印機旋律",
+      "sha256": "06c960a9fc152cbeb3f3304c5c7aa2f99166c303ce163f190715e52186c0a912"
     },
     {
       "route": "documentation/README.md",
@@ -1220,12 +1230,12 @@
     {
       "route": "windows/README.md",
       "title": "Windows features",
-      "sha256": "7d29e23a136b082d004af7fd56494f3a78461477e252f688c0de4c60cf221655"
+      "sha256": "46b9322fb16b7860b8ea230a28a464896f55d34e9c8ac536a605d5b27a0f2a97"
     },
     {
       "route": "windows/README.yue_HK.md",
       "title": "Windows 功能",
-      "sha256": "d88f727d88b29be66d50646933cf95bc5d1bdceed4287b7db62e1236da7bd78b"
+      "sha256": "3f85cb2846b34fdd5aac1d2c5a56f6721ea24cb58ff42217591bcbdcbef4451d"
     },
     {
       "route": "windows/ai-filament-scanner.md",
@@ -1408,6 +1418,16 @@
       "sha256": "42a0b4e312e70a6020aa13804c805b0aa353c6df39cd6dff324908fce5d6437a"
     },
     {
+      "route": "windows/express-print-mode.md",
+      "title": "Express print mode",
+      "sha256": "25dcdd3ce26b8f754cb15c0eae9229585793dd545f7332d2bf840b0a6ef0478e"
+    },
+    {
+      "route": "windows/express-print-mode.yue_HK.md",
+      "title": "快速開印模式",
+      "sha256": "a93af0590b6450f066ff51ec61c96477e2d5eb79ecf61675cb3f80b61831b997"
+    },
+    {
       "route": "windows/first-run-funny-level-disclosure.md",
       "title": "First-run funny-level disclosure",
       "sha256": "3e63a61e74eb0965a04dee5c278cb4f622895dca96e4e3fb914149ae06cfef0e"
@@ -1580,12 +1600,12 @@
     {
       "route": "windows/print-actions.md",
       "title": "Plate print actions and material mapping",
-      "sha256": "1a66e4089f7ee426f50a5ae9aa99ffd36b063e1436dc2479ddfb5d8b5217d927"
+      "sha256": "1dc5da7e8baba068ee35683fd7fc10ee7a6f8ed70ba73df259874bc221abbfbe"
     },
     {
       "route": "windows/print-actions.yue_HK.md",
       "title": "打印盤操作同材料映射",
-      "sha256": "b3685bc60d8457c168749207911bb61a8b5ec335d32a0a5381e960b0a7e8b7a8"
+      "sha256": "ee9bfd5d0c7af6f72dc51d32dbef0b687d458352d5c64c0b94492e06065695a1"
     },
     {
       "route": "windows/print-simulation.md",
@@ -1975,7 +1995,7 @@
       "bytes": 1979
     }
   ],
-  "bundle_sha256": "0844452092527eab6c491a30d617f91deb31a160f85bc046bc74915d3e3277c1",
+  "bundle_sha256": "76a8135e4254e39bedc6f8ff0ea4c1ba9a87d24343c4a4005f0aee99a4f60672",
   "unavailable_references": [
     {
       "source": "api/README.md",
