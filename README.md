@@ -1,40 +1,86 @@
-Installer repair, 9 October 2026: a registered Visual Studio compiler inside the Squirrel install destination prevented `md3-v234` Setup from replacing that directory. The compiler bootstrap and PDF build default now use `%LOCALAPPDATA%\BambuBuildTools\VS2026`, outside the installer destination. The affected local instance was migrated through Microsoft's installer, and the unchanged released Setup completed successfully. The installed application remained running with an isolated profile. [Repair evidence](docs/evidence/installer-toolchain-separation/receipt.json) and [bootstrap behavior](docs/features/releases/windows-one-click-build.md#compiler-and-installer-directory-separation) distinguish this focused verification from broader product acceptance.
-
-![Installed md3-v234 application after the compiler directory migration](docs/evidence/installer-toolchain-separation/installed-v234.png)
-
-All reviewed local source continuations are integrated, and only the primary working directory remains registered. The [closeout report](docs/integration/closeout-20261006.md) records passing hosted workflows, verified backup consolidation, and two retained directory remnants. [Issue 60](https://github.com/Ding-Ding-Projects/BambuStudio/issues/60) tracks unfinished native and website acceptance; source integration is not product acceptance.
-
-> [!IMPORTANT]
-> Current status, 6 October 2026: the exact-main root build at `cc059003d` passed at 16:43:57 UTC and the exact installer entrypoint is running. Reviewed redesign preparation from `1fa14f33a` is now merged into main; its 71 offline checks do not prove rendering, and the merged tree has no native build result yet. Separately, both exact root build entrypoints and independent installer-byte verification passed for the earlier redesign candidate `a28944e3c14b2066ee63d14151c8aca23066d743`. Two authorized visible attempts exited before inspection, so there is no current screenshot or complete visual acceptance. Read the [current continuation](CLOSEOUT_PROMPT.md).
-
-![image](https://user-images.githubusercontent.com/106916061/179006347-497d24c0-9bd6-45b7-8c49-d5cc8ecfe5d7.png)
 # BambuStudio
 
-MCP and command-line automation is being implemented for live projects, headless
-slicing, and configured printers. See [setup and verification status](docs/features/automation/mcp-and-cli.md).
+Bambu Studio is a feature-rich slicer for Bambu Lab printers: project-based workflows, optimized slicing algorithms and a graphic interface built for a smooth printing experience. This fork rebuilds the native Windows interface on Material Design 3, keeps upstream slicing intact, and adds its own features: three language modes (English, Hong Kong Cantonese, bilingual), automatic updates, local project history, a command palette, a regex builder on every search, Home Assistant handover, **Express print mode** and the **Melody creator**.
 
-The current interface work also includes [local personal wording](docs/features/windows/personal-vocabulary.md),
-[separate slicing actions](docs/features/windows/print-actions.md), and
-[searchable canvas menus](docs/features/canvas-menu-search.md). These changes are
-under development for the combined delivery; the [audit register](docs/features/design-system/native-interface-audit-2026-10-02.md)
-records historical runtime and layout evidence. Focused source and non-window geometry checks now cover the current redesign; they do not establish native runtime or screenshots.
-Implementation is not a claim of verified physical-printer behavior.
-Current compiler and startup evidence is summarized in the [continuation record](CLOSEOUT_PROMPT.md).
-The earlier configure blockers are superseded. Current build and package evidence is recorded against exact source revisions in the verification report. The earlier production catalogue, documentation bundling and DeviceWeb observations belong to their dated source receipts. Reviewed inspection preparation covers all 55 declared states; 38 preparation checks and 33 native-review checks pass offline. The initial startup cause remains unknown, and a reviewed target-exit diagnostic prepares the next attempt. Exact-main packaging remains pending. The inherited DeviceWeb type stage attempted once and failed before bundling during the older delivery pass; no passing type-check result is claimed.
-Earlier managed-check results apply only to their recorded source revisions. The combined source includes the reconciled continuation lanes and bounded repairs listed in the current handoff.
+- **Install (Windows only):** the [latest installer](https://github.com/Ding-Ding-Projects/BambuStudio/releases/latest/download/Setup.exe) is a per-user Squirrel.Windows setup that needs no administrator elevation. It is unsigned; check the [SHA-256 file](https://github.com/Ding-Ding-Projects/BambuStudio/releases/latest/download/Setup.exe.sha256) before running it. macOS and Linux were removed from this tree; cross-platform builds remain upstream at [Bambu Lab](https://github.com/bambulab/BambuStudio/releases/).
+- **Site:** [ding-ding-projects.github.io/BambuStudio](https://ding-ding-projects.github.io/BambuStudio/), a tabbed design reference and changelog viewer.
+- **Docs:** [feature documentation](docs/README.md) · [wiki](https://github.com/Ding-Ding-Projects/BambuStudio/wiki) · [roadmap](ROADMAP.md) · [handoff](HANDOFF.md) · [continuation prompt](CLOSEOUT_PROMPT.md).
+- **Screenshots:** the public capture gallery is [`docs/screenshots/`](docs/screenshots/), with every image's source in the [screenshot provenance](#screenshot-provenance) table below.
+- **Status history:** the dated status paragraphs that used to open this file are kept verbatim in the [README status archive](docs/integration/readme-status-archive-20261019.md).
 
-Bambu Studio is a cutting-edge, feature-rich slicing software.  
-It contains project-based workflows, systematically optimized slicing algorithms, and an easy-to-use graphic interface, bringing users an incredibly smooth printing experience.
+**Contents:** [Express print mode](#express-print-mode) · [Melody creator](#melody-creator) · [New features in this line](#new-features-in-this-line) · [Current development work](#current-development-work) · [Native UI modernization](#native-ui-modernization-material-design-3) · [Live application captures](#live-application-captures) · [Interactive design reference](#interactive-design-reference) · [Screenshot provenance](#screenshot-provenance) · [Home Assistant printer handover](#home-assistant-printer-handover) · [Windows installer](#windows-installer) · [Project history](#project-history) · [Main features](#what-are-bambu-studios-main-features) · [How to compile on Windows](#how-to-compile-on-windows) · [Report issue](#report-issue) · [License](#license)
 
-This fork's maintained delivery target is native Windows UI modernization informed by Material Design 3. The
-[latest Windows installer](https://github.com/Ding-Ding-Projects/BambuStudio/releases/latest/download/Setup.exe)
-is a per-user install and does not require administrator elevation. It is currently unsigned; verify
-the accompanying
-[SHA-256 file](https://github.com/Ding-Ding-Projects/BambuStudio/releases/latest/download/Setup.exe.sha256)
-before running it. **This fork is Windows-only.** macOS and Linux support has been removed from the tree: the
-platform sources, build scripts, packaging and CI jobs are gone, and CMake fails fast when
-configured on any other system. Cross-platform builds remain available upstream from
-[Bambu Lab](https://github.com/bambulab/BambuStudio/releases/).
+## Express print mode
+
+One process option, **Express print mode** (Others page, Special mode group), skips the optional preparation a Bambu Lab printer runs before every print and keeps only what a print needs. The Bambu Lab start G-code templates carry `{if !express_print_mode}` guards around the sections that otherwise run unconditionally, and the Send print job dialog mirrors the option, forces the bed leveling, flow calibration and nozzle offset calibration rows off while it is on, and sends every preparation flag off. Use it on a printer that was leveled and calibrated recently; the first layer is not corrected. Full details, caveats and the verification state are in [Express print mode](docs/features/windows/express-print-mode.md).
+
+```mermaid
+flowchart TB
+    A[Print starts] --> B{Express print mode?}
+    B -- off --> C[Start sound and cog noise reduction]
+    C --> D[Heat bed and nozzle]
+    D --> E[Home, load filament from the AMS, flush]
+    E --> F[Nozzle wipe, scanner and plate detections]
+    F --> G[Bed leveling and calibrations as the send flags say]
+    G --> H[Vibration check]
+    H --> I[Purge line and final temperature wait]
+    B -- on --> J[Heat bed and nozzle]
+    J --> K[Home, load filament from the AMS, flush]
+    K --> L[Skip wipe, detections, leveling, calibrations and vibration check]
+    L --> I
+    I --> M[First layer]
+```
+
+The diagram is a reading aid for the sequence; the exact commands per printer family are in the article and in the templates under `resources/profiles/BBL/machine/`.
+
+## Melody creator
+
+**File ▸ Melody creator…** composes a tune the printer plays through `M1006`: three voices per step, each with a note, a duration in ticks and a volume. It previews the tune on this computer, plays it on the connected printer when the printer is idle, copies the G-code, adds the tune to the printer preset's start or end G-code inside melody markers, and saves or opens it as a JSON file. The stock Bambu Lab X1, A1, A1 mini and H2D tunes are presets. The M1006 parameter meaning and the tick length are inferred from the stock tunes, so the tick length is a preview setting. See [Printer melodies](docs/features/device/printer-melody.md).
+
+<details>
+<summary><strong>New features in this line</strong>: every feature added by this fork, with its verification state and its article</summary>
+
+### New features in this line
+
+Features added for this line of releases, with where each one stands. "Verified" means checked in an
+unmodified release package on a hidden desktop; the evidence is listed in
+[the capture provenance](docs/screenshots/md3-everything/README.md).
+
+| Feature | Status | Details |
+| --- | --- | --- |
+| Express print mode: one process option that skips the optional pre-print preparation of Bambu Lab printers (bed leveling, nozzle wipe, vibration check, calibrations, detections, start sound) and keeps heating, homing, the filament load, the purge line and the temperature waits; print setup mirrors it and sends every preparation flag off | In source (`aa27ab45`, `de1c809f`, `4ae74103`); Linux-side checks pass; the hosted Windows build, the running application and a physical printer are not verified | [Express print mode](docs/features/windows/express-print-mode.md) |
+| Melody creator: compose a tune the printer plays through M1006, preview it, play it on the connected printer, copy its G-code, add it to the start or end G-code, save and open it | In source (`c98e08f8`); model fixture and localization contract pass; not built with MSVC, not played on a printer | [Printer melodies](docs/features/device/printer-melody.md) |
+| Automatic updates from this fork's GitHub releases: an installed copy downloads a new version in the background, then a banner offers **Restart to install update** and **Release notes** and says the update is not code-signed; it checks again every six hours, and the download dialog stays as the fallback | In releases since `md3-v151`; the **Update automatically** preference is verified in all three language modes; an installed copy updating itself is not verified yet | [App updates](docs/features/windows/app-updates.md) |
+| The release feed moves: a build becomes the latest release when its commit is newer than the current latest | Verified (`md3-v151` onward) | [Release supply chain](docs/features/releases/windows-release-supply-chain.md) |
+| Every update package carries a higher version than the latest release before it: hosted builds number packages by workflow run, because two queued builds could share a number (`md3-v155` and `md3-v156` both `2.8.4155`) and Squirrel skips an equal version | Verified: `md3-v161` `2.8.4608`, then `md3-v162` `2.8.4611` | [App updates](docs/features/windows/app-updates.md) |
+| Faster hosted Windows builds: each build restores the last `main` build tree from a never-published draft release, stored in parts of at most 1.5 GB, and compiles only what changed (the full compile took 72 of the build's 80 minutes) | Measured: the first warm build compiled in 3 min 4 s (10 compile requests instead of 795) and its build job took 12 min 44 s instead of 80 min 16 s | [Build cache](docs/features/releases/windows-release-supply-chain.md#build-cache) |
+| Preview overlays keep clear of each other: notifications end left of the legend dock, the status chip starts right of the plate strip, the dock's blocks span it, and the Ink Grouping card is sized from its content | In source (`856d92a2c`); compiled by run [36747308882](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36747308882) and published as `md3-v177` (package `2.8.4635`); captures from a release are pending | [Preview overlays](docs/features/gcode-preview/preview-overlays.md) |
+| Ink wording everywhere: the English catalogue carries the ink wording for 94 messages that relied on a runtime word swap ("a ink" is now "an ink"), 19 Cantonese values are corrected, the dispenser names built from tables and the other text that skipped the catalogue go through it, and a check starts from every message the application can show | In source (`4ef3a9394`, `3bb44bc5d`); the catalogue half is in `md3-v177` | [Ink terminology](docs/features/windows/ink-terminology.md) |
+| One shortcut, named Bambu Studio MD3, that starts the application: the launcher is marked aware of the installer and makes its own shortcuts, so the regex helper no longer gets one | In source ([issue #52](https://github.com/Ding-Ding-Projects/BambuStudio/issues/52)); the release job reads the shortcuts back after installing | [App updates](docs/features/windows/app-updates.md#shortcuts-and-install-events) |
+| The splash screen says when the running version was released, in English, Cantonese or both | Verified on `md3-v153` | [Splash release date](docs/features/windows/splash-release-date.md) |
+| Bilingual mode on every native surface: labels, buttons, check boxes, radio buttons, group boxes, section headers, list and table column titles, placeholder hints, tooltips, menus, message dialog bodies, notification links, self-drawn widgets and the 3D canvas, each paired only where both languages fit, with the Cantonese in the tooltip otherwise | Verified surface by surface; the `md3-v153` language audit found no English-only label on Prepare or Preferences > General | [Language modes](docs/features/windows/language-modes.md) |
+| A complete Hong Kong Cantonese catalog (7,660 entries), Cantonese feature articles (77) and a Cantonese in-app changelog | In releases; human review pending | [Language modes](docs/features/windows/language-modes.md) |
+| Cantonese line breaking that never starts a line with closing punctuation such as "。" and never splits an emoji | Verified on `md3-v157` for closing punctuation; opening punctuation and emoji by contract test only | [Language modes](docs/features/windows/language-modes.md) |
+| Every dialog kept inside its own edges in all three modes: 37 clipping defects found by capture and by the layout probe, each with its cause and fix | 25 verified in built packages (CJ-005 to CJ-029), 12 fixed in source and waiting for a capture (CJ-001 to CJ-004, CJ-030 to CJ-037), none open | [Clipping inventory](docs/features/design-system/clipping-inventory.md) |
+| Every context menu is the Material menu: the text fields' edit menu from a right-click and from the Menu key or Shift+F10 (a masked field never copies), copyable labels, the caption bar's menus and the canvas and list menus; web pages show no browser menu | Verified on `md3-v169`: 8 of 8 menu requests per mode opened the Material menu, in English, Cantonese and bilingual; on `md3-v162` text fields opened nothing on a right-click and the system's English edit menu from the keyboard | [Context menus](docs/features/design-system/context-menus.md) |
+| The last native-looking fields on the kit: the appearance editor's decimal fields, the colour picker's HEX and any-format fields, the object list's rename editor and the What's new year field; no native spin control is left | In source, not yet in a release | [Appearance editor](docs/features/windows/appearance-editor.md) |
+| Every group box draws the Material outline and title, the bed shape dialog chooses its shape with the kit combo, and no dialog keeps a native OK or Cancel button | In source, not yet in a release | [Native controls on the kit](docs/features/design-system/native-controls.md) |
+| The last native controls on people's screens are kit controls: a disabled button's tip, the web pages' notice bar, and the Workspace panel's tabs, tables, checklist and calendar; every table takes one Material style | In source, not yet in a release | [Native controls on the kit](docs/features/design-system/native-controls.md) |
+| Every scrolled page, panel, list, table, multi-line text box and HTML view shows the Material scrollbar: a 10 px strip with a rounded thumb that highlights under the pointer, in place of the 17 px grey Windows bar; it drags, pages while held and follows high contrast | In source, not yet in a release | [Native controls on the kit](docs/features/design-system/native-controls.md) |
+| Every prompt, chooser, busy notice and colour picker is a Material dialog, and ink colours keep the recently used colours as quick picks | In source, not yet in a release | [Dialogs and pickers](docs/features/design-system/dialogs-and-pickers.md) |
+| Every tooltip is the Material plain tooltip, in the light and the dark theme | In source, not yet in a release | [Tooltips](docs/features/design-system/tooltips.md) |
+| Every message box is the Material dialog, in the theme and the language modes, except the few that fire before the app's own interface exists | In source, not yet in a release | [MD3 parity register](docs/features/design-system/md3-parity-register.md) |
+| Units and separators shown as themselves: "°C", "mm³" and the What's new separators used to read "Â°C" and "Â·" because narrow literals went through the Windows code page | Verified on `md3-v158` | [Handoff](HANDOFF.md) |
+| Verification tools: the layout probe's `language-audit` command and splash hook, and capture scripts for dialogs, the splash, Preferences search and the language audit | In use for every release check above | [Layout probe](docs/features/design-system/layout-probe.md) |
+
+Still to add or verify for these features: an installed copy updating itself from one release to the
+next (it needs a Windows account whose installed copy can be replaced), notification links captured
+in a release, the 125%, 150% and 200% display scales, and human review of the Cantonese.
+
+</details>
+
+<details>
+<summary><strong>Current development work</strong>: the Studio Atlas design, the reconciled release line and the language modes</summary>
 
 ## Current development work
 
@@ -62,40 +108,10 @@ is agent-drafted and still awaits broader human review. See the
 [language-mode documentation](docs/features/windows/language-modes.md) for coverage and fallback
 details.
 
-### New features in this line
+</details>
 
-Features added for this line of releases, with where each one stands. "Verified" means checked in an
-unmodified release package on a hidden desktop; the evidence is listed in
-[the capture provenance](docs/screenshots/md3-everything/README.md).
-
-| Feature | Status | Details |
-| --- | --- | --- |
-| Automatic updates from this fork's GitHub releases: an installed copy downloads a new version in the background, then a banner offers **Restart to install update** and **Release notes** and says the update is not code-signed; it checks again every six hours, and the download dialog stays as the fallback | In releases since `md3-v151`; the **Update automatically** preference is verified in all three language modes; an installed copy updating itself is not verified yet | [App updates](docs/features/windows/app-updates.md) |
-| The release feed moves: a build becomes the latest release when its commit is newer than the current latest | Verified (`md3-v151` onward) | [Release supply chain](docs/features/releases/windows-release-supply-chain.md) |
-| Every update package carries a higher version than the latest release before it: hosted builds number packages by workflow run, because two queued builds could share a number (`md3-v155` and `md3-v156` both `2.8.4155`) and Squirrel skips an equal version | Verified: `md3-v161` `2.8.4608`, then `md3-v162` `2.8.4611` | [App updates](docs/features/windows/app-updates.md) |
-| Faster hosted Windows builds: each build restores the last `main` build tree from a never-published draft release, stored in parts of at most 1.5 GB, and compiles only what changed (the full compile took 72 of the build's 80 minutes) | Measured: the first warm build compiled in 3 min 4 s (10 compile requests instead of 795) and its build job took 12 min 44 s instead of 80 min 16 s | [Build cache](docs/features/releases/windows-release-supply-chain.md#build-cache) |
-| Preview overlays keep clear of each other: notifications end left of the legend dock, the status chip starts right of the plate strip, the dock's blocks span it, and the Ink Grouping card is sized from its content | In source (`856d92a2c`); compiled by run [36747308882](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/36747308882) and published as `md3-v177` (package `2.8.4635`); captures from a release are pending | [Preview overlays](docs/features/gcode-preview/preview-overlays.md) |
-| Ink wording everywhere: the English catalogue carries the ink wording for 94 messages that relied on a runtime word swap ("a ink" is now "an ink"), 19 Cantonese values are corrected, the dispenser names built from tables and the other text that skipped the catalogue go through it, and a check starts from every message the application can show | In source (`4ef3a9394`, `3bb44bc5d`); the catalogue half is in `md3-v177` | [Ink terminology](docs/features/windows/ink-terminology.md) |
-| One shortcut, named Bambu Studio MD3, that starts the application: the launcher is marked aware of the installer and makes its own shortcuts, so the regex helper no longer gets one | In source ([issue #52](https://github.com/Ding-Ding-Projects/BambuStudio/issues/52)); the release job reads the shortcuts back after installing | [App updates](docs/features/windows/app-updates.md#shortcuts-and-install-events) |
-| The splash screen says when the running version was released, in English, Cantonese or both | Verified on `md3-v153` | [Splash release date](docs/features/windows/splash-release-date.md) |
-| Bilingual mode on every native surface: labels, buttons, check boxes, radio buttons, group boxes, section headers, list and table column titles, placeholder hints, tooltips, menus, message dialog bodies, notification links, self-drawn widgets and the 3D canvas, each paired only where both languages fit, with the Cantonese in the tooltip otherwise | Verified surface by surface; the `md3-v153` language audit found no English-only label on Prepare or Preferences > General | [Language modes](docs/features/windows/language-modes.md) |
-| A complete Hong Kong Cantonese catalog (7,660 entries), Cantonese feature articles (77) and a Cantonese in-app changelog | In releases; human review pending | [Language modes](docs/features/windows/language-modes.md) |
-| Cantonese line breaking that never starts a line with closing punctuation such as "。" and never splits an emoji | Verified on `md3-v157` for closing punctuation; opening punctuation and emoji by contract test only | [Language modes](docs/features/windows/language-modes.md) |
-| Every dialog kept inside its own edges in all three modes: 37 clipping defects found by capture and by the layout probe, each with its cause and fix | 25 verified in built packages (CJ-005 to CJ-029), 12 fixed in source and waiting for a capture (CJ-001 to CJ-004, CJ-030 to CJ-037), none open | [Clipping inventory](docs/features/design-system/clipping-inventory.md) |
-| Every context menu is the Material menu: the text fields' edit menu from a right-click and from the Menu key or Shift+F10 (a masked field never copies), copyable labels, the caption bar's menus and the canvas and list menus; web pages show no browser menu | Verified on `md3-v169`: 8 of 8 menu requests per mode opened the Material menu, in English, Cantonese and bilingual; on `md3-v162` text fields opened nothing on a right-click and the system's English edit menu from the keyboard | [Context menus](docs/features/design-system/context-menus.md) |
-| The last native-looking fields on the kit: the appearance editor's decimal fields, the colour picker's HEX and any-format fields, the object list's rename editor and the What's new year field; no native spin control is left | In source, not yet in a release | [Appearance editor](docs/features/windows/appearance-editor.md) |
-| Every group box draws the Material outline and title, the bed shape dialog chooses its shape with the kit combo, and no dialog keeps a native OK or Cancel button | In source, not yet in a release | [Native controls on the kit](docs/features/design-system/native-controls.md) |
-| The last native controls on people's screens are kit controls: a disabled button's tip, the web pages' notice bar, and the Workspace panel's tabs, tables, checklist and calendar; every table takes one Material style | In source, not yet in a release | [Native controls on the kit](docs/features/design-system/native-controls.md) |
-| Every scrolled page, panel, list, table, multi-line text box and HTML view shows the Material scrollbar: a 10 px strip with a rounded thumb that highlights under the pointer, in place of the 17 px grey Windows bar; it drags, pages while held and follows high contrast | In source, not yet in a release | [Native controls on the kit](docs/features/design-system/native-controls.md) |
-| Every prompt, chooser, busy notice and colour picker is a Material dialog, and ink colours keep the recently used colours as quick picks | In source, not yet in a release | [Dialogs and pickers](docs/features/design-system/dialogs-and-pickers.md) |
-| Every tooltip is the Material plain tooltip, in the light and the dark theme | In source, not yet in a release | [Tooltips](docs/features/design-system/tooltips.md) |
-| Every message box is the Material dialog, in the theme and the language modes, except the few that fire before the app's own interface exists | In source, not yet in a release | [MD3 parity register](docs/features/design-system/md3-parity-register.md) |
-| Units and separators shown as themselves: "°C", "mm³" and the What's new separators used to read "Â°C" and "Â·" because narrow literals went through the Windows code page | Verified on `md3-v158` | [Handoff](HANDOFF.md) |
-| Verification tools: the layout probe's `language-audit` command and splash hook, and capture scripts for dialogs, the splash, Preferences search and the language audit | In use for every release check above | [Layout probe](docs/features/design-system/layout-probe.md) |
-
-Still to add or verify for these features: an installed copy updating itself from one release to the
-next (it needs a Windows account whose installed copy can be replaced), notification links captured
-in a release, the 125%, 150% and 200% display scales, and human review of the Cantonese.
+<details>
+<summary><strong>Native UI modernization (Material Design 3)</strong>: the vendored design system, the parity register and the native features added with it</summary>
 
 ## Native UI modernization (Material Design 3)
 
@@ -143,6 +159,11 @@ The native split actions, option menus, segmented selectors, links, tabs, Ink Di
 Filament Manager, Project page, and setup guides now share a documented keyboard, assistive, zoom,
 and responsive-layout baseline; see
 [Keyboard, assistive, and responsive GUI accessibility](docs/features/windows/gui-accessibility.md).
+
+</details>
+
+<details>
+<summary><strong>Live application captures</strong>: real captures of the running native application, with their dates and sources</summary>
 
 ### Live application captures
 
@@ -298,6 +319,11 @@ image shows Prepare as well.
 | :---: | :---: |
 | ![Prepare page captured under the Device plug-in gate file name](docs/readme-assets/native-material-device-plugin-gate-light-en.png) | ![Local history dialog, from release md3-v231](docs/readme-assets/native-material-project-history-light-en.png) |
 
+</details>
+
+<details>
+<summary><strong>Interactive design reference</strong>: deterministic captures of the separate ui-md3 design reference and the tabbed Pages site</summary>
+
 ### Interactive design reference
 
 The images below are deterministic captures of the separate [`ui-md3`](ui-md3/) interactive design
@@ -337,6 +363,11 @@ real headless browser.
 | Preview · dark theme · Hong Kong Cantonese | Device · compact dark theme · English + Cantonese |
 | :---: | :---: |
 | [![Bambu Studio Material Design 3 Preview design reference in the dark theme and Hong Kong Cantonese](docs/readme-assets/material-preview-dark-yue-hk.png)](https://ding-ding-projects.github.io/BambuStudio/app/?view=preview&theme=dark&density=comfortable&accent=%237c5cff&lang=yue_HK) | [![Bambu Studio Material Design 3 Device design reference in the compact dark theme with English and Cantonese](docs/readme-assets/material-device-dark-bilingual.png)](https://ding-ding-projects.github.io/BambuStudio/app/?view=device&theme=dark&density=compact&accent=%2314b8a6&lang=bilingual_en_yue_HK) |
+
+</details>
+
+<details>
+<summary><strong>Screenshot provenance</strong>: every image in this README, its subject, source, capture route and date</summary>
 
 ### Screenshot provenance
 
@@ -391,9 +422,14 @@ Capture routes:
 | `docs/readme-assets/material-preview-dark-yue-hk.png` | Pages design reference: Preview, dark theme, Hong Kong Cantonese | New: Pages app at `e7c4e7c6f` | B | 2026-10-09 |
 | `docs/readme-assets/material-device-dark-bilingual.png` | Pages design reference: Device, compact dark theme, English + Cantonese | New: Pages app at `e7c4e7c6f` | B | 2026-10-09 |
 
-Not in the table: the banner at the top of this README is inherited from upstream Bambu Studio's
-README, and the Pages social card in the design-reference section is generated artwork; neither is
-a capture of this fork.
+Not in the table: the Pages social card in the design-reference section is generated artwork, not a
+capture of this fork. The upstream Bambu Studio banner that used to open this README was removed in
+the 19 October 2026 rewrite.
+
+</details>
+
+<details>
+<summary><strong>Home Assistant printer handover</strong>: the Smart home dialog, its two handover paths and its verification record</summary>
 
 ## Home Assistant printer handover
 
@@ -442,6 +478,11 @@ honest verification boundary, and
 [Home Assistant printer-discovery API](docs/features/api/home-assistant-printer-discovery.md) for
 the temporary HTTP/mDNS contract and Postman collections.
 
+</details>
+
+<details>
+<summary><strong>Windows installer</strong>: the unsigned Squirrel.Windows package and its verification</summary>
+
 ## Windows installer
 
 The supported Windows installer is Squirrel.Windows. It produces the standard unsigned
@@ -452,6 +493,11 @@ status before publication. The old NSIS UI-page path is retired; local source bu
 available through the documented one-click build scripts. See [Windows native installer](docs/features/releases/windows-native-installer.md),
 [Windows one-click build](docs/features/releases/windows-one-click-build.md), and
 [Build from source](docs/features/releases/windows-build-from-source.md).
+
+</details>
+
+<details>
+<summary><strong>Project history</strong>: app-local Git-backed version history and the release pipeline record</summary>
 
 ## Project history
 
@@ -494,7 +540,11 @@ See this fork's [wiki](https://github.com/Ding-Ding-Projects/BambuStudio/wiki),
 MD3 rewrite, verification status, and Windows release details. The original documentation remains in
 [`doc/`](doc/).
 
-# What are Bambu Studio's main features?
+</details>
+
+<details>
+<summary><strong>What are Bambu Studio's main features?</strong></summary>
+
 Key features are:
 
 - Basic slicing features & GCode viewer
@@ -517,7 +567,11 @@ Other major features are:
 - Assembly & explosion view
 - Flushing transition-filament into infill/object during filament change
 
-# How to compile on Windows
+</details>
+
+<details>
+<summary><strong>How to compile on Windows</strong>: the one-click installer build, the root build scripts and the release workflow</summary>
+
 
 For a local Release installer, double-click [`OneClickBuildInstaller.cmd`](OneClickBuildInstaller.cmd).
 Automation and fresh checkouts can use the root [`build.bat`](build.bat) and
@@ -543,6 +597,8 @@ is encoded in
 native C++ tests and packages the installed payload with Squirrel.Windows; see the
 [Windows CI and supply-chain documentation](docs/features/releases/windows-release-supply-chain.md)
 before treating a local build as equivalent to a published artifact.
+
+</details>
 
 # Report issue
 You can add an issue to the [github tracker](https://github.com/bambulab/BambuStudio/issues) if **it isn't already present.**
