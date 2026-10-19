@@ -1,5 +1,29 @@
 # Bambu Studio handoff
 
+## Express print mode and Melody creator, 19 October 2026
+
+Objective: add an Express print mode that skips the optional pre-print preparation of Bambu Lab printers and keeps heating, one homing pass, the AMS filament load, the purge line and the temperature waits; add a Melody creator so the printer can play tunes; rewrite the README. Everything is on branch `claude/bambu-express-print-mode-jkx766`, pushed and read back; nothing is on `main` yet.
+
+On the branch and verified on Linux:
+- `aa27ab45` the `express_print_mode` process option (PrintConfig, Preset, Print invalidation, process tab, GCodeProcessor 60 s allowance) with English and Cantonese catalog entries. g++ syntax check of the four libslic3r units; catalog check with `--require-complete`.
+- `de1c809f` `scripts/profiles/express_start_gcode_guards.py` and the 29 regenerated start G-code templates, pinned by `ui-md3/tests/express-start-gcode.test.mjs` (every template resolved in express and normal mode, per-family expectations, idempotency, mutation self-test).
+- `4ae74103` the Send print job dialog row (preset-backed, forced-off rows, Slice again through the process Tab), `apply_express_print_mode()` in `SendPrintReadiness.hpp` (47 native assertions), the multi-machine page and the automation bridge, `ui-md3/tests/send-dialog-express-mode.test.mjs`. g++ syntax check of the three GUI units; the pre-existing `CheckBox` name clash with `Tab.hpp` is resolved with `::CheckBox`.
+- `c98e08f8` the Melody creator: `src/slic3r/GUI/Melody/MelodyModel.hpp` (229 assertions in `tests/melody_model_test.cpp`), `MelodyCreatorDialog`, the File menu item, CMake and catalog registration, 79 messages in both languages, `ui-md3/tests/melody-creator-localization.test.mjs`. g++ syntax check of the dialog and `MainFrame.cpp`.
+- `b3927730` the two articles with Cantonese twins, the category indexes, a paragraph in the print actions article, the regenerated documentation bundle. `check_translated_content.py` reports the same 21 pre-existing problems as the base tree and none new.
+- `bf640f14` the tabbed README with both features first and `docs/integration/readme-status-archive-20261019.md` holding the old status log verbatim.
+
+Not verified:
+- The hosted Windows build. Runs 873 to 877 of "Windows build and release" were in progress on the branch when this was written (the first was at "Build slicer Win"). The g++ syntax check on Linux cannot compile `#ifdef _WIN32` blocks or MSVC-only constructs, so the hosted build is the only native verdict. Read it; if it is red, fix on the branch and push again.
+- The dialogs in the running application, screenshots, and a physical printer. The express start G-code was read for seven families, not printed. The M1006 parameter meaning and the tick length are inferred from the stock tunes and can only be confirmed by ear on a printer.
+- `scripts/i18n/test_untranslated_literals.py` is red on the base tree (62 findings); this branch adds none.
+
+Blockers and leftovers:
+- The wiki pages `Express-Print-Mode.md`, `Melody-Creator.md` and the Home entry were written and committed in a clone of the wiki but could not be pushed: the session's git proxy refuses the wiki repository. They mirror the two articles; re-create them from the articles when pushing from a session that can reach the wiki.
+- The Pages site has no per-feature article list, so it was not changed; its changelog is generated from releases.
+- No screenshot of either dialog exists yet; the README feature table says so.
+
+Next owner: read the build verdict, run the dialogs on Windows and capture them, play an express start and a melody on a printer, then integrate the branch into `main`.
+
 ## Release repair, Material conversion and LAN model drop, 10 October 2026
 
 Objective: keep the updater and startup working, make every element Material Design 3, and add a LAN site where other people send a model to Bambu Studio MD3 on this computer, with the option visible in the app and an invite link plus QR code. The session stopped at the owner's request (usage limit) and the cloud container was about to be deleted, so every piece of work below is pushed; nothing exists only locally.

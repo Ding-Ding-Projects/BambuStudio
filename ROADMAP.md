@@ -1,3 +1,19 @@
+## Express print mode and Melody creator, 19 October 2026
+
+Branch `claude/bambu-express-print-mode-jkx766`, commits `aa27ab45`, `de1c809f`, `4ae74103`, `c98e08f8`, `b3927730`, `bf640f14`.
+
+- [x] Add the `express_print_mode` process option, persist it, invalidate only the G-code export on toggle, show it in the Special mode group, and use a 60 s preparation allowance in the time estimate.
+- [x] Guard the unconditional preparation sections of all 29 Bambu Lab start G-code templates with a reviewed, idempotent script and a template contract that resolves every template in express and normal mode.
+- [x] Mirror the option in the Send print job dialog, force the leveling, flow and offset rows off while it is on, send every preparation flag off, and follow it on the multi-machine page and the automation bridge; native readiness fixture and dialog wiring contract pass.
+- [x] Add the Melody creator: the M1006 model (229 fixture assertions), the Material dialog, the File menu item, catalog registration with 79 English and Cantonese messages, and the localization contract.
+- [x] Write both feature articles with Cantonese twins, index them, extend the print actions article, regenerate the offline bundle.
+- [x] Rewrite the README as a tabbed page with both features first and the old status log archived verbatim.
+- [ ] Read the hosted Windows build verdict for the branch (runs 873 to 877 were in progress at the time of writing); fix and push again if it is red.
+- [ ] Run the dialogs in the built application on a Windows host and capture them: the Express print mode row, the forced-off rows, Slice again after a toggle, the Melody creator with a preset loaded.
+- [ ] Play an express start and a melody on a physical printer; confirm the M1006 parameter meaning and the tick length, and correct the article if they differ.
+- [ ] Push the wiki pages (Express-Print-Mode, Melody-Creator, Home entry) that this session wrote but could not push: the wiki repository is outside the session's authorized set.
+- [ ] Integrate the branch into `main` once the build is green.
+
 ## Installer destination isolation, 9 October 2026
 
 - [x] Move future Visual Studio bootstrap and PDF compiler defaults outside Squirrel's replaceable product directory.
