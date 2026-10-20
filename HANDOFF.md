@@ -1,5 +1,18 @@
 # Bambu Studio handoff
 
+## Upstream port, 20 October 2026
+
+Objective: check upstream `bambulab/BambuStudio` for changes newer than what this fork already includes, and port what applies.
+
+Found: the newest upstream tag is still `v02.08.04.61` and both it and the previously recorded `master` tip `da8b44ee` are ancestors of this branch (proved with `git merge-base --is-ancestor` after deepening the clone). `master` has exactly three commits beyond that:
+- `88ec97c2` "Fix preset setting-id type routing": `PresetBundle::update_system_preset_setting_ids` tested `PRESET_IOT_PRINTER_TYPE` in all three branches, so print and filament setting ids were routed to the printer collection. Ported as-is (applies cleanly).
+- `79df7ae3` "FIX: 2.8.3 Beta Build Fixes (#12596)": `MeshDiagnostics.hpp` includes `Point.hpp`, `WipeTowerPlacement.cpp` includes `ClipperUtils.hpp` for `offset()`, and `wgtFilaManagerSync.h` declares `<set>` for its `std::set` member instead of the `.cpp`. Ported as-is (applies cleanly).
+- `47a13eeb` "Add Windows ARM64 and ARM64EC build support": 22 files, mostly dependency recipes and workflow matrix entries. Not ported: this fork publishes x64 only, six of its files (`build_all.yml`, `build_bambu.yml`, `build_deps.yml`, `CMakeLists.txt`, `deps/FFMPEG/FFMPEG.cmake`, `deps/OpenSSL/OpenSSL.cmake`, `src/BaseException.cpp`) conflict with this fork's rewritten build, and there is no ARM64 runner here to verify the result. Port it together with an ARM64 build target if one is ever wanted.
+
+Verified on Linux: g++ `-fsyntax-only` passes for `PresetBundle.cpp`, `MeshDiagnostics.cpp`, `WipeTowerPlacement.cpp` and `wgtFilaManagerSync.cpp` with the Linux header set. Not verified here: the hosted Windows build of this commit (read "Windows build and release" for it), and runtime behaviour of the setting-id routing with a cloud account.
+
+Next owner: read the hosted build verdict, then integrate into `main` the same way as the express work below.
+
 ## Express print mode and Melody creator, 19 October 2026
 
 Objective: add an Express print mode that skips the optional pre-print preparation of Bambu Lab printers and keeps heating, one homing pass, the AMS filament load, the purge line and the temperature waits; add a Melody creator so the printer can play tunes; rewrite the README. Everything is on branch `claude/bambu-express-print-mode-jkx766`, pushed and read back; nothing is on `main` yet.

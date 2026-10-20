@@ -91,7 +91,7 @@ The [Studio Atlas design](design/workflow-refresh.md) covers the whole native ap
 The previously preserved responsive-workflow and local-history source has been reconciled into the combined delivery revision. This pass adds bounded draft/history, continuity, import and automation repairs. Release delivery remains pending; see [the current continuation record](CLOSEOUT_PROMPT.md). Import cancellation remains cooperative and cannot interrupt an indivisible reader, hull calculation, object copy or final scene update. Issue #16's separately licensed companion remains a separate decision and is not included in this delivery.
 
 The source branch for the next Windows release reconciles upstream Bambu Studio
-2.8.4.57, with the fixes of upstream 2.8.4.61 merged on 2026-09-29, with this fork's native UI. It adds remembered dual-nozzle grouping,
+2.8.4.57, with the fixes of upstream 2.8.4.61 merged on 2026-09-29 and the two upstream fixes that followed it on `master` (preset setting-id type routing, `88ec97c2`; build-fix includes, `79df7ae3`) ported on 2026-10-20, with this fork's native UI. Upstream's Windows ARM64 build support (`47a13eeb`) is not ported: this fork ships x64 only and its build workflow differs. It adds remembered dual-nozzle grouping,
 quick swaps and a Slice and print setup action, LAN printer farm routing,
 camera autoplay and fan feedback, a native Model Creator, portable multi-file
 workspaces with checklists and planning, and history embedded in saved 3MF
