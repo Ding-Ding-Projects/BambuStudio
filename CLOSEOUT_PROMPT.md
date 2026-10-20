@@ -14,13 +14,14 @@ page and automation bridge, with the native readiness fixture (4ae74103); the Me
 plus the regenerated documentation bundle (b3927730); the tabbed README and its status archive
 (bf640f14).
 
-Verified: the hosted Windows build of the code commits (runs 873 to 876 of "Windows build and
-release" completed with success). Not verified: runs 877 and 878 (docs and README, in progress),
-the dialogs in the running application, screenshots, and a physical printer. The M1006
+Verified: the hosted Windows build of every commit on the branch (runs 873 to 878 of "Windows
+build and release" completed with success). Not verified: the dialogs in the running application,
+screenshots, and a physical printer. The M1006
 parameter meaning and tick length are inferred.
 
 Next steps, in order:
-1. Confirm runs 877 and 878 finished green (the code runs 873 to 876 already did).
+1. Merge the branch into main after review (it fast-forwards from 6dc72bba); a push to main
+   builds and publishes a release.
 2. On a Windows host with the built app: open Print setup, toggle Express print mode, confirm the
    three rows go off and Slice again appears; open File > Melody creator, load a preset, preview,
    add to start G-code. Capture both dialogs for docs/screenshots and the README feature table.

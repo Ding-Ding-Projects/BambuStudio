@@ -13,7 +13,7 @@ On the branch and verified on Linux:
 - `bf640f14` the tabbed README with both features first and `docs/integration/readme-status-archive-20261019.md` holding the old status log verbatim.
 
 Verified by the hosted build, then not verified:
-- The hosted Windows build of the code commits is green: runs 873 (`aa27ab45`), 874 (`de1c809f`), 875 (`4ae74103`) and 876 (`c98e08f8`) of "Windows build and release" completed with success, so the MSVC compile, the Cantonese catalog verification and the Squirrel package contract passed for the express print mode and the Melody creator. Runs 877 (`b3927730`, documentation) and 878 (`bf640f14`, README) were still in progress when this was written; they change no C++ apart from the regenerated documentation bundle header.
+- The hosted Windows build of the code commits is green: runs 873 (`aa27ab45`), 874 (`de1c809f`), 875 (`4ae74103`) and 876 (`c98e08f8`) of "Windows build and release" completed with success, so the MSVC compile, the Cantonese catalog verification and the Squirrel package contract passed for the express print mode and the Melody creator. Runs 877 (`b3927730`, documentation) and 878 (`bf640f14`, README) completed with success too, so every commit on the branch has a green hosted build.
 - The dialogs in the running application, screenshots, and a physical printer. The express start G-code was read for seven families, not printed. The M1006 parameter meaning and the tick length are inferred from the stock tunes and can only be confirmed by ear on a printer.
 - `scripts/i18n/test_untranslated_literals.py` is red on the base tree (62 findings); this branch adds none.
 
@@ -22,7 +22,9 @@ Blockers and leftovers:
 - The Pages site has no per-feature article list, so it was not changed; its changelog is generated from releases.
 - No screenshot of either dialog exists yet; the README feature table says so.
 
-Next owner: read the build verdict, run the dialogs on Windows and capture them, play an express start and a melody on a printer, then integrate the branch into `main`.
+Integration: `main` (`6dc72bba`) is an ancestor of the branch tip, so the integration is a fast-forward of the branch; the cloud session's policy withheld it as a merge without review, so the maintainer merges (or fast-forwards) the branch into `main` after review. A push to `main` builds and publishes a release.
+
+Next owner: merge the branch into `main`, run the dialogs on Windows and capture them, play an express start and a melody on a printer, and push the wiki pages.
 
 ## Release repair, Material conversion and LAN model drop, 10 October 2026
 
