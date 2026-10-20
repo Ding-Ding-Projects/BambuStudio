@@ -3,6 +3,8 @@
 #include "PreferencesSearchTraversal.hpp"
 #include "PersonalVocabulary.hpp"
 #include "TtsNarrator.hpp"
+#include "LanModelDrop/LanModelDropStation.hpp"
+#include "LanModelDrop/LanModelDropUi.hpp"
 #include "PersonalModes/SchoolMode.hpp"
 #include "FeatureServices/PresentationRoutes.hpp"
 #include "FeatureServices/SchoolCredentials.hpp"
@@ -1261,6 +1263,11 @@ wxBoxSizer *PreferencesDialog::create_item_checkbox(wxString title, wxWindow *pa
             wxGetApp().switch_staff_pick(pbool);
         }
 
+        // LAN model drop: start or stop polling at once. The invite right under the switch is
+        // the first thing shown once it is on.
+        if (param == LanModelDrop::kEnabledConfigKey)
+            LanModelDrop::apply_settings();
+
         if (param == "sync_user_preset") {
             bool sync = app_config->get("sync_user_preset") == "true" ? true : false;
             if (sync) {
@@ -1671,6 +1678,8 @@ void PreferencesDialog::create()
     add_tab("user", _CTX(L_CONTEXT("User", "Preference"), "Preference"), create_user_tab());
     add_tab("3d", _CTX(L_CONTEXT("3D", "Preference"), "Preference"), create_3d_tab());
     add_tab("other", _CTX(L_CONTEXT("Other", "Preference"), "Preference"), create_other_tab());
+    // A section of its own, never behind an advanced toggle (docs/features/application-integration/lan-model-drop.md).
+    add_tab("lan_drop", _L("LAN model drop"), create_lan_drop_tab());
 
 #if !BBL_RELEASE_TO_PUBLIC
     add_tab("developer", _L("Developer Tools"), create_developer_tab());
@@ -3521,6 +3530,49 @@ wxWindow *PreferencesDialog::create_other_tab()
     sizer->Add(item_associate_stl, flags);
     sizer->Add(item_associate_step, flags);
 #endif
+
+    sizer->AddSpacer(FromDIP(20));
+    scrolled->SetSizer(sizer);
+    scrolled->FitInside();
+    return scrolled;
+}
+
+// LAN model drop: receive 3D models that people on the local network send through the drop site
+// (a Docker container). Off by default. The switch comes first, then the invite (link, Copy link,
+// QR code, New link), then the connection rows. Every row is registered so the settings search and
+// the command palette find it.
+wxWindow *PreferencesDialog::create_lan_drop_tab()
+{
+    auto        scrolled = new ScrollPanel(m_book);
+    wxBoxSizer *sizer    = new wxBoxSizer(wxVERTICAL);
+    auto        flags    = wxSizerFlags().Expand().Border(wxTOP, FromDIP(8));
+
+    sizer->Add(create_item_title(_L("LAN model drop"), scrolled, _L("LAN model drop")), wxSizerFlags().Expand().Border(wxTOP, FromDIP(16)));
+    sizer->Add(LanModelDrop::create_intro_row(scrolled), flags);
+    sizer->Add(create_item_checkbox(_L("Receive models from the LAN drop site"), scrolled,
+                                    _L("Check the drop site every few seconds and show each received model with Open and Discard."), 50,
+                                    "lan_drop_enabled"),
+               flags);
+
+    LanModelDrop::InvitePanel::Options invite_options;
+    auto *invite = new LanModelDrop::InvitePanel(scrolled, invite_options);
+    sizer->Add(invite, wxSizerFlags().Expand().Border(wxLEFT | wxRIGHT | wxTOP, FromDIP(ITEM_LEFT_PADDING)));
+    register_option_row("lan_drop_invite", nullptr, invite);
+
+    sizer->Add(create_item_title(_L("Connection to the drop site"), scrolled, _L("Connection to the drop site")),
+               wxSizerFlags().Expand().Border(wxTOP, FromDIP(16)));
+    auto *status = LanModelDrop::create_status_row(scrolled);
+    sizer->Add(status, flags);
+    register_option_row("lan_drop_status", nullptr, status);
+    auto *address = LanModelDrop::create_address_row(scrolled);
+    sizer->Add(address, flags);
+    register_option_row("lan_drop_address", nullptr, address);
+    auto *key = LanModelDrop::create_key_row(scrolled);
+    sizer->Add(key, flags);
+    register_option_row("lan_drop_station_key", nullptr, key);
+    auto *code = LanModelDrop::create_code_row(scrolled);
+    sizer->Add(code, flags);
+    register_option_row("lan_drop_code", nullptr, code);
 
     sizer->AddSpacer(FromDIP(20));
     scrolled->SetSizer(sizer);

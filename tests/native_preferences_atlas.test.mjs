@@ -16,7 +16,12 @@ function literals(source){return tokens(source).filter(t=>t.startsWith('"'));}
 // between an addition's markers is set aside; every other call and literal in
 // the file stays fingerprinted against the baseline.
 // - The App logo section of the appearance tab: ui-md3/tests/app-logo-chrome.test.mjs.
-const additions={'Preferences.cpp':[/\n[ \t]*\/\/ ---- App logo \(presentation-only mark\)[\s\S]*?\n[ \t]*register_option_row\(AppLogo::config_key, logo_line\);\n/]};
+// - The LAN model drop section (its tab, its switch hook and its builder):
+//   tests/lan_model_drop/app_wiring.test.mjs.
+const additions={'Preferences.cpp':[/\n[ \t]*\/\/ ---- App logo \(presentation-only mark\)[\s\S]*?\n[ \t]*register_option_row\(AppLogo::config_key, logo_line\);\n/,
+ /\n[ \t]*\/\/ A section of its own, never behind an advanced toggle[^\n]*\n[ \t]*add_tab\("lan_drop", _L\("LAN model drop"\), create_lan_drop_tab\(\)\);\n/,
+ /\n[ \t]*\/\/ LAN model drop: start or stop polling at once\.[^\n]*\n[ \t]*\/\/[^\n]*\n[ \t]*if \(param == LanModelDrop::kEnabledConfigKey\)\n[ \t]*LanModelDrop::apply_settings\(\);\n/,
+ /\n\/\/ LAN model drop: receive 3D models[^\n]*\n(?:\/\/[^\n]*\n)*wxWindow \*PreferencesDialog::create_lan_drop_tab\(\)\n\{[\s\S]*?\n\}\n/]};
 const current=p=>(additions[p]||[]).reduce((source,marker)=>source.replace(marker,'\n'),read(p));
 function cardContract(project,preferences,schedules){
  assert.match(project,/new StaticBox\(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL\)/);

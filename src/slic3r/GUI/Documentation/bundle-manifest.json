@@ -45,7 +45,27 @@
     {
       "route": "application-integration/README.md",
       "title": "Native service integration",
-      "sha256": "82a44633f2b47312d60e4ab6dc97e098161a985cda9dd4655da55e825a416967"
+      "sha256": "355ab08db8bb1072353b36c8db55bd202f32842082989bf034e02611f6b06bb7"
+    },
+    {
+      "route": "application-integration/lan-model-drop-site.md",
+      "title": "LAN model drop site",
+      "sha256": "9df80d7bc6c9a001a800f80d0377b73784202a6a5330fb7acc24f5ed7715df6c"
+    },
+    {
+      "route": "application-integration/lan-model-drop-site.yue_HK.md",
+      "title": "LAN 模型投遞網站",
+      "sha256": "6c546fd5e94702f1fbcdaa32df2ad4667625ccaa70079888e58e19cd5a471174"
+    },
+    {
+      "route": "application-integration/lan-model-drop.md",
+      "title": "LAN model drop",
+      "sha256": "a6f584ce68d47fd8d2a9e7e2f8802ed2509e0c08bb4b455c94fa7b9e7f81e982"
+    },
+    {
+      "route": "application-integration/lan-model-drop.yue_HK.md",
+      "title": "LAN 模型投遞",
+      "sha256": "c7593c20d04488cc3c7a19ecd77a4f2d0e70bcfc86b05ba0df74ab758edf1297"
     },
     {
       "route": "application-integration/surface-registry.md",
@@ -1995,7 +2015,7 @@
       "bytes": 1979
     }
   ],
-  "bundle_sha256": "76a8135e4254e39bedc6f8ff0ea4c1ba9a87d24343c4a4005f0aee99a4f60672",
+  "bundle_sha256": "f90833130fba6ef2ecb2cc24745f6b9b60b0e16210b85ab5b547f95bc84ff8a9",
   "unavailable_references": [
     {
       "source": "api/README.md",

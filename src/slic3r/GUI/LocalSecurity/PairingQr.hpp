@@ -9,5 +9,8 @@ struct PairingQr {
     bool module(unsigned x, unsigned y) const;
     // Registration-only matrix; do not serialize, cache, log or capture it.
     static PairingQr encode(const LocalSecurity::Enrollment&);
+    // Public, non-secret text such as the LAN model drop site address, with the same encoder,
+    // error correction and 2,048-byte bound. Throws LocalSecurity::Failure on an empty or longer text.
+    static PairingQr encode_text(const std::string& text);
 };
 }

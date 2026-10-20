@@ -1,0 +1,15 @@
+HTTP/1.1 201 Created
+Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'
+X-Content-Type-Options: nosniff
+Referrer-Policy: no-referrer
+X-Frame-Options: DENY
+Cross-Origin-Opener-Policy: same-origin
+Cross-Origin-Resource-Policy: same-origin
+Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
+Content-Type: application/json; charset=utf-8
+Content-Length: 51
+Cache-Control: no-store
+Date: Sun, 11 Oct 2026 19:21:34 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+

@@ -1,0 +1,5 @@
+# Only server/ and site/ go into the image; keep everything else, and above
+# all a .env with a station key, out of the build context.
+*
+!server/
+!site/
