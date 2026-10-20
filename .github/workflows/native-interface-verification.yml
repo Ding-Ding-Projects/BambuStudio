@@ -367,7 +367,7 @@ jobs:
           $python = (Get-Command python.exe -ErrorAction Stop).Source
           cmake -S . -B focused-build -G Ninja -DSLIC3R_BUILD_TESTS=ON -DSLIC3R_MSVC_PDB=OFF -DBBL_RELEASE_TO_PUBLIC=1 -DBBL_INTERNAL_TESTING=0 "-DCMAKE_PREFIX_PATH=$prefix" "-DPython3_EXECUTABLE=$python" -DCMAKE_BUILD_TYPE=Release
           if ($LASTEXITCODE -ne 0) { throw 'Focused native service configuration failed.' }
-          cmake --build focused-build --config Release --parallel 4 --target personal_vocabulary_tests personal_vocabulary_probe language_mode_tests profile_archive_tests bounded_regex_tests
+          cmake --build focused-build --config Release --parallel 4 --target personal_vocabulary_tests personal_vocabulary_schema_test personal_vocabulary_probe language_mode_tests profile_archive_tests bounded_regex_tests
           if ($LASTEXITCODE -ne 0) { throw 'Focused native service compilation failed.' }
       - name: Verify canvas regex whole-word parity with the real worker
         timeout-minutes: 2
@@ -390,9 +390,15 @@ jobs:
             & $executables[0].FullName --reporter junit --out "artifacts/native-services/$target.xml"
             if ($LASTEXITCODE -ne 0) { throw "Native service verification failed: $target." }
           }
+          $schema = @(Get-ChildItem focused-build -Filter 'personal_vocabulary_schema_test.exe' -File -Recurse)
+          if ($schema.Count -ne 1) { throw 'Expected one vocabulary schema test.' }
+          & $schema[0].FullName
+          if ($LASTEXITCODE -ne 0) { throw 'Vocabulary file limits failed.' }
           $probes = @(Get-ChildItem focused-build -Filter 'personal_vocabulary_probe.exe' -File -Recurse)
           if ($probes.Count -ne 1) { throw 'Expected one vocabulary persistence probe.' }
-          foreach ($phase in @('load-first','restore-first','invalid','replace','restore-second','clear','restore-empty')) {
+          foreach ($phase in @('load-first','restore-first','invalid','replace','restore-second','clear','restore-empty',
+                               'large','restore-large','stale-cache','restore-stale','corrupt-cache','restore-corrupt',
+                               'clear','restore-empty')) {
             & $probes[0].FullName $phase
             if ($LASTEXITCODE -ne 0) { throw "Synthetic persistence phase failed: $phase." }
           }

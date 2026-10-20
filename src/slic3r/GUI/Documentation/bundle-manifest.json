@@ -1620,12 +1620,12 @@
     {
       "route": "windows/personal-vocabulary.md",
       "title": "Personal vocabulary",
-      "sha256": "7fda420aacc18e221da22803e91685fa11beb504f516a621ff6cacab20b092ac"
+      "sha256": "ef49164925414e5bf5906aea98804338cacaa0edab623cafc0eff4fb3556a701"
     },
     {
       "route": "windows/personal-vocabulary.yue_HK.md",
       "title": "個人詞彙",
-      "sha256": "0a6545543ddeed5c218a847f109fc658ffc359dc21b84f792b7a067d3efe57d3"
+      "sha256": "58131589dffc60afe9ad16016754ee8a1d1e93f75dd25283d6019574ec94e8dd"
     },
     {
       "route": "windows/print-actions.md",
@@ -2025,7 +2025,7 @@
       "bytes": 1979
     }
   ],
-  "bundle_sha256": "ba9b3753c310070002750e1895203c50911b77d949a2ba9c2c6947b4b386a74d",
+  "bundle_sha256": "730c3337f410824aa3a9d4102b0b1b574d8a64ee4d6ec6b7ff802fa79087120a",
   "unavailable_references": [
     {
       "source": "api/README.md",

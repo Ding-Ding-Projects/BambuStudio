@@ -1,7 +1,6 @@
 #include "PersonalVocabulary.hpp"
 #include "PersonalModes/SchoolMode.hpp"
 
-#include <nlohmann/json.hpp>
 #include <algorithm>
 #include <atomic>
 #include <chrono>
@@ -11,7 +10,7 @@
 #include <memory>
 #include <mutex>
 #include <set>
-#include <stdexcept>
+#include <unordered_map>
 #include <wx/app.h>
 #include <wx/stdpaths.h>
 #include <wx/toplevel.h>
@@ -31,6 +30,11 @@ struct Observer {
     std::function<void()> refresh_display;
 };
 
+// Positions of the entries whose source starts with each code unit, in mapping
+// order. Display looks only at entries that can match at a position, so the
+// cost of a label does not grow with the size of the vocabulary.
+using FirstUnitIndex = std::unordered_map<wchar_t, std::vector<std::size_t>>;
+
 // remember() runs inside every translation, and other files translate text in
 // their static initializers while BambuStudio.dll is still loading. A container
 // at namespace scope may not be constructed yet at that point (its constructor
@@ -45,6 +49,8 @@ struct State {
     std::map<wxWindow *, Observer> observers;
     bool initialized = false;
     bool cache_loaded = false;
+    FirstUnitIndex index;
+    Rejection cache_rejection = Rejection::None;
 };
 
 State &state()
@@ -59,28 +65,55 @@ std::filesystem::path cache_path()
         "private-display" / "vocabulary.json";
 }
 
-bool read_bounded(const std::filesystem::path &path, std::string &bytes)
+// Reads at most one byte more than the file limit, so an oversized file is
+// rejected without reading the rest of it.
+Rejection read_bounded(const std::filesystem::path &path, std::string &bytes)
 {
     std::ifstream input(path, std::ios::binary);
-    if (!input) return false;
-    bytes.resize(max_bytes + 1);
+    if (!input) return Rejection::Unreadable;
+    bytes.resize(max_file_bytes + 1);
     input.read(bytes.data(), static_cast<std::streamsize>(bytes.size()));
     bytes.resize(static_cast<std::size_t>(input.gcount()));
-    return !input.bad() && bytes.size() <= max_bytes;
+    if (input.bad()) return Rejection::Unreadable;
+    return bytes.size() > max_file_bytes ? Rejection::TooLarge : Rejection::None;
 }
 
-bool valid_text(const std::string &text)
+FirstUnitIndex index_entries(const Entries &mapping)
 {
-    if (text.empty() || text.size() > max_text_bytes) return false;
-    for (unsigned char ch : text) if (ch < 32 || ch == 127) return false;
-    const auto unicode = wxString::FromUTF8(text).ToStdWstring();
-    bool has_content = false;
-    for (wchar_t ch : unicode) {
-        if ((ch >= 0x80 && ch <= 0x9f) || (ch >= 0x202a && ch <= 0x202e) ||
-            (ch >= 0x2066 && ch <= 0x2069)) return false;
-        if (!std::iswspace(ch)) has_content = true;
+    FirstUnitIndex index;
+    for (std::size_t i = 0; i < mapping.size(); ++i)
+        if (!mapping[i].first.empty()) index[mapping[i].first.front()].push_back(i);
+    return index;
+}
+
+wxString apply_indexed(const wxString &source, const Entries &mapping, const FirstUnitIndex &index)
+{
+    const auto value = source.ToStdWstring();
+    if (value.size() > 32768) return source;
+    if (value.find(L"://") != std::wstring::npos || value.find(L'\\') != std::wstring::npos ||
+        value.find(L'/') != std::wstring::npos || value.find(L'%') != std::wstring::npos) return source;
+    auto word = [](wchar_t c) { return std::iswalnum(c) || c == L'_'; };
+    std::wstring output;
+    for (std::size_t i = 0; i < value.size();) {
+        bool matched = false;
+        if (const auto candidates = index.find(value[i]); candidates != index.end()) {
+            for (const std::size_t position : candidates->second) {
+                const auto &entry = mapping[position];
+                const auto end = i + entry.first.size();
+                if (value.compare(i, entry.first.size(), entry.first) == 0 &&
+                    (i == 0 || !word(value[i-1]) || !word(entry.first.front())) &&
+                    (end == value.size() || !word(value[end]) || !word(entry.first.back()))) {
+                    output += entry.second;
+                    i = end;
+                    matched = true;
+                    break;
+                }
+            }
+        }
+        if (!matched) output += value[i++];
+        if (output.size() > 65536) return source;
     }
-    return has_content && text != "__proto__" && text != "constructor" && text != "prototype";
+    return wxString(output);
 }
 
 bool write_exclusive(const std::filesystem::path &path, const std::string &bytes)
@@ -123,37 +156,19 @@ void observe(wxWindow *window, std::function<void()> refresh_display)
     observers[window] = Observer{window, std::move(refresh_display)};
 }
 
-bool parse(std::string_view bytes, Entries &result)
+bool parse(std::string_view bytes, Entries &result, Rejection *reason)
 {
-    if (bytes.empty() || bytes.size() > max_bytes) return false;
-    try {
-        bool valid = true;
-        std::vector<std::set<std::string>> object_keys;
-        auto callback = [&](int depth, nlohmann::json::parse_event_t event, nlohmann::json &value) {
-            if (depth > 3) throw std::invalid_argument("Unsupported document nesting");
-            if (event == nlohmann::json::parse_event_t::object_start) object_keys.emplace_back();
-            if (event == nlohmann::json::parse_event_t::key) {
-                const auto key = value.get<std::string>();
-                if (object_keys.empty() || !object_keys.back().insert(key).second || !valid_text(key)) valid = false;
-            }
-            if (event == nlohmann::json::parse_event_t::object_end && !object_keys.empty()) object_keys.pop_back();
-            return true;
-        };
-        auto root = nlohmann::json::parse(bytes.begin(), bytes.end(), callback);
-        if (!valid || !root.is_object() || root.size() != 2 || !root.contains("schemaVersion") ||
-            !root["schemaVersion"].is_number_integer() || root["schemaVersion"] != 1 ||
-            !root.contains("entries") || !root["entries"].is_object() || root["entries"].size() > max_entries) return false;
-        Entries next;
-        for (const auto &item : root["entries"].items()) {
-            if (!valid_text(item.key()) || !item.value().is_string()) return false;
-            const auto value = item.value().get<std::string>();
-            if (!valid_text(value)) return false;
-            next.emplace_back(wxString::FromUTF8(item.key()).ToStdWstring(), wxString::FromUTF8(value).ToStdWstring());
-        }
-        std::stable_sort(next.begin(), next.end(), [](const auto &a, const auto &b) { return a.first.size() > b.first.size(); });
-        result = std::move(next);
-        return true;
-    } catch (...) { return false; }
+    TextEntries text;
+    const Rejection why = validate(bytes, text);
+    if (reason) *reason = why;
+    if (why != Rejection::None) return false;
+    Entries next;
+    next.reserve(text.size());
+    for (const auto &[key, value] : text)
+        next.emplace_back(wxString::FromUTF8(key).ToStdWstring(), wxString::FromUTF8(value).ToStdWstring());
+    std::stable_sort(next.begin(), next.end(), [](const auto &a, const auto &b) { return a.first.size() > b.first.size(); });
+    result = std::move(next);
+    return true;
 }
 
 void initialize()
@@ -161,24 +176,43 @@ void initialize()
     auto &s = state();
     if (s.initialized || !wxTheApp) return;
     s.initialized = true;
+    // The private copy meets exactly the rules a selected file meets before it
+    // is used. A copy that is unreadable, oversized, written under other rules
+    // or otherwise invalid is ignored, original wording stays, and the settings
+    // control reports why.
+    const auto path = cache_path();
+    std::error_code ec;
+    const bool present = std::filesystem::exists(path, ec);
+    if (!present && !ec) return;
     std::string bytes;
     Entries cached;
-    if (read_bounded(cache_path(), bytes) && parse(bytes, cached)) {
-        s.entries = std::move(cached);
-        s.cache_loaded = true;
+    Rejection reason = ec ? Rejection::Unreadable : read_bounded(path, bytes);
+    if (reason == Rejection::None) parse(bytes, cached, &reason);
+    if (reason != Rejection::None) {
+        s.cache_rejection = reason;
+        return;
     }
+    s.entries = std::move(cached);
+    s.index = index_entries(s.entries);
+    s.cache_loaded = true;
 }
 
-bool load(const std::filesystem::path &file)
+bool load(const std::filesystem::path &file, Rejection *reason)
 {
     initialize();
+    auto reject = [reason](Rejection why) {
+        if (reason) *reason = why;
+        return false;
+    };
     std::string bytes;
     Entries next;
-    if (!read_bounded(file, bytes) || !parse(bytes, next)) return false;
+    Rejection why = read_bounded(file, bytes);
+    if (why == Rejection::None) parse(bytes, next, &why);
+    if (why != Rejection::None) return reject(why);
     const auto cache = cache_path();
     std::error_code ec;
     std::filesystem::create_directories(cache.parent_path(), ec);
-    if (ec) return false;
+    if (ec) return reject(Rejection::CacheUnavailable);
     // The private cache is outside the profile configuration and its history.
     // Persist no selected source path and expose no payload in diagnostics.
     PendingFile pending;
@@ -194,16 +228,21 @@ bool load(const std::filesystem::path &file)
             std::to_string(stamp) + "-" + std::to_string(sequence.fetch_add(1)) + ".pending");
         if (write_exclusive(candidate, bytes)) pending.path = candidate;
     }
-    if (pending.path.empty()) return false;
+    if (pending.path.empty()) return reject(Rejection::CacheUnavailable);
 #ifdef _WIN32
-    if (!::MoveFileExW(pending.path.c_str(), cache.c_str(), MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH)) return false;
+    if (!::MoveFileExW(pending.path.c_str(), cache.c_str(), MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH))
+        return reject(Rejection::CacheUnavailable);
 #else
     std::filesystem::rename(pending.path, cache, ec);
-    if (ec) return false;
+    if (ec) return reject(Rejection::CacheUnavailable);
 #endif
     pending.path.clear();
-    state().entries = std::move(next);
-    state().cache_loaded = true;
+    auto &s = state();
+    s.entries = std::move(next);
+    s.index = index_entries(s.entries);
+    s.cache_loaded = true;
+    s.cache_rejection = Rejection::None;
+    if (reason) *reason = Rejection::None;
     refresh();
     return true;
 }
@@ -214,13 +253,18 @@ bool clear()
     std::error_code ec;
     std::filesystem::remove(cache_path(), ec);
     if (ec) return false;
-    state().entries.clear();
-    state().cache_loaded = false;
+    auto &s = state();
+    s.entries.clear();
+    s.index.clear();
+    s.cache_loaded = false;
+    s.cache_rejection = Rejection::None;
     refresh();
-    return !ec;
+    return true;
 }
 
 bool loaded() { initialize(); return state().cache_loaded; }
+
+Rejection cache_rejection() { initialize(); return state().cache_rejection; }
 
 bool is_cache_path(const std::filesystem::path &path)
 {
@@ -249,35 +293,12 @@ wxString display(const wxString &source)
     const auto value = source.ToStdWstring();
     auto &s = state();
     { std::lock_guard<std::mutex> lock(s.source_mutex); if (!s.sources.count(value)) return source; }
-    return Slic3r::GUI::PersonalVocabulary::apply(source, s.entries);
+    return apply_indexed(source, s.entries, s.index);
 }
 
 wxString apply(const wxString &source, const Entries &mapping)
 {
-    const auto value = source.ToStdWstring();
-    if (value.size() > 32768) return source;
-    if (value.find(L"://") != std::wstring::npos || value.find(L'\\') != std::wstring::npos ||
-        value.find(L'/') != std::wstring::npos || value.find(L'%') != std::wstring::npos) return source;
-    auto word = [](wchar_t c) { return std::iswalnum(c) || c == L'_'; };
-    std::wstring output;
-    for (std::size_t i = 0; i < value.size();) {
-        bool matched = false;
-        for (const auto &entry : mapping) {
-            if (entry.first.empty()) continue;
-            const auto end = i + entry.first.size();
-            if (value.compare(i, entry.first.size(), entry.first) == 0 &&
-                (i == 0 || !word(value[i-1]) || !word(entry.first.front())) &&
-                (end == value.size() || !word(value[end]) || !word(entry.first.back()))) {
-                output += entry.second;
-                i = end;
-                matched = true;
-                break;
-            }
-        }
-        if (!matched) output += value[i++];
-        if (output.size() > 65536) return source;
-    }
-    return wxString(output);
+    return apply_indexed(source, mapping, index_entries(mapping));
 }
 
 void refresh()

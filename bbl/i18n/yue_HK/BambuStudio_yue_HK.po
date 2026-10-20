@@ -37585,6 +37585,102 @@ msgstr "JSON 檔案 (*.json)|*.json"
 msgid "Load a version 1 JSON file to change display wording on this device. Original data, logs and exports keep their original wording."
 msgstr "載入第 1 版 JSON 檔案，更改呢部裝置顯示嘅用語。原始資料、記錄同匯出內容會保留原本用語。"
 
+#: src/slic3r/GUI/Preferences.cpp
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "A file can be up to %d KiB, with keys up to %d characters and values up to %d characters."
+msgstr "檔案最多 %d KiB，每個鍵最多 %d 個字元，每個值最多 %d 個字元。"
+
+#: src/slic3r/GUI/Preferences.cpp
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The vocabulary file was not applied, and the wording on screen has not changed."
+msgstr "個人用語檔案冇套用，畫面上嘅用語冇改變。"
+
+#: src/slic3r/GUI/Preferences.cpp
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The vocabulary saved on this device did not pass validation, so original wording is shown."
+msgstr "呢部裝置儲存咗嘅個人用語未能通過檢查，所以而家顯示原本用語。"
+
+#: src/slic3r/GUI/Preferences.cpp
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The saved vocabulary could not be removed from this device, so nothing changed."
+msgstr "未能喺呢部裝置移除已儲存嘅個人用語，所以乜都冇改變。"
+
+#: src/slic3r/GUI/Preferences.cpp
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The file could not be read."
+msgstr "讀取唔到呢個檔案。"
+
+#: src/slic3r/GUI/Preferences.cpp
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The file is larger than %d KiB."
+msgstr "檔案大過 %d KiB。"
+
+#: src/slic3r/GUI/Preferences.cpp
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The file is not valid JSON saved as UTF-8."
+msgstr "檔案唔係以 UTF-8 儲存嘅有效 JSON。"
+
+#: src/slic3r/GUI/Preferences.cpp
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The file nests objects or lists more than %d levels deep."
+msgstr "檔案入面嘅物件或者清單巢狀超過 %d 層。"
+
+#: src/slic3r/GUI/Preferences.cpp
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The file repeats a key inside one object."
+msgstr "檔案喺同一個物件入面重複咗同一個鍵。"
+
+#: src/slic3r/GUI/Preferences.cpp
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The file must use schemaVersion 1."
+msgstr "檔案必須使用 schemaVersion 1。"
+
+#: src/slic3r/GUI/Preferences.cpp
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The file must contain only schemaVersion and an entries object."
+msgstr "檔案只可以有 schemaVersion 同一個 entries 物件。"
+
+#: src/slic3r/GUI/Preferences.cpp
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Every entry value must be text."
+msgstr "每個項目嘅值都必須係文字。"
+
+#: src/slic3r/GUI/Preferences.cpp
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "An entry key is longer than %d characters."
+msgstr "有項目嘅鍵超過 %d 個字元。"
+
+#: src/slic3r/GUI/Preferences.cpp
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "An entry value is longer than %d characters."
+msgstr "有項目嘅值超過 %d 個字元。"
+
+#: src/slic3r/GUI/Preferences.cpp
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "An entry is blank, contains control or text-direction characters, or uses a reserved name."
+msgstr "有項目係空白、含有控制字元或者文字方向字元，或者用咗保留名稱。"
+
+#: src/slic3r/GUI/Preferences.cpp
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The file is valid, but this device could not save its private copy."
+msgstr "檔案有效，但係呢部裝置儲存唔到佢嘅私人副本。"
+
 #: src/slic3r/GUI/Preferences.cpp src/slic3r/GUI/Widgets/MD3Menu.cpp
 #. reviewed-category: destructive-dirty-error-security
 #. review-status: agent-drafted

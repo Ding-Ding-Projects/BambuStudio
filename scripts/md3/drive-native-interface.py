@@ -525,10 +525,11 @@ class Driver:
                          or text.startswith(expected + " · ") or text.startswith(expected + "\t")))
         return [row for row in self.native if matches(row)]
 
-    def prose_status(self, name):
+    def prose_status(self, *names):
         # Auto-wrapped native text inserts layout whitespace. Normalize only
         # prose status text, never menu, button or editable-control identity.
-        expected = re.sub(r"\s+", "", self.label(name))
+        # A status built from several translated sentences passes each one.
+        expected = re.sub(r"\s+", "", "".join(self.label(name) for name in names))
         return any(not row["offscreen"] and row["type"] == 50020 and
                    re.sub(r"\s+", "", row["name"]) == expected for row in self.native)
 
@@ -1027,7 +1028,8 @@ class Driver:
                 malformed = self.scratch / "neutral-malformed.json"
                 malformed.write_text('{"schemaVersion":1,"entries":', encoding="utf-8")
                 self.upload_vocabulary("malformed", target, malformed, preferences)
-                require(self.prose_status("The vocabulary file could not be applied. Use valid version 1 JSON within the supported size limits.")
+                require(self.prose_status("The vocabulary file was not applied, and the wording on screen has not changed.",
+                                          "The file is not valid JSON saved as UTF-8.")
                         and self.candidates("Replace JSON"),
                         "Malformed JSON did not visibly reject the input and preserve the active mapping")
                 require(self.title_pixels("malformed", verify_getters=True) == previous,
@@ -1036,7 +1038,8 @@ class Driver:
         invalid = self.scratch / "neutral-invalid.json"
         invalid.write_text(json.dumps({"schemaVersion": 2, "entries": {source: "Invalid replacement"}}), encoding="utf-8")
         self.upload_vocabulary("invalid", target, invalid, preferences)
-        require(self.prose_status("The vocabulary file could not be applied. Use valid version 1 JSON within the supported size limits.")
+        require(self.prose_status("The vocabulary file was not applied, and the wording on screen has not changed.",
+                                  "The file must use schemaVersion 1.")
                 and self.candidates("Replace JSON")
                 and not self.candidates("Invalid replacement"),
                 "Invalid JSON did not visibly preserve the active mapping")
