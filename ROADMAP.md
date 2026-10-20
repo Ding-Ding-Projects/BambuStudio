@@ -12,7 +12,8 @@ Branch `claude/bambu-express-print-mode-jkx766`, commits `aa27ab45`, `de1c809f`,
 - [ ] Run the dialogs in the built application on a Windows host and capture them: the Express print mode row, the forced-off rows, Slice again after a toggle, the Melody creator with a preset loaded.
 - [ ] Play an express start and a melody on a physical printer; confirm the M1006 parameter meaning and the tick length, and correct the article if they differ.
 - [ ] Push the wiki pages (Express-Print-Mode, Melody-Creator, Home entry) that this session wrote but could not push: the wiki repository is outside the session's authorized set.
-- [x] Integrate the branch into `main`: with the maintainer's permission, `main` was fast-forwarded from `6dc72bba` to `abc6b8ea` and read back on the remote. The two landing pushes carried a `[skip ci]` tip commit, so no release build ran for them; this records commit carries no skip marker and is the push that builds and publishes the release.
+- [x] Integrate the branch into `main`: with the maintainer's permission, `main` was fast-forwarded from `6dc72bba` to `abc6b8ea` and read back on the remote. The two landing pushes carried a `[skip ci]` tip commit, so no release build ran for them; the correction `47997e75` ran "Windows build and release" run 880 with success and published release `md3-v239` (package `2.8.4880`) as a normal, non-draft release with `Setup.exe`, `RELEASES`, the full nupkg, the SHA-256 sidecar and the SBOM.
+- [ ] Install `md3-v239` on the Windows host through its updater or installer and verify the installed version.
 
 ## Installer destination isolation, 9 October 2026
 

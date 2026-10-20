@@ -20,10 +20,9 @@ screenshots, and a physical printer. The M1006
 parameter meaning and tick length are inferred.
 
 Next steps, in order:
-1. Read the release build verdict for the main push that carries this records commit (the
-   earlier landings were [skip ci] tips and built nothing); if red, fix on the branch, push, and
-   fast-forward main again. Confirm the md3-v<N> release is a normal, non-draft release with
-   Setup.exe, RELEASES, the full nupkg, the SHA-256 sidecar and the SBOM.
+1. Release md3-v239 (package 2.8.4880, main at 47997e75, run 880 green) is published as a normal
+   release with Setup.exe, RELEASES, the full nupkg, the SHA-256 sidecar and the SBOM. Install it
+   on the Windows host through the installed copy's updater or Setup.exe and verify the version.
 2. On a Windows host with the built app: open Print setup, toggle Express print mode, confirm the
    three rows go off and Slice again appears; open File > Melody creator, load a preset, preview,
    add to start G-code. Capture both dialogs for docs/screenshots and the README feature table.
