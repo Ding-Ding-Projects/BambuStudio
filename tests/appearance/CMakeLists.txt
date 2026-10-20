@@ -1,6 +1,7 @@
 add_executable(appearance_tests
     appearance_tests_main.cpp
     ${PROJECT_SOURCE_DIR}/src/slic3r/GUI/Appearance/ElementStyle.cpp
+    ${PROJECT_SOURCE_DIR}/src/slic3r/GUI/Appearance/ElementMotion.cpp
 )
 
 # ElementStyle.cpp depends on wx core/base and the vendored nlohmann::json only,
@@ -23,3 +24,11 @@ add_executable(style_metrics_tests style_metrics_standalone.cpp)
 target_include_directories(style_metrics_tests PRIVATE ${PROJECT_SOURCE_DIR}/src)
 target_compile_features(style_metrics_tests PRIVATE cxx_std_17)
 add_test(NAME style_metrics_tests COMMAND style_metrics_tests)
+
+# The per-element motion model (Animation and transition tab) is pure C++17
+# plus the bundled nlohmann json header, so it needs neither wx nor Catch2.
+add_executable(element_motion_tests element_motion_standalone.cpp
+    ${PROJECT_SOURCE_DIR}/src/slic3r/GUI/Appearance/ElementMotion.cpp)
+target_include_directories(element_motion_tests PRIVATE ${PROJECT_SOURCE_DIR}/src)
+target_compile_features(element_motion_tests PRIVATE cxx_std_17)
+add_test(NAME element_motion_tests COMMAND element_motion_tests)

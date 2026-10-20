@@ -10,6 +10,7 @@
 #include <wx/log.h>
 #include <wx/settings.h>
 #include <wx/sizer.h>
+#include <wx/weakref.h>
 #include <wx/window.h>
 
 namespace Slic3r { namespace GUI {
@@ -32,7 +33,7 @@ const std::vector<std::string> &all()
 bool is_known(const std::string &key)
 {
     const auto &keys = all();
-    return std::find(keys.begin(), keys.end(), key) != keys.end();
+    return std::find(keys.begin(), keys.end(), key) != keys.end() || ElementMotion::is_motion_key(key);
 }
 
 } // namespace StyleProp
@@ -423,6 +424,9 @@ StyleLoadReport StyleRegistry::from_json(const nlohmann::json &doc)
             bag[it.key()] = it.value(); // kept verbatim, known or not
             if (!StyleProp::is_known(it.key()))
                 report.unknown_properties.push_back(owner + "." + it.key());
+            else if (const ElementMotion::Check check = ElementMotion::validate_key(it.key(), it.value()); !check.ok)
+                // Kept as written; the consumer plays its Material default instead.
+                report.unknown_properties.push_back(owner + "." + it.key() + " (" + check.issue + ")");
         }
         return bag;
     };
@@ -748,6 +752,72 @@ StyleMetrics ElementStyle::metrics_for(const std::string &id, const StyleMetrics
     }.sanitized();
 }
 
+ElementMotion::Resolved ElementStyle::motion_state(const std::string &id, ElementMotion::Trigger trigger,
+                                                  int default_duration_ms)
+{
+    const ElementMotion::Timing defaults = ElementMotion::material_default(default_duration_ms);
+    if (id.empty())
+        return ElementMotion::resolve(nullptr, trigger, defaults);
+    const StyleRegistry &reg = registry();
+    return ElementMotion::resolve([&reg, &id](const std::string &key) { return reg.resolve(id, key); }, trigger, defaults);
+}
+
+ElementMotion::Timing ElementStyle::motion_for(const std::string &id, ElementMotion::Trigger trigger, int default_duration_ms)
+{
+    return motion_state(id, trigger, default_duration_ms).timing;
+}
+
+namespace {
+
+struct EntranceRecord
+{
+    wxWeakRef<wxWindow> window;
+    std::string         id;
+    int                 default_duration_ms { 0 };
+};
+
+std::vector<EntranceRecord> &entrance_records()
+{
+    static auto *records = new std::vector<EntranceRecord>(); // windows outlive static teardown
+    return *records;
+}
+
+} // namespace
+
+ElementMotion::Timing ElementStyle::entrance_for(wxWindow *window, const std::string &id, int default_duration_ms)
+{
+    auto &records = entrance_records();
+    records.erase(std::remove_if(records.begin(), records.end(), [](const EntranceRecord &r) { return !r.window; }),
+                  records.end());
+    if (window) {
+        auto it = std::find_if(records.begin(), records.end(),
+                               [window](const EntranceRecord &r) { return r.window.get() == window; });
+        if (it == records.end()) {
+            EntranceRecord record;
+            record.window              = window;
+            record.id                  = id;
+            record.default_duration_ms = default_duration_ms;
+            records.push_back(record);
+        } else {
+            it->id                  = id;
+            it->default_duration_ms = default_duration_ms;
+        }
+    }
+    return motion_for(id, ElementMotion::Trigger::Entrance, default_duration_ms);
+}
+
+ElementStyle::EntranceInfo ElementStyle::entrance_of(const wxWindow *window)
+{
+    EntranceInfo info;
+    for (const EntranceRecord &record : entrance_records())
+        if (record.window && record.window.get() == window) {
+            info.has_entrance        = true;
+            info.id                  = record.id;
+            info.default_duration_ms = record.default_duration_ms;
+        }
+    return info;
+}
+
 // ---------------------------------------------------------------------------
 // Adopter
 // ---------------------------------------------------------------------------
@@ -885,6 +955,13 @@ std::string ElementStyle::element_id_of(const wxWindow *window)
             return it->second->id;
     }
     return {};
+}
+
+std::string ElementStyle::own_id_of(const wxWindow *window)
+{
+    const auto &map = adopted();
+    auto        it  = map.find(const_cast<wxWindow *>(window));
+    return it == map.end() ? std::string() : it->second->id;
 }
 
 wxString ElementStyle::display_name_of(const std::string &id)

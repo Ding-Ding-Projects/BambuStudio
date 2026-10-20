@@ -140,7 +140,8 @@ const char *unfixed_reason(const std::string &key)
 
 const char *style_property_label(const std::string &key)
 {
-    // The property keys of Appearance/ElementStyle.hpp (StyleProp), in its order.
+    // The property keys of Appearance/ElementStyle.hpp (StyleProp), in its
+    // order, then the eighteen motion keys of Appearance/ElementMotion.hpp.
     static const std::map<std::string, const char *> labels = {
         {"fontFamily", L("Font family")},
         {"fontSize", L("Font size (pt)")},
@@ -158,6 +159,25 @@ const char *style_property_label(const std::string &key)
         {"radius", L("Corner radius (px)")},
         {"padding", L("Padding (px)")},
         {"margin", L("Margin (px)")},
+        // Per-element motion (Appearance/ElementMotion.hpp).
+        {"motion.hover.duration", L("Hover duration (ms)")},
+        {"motion.hover.delay", L("Hover delay (ms)")},
+        {"motion.hover.easing", L("Hover easing")},
+        {"motion.focus.duration", L("Focus duration (ms)")},
+        {"motion.focus.delay", L("Focus delay (ms)")},
+        {"motion.focus.easing", L("Focus easing")},
+        {"motion.press.duration", L("Press duration (ms)")},
+        {"motion.press.delay", L("Press delay (ms)")},
+        {"motion.press.easing", L("Press easing")},
+        {"motion.selection.duration", L("Selection duration (ms)")},
+        {"motion.selection.delay", L("Selection delay (ms)")},
+        {"motion.selection.easing", L("Selection easing")},
+        {"motion.enable.duration", L("Enable and disable duration (ms)")},
+        {"motion.enable.delay", L("Enable and disable delay (ms)")},
+        {"motion.enable.easing", L("Enable and disable easing")},
+        {"motion.entrance.duration", L("Entrance duration (ms)")},
+        {"motion.entrance.delay", L("Entrance delay (ms)")},
+        {"motion.entrance.easing", L("Entrance easing")},
     };
     const auto found = labels.find(key);
     return found == labels.end() ? nullptr : found->second;

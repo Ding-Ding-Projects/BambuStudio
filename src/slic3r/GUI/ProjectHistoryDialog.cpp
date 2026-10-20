@@ -1522,6 +1522,7 @@ wxString ProjectHistoryDialog::display_message(const std::string &message)
     static const char *const named_actions[] = {
         L("Apply appearance preset: %s"), L("Save appearance preset: %s"), L("Delete appearance preset: %s"),
         L("Reset element appearance: %s"), L("Add schedule rule from preset: %s"),
+        L("Reset element motion: %s"), L("Undo element motion: %s"), L("Redo element motion: %s"),
     };
     for (const char *format : named_actions) {
         const wxString prefix = wxString::FromUTF8(format).BeforeFirst('%');

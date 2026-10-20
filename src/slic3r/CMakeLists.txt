@@ -794,6 +794,10 @@ list(APPEND SLIC3R_GUI_SOURCES
     GUI/Widgets/MD3Menu.hpp
     GUI/Appearance/ElementStyle.cpp
     GUI/Appearance/ElementStyle.hpp
+    GUI/Appearance/ElementMotion.cpp
+    GUI/Appearance/ElementMotion.hpp
+    GUI/Appearance/AppearanceMotionPage.cpp
+    GUI/Appearance/AppearanceMotionPage.hpp
     GUI/Appearance/AppearanceEditorPopover.cpp
     GUI/Appearance/AppearanceEditorPopover.hpp
     GUI/Presets/BlankEditorPresets.cpp
@@ -837,6 +841,7 @@ list(APPEND SLIC3R_GUI_SOURCES
     GUI/Widgets/MD3Motion.cpp
     GUI/Widgets/MD3MotionPreference.cpp
     GUI/Widgets/MD3Motion.hpp
+    GUI/Widgets/MD3EasingMath.hpp
     GUI/Widgets/MD3DialogChrome.cpp
     GUI/Widgets/MD3DialogChrome.hpp
     GUI/Widgets/MD3DataView.cpp
