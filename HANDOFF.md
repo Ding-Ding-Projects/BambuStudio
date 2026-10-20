@@ -13,7 +13,9 @@ Verified on Linux: g++ `-fsyntax-only` passes for `PresetBundle.cpp`, `MeshDiagn
 
 Integration: `main` was fast-forwarded from `a1831855` to `464c843e2` and read back on the remote; run 882 ("Windows build and release", `main`) and run 881 (branch) were in progress at the time of writing. Gate 1 before that push: the node contract set (875 subtests, 5 red) and the 12 CMake contracts (1 red) were compared with the `main` baseline; every red check reads files this port does not touch, so none is new. `offline-render.test.mjs` was stopped after ten minutes because headless Chrome does not start in this container, and two catalog checks need `gh` GraphQL, which the session proxy refuses.
 
-Next owner: read runs 881 and 882 and the published release, then install it on the Windows host.
+Release: run 881 (branch) and run 882 (`main`) both completed with success; run 882 published `md3-v240` (package `2.8.4882`, target `464c843e2`) as a normal, non-draft release with `Setup.exe`, `RELEASES`, the full nupkg, the SHA-256 sidecar and the SBOM, read back from the releases API at 13:14 UTC.
+
+Next owner: install `md3-v240` on the Windows host and verify the installed version, then the express-pass leftovers below.
 
 ## Express print mode and Melody creator, 19 October 2026
 

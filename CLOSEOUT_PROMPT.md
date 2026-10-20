@@ -20,13 +20,15 @@ Verified: g++ -fsyntax-only on PresetBundle.cpp, MeshDiagnostics.cpp, WipeTowerP
 wgtFilaManagerSync.cpp with the Linux header set. Not verified: the hosted Windows build of this
 commit, runtime with a cloud account.
 
-main was fast-forwarded to 464c843e2 (read back); run 882 builds main and run 881 the branch.
+main was fast-forwarded to 464c843e2 (read back). Runs 881 (branch) and 882 (main) of "Windows
+build and release" completed with success; run 882 published md3-v240 (package 2.8.4882, target
+464c843e2) as a normal release with Setup.exe, RELEASES, the full nupkg, the SHA-256 sidecar and
+the SBOM.
 
 Next steps, in order:
-1. Read runs 881 and 882 of "Windows build and release" and the release they publish; fix and
-   push if red.
-2. Install the accepted release on the Windows host and verify the installed version.
-3. Leftovers from the express work still stand: install the accepted release on the Windows host,
+1. Install md3-v240 on the Windows host through the installed copy's updater or Setup.exe and
+   verify the installed version.
+2. Leftovers from the express work still stand: install the accepted release on the Windows host,
    capture both dialogs, play an express start and a melody on a printer, push the wiki pages.
 
 Local checks to rerun after any change: node --test ui-md3/tests/express-start-gcode.test.mjs
