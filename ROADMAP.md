@@ -12,7 +12,7 @@ Branch `claude/bambu-express-print-mode-jkx766`, commits `aa27ab45`, `de1c809f`,
 - [ ] Run the dialogs in the built application on a Windows host and capture them: the Express print mode row, the forced-off rows, Slice again after a toggle, the Melody creator with a preset loaded.
 - [ ] Play an express start and a melody on a physical printer; confirm the M1006 parameter meaning and the tick length, and correct the article if they differ.
 - [ ] Push the wiki pages (Express-Print-Mode, Melody-Creator, Home entry) that this session wrote but could not push: the wiki repository is outside the session's authorized set.
-- [x] Integrate the branch into `main`: with the maintainer's permission, `main` was fast-forwarded from `6dc72bba` to `abc6b8ea` and read back on the remote. The release build for `main` had not finished when this was written.
+- [x] Integrate the branch into `main`: with the maintainer's permission, `main` was fast-forwarded from `6dc72bba` to `abc6b8ea` and read back on the remote. The two landing pushes carried a `[skip ci]` tip commit, so no release build ran for them; this records commit carries no skip marker and is the push that builds and publishes the release.
 
 ## Installer destination isolation, 9 October 2026
 

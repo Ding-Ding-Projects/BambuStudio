@@ -22,7 +22,7 @@ Blockers and leftovers:
 - The Pages site has no per-feature article list, so it was not changed; its changelog is generated from releases.
 - No screenshot of either dialog exists yet; the README feature table says so.
 
-Integration: with the maintainer's permission, `main` was fast-forwarded from `6dc72bba` to `abc6b8ea` and read back on the remote; the release build for that push had not finished when this was written, so no release is claimed here.
+Integration: with the maintainer's permission, `main` was fast-forwarded from `6dc72bba` to `abc6b8ea`, then to `89c40c9a`, and read back on the remote. Both of those tips were `[skip ci]` records commits, so neither push started the "Windows build and release" workflow on `main`; the earlier claim that its release build was running was wrong. This records commit carries no skip marker, so its push to `main` is the one that builds and publishes the release; read that run's verdict and the resulting `md3-v<N>` release before claiming one.
 
 Next owner: read the release build verdict for `main`, install the accepted release on the Windows host, run the dialogs there and capture them, play an express start and a melody on a printer, and push the wiki pages.
 
