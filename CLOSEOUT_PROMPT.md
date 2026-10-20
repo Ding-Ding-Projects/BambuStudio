@@ -1,39 +1,16 @@
-# Continuation prompt: upstream port after Express print mode and Melody creator, 20 October 2026
+# Continuation: branch integration and review, 20 October 2026
 
-Copy the block below into a new session to continue this work.
+Repository: `Ding-Ding-Projects/BambuStudio`. Branch: `main`.
 
-```text
-Repository: Ding-Ding-Projects/BambuStudio (public). Branch: claude/bambu-express-print-mode-jkx766.
-Before this port, main carried the express print mode and Melody creator work up to a1831855 (release md3-v239,
-package 2.8.4880, run 880 green).
+The tested integration candidate is `b07eaf67478dbdcdf485de1010845c44a7b9751a`, based on `07e3b8d206f3e87be6743cca7756237ea9f49102`. Read `docs/integration/branch-integration-20261020.md` for exact source heads, merge resolutions and verification. Four merge commits integrate LAN receiving, motion controls, wording validation and startup diagnostics. Three older LAN branches are content-equivalent to the existing newer LAN squash and remain preserved on their original refs; they were not merged into main's ancestry. No branches were deleted.
 
-This commit ports two upstream bambulab/BambuStudio master fixes that were newer than the fork's
-recorded baseline (tag v02.08.04.61 and master tip da8b44ee are both ancestors; proved with
-git merge-base --is-ancestor after git fetch --deepen):
-- 88ec97c2 Fix preset setting-id type routing (PresetBundle::update_system_preset_setting_ids
-  routed print and filament ids to the printer collection).
-- 79df7ae3 FIX: 2.8.3 Beta Build Fixes (#12596): three include fixes.
-Not ported on purpose: 47a13eeb Windows ARM64 and ARM64EC build support (x64-only fork, seven
-files conflict with the rewritten build, no ARM64 runner to verify).
+Baseline comparison: Node 979 passed / 7 failed / 10 skipped; candidate 1,112 passed / the same 7 failed / 13 skipped. CMake source contracts: both 11 passed and the same one failed. Translation validation, documentation bundle and Express G-code guard checks pass. Focused native model and offline Python assertions also pass. The seven Node failures include four missing-wxWidgets compile prerequisites and three pre-existing source contracts. Offline browser and online catalogue suites were excluded from both runs.
 
-Verified: g++ -fsyntax-only on PresetBundle.cpp, MeshDiagnostics.cpp, WipeTowerPlacement.cpp and
-wgtFilaManagerSync.cpp with the Linux header set. Not verified: the hosted Windows build of this
-commit, runtime with a cloud account.
+Next steps:
 
-main was fast-forwarded to 464c843e2 (read back). Runs 881 (branch) and 882 (main) of "Windows
-build and release" completed with success; run 882 published md3-v240 (package 2.8.4882, target
-464c843e2) as a normal release with Setup.exe, RELEASES, the full nupkg, the SHA-256 sidecar and
-the SBOM.
+1. Read the hosted build status for the exact new main revision. Do not reuse an older release or a different revision's result.
+2. Build with the supported Windows entrypoints, then verify the merged GUI and live LAN container. Do not launch the opt-in visible-desktop startup tracer without selecting the intended host and route.
+3. Preserve the current newer Melody, Express printing and updater behavior during any subsequent repair.
+4. Keep unrun native, browser and printer checks explicitly pending. Source integration is not release or runtime acceptance.
 
-Next steps, in order:
-1. Install md3-v240 on the Windows host through the installed copy's updater or Setup.exe and
-   verify the installed version.
-2. Leftovers from the express work still stand: install the accepted release on the Windows host,
-   capture both dialogs, play an express start and a melody on a printer, push the wiki pages.
-
-Local checks to rerun after any change: node --test ui-md3/tests/express-start-gcode.test.mjs
-ui-md3/tests/send-dialog-express-mode.test.mjs ui-md3/tests/melody-creator-localization.test.mjs
-tests/send_print_readiness.test.mjs tests/melody_model.test.mjs; python3 -B
-bbl/i18n/yue_HK/compile_translation.py --check --require-complete; python3 -I -B
-scripts/documentation/build_bundle.py --check; python3 -I scripts/profiles/express_start_gcode_guards.py --check.
-```
+This record is committed with the integration closeout. Its own commit and remote verification are reported separately in the task result.

@@ -1,5 +1,9 @@
 # Bambu Studio handoff
 
+## Remaining branch integration, 20 October 2026
+
+The remaining source contributions have been reconciled on `main`. See [the source coverage and verification record](docs/integration/branch-integration-20261020.md) for the four merge commits, three superseded LAN branches preserved through the existing squash, and exact baseline comparison. The tested source candidate is `b07eaf67478dbdcdf485de1010845c44a7b9751a`. Native Windows build/runtime, live-container browser verification and printer acceptance remain pending. Historical sections below describe their original checkpoints and are not the current branch inventory.
+
 ## Upstream port, 20 October 2026
 
 Objective: check upstream `bambulab/BambuStudio` for changes newer than what this fork already includes, and port what applies.
