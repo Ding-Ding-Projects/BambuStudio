@@ -22,9 +22,9 @@ Blockers and leftovers:
 - The Pages site has no per-feature article list, so it was not changed; its changelog is generated from releases.
 - No screenshot of either dialog exists yet; the README feature table says so.
 
-Integration: `main` (`6dc72bba`) is an ancestor of the branch tip, so the integration is a fast-forward of the branch; the cloud session's policy withheld it as a merge without review, so the maintainer merges (or fast-forwards) the branch into `main` after review. A push to `main` builds and publishes a release.
+Integration: with the maintainer's permission, `main` was fast-forwarded from `6dc72bba` to `abc6b8ea` and read back on the remote; the release build for that push had not finished when this was written, so no release is claimed here.
 
-Next owner: merge the branch into `main`, run the dialogs on Windows and capture them, play an express start and a melody on a printer, and push the wiki pages.
+Next owner: read the release build verdict for `main`, install the accepted release on the Windows host, run the dialogs there and capture them, play an express start and a melody on a printer, and push the wiki pages.
 
 ## Release repair, Material conversion and LAN model drop, 10 October 2026
 
