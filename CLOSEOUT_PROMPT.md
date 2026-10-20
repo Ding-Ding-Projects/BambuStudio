@@ -4,7 +4,7 @@ Copy the block below into a new session to continue this work.
 
 ```text
 Repository: Ding-Ding-Projects/BambuStudio (public). Branch: claude/bambu-express-print-mode-jkx766.
-main carries the express print mode and Melody creator work up to a1831855 (release md3-v239,
+Before this port, main carried the express print mode and Melody creator work up to a1831855 (release md3-v239,
 package 2.8.4880, run 880 green).
 
 This commit ports two upstream bambulab/BambuStudio master fixes that were newer than the fork's
@@ -20,10 +20,12 @@ Verified: g++ -fsyntax-only on PresetBundle.cpp, MeshDiagnostics.cpp, WipeTowerP
 wgtFilaManagerSync.cpp with the Linux header set. Not verified: the hosted Windows build of this
 commit, runtime with a cloud account.
 
+main was fast-forwarded to 464c843e2 (read back); run 882 builds main and run 881 the branch.
+
 Next steps, in order:
-1. Read "Windows build and release" for this commit on the branch; fix and push if red.
-2. Fast-forward main to the green branch tip with the maintainer's permission and read it back;
-   a tip without [skip ci] starts the release build, which publishes the next md3-v<N>.
+1. Read runs 881 and 882 of "Windows build and release" and the release they publish; fix and
+   push if red.
+2. Install the accepted release on the Windows host and verify the installed version.
 3. Leftovers from the express work still stand: install the accepted release on the Windows host,
    capture both dialogs, play an express start and a melody on a printer, push the wiki pages.
 

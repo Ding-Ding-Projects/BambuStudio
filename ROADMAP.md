@@ -5,7 +5,9 @@ Branch `claude/bambu-express-print-mode-jkx766`.
 - [x] Compare upstream `bambulab/BambuStudio` with this branch: tag `v02.08.04.61` and the recorded `master` tip `da8b44ee` are ancestors; three `master` commits are newer.
 - [x] Port `88ec97c2` (preset setting-id type routing fix) and `79df7ae3` (build-fix includes); g++ syntax check of the four touched units passes on Linux.
 - [ ] Port `47a13eeb` (Windows ARM64 and ARM64EC build support): deliberately not done. This fork ships x64 only and seven of its files conflict with the rewritten build; revisit only with an ARM64 build target.
-- [ ] Read the hosted Windows build verdict for the port commit and integrate it into `main`.
+- [x] Integrate the port into `main`: fast-forwarded from `a1831855` to `464c843e2` and read back on the remote; "Windows build and release" run 882 (`main`) and run 881 (branch) were in progress when this was written.
+- [ ] Read runs 881 and 882 and the release they publish (expected `md3-v240` or later); install it on the Windows host.
+- [ ] Pre-existing red checks, unchanged by this port and red on the `main` baseline too: the Home Assistant UI boundedness CMake contract, `offline-render.test.mjs` (headless Chrome does not start in this container), two catalog checks that need `gh` GraphQL, the version-history, splash-date and narrow-literal contracts.
 
 ## Express print mode and Melody creator, 19 October 2026
 

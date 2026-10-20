@@ -11,7 +11,9 @@ Found: the newest upstream tag is still `v02.08.04.61` and both it and the previ
 
 Verified on Linux: g++ `-fsyntax-only` passes for `PresetBundle.cpp`, `MeshDiagnostics.cpp`, `WipeTowerPlacement.cpp` and `wgtFilaManagerSync.cpp` with the Linux header set. Not verified here: the hosted Windows build of this commit (read "Windows build and release" for it), and runtime behaviour of the setting-id routing with a cloud account.
 
-Next owner: read the hosted build verdict, then integrate into `main` the same way as the express work below.
+Integration: `main` was fast-forwarded from `a1831855` to `464c843e2` and read back on the remote; run 882 ("Windows build and release", `main`) and run 881 (branch) were in progress at the time of writing. Gate 1 before that push: the node contract set (875 subtests, 5 red) and the 12 CMake contracts (1 red) were compared with the `main` baseline; every red check reads files this port does not touch, so none is new. `offline-render.test.mjs` was stopped after ten minutes because headless Chrome does not start in this container, and two catalog checks need `gh` GraphQL, which the session proxy refuses.
+
+Next owner: read runs 881 and 882 and the published release, then install it on the Windows host.
 
 ## Express print mode and Melody creator, 19 October 2026
 
