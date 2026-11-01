@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Home</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0e1311}
+a{color:#6fdc98}a:hover{color:#9ff7bf}
+</style>
+</helmet>
+<div style="width: 100%; height: 900px; display: flex; flex-direction: column; background: #0e1311; color: #e3ebe5; font-family: Roboto, system-ui, sans-serif; overflow: hidden">
+  <dc-import name="TitleBar" active="home" hint-size="100%,48px"></dc-import>
+  <div style="flex: 1; display: flex; min-height: 0">
+    <dc-import name="NavRail" active="home" hint-size="88px,852px"></dc-import>
+    <main style="flex: 1; min-width: 0; padding: 28px 32px; display: flex; flex-direction: column; gap: 24px; overflow: hidden">
+      <section style="display: flex; align-items: flex-end; gap: 24px; flex-wrap: wrap">
+        <div style="flex: 1; min-width: 320px">
+          <div style="font-size: 13px; color: #a9b6ad">Sunday afternoon · 3 printers on the network</div>
+          <h1 style="margin: 6px 0 0; font-size: 40px; line-height: 1.1; font-weight: 500; letter-spacing: -.01em">What are we printing today?</h1>
+        </div>
+        <div style="display: flex; gap: 10px">
+          <button style="height: 48px; padding: 0 20px; border-radius: 16px; border: 1px solid #34413a; background: transparent; color: #e3ebe5; font: inherit; font-size: 14px; font-weight: 500">Open project</button>
+          <button style="height: 48px; padding: 0 22px; border-radius: 16px; border: 0; background: #6fdc98; color: #00391c; font: inherit; font-size: 14px; font-weight: 700">New project</button>
+        </div>
+      </section>
+
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; flex: 1; min-height: 0">
+        <section style="grid-column: span 2; background: #18201c; border-radius: 24px; padding: 20px; display: flex; flex-direction: column; gap: 14px; min-height: 0">
+          <div style="display: flex; align-items: center; justify-content: space-between">
+            <h2 style="margin: 0; font-size: 18px; font-weight: 500">Recent projects</h2>
+            <div style="height: 34px; width: 260px; border-radius: 17px; background: #1f2823; display: flex; align-items: center; gap: 8px; padding: 0 12px; color: #a9b6ad; font-size: 13px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg><span style="flex: 1">Filter projects</span><span style="font-family: 'Roboto Mono', monospace; font-size: 11px">.*</span></div>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px">
+            <sc-for list="{{projects}}" as="p" hint-placeholder-count="6">
+              <a href="Main.dc.html" style="display: flex; flex-direction: column; gap: 8px; padding: 10px; border-radius: 18px; background: #141a17; color: #e3ebe5; text-decoration: none">
+                <span style="height: 108px; border-radius: 12px; background: {{p.tint}}; display: grid; place-items: center"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="{{p.stroke}}" stroke-width="1.4" aria-hidden="true"><path d="{{p.d}}"></path></svg></span>
+                <span style="font-size: 14px; font-weight: 500">{{p.name}}</span>
+                <span style="font-size: 12px; color: #a9b6ad; display: flex; justify-content: space-between">{{p.when}}<span style="font-family: 'Roboto Mono', monospace">{{p.rev}}</span></span>
+              </a>
+            </sc-for>
+          </div>
+        </section>
+
+        <div style="display: flex; flex-direction: column; gap: 16px; min-height: 0">
+          <section style="background: #0f5130; color: #9ff7bf; border-radius: 24px; padding: 20px; display: flex; flex-direction: column; gap: 10px">
+            <div style="font-size: 11px; letter-spacing: .08em; text-transform: uppercase; font-weight: 500">LAN model drop</div>
+            <div style="display: flex; gap: 14px; align-items: center">
+              <div aria-label="Invite QR code" role="img" style="width: 84px; height: 84px; border-radius: 12px; background: #e3ebe5; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); padding: 6px; box-sizing: border-box; gap: 2px">
+                <sc-for list="{{qr}}" as="q" hint-placeholder-count="49"><span style="background: {{q}}; border-radius: 1px"></span></sc-for>
+              </div>
+              <div style="flex: 1; font-size: 13px; line-height: 1.4">Friends on your Wi-Fi can send a model straight to this computer.<div style="margin-top: 6px; font-family: 'Roboto Mono', monospace; font-size: 12px">192.168.1.24:8790</div></div>
+            </div>
+            <button style="height: 36px; border-radius: 12px; border: 0; background: #9ff7bf; color: #00391c; font: inherit; font-size: 13px; font-weight: 500">Copy invite link</button>
+          </section>
+
+          <section style="background: #18201c; border-radius: 24px; padding: 20px; display: flex; flex-direction: column; gap: 10px">
+            <div style="font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: #a9b6ad; font-weight: 500">Printers</div>
+            <sc-for list="{{printers}}" as="pr" hint-placeholder-count="3">
+              <div style="display: flex; align-items: center; gap: 10px; font-size: 13px">
+                <span style="width: 8px; height: 8px; border-radius: 4px; background: {{pr.dot}}"></span>
+                <span style="flex: 1">{{pr.name}}</span>
+                <span style="color: #a9b6ad; font-family: 'Roboto Mono', monospace; font-size: 12px">{{pr.state}}</span>
+              </div>
+            </sc-for>
+            <div style="display: flex; gap: 8px; align-items: center; padding-top: 8px; border-top: 1px solid #28322c; font-size: 12px; color: #a9b6ad">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8ab4ff" stroke-width="1.8" aria-hidden="true"><path d="M3 11 12 4l9 7v9H3z"></path><circle cx="12" cy="14" r="2"></circle></svg>
+              Home Assistant handover ready
+            </div>
+          </section>
+
+          <section style="background: #18201c; border-radius: 24px; padding: 20px; display: flex; gap: 12px; align-items: center">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ffb870" stroke-width="1.8" aria-hidden="true"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
+            <div style="flex: 1; font-size: 13px"><div style="font-weight: 500">Melody creator</div><div style="color: #a9b6ad; font-size: 12px">Compose a tune your printer plays</div></div>
+            <a href="Dialogs.dc.html" style="font-size: 13px; font-weight: 500; text-decoration: none">Open</a>
+          </section>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const cube = 'M12 2 3 7v10l9 5 9-5V7zM3 7l9 5 9-5M12 12v10';
+    const gear = 'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2';
+    const vase = 'M9 3h6M10 3c0 4-4 6-4 11a6 6 0 0 0 12 0c0-5-4-7-4-11';
+    const seed = '0110100101100111010110100110100101101100101110010'.split('');
+    return {
+      projects: [
+        { name: 'bracket_v3', when: 'Today, 14:10', rev: 'r12', tint: '#0f5130', stroke: '#9ff7bf', d: cube },
+        { name: 'Gear train set', when: 'Yesterday', rev: 'r4', tint: '#1f2823', stroke: '#a9b6ad', d: gear },
+        { name: 'Spiral vase', when: 'Fri', rev: 'r2', tint: '#3d2a14', stroke: '#ffb870', d: vase },
+        { name: 'Cable clips x24', when: 'Thu', rev: 'r7', tint: '#1f2823', stroke: '#a9b6ad', d: cube },
+        { name: 'Desk organiser', when: '28 Oct', rev: 'r3', tint: '#1a2740', stroke: '#8ab4ff', d: cube },
+        { name: 'Benchy (calibration)', when: '27 Oct', rev: 'r1', tint: '#1f2823', stroke: '#a9b6ad', d: vase }
+      ],
+      printers: [
+        { name: 'X1 Carbon · Studio', state: 'Idle', dot: '#6fdc98' },
+        { name: 'P1S · Garage', state: '62% · 38 m', dot: '#8ab4ff' },
+        { name: 'A1 mini · Desk', state: 'Offline', dot: '#7c8a81' }
+      ],
+      qr: seed.map((b) => (b === '1' ? '#0a0e0c' : '#e3ebe5'))
+    };
+  }
+}
+</script>
+</body>
+</html>

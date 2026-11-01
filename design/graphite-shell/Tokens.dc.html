@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Graphite tokens</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0e1311}
+</style>
+</helmet>
+<div style="width: 100%; min-height: 1000px; box-sizing: border-box; padding: 40px; display: flex; flex-direction: column; gap: 28px; background: #0e1311; color: #e3ebe5; font-family: Roboto, system-ui, sans-serif">
+  <header>
+    <h1 style="margin: 0; font-size: 32px; font-weight: 500">Graphite: colour roles, type and shape</h1>
+    <p style="margin: 6px 0 0; color: #a9b6ad; font-size: 14px">Green-tinted graphite neutrals, one mint accent, amber for heat, blue for network. Roles map one to one onto MD3::Role in the native kit.</p>
+  </header>
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px">
+    <section style="background: #18201c; border-radius: 24px; padding: 20px">
+      <h2 style="margin: 0 0 14px; font-size: 16px; font-weight: 500">Dark (default)</h2>
+      <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px">
+        <sc-for list="{{dark}}" as="s" hint-placeholder-count="24">
+          <div style="border-radius: 12px; overflow: hidden; border: 1px solid #34413a">
+            <div style="height: 44px; background: {{s.hex}}"></div>
+            <div style="padding: 6px 8px; font-size: 11px; background: #141a17"><div>{{s.name}}</div><div style="font-family: 'Roboto Mono', monospace; color: #a9b6ad">{{s.hex}}</div></div>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+    <section style="background: #f5f8f5; color: #131c17; border-radius: 24px; padding: 20px">
+      <h2 style="margin: 0 0 14px; font-size: 16px; font-weight: 500">Light</h2>
+      <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px">
+        <sc-for list="{{light}}" as="s" hint-placeholder-count="24">
+          <div style="border-radius: 12px; overflow: hidden; border: 1px solid #c0ccc4">
+            <div style="height: 44px; background: {{s.hex}}"></div>
+            <div style="padding: 6px 8px; font-size: 11px; background: #ffffff"><div>{{s.name}}</div><div style="font-family: 'Roboto Mono', monospace; color: #3f4c44">{{s.hex}}</div></div>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+  </div>
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px">
+    <section style="background: #18201c; border-radius: 24px; padding: 20px; display: flex; flex-direction: column; gap: 8px">
+      <h2 style="margin: 0 0 6px; font-size: 16px; font-weight: 500">Type (Roboto, Roboto Mono)</h2>
+      <div style="font-size: 40px; line-height: 1.1">Display 40</div>
+      <div style="font-size: 22px; font-weight: 500">Title 22 medium</div>
+      <div style="font-size: 14px">Body 14 · compact 13</div>
+      <div style="font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: #a9b6ad; font-weight: 500">Section label 11</div>
+      <div style="font-family: 'Roboto Mono', monospace; font-size: 15px">1 h 42 m · 38.6 g · 220°C</div>
+    </section>
+    <section style="background: #18201c; border-radius: 24px; padding: 20px; display: flex; flex-direction: column; gap: 10px">
+      <h2 style="margin: 0 0 6px; font-size: 16px; font-weight: 500">Shape</h2>
+      <div style="display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap">
+        <div style="width: 64px; height: 64px; border-radius: 28px; background: #1f2823; display: grid; place-items: center; font-size: 11px">28</div>
+        <div style="width: 64px; height: 64px; border-radius: 24px; background: #1f2823; display: grid; place-items: center; font-size: 11px">24</div>
+        <div style="width: 64px; height: 64px; border-radius: 20px; background: #1f2823; display: grid; place-items: center; font-size: 11px">20</div>
+        <div style="width: 64px; height: 64px; border-radius: 16px; background: #1f2823; display: grid; place-items: center; font-size: 11px">16</div>
+        <div style="width: 64px; height: 64px; border-radius: 12px; background: #1f2823; display: grid; place-items: center; font-size: 11px">12</div>
+      </div>
+      <p style="margin: 0; font-size: 13px; color: #a9b6ad">Dialogs 28 · canvas and panels 24 · cards 20 · action buttons 16 · rows and chips 12. Panels float on the ground with 12 px gaps, no hairlines.</p>
+    </section>
+    <section style="background: #18201c; border-radius: 24px; padding: 20px; display: flex; flex-direction: column; gap: 10px">
+      <h2 style="margin: 0 0 6px; font-size: 16px; font-weight: 500">Accents</h2>
+      <div style="display: flex; gap: 10px">
+        <div style="flex: 1; height: 56px; border-radius: 14px; background: #6fdc98; color: #00391c; display: grid; place-items: center; font-size: 12px; font-weight: 500">Primary</div>
+        <div style="flex: 1; height: 56px; border-radius: 14px; background: #ffb870; color: #3d2400; display: grid; place-items: center; font-size: 12px; font-weight: 500">Heat</div>
+        <div style="flex: 1; height: 56px; border-radius: 14px; background: #8ab4ff; color: #0a2a5c; display: grid; place-items: center; font-size: 12px; font-weight: 500">Network</div>
+      </div>
+      <p style="margin: 0; font-size: 13px; color: #a9b6ad">Heat marks temperatures and unsaved state; Network marks printers, LAN and Home Assistant.</p>
+    </section>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const names = ['surface','surfaceDim','surfaceBright','scLowest','scLow','sc','scHigh','scHighest','onSurface','onSurfaceVariant','outline','outlineVariant','primary','onPrimary','primaryContainer','onPrimaryContainer','secondaryContainer','onSecondaryContainer','error','errorContainer','inverseSurface','inverseOn','onError','onErrorContainer'];
+    const dark = ['#0e1311','#0b0f0d','#333d37','#0a0e0c','#141a17','#18201c','#1f2823','#28322c','#e3ebe5','#a9b6ad','#7c8a81','#34413a','#6fdc98','#00391c','#0f5130','#9ff7bf','#24342b','#cde9d6','#ffb4ab','#93000a','#e3ebe6','#2c332f','#690005','#ffdad6'];
+    const light = ['#f5f8f5','#d5ddd7','#fafcfa','#ffffff','#eef3ef','#e7eee9','#dfe8e2','#d6e1da','#131c17','#3f4c44','#66766c','#c0ccc4','#146c2e','#ffffff','#a6f4b8','#00210c','#d3e8da','#0e1f15','#ba1a1a','#ffdad6','#2b322e','#edf2ee','#ffffff','#410002'];
+    return {
+      dark: names.map((n, i) => ({ name: n, hex: dark[i] })),
+      light: names.map((n, i) => ({ name: n, hex: light[i] }))
+    };
+  }
+}
+</script>
+</body>
+</html>

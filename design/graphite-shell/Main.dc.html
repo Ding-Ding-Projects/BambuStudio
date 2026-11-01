@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Prepare</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..500,0..1,0&display=swap" rel="stylesheet">
+<style>
+.ms{font-family:"Material Symbols Outlined";font-weight:400;font-style:normal;font-size:22px;line-height:1;letter-spacing:normal;text-transform:none;white-space:nowrap;direction:ltr;font-feature-settings:"liga";-webkit-font-smoothing:antialiased}
+body{margin:0;background:#0e1311}
+a{color:#6fdc98}a:hover{color:#9ff7bf}
+</style>
+</helmet>
+<div style="width: 100%; height: 900px; display: flex; flex-direction: column; background: #0e1311; color: #e3ebe5; font-family: Roboto, system-ui, sans-serif; overflow: hidden">
+  <dc-import name="TitleBar" active="prepare" hint-size="100%,48px"></dc-import>
+  <div style="flex: 1; display: flex; min-height: 0">
+    <dc-import name="NavRail" active="prepare" hint-size="88px,852px"></dc-import>
+
+    <aside style="width: 340px; flex-shrink: 0; display: flex; flex-direction: column; gap: 12px; padding: 12px; overflow: hidden">
+      <section style="background: #18201c; border-radius: 20px; padding: 16px; display: flex; flex-direction: column; gap: 12px">
+        <div style="display: flex; align-items: center; justify-content: space-between">
+          <span style="font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: #a9b6ad; font-weight: 500">Printer</span>
+          <button aria-label="Printer settings" style="width: 32px; height: 32px; border-radius: 10px; border: 0; background: transparent; color: #a9b6ad; display: grid; place-items: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"></path></svg></button>
+        </div>
+        <div style="display: flex; gap: 12px; align-items: center">
+          <div style="width: 52px; height: 52px; border-radius: 14px; background: #28322c; display: grid; place-items: center"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#6fdc98" stroke-width="1.6" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M3 8h18M8 13h8M10 17h4"></path></svg></div>
+          <div style="flex: 1; min-width: 0">
+            <div style="font-size: 16px; font-weight: 500">Bambu Lab X1 Carbon</div>
+            <div style="font-size: 12px; color: #a9b6ad; display: flex; gap: 6px; align-items: center"><span style="width: 8px; height: 8px; border-radius: 4px; background: #6fdc98"></span>0.4 mm nozzle · Idle · LAN</div>
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+          <label style="display: flex; flex-direction: column; gap: 4px; font-size: 11px; color: #a9b6ad">Plate
+            <select style="height: 36px; border-radius: 10px; background: #1f2823; color: #e3ebe5; border: 1px solid #34413a; padding: 0 10px; font: inherit; font-size: 13px"><option>Textured PEI</option></select></label>
+          <label style="display: flex; flex-direction: column; gap: 4px; font-size: 11px; color: #a9b6ad">Nozzle flow
+            <select style="height: 36px; border-radius: 10px; background: #1f2823; color: #e3ebe5; border: 1px solid #34413a; padding: 0 10px; font: inherit; font-size: 13px"><option>Standard</option></select></label>
+        </div>
+      </section>
+
+      <section style="background: #18201c; border-radius: 20px; padding: 16px; display: flex; flex-direction: column; gap: 10px">
+        <div style="display: flex; align-items: center; justify-content: space-between">
+          <span style="font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: #a9b6ad; font-weight: 500">Inks</span>
+          <button style="height: 28px; padding: 0 12px; border-radius: 14px; border: 1px solid #34413a; background: transparent; color: #6fdc98; font: inherit; font-size: 12px; font-weight: 500">Sync AMS</button>
+        </div>
+        <div style="height: 36px; border-radius: 18px; background: #1f2823; display: flex; align-items: center; gap: 8px; padding: 0 12px; color: #a9b6ad; font-size: 13px">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+          <span style="flex: 1">Search inks</span>
+          <span style="font-family: 'Roboto Mono', monospace; font-size: 12px; padding: 2px 6px; border-radius: 6px; background: #28322c">.*</span>
+        </div>
+        <sc-for list="{{inks}}" as="ink" hint-placeholder-count="4">
+          <div style="display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 8px; border-radius: 12px; background: #141a17">
+            <span style="width: 24px; height: 24px; border-radius: 8px; display: grid; place-items: center; font-size: 12px; font-weight: 700; color: {{ink.fg}}; background: {{ink.color}}">{{ink.slot}}</span>
+            <span style="flex: 1; font-size: 13px">{{ink.name}}</span>
+            <span style="font-size: 11px; color: #a9b6ad; font-family: 'Roboto Mono', monospace">{{ink.temp}}</span>
+          </div>
+        </sc-for>
+      </section>
+
+      <section style="background: #18201c; border-radius: 20px; padding: 16px; display: flex; flex-direction: column; gap: 10px; flex: 1">
+        <div style="display: flex; align-items: center; justify-content: space-between">
+          <span style="font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: #a9b6ad; font-weight: 500">Process</span>
+          <span style="font-size: 12px; color: #a9b6ad">0.20 mm Standard</span>
+        </div>
+        <div style="display: flex; gap: 4px; padding: 4px; border-radius: 12px; background: #141a17">
+          <button style="flex: 1; height: 30px; border-radius: 9px; border: 0; background: #24342b; color: #cde9d6; font: inherit; font-size: 12px; font-weight: 500">Global</button>
+          <button style="flex: 1; height: 30px; border-radius: 9px; border: 0; background: transparent; color: #a9b6ad; font: inherit; font-size: 12px">Objects</button>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 14px; background: #0f5130">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9ff7bf" stroke-width="1.8" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 9-12h-7z"></path></svg>
+          <div style="flex: 1">
+            <div style="font-size: 13px; font-weight: 500; color: #9ff7bf">Express print mode</div>
+            <div style="font-size: 11px; color: #9ff7bf; opacity: .8">Skips leveling, wipe and checks</div>
+          </div>
+          <button role="switch" aria-checked="true" aria-label="Express print mode" style="width: 44px; height: 24px; border-radius: 12px; border: 0; padding: 0; background: #6fdc98; position: relative; display: block"><span style="position: absolute; right: 3px; top: 3px; width: 18px; height: 18px; border-radius: 9px; background: #00391c"></span></button>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; font-size: 12px">
+          <div style="padding: 10px; border-radius: 12px; background: #141a17"><div style="color: #a9b6ad">Wall loops</div><div style="font-family: 'Roboto Mono', monospace; font-size: 15px">2</div></div>
+          <div style="padding: 10px; border-radius: 12px; background: #141a17"><div style="color: #a9b6ad">Infill</div><div style="font-family: 'Roboto Mono', monospace; font-size: 15px">15 %</div></div>
+          <div style="padding: 10px; border-radius: 12px; background: #141a17"><div style="color: #a9b6ad">Supports</div><div style="font-size: 14px">Tree (auto)</div></div>
+          <div style="padding: 10px; border-radius: 12px; background: #141a17"><div style="color: #a9b6ad">Brim</div><div style="font-size: 14px">Auto</div></div>
+        </div>
+      </section>
+    </aside>
+
+    <main style="flex: 1; min-width: 0; position: relative; margin: 12px 12px 12px 0; border-radius: 24px; overflow: hidden; background: #141a17">
+      <svg width="100%" height="100%" viewBox="0 0 1000 800" preserveAspectRatio="xMidYMid slice" aria-hidden="true" style="position: absolute; inset: 0">
+        <defs><pattern id="g" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" stroke="#1f2823" stroke-width="1"></path></pattern></defs>
+        <rect width="1000" height="800" fill="url(#g)"></rect>
+        <polygon points="200,520 800,520 900,680 100,680" fill="#18201c" stroke="#34413a"></polygon>
+        <polygon points="430,330 570,330 600,560 400,560" fill="#2a8a52" stroke="#6fdc98" stroke-width="1.5"></polygon>
+        <polygon points="430,330 470,300 610,300 570,330" fill="#3ca866"></polygon>
+        <polygon points="570,330 610,300 640,530 600,560" fill="#1d6b3f"></polygon>
+      </svg>
+
+      <div style="position: absolute; left: 16px; top: 16px; display: flex; flex-direction: column; gap: 4px; padding: 6px; border-radius: 16px; background: #1f2823">
+        <sc-for list="{{gizmos}}" as="g" hint-placeholder-count="8">
+          <button aria-label="{{g.label}}" style="width: 40px; height: 40px; border-radius: 12px; border: 0; display: grid; place-items: center; color: {{g.fg}}; background: {{g.bg}}"><span class="ms" aria-hidden="true" style="font-size: 20px">{{g.glyph}}</span></button>
+        </sc-for>
+      </div>
+
+      <div style="position: absolute; left: 50%; top: 16px; transform: translateX(-50%); display: flex; gap: 4px; padding: 6px; border-radius: 16px; background: #1f2823">
+        <button style="height: 36px; padding: 0 14px; border-radius: 10px; border: 0; background: transparent; color: #e3ebe5; font: inherit; font-size: 13px">Add</button>
+        <button style="height: 36px; padding: 0 14px; border-radius: 10px; border: 0; background: transparent; color: #e3ebe5; font: inherit; font-size: 13px">Arrange</button>
+        <button style="height: 36px; padding: 0 14px; border-radius: 10px; border: 0; background: transparent; color: #e3ebe5; font: inherit; font-size: 13px">Orient</button>
+        <button style="height: 36px; padding: 0 14px; border-radius: 10px; border: 0; background: transparent; color: #e3ebe5; font: inherit; font-size: 13px">Split</button>
+        <button style="height: 36px; padding: 0 14px; border-radius: 10px; border: 0; background: transparent; color: #e3ebe5; font: inherit; font-size: 13px">Variable height</button>
+      </div>
+
+      <div style="position: absolute; right: 16px; top: 16px; width: 260px; padding: 14px; border-radius: 18px; background: #1f2823; display: flex; flex-direction: column; gap: 8px">
+        <div style="font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: #a9b6ad; font-weight: 500">Objects · Plate 1</div>
+        <div style="display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 10px; border-radius: 10px; background: #24342b; color: #cde9d6; font-size: 13px">bracket_v3.stl<span style="margin-left: auto; font-family: 'Roboto Mono', monospace; font-size: 11px">Ink 1</span></div>
+        <div style="display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 10px; border-radius: 10px; font-size: 13px">cable_clip.stl<span style="margin-left: auto; font-family: 'Roboto Mono', monospace; font-size: 11px; color: #a9b6ad">Ink 2</span></div>
+      </div>
+
+      <div style="position: absolute; left: 16px; right: 16px; bottom: 16px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap">
+        <div style="display: flex; gap: 8px; padding: 6px; border-radius: 16px; background: #1f2823">
+          <button style="height: 40px; padding: 0 16px; border-radius: 12px; border: 0; background: #24342b; color: #cde9d6; font: inherit; font-size: 13px; font-weight: 500">Plate 1</button>
+          <button style="height: 40px; padding: 0 16px; border-radius: 12px; border: 0; background: transparent; color: #a9b6ad; font: inherit; font-size: 13px">Plate 2</button>
+          <button aria-label="Add plate" style="width: 40px; height: 40px; border-radius: 12px; border: 1px dashed #34413a; background: transparent; color: #a9b6ad; font: inherit; font-size: 18px">+</button>
+        </div>
+        <div style="flex: 1"></div>
+        <div style="display: flex; align-items: center; gap: 16px; height: 52px; padding: 0 18px; border-radius: 16px; background: #1f2823; font-size: 13px">
+          <span style="color: #a9b6ad">Estimate</span>
+          <span style="font-family: 'Roboto Mono', monospace">1 h 42 m</span>
+          <span style="font-family: 'Roboto Mono', monospace">38.6 g</span>
+        </div>
+        <button style="height: 52px; padding: 0 22px; border-radius: 16px; border: 1px solid #34413a; background: #1f2823; color: #e3ebe5; font: inherit; font-size: 14px; font-weight: 500">Slice plate</button>
+        <button style="height: 52px; padding: 0 26px; border-radius: 16px; border: 0; background: #6fdc98; color: #00391c; font: inherit; font-size: 14px; font-weight: 700">Print plate</button>
+      </div>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const on = { fg: '#00391c', bg: '#6fdc98' };
+    const off = { fg: '#e3ebe5', bg: 'transparent' };
+    return {
+      inks: [
+        { slot: '1', name: 'PLA Basic · Bambu Green', temp: '220°C', color: '#00ae42', fg: '#ffffff' },
+        { slot: '2', name: 'PLA Matte · Ivory', temp: '220°C', color: '#f2ead8', fg: '#1a1a1a' },
+        { slot: '3', name: 'PETG HF · Charcoal', temp: '250°C', color: '#3a3a3a', fg: '#ffffff' },
+        { slot: '4', name: 'TPU 95A · Signal Orange', temp: '230°C', color: '#ff7a1a', fg: '#1a1a1a' }
+      ],
+      gizmos: [
+        { label: 'Move', glyph: 'open_with', d: 'M12 2v20M2 12h20M12 2l-3 3M12 2l3 3M12 22l-3-3M12 22l3-3', ...on },
+        { label: 'Rotate', glyph: 'rotate_right', d: 'M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5', ...off },
+        { label: 'Scale', glyph: 'open_in_full', d: 'M4 20 20 4M14 4h6v6M10 20H4v-6', ...off },
+        { label: 'Lay on face', glyph: 'vertical_align_bottom', d: 'M3 20h18M6 16l6-10 6 10z', ...off },
+        { label: 'Cut', glyph: 'content_cut', d: 'M6 6l12 12M6 18 18 6M4 12h4M16 12h4', ...off },
+        { label: 'Supports', glyph: 'foundation', d: 'M12 3v18M6 9v12M18 9v12M4 9h16', ...off },
+        { label: 'Seam', glyph: 'line_curve', d: 'M4 12c4-8 12-8 16 0M12 8v8', ...off },
+        { label: 'Paint inks', glyph: 'format_paint', d: 'M4 20l4-1 11-11-3-3L5 16zM14 6l3 3', ...off }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Dialogs</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0e1311}
+</style>
+</helmet>
+<div style="width: 100%; min-height: 900px; box-sizing: border-box; padding: 40px; display: flex; gap: 32px; align-items: flex-start; flex-wrap: wrap; background: #0e1311; color: #e3ebe5; font-family: Roboto, system-ui, sans-serif">
+
+  <section aria-label="Send print job" style="flex: 1 1 400px; max-width: 460px; background: #1f2823; border-radius: 28px; padding: 24px; display: flex; flex-direction: column; gap: 16px">
+    <h2 style="margin: 0; font-size: 22px; font-weight: 500">Send print job</h2>
+    <div style="display: flex; gap: 12px; padding: 12px; border-radius: 16px; background: #141a17">
+      <span style="width: 64px; height: 64px; border-radius: 12px; background: #0f5130; display: grid; place-items: center"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#9ff7bf" stroke-width="1.4" aria-hidden="true"><path d="M12 2 3 7v10l9 5 9-5V7zM3 7l9 5 9-5M12 12v10"></path></svg></span>
+      <div style="font-size: 13px; display: flex; flex-direction: column; gap: 4px"><span style="font-weight: 500; font-size: 15px">bracket_v3 · Plate 1</span><span style="color: #a9b6ad; font-family: 'Roboto Mono', monospace">1 h 42 m · 38.6 g</span><span style="color: #a9b6ad">to X1 Carbon · Studio</span></div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: 16px; background: #0f5130; color: #9ff7bf">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 9-12h-7z"></path></svg>
+      <div style="flex: 1"><div style="font-size: 14px; font-weight: 500">Express print mode</div><div style="font-size: 12px; opacity: .85">From the process preset · keeps heating, homing, AMS load, purge</div></div>
+      <button role="switch" aria-checked="true" aria-label="Express print mode" style="width: 44px; height: 24px; border-radius: 12px; border: 0; padding: 0; background: #6fdc98; position: relative"><span style="position: absolute; right: 3px; top: 3px; width: 18px; height: 18px; border-radius: 9px; background: #00391c"></span></button>
+    </div>
+    <sc-for list="{{rows}}" as="r" hint-placeholder-count="4">
+      <label style="display: flex; align-items: center; gap: 12px; font-size: 14px; color: {{r.fg}}">
+        <input type="checkbox" disabled="{{r.disabled}}" style="width: 18px; height: 18px; accent-color: #6fdc98">
+        <span style="flex: 1">{{r.name}}</span><span style="font-size: 12px; color: #a9b6ad">{{r.note}}</span>
+      </label>
+    </sc-for>
+    <div style="display: flex; justify-content: flex-end; gap: 8px; padding-top: 8px">
+      <button style="height: 44px; padding: 0 20px; border-radius: 14px; border: 0; background: transparent; color: #6fdc98; font: inherit; font-size: 14px; font-weight: 500">Cancel</button>
+      <button style="height: 44px; padding: 0 24px; border-radius: 14px; border: 0; background: #6fdc98; color: #00391c; font: inherit; font-size: 14px; font-weight: 700">Send</button>
+    </div>
+  </section>
+
+  <section aria-label="Melody creator" style="flex: 1 1 480px; max-width: 560px; background: #1f2823; border-radius: 28px; padding: 24px; display: flex; flex-direction: column; gap: 14px">
+    <div style="display: flex; align-items: center; gap: 12px"><h2 style="margin: 0; font-size: 22px; font-weight: 500; flex: 1">Melody creator</h2><select style="height: 36px; border-radius: 10px; background: #141a17; color: #e3ebe5; border: 1px solid #34413a; padding: 0 10px; font: inherit; font-size: 13px"><option>Preset: X1 start tune</option></select></div>
+    <div style="border-radius: 16px; background: #141a17; padding: 12px; display: grid; grid-template-columns: 56px repeat(16, minmax(0, 1fr)); gap: 3px">
+      <sc-for list="{{voices}}" as="v" hint-placeholder-count="3">
+        <span style="font-size: 11px; color: #a9b6ad; align-self: center">{{v.name}}</span>
+        <sc-for list="{{v.steps}}" as="s" hint-placeholder-count="16"><span style="height: 28px; border-radius: 6px; background: {{s}}"></span></sc-for>
+      </sc-for>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; font-size: 12px">
+      <label style="display: flex; flex-direction: column; gap: 4px; color: #a9b6ad">Note<input value="E5" style="height: 36px; border-radius: 10px; background: #141a17; color: #e3ebe5; border: 1px solid #34413a; padding: 0 10px; font-family: 'Roboto Mono', monospace"></label>
+      <label style="display: flex; flex-direction: column; gap: 4px; color: #a9b6ad">Ticks<input value="4" style="height: 36px; border-radius: 10px; background: #141a17; color: #e3ebe5; border: 1px solid #34413a; padding: 0 10px; font-family: 'Roboto Mono', monospace"></label>
+      <label style="display: flex; flex-direction: column; gap: 4px; color: #a9b6ad">Volume<input value="80" style="height: 36px; border-radius: 10px; background: #141a17; color: #e3ebe5; border: 1px solid #34413a; padding: 0 10px; font-family: 'Roboto Mono', monospace"></label>
+    </div>
+    <div style="display: flex; gap: 8px; flex-wrap: wrap">
+      <button style="height: 40px; padding: 0 16px; border-radius: 12px; border: 0; background: #24342b; color: #cde9d6; font: inherit; font-size: 13px; font-weight: 500">Preview here</button>
+      <button style="height: 40px; padding: 0 16px; border-radius: 12px; border: 1px solid #34413a; background: transparent; color: #e3ebe5; font: inherit; font-size: 13px">Play on printer</button>
+      <button style="height: 40px; padding: 0 16px; border-radius: 12px; border: 1px solid #34413a; background: transparent; color: #e3ebe5; font: inherit; font-size: 13px">Copy G-code</button>
+      <button style="height: 40px; padding: 0 16px; border-radius: 12px; border: 0; background: #6fdc98; color: #00391c; font: inherit; font-size: 13px; font-weight: 700">Add to start G-code</button>
+    </div>
+  </section>
+
+  <section aria-label="Command palette" style="flex: 1 1 520px; max-width: 640px; background: #1f2823; border-radius: 28px; overflow: hidden">
+    <div style="display: flex; align-items: center; gap: 10px; padding: 16px 20px; border-bottom: 1px solid #34413a">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a9b6ad" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+      <input value="^(slice|print)" aria-label="Search commands" style="flex: 1; border: 0; background: transparent; color: #e3ebe5; font-family: 'Roboto Mono', monospace; font-size: 15px; outline: none">
+      <span style="font-family: 'Roboto Mono', monospace; font-size: 11px; padding: 2px 8px; border-radius: 6px; background: #0f5130; color: #9ff7bf">.* regex</span>
+    </div>
+    <sc-for list="{{commands}}" as="c" hint-placeholder-count="5">
+      <div style="display: flex; align-items: center; gap: 12px; padding: 12px 20px; background: {{c.bg}}; font-size: 14px">
+        <span style="flex: 1">{{c.name}}</span><span style="font-size: 12px; color: #a9b6ad">{{c.where}}</span><span style="font-family: 'Roboto Mono', monospace; font-size: 11px; color: #a9b6ad">{{c.key}}</span>
+      </div>
+    </sc-for>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const pat = (bits, on) => bits.split('').map((b) => (b === '1' ? on : '#28322c'));
+    return {
+      rows: [
+        { name: 'Bed leveling', note: 'Off in express', disabled: true, fg: '#7c8a81' },
+        { name: 'Flow dynamics calibration', note: 'Off in express', disabled: true, fg: '#7c8a81' },
+        { name: 'Timelapse', note: '', disabled: false, fg: '#e3ebe5' },
+        { name: 'Use AMS', note: '4 inks mapped', disabled: false, fg: '#e3ebe5' }
+      ],
+      voices: [
+        { name: 'Voice 1', steps: pat('1010110010101100', '#6fdc98') },
+        { name: 'Voice 2', steps: pat('1000100010001000', '#8ab4ff') },
+        { name: 'Voice 3', steps: pat('0010001000100011', '#ffb870') }
+      ],
+      commands: [
+        { name: 'Slice plate', where: 'Prepare', key: 'Ctrl R', bg: '#24342b' },
+        { name: 'Slice all plates', where: 'Prepare', key: 'Ctrl Shift R', bg: 'transparent' },
+        { name: 'Print plate', where: 'Prepare', key: 'Ctrl P', bg: 'transparent' },
+        { name: 'Print all', where: 'Prepare', key: '', bg: 'transparent' },
+        { name: 'Printer melodies', where: 'File', key: '', bg: 'transparent' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>
