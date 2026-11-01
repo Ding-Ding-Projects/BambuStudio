@@ -1013,6 +1013,15 @@ struct Sidebar::priv
     // Divider above the card; hidden and shown with it so no orphan rule is left
     // behind while the card is away.
     wxWindow            *m_manip_divider{nullptr};
+    // Graphite shell: the sidebar sections float as rounded cards on the window
+    // ground. A spacer precedes every section item in the scrolled sizer; only
+    // the spacers in front of the first shown item of a card are shown.
+    std::vector<wxSizerItem *> card_spacers;
+    wxSizerItem               *card_tail{nullptr};
+    int  card_of(const wxSizerItem *item) const;
+    void setup_section_cards();
+    void layout_section_cards();
+    void paint_section_cards(wxDC &dc);
     Label               *m_manip_cells[12]{};  // 4 rows (Position/Rotation/Scale%/Size) x 3 axes (X/Y/Z)
     wxTimer             *m_manip_timer{nullptr};
     void                 refresh_manip_card();
@@ -1343,6 +1352,12 @@ static constexpr int ADVANCED_SIDEBAR_WIDTH = 480;
 // counted inside them, it left the full settings tree 334 px of a 480 px pane,
 // and every value field ended past the edge (md3-v151).
 static constexpr int PREPARE_SECTION_RAIL_WIDTH = 128;
+
+// Graphite shell: padding (DIP) between a floating sidebar card's edge and the
+// section inside it. It must stay larger than the corner cut of
+// MD3::Metrics::radius_panel (24 * (1 - 1/sqrt 2), about 7 px), so the square
+// corners of the section windows never cross the rounded edge.
+static constexpr int SECTION_CARD_PADDING = 8;
 
 // Sidebar body scroll maintenance (shared by Sidebar::update_scroll_body and
 // the priv:: paths that run before/without the public wrapper): virtual height
@@ -3578,9 +3593,8 @@ Sidebar::Sidebar(Plater *parent)
 
     p->m_panel_filament_title->SetSizer( bSizer39 );
     p->m_panel_filament_title->Layout();
-    auto spliter_1 = new ::StaticLine(p->scrolled);
-    spliter_1->SetLineColour(outline);
-    scrolled_sizer->Add(spliter_1, 0, wxEXPAND);
+    // Graphite shell: the gap between the printer and filament cards replaces
+    // the divider that used to separate the two sections.
     scrolled_sizer->Add(p->m_panel_filament_title, 0, wxEXPAND | wxALL, 0);
     auto spliter_2 = new ::StaticLine(p->scrolled);
     spliter_2->SetLineColour(outline);
@@ -4496,6 +4510,8 @@ Sidebar::Sidebar(Plater *parent)
         });
         p->m_manip_timer->Start(250);
     }
+
+    p->setup_section_cards();
 
     // Explicit 1px OutlineVariant divider between the sidebar and the adjacent
     // 3D scene. The scrolled body is added FIRST so its opaque surface starts at
@@ -7097,7 +7113,169 @@ void Sidebar::fit_object_list_height() const
 void Sidebar::update_scroll_body() const
 {
     fit_object_list_height();
+    p->layout_section_cards();
     update_sidebar_scroll_body(p->scrolled);
+    // The cards are painted on the scrolled window behind its children.
+    p->scrolled->Refresh(false);
+}
+
+// Which card a scrolled-sizer item belongs to: 0 printer, 1 filament, 2 process,
+// 3 object list, 4 object manipulation. Dividers and other items without a
+// marker return -1 and stay with the card before them.
+int Sidebar::priv::card_of(const wxSizerItem *item) const
+{
+    const wxWindow *w = item->GetWindow();
+    if (w != nullptr && (w == m_panel_printer_title || w == m_panel_printer_content))
+        return 0;
+    if (w != nullptr && (w == m_panel_filament_title || w == m_filament_area_wrapper))
+        return 1;
+    if (w != nullptr && (w == m_params_top_line_1 || w == m_params_top_line_2 || w == m_process_card ||
+                         w == m_process_simple_bar ||
+                         (params_panel_ref && (w == params_panel_ref || w == params_panel_ref->get_top_panel()))))
+        return 2;
+    if (item->GetSizer() != nullptr && item->GetSizer() == sizer_params)
+        return 3;
+    if (w != nullptr && (w == m_manip_divider || w == m_manip_panel))
+        return 4;
+    return -1;
+}
+
+// Insets every section item from the sidebar edges and puts a spacer in front
+// of each one, then paints the cards behind them. Runs once, after the scrolled
+// sizer holds all of its items.
+void Sidebar::priv::setup_section_cards()
+{
+    wxSizer *sizer = scrolled->GetSizer();
+    if (sizer == nullptr || !card_spacers.empty())
+        return;
+    const MD3::DensityMetrics &m = MD3::Metrics::active();
+    const int side = scrolled->FromDIP(m.gap / 2 + SECTION_CARD_PADDING);
+    std::vector<wxSizerItem *> items(sizer->GetChildren().begin(), sizer->GetChildren().end());
+    size_t index = 0;
+    for (wxSizerItem *item : items) {
+        item->SetFlag((item->GetFlag() & ~wxALL) | wxLEFT | wxRIGHT);
+        item->SetBorder(side);
+        card_spacers.push_back(sizer->Insert(index, 0, 0));
+        index += 2;
+    }
+    card_tail = sizer->Add(0, 0);
+    scrolled->Bind(wxEVT_PAINT, [this](wxPaintEvent &) {
+        wxPaintDC dc(scrolled);
+        paint_section_cards(dc);
+    });
+    layout_section_cards();
+}
+
+// Shows the spacer in front of the first shown item of each card: half a gap
+// above the first card, a full gap between cards, plus the card padding.
+void Sidebar::priv::layout_section_cards()
+{
+    wxSizer *sizer = scrolled ? scrolled->GetSizer() : nullptr;
+    if (sizer == nullptr || card_spacers.empty())
+        return;
+    const MD3::DensityMetrics &m = MD3::Metrics::active();
+    const int pad  = scrolled->FromDIP(SECTION_CARD_PADDING);
+    const int edge = scrolled->FromDIP(m.gap / 2);
+    const int gap  = scrolled->FromDIP(m.gap);
+    int  card       = -1;
+    int  shown_card = -2;
+    bool first      = true;
+    wxSizerItem *spacer = nullptr;
+    for (wxSizerItem *item : sizer->GetChildren()) {
+        if (item == card_tail)
+            continue;
+        if (std::find(card_spacers.begin(), card_spacers.end(), item) != card_spacers.end()) {
+            spacer = item;
+            spacer->Show(false);
+            continue;
+        }
+        if (const int known = card_of(item); known >= 0)
+            card = known;
+        if (item->IsShown() && card != shown_card) {
+            if (spacer != nullptr) {
+                spacer->AssignSpacer(wxSize(0, (first ? edge : gap) + pad));
+                spacer->Show(true);
+            }
+            shown_card = card;
+            first      = false;
+        }
+        spacer = nullptr;
+    }
+    if (card_tail != nullptr)
+        card_tail->AssignSpacer(wxSize(0, edge + pad));
+}
+
+static wxRect shown_items_rect(wxSizer *sizer);
+
+static wxRect shown_item_rect(wxSizerItem *item)
+{
+    if (!item->IsShown())
+        return {};
+    if (wxWindow *w = item->GetWindow())
+        return w->IsShown() ? w->GetRect() : wxRect();
+    if (wxSizer *s = item->GetSizer())
+        return shown_items_rect(s);
+    return {};
+}
+
+// Union of the current rectangles of the shown windows in a sizer. Window
+// rectangles, not sizer rectangles: scrolling moves the windows but leaves the
+// sizer's record of where it put them.
+static wxRect shown_items_rect(wxSizer *sizer)
+{
+    wxRect out;
+    for (wxSizerItem *item : sizer->GetChildren()) {
+        const wxRect r = shown_item_rect(item);
+        if (r.IsEmpty())
+            continue;
+        out = out.IsEmpty() ? r : out.Union(r);
+    }
+    return out;
+}
+
+// The window ground, then one rounded SurfaceContainerLow card with an
+// OutlineVariant edge behind each card's shown items. The card padding is larger
+// than the corner cut, so square child corners never cross the rounded edge.
+void Sidebar::priv::paint_section_cards(wxDC &dc)
+{
+    const wxSize client = scrolled->GetClientSize();
+    dc.SetPen(*wxTRANSPARENT_PEN);
+    dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::Surface)));
+    dc.DrawRectangle(0, 0, client.x, client.y);
+    wxSizer *sizer = scrolled->GetSizer();
+    if (sizer == nullptr || card_spacers.empty())
+        return;
+
+    std::map<int, wxRect> cards;
+    int card = -1;
+    for (wxSizerItem *item : sizer->GetChildren()) {
+        if (item->GetWindow() == nullptr && item->GetSizer() == nullptr)
+            continue;
+        if (const int known = card_of(item); known >= 0)
+            card = known;
+        const wxRect r = shown_item_rect(item);
+        if (r.IsEmpty())
+            continue;
+        auto it = cards.find(card);
+        if (it == cards.end())
+            cards.emplace(card, r);
+        else
+            it->second = it->second.Union(r);
+    }
+
+    std::unique_ptr<wxGraphicsContext> gc(wxGraphicsContext::CreateFromUnknownDC(dc));
+    if (!gc)
+        return;
+    const double pad    = scrolled->FromDIP(SECTION_CARD_PADDING);
+    const double radius = scrolled->FromDIP(MD3::Metrics::radius_panel);
+    gc->SetBrush(wxBrush(StateColor::semantic(MD3::Role::SurfaceContainerLow)));
+    gc->SetPen(wxPen(StateColor::semantic(MD3::Role::OutlineVariant), std::max(1, scrolled->FromDIP(1))));
+    for (const auto &entry : cards) {
+        const wxRect &r = entry.second;
+        if (r.GetBottom() + pad < 0 || r.GetTop() - pad > client.y)
+            continue;
+        gc->DrawRoundedRectangle(r.x - pad + 0.5, r.y - pad + 0.5, r.width + 2 * pad - 1, r.height + 2 * pad - 1, radius);
+    }
 }
 
 static std::string blend_mixed_color(const std::vector<unsigned int> &comp_ids,

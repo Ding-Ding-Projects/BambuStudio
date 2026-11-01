@@ -17,7 +17,7 @@ The artboards use the Design Component format and load their runtime from `suppo
 
 ## What is implemented
 
-On `main`: the left navigation rail and the Graphite colour roles from `Tokens.dc.html` in the native kit (`b92da01`), the same roles in every bundled web page, and the Home header and recent-project grid (`029af58`), the floating 3D canvas without the sidebar divider (`292ff65`), the title bar language switch (`d5adb8c`) and the title bar update chip; see `docs/features/design-system/graphite-shell.md`. Still design only: floating 24 px panels for the sidebar sections, rounded canvas corners (the OpenGL view is a native child window), the title bar search field, the printer and LAN model drop column on Home, the restyled Preview and Device screens, and the dialogs. Native labels keep their existing wording, so the rail reads "Multi-device", "Calibration" and "Ink" where the design says "Fleet", "Calibrate" and "Inks".
+On `main`: the left navigation rail and the Graphite colour roles from `Tokens.dc.html` in the native kit (`b92da01`), the same roles in every bundled web page, and the Home header and recent-project grid (`029af58`), the floating 3D canvas without the sidebar divider (`292ff65`), the title bar language switch (`d5adb8c`) the title bar update chip and the floating sidebar cards; see `docs/features/design-system/graphite-shell.md`. Still design only: rounded canvas corners (the OpenGL view is a native child window), the title bar search field, the printer and LAN model drop column on Home, the restyled Preview and Device screens, and the dialogs. Native labels keep their existing wording, so the rail reads "Multi-device", "Calibration" and "Ink" where the design says "Fleet", "Calibrate" and "Inks".
 
 ## Design review
 
