@@ -37389,7 +37389,7 @@ msgstr "重新啟動以安裝更新"
 msgid "Restart to update"
 msgstr "重新啟動以更新"
 
-#. reviewed-category: device
+#. reviewed-category: slicing-printing
 #. review-status: agent-drafted
 msgid "Paused"
 msgstr "已暫停"

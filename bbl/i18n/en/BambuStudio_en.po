@@ -24487,6 +24487,15 @@ msgstr ""
 msgid "Restart to install update"
 msgstr ""
 
+msgid "Restart to update"
+msgstr ""
+
+msgid "An update has been downloaded. Restart to install it. Updates from this fork are not code-signed."
+msgstr ""
+
+msgid "Paused"
+msgstr ""
+
 msgid "Release notes"
 msgstr ""
 
