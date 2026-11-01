@@ -4545,6 +4545,9 @@ Sidebar::Sidebar(Plater *parent)
 
     auto *sidebar_border = new ::StaticLine(this, true);
     sidebar_border->SetLineColour(outline);
+    // Graphite shell: the canvas gutter separates the sidebar from the canvas,
+    // so the hairline is not drawn.
+    sidebar_border->Hide();
     auto *content_row = new wxBoxSizer(wxHORIZONTAL);
     content_row->Add(p->scrolled, 1, wxEXPAND);
     p->m_draft_panel = new SettingsDraftPanel(this, p->m_prepare_tabs, [this](bool draft) {
@@ -9876,10 +9879,14 @@ Plater::priv::priv(Plater *q, MainFrame *main_frame)
                                    .MinSize(wxSize(this->sidebar->default_width(), 90 * wxGetApp().em_unit()))
                                    .BestSize(wxSize(this->sidebar->default_width(), 90 * wxGetApp().em_unit())));
 
+    // Graphite shell: the 3D canvas floats on the window ground with a gutter
+    // on every side instead of running edge to edge beside the sidebar.
+    panel_3d->SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));
+    const int canvas_gutter = q->FromDIP(MD3::Metrics::active().gap);
     auto *panel_sizer = new wxBoxSizer(wxHORIZONTAL);
-    panel_sizer->Add(view3D, 1, wxEXPAND | wxALL, 0);
-    panel_sizer->Add(preview, 1, wxEXPAND | wxALL, 0);
-    panel_sizer->Add(assemble_view, 1, wxEXPAND | wxALL, 0);
+    panel_sizer->Add(view3D, 1, wxEXPAND | wxALL, canvas_gutter);
+    panel_sizer->Add(preview, 1, wxEXPAND | wxALL, canvas_gutter);
+    panel_sizer->Add(assemble_view, 1, wxEXPAND | wxALL, canvas_gutter);
     panel_3d->SetSizer(panel_sizer);
     m_aui_mgr.AddPane(panel_3d, wxAuiPaneInfo().Name("main").CenterPane().PaneBorder(false));
 

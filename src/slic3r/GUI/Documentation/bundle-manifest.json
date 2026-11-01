@@ -435,12 +435,12 @@
     {
       "route": "design-system/graphite-shell.md",
       "title": "Graphite shell",
-      "sha256": "f5bfe0089c807b8e4c67df7064fc679f526309f2da644af1061e80e30fd53fcc"
+      "sha256": "f811f13f196c69d9e80098ac21cc37397590f975f43a0d13dc914671d35ca5af"
     },
     {
       "route": "design-system/graphite-shell.yue_HK.md",
       "title": "石墨外殼",
-      "sha256": "8ac4d3d94f889dd44d077306594ab1b3a145c162cf5b812817ee785e06062b3b"
+      "sha256": "f4a80ed9c8b2cc9d33b44c70dcc92a37faecea1532337a1822bef71fa665d31e"
     },
     {
       "route": "design-system/humidity-details-atlas.md",
@@ -2045,7 +2045,7 @@
       "bytes": 1979
     }
   ],
-  "bundle_sha256": "69d06606822568bf60423e1e7185cc0b2384fd3cb71ba8909e97d368767573b7",
+  "bundle_sha256": "3c7b6cbc1d66bf265f584e2224f594c2c3fe48498ba86e852c8841efc2e67710",
   "unavailable_references": [
     {
       "source": "api/README.md",
