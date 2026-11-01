@@ -37384,6 +37384,16 @@ msgstr "Bambu Studio %s 已準備好。下次開啟應用程式時會啟動。�
 msgid "Restart to install update"
 msgstr "重新啟動以安裝更新"
 
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Restart to update"
+msgstr "重新啟動以更新"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "An update has been downloaded. Restart to install it. Updates from this fork are not code-signed."
+msgstr "更新已經下載好。重新啟動就會安裝。呢個分叉嘅更新冇數碼簽署。"
+
 #. reviewed-category: navigation
 #. review-status: agent-drafted
 msgid "Release notes"

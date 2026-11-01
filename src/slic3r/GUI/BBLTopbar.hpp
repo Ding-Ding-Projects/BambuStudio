@@ -45,6 +45,9 @@ public:
     // LAN model drop indicator: opens the "Invite someone to send a model" dialog.
     void OnLanDropIndicator(wxAuiToolBarEvent& event);
     void OnLanguageSwitch(wxAuiToolBarEvent& event);
+    void OnUpdateChip(wxAuiToolBarEvent& event);
+    // Shows the title bar update chip while a downloaded update waits for a restart.
+    void SetUpdateReady(bool ready);
 
     wxAuiToolBarItem* FindToolByCurrentPosition();
 
@@ -112,6 +115,10 @@ private:
     wxAuiToolBarItem* m_history_item{nullptr};
     wxAuiToolBarItem* m_appearance_item{nullptr};
     wxAuiToolBarItem* m_language_item{nullptr};
+    wxAuiToolBarItem* m_update_item{nullptr};
+    wxAuiToolBarItem* m_update_spacer{nullptr};
+    bool              m_update_ready{false};
+    void apply_update_visibility();
     wxAuiToolBarItem* m_notification_item{nullptr};
     int               m_notification_unread{0};
     // The popover, created on first click and reused (hidden, never destroyed

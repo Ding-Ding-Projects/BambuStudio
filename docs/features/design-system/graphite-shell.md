@@ -9,6 +9,7 @@ The Graphite shell is a redesign of the main window chrome. It changes where the
 - **Graphite palette.** The neutral ramp in `MD3Tokens.hpp` becomes a green-tinted graphite. Dark: ground `#0e1311`, containers `#0a0e0c` to `#28322c`, text `#e3ebe5` and `#a9b6ad`, primary `#6fdc98`. Light: ground `#f5f8f5`, containers `#ffffff` to `#d6e1da`, text `#131c17` and `#3f4c44`, primary `#146c2e`. Text keeps at least 4.5:1 and outlines at least 3:1 against every surface in both themes, and the dark compatibility map stays idempotent (`tests/native_navigation/neutral_palette.test.mjs`).
 - **Floating canvas.** The 3D canvas (Prepare, Preview and Assemble) sits on the window ground with a gutter of one density gap on every side, and the hairline between the sidebar and the canvas is gone. The canvas corners stay square because the OpenGL view is a native child window.
 - **Language switch in the title bar.** A three-segment switch (EN, 粵, 雙) sits before the window controls and shows the current language mode. Choosing another segment runs the same steps as Preferences: an offer to save an unsaved project, the restart confirmation, the modified-preset check, then the interface is rebuilt in the new mode. Any other installed language leaves no segment highlighted.
+- **Update chip in the title bar.** When a background update has been downloaded and is waiting, a "Restart to update" pill in the primary container colour appears after the language switch. Clicking it restarts into the new version through the same path as the notification's restart link. Its tooltip says the update is not code-signed. The chip stays hidden at all other times, and the notification still appears as before.
 - **Web pages follow the palette.** Every bundled web page that carries its own copy of the colour roles (Home, the device page, the filament manager and creator, the guide, login and the model pages) now uses the Graphite values, so web surfaces match the native ones.
 - **Home.** The Home page drops the gradient hero band for a plain display header with 16 px action buttons, and shows up to six recent projects as a three-column grid inside one 24 px panel. These renders come from the shipped page opened in Chromium with sample recent files, not from the running application:
 
@@ -20,10 +21,12 @@ The Graphite shell is a redesign of the main window chrome. It changes where the
 
 - `g++ -fsyntax-only` against wxWidgets 3.2, Boost and OpenCASCADE headers on Linux passes for `Notebook.cpp` and `MainFrame.cpp`.
 - `tests/native_navigation/graphite_rail.test.mjs` pins the left dock, the top-strip default for other notebooks, the rail geometry and the Graphite grounds.
+- `tests/native_navigation/graphite_title_bar.test.mjs` pins the language switch modes, the order of the title bar items, the hidden-until-ready update chip and its restart action.
+- The hosted Windows build compiled the rail, the palette, the floating canvas and the language switch.
 - The node contract suite reports the same failures as `main` and no new ones. The fingerprint of `MainFrame::init_tabpanel` in `tests/native_shared_controls/atlas_shell_preserved_functions.json` was refreshed because this change deliberately edits that function.
 
-Not verified yet: the hosted Windows build, the running application, captures in English, Cantonese and bilingual modes at each scale, and the keyboard order through the rail.
+Not verified yet: the hosted Windows build of the update chip, the running application, captures in English, Cantonese and bilingual modes at each scale, and the keyboard order through the rail.
 
 ## Next steps
 
-The design also turns the sidebar sections into floating 24 px panels and rounds the canvas frame, moves the update notice into the title bar, adds the printer and LAN model drop column to Home, and restyles Preview, Device and the dialogs. Those are not implemented yet. The full design is in `design/graphite-shell/`.
+The design also turns the sidebar sections into floating 24 px panels and rounds the canvas frame, adds the printer and LAN model drop column to Home, and restyles Preview, Device and the dialogs. Those are not implemented yet. The full design is in `design/graphite-shell/`.

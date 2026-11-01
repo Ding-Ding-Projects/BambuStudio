@@ -594,6 +594,9 @@ static std::string release_page_url(const std::string &tag)
 // the application; without it the new version starts the next time the application opens.
 static void push_auto_update_ready_notification(const std::string &tag)
 {
+    // The title bar chip offers the same restart and stays until the app restarts.
+    if (MainFrame *frame = wxGetApp().mainframe; frame != nullptr && frame->topbar() != nullptr)
+        frame->topbar()->SetUpdateReady(true);
     Plater              *plater  = wxGetApp().plater();
     NotificationManager *manager = plater ? plater->get_notification_manager() : nullptr;
     if (manager == nullptr)

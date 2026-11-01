@@ -72,6 +72,8 @@ enum CUSTOM_ID
 static constexpr int ID_LAN_DROP = ID_AMS_NOTEBOOK + 1;
 // Graphite shell language switch (EN / Cantonese / bilingual), outside CUSTOM_ID for the same reason.
 static constexpr int ID_LANGUAGE = ID_AMS_NOTEBOOK + 2;
+// Graphite shell update chip: shown only while a downloaded update waits for a restart.
+static constexpr int ID_UPDATE_READY = ID_AMS_NOTEBOOK + 3;
 
 // Wave 3 (topbar-chrome-raster-to-glyph / titlebar-window-controls-raster):
 // title-bar tool icons are now Material Symbols glyphs rendered to a DPI-correct
@@ -344,6 +346,49 @@ static wxBitmap topbar_language_switch_bitmap(wxWindow *ref, int active)
     });
 }
 
+// Graphite shell update chip: a 30 px PrimaryContainer pill with the download
+// glyph and "Restart to update". Hover lifts it to the Primary role. Shown only
+// while an update has been downloaded and waits for a restart.
+static wxBitmap topbar_update_chip_bitmap(wxWindow *ref, bool hover)
+{
+    const int  H        = 30;
+    const int  padx     = 12;
+    const int  gap      = 6;
+    const int  glyph    = 16;
+    const bool icons_ok = MaterialIcon::available();
+    // TRN: Title bar chip shown when a downloaded update is ready; clicking it restarts the app.
+    const wxString label = _L("Restart to update");
+    wxFont font = Label::Body_12;
+    if (!font.IsOk())
+        font = *wxNORMAL_FONT;
+    font.SetWeight(wxFONTWEIGHT_MEDIUM);
+    const double scale = topbar_scale(ref);
+    const wxColour fg  = StateColor::semantic(hover ? MD3::Role::OnPrimary : MD3::Role::OnPrimaryContainer);
+    const wxBitmap text = topbar_text_alpha(font, scale, label, fg);
+    const double   tw   = text.GetWidth() / scale, th = text.GetHeight() / scale;
+    wxSize gs(0, 0);
+    if (icons_ok) {
+        wxBitmap   probe(1, 1);
+        wxMemoryDC mdc(probe);
+        gs = MaterialIcon::measure(mdc, MaterialIcon::Download, glyph);
+        mdc.SelectObject(wxNullBitmap);
+    }
+    const int W = padx + (icons_ok ? gs.x + gap : 0) + static_cast<int>(std::ceil(tw)) + padx;
+    return topbar_make_canvas(ref, wxSize(W, H), [&](wxGraphicsContext *gc) {
+        gc->SetPen(*wxTRANSPARENT_PEN);
+        gc->SetBrush(wxBrush(StateColor::semantic(hover ? MD3::Role::Primary : MD3::Role::PrimaryContainer)));
+        gc->DrawRoundedRectangle(0, 0, W, H, H / 2.0);
+        double x = padx;
+        if (icons_ok) {
+            // Private icon face: pre-rendered with plain GDI, composited as a bitmap.
+            const wxBitmap gbmp = MaterialIcon::bitmap(ref, MaterialIcon::Download, glyph, fg);
+            gc->DrawBitmap(gbmp, x, (H - gs.y) / 2.0, gs.x, gs.y);
+            x += gs.x + gap;
+        }
+        gc->DrawBitmap(text, x, (H - th) / 2.0, tw, th);
+    });
+}
+
 static wxBitmap topbar_history_chip_bitmap(wxWindow *ref, const wxString &branch,
                                            const wxString &head, bool hover)
 {
@@ -605,7 +650,7 @@ void BBLTopbarArt::DrawButton(wxDC& dc, wxWindow* wnd, const wxAuiToolBarItem& i
     // The brand tile (§3.1) and history chip (§3.5) bake their own background, so
     // they opt out of the shared state layer.
     const int  item_id       = item.GetId();
-    const bool bakes_own_bg  = item_id == ID_LOGO || item_id == ID_HISTORY || item_id == ID_LANGUAGE;
+    const bool bakes_own_bg  = item_id == ID_LOGO || item_id == ID_HISTORY || item_id == ID_LANGUAGE || item_id == ID_UPDATE_READY;
     if (!bakes_own_bg && !(item.GetState() & wxAUI_BUTTON_STATE_DISABLED)) {
         wxColour state_layer;
         // §3.9: the window Close control carries a destructive hover -- its state
@@ -791,6 +836,13 @@ void BBLTopbar::Init(wxFrame* parent)
     m_language_item->SetShortHelp(_L("Language"));
     this->AddSpacer(FromDIP(6));
 
+    // Graphite shell update chip: hidden until SetUpdateReady() reports a downloaded update.
+    m_update_item = this->AddTool(ID_UPDATE_READY, "", topbar_update_chip_bitmap(this, false), wxEmptyString, wxITEM_NORMAL);
+    m_update_item->SetHoverBitmap(topbar_update_chip_bitmap(this, true));
+    // TRN: Tooltip of the title bar update chip.
+    m_update_item->SetShortHelp(_L("An update has been downloaded. Restart to install it. Updates from this fork are not code-signed."));
+    m_update_spacer = this->AddSpacer(FromDIP(6));
+
     // §3.8: a 1px x 22px outline-variant separator sits immediately before the
     // window-control cluster (drawn by BBLTopbarArt::DrawSeparator).
     this->AddSeparator();
@@ -847,6 +899,7 @@ void BBLTopbar::Init(wxFrame* parent)
     this->Bind(wxEVT_AUITOOLBAR_TOOL_DROPDOWN, &BBLTopbar::OnNotificationBell, this, ID_NOTIFICATIONS);
     this->Bind(wxEVT_AUITOOLBAR_TOOL_DROPDOWN, &BBLTopbar::OnLanDropIndicator, this, ID_LAN_DROP);
     this->Bind(wxEVT_AUITOOLBAR_TOOL_DROPDOWN, &BBLTopbar::OnLanguageSwitch, this, ID_LANGUAGE);
+    this->Bind(wxEVT_AUITOOLBAR_TOOL_DROPDOWN, &BBLTopbar::OnUpdateChip, this, ID_UPDATE_READY);
     if (m_lan_drop_item)
         m_lan_drop_listener = LanModelDrop::add_listener([this] {
             const bool   was_shown = m_lan_drop_shown;
@@ -1154,10 +1207,45 @@ void BBLTopbar::apply_lan_drop_visibility()
         m_sizer->Layout();
 }
 
+void BBLTopbar::apply_update_visibility()
+{
+    const bool shown = m_update_ready;
+    for (wxAuiToolBarItem *item : {m_update_item, m_update_spacer}) {
+        if (item == nullptr || item->GetSizerItem() == nullptr)
+            continue;
+        item->GetSizerItem()->Show(shown);
+        // A hidden sizer item keeps its last rectangle, which painting and hit testing still use.
+        if (!shown)
+            item->GetSizerItem()->SetDimension({-1000, 0}, {0, 0});
+    }
+    if (m_sizer)
+        m_sizer->Layout();
+}
+
 void BBLTopbar::realize_with_hidden_items()
 {
     Realize();
     apply_lan_drop_visibility();
+    apply_update_visibility();
+}
+
+void BBLTopbar::SetUpdateReady(bool ready)
+{
+    if (ready == m_update_ready)
+        return;
+    m_update_ready = ready;
+    realize_with_hidden_items();
+    update_responsive_title(GetSize().GetWidth());
+    Refresh(false);
+}
+
+void BBLTopbar::OnUpdateChip(wxAuiToolBarEvent& event)
+{
+    if (!m_update_ready)
+        return;
+    // Closing the window from inside the toolbar event would tear the bar down
+    // mid-handler, so the restart runs on the next turn of the event loop.
+    wxGetApp().CallAfter([] { wxGetApp().restart_after_update(); });
 }
 
 void BBLTopbar::rebuild_history_chip()
@@ -1387,6 +1475,10 @@ void BBLTopbar::Rescale() {
     rebuild_lan_drop_indicator();
     if (m_language_item)
         m_language_item->SetBitmap(topbar_language_switch_bitmap(this, topbar_language_index()));
+    if (m_update_item) {
+        m_update_item->SetBitmap(topbar_update_chip_bitmap(this, false));
+        m_update_item->SetHoverBitmap(topbar_update_chip_bitmap(this, true));
+    }
     if (m_appearance_item)
         m_appearance_item->SetBitmap(MaterialIcon::bitmap(this, MaterialIcon::Palette, 20,
                                                           StateColor::semantic(MD3::Role::OnSurfaceVariant)));
