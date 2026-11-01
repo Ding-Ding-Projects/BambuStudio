@@ -9,7 +9,7 @@
     {
       "file": "src/slic3r/GUI/MainFrame.cpp",
       "name": "void MainFrame::init_tabpanel(",
-      "sha256": "5b17b58e5614381e5cf06df66d9f176f62381da74404aba9140408f3a134b644",
+      "sha256": "8d2eb9be5bfb1817cd7af5f3559fabd44f40c89c5689046cd5fbc536771a811e",
       "end": "void MainFrame::show_device("
     },
     {

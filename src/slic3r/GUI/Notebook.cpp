@@ -65,17 +65,24 @@ uint32_t tab_glyph_for(const std::string &bmp_name)
 
 wxDEFINE_EVENT(wxCUSTOMEVT_NOTEBOOK_SEL_CHANGED, wxCommandEvent);
 
-ButtonsListCtrl::ButtonsListCtrl(wxWindow *parent, wxBoxSizer* side_tools) :
+ButtonsListCtrl::ButtonsListCtrl(wxWindow *parent, wxBoxSizer* side_tools, bool rail) :
     wxControl(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE | wxTAB_TRAVERSAL),
-    m_side_tools(side_tools)
+    m_side_tools(side_tools),
+    m_rail(rail)
 {
 #ifdef __WINDOWS__
     SetDoubleBuffered(true);
 #endif
     SetBackgroundStyle(wxBG_STYLE_PAINT);
-    const int height = FromDIP(MD3::Metrics::navigation_bar_height);
-    SetMinSize({0, height});
-    SetMaxSize({-1, height});
+    if (m_rail) {
+        const int width = FromDIP(MD3::Metrics::navigation_rail_width);
+        SetMinSize({width, 0});
+        SetMaxSize({width, -1});
+    } else {
+        const int height = FromDIP(MD3::Metrics::navigation_bar_height);
+        SetMinSize({0, height});
+        SetMaxSize({-1, height});
+    }
     SetName(_L("Workspace navigation"));
     m_line_margin = FromDIP(MD3::Metrics::tab_active_indicator);
     if (m_side_tools) {
@@ -104,6 +111,26 @@ void ButtonsListCtrl::OnPaint(wxPaintEvent &)
 {
     wxAutoBufferedPaintDC dc(this);
     const wxSize size = GetClientSize();
+    if (m_rail) {
+        // The rail is the deepest layer of the Graphite shell: no hairline,
+        // panels float beside it. The selected tile carries its own container;
+        // a short primary bar on the leading edge is the non-colour cue.
+        const wxColour ground = StateColor::semantic(MD3::Role::SurfaceContainerLowest);
+        dc.SetBackground(wxBrush(ground));
+        dc.Clear();
+        Button *selected = m_selection >= 0 && m_selection < int(m_pageButtons.size()) ? m_pageButtons[m_selection] : nullptr;
+        if (selected && !selected->IsShown()) selected = m_overflow_button;
+        if (!selected || !selected->IsShown()) return;
+        const wxRect rect = selected->GetRect();
+        const auto primary = StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Brand);
+        const double emphasis = MD3::Motion::reduced() ? 1.0 : m_selection_emphasis;
+        const int bar = std::max(2, FromDIP(MD3::Metrics::tab_active_indicator));
+        const int length = std::max(bar, int(FromDIP(24) * emphasis));
+        dc.SetPen(*wxTRANSPARENT_PEN);
+        dc.SetBrush(wxBrush(primary));
+        dc.DrawRoundedRectangle(0, rect.y + (rect.height - length) / 2, bar, length, bar / 2.0);
+        return;
+    }
     const wxColour surface = StateColor::semantic(MD3::Role::Surface);
     dc.SetBackground(wxBrush(surface));
     dc.Clear();
@@ -134,6 +161,31 @@ void ButtonsListCtrl::OnPaint(wxPaintEvent &)
 
 void ButtonsListCtrl::StyleButton(Button *button, bool selected)
 {
+    if (m_rail) {
+        const wxColour ground = StateColor::semantic(MD3::Role::SurfaceContainerLowest);
+        button->SetBackgroundColor(StateColor(
+            std::pair{StateColor::semantic(MD3::Role::SurfaceContainerHigh), (int)StateColor::Pressed},
+            std::pair{StateColor::semantic(MD3::Role::SurfaceContainer), (int)StateColor::Hovered},
+            std::pair{selected ? StateColor::semantic(MD3::Role::SecondaryContainer, MD3::ColorScheme::Brand) : ground, (int)StateColor::Normal}));
+        button->SetTextColor(StateColor(
+            std::pair{StateColor::semantic(MD3::Role::Outline), (int)StateColor::Disabled},
+            std::pair{StateColor::semantic(MD3::Role::OnSurface), (int)StateColor::Pressed},
+            std::pair{StateColor::semantic(MD3::Role::OnSurface), (int)StateColor::Hovered},
+            std::pair{StateColor::semantic(selected ? MD3::Role::OnSecondaryContainer : MD3::Role::OnSurfaceVariant, MD3::ColorScheme::Brand), (int)StateColor::Normal}));
+        button->SetBorderWidth(0);
+        button->SetSelected(selected);
+        button->SetVertical(true);
+        button->SetCornerRadius(FromDIP(16));
+        button->SetPaddingSize({FromDIP(4), FromDIP(6)});
+        button->SetAllowShrink(true);
+        wxFont label = Label::Body_12;
+        label.SetNumericWeight(selected ? 600 : 500);
+        button->SetFont(label);
+        const wxSize tile{FromDIP(MD3::Metrics::navigation_rail_item_width), FromDIP(MD3::Metrics::navigation_rail_item_height)};
+        button->SetMinSize(tile);
+        button->SetMaxSize(tile);
+        return;
+    }
     const auto page = std::find(m_pageButtons.begin(), m_pageButtons.end(), button);
     const bool workflow = page != m_pageButtons.end() && IsWorkflowPage(int(page - m_pageButtons.begin()));
     const wxColour surface = StateColor::semantic(workflow ? MD3::Role::SurfaceContainerLow : MD3::Role::Surface);
@@ -166,7 +218,7 @@ void ButtonsListCtrl::StyleButton(Button *button, bool selected)
 
 void ButtonsListCtrl::ApplyTheme()
 {
-    SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));
+    SetBackgroundColour(StateColor::semantic(m_rail ? MD3::Role::SurfaceContainerLowest : MD3::Role::Surface));
     for (size_t i = 0; i < m_pageButtons.size(); ++i) StyleButton(m_pageButtons[i], int(i) == m_selection);
     for (auto *button : m_actionButtons) StyleButton(button, false);
     StyleButton(m_overflow_button, false);
@@ -180,9 +232,71 @@ void ButtonsListCtrl::SetWorkflowPages(int prepare, int preview, int print, int 
     ApplyTheme();
 }
 
+void ButtonsListCtrl::LayoutRail()
+{
+    // Destinations stack from the top in workflow order; navigation actions
+    // (Settings) are pinned to the bottom. When the window is too short, the
+    // same fit() used by the strip moves the tail into the overflow menu,
+    // measured along the height instead of the width.
+    const wxSize size = GetClientSize();
+    const int inset = FromDIP(navigation_inset), gap = FromDIP(destination_gap);
+    const int tile_w = FromDIP(MD3::Metrics::navigation_rail_item_width);
+    const int x = std::max(0, (size.x - tile_w) / 2);
+    int bottom = size.y - inset;
+    for (auto it = m_actionButtons.rbegin(); it != m_actionButtons.rend(); ++it) {
+        const int h = (*it)->GetMinSize().y;
+        bottom -= h;
+        (*it)->SetSize(x, std::max(inset, bottom), tile_w, h);
+        (*it)->Show();
+        bottom -= gap;
+    }
+    const int available = std::max(0, bottom - inset - gap);
+    std::vector<NotebookNavigation::Item> items;
+    for (int page : NotebookNavigation::order(int(m_pageButtons.size()), m_workflow))
+        items.push_back({page, m_pageButtons[page]->GetMinSize().y, IsWorkflowPage(page)});
+    const auto layout = NotebookNavigation::fit(items, available, m_overflow_button->GetMinSize().y, gap, m_selection);
+    wxWindow *focused = wxWindow::FindFocus();
+    bool focus_hidden = false;
+    for (int id : layout.overflow) {
+        if (m_pageButtons[id] == focused) focus_hidden = true;
+        m_pageButtons[id]->Hide();
+    }
+    Button *previous = nullptr;
+    for (const auto &position : layout.visible) {
+        Button *button = m_pageButtons[position.id];
+        button->SetSize(x, inset + position.x, tile_w, position.width);
+        button->Show();
+        if (previous) button->MoveAfterInTabOrder(previous);
+        previous = button;
+    }
+    for (auto *action : m_actionButtons) {
+        if (previous) action->MoveAfterInTabOrder(previous);
+        previous = action;
+    }
+    m_workflow_rect = wxRect();
+    m_overflow = layout.overflow;
+    const bool selected_hidden = std::find(m_overflow.begin(), m_overflow.end(), m_selection) != m_overflow.end();
+    StyleButton(m_overflow_button, selected_hidden);
+    m_overflow_button->Show(!m_overflow.empty());
+    if (!m_overflow.empty()) {
+        m_overflow_button->SetSize(x, inset + layout.overflow_x, tile_w, layout.overflow_width);
+        const wxString name = selected_hidden ? _L("More workspaces") + ": " + m_pageButtons[m_selection]->GetLabel() : _L("More workspaces");
+        m_overflow_button->SetName(name);
+        m_overflow_button->SetToolTip(name);
+        if (focus_hidden) m_overflow_button->SetFocus();
+    }
+    Refresh(false);
+}
+
 void ButtonsListCtrl::LayoutNavigation()
 {
     if (m_laying_out || !m_overflow_button) return;
+    if (m_rail) {
+        m_laying_out = true;
+        LayoutRail();
+        m_laying_out = false;
+        return;
+    }
     m_laying_out = true;
     const wxSize size = GetClientSize();
     const int inset = FromDIP(navigation_inset), gap = FromDIP(destination_gap);
@@ -288,9 +402,15 @@ void ButtonsListCtrl::Rescale()
     for (auto *button : m_pageButtons) button->Rescale();
     for (auto *button : m_actionButtons) button->Rescale();
     m_overflow_button->Rescale();
-    const int height = FromDIP(MD3::Metrics::navigation_bar_height);
-    SetMinSize({0, height});
-    SetMaxSize({-1, height});
+    if (m_rail) {
+        const int width = FromDIP(MD3::Metrics::navigation_rail_width);
+        SetMinSize({width, 0});
+        SetMaxSize({width, -1});
+    } else {
+        const int height = FromDIP(MD3::Metrics::navigation_bar_height);
+        SetMinSize({0, height});
+        SetMaxSize({-1, height});
+    }
     m_line_margin = FromDIP(MD3::Metrics::tab_active_indicator);
     ApplyTheme();
 }
@@ -318,8 +438,8 @@ void ButtonsListCtrl::SetSelection(int sel)
         if (m_selection >= 0 && m_selection < int(m_pageButtons.size())) {
             Button *button = m_pageButtons[m_selection];
             if (!button->IsShown()) button = m_overflow_button;
-            const auto surface = StateColor::semantic(MD3::Role::Surface);
-            const auto container = StateColor::semantic(MD3::Role::PrimaryContainer, MD3::ColorScheme::Brand);
+            const auto surface = StateColor::semantic(m_rail ? MD3::Role::SurfaceContainerLowest : MD3::Role::Surface);
+            const auto container = StateColor::semantic(m_rail ? MD3::Role::SecondaryContainer : MD3::Role::PrimaryContainer, MD3::ColorScheme::Brand);
             const double emphasis = MD3::Motion::reduced() ? 1.0 : m_selection_emphasis;
             button->SetBackgroundColor(StateColor(
                 std::pair{StateColor::semantic(MD3::Role::SurfaceContainerHighest), (int)StateColor::Pressed},

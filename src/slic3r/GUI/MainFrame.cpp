@@ -2392,7 +2392,8 @@ void MainFrame::init_tabpanel()
     update_prepare_action_bar_style();
     m_prepare_action_bar->Hide();
 
-    m_tabpanel = new Notebook(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, nullptr, wxNB_TOP | wxTAB_TRAVERSAL | wxNB_NOPAGETHEME);
+    // Graphite shell: workspaces live in a left navigation rail.
+    m_tabpanel = new Notebook(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, nullptr, wxNB_LEFT | wxTAB_TRAVERSAL | wxNB_NOPAGETHEME);
     // Match the tab-bar (ButtonsListCtrl) Surface role; the strip repaints over it.
     m_tabpanel->SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));
 

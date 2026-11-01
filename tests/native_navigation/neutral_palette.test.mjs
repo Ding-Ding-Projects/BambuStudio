@@ -115,8 +115,8 @@ test('accent override, contextual resolution and seed generation remain byte-ide
         'dbed921ac70ceefcabd39aae5f47215afbef244b3a15512f44dc0593a95eaabe');
 });
 test('contrast and dark-remap checks reject deliberate invalid palette mutations', () => {
-    assert.throws(() => checkContrast(palette(tokens.replace('onSurfaceVariant{"#b9c8da"}', 'onSurfaceVariant{"#344557"}'))));
-    assert.throws(() => checkIdempotence(palette(tokens.replace('onSurface{"#e8eff8"}', 'onSurface{"#e8e7ee"}'))));
+    assert.throws(() => checkContrast(palette(tokens.replace('onSurfaceVariant{"#a9b6ad"}', 'onSurfaceVariant{"#28322c"}'))));
+    assert.throws(() => checkIdempotence(palette(tokens.replace('onSurface{"#e3ebe5"}', 'onSurface{"#e7eee9"}'))));
     checkContrast(data);
     checkIdempotence(data);
 });

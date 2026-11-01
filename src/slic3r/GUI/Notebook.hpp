@@ -25,7 +25,10 @@ class ButtonsListCtrl : public wxControl
 {
 public:
     // BBS
-    ButtonsListCtrl(wxWindow* parent, wxBoxSizer* side_tools = NULL);
+    // rail = true lays the destinations out as a vertical navigation rail
+    // (icon above label, actions pinned to the bottom) for a left-docked book.
+    ButtonsListCtrl(wxWindow* parent, wxBoxSizer* side_tools = NULL, bool rail = false);
+    bool IsRail() const { return m_rail; }
     ~ButtonsListCtrl() override { m_selection_motion.Stop(); }
 
     void OnPaint(wxPaintEvent&);
@@ -46,6 +49,7 @@ private:
     void ApplyTheme();
     void StyleButton(Button* button, bool selected);
     void LayoutNavigation();
+    void LayoutRail();
     void ShowOverflow();
     bool IsWorkflowPage(int page) const;
 
@@ -55,6 +59,7 @@ private:
     std::vector<int>                m_overflow;
     wxRect                          m_workflow_rect;
     bool                            m_laying_out = false;
+    bool                            m_rail = false;
     // BBS: use Button
     std::vector<Button*>            m_pageButtons;
     std::vector<Button*>            m_actionButtons;
@@ -92,10 +97,12 @@ public:
                 wxBoxSizer* side_tools = NULL,
                 long style = 0)
     {
-        if (!wxBookCtrlBase::Create(parent, winid, pos, size, style | wxBK_TOP))
+        // Respect an explicit left/right/bottom dock; default to the top strip.
+        const long dock = style & wxBK_ALIGN_MASK;
+        if (!wxBookCtrlBase::Create(parent, winid, pos, size, dock ? style : (style | wxBK_TOP)))
             return false;
 
-        m_bookctrl = new ButtonsListCtrl(this, side_tools);
+        m_bookctrl = new ButtonsListCtrl(this, side_tools, (style & wxBK_LEFT) != 0);
 
         wxSizer* mainSizer = new wxBoxSizer(IsVertical() ? wxVERTICAL : wxHORIZONTAL);
 
@@ -105,11 +112,13 @@ public:
         m_controlSizer = new wxBoxSizer(IsVertical() ? wxHORIZONTAL : wxVERTICAL);
         m_controlSizer->Add(m_bookctrl, wxSizerFlags(1).Expand());
         wxSizerFlags flags;
-        if (IsVertical())
+        const bool rail = GetBtnsListCtrl()->IsRail();
+        if (IsVertical() || rail)
             flags.Expand();
         else
             flags.CentreVertical();
-        mainSizer->Add(m_controlSizer, flags.Border(wxALL, m_controlMargin));
+        // The rail runs edge to edge down the window; the strip keeps its margin.
+        mainSizer->Add(m_controlSizer, flags.Border(wxALL, rail ? 0 : m_controlMargin));
         SetSizer(mainSizer);
 
         this->Bind(wxCUSTOMEVT_NOTEBOOK_SEL_CHANGED, [this](wxCommandEvent& evt)

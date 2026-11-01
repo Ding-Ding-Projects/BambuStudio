@@ -50,32 +50,32 @@ enum class ColorScheme
 
 namespace Light {
 
-inline const wxColour surface{"#f7f9fc"};
-inline const wxColour surfaceDim{"#d6e0ec"};
-inline const wxColour surfaceBright{"#fafcff"};
+inline const wxColour surface{"#f5f8f5"};
+inline const wxColour surfaceDim{"#d5ddd7"};
+inline const wxColour surfaceBright{"#fafcfa"};
 inline const wxColour scLowest{"#ffffff"};
-inline const wxColour scLow{"#eef2f7"};
-inline const wxColour sc{"#e7edf5"};
-inline const wxColour scHigh{"#dfe7f1"};
-inline const wxColour scHighest{"#d7e1ed"};
-inline const wxColour onSurface{"#172434"};
-inline const wxColour onSurfaceVariant{"#46576a"};
+inline const wxColour scLow{"#eef3ef"};
+inline const wxColour sc{"#e7eee9"};
+inline const wxColour scHigh{"#dfe8e2"};
+inline const wxColour scHighest{"#d6e1da"};
+inline const wxColour onSurface{"#131c17"};
+inline const wxColour onSurfaceVariant{"#3f4c44"};
 // Slightly darker than the reference outline: at least 3:1 on the highest container.
-inline const wxColour outline{"#6d7e94"};
-inline const wxColour outlineVariant{"#c4d0df"};
+inline const wxColour outline{"#66766c"};
+inline const wxColour outlineVariant{"#c0ccc4"};
 inline const wxColour primary{"#146c2e"};
 inline const wxColour onPrimary{"#ffffff"};
 inline const wxColour primaryContainer{"#a6f4b8"};
 inline const wxColour onPrimaryContainer{"#00210c"};
-inline const wxColour secondaryContainer{"#d7e8d9"};
-inline const wxColour onSecondaryContainer{"#0e1f13"};
+inline const wxColour secondaryContainer{"#d3e8da"};
+inline const wxColour onSecondaryContainer{"#0e1f15"};
 inline const wxColour error{"#ba1a1a"};
 inline const wxColour errorContainer{"#ffdad6"};
-inline const wxColour inverseSurface{"#2f3036"};
-inline const wxColour inverseOn{"#f1f0f7"};
+inline const wxColour inverseSurface{"#2b322e"};
+inline const wxColour inverseOn{"#edf2ee"};
 inline const wxColour onError{"#ffffff"};
 inline const wxColour onErrorContainer{"#410002"};
-inline const wxColour inversePrimary{"#8bd89b"};
+inline const wxColour inversePrimary{"#6fdc98"};
 
 // Overlay tints carry alpha over black. Scrim dims content behind modal
 // surfaces; shadow tints the elevation drop-shadows (see Metrics::elev*).
@@ -90,28 +90,28 @@ namespace Dark {
 // Both paint-time state resolution and theme switching may apply that map, so
 // already-resolved dark colours must remain fixed points. Brand/error/inverse
 // roles retain their existing hand-tuned values; only the neutral ramp changes.
-inline const wxColour surface{"#151c25"};
-inline const wxColour surfaceDim{"#111821"};
-inline const wxColour surfaceBright{"#3b4c60"};
-inline const wxColour scLowest{"#101720"};
-inline const wxColour scLow{"#1a2430"};
-inline const wxColour sc{"#202d3b"};
-inline const wxColour scHigh{"#293849"};
-inline const wxColour scHighest{"#344557"};
-inline const wxColour onSurface{"#e8eff8"};
-inline const wxColour onSurfaceVariant{"#b9c8da"};
-inline const wxColour outline{"#899caf"};
-inline const wxColour outlineVariant{"#43566a"};
-inline const wxColour primary{"#8bd89b"};
-inline const wxColour onPrimary{"#00391a"};
-inline const wxColour primaryContainer{"#095228"};
-inline const wxColour onPrimaryContainer{"#a7f5b9"};
-inline const wxColour secondaryContainer{"#2b3a2f"};
-inline const wxColour onSecondaryContainer{"#cfe9d3"};
+inline const wxColour surface{"#0e1311"};
+inline const wxColour surfaceDim{"#0b0f0d"};
+inline const wxColour surfaceBright{"#333d37"};
+inline const wxColour scLowest{"#0a0e0c"};
+inline const wxColour scLow{"#141a17"};
+inline const wxColour sc{"#18201c"};
+inline const wxColour scHigh{"#1f2823"};
+inline const wxColour scHighest{"#28322c"};
+inline const wxColour onSurface{"#e3ebe5"};
+inline const wxColour onSurfaceVariant{"#a9b6ad"};
+inline const wxColour outline{"#7c8a81"};
+inline const wxColour outlineVariant{"#34413a"};
+inline const wxColour primary{"#6fdc98"};
+inline const wxColour onPrimary{"#00391c"};
+inline const wxColour primaryContainer{"#0f5130"};
+inline const wxColour onPrimaryContainer{"#9ff7bf"};
+inline const wxColour secondaryContainer{"#24342b"};
+inline const wxColour onSecondaryContainer{"#cde9d6"};
 inline const wxColour error{"#ffb4ab"};
 inline const wxColour errorContainer{"#93000a"};
-inline const wxColour inverseSurface{"#e3e2e9"};
-inline const wxColour inverseOn{"#2f3036"};
+inline const wxColour inverseSurface{"#e3ebe6"};
+inline const wxColour inverseOn{"#2c332f"};
 inline const wxColour onError{"#690005"};
 inline const wxColour onErrorContainer{"#ffdad6"};
 inline const wxColour inversePrimary{"#156d2f"};
@@ -408,6 +408,11 @@ inline const DensityMetrics &active() { return isCompact() ? compact : comfortab
 
 inline constexpr int top_bar_height         = 46;
 inline constexpr int navigation_bar_height  = 52;
+// Left navigation rail (Graphite shell): fixed width, one destination per
+// icon-over-label tile.
+inline constexpr int navigation_rail_width       = 88;
+inline constexpr int navigation_rail_item_width  = 72;
+inline constexpr int navigation_rail_item_height = 60;
 inline constexpr int prepare_actions_height = 66;
 inline constexpr int preview_timeline_height = 58;
 
@@ -436,6 +441,7 @@ inline constexpr int tab_active_indicator = 3; // tab-bar active underline
 // any density. Standalone buttons and chips use a pill radius = height / 2,
 // computed at the call site.
 inline constexpr int radius_dialog    = 28; // dialogs, hero cards
+inline constexpr int radius_panel     = 24; // floating panels and the 3D canvas frame
 inline constexpr int radius_home      = 20; // home cards
 inline constexpr int radius_icon_tile = 14; // icon tiles
 inline constexpr int radius_rail      = 12; // rail buttons, snackbars
