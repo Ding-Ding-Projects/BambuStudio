@@ -727,6 +727,9 @@ public:
     void            update_ui_from_settings();
 
     bool            switch_language();
+    // Switches to one language mode ("en", "yue_HK", "bilingual_en_yue_HK")
+    // with the same save, confirm and restart steps as Preferences.
+    bool            request_language_mode(const std::string &mode);
     bool            load_language(wxString language, bool initial);
 
     Tab*            get_tab(Preset::Type type);

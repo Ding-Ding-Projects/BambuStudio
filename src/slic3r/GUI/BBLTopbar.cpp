@@ -21,9 +21,11 @@
 #include "LanModelDrop/LanModelDropStation.hpp"
 #include "format.hpp"
 #include "AppLogo/LogoRender.hpp"
+#include "LanguageMode.hpp"
 
 #include <wx/dcmemory.h>
 #include <wx/graphics.h>
+#include <wx/settings.h>
 
 #include <algorithm>
 #include <cmath>
@@ -68,6 +70,8 @@ enum CUSTOM_ID
 // LAN model drop indicator. Outside CUSTOM_ID, whose body is fingerprinted by the shell atlas
 // contract (tests/native_shared_controls/atlas_shell_preserved_functions.json).
 static constexpr int ID_LAN_DROP = ID_AMS_NOTEBOOK + 1;
+// Graphite shell language switch (EN / Cantonese / bilingual), outside CUSTOM_ID for the same reason.
+static constexpr int ID_LANGUAGE = ID_AMS_NOTEBOOK + 2;
 
 // Wave 3 (topbar-chrome-raster-to-glyph / titlebar-window-controls-raster):
 // title-bar tool icons are now Material Symbols glyphs rendered to a DPI-correct
@@ -283,6 +287,63 @@ static wxBitmap topbar_brand_tile_bitmap(wxWindow *ref)
 // hover) with an account_tree glyph, the branch name + short head in Roboto
 // Mono, and a Primary status dot. The whole chip is baked into one bitmap so it
 // reserves exactly its content width in the AUI toolbar.
+// Graphite shell language switch: three segments (English, Hong Kong Cantonese,
+// bilingual) in one container; the active mode takes the secondary container.
+// Geometry is shared with BBLTopbar::OnLanguageSwitch, which maps a click to a
+// segment.
+static constexpr int TOPBAR_LANG_H   = 30;
+static constexpr int TOPBAR_LANG_PAD = 3;
+static constexpr int TOPBAR_LANG_SEG = 30;
+
+static const char *const topbar_language_modes[3] = {
+    Slic3r::GUI::I18N::LANGUAGE_MODE_ENGLISH,
+    Slic3r::GUI::I18N::LANGUAGE_MODE_CANTONESE_HONG_KONG,
+    Slic3r::GUI::I18N::LANGUAGE_MODE_ENGLISH_CANTONESE_HK,
+};
+
+// Index of the configured language mode in the switch, or -1 for any other
+// installed language (no segment is highlighted then).
+static int topbar_language_index()
+{
+    using namespace Slic3r::GUI;
+    const std::string current = I18N::normalize_language_mode_id(wxGetApp().app_config->get("language"));
+    if (I18N::is_baseline_language_mode(current))
+        return 0;
+    for (int i = 1; i < 3; ++i)
+        if (current == I18N::normalize_language_mode_id(topbar_language_modes[i]))
+            return i;
+    return -1;
+}
+
+static wxBitmap topbar_language_switch_bitmap(wxWindow *ref, int active)
+{
+    static const wxString labels[3] = {wxString("EN"), wxString::FromUTF8("\xE7\xB2\xB5"), wxString::FromUTF8("\xE9\x9B\x99")};
+    const int W = 2 * TOPBAR_LANG_PAD + 3 * TOPBAR_LANG_SEG;
+    const int H = TOPBAR_LANG_H;
+    // The system UI face, not a privately registered one: it links to a CJK
+    // face for the two Chinese labels.
+    wxFont font = wxSystemSettings::GetFont(wxSYS_DEFAULT_GUI_FONT);
+    font.SetPointSize(9);
+    const double scale = topbar_scale(ref);
+    return topbar_make_canvas(ref, wxSize(W, H), [&](wxGraphicsContext *gc) {
+        gc->SetPen(*wxTRANSPARENT_PEN);
+        gc->SetBrush(wxBrush(StateColor::semantic(MD3::Role::SurfaceContainerLow)));
+        gc->DrawRoundedRectangle(0, 0, W, H, MD3::Metrics::radius_rail);
+        for (int i = 0; i < 3; ++i) {
+            const double x = TOPBAR_LANG_PAD + i * TOPBAR_LANG_SEG;
+            const bool   on = i == active;
+            if (on) {
+                gc->SetBrush(wxBrush(StateColor::semantic(MD3::Role::SecondaryContainer)));
+                gc->DrawRoundedRectangle(x, TOPBAR_LANG_PAD, TOPBAR_LANG_SEG, H - 2 * TOPBAR_LANG_PAD, MD3::Metrics::radius_tiny);
+            }
+            const wxColour colour = StateColor::semantic(on ? MD3::Role::OnSecondaryContainer : MD3::Role::OnSurfaceVariant);
+            const wxBitmap text = topbar_text_alpha(font, scale, labels[i], colour);
+            const double tw = text.GetWidth() / scale, th = text.GetHeight() / scale;
+            gc->DrawBitmap(text, x + (TOPBAR_LANG_SEG - tw) / 2.0, (H - th) / 2.0, tw, th);
+        }
+    });
+}
+
 static wxBitmap topbar_history_chip_bitmap(wxWindow *ref, const wxString &branch,
                                            const wxString &head, bool hover)
 {
@@ -544,7 +605,7 @@ void BBLTopbarArt::DrawButton(wxDC& dc, wxWindow* wnd, const wxAuiToolBarItem& i
     // The brand tile (§3.1) and history chip (§3.5) bake their own background, so
     // they opt out of the shared state layer.
     const int  item_id       = item.GetId();
-    const bool bakes_own_bg  = item_id == ID_LOGO || item_id == ID_HISTORY;
+    const bool bakes_own_bg  = item_id == ID_LOGO || item_id == ID_HISTORY || item_id == ID_LANGUAGE;
     if (!bakes_own_bg && !(item.GetState() & wxAUI_BUTTON_STATE_DISABLED)) {
         wxColour state_layer;
         // §3.9: the window Close control carries a destructive hover -- its state
@@ -724,6 +785,12 @@ void BBLTopbar::Init(wxFrame* parent)
         this->AddSpacer(FromDIP(6));
     }
 
+    // Graphite shell language switch: English, Hong Kong Cantonese, bilingual.
+    m_language_item = this->AddTool(ID_LANGUAGE, "", topbar_language_switch_bitmap(this, topbar_language_index()),
+                                    wxEmptyString, wxITEM_NORMAL);
+    m_language_item->SetShortHelp(_L("Language"));
+    this->AddSpacer(FromDIP(6));
+
     // §3.8: a 1px x 22px outline-variant separator sits immediately before the
     // window-control cluster (drawn by BBLTopbarArt::DrawSeparator).
     this->AddSeparator();
@@ -779,6 +846,7 @@ void BBLTopbar::Init(wxFrame* parent)
     this->Bind(wxEVT_AUITOOLBAR_TOOL_DROPDOWN, &BBLTopbar::OnAppearanceButton, this, ID_APPEARANCE);
     this->Bind(wxEVT_AUITOOLBAR_TOOL_DROPDOWN, &BBLTopbar::OnNotificationBell, this, ID_NOTIFICATIONS);
     this->Bind(wxEVT_AUITOOLBAR_TOOL_DROPDOWN, &BBLTopbar::OnLanDropIndicator, this, ID_LAN_DROP);
+    this->Bind(wxEVT_AUITOOLBAR_TOOL_DROPDOWN, &BBLTopbar::OnLanguageSwitch, this, ID_LANGUAGE);
     if (m_lan_drop_item)
         m_lan_drop_listener = LanModelDrop::add_listener([this] {
             const bool   was_shown = m_lan_drop_shown;
@@ -1031,6 +1099,22 @@ void BBLTopbar::rebuild_notification_bell()
     m_notification_item->SetShortHelp(m_notification_unread > 0
         ? wxString::Format(_L("Notifications (%d unread)"), m_notification_unread)
         : _L("Notifications"));
+}
+
+void BBLTopbar::OnLanguageSwitch(wxAuiToolBarEvent& event)
+{
+    // Map the click to a segment of the baked switch, which is centred in the tool rect.
+    const wxRect   rect   = GetToolRect(ID_LANGUAGE);
+    const wxPoint  click  = ScreenToClient(::wxGetMousePosition());
+    const int      width  = FromDIP(2 * TOPBAR_LANG_PAD + 3 * TOPBAR_LANG_SEG);
+    const int      left   = rect.x + (rect.width - width) / 2 + FromDIP(TOPBAR_LANG_PAD);
+    const int      index  = std::clamp((click.x - left) / std::max(1, FromDIP(TOPBAR_LANG_SEG)), 0, 2);
+    if (index == topbar_language_index())
+        return;
+    const std::string mode = topbar_language_modes[index];
+    // The switch recreates the whole interface, this bar included, so it runs
+    // after the click has been handled.
+    wxGetApp().CallAfter([mode]() { wxGetApp().request_language_mode(mode); });
 }
 
 void BBLTopbar::OnLanDropIndicator(wxAuiToolBarEvent& event)
@@ -1301,6 +1385,8 @@ void BBLTopbar::Rescale() {
     rebuild_history_chip();
     rebuild_notification_bell();
     rebuild_lan_drop_indicator();
+    if (m_language_item)
+        m_language_item->SetBitmap(topbar_language_switch_bitmap(this, topbar_language_index()));
     if (m_appearance_item)
         m_appearance_item->SetBitmap(MaterialIcon::bitmap(this, MaterialIcon::Palette, 20,
                                                           StateColor::semantic(MD3::Role::OnSurfaceVariant)));

@@ -7587,6 +7587,56 @@ void GUI_App::switch_staff_pick(bool on)
     mainframe->m_webview->SendDesignStaffpick(on);
 }
 
+bool GUI_App::request_language_mode(const std::string &mode)
+{
+    const std::string next     = I18N::normalize_language_mode_id(mode);
+    const std::string previous = app_config->get("language");
+    const std::string current  = I18N::normalize_language_mode_id(previous);
+    if (next == current || (I18N::is_baseline_language_mode(next) && I18N::is_baseline_language_mode(current)))
+        return false;
+
+    wxWindow *parent = mainframe;
+    if (plater() && plater()->is_project_dirty()) {
+        const auto result = MessageDialog(parent, _L("The current project has unsaved changes, save it before continuing?"),
+                                          wxString(SLIC3R_APP_FULL_NAME) + " - " + _L("Save"),
+                                          wxYES_NO | wxCANCEL | wxYES_DEFAULT | wxCENTRE).ShowModal();
+        if (result == wxID_CANCEL)
+            return false;
+        if (result == wxID_YES)
+            plater()->save_project();
+    }
+
+    auto restart_copy = I18N::translate_mode(L("Switching the language requires application restart.\n"));
+    restart_copy.primary.Trim();
+    restart_copy.secondary.Trim();
+    const auto restart_text  = I18N::render_localized_text_stacked(restart_copy.finalize_without_arguments());
+    const auto continue_text = I18N::render_localized_text_stacked(
+        I18N::translate_mode(L("Do you want to continue?")).finalize_without_arguments());
+    const auto caption_text = I18N::render_localized_text_compact(
+        I18N::translate_mode(L("Language selection")).finalize_without_arguments());
+    MessageDialog confirm(nullptr, restart_text.label + "\n\n" + continue_text.label, caption_text.label,
+                          wxICON_QUESTION | wxOK | wxCANCEL);
+    if (confirm.ShowModal() == wxID_CANCEL)
+        return false;
+
+    int action_buttons = UnsavedChangesDialog::ActionButtons::SAVE;
+    if (!check_and_keep_current_preset_changes(_L("Switching application language"),
+                                               _L("Switching application language while some presets are modified."),
+                                               action_buttons))
+        return false;
+
+    app_config->set("language", next);
+    app_config->save();
+    if (!load_language(from_u8(next), false)) {
+        app_config->set("language", previous);
+        app_config->save();
+        return false;
+    }
+    Label::initSysFont(I18N::language_mode_profile().font_language);
+    recreate_GUI(_L("Changing application language"));
+    return true;
+}
+
 bool GUI_App::switch_language()
 {
     if (select_language()) {

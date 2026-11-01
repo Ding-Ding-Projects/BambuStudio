@@ -44,6 +44,7 @@ public:
     void OnNotificationBell(wxAuiToolBarEvent& event);
     // LAN model drop indicator: opens the "Invite someone to send a model" dialog.
     void OnLanDropIndicator(wxAuiToolBarEvent& event);
+    void OnLanguageSwitch(wxAuiToolBarEvent& event);
 
     wxAuiToolBarItem* FindToolByCurrentPosition();
 
@@ -110,6 +111,7 @@ private:
     wxAuiToolBarItem* m_model_store_item;
     wxAuiToolBarItem* m_history_item{nullptr};
     wxAuiToolBarItem* m_appearance_item{nullptr};
+    wxAuiToolBarItem* m_language_item{nullptr};
     wxAuiToolBarItem* m_notification_item{nullptr};
     int               m_notification_unread{0};
     // The popover, created on first click and reused (hidden, never destroyed
