@@ -810,6 +810,8 @@ list(APPEND SLIC3R_GUI_SOURCES
     GUI/AppLogo/LogoRender.hpp
     GUI/Widgets/MaterialIcon.cpp
     GUI/Widgets/MaterialIcon.hpp
+    GUI/Widgets/MD3DynamicColor.cpp
+    GUI/Widgets/MD3DynamicColor.hpp
     GUI/Widgets/MD3Dialog.cpp
     GUI/Widgets/MD3Dialog.hpp
     GUI/Widgets/CameraHUD.cpp

@@ -3,6 +3,8 @@
 
 #include <wx/colour.h>
 
+#include "MD3DynamicColor.hpp"
+
 #include <algorithm>
 #include <cmath>
 
@@ -174,7 +176,8 @@ inline const wxColour onSecondaryContainerDark{"#cce8e3"};
 namespace detail {
 
 // Runtime accent override. setAccentSeed() (bottom of this header) fills these
-// six accent-role tones for light and dark from a user-chosen Appearance seed;
+// accent-role tones for light and dark from a user-chosen Appearance seed, taken
+// from the Material 3 Tonal Spot scheme for that seed (MD3DynamicColor.hpp);
 // while active, resolve(role, dark) returns them in place of the built-in Brand
 // accent, so every StateColor::semantic() consumer re-themes on its next
 // repaint/rebuild. The Preview/Device contextual schemes resolve their own
@@ -188,6 +191,7 @@ struct AccentSlots
     wxColour onPrimaryContainer;
     wxColour secondaryContainer;
     wxColour onSecondaryContainer;
+    wxColour inversePrimary;
 };
 
 struct AccentOverrideState
@@ -203,7 +207,7 @@ inline AccentOverrideState &accentState()
     return state;
 }
 
-// Non-null only for the six accent roles while an override is active; returns a
+// Non-null only for the accent roles while an override is active; returns a
 // pointer into the process-lifetime accentState() storage (semantic() copies the
 // value immediately, mirroring how resolve() hands back the static role tones).
 inline const wxColour *accentOverrideColour(Role role, bool dark)
@@ -219,6 +223,7 @@ inline const wxColour *accentOverrideColour(Role role, bool dark)
     case Role::OnPrimaryContainer: return &a.onPrimaryContainer;
     case Role::SecondaryContainer: return &a.secondaryContainer;
     case Role::OnSecondaryContainer: return &a.onSecondaryContainer;
+    case Role::InversePrimary: return &a.inversePrimary;
     default: return nullptr;
     }
 }
@@ -518,10 +523,11 @@ inline double uiFontScale() { return ui_font_scale_state(); }
 
 } // namespace Type
 
-// Live accent generator — ports accentVars() from the design kit's
-// seed-algorithm. Produces the six accent role tones for a user-picked seed.
-// The static Brand/Preview/Device sets above are hand-tuned and intentionally
-// differ from this algorithm's output; this path is for the custom seed only.
+// Live accent generator. A user-picked seed produces a complete Material 3
+// Tonal Spot colour scheme (HCT tonal palettes, 2021 role tones, standard
+// contrast; see MD3DynamicColor.hpp). The accent roles below come from that
+// scheme. The static Brand/Preview/Device sets above are hand-tuned approved
+// tones and intentionally differ from it; this path is for the custom seed only.
 struct AccentRoles
 {
     wxColour primary;
@@ -530,111 +536,52 @@ struct AccentRoles
     wxColour onPrimaryContainer;
     wxColour secondaryContainer;
     wxColour onSecondaryContainer;
+    wxColour inversePrimary;
 };
 
 namespace detail {
 
-// sRGB -> HSL. Hue in [0,360), saturation and lightness in [0,100]. Mirrors
-// hexToHsl() in guidelines/seed-algorithm.html.
-inline void rgbToHsl(const wxColour &c, double &h, double &s, double &l)
-{
-    const double r  = c.Red() / 255.0;
-    const double g  = c.Green() / 255.0;
-    const double b  = c.Blue() / 255.0;
-    const double mx = std::max(r, std::max(g, b));
-    const double mn = std::min(r, std::min(g, b));
-    l = (mx + mn) / 2.0;
-    if (mx == mn) {
-        h = 0.0;
-        s = 0.0;
-    } else {
-        const double d = mx - mn;
-        s = l > 0.5 ? d / (2.0 - mx - mn) : d / (mx + mn);
-        if (mx == r)
-            h = (g - b) / d + (g < b ? 6.0 : 0.0);
-        else if (mx == g)
-            h = (b - r) / d + 2.0;
-        else
-            h = (r - g) / d + 4.0;
-        h /= 6.0;
-    }
-    h *= 360.0;
-    s *= 100.0;
-    l *= 100.0;
-}
+inline Dynamic::Argb toArgb(const wxColour &c) { return Dynamic::argb_from_rgb(c.Red(), c.Green(), c.Blue()); }
 
-// HSL (hue [0,360), saturation/lightness [0,100]) -> sRGB wxColour.
-inline wxColour hslToRgb(double h, double s, double l)
+inline wxColour fromArgb(Dynamic::Argb argb)
 {
-    s /= 100.0;
-    l /= 100.0;
-    const double c  = (1.0 - std::fabs(2.0 * l - 1.0)) * s;
-    const double hp = h / 60.0;
-    const double x  = c * (1.0 - std::fabs(std::fmod(hp, 2.0) - 1.0));
-    double r1 = 0.0, g1 = 0.0, b1 = 0.0;
-    if (hp < 1.0) {
-        r1 = c;
-        g1 = x;
-    } else if (hp < 2.0) {
-        r1 = x;
-        g1 = c;
-    } else if (hp < 3.0) {
-        g1 = c;
-        b1 = x;
-    } else if (hp < 4.0) {
-        g1 = x;
-        b1 = c;
-    } else if (hp < 5.0) {
-        r1 = x;
-        b1 = c;
-    } else {
-        r1 = c;
-        b1 = x;
-    }
-    const double m   = l - c / 2.0;
-    auto         to8 = [](double v) {
-        long n = std::lround(v * 255.0);
-        if (n < 0)
-            n = 0;
-        if (n > 255)
-            n = 255;
-        return static_cast<unsigned char>(n);
-    };
-    return wxColour(to8(r1 + m), to8(g1 + m), to8(b1 + m));
+    return wxColour(static_cast<unsigned char>(Dynamic::red_of(argb)), static_cast<unsigned char>(Dynamic::green_of(argb)),
+                    static_cast<unsigned char>(Dynamic::blue_of(argb)));
 }
 
 } // namespace detail
 
-// Regenerate the six accent roles from a seed colour. Saturation is clamped to
-// [32,92]; hue is preserved; the seed's own lightness is discarded (each role
-// derives its own tone). Container saturations round-half-up on s * multiplier.
+// The full Material 3 Tonal Spot scheme for a seed. Every role, including the
+// tertiary, fixed and surface families that the wx Role enum does not carry,
+// is available here for surfaces that paint from the scheme directly.
+inline Dynamic::Scheme dynamicScheme(const wxColour &seed, bool dark)
+{
+    return Dynamic::tonal_spot(detail::toArgb(seed), dark);
+}
+
+inline wxColour schemeColour(const Dynamic::Scheme &scheme, Dynamic::SchemeRole role)
+{
+    return detail::fromArgb(scheme.get(role));
+}
+
+// Regenerate the accent roles from a seed colour via the Tonal Spot scheme.
 inline AccentRoles accentFromSeed(const wxColour &seed, bool dark)
 {
-    double h = 0.0, s = 0.0, l = 0.0;
-    detail::rgbToHsl(seed, h, s, l);
-    s = std::max(32.0, std::min(92.0, s));
-
+    using Dynamic::SchemeRole;
+    const Dynamic::Scheme s = dynamicScheme(seed, dark);
     AccentRoles roles;
-    if (dark) {
-        roles.primary              = detail::hslToRgb(h, s, 76.0);
-        roles.onPrimary            = detail::hslToRgb(h, s, 16.0);
-        roles.primaryContainer     = detail::hslToRgb(h, static_cast<double>(std::lround(s * 0.9)), 28.0);
-        roles.onPrimaryContainer   = detail::hslToRgb(h, s, 90.0);
-        roles.secondaryContainer   = detail::hslToRgb(h, static_cast<double>(std::lround(s * 0.35)), 26.0);
-        roles.onSecondaryContainer = detail::hslToRgb(h, s, 88.0);
-    } else {
-        roles.primary              = detail::hslToRgb(h, s, 36.0);
-        roles.onPrimary            = wxColour(255, 255, 255);
-        roles.primaryContainer     = detail::hslToRgb(h, static_cast<double>(std::lround(s * 0.7)), 88.0);
-        roles.onPrimaryContainer   = detail::hslToRgb(h, s, 12.0);
-        roles.secondaryContainer   = detail::hslToRgb(h, static_cast<double>(std::lround(s * 0.45)), 90.0);
-        roles.onSecondaryContainer = detail::hslToRgb(h, s, 20.0);
-    }
+    roles.primary              = schemeColour(s, SchemeRole::Primary);
+    roles.onPrimary            = schemeColour(s, SchemeRole::OnPrimary);
+    roles.primaryContainer     = schemeColour(s, SchemeRole::PrimaryContainer);
+    roles.onPrimaryContainer   = schemeColour(s, SchemeRole::OnPrimaryContainer);
+    roles.secondaryContainer   = schemeColour(s, SchemeRole::SecondaryContainer);
+    roles.onSecondaryContainer = schemeColour(s, SchemeRole::OnSecondaryContainer);
+    roles.inversePrimary       = schemeColour(s, SchemeRole::InversePrimary);
     return roles;
 }
 
 // Apply an Appearance accent swatch (seed colour) to the default (Brand) colour
-// scheme. Recomputes the six accent roles for both light and dark via
+// scheme. Recomputes the accent roles for both light and dark via
 // accentFromSeed and installs them as the runtime override consulted by
 // resolve(role, dark), so every StateColor::semantic() consumer picks up the new
 // accent on its next repaint/rebuild. Passing the Brand seed (#146c2e) clears
@@ -654,10 +601,10 @@ inline void setAccentSeed(const wxColour &seed)
 
     const AccentRoles light = accentFromSeed(seed, false);
     const AccentRoles dark  = accentFromSeed(seed, true);
-    s.light = {light.primary, light.onPrimary, light.primaryContainer,
-               light.onPrimaryContainer, light.secondaryContainer, light.onSecondaryContainer};
-    s.dark  = {dark.primary, dark.onPrimary, dark.primaryContainer,
-               dark.onPrimaryContainer, dark.secondaryContainer, dark.onSecondaryContainer};
+    s.light = {light.primary, light.onPrimary, light.primaryContainer, light.onPrimaryContainer,
+               light.secondaryContainer, light.onSecondaryContainer, light.inversePrimary};
+    s.dark  = {dark.primary, dark.onPrimary, dark.primaryContainer, dark.onPrimaryContainer,
+               dark.secondaryContainer, dark.onSecondaryContainer, dark.inversePrimary};
     s.active = true;
 }
 
