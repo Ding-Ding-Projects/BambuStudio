@@ -9,7 +9,9 @@
 <x-dc>
 <helmet>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..500,0..1,0&display=swap" rel="stylesheet">
 <style>
+.ms{font-family:"Material Symbols Outlined";font-weight:400;font-style:normal;font-size:22px;line-height:1;letter-spacing:normal;text-transform:none;white-space:nowrap;direction:ltr;font-feature-settings:"liga";-webkit-font-smoothing:antialiased}
 body{margin:0;background:#0e1311}
 </style>
 </helmet>
@@ -62,7 +64,7 @@ body{margin:0;background:#0e1311}
 
       <div style="position: absolute; left: 16px; right: 16px; bottom: 16px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap">
         <div style="flex: 1; min-width: 300px; height: 52px; border-radius: 16px; background: #1f2823; display: flex; align-items: center; gap: 14px; padding: 0 16px">
-          <button aria-label="Play moves" style="width: 32px; height: 32px; border-radius: 16px; border: 0; background: #6fdc98; color: #00391c">▶</button>
+          <button aria-label="Play moves" style="width: 32px; height: 32px; border-radius: 16px; border: 0; background: #6fdc98; color: #00391c; display: grid; place-items: center"><span class="ms" aria-hidden="true" style="font-size: 20px">play_arrow</span></button>
           <div style="flex: 1; height: 4px; border-radius: 2px; background: #34413a; position: relative"><div style="width: 40%; height: 4px; border-radius: 2px; background: #6fdc98"></div></div>
           <span style="font-family: 'Roboto Mono', monospace; font-size: 12px; color: #a9b6ad">Layer 132 · Z 26.40 mm</span>
         </div>
@@ -80,7 +82,7 @@ class Component extends DCLogic {
     const layers = [];
     for (let i = 0; i < 22; i++) {
       const w = 200 - Math.abs(11 - i) * 4;
-      layers.push({ x: 500 - w / 2, y: 520 - i * 10, w, c: i % 5 === 4 ? '#8ab4ff' : colors[i % 3] });
+      layers.push({ x: 500 - w / 2, y: 640 - i * 10, w, c: i % 5 === 4 ? '#8ab4ff' : colors[i % 3] });
     }
     return {
       layers,
@@ -90,7 +92,7 @@ class Component extends DCLogic {
         { name: 'Sparse infill', c: '#8ab4ff', t: '19 m' },
         { name: 'Top surface', c: '#e3ebe5', t: '8 m' },
         { name: 'Support', c: '#7c8a81', t: '6 m' },
-        { name: 'Travel', c: '#34413a', t: '—' }
+        { name: 'Travel', c: '#34413a', t: 'n/a' }
       ]
     };
   }

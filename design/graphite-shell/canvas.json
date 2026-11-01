@@ -1,1 +1,98 @@
-{"v":3,"createdOnFiles":{"v":1,"at":"2026-11-01T17:20:00Z"},"title":"Bambu Studio MD3 GUI Redesign","launch":{"view":"canvas"},"pages":[],"boards":{"Main.dc.html":{"x":0,"y":0,"w":1440,"h":900,"title":"Prepare","expand":"fill"},"Home.dc.html":{"x":1520,"y":0,"w":1440,"h":900,"title":"Home","expand":"fill"},"Preview.dc.html":{"x":0,"y":1020,"w":1440,"h":900,"title":"Preview","expand":"fill"},"Device.dc.html":{"x":1520,"y":1020,"w":1440,"h":900,"title":"Device","expand":"fill"},"Dialogs.dc.html":{"x":0,"y":2040,"w":1440,"h":900,"title":"Send print, Melody creator, command palette","expand":"fill"},"Tokens.dc.html":{"x":1520,"y":2040,"w":1440,"h":1000,"title":"Graphite tokens","expand":"fill"},"TitleBar.dc.html":{"x":0,"y":3160,"w":1440,"h":48,"title":"Title bar component"},"NavRail.dc.html":{"x":1520,"y":3160,"w":88,"h":852,"title":"Navigation rail component"}},"order":["Main.dc.html","Home.dc.html","Preview.dc.html","Device.dc.html","Dialogs.dc.html","Tokens.dc.html","TitleBar.dc.html","NavRail.dc.html"],"notes":{"title":{"x":0,"y":-300,"text":"Bambu Studio MD3: Graphite shell","kind":"title1","maxW":2960}},"designSystems":[]}
+{
+  "v": 3,
+  "attachments": {},
+  "boards": {
+    "Device.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "title": "Device",
+      "w": 1440,
+      "x": 1520,
+      "y": 1020
+    },
+    "Dialogs.dc.html": {
+      "expand": "fill",
+      "h": 720,
+      "title": "Send print, Melody creator, command palette",
+      "w": 1440,
+      "x": 0,
+      "y": 2040
+    },
+    "Home.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "title": "Home",
+      "w": 1440,
+      "x": 1520,
+      "y": 0
+    },
+    "Main.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "title": "Prepare",
+      "w": 1440,
+      "x": 0,
+      "y": 0
+    },
+    "NavRail.dc.html": {
+      "h": 852,
+      "title": "Navigation rail component",
+      "w": 88,
+      "x": 1520,
+      "y": 3160
+    },
+    "Preview.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "title": "Preview",
+      "w": 1440,
+      "x": 0,
+      "y": 1020
+    },
+    "TitleBar.dc.html": {
+      "h": 48,
+      "title": "Title bar component",
+      "w": 1440,
+      "x": 0,
+      "y": 3160
+    },
+    "Tokens.dc.html": {
+      "expand": "fill",
+      "h": 1000,
+      "title": "Graphite tokens",
+      "w": 1440,
+      "x": 1792,
+      "y": 1671
+    }
+  },
+  "createdOnFiles": {
+    "at": "2026-11-01T17:20:00Z",
+    "v": 1
+  },
+  "designSystems": [],
+  "launch": {
+    "view": "canvas"
+  },
+  "notes": {
+    "title": {
+      "kind": "title1",
+      "maxW": 2960,
+      "text": "Bambu Studio MD3: Graphite shell",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    }
+  },
+  "order": [
+    "Main.dc.html",
+    "Home.dc.html",
+    "Preview.dc.html",
+    "Device.dc.html",
+    "Dialogs.dc.html",
+    "Tokens.dc.html",
+    "TitleBar.dc.html",
+    "NavRail.dc.html"
+  ],
+  "pages": [],
+  "title": "Bambu Studio MD3 GUI Redesign"
+}

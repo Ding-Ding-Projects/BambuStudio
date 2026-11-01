@@ -9,36 +9,38 @@
 <x-dc>
 <helmet>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..500,0..1,0&display=swap" rel="stylesheet">
 <style>
+.ms{font-family:"Material Symbols Outlined";font-weight:400;font-style:normal;font-size:22px;line-height:1;letter-spacing:normal;text-transform:none;white-space:nowrap;direction:ltr;font-feature-settings:"liga";-webkit-font-smoothing:antialiased}
 body{margin:0}
 </style>
 </helmet>
 <header style="height: 48px; width: 100%; box-sizing: border-box; display: flex; align-items: center; gap: 10px; padding: 0 0 0 14px; background: #0a0e0c; color: #e3ebe5; font-family: Roboto, system-ui, sans-serif; border-bottom: 1px solid #1f2823">
-  <div style="width: 28px; height: 28px; border-radius: 9px; background: #6fdc98; display: grid; place-items: center; flex-shrink: 0"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00391c" stroke-width="2.2" aria-hidden="true"><path d="M12 2 3 7v10l9 5 9-5V7z"></path><path d="M3 7l9 5 9-5M12 12v10"></path></svg></div>
+  <div style="width: 28px; height: 28px; border-radius: 9px; background: #6fdc98; display: grid; place-items: center; flex-shrink: 0; color: #00391c"><span class="ms" aria-hidden="true" style="font-size: 16px; color: #00391c">deployed_code</span></div>
   <nav aria-label="Projects" style="display: flex; gap: 4px; min-width: 0">
     <a href="#" style="height: 32px; display: flex; align-items: center; gap: 8px; padding: 0 12px; border-radius: 10px; background: #1f2823; color: #e3ebe5; text-decoration: none; font-size: 13px; font-weight: 500">bracket_v3.3mf<span style="width: 6px; height: 6px; border-radius: 3px; background: #ffb870"></span></a>
     <a href="#" style="height: 32px; display: flex; align-items: center; padding: 0 12px; border-radius: 10px; color: #a9b6ad; text-decoration: none; font-size: 13px">Untitled</a>
-    <button aria-label="New project tab" style="width: 32px; height: 32px; border-radius: 10px; border: 0; background: transparent; color: #a9b6ad; font-size: 18px">+</button>
+    <button aria-label="New project tab" style="width: 32px; height: 32px; border-radius: 10px; border: 0; background: transparent; color: #a9b6ad; display: grid; place-items: center"><span class="ms" aria-hidden="true" style="font-size: 18px">add</span></button>
   </nav>
   <div style="flex: 1; display: flex; justify-content: center; min-width: 0">
     <button style="width: min(460px, 100%); height: 32px; border-radius: 16px; border: 1px solid #28322c; background: #141a17; color: #a9b6ad; display: flex; align-items: center; gap: 8px; padding: 0 12px; font: inherit; font-size: 13px">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+      <span class="ms" aria-hidden="true" style="font-size: 15px">search</span>
       <span style="flex: 1; text-align: left">Search commands, settings, inks</span>
       <span style="font-family: 'Roboto Mono', monospace; font-size: 11px; padding: 1px 6px; border-radius: 6px; background: #1f2823">.*</span>
       <span style="font-family: 'Roboto Mono', monospace; font-size: 11px; padding: 1px 6px; border-radius: 6px; background: #1f2823">Ctrl K</span>
     </button>
   </div>
-  <button style="height: 30px; display: flex; align-items: center; gap: 6px; padding: 0 10px; border-radius: 15px; border: 0; background: #141a17; color: #a9b6ad; font-family: 'Roboto Mono', monospace; font-size: 12px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6fdc98" stroke-width="2" aria-hidden="true"><circle cx="6" cy="6" r="2"></circle><circle cx="6" cy="18" r="2"></circle><circle cx="18" cy="8" r="2"></circle><path d="M6 8v8M18 10c0 4-6 3-10 7"></path></svg>main</button>
+  <button style="height: 30px; display: flex; align-items: center; gap: 6px; padding: 0 10px; border-radius: 15px; border: 0; background: #141a17; color: #a9b6ad; font-family: 'Roboto Mono', monospace; font-size: 12px"><span class="ms" aria-hidden="true" style="font-size: 14px; color: #6fdc98">account_tree</span>main</button>
   <div role="group" aria-label="Language" style="display: flex; padding: 3px; border-radius: 12px; background: #141a17">
     <button style="height: 26px; padding: 0 10px; border-radius: 9px; border: 0; background: {{enBg}}; color: {{enFg}}; font: inherit; font-size: 12px; font-weight: 500">EN</button>
     <button style="height: 26px; padding: 0 10px; border-radius: 9px; border: 0; background: transparent; color: #a9b6ad; font: inherit; font-size: 12px">粵</button>
     <button style="height: 26px; padding: 0 10px; border-radius: 9px; border: 0; background: transparent; color: #a9b6ad; font: inherit; font-size: 12px">雙</button>
   </div>
-  <button style="height: 30px; display: flex; align-items: center; gap: 6px; padding: 0 12px; border-radius: 15px; border: 0; background: #0f5130; color: #9ff7bf; font: inherit; font-size: 12px; font-weight: 500"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 4v12M6 10l6 6 6-6M5 20h14"></path></svg>Restart to update</button>
+  <button style="height: 30px; display: flex; align-items: center; gap: 6px; padding: 0 12px; border-radius: 15px; border: 0; background: #0f5130; color: #9ff7bf; font: inherit; font-size: 12px; font-weight: 500"><span class="ms" aria-hidden="true" style="font-size: 14px">download</span>Restart to update</button>
   <div style="display: flex; height: 48px">
-    <button aria-label="Minimize" style="width: 46px; border: 0; background: transparent; color: #a9b6ad">–</button>
-    <button aria-label="Maximize" style="width: 46px; border: 0; background: transparent; color: #a9b6ad">□</button>
-    <button aria-label="Close" style="width: 46px; border: 0; background: transparent; color: #a9b6ad">×</button>
+    <button aria-label="Minimize" style="width: 46px; border: 0; background: transparent; color: #a9b6ad"><span class="ms" aria-hidden="true" style="font-size: 18px">remove</span></button>
+    <button aria-label="Maximize" style="width: 46px; border: 0; background: transparent; color: #a9b6ad"><span class="ms" aria-hidden="true" style="font-size: 16px">crop_square</span></button>
+    <button aria-label="Close" style="width: 46px; border: 0; background: transparent; color: #a9b6ad"><span class="ms" aria-hidden="true" style="font-size: 18px">close</span></button>
   </div>
 </header>
 </x-dc>

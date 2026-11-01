@@ -21,11 +21,19 @@ On `main` at `b92da01`: the left navigation rail and the Graphite colour roles f
 
 ## Design review
 
-Reviewed against the Stageshow skill (benjitaylor/skills, commit `8020574`, folder `stageshow`). References read: `SKILL.md`, `references/review.md`, `references/craft.md` (Restraint, Spacing and alignment, Icons and logos). Stageshow targets marketing illustrations rather than application screens, so these rules did not apply: the gold-example copy step, the cursor choreography, filming with `scripts/film.mjs`, the 358 px compact redesign and `REHEARSAL.md`. No frames were filmed; the review below is from the source.
+Reviewed against the Stageshow skill (benjitaylor/skills, commit `8020574`, folder `stageshow`). References read: `SKILL.md`, `references/review.md`, `references/craft.md` (Restraint, Spacing and alignment, Icons and logos). Every artboard was rendered at 1440 px with the fonts the application ships (Roboto, Roboto Mono, Material Symbols Outlined) and reviewed from the frames in `frames/`. The rehearsal notes are in `REHEARSAL.md`.
 
-Findings, most important first:
+Fixed in this pass:
 
-1. Hand-drawn icons. Fixed on the navigation rail and the Prepare gizmo rail, which now use Material Symbols, the set the application ships. Still open: hand-drawn icons in the title bar, Home, Preview, Device and dialogs, and Unicode arrows and symbols used as icons on the Device motion pad, the window controls and the Preview play button.
-2. Logo. The title bar shows a cube in a mint square, not the application's own logo. Use the shipped logo asset.
-3. Density. Home and Device carry many real strings at once; reduce secondary text where the screen is not about it.
-4. Not checked: rendering at narrow widths, text fitting in Cantonese and bilingual modes, and contrast of the accent chips beyond the token sheet.
+1. Icons. Every hand-drawn icon and every Unicode symbol used as an icon is replaced by Material Symbols, the set the application ships. The title bar mark is the application's own brand tile (the `deployed_code` glyph on the primary tile, as `BBLTopbar.cpp` draws it).
+2. Prepare. The scene toolbar overlapped the object list; it now starts beside the gizmo rail. The Process card no longer stretches over an empty band.
+3. Home. Project thumbnails fill the grid instead of leaving the lower half of the card empty. Printers are tiles with a progress bar. The greeting subtitle and part of the LAN copy were cut.
+4. Device. The camera hero takes the free height; the print sits above the status card. Temperatures are three dashboard tiles with the reading as the largest text, and the fans moved to Extras. The chamber light row was cut.
+5. Preview. The layer stack sits on the plate.
+6. Dialogs. Checked options render as checked, the express line is one sentence, and the command palette sits under the Melody creator.
+
+Still open:
+
+- The AMS and Motion cards on Device end about 90 px above their bottoms at 1440 x 900.
+- Narrow widths: the shell is a desktop window with a minimum width near 1000 px, so the 390 px frames are not a target; the title bar collides there.
+- Not checked: Cantonese and bilingual text fitting, light theme artboards, keyboard order.

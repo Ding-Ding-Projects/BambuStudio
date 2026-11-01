@@ -25,10 +25,10 @@ a{color:#6fdc98}a:hover{color:#9ff7bf}
       <section style="background: #18201c; border-radius: 20px; padding: 16px; display: flex; flex-direction: column; gap: 12px">
         <div style="display: flex; align-items: center; justify-content: space-between">
           <span style="font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: #a9b6ad; font-weight: 500">Printer</span>
-          <button aria-label="Printer settings" style="width: 32px; height: 32px; border-radius: 10px; border: 0; background: transparent; color: #a9b6ad; display: grid; place-items: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"></path></svg></button>
+          <button aria-label="Printer settings" style="width: 32px; height: 32px; border-radius: 10px; border: 0; background: transparent; color: #a9b6ad; display: grid; place-items: center"><span class="ms" aria-hidden="true" style="font-size: 18px">settings</span></button>
         </div>
         <div style="display: flex; gap: 12px; align-items: center">
-          <div style="width: 52px; height: 52px; border-radius: 14px; background: #28322c; display: grid; place-items: center"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#6fdc98" stroke-width="1.6" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M3 8h18M8 13h8M10 17h4"></path></svg></div>
+          <div style="width: 52px; height: 52px; border-radius: 14px; background: #28322c; display: grid; place-items: center"><span class="ms" aria-hidden="true" style="font-size: 28px; color: #6fdc98">print</span></div>
           <div style="flex: 1; min-width: 0">
             <div style="font-size: 16px; font-weight: 500">Bambu Lab X1 Carbon</div>
             <div style="font-size: 12px; color: #a9b6ad; display: flex; gap: 6px; align-items: center"><span style="width: 8px; height: 8px; border-radius: 4px; background: #6fdc98"></span>0.4 mm nozzle · Idle · LAN</div>
@@ -48,7 +48,7 @@ a{color:#6fdc98}a:hover{color:#9ff7bf}
           <button style="height: 28px; padding: 0 12px; border-radius: 14px; border: 1px solid #34413a; background: transparent; color: #6fdc98; font: inherit; font-size: 12px; font-weight: 500">Sync AMS</button>
         </div>
         <div style="height: 36px; border-radius: 18px; background: #1f2823; display: flex; align-items: center; gap: 8px; padding: 0 12px; color: #a9b6ad; font-size: 13px">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+          <span class="ms" aria-hidden="true" style="font-size: 16px">search</span>
           <span style="flex: 1">Search inks</span>
           <span style="font-family: 'Roboto Mono', monospace; font-size: 12px; padding: 2px 6px; border-radius: 6px; background: #28322c">.*</span>
         </div>
@@ -61,7 +61,7 @@ a{color:#6fdc98}a:hover{color:#9ff7bf}
         </sc-for>
       </section>
 
-      <section style="background: #18201c; border-radius: 20px; padding: 16px; display: flex; flex-direction: column; gap: 10px; flex: 1">
+      <section style="background: #18201c; border-radius: 20px; padding: 16px; display: flex; flex-direction: column; gap: 10px">
         <div style="display: flex; align-items: center; justify-content: space-between">
           <span style="font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: #a9b6ad; font-weight: 500">Process</span>
           <span style="font-size: 12px; color: #a9b6ad">0.20 mm Standard</span>
@@ -71,7 +71,7 @@ a{color:#6fdc98}a:hover{color:#9ff7bf}
           <button style="flex: 1; height: 30px; border-radius: 9px; border: 0; background: transparent; color: #a9b6ad; font: inherit; font-size: 12px">Objects</button>
         </div>
         <div style="display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 14px; background: #0f5130">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9ff7bf" stroke-width="1.8" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 9-12h-7z"></path></svg>
+          <span class="ms" aria-hidden="true" style="font-size: 20px; color: #9ff7bf">bolt</span>
           <div style="flex: 1">
             <div style="font-size: 13px; font-weight: 500; color: #9ff7bf">Express print mode</div>
             <div style="font-size: 11px; color: #9ff7bf; opacity: .8">Skips leveling, wipe and checks</div>
@@ -103,7 +103,7 @@ a{color:#6fdc98}a:hover{color:#9ff7bf}
         </sc-for>
       </div>
 
-      <div style="position: absolute; left: 50%; top: 16px; transform: translateX(-50%); display: flex; gap: 4px; padding: 6px; border-radius: 16px; background: #1f2823">
+      <div style="position: absolute; left: 84px; top: 16px; display: flex; gap: 4px; padding: 6px; border-radius: 16px; background: #1f2823">
         <button style="height: 36px; padding: 0 14px; border-radius: 10px; border: 0; background: transparent; color: #e3ebe5; font: inherit; font-size: 13px">Add</button>
         <button style="height: 36px; padding: 0 14px; border-radius: 10px; border: 0; background: transparent; color: #e3ebe5; font: inherit; font-size: 13px">Arrange</button>
         <button style="height: 36px; padding: 0 14px; border-radius: 10px; border: 0; background: transparent; color: #e3ebe5; font: inherit; font-size: 13px">Orient</button>
@@ -121,7 +121,7 @@ a{color:#6fdc98}a:hover{color:#9ff7bf}
         <div style="display: flex; gap: 8px; padding: 6px; border-radius: 16px; background: #1f2823">
           <button style="height: 40px; padding: 0 16px; border-radius: 12px; border: 0; background: #24342b; color: #cde9d6; font: inherit; font-size: 13px; font-weight: 500">Plate 1</button>
           <button style="height: 40px; padding: 0 16px; border-radius: 12px; border: 0; background: transparent; color: #a9b6ad; font: inherit; font-size: 13px">Plate 2</button>
-          <button aria-label="Add plate" style="width: 40px; height: 40px; border-radius: 12px; border: 1px dashed #34413a; background: transparent; color: #a9b6ad; font: inherit; font-size: 18px">+</button>
+          <button aria-label="Add plate" style="width: 40px; height: 40px; border-radius: 12px; border: 1px dashed #34413a; background: transparent; color: #a9b6ad; display: grid; place-items: center"><span class="ms" aria-hidden="true" style="font-size: 20px">add</span></button>
         </div>
         <div style="flex: 1"></div>
         <div style="display: flex; align-items: center; gap: 16px; height: 52px; padding: 0 18px; border-radius: 16px; background: #1f2823; font-size: 13px">
