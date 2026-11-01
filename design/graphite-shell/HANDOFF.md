@@ -17,7 +17,7 @@ The artboards use the Design Component format and load their runtime from `suppo
 
 ## What is implemented
 
-On `main` at `b92da01`: the left navigation rail and the Graphite colour roles from `Tokens.dc.html` (see `docs/features/design-system/graphite-shell.md`). Everything else on these artboards is design only: floating 24 px panels for the sidebar and canvas, the title bar layout (language switch and update notice), the Home dashboard, the restyled Preview and Device screens, and the dialogs. Native labels keep their existing wording, so the rail reads "Multi-device", "Calibration" and "Ink" where the design says "Fleet", "Calibrate" and "Inks".
+On `main`: the left navigation rail and the Graphite colour roles from `Tokens.dc.html` in the native kit (`b92da01`), the same roles in every bundled web page, and the Home header and recent-project grid (`029af58`); see `docs/features/design-system/graphite-shell.md`. Still design only: floating 24 px panels for the sidebar and canvas, the title bar layout (language switch and update notice), the printer and LAN model drop column on Home, the restyled Preview and Device screens, and the dialogs. Native labels keep their existing wording, so the rail reads "Multi-device", "Calibration" and "Ink" where the design says "Fleet", "Calibrate" and "Inks".
 
 ## Design review
 
