@@ -2,17 +2,17 @@
 :root {
     --color-brand: #00AE42;
     --color-brand-hover: #009638;
-    --color-text-main: #172434;
-    --color-text-dark: #172434;
-    --color-text-muted: #46576a;
-    --color-text-placeholder: #46576a;
+    --color-text-main: #131c17;
+    --color-text-dark: #131c17;
+    --color-text-muted: #3f4c44;
+    --color-text-placeholder: #3f4c44;
     
-    --color-bg-main: #f7f9fc;
-    --color-bg-gray: #eef2f7;
-    --color-bg-disabled: #dfe7f1;
+    --color-bg-main: #f5f8f5;
+    --color-bg-gray: #eef3ef;
+    --color-bg-disabled: #dfe8e2;
     
-    --color-border: #6d7e94;
-    --color-border-light: #c4d0df;
+    --color-border: #66766c;
+    --color-border-light: #c0ccc4;
 }
 
 html, body {
@@ -41,7 +41,7 @@ html, body {
     width: 800px;
     height: 680px;
     background: #FFFFFF;
-    border: 1px solid #c4d0df;
+    border: 1px solid #c0ccc4;
     border-radius: 4px;
     box-sizing: border-box;
     overflow: hidden;
@@ -55,7 +55,7 @@ html, body {
     align-items: center;
     height: 48px;
     padding: 0 16px;
-    background: #eef2f7;
+    background: #eef3ef;
     border-bottom: 1px solid var(--color-border-light);
 }
 
@@ -151,7 +151,7 @@ html, body {
 .step-line {
     flex: 1;
     height: 1px;
-    background: #c4d0df; /* Grey 400 */
+    background: #c0ccc4; /* Grey 400 */
     margin: 0 16px;
 }
 
@@ -251,7 +251,7 @@ html, body {
     left: 0;
     width: 100%;
     background: #fff;
-    border: 1px solid #c4d0df;
+    border: 1px solid #c0ccc4;
     border-radius: 4px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     z-index: 100;
@@ -281,7 +281,7 @@ html, body {
 }
 
 .dropdown-item:hover:not(.disabled) {
-    background: #dfe7f1;
+    background: #dfe8e2;
 }
 
 .dropdown-item.disabled {
@@ -290,7 +290,7 @@ html, body {
 }
 
 .dropdown-footer {
-    border-top: 1px solid #c4d0df;
+    border-top: 1px solid #c0ccc4;
     padding: 8px;
 }
 
@@ -323,8 +323,8 @@ html, body {
     align-items: flex-start;
     padding: 12px 16px;
     border-radius: 6px;
-    background: #eef2f7;
-    border: 1px solid #c4d0df;
+    background: #eef3ef;
+    border: 1px solid #c0ccc4;
     cursor: pointer;
     transition: all 0.2s;
     width: 100%;
@@ -474,7 +474,7 @@ html, body {
 .dialog-input-wrapper input {
     width: 100%;
     height: 32px;
-    border: 1px solid #c4d0df;
+    border: 1px solid #c0ccc4;
     border-radius: 4px;
     padding: 0 50px 0 12px;
     font-size: 13px;

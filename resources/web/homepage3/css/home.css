@@ -266,3 +266,83 @@ body { min-width: 0; }
 .PH_PrintTime, .PH_PrintDate { flex-shrink: 0; width: auto; }
 .PH_DeviceName, .PH_PlateName { white-space: normal; overflow-wrap: anywhere; min-width: 0; }
 .PrintHistoryStatus { padding: 2px 8px; border: 1px solid currentColor; border-radius: 999px; }
+
+/* Graphite shell (design/graphite-shell/Home.dc.html): the hero band becomes a
+   plain display header on the ground, recent projects sit in one 24 px panel as
+   a three-column grid of up to six cards, and the actions are 16 px buttons. */
+body #MenuArea
+{
+	background: none;
+	padding: 4px 4px 0;
+	min-height: 0;
+	margin-bottom: 24px;
+	border-radius: 0;
+	color: var(--md-on-surface);
+	align-items: flex-end;
+}
+body #HeroBrand
+{
+	font-size: 40px;
+	line-height: 1.1;
+	font-weight: 500;
+	letter-spacing: -0.01em;
+	color: var(--md-on-surface);
+}
+body #MenuArea .Menu_Btn
+{
+	height: 48px;
+	border-radius: 16px;
+	padding: 0 20px;
+	font-weight: 500;
+	box-shadow: none;
+}
+body #MenuArea .Btn_White
+{
+	background: transparent;
+	border: 1px solid var(--md-outline-variant);
+	color: var(--md-on-surface);
+}
+body #MenuArea .Btn_Green
+{
+	background: var(--md-primary);
+	border: 0;
+	color: var(--md-on-primary);
+	font-weight: 700;
+}
+body #MiniRecentFileArea
+{
+	background: var(--md-sc);
+	border-radius: 24px;
+	padding: 12px 12px 4px;
+}
+body #MiniRecentFileArea .Title_Bar { padding: 8px 8px 12px; }
+body #MiniRecentFileArea .TitleSmallIcon { display: none; }
+body #MiniRecentFileArea .Content-Title { font-size: 18px; font-weight: 500; }
+body #MiniFileList
+{
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 12px;
+	padding: 0 8px 8px;
+}
+@media screen and (max-width: 815px) { body #MiniFileList { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+body #MiniFileList > .FileItem { display: block; width: auto; margin: 0; }
+body #MiniFileList > :nth-child(n+7) { display: none; }
+body #MiniFileList > .FileItem.GuideBlock
+{
+	background: var(--md-sc-low);
+	border: 0;
+	border-radius: 18px;
+	padding: 10px;
+}
+body #MiniFileList > .FileItem.GuideBlock:hover { box-shadow: none; background: var(--md-sc-high); }
+body #MiniFileList .FileImg
+{
+	border: 0;
+	border-radius: 12px;
+	overflow: hidden;
+	background-color: var(--md-sc-high);
+}
+body #MiniFileList .FileImg img { border-radius: 12px; aspect-ratio: 16/9; }
+body #MiniFileList .FileName { padding: 10px 2px 2px; font-size: 14px; font-weight: 500; }
+body #MiniFileList .FileDate { padding: 0 2px 2px; font-size: 12px; }

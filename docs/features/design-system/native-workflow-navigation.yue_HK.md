@@ -1,6 +1,6 @@
 ---
 translation-of: native-workflow-navigation.md
-source-sha256: 3bb0cfe48d742f42a87bcf504d447643888d1f1887375dd79851de4d58fcdf04
+source-sha256: fc30cdb5d08cb5a1134ab722e52ad874d01f7f51dc409d32721f56727ad0dd7b
 review-status: agent-drafted
 ---
 
@@ -40,20 +40,20 @@ Studio Atlas 保留 52-DIP 導航列，使用共用語意表面角色、低色�
 
 | 角色 | 淺色 | 深色 |
 | --- | --- | --- |
-| Surface | `#f7f9fc` | `#151c25` |
-| Surface dim | `#d6e0ec` | `#111821` |
-| Surface bright | `#fafcff` | `#3b4c60` |
-| Container lowest | `#ffffff` | `#101720` |
-| Container low | `#eef2f7` | `#1a2430` |
-| Container | `#e7edf5` | `#202d3b` |
-| Container high | `#dfe7f1` | `#293849` |
-| Container highest | `#d7e1ed` | `#344557` |
-| On surface | `#172434` | `#e8eff8` |
-| On surface variant | `#46576a` | `#b9c8da` |
-| Outline | `#6d7e94` | `#899caf` |
-| Outline variant | `#c4d0df` | `#43566a` |
+| Surface | `#f5f8f5` | `#0e1311` |
+| Surface dim | `#d5ddd7` | `#0b0f0d` |
+| Surface bright | `#fafcfa` | `#333d37` |
+| Container lowest | `#ffffff` | `#0a0e0c` |
+| Container low | `#eef3ef` | `#141a17` |
+| Container | `#e7eee9` | `#18201c` |
+| Container high | `#dfe8e2` | `#1f2823` |
+| Container highest | `#d6e1da` | `#28322c` |
+| On surface | `#131c17` | `#e3ebe5` |
+| On surface variant | `#3f4c44` | `#a9b6ad` |
+| Outline | `#66766c` | `#7c8a81` |
+| Outline variant | `#c0ccc4` | `#34413a` |
 
-淺色外框比最初參考 `#718298` 稍深：原本同最高容器配對對比係 2.969:1，實作 `#6d7e94` 係 3.137:1。必要邊界至少要 3:1。柔和 outline-variant 仍只係裝飾分隔，唔作必要控件唯一識別。主要同輔助文字喺兩種主題所有預設中性表面上都達 4.5:1。呢啲係原始碼顏色計算，唔係實際繪畫狀態層或使用者自選顏色量度。
+淺色外框比最初參考 `#718298` 稍深：原本同最高容器配對對比係 2.969:1，實作 `#66766c` 係 3.137:1。必要邊界至少要 3:1。柔和 outline-variant 仍只係裝飾分隔，唔作必要控件唯一識別。主要同輔助文字喺兩種主題所有預設中性表面上都達 4.5:1。呢啲係原始碼顏色計算，唔係實際繪畫狀態層或使用者自選顏色量度。
 
 `StateColor` 仍接受歷史原始淺色 RGB 值作相容。每個相容映射輸出，喺重複深色轉換下都係固定點。返回淺色時，目前語意中性色角色優先於共用同一深色色調嘅歷史淺色別名，避免反向映射只按數字鍵順序復活舊預設。獨立 surface／bright 鍵亦保留轉換角色。
 

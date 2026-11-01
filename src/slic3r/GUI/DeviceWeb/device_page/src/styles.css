@@ -1,55 +1,55 @@
 @import 'tailwindcss';
 
 @theme {
-  --color-fm-base: #151c25;
-  --color-fm-sidebar: #1a2430;
-  --color-fm-inner: #202d3b;
-  --color-fm-inner2: #293849;
-  --color-fm-input: #344557;
-  --color-fm-hover: #344557;
-  --color-fm-selected: #095228;
-  --color-fm-border: #43566a;
-  --color-fm-border-focus: #899caf;
-  --color-fm-text-strong: #e8eff8;
-  --color-fm-text-primary: #e8eff8;
-  --color-fm-text-secondary: #b9c8da;
-  --color-fm-text-detail: #b9c8da;
-  --color-fm-text-gray: #43566a;
-  --color-fm-brand: #8bd89b;
-  --color-fm-brand-hover: #8bd89b;
+  --color-fm-base: #0e1311;
+  --color-fm-sidebar: #141a17;
+  --color-fm-inner: #18201c;
+  --color-fm-inner2: #1f2823;
+  --color-fm-input: #28322c;
+  --color-fm-hover: #28322c;
+  --color-fm-selected: #0f5130;
+  --color-fm-border: #34413a;
+  --color-fm-border-focus: #7c8a81;
+  --color-fm-text-strong: #e3ebe5;
+  --color-fm-text-primary: #e3ebe5;
+  --color-fm-text-secondary: #a9b6ad;
+  --color-fm-text-detail: #a9b6ad;
+  --color-fm-text-gray: #34413a;
+  --color-fm-brand: #6fdc98;
+  --color-fm-brand-hover: #6fdc98;
   --color-fm-danger: #ffb4ab;
   --color-fm-warning: #ed7417;
   /* SpoolColorChip 1px inset ring follows the MD3 outline-variant role so
      white / near-white chip fills remain distinct from surrounding surfaces. */
-  --color-fm-chip-ring: #43566a;
+  --color-fm-chip-ring: #34413a;
   /* AMS slot card headers use the highest container tone and on-surface text. */
-  --color-fm-slot-header: #344557;
-  --color-fm-slot-header-text: #e8eff8;
+  --color-fm-slot-header: #28322c;
+  --color-fm-slot-header-text: #e3ebe5;
 }
 
 /* ===== Filament Light Theme Overrides ===== */
 [data-theme="light"] {
-  --color-fm-base: #f7f9fc;
-  --color-fm-sidebar: #eef2f7;
-  --color-fm-inner: #e7edf5;
-  --color-fm-inner2: #dfe7f1;
-  --color-fm-input: #d7e1ed;
-  --color-fm-hover: #d7e1ed;
+  --color-fm-base: #f5f8f5;
+  --color-fm-sidebar: #eef3ef;
+  --color-fm-inner: #e7eee9;
+  --color-fm-inner2: #dfe8e2;
+  --color-fm-input: #d6e1da;
+  --color-fm-hover: #d6e1da;
   --color-fm-selected: #a6f4b8;
-  --color-fm-border: #c4d0df;
-  --color-fm-border-focus: #6d7e94;
-  --color-fm-text-strong: #172434;
-  --color-fm-text-primary: #172434;
-  --color-fm-text-secondary: #46576a;
-  --color-fm-text-detail: #46576a;
-  --color-fm-text-gray: #c4d0df;
+  --color-fm-border: #c0ccc4;
+  --color-fm-border-focus: #66766c;
+  --color-fm-text-strong: #131c17;
+  --color-fm-text-primary: #131c17;
+  --color-fm-text-secondary: #3f4c44;
+  --color-fm-text-detail: #3f4c44;
+  --color-fm-text-gray: #c0ccc4;
   --color-fm-brand: #146c2e;
   --color-fm-brand-hover: #146c2e;
   --color-fm-danger: #ba1a1a;
   --color-fm-warning: #e65100;
-  --color-fm-chip-ring: #c4d0df;
-  --color-fm-slot-header: #d7e1ed;
-  --color-fm-slot-header-text: #172434;
+  --color-fm-chip-ring: #c0ccc4;
+  --color-fm-slot-header: #d6e1da;
+  --color-fm-slot-header-text: #131c17;
 }
 
 html, body, #root {

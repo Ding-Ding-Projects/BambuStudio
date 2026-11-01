@@ -8,23 +8,23 @@
    ========================================================================== */
 :root
 {
-	--md-surface: #151c25;
-	--md-surface-dim: #101720;
-	--md-sc-lowest: #101720;
-	--md-sc-low: #1a2430;
-	--md-sc: #202d3b;
-	--md-sc-high: #293849;
-	--md-sc-highest: #344557;
-	--md-on-surface: #e8eff8;
-	--md-on-surface-variant: #b9c8da;
-	--md-outline: #899caf;
-	--md-outline-variant: #43566a;
-	--md-primary:#8bd89b;
-	--md-on-primary:#00391a;
-	--md-primary-container:#095228;
+	--md-surface: #0e1311;
+	--md-surface-dim: #0a0e0c;
+	--md-sc-lowest: #0a0e0c;
+	--md-sc-low: #141a17;
+	--md-sc: #18201c;
+	--md-sc-high: #1f2823;
+	--md-sc-highest: #28322c;
+	--md-on-surface: #e3ebe5;
+	--md-on-surface-variant: #a9b6ad;
+	--md-outline: #7c8a81;
+	--md-outline-variant: #34413a;
+	--md-primary:#6fdc98;
+	--md-on-primary:#00391c;
+	--md-primary-container:#0f5130;
 	--md-on-primary-container:#a6f4b8;
-	--md-secondary-container:#2b3a2f;
-	--md-on-secondary-container:#cfe9d3;
+	--md-secondary-container:#24342b;
+	--md-on-secondary-container:#cde9d6;
 	--md-error:#ffb4ab;
 	--md-error-container:#93000a;
 	--md-on-error:#690005;

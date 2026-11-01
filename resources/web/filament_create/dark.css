@@ -10,18 +10,18 @@
     --color-brand:              #00AE42;
     --color-brand-hover:        #00C74E;
 
-    --color-text-main: #e8eff8;
-    --color-text-dark: #e8eff8;
-    --color-text-muted: #b9c8da;
-    --color-text-placeholder: #b9c8da;
+    --color-text-main: #e3ebe5;
+    --color-text-dark: #e3ebe5;
+    --color-text-muted: #a9b6ad;
+    --color-text-placeholder: #a9b6ad;
 
-    --color-bg-main: #151c25;
-    --color-bg-gray: #1a2430;
-    --color-bg-disabled: #293849;
+    --color-bg-main: #0e1311;
+    --color-bg-gray: #141a17;
+    --color-bg-disabled: #1f2823;
 
-    --color-border: #899caf;
-    --color-border-light: #43566a;
-    --color-border-dark: #899caf;
+    --color-border: #7c8a81;
+    --color-border-light: #34413a;
+    --color-border-dark: #7c8a81;
 }
 
 /* ---- Hardcoded colors that don't go through variables -------------- */
@@ -33,21 +33,21 @@ html {
 
 /* Window chrome */
 .window-frame {
-    background: #151c25;
-    border-color: #899caf;
+    background: #0e1311;
+    border-color: #7c8a81;
 }
 .window-titlebar {
-    background: #1a2430;
-    border-bottom-color: #43566a;
+    background: #141a17;
+    border-bottom-color: #34413a;
 }
 
 /* Inputs (text, dropdown triggers) */
 .input-wrapper input,
 .dialog-input-wrapper input,
 #new-vendor-input {
-    background: #1a2430;
+    background: #141a17;
     color: var(--color-text-main);
-    border-color: #899caf;
+    border-color: #7c8a81;
 }
 .input-wrapper.vendor-readonly input {
     background: var(--color-bg-disabled);
@@ -61,21 +61,21 @@ html {
 
 /* Dropdown lists */
 .dropdown-list {
-    background: #1a2430;
-    border-color: #899caf;
+    background: #141a17;
+    border-color: #7c8a81;
     box-shadow: 0 4px 12px rgba(0,0,0,0.5);
 }
 .dropdown-item { color: var(--color-text-main); }
-.dropdown-item:hover:not(.disabled) { background: #43566a; }
-.dropdown-item.disabled { color: #b9c8da; }
+.dropdown-item:hover:not(.disabled) { background: #34413a; }
+.dropdown-item.disabled { color: #a9b6ad; }
 .dropdown-category { color: var(--color-text-muted); }
-.dropdown-footer { border-top-color: #43566a; }
+.dropdown-footer { border-top-color: #34413a; }
 .add-btn { color: var(--color-brand); }
 
 /* Radio + checkbox cards */
 .radio-card {
-    background: #1a2430;
-    border-color: #43566a;
+    background: #141a17;
+    border-color: #34413a;
 }
 .radio-card.active {
     border-color: var(--color-brand);
@@ -84,8 +84,8 @@ html {
     background: #2F3235;
 }
 .radio-indicator {
-    background: #151c25;
-    border-color: #899caf;
+    background: #0e1311;
+    border-color: #7c8a81;
 }
 .radio-title { color: var(--color-text-main); }
 .radio-desc  { color: var(--color-text-muted); }
@@ -96,7 +96,7 @@ html {
     color: var(--color-text-main);
     border-color: #6A6E72;
 }
-.btn-secondary:hover { background: #43566a; }
+.btn-secondary:hover { background: #34413a; }
 .btn-primary:disabled,
 .btn-primary:disabled:hover { background: #5A5E62; }
 
@@ -105,26 +105,26 @@ html {
 .step-item.active .step-circle   { background: var(--color-brand); }
 .step-item .step-label           { color: #A0A4A8; }
 .step-item.active .step-label    { color: #FFFFFF; }
-.step-line                       { background: #899caf; }
+.step-line                       { background: #7c8a81; }
 .step-item.done .step-label      { color: var(--color-text-main); }
 
 /* Custom vendor dialog */
 .dialog-mask { background: rgba(0,0,0,0.6); }
 .dialog-body {
-    background: #151c25;
+    background: #0e1311;
     box-shadow: 0 4px 20px rgba(0,0,0,0.6);
 }
-.dialog-header { border-bottom-color: #43566a; }
+.dialog-header { border-bottom-color: #34413a; }
 
 /* Step 2 layout — info rows, param categories, param area */
 .parameters-area {
-    background: #1a2430;
-    border-color: #43566a;
+    background: #141a17;
+    border-color: #34413a;
 }
-.nozzle-tabs      { border-bottom-color: #899caf; }
+.nozzle-tabs      { border-bottom-color: #7c8a81; }
 .nozzle-tab       { color: var(--color-text-muted); }
 .nozzle-tab.active { color: var(--color-text-main); border-bottom-color: var(--color-brand); }
-.nozzle-tab.disabled { color: #b9c8da; }
+.nozzle-tab.disabled { color: #a9b6ad; }
 .param-category   { color: var(--color-text-muted); }
 .param-category.active { color: var(--color-brand); }
 .param-group-title { color: var(--color-text-main); }
@@ -135,44 +135,44 @@ html {
 
 /* Custom checkbox */
 .checkmark {
-    background: #1a2430;
+    background: #141a17;
     border-color: #6A6E72;
 }
-.custom-checkbox.disabled .checkmark { background: #43566a; }
+.custom-checkbox.disabled .checkmark { background: #34413a; }
 .custom-checkbox.disabled            { color: var(--color-text-muted); }
 
 /* Two-column selection area (step2_type / step2_copy) */
 .printer-list,
 .nozzle-list {
-    background: #1a2430;
-    border-color: #899caf;
+    background: #141a17;
+    border-color: #7c8a81;
 }
-.list-row               { color: var(--color-text-main); border-bottom-color: #43566a; }
-.list-row:hover         { background: #43566a; }
+.list-row               { color: var(--color-text-main); border-bottom-color: #34413a; }
+.list-row:hover         { background: #34413a; }
 .list-row.active        { background: #223A2A; }
 .list-row .row-arrow    { color: #6A6E72; }
-.row-checkbox           { background: #1a2430; border-color: #6A6E72; }
+.row-checkbox           { background: #141a17; border-color: #6A6E72; }
 
 /* Printer dropdown panel (step2_copy) */
 .printer-dropdown {
-    background: #1a2430;
-    border-color: #899caf;
+    background: #141a17;
+    border-color: #7c8a81;
     box-shadow: 0 4px 12px rgba(0,0,0,0.5);
 }
-.dropdown-confirm-bar { background: #2F3235; border-top-color: #43566a; }
+.dropdown-confirm-bar { background: #2F3235; border-top-color: #34413a; }
 
 /* Preset table (step2_copy) */
 .preset-table {
-    background: #151c25;
-    border-color: #43566a;
+    background: #0e1311;
+    border-color: #34413a;
 }
-.preset-row { border-bottom-color: #43566a; }
+.preset-row { border-bottom-color: #34413a; }
 .preset-row .nozzle-name { color: var(--color-text-main); }
 .preset-row select.preset-input,
 .preset-row input.preset-input {
-    background: #1a2430;
+    background: #141a17;
     color: var(--color-text-main);
-    border-color: #899caf;
+    border-color: #7c8a81;
 }
 
 /* Empty state (icon + hint) */
@@ -209,7 +209,7 @@ html {
    explicitly so we have to fight that with an explicit dark value. */
 body,
 .ef-wrapper {
-    background: #151c25;
+    background: #0e1311;
     color: var(--color-text-main);
 }
 
@@ -221,47 +221,47 @@ body,
 
 /* "添加预设" outlined button, top-right of Edit Material */
 .ef-btn-add {
-    background: #1a2430;
+    background: #141a17;
     color: var(--color-text-main);
     border-color: #6A6E72;
 }
 .ef-btn-add:hover {
-    background: #43566a;
+    background: #34413a;
     border-color: var(--color-brand);
     color: var(--color-brand);
 }
 
 /* List container that holds the printer→preset rows */
 .ef-list-container {
-    background: #151c25;
-    border-color: #43566a;
+    background: #0e1311;
+    border-color: #34413a;
 }
 .ef-empty { color: var(--color-text-muted); }
 
 /* Group headers (H 系列 / A 系列 / 其它) — matches CFilament_GroupTitle */
 .ef-list-container .CFilament_GroupTitle,
 .CFilament_GroupTitle {
-    background: #1a2430;
+    background: #141a17;
     color: var(--color-text-main);
 }
 
 /* Each printer preset row */
 .ef-item {
-    background: #151c25;
-    border-bottom-color: #43566a;
+    background: #0e1311;
+    border-bottom-color: #34413a;
 }
-.ef-item:hover           { background: #293849; }
+.ef-item:hover           { background: #1f2823; }
 .ef-item-printer         { color: var(--color-text-main); }
 .ef-item-base-preset     { color: var(--color-text-muted); }
 
 /* Per-row action buttons ("编辑预设" / "移除") */
 .ef-btn-action {
-    background: #1a2430;
+    background: #141a17;
     color: var(--color-text-main);
     border-color: #6A6E72;
 }
 .ef-btn-action:hover {
-    background: #43566a;
+    background: #34413a;
     border-color: var(--color-brand);
     color: var(--color-brand);
 }
@@ -272,23 +272,23 @@ body,
 
 /* Footer bar with the 确认 / 取消 buttons */
 .ef-footer {
-    background: #151c25;
-    border-top-color: #43566a;
+    background: #0e1311;
+    border-top-color: #34413a;
 }
 .ef-btn-secondary {
     background: transparent;
     color: var(--color-text-main);
     border-color: #6A6E72;
 }
-.ef-btn-secondary:hover { background: #43566a; }
+.ef-btn-secondary:hover { background: #34413a; }
 
 /* Custom filament rows shared with guide/23 tab */
 .CFilament_Item {
-    background: #151c25;
-    border-bottom-color: #43566a;
+    background: #0e1311;
+    border-bottom-color: #34413a;
     color: var(--color-text-main);
 }
-.CFilament_Item:hover    { background: #293849; }
+.CFilament_Item:hover    { background: #1f2823; }
 .CFilament_Name          { color: var(--color-text-main); }
 .CFilament_Type,
 .CFilament_Date          { color: var(--color-text-muted); }
@@ -301,23 +301,23 @@ body,
 
 /* "+ 新建自定义材料" button */
 .CFilament_CreateBtn {
-    background: #1a2430;
+    background: #141a17;
     color: var(--color-text-main);
     border-color: #6A6E72;
 }
-.CFilament_CreateBtn:hover { background: #43566a; }
+.CFilament_CreateBtn:hover { background: #34413a; }
 
 /* Custom-filaments tab (guide/23) header + list container */
 #CFilament_Header,
 #CFilament_Count { color: var(--color-text-main); }
 #CFilament_Sort {
-    background: #1a2430;
+    background: #141a17;
     color: var(--color-text-main);
-    border-color: #899caf;
+    border-color: #7c8a81;
 }
 #CFilament_List {
-    background: #151c25;
-    border-color: #43566a;
+    background: #0e1311;
+    border-color: #34413a;
 }
 
 /* System-materials tab (guide/23) left filter panel */
@@ -326,27 +326,27 @@ body,
 .filter-dd-item {
     color: var(--color-text-main);
 }
-.filter-dd-item:hover { background: #43566a; }
+.filter-dd-item:hover { background: #34413a; }
 #selectAllCurrent { color: var(--color-text-main); }
 
 /* Search bar inside system-materials */
 #searchBar,
 #searchBar input {
-    background: #1a2430;
+    background: #141a17;
     color: var(--color-text-main);
-    border-color: #899caf;
+    border-color: #7c8a81;
 }
 #searchBar input::placeholder { color: var(--color-text-placeholder); }
 
 /* Filament item groups + individual checkboxes in system materials */
 .fila-group,
 .fila-group-header {
-    background: #1a2430;
+    background: #141a17;
     color: var(--color-text-main);
-    border-color: #43566a;
+    border-color: #34413a;
 }
 .fila-item { color: var(--color-text-main); }
-.fila-item:hover { background: #43566a; }
+.fila-item:hover { background: #34413a; }
 
 /* Tabs (系统材料 / 自定义材料) */
 .tab-item          { color: var(--color-text-muted); }

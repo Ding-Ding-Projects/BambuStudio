@@ -3,21 +3,21 @@
    Values mirror ui-md3/design-system/tokens/colors.css. ---*/
 :root {
   color-scheme: light;
-  --md-surface: #f7f9fc;
-  --md-surface-dim: #d7e1ed;
-  --md-surface-bright: #f7f9fc;
+  --md-surface: #f5f8f5;
+  --md-surface-dim: #d6e1da;
+  --md-surface-bright: #f5f8f5;
   --md-sc-lowest: #ffffff;
-  --md-sc-low: #eef2f7;
-  --md-sc: #e7edf5;
-  --md-sc-high: #dfe7f1;
-  --md-sc-highest: #d7e1ed;
-  --md-on-surface: #172434;
-  --md-on-surface-variant: #46576a;
-  --md-outline: #6d7e94;
-  --md-outline-variant: #c4d0df;
-  --md-inverse-surface: #2f3036;
-  --md-inverse-on: #f1f0f7;
-  --md-inverse-primary: #8bd89b;
+  --md-sc-low: #eef3ef;
+  --md-sc: #e7eee9;
+  --md-sc-high: #dfe8e2;
+  --md-sc-highest: #d6e1da;
+  --md-on-surface: #131c17;
+  --md-on-surface-variant: #3f4c44;
+  --md-outline: #66766c;
+  --md-outline-variant: #c0ccc4;
+  --md-inverse-surface: #2b322e;
+  --md-inverse-on: #edf2ee;
+  --md-inverse-primary: #6fdc98;
   --md-error: #ba1a1a;
   --md-error-container: #ffdad6;
   --md-on-error: #ffffff;
@@ -29,8 +29,8 @@
   --md-primary-container: #a6f4b8;
   --md-on-primary-container: #00210c;
   --md-accent: #146c2e;
-  --md-secondary-container: #d7e8d9;
-  --md-on-secondary-container: #0e1f13;
+  --md-secondary-container: #d3e8da;
+  --md-on-secondary-container: #0e1f15;
 }
 
 *{

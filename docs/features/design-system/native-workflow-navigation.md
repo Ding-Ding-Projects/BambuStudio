@@ -87,22 +87,22 @@ completion of the remaining per-surface composition and control work.
 
 | Role | Light | Dark |
 | --- | --- | --- |
-| Surface | `#f7f9fc` | `#151c25` |
-| Surface dim | `#d6e0ec` | `#111821` |
-| Surface bright | `#fafcff` | `#3b4c60` |
-| Container lowest | `#ffffff` | `#101720` |
-| Container low | `#eef2f7` | `#1a2430` |
-| Container | `#e7edf5` | `#202d3b` |
-| Container high | `#dfe7f1` | `#293849` |
-| Container highest | `#d7e1ed` | `#344557` |
-| On surface | `#172434` | `#e8eff8` |
-| On surface variant | `#46576a` | `#b9c8da` |
-| Outline | `#6d7e94` | `#899caf` |
-| Outline variant | `#c4d0df` | `#43566a` |
+| Surface | `#f5f8f5` | `#0e1311` |
+| Surface dim | `#d5ddd7` | `#0b0f0d` |
+| Surface bright | `#fafcfa` | `#333d37` |
+| Container lowest | `#ffffff` | `#0a0e0c` |
+| Container low | `#eef3ef` | `#141a17` |
+| Container | `#e7eee9` | `#18201c` |
+| Container high | `#dfe8e2` | `#1f2823` |
+| Container highest | `#d6e1da` | `#28322c` |
+| On surface | `#131c17` | `#e3ebe5` |
+| On surface variant | `#3f4c44` | `#a9b6ad` |
+| Outline | `#66766c` | `#7c8a81` |
+| Outline variant | `#c0ccc4` | `#34413a` |
 
 The light outline is slightly darker than the initial reference's `#718298`:
 the original pair against the highest container measures 2.969:1, while the
-implemented `#6d7e94` measures 3.137:1. Essential boundaries need at least 3:1.
+implemented `#66766c` measures 3.137:1. Essential boundaries need at least 3:1.
 The subtle outline-variant remains a decorative separator, not the sole
 identification of an essential control. Primary and supporting text meet 4.5:1
 against every default neutral surface in both themes. These are source-color

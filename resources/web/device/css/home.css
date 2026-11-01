@@ -6,11 +6,11 @@
    the view starts at the top instead of overflowing above it where no scrollbar
    can reach (the previous height:100vh + align-items:center did exactly that). */
 :root {
-    --md-surface: #f7f9fc;
+    --md-surface: #f5f8f5;
     --md-surface-container-lowest: #ffffff;
-    --md-on-surface: #172434;
-    --md-on-surface-variant: #46576a;
-    --md-outline-variant: #c4d0df;
+    --md-on-surface: #131c17;
+    --md-on-surface-variant: #3f4c44;
+    --md-outline-variant: #c0ccc4;
     --md-shape-large: 16px;
     --md-font: "Roboto Flex", Roboto, "Segoe UI", system-ui, sans-serif;
 }

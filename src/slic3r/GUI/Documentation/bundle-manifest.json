@@ -433,6 +433,16 @@
       "sha256": "ec4e7c1b0be520b684d90d89ab5394a6c45a026fbe9bd7ab3bdb6955fd12b614"
     },
     {
+      "route": "design-system/graphite-shell.md",
+      "title": "Graphite shell",
+      "sha256": "f5bfe0089c807b8e4c67df7064fc679f526309f2da644af1061e80e30fd53fcc"
+    },
+    {
+      "route": "design-system/graphite-shell.yue_HK.md",
+      "title": "石墨外殼",
+      "sha256": "8ac4d3d94f889dd44d077306594ab1b3a145c162cf5b812817ee785e06062b3b"
+    },
+    {
       "route": "design-system/humidity-details-atlas.md",
       "title": "Studio Atlas humidity detail surfaces",
       "sha256": "15cca611a795ac5600c55fc96210122409d7a9515ef27f27fa9c191f98bb3321"
@@ -535,12 +545,12 @@
     {
       "route": "design-system/native-workflow-navigation.md",
       "title": "Native workflow navigation",
-      "sha256": "3bb0cfe48d742f42a87bcf504d447643888d1f1887375dd79851de4d58fcdf04"
+      "sha256": "fc30cdb5d08cb5a1134ab722e52ad874d01f7f51dc409d32721f56727ad0dd7b"
     },
     {
       "route": "design-system/native-workflow-navigation.yue_HK.md",
       "title": "原生工作流程導航",
-      "sha256": "cd761fb3ff7085a773fddbb4f4c352ee9be01b4003d2ddf6e72e2fe64be59d6e"
+      "sha256": "cbb27f35c09a09fddafcb25de96ad4d9c76fbc1db85a8f0896d4f8b25ab897ab"
     },
     {
       "route": "design-system/nozzle-rack-atlas.md",
@@ -2020,12 +2030,22 @@
       "bytes": 7306
     },
     {
+      "name": "8c04650700865cfb5148083a4cefecbf80bf79f0da2dfcb911cd4c1ba6156e18.png",
+      "sha256": "8c04650700865cfb5148083a4cefecbf80bf79f0da2dfcb911cd4c1ba6156e18",
+      "bytes": 133105
+    },
+    {
+      "name": "c7b39c3ef851111b815b203ae82c59961ff2f84fcf5cd408841907f0aa9b1dac.png",
+      "sha256": "c7b39c3ef851111b815b203ae82c59961ff2f84fcf5cd408841907f0aa9b1dac",
+      "bytes": 143071
+    },
+    {
       "name": "cecb10fb5a84dc1ee6d8a3fc9d9952be22f285402db3bfefd07e3984fe7b41d0.png",
       "sha256": "cecb10fb5a84dc1ee6d8a3fc9d9952be22f285402db3bfefd07e3984fe7b41d0",
       "bytes": 1979
     }
   ],
-  "bundle_sha256": "730c3337f410824aa3a9d4102b0b1b574d8a64ee4d6ec6b7ff802fa79087120a",
+  "bundle_sha256": "69d06606822568bf60423e1e7185cc0b2384fd3cb71ba8909e97d368767573b7",
   "unavailable_references": [
     {
       "source": "api/README.md",
