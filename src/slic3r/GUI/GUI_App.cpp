@@ -114,6 +114,7 @@
 #include "PreferencesHistory.hpp"
 #include "PrinterWatch.hpp"
 #include "LanModelDrop/LanModelDropStation.hpp"
+#include "Melody/MelodyCreatorDialog.hpp"
 #include "DimSumSurprise.hpp"
 #include "TtsNarrator.hpp"
 #include "PersonalModes/SchoolRuntime.hpp"
@@ -5739,6 +5740,28 @@ std::string GUI_App::handle_web_request(std::string cmd)
             }
             else if (command_str.compare("homepage_openproject") == 0) {
                 this->request_open_project({});
+            }
+            else if (command_str.compare("homepage_side_status_get") == 0) {
+                if (mainframe && mainframe->m_webview)
+                    mainframe->m_webview->SendHomeSideStatus();
+            }
+            else if (command_str.compare("homepage_lan_invite") == 0) {
+                CallAfter([this] {
+                    if (mainframe) LanModelDrop::open_invite_dialog(mainframe);
+                });
+            }
+            else if (command_str.compare("homepage_lan_settings") == 0) {
+                CallAfter([] { LanModelDrop::open_preferences_section(); });
+            }
+            else if (command_str.compare("homepage_open_device") == 0) {
+                CallAfter([this] {
+                    if (mainframe) mainframe->request_select_tab(MainFrame::tpMonitor);
+                });
+            }
+            else if (command_str.compare("homepage_melody") == 0) {
+                CallAfter([this] {
+                    if (mainframe) MelodyCreatorDialog(mainframe).ShowModal();
+                });
             }
             else if (command_str.compare("get_recent_projects") == 0) {
                 if (mainframe) {

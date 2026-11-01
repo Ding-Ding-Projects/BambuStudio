@@ -12,10 +12,11 @@ The Graphite shell is a redesign of the main window chrome. It changes where the
 - **Language switch in the title bar.** A three-segment switch (EN, 粵, 雙) sits before the window controls and shows the current language mode. Choosing another segment runs the same steps as Preferences: an offer to save an unsaved project, the restart confirmation, the modified-preset check, then the interface is rebuilt in the new mode. Any other installed language leaves no segment highlighted.
 - **Update chip in the title bar.** When a background update has been downloaded and is waiting, a "Restart to update" pill in the primary container colour appears after the language switch. Clicking it restarts into the new version through the same path as the notification's restart link. Its tooltip says the update is not code-signed. The chip stays hidden at all other times, and the notification still appears as before.
 - **Web pages follow the palette.** Every bundled web page that carries its own copy of the colour roles (Home, the device page, the filament manager and creator, the guide, login and the model pages) now uses the Graphite values, so web surfaces match the native ones.
-- **Home.** The Home page drops the gradient hero band for a plain display header with 16 px action buttons, and shows up to six recent projects as a three-column grid inside one 24 px panel. These renders come from the shipped page opened in Chromium with sample recent files, not from the running application:
+- **Home.** The Home page drops the gradient hero band for a plain display header with 16 px action buttons, and shows up to six recent projects as a three-column grid inside one 24 px panel. A column beside the panel (below it on windows narrower than 1088 px) holds three cards. The LAN model drop card shows the link state and the number of received files waiting, opens the invite dialog with Show invite, and offers Open settings while the feature is off. The printers card lists up to four of your printers with a state dot, the state, the progress and the time left, and links to the Device page. The melody creator card opens the melody creator. The page asks the application for this state when it opens and every five seconds while it is visible; printer names are inserted as text, never as markup. These renders come from the shipped page opened in Chromium with sample recent files and sample printers, not from the running application:
 
   ![Home, dark](../../screenshots/graphite-shell/home--en-dark--browser-render.png)
   ![Home, light](../../screenshots/graphite-shell/home--en-light--browser-render.png)
+  ![Home, light, Hong Kong Cantonese](../../screenshots/graphite-shell/home--yue_HK-light--browser-render.png)
 - **New tokens.** `navigation_rail_width`, `navigation_rail_item_width`, `navigation_rail_item_height` and `radius_panel` (24 px, for floating panels and the canvas frame).
 
 ## Verification
@@ -23,12 +24,13 @@ The Graphite shell is a redesign of the main window chrome. It changes where the
 - `g++ -fsyntax-only` against wxWidgets 3.2, Boost and OpenCASCADE headers on Linux passes for `Notebook.cpp` and `MainFrame.cpp`.
 - `tests/native_navigation/graphite_rail.test.mjs` pins the left dock, the top-strip default for other notebooks, the rail geometry and the Graphite grounds.
 - `tests/native_navigation/graphite_sidebar_cards.test.mjs` pins the card padding against the corner radius, the one-time setup after every section is added, the layout on each section change and the colour roles.
+- `tests/native_navigation/graphite_home_column.test.mjs` pins the Home column markup, its commands on both sides of the bridge, the text-only insertion of printer names and the strings in both languages.
 - `tests/native_navigation/graphite_title_bar.test.mjs` pins the language switch modes, the order of the title bar items, the hidden-until-ready update chip and its restart action.
 - The hosted Windows build compiled the rail, the palette, the floating canvas and the language switch.
 - The node contract suite reports the same failures as `main` and no new ones. The fingerprint of `MainFrame::init_tabpanel` in `tests/native_shared_controls/atlas_shell_preserved_functions.json` was refreshed because this change deliberately edits that function.
 
-Not verified yet: the hosted Windows build of the update chip and the sidebar cards, the running application, captures in English, Cantonese and bilingual modes at each scale, and the keyboard order through the rail.
+Not verified yet: the hosted Windows build of the update chip, the sidebar cards and the Home column, the running application, captures in English, Cantonese and bilingual modes at each scale, and the keyboard order through the rail.
 
 ## Next steps
 
-The design also rounds the canvas frame, adds the printer and LAN model drop column to Home, and restyles Preview, Device and the dialogs. Those are not implemented yet. The full design is in `design/graphite-shell/`.
+The design also rounds the canvas frame and restyles Preview, Device and the dialogs. Those are not implemented yet. The full design is in `design/graphite-shell/`.

@@ -69,6 +69,7 @@
 	
 	<div id="HomeFullArea">
 	
+	<div id="HomeTopRow">
 	<!----------Recent open---------->
 	<div id="MiniRecentFileArea">
 		<div class="Title_Bar">
@@ -118,6 +119,31 @@
 		</div>
 	</div>
 	
+	<!----------Graphite shell side column: LAN model drop, printers, melody creator---------->
+	<div id="HomeSideColumn" aria-label="Devices">
+		<section id="HomeLanCard" class="HomeSideCard">
+			<div class="HomeSideLabel trans" tid="t314">LAN model drop</div>
+			<div id="HomeLanText" class="HomeSideBody trans" tid="t315">Send a model to this computer from any device on your network.</div>
+			<div id="HomeLanState" class="HomeSideMono" aria-live="polite"></div>
+			<button id="HomeLanInvite" type="button" class="HomeSideButton trans" tid="t316" onClick="OnHomeLanInvite()">Show invite</button>
+			<button id="HomeLanSettings" type="button" class="HomeSideButton trans" tid="t318" onClick="OnHomeLanSettings()">Open settings</button>
+		</section>
+		<section id="HomePrinterCard" class="HomeSideCard">
+			<div class="HomeSideLabel trans" tid="t319">Printers</div>
+			<div id="HomePrinterList" role="list"></div>
+			<div id="HomePrinterEmpty" class="HomeSideBody TextS2 trans" tid="t320">No printers yet. Add one from the Device page.</div>
+			<button type="button" class="HomeSideLink trans" tid="t321" onClick="OnHomeOpenDevice()">Open Device</button>
+		</section>
+		<section id="HomeMelodyCard" class="HomeSideCard">
+			<div class="HomeMelodyText">
+				<div class="HomeMelodyTitle trans" tid="t322">Melody creator</div>
+				<div class="TextS2 trans" tid="t323">Compose a tune your printer plays</div>
+			</div>
+			<button type="button" class="HomeSideLink trans" tid="t324" onClick="OnHomeMelody()">Open</button>
+		</section>
+	</div>
+	</div>
+
 	<!----------Online Models--------->
 	<div id="HotModelArea">
 		<div id="Online_Models_Bar" class="Title_Bar">

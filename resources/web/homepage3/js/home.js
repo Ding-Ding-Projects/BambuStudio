@@ -15,6 +15,9 @@ function OnHomeInit()
 	SendMsg_GetStaffPick();
     SendMsg_GetMakerlabList();
 	SendMsg_GetPrintHistory();	    
+	SendMsg_GetHomeSideStatus();
+	// The printers and the LAN model drop change on their own; ask again while Home is open.
+	setInterval(function(){ if(!document.hidden) SendMsg_GetHomeSideStatus(); }, 5000);
 	
     document.getElementById('HotModel_Search_Input').onkeydown = function (event) {
 		if (event.key === 'Enter') {
@@ -143,6 +146,10 @@ function HandleStudio( pVal )
 	if(strCmd=='get_recent_projects')
 	{
 		ShowRecentFileList(pVal['response']);
+	}
+	else if(strCmd=='homepage_side_status')
+	{
+		ShowHomeSideStatus(pVal);
 	}
 	else if( strCmd=="studio_set_mallurl" )
 	{
@@ -1066,3 +1073,68 @@ function OnOpenPrintHistory( TaskID )
 
 //---------------Global-----------------
 window.postMessage = HandleStudio;
+
+
+/*-------Graphite shell side column-------*/
+function SendHomeCommand(strCommand)
+{
+	var tSend={};
+	tSend['sequence_id']=Math.round(new Date() / 1000);
+	tSend['command']=strCommand;
+	SendWXMessage( JSON.stringify(tSend) );
+}
+
+function SendMsg_GetHomeSideStatus() { SendHomeCommand("homepage_side_status_get"); }
+function OnHomeLanInvite() { SendHomeCommand("homepage_lan_invite"); }
+function OnHomeLanSettings() { SendHomeCommand("homepage_lan_settings"); }
+function OnHomeOpenDevice() { SendHomeCommand("homepage_open_device"); }
+function OnHomeMelody() { SendHomeCommand("homepage_melody"); }
+
+// Native sends booleans and numbers as strings (property tree JSON).
+function HomeFlag(v) { return v===true || v==="true"; }
+
+function ShowHomeSideStatus(pVal)
+{
+	var lan=pVal['lan'] || {};
+	var on=HomeFlag(lan['enabled']);
+	$('#HomeLanCard').toggleClass('Off', !on);
+	var state=on ? String(lan['state'] || '') : GetCurrentPlainTextByKey('t317');
+	var waiting=parseInt(lan['waiting'] || '0', 10);
+	if(on && waiting>0)
+		state += ' \u00b7 ' + GetCurrentPlainTextByKey('t325').replace('{n}', waiting);
+	$('#HomeLanState').text(state);
+
+	var list=document.getElementById('HomePrinterList');
+	list.textContent='';
+	var printers=pVal['printers'];
+	if(!Array.isArray(printers)) printers=[];
+	for(var i=0;i<printers.length;i++)
+	{
+		var p=printers[i];
+		var tone=['idle','busy','offline','error'].indexOf(p['tone'])>=0 ? p['tone'] : 'offline';
+		var row=document.createElement('div');
+		row.className='HomePrinter '+tone;
+		row.setAttribute('role','listitem');
+		var top=document.createElement('div');
+		top.className='HomePrinterTop';
+		var dot=document.createElement('span');
+		dot.className='HomePrinterDot';
+		dot.setAttribute('aria-hidden','true');
+		var name=document.createElement('span');
+		name.className='HomePrinterName';
+		name.textContent=String(p['name'] || '');
+		var st=document.createElement('span');
+		st.className='HomePrinterState';
+		st.textContent=String(p['state'] || '');
+		top.appendChild(dot); top.appendChild(name); top.appendChild(st);
+		var bar=document.createElement('div');
+		bar.className='HomePrinterBar';
+		var fill=document.createElement('div');
+		var pct=Math.max(0, Math.min(100, parseInt(p['progress'] || '0', 10) || 0));
+		fill.style.width=(tone=='busy' ? pct : 0)+'%';
+		bar.appendChild(fill);
+		row.appendChild(top); row.appendChild(bar);
+		list.appendChild(row);
+	}
+	$('#HomePrinterEmpty').toggle(printers.length==0);
+}

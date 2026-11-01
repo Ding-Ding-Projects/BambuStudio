@@ -37389,6 +37389,11 @@ msgstr "重新啟動以安裝更新"
 msgid "Restart to update"
 msgstr "重新啟動以更新"
 
+#. reviewed-category: device
+#. review-status: agent-drafted
+msgid "Paused"
+msgstr "已暫停"
+
 #. reviewed-category: connection-offline
 #. review-status: agent-drafted
 msgid "An update has been downloaded. Restart to install it. Updates from this fork are not code-signed."

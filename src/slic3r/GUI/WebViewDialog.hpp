@@ -131,6 +131,8 @@ public:
 
     //Recent File
     void SendRecentList(int images);
+    // Graphite shell Home column: the LAN model drop state and the user's printers.
+    void SendHomeSideStatus();
 
     //Online
     bool     m_onlinefirst;    // Online Page First Load

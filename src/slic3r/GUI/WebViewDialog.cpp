@@ -31,6 +31,9 @@
 #include "slic3r/GUI/Widgets/StateColor.hpp"
 #include "slic3r/GUI/Widgets/MaterialIcon.hpp"
 #include "slic3r/GUI/Widgets/MD3DialogChrome.hpp"
+#include "slic3r/GUI/DeviceManager.hpp"
+#include "slic3r/GUI/DeviceCore/DevManager.h"
+#include "slic3r/GUI/LanModelDrop/LanModelDropStation.hpp"
 
 namespace pt = boost::property_tree;
 
@@ -987,6 +990,67 @@ void WebViewPanel::SendRecentList(int images)
     std::wostringstream oss;
     pt::write_json(oss, req, false);
     RunScript(wxString::Format("window.postMessage(%s)", oss.str()));
+}
+
+// The Home column of the Graphite shell. Read on request from the page (it asks
+// again every few seconds while shown), so no state is kept here.
+void WebViewPanel::SendHomeSideStatus()
+{
+    namespace LMD = Slic3r::GUI::LanModelDrop;
+    boost::property_tree::ptree req;
+    req.put("sequence_id", "");
+    req.put("command", "homepage_side_status");
+
+    const LMD::View &lan = LMD::view();
+    req.put("lan.enabled", lan.enabled);
+    req.put("lan.connected", lan.state == LMD::LinkState::Connected);
+    req.put("lan.problem", LMD::is_error_state(lan.state));
+    req.put("lan.state", std::string(LMD::state_text(lan.state).ToUTF8()));
+    req.put("lan.waiting", lan.waiting);
+
+    boost::property_tree::ptree printers;
+    if (Slic3r::DeviceManager *dev = wxGetApp().getDeviceManager()) {
+        int count = 0;
+        for (const auto &entry : dev->get_my_machine_list()) {
+            MachineObject *obj = entry.second;
+            if (obj == nullptr)
+                continue;
+            if (++count > 4)
+                break;
+            boost::property_tree::ptree row;
+            row.put("name", obj->get_dev_name());
+            std::string tone  = "idle";
+            wxString    state = _L("Idle");
+            int         progress = 0;
+            if (!obj->is_online()) {
+                tone  = "offline";
+                state = _L("Offline");
+            } else if (obj->print_status == "FAILED") {
+                tone  = "error";
+                state = _L("Failed");
+            } else if (obj->is_in_printing()) {
+                tone     = "busy";
+                progress = std::clamp(obj->mc_print_percent, 0, 100);
+                const wxString dot(wxUniChar(0x00B7));
+                if (obj->print_status == "PAUSE")
+                    state = wxString::Format("%s %s %d%%", _L("Paused"), dot, progress);
+                else if (obj->mc_left_time > 0)
+                    state = wxString::Format("%d%% %s %s", progress, dot,
+                                             wxString::FromUTF8(Slic3r::get_time_dhm(float(obj->mc_left_time))));
+                else
+                    state = wxString::Format("%d%%", progress);
+            }
+            row.put("tone", tone);
+            row.put("state", std::string(state.ToUTF8()));
+            row.put("progress", progress);
+            printers.push_back(std::make_pair("", row));
+        }
+    }
+    req.add_child("printers", printers);
+
+    std::ostringstream oss;
+    boost::property_tree::write_json(oss, req, false);
+    RunScript(wxString::Format("window.postMessage(%s)", wxString::FromUTF8(oss.str())));
 }
 
 void WebViewPanel::SendDesignStaffpick(bool on)

@@ -346,3 +346,93 @@ body #MiniFileList .FileImg
 body #MiniFileList .FileImg img { border-radius: 12px; aspect-ratio: 16/9; }
 body #MiniFileList .FileName { padding: 10px 2px 2px; font-size: 14px; font-weight: 500; }
 body #MiniFileList .FileDate { padding: 0 2px 2px; font-size: 12px; }
+
+/* Graphite shell Home column (design/graphite-shell/Home.dc.html): the recent
+   projects panel and a column with the LAN model drop, the printers and the
+   melody creator. The column moves below the panel on narrow windows. */
+body #HomeTopRow
+{
+	display: grid;
+	grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr);
+	gap: 16px;
+	align-items: start;
+	margin-bottom: 24px;
+}
+body #HomeTopRow > #MiniRecentFileArea { margin-bottom: 0; }
+@media screen and (max-width: 1087px) { body #HomeTopRow { grid-template-columns: minmax(0, 1fr); } }
+body #HomeSideColumn { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+body .HomeSideCard
+{
+	background: var(--md-sc);
+	border-radius: 24px;
+	padding: 20px;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	color: var(--md-on-surface);
+}
+body #HomeLanCard { background: var(--md-primary-container); color: var(--md-on-primary-container); }
+body #HomeLanCard.Off { background: var(--md-sc); color: var(--md-on-surface); }
+body .HomeSideLabel
+{
+	font-size: 11px;
+	letter-spacing: .08em;
+	text-transform: uppercase;
+	font-weight: 500;
+	color: inherit;
+	opacity: .85;
+}
+body .HomeSideBody { font-size: 13px; line-height: 1.4; }
+body .HomeSideMono { font-family: "Roboto Mono", monospace; font-size: 12px; }
+body .HomeSideButton
+{
+	height: 36px;
+	border-radius: 12px;
+	border: 0;
+	background: var(--md-on-primary-container);
+	color: var(--md-primary-container);
+	font: inherit;
+	font-size: 13px;
+	font-weight: 500;
+	cursor: pointer;
+}
+body #HomeLanCard.Off .HomeSideButton { background: var(--md-primary); color: var(--md-on-primary); }
+body #HomeLanCard.Off #HomeLanInvite,
+body #HomeLanCard:not(.Off) #HomeLanSettings { display: none; }
+body .HomeSideLink
+{
+	align-self: flex-start;
+	border: 0;
+	background: none;
+	padding: 4px 0;
+	color: var(--md-primary);
+	font: inherit;
+	font-size: 13px;
+	font-weight: 500;
+	cursor: pointer;
+}
+body .HomePrinter
+{
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 12px;
+	border-radius: 14px;
+	background: var(--md-sc-low);
+	font-size: 13px;
+}
+body .HomePrinterTop { display: flex; align-items: center; gap: 10px; }
+body .HomePrinterDot { width: 8px; height: 8px; border-radius: 4px; flex: 0 0 auto; background: var(--md-outline); }
+body .HomePrinterName { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+body .HomePrinterState { font-family: "Roboto Mono", monospace; font-size: 12px; color: var(--md-on-surface-variant); }
+body .HomePrinterBar { height: 4px; border-radius: 2px; background: var(--md-sc-highest); }
+body .HomePrinterBar > div { height: 4px; border-radius: 2px; background: var(--md-outline); }
+body .HomePrinter.idle .HomePrinterDot,
+body .HomePrinter.idle .HomePrinterBar > div { background: var(--md-primary); }
+body .HomePrinter.busy .HomePrinterDot,
+body .HomePrinter.busy .HomePrinterBar > div { background: var(--md-primary); }
+body .HomePrinter.error .HomePrinterDot,
+body .HomePrinter.error .HomePrinterBar > div { background: var(--md-error); }
+body #HomeMelodyCard { flex-direction: row; align-items: center; gap: 12px; }
+body .HomeMelodyText { flex: 1; font-size: 12px; }
+body .HomeMelodyTitle { font-size: 13px; font-weight: 500; color: var(--md-on-surface); }

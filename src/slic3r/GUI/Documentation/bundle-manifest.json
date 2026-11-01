@@ -435,12 +435,12 @@
     {
       "route": "design-system/graphite-shell.md",
       "title": "Graphite shell",
-      "sha256": "b334e445f213d39b83dc2d55a30c94dd44676ea7a14e4349776ab4525c2b0c5c"
+      "sha256": "ae21f5868ca5e70fadea286393a9b40789dabafa34c47889cdff01bbde41b8d0"
     },
     {
       "route": "design-system/graphite-shell.yue_HK.md",
       "title": "石墨外殼",
-      "sha256": "3a7f1584f39ce594c31905614a88a4b956c43fed9124180ce5a8220d0337f75f"
+      "sha256": "6b42be80e72e5a3beddfebaed9c690732289ef3a56d0959860f06b637e44a37d"
     },
     {
       "route": "design-system/humidity-details-atlas.md",
@@ -2030,14 +2030,19 @@
       "bytes": 7306
     },
     {
-      "name": "8c04650700865cfb5148083a4cefecbf80bf79f0da2dfcb911cd4c1ba6156e18.png",
-      "sha256": "8c04650700865cfb5148083a4cefecbf80bf79f0da2dfcb911cd4c1ba6156e18",
-      "bytes": 133105
+      "name": "b40fdba4694fbd54d84816333f366e0461c8bec40a7d81f6c032d2589b3399b1.png",
+      "sha256": "b40fdba4694fbd54d84816333f366e0461c8bec40a7d81f6c032d2589b3399b1",
+      "bytes": 134184
     },
     {
-      "name": "c7b39c3ef851111b815b203ae82c59961ff2f84fcf5cd408841907f0aa9b1dac.png",
-      "sha256": "c7b39c3ef851111b815b203ae82c59961ff2f84fcf5cd408841907f0aa9b1dac",
-      "bytes": 143071
+      "name": "b47293eb1d003049e1cda00b6c90a27b0adc3b5d320306eeee006b8606ad4283.png",
+      "sha256": "b47293eb1d003049e1cda00b6c90a27b0adc3b5d320306eeee006b8606ad4283",
+      "bytes": 133176
+    },
+    {
+      "name": "c012102014b46fc51529cde75c7cfb4ac0fec388017cbd782a4e4b023b33f274.png",
+      "sha256": "c012102014b46fc51529cde75c7cfb4ac0fec388017cbd782a4e4b023b33f274",
+      "bytes": 139371
     },
     {
       "name": "cecb10fb5a84dc1ee6d8a3fc9d9952be22f285402db3bfefd07e3984fe7b41d0.png",
@@ -2045,7 +2050,7 @@
       "bytes": 1979
     }
   ],
-  "bundle_sha256": "dff0ce446d7d550f748e3112213406612b8f60fd4484e4d8bd2d7e636fa7f14f",
+  "bundle_sha256": "9b2d032692291ee3b577e48f46ff96b015cceddcede81abd1640f819749744eb",
   "unavailable_references": [
     {
       "source": "api/README.md",
