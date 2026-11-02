@@ -63,7 +63,9 @@ CommandPalette::CommandPalette(MainFrame *frame)
                wxBORDER_NONE)
     , m_frame(frame)
 {
-    SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));
+    // Graphite shell: one SurfaceContainerHigh surface; rows sit on it and the
+    // selected row takes the secondary container.
+    SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerHigh));
     auto *root = new wxBoxSizer(wxVERTICAL);
     auto *title = new Label(this, Label::Head_20, _L("Command palette"));
     title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
@@ -90,7 +92,7 @@ CommandPalette::CommandPalette(MainFrame *frame)
     m_list = new MD3ScrolledWindow(this, wxID_ANY, wxDefaultPosition,
                                   wxSize(FromDIP(kWidth), FromDIP(kListHeight)),
                                   wxVSCROLL | wxBORDER_NONE);
-    m_list->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
+    m_list->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerHigh));
     m_list->SetScrollRate(0, FromDIP(kRowHeight) + kDividerHeight);
     m_list->SetSizer(new wxBoxSizer(wxVERTICAL));
     root->Add(m_list, 1, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(12));
@@ -371,7 +373,7 @@ wxPanel *CommandPalette::make_row(const Entry &entry, int index)
 {
     const wxColour on     = StateColor::semantic(MD3::Role::OnSurface);
     const wxColour on_var = StateColor::semantic(MD3::Role::OnSurfaceVariant);
-    const wxColour base   = StateColor::semantic(MD3::Role::SurfaceContainerLowest);
+    const wxColour base   = StateColor::semantic(MD3::Role::SurfaceContainerHigh);
 
     auto *row = new wxPanel(m_list, wxID_ANY);
     row->SetBackgroundColour(base);
@@ -396,7 +398,7 @@ wxPanel *CommandPalette::make_row(const Entry &entry, int index)
         if (MaterialIcon::available()) {
             const int px = icon->FromDIP(22);
             const wxSize gs = MaterialIcon::measure(dc, glyph, px);
-            MaterialIcon::draw(dc, glyph, px, StateColor::semantic(m_selected == index ? MD3::Role::OnPrimaryContainer : MD3::Role::OnSurfaceVariant),
+            MaterialIcon::draw(dc, glyph, px, StateColor::semantic(m_selected == index ? MD3::Role::OnSecondaryContainer : MD3::Role::OnSurfaceVariant),
                                wxPoint((icon->GetSize().x - gs.x) / 2, (icon->GetSize().y - gs.y) / 2));
         }
     });
@@ -539,8 +541,8 @@ void CommandPalette::select_row(int index)
     if (m_rows.empty())
         return;
     index = std::max(0, std::min(index, static_cast<int>(m_rows.size()) - 1));
-    const wxColour base = StateColor::semantic(MD3::Role::SurfaceContainerLowest);
-    const wxColour sel  = StateColor::semantic(MD3::Role::PrimaryContainer);
+    const wxColour base = StateColor::semantic(MD3::Role::SurfaceContainerHigh);
+    const wxColour sel  = StateColor::semantic(MD3::Role::SecondaryContainer);
     // Match direct text/icon plates to the row, leaving embedded live controls in their own states.
     auto paint_row = [this](wxPanel *row, const wxColour &background, bool selected) {
         const auto icon = m_icon_plates.find(row);
@@ -549,7 +551,7 @@ void CommandPalette::select_row(int index)
         for (wxWindow *child : row->GetChildren()) {
             if (auto *label = dynamic_cast<Label *>(child)) {
                 label->SetBackgroundColour(background);
-                label->SetForegroundColour(StateColor::semantic(selected ? MD3::Role::OnPrimaryContainer : (label->GetFont().GetWeight() >= wxFONTWEIGHT_BOLD ? MD3::Role::OnSurface : MD3::Role::OnSurfaceVariant)));
+                label->SetForegroundColour(StateColor::semantic(selected ? MD3::Role::OnSecondaryContainer : (label->GetFont().GetWeight() >= wxFONTWEIGHT_BOLD ? MD3::Role::OnSurface : MD3::Role::OnSurfaceVariant)));
             } else if (child == icon_plate) {
                 child->SetBackgroundColour(background);
             }
