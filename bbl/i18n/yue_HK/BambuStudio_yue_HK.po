@@ -47166,3 +47166,13 @@ msgstr "復原元素動畫：%s"
 #. review-status: agent-drafted
 msgid "Redo element motion: %s"
 msgstr "重做元素動畫：%s"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Search commands and settings"
+msgstr "搜尋指令同設定"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Search commands and settings (%s)"
+msgstr "搜尋指令同設定（%s）"

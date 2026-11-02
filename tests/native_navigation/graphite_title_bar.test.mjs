@@ -44,3 +44,25 @@ test('the update chip uses the primary container roles and names the unsigned up
     assert.match(bar, /hover \? MD3::Role::OnPrimary : MD3::Role::OnPrimaryContainer/);
     assert(bar.includes('Updates from this fork are not code-signed.'));
 });
+
+test('the search field sits after the drag spacer and opens the command palette', () => {
+    const stretch = indexOf(bar, 'this->AddStretchSpacer(1);');
+    const search = indexOf(bar, 'm_search_item = this->AddTool(ID_SEARCH');
+    const history = indexOf(bar, 'm_history_item = this->AddTool(ID_HISTORY');
+    assert(stretch < search && search < history);
+    assert.match(bar, /void BBLTopbar::OnSearchField[\s\S]*?if \(!m_search_shown\)\n        return;[\s\S]*?GUI::CommandPalette::ShowPalette\(frame\)/);
+    assert(bar.includes('this->Bind(wxEVT_AUITOOLBAR_TOOL_DROPDOWN, &BBLTopbar::OnSearchField, this, ID_SEARCH);'));
+});
+
+test('the search field gives way on a narrow bar and starts hidden', () => {
+    assert(barHeader.includes('bool              m_search_shown{false};'));
+    assert.match(bar, /const bool search_fits = width >= FromDIP\(TOPBAR_SEARCH_MIN_BAR_W\);/);
+    assert.match(bar, /apply_update_visibility\(\);\n    apply_search_visibility\(\);\n\}/);
+    assert.match(bar, /item_id == ID_UPDATE_READY \|\| item_id == ID_SEARCH;/);
+});
+
+test('the search field names the palette shortcut and paints from container roles', () => {
+    assert(bar.includes('PaletteIndex::palette_shortcut_label()'));
+    assert.match(bar, /hover \? MD3::Role::SurfaceContainerHigh : MD3::Role::SurfaceContainer/);
+    assert(bar.includes('_L("Search commands and settings")'));
+});

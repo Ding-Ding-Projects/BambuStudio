@@ -2266,7 +2266,9 @@ void MainFrame::update_prepare_action_bar_style()
 
     m_prepare_action_bar->SetMinSize(wxSize(-1, bar_height));
     m_prepare_action_bar->SetMaxSize(wxDefaultSize);
-    const wxColour bar_bg = StateColor::semantic(MD3::Role::SurfaceContainerLow);
+    // Graphite shell: the plate, estimate and Slice/Print controls float on the
+    // window ground under the canvas instead of sitting on a separate band.
+    const wxColour bar_bg = StateColor::semantic(MD3::Role::Surface);
     m_prepare_action_bar->SetBackgroundColour(bar_bg);
 
     // Re-seed every direct child's window background with the bar surface. The
@@ -2286,6 +2288,8 @@ void MainFrame::update_prepare_action_bar_style()
     m_prepare_action_bar_divider->SetMinSize(wxSize(-1, divider_height));
     m_prepare_action_bar_divider->SetMaxSize(wxSize(-1, divider_height));
     m_prepare_action_bar_divider->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
+    // Graphite shell: no hairline between the canvas and the floating controls.
+    m_prepare_action_bar_divider->Hide();
 
     if (m_prepare_split_line) {
         // Re-apply the OutlineVariant tone and DPI-scaled geometry so the divider
@@ -2320,7 +2324,7 @@ void MainFrame::update_prepare_action_bar_style()
         // (bar-surface) fill, 12px radius, OnSurfaceVariant glyph.
         const StateColor background(
             std::pair{StateColor::semantic(MD3::Role::SurfaceContainerHigh), (int) StateColor::Hovered},
-            std::pair{StateColor::semantic(MD3::Role::SurfaceContainerLow), (int) StateColor::Normal});
+            std::pair{StateColor::semantic(MD3::Role::Surface), (int) StateColor::Normal});
         m_prepare_add_plate_button->SetBackgroundColor(background);
         m_prepare_add_plate_button->SetBorderColor(StateColor(StateColor::semantic(MD3::Role::Outline)));
         m_prepare_add_plate_button->SetBorderWidth(FromDIP(1));

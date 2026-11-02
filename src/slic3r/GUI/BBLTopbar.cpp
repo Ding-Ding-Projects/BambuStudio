@@ -22,6 +22,8 @@
 #include "format.hpp"
 #include "AppLogo/LogoRender.hpp"
 #include "LanguageMode.hpp"
+#include "CommandPalette.hpp"
+#include "CommandPaletteIndex.hpp"
 
 #include <wx/dcmemory.h>
 #include <wx/graphics.h>
@@ -74,6 +76,11 @@ static constexpr int ID_LAN_DROP = ID_AMS_NOTEBOOK + 1;
 static constexpr int ID_LANGUAGE = ID_AMS_NOTEBOOK + 2;
 // Graphite shell update chip: shown only while a downloaded update waits for a restart.
 static constexpr int ID_UPDATE_READY = ID_AMS_NOTEBOOK + 3;
+// Graphite shell search field: opens the command palette.
+static constexpr int ID_SEARCH = ID_AMS_NOTEBOOK + 4;
+// The search field is shown only when the bar is at least this wide (logical px),
+// so it never pushes the window controls into the overflow on a narrow window.
+static constexpr int TOPBAR_SEARCH_MIN_BAR_W = 1180;
 
 // Wave 3 (topbar-chrome-raster-to-glyph / titlebar-window-controls-raster):
 // title-bar tool icons are now Material Symbols glyphs rendered to a DPI-correct
@@ -389,6 +396,70 @@ static wxBitmap topbar_update_chip_bitmap(wxWindow *ref, bool hover)
     });
 }
 
+// Graphite shell search field: a 32 px SurfaceContainer pill with the search
+// glyph, a hint and the palette shortcut on a SurfaceContainerHighest key cap.
+// Hover lifts the pill to SurfaceContainerHigh. Clicking it opens the command
+// palette, which already searches commands, workspaces, settings and articles.
+static wxBitmap topbar_search_field_bitmap(wxWindow *ref, bool hover)
+{
+    using namespace Slic3r::GUI;
+    const int  H        = 32;
+    const int  W        = 300;
+    const int  padx     = 12;
+    const int  gap      = 8;
+    const int  glyph    = 18;
+    const int  key_padx = 6;
+    const int  key_h    = 20;
+    const bool icons_ok = MaterialIcon::available();
+    // TRN: Hint inside the title bar search field; clicking it opens the command palette.
+    const wxString hint = _L("Search commands and settings");
+    const wxString keys = wxString::FromUTF8(PaletteIndex::palette_shortcut_label());
+    wxFont font = Label::Body_12;
+    if (!font.IsOk())
+        font = *wxNORMAL_FONT;
+    const double   scale = topbar_scale(ref);
+    const wxColour hint_fg = StateColor::semantic(MD3::Role::OnSurfaceVariant);
+    const wxBitmap key_text = topbar_text_alpha(font, scale, keys, hint_fg);
+    const double   kw = key_text.GetWidth() / scale, kh = key_text.GetHeight() / scale;
+    const double   key_w = kw + 2 * key_padx;
+    wxSize gs(0, 0);
+    if (icons_ok) {
+        wxBitmap   probe(1, 1);
+        wxMemoryDC mdc(probe);
+        gs = MaterialIcon::measure(mdc, MaterialIcon::Search, glyph);
+        mdc.SelectObject(wxNullBitmap);
+    }
+    // The hint takes what is left between the glyph and the key cap.
+    const double hint_left  = padx + (icons_ok ? gs.x + gap : 0);
+    const double hint_room  = std::max(0.0, W - padx - key_w - gap - hint_left);
+    wxString     shown_hint = hint;
+    {
+        wxBitmap   probe(1, 1);
+        wxMemoryDC mdc(probe);
+        mdc.SetFont(font);
+        shown_hint = wxControl::Ellipsize(hint, mdc, wxELLIPSIZE_END, static_cast<int>(hint_room));
+        mdc.SelectObject(wxNullBitmap);
+    }
+    const wxBitmap text = topbar_text_alpha(font, scale, shown_hint, hint_fg);
+    const double   tw = text.GetWidth() / scale, th = text.GetHeight() / scale;
+    return topbar_make_canvas(ref, wxSize(W, H), [&](wxGraphicsContext *gc) {
+        gc->SetPen(wxPen(StateColor::semantic(MD3::Role::OutlineVariant), 1));
+        gc->SetBrush(wxBrush(StateColor::semantic(hover ? MD3::Role::SurfaceContainerHigh : MD3::Role::SurfaceContainer)));
+        gc->DrawRoundedRectangle(0.5, 0.5, W - 1, H - 1, (H - 1) / 2.0);
+        if (icons_ok) {
+            // Private icon face: pre-rendered with plain GDI, composited as a bitmap.
+            const wxBitmap gbmp = MaterialIcon::bitmap(ref, MaterialIcon::Search, glyph, hint_fg);
+            gc->DrawBitmap(gbmp, padx, (H - gs.y) / 2.0, gs.x, gs.y);
+        }
+        gc->DrawBitmap(text, hint_left, (H - th) / 2.0, tw, th);
+        const double key_x = W - padx - key_w;
+        gc->SetPen(*wxTRANSPARENT_PEN);
+        gc->SetBrush(wxBrush(StateColor::semantic(MD3::Role::SurfaceContainerHighest)));
+        gc->DrawRoundedRectangle(key_x, (H - key_h) / 2.0, key_w, key_h, 6);
+        gc->DrawBitmap(key_text, key_x + key_padx, (H - kh) / 2.0, kw, kh);
+    });
+}
+
 static wxBitmap topbar_history_chip_bitmap(wxWindow *ref, const wxString &branch,
                                            const wxString &head, bool hover)
 {
@@ -650,7 +721,7 @@ void BBLTopbarArt::DrawButton(wxDC& dc, wxWindow* wnd, const wxAuiToolBarItem& i
     // The brand tile (§3.1) and history chip (§3.5) bake their own background, so
     // they opt out of the shared state layer.
     const int  item_id       = item.GetId();
-    const bool bakes_own_bg  = item_id == ID_LOGO || item_id == ID_HISTORY || item_id == ID_LANGUAGE || item_id == ID_UPDATE_READY;
+    const bool bakes_own_bg  = item_id == ID_LOGO || item_id == ID_HISTORY || item_id == ID_LANGUAGE || item_id == ID_UPDATE_READY || item_id == ID_SEARCH;
     if (!bakes_own_bg && !(item.GetState() & wxAUI_BUTTON_STATE_DISABLED)) {
         wxColour state_layer;
         // §3.9: the window Close control carries a destructive hover -- its state
@@ -784,6 +855,14 @@ void BBLTopbar::Init(wxFrame* parent)
     // spacers. Dragging over this region (or the project chip) moves the window.
     this->AddStretchSpacer(1);
 
+    // Graphite shell search field: opens the command palette. Hidden on narrow bars.
+    m_search_item = this->AddTool(ID_SEARCH, "", topbar_search_field_bitmap(this, false), wxEmptyString, wxITEM_NORMAL);
+    m_search_item->SetHoverBitmap(topbar_search_field_bitmap(this, true));
+    // TRN: Tooltip of the title bar search field. %s is the keyboard shortcut.
+    m_search_item->SetShortHelp(wxString::Format(_L("Search commands and settings (%s)"),
+                                                 wxString::FromUTF8(GUI::PaletteIndex::palette_shortcut_label())));
+    m_search_spacer = this->AddSpacer(FromDIP(MD3::Metrics::active().gap));
+
     // §3.5 history chip -> the real version-history backend (MainFrame::show_project_history,
     // the same handler behind the File>Version history item). The chip bakes its
     // own idle/hover background bitmaps.
@@ -900,6 +979,7 @@ void BBLTopbar::Init(wxFrame* parent)
     this->Bind(wxEVT_AUITOOLBAR_TOOL_DROPDOWN, &BBLTopbar::OnLanDropIndicator, this, ID_LAN_DROP);
     this->Bind(wxEVT_AUITOOLBAR_TOOL_DROPDOWN, &BBLTopbar::OnLanguageSwitch, this, ID_LANGUAGE);
     this->Bind(wxEVT_AUITOOLBAR_TOOL_DROPDOWN, &BBLTopbar::OnUpdateChip, this, ID_UPDATE_READY);
+    this->Bind(wxEVT_AUITOOLBAR_TOOL_DROPDOWN, &BBLTopbar::OnSearchField, this, ID_SEARCH);
     if (m_lan_drop_item)
         m_lan_drop_listener = LanModelDrop::add_listener([this] {
             const bool   was_shown = m_lan_drop_shown;
@@ -1227,6 +1307,33 @@ void BBLTopbar::realize_with_hidden_items()
     Realize();
     apply_lan_drop_visibility();
     apply_update_visibility();
+    apply_search_visibility();
+}
+
+void BBLTopbar::apply_search_visibility()
+{
+    const bool shown = m_search_shown;
+    for (wxAuiToolBarItem *item : {m_search_item, m_search_spacer}) {
+        if (item == nullptr || item->GetSizerItem() == nullptr)
+            continue;
+        item->GetSizerItem()->Show(shown);
+        // A hidden sizer item keeps its last rectangle, which painting and hit testing still use.
+        if (!shown)
+            item->GetSizerItem()->SetDimension({-1000, 0}, {0, 0});
+    }
+    if (m_sizer)
+        m_sizer->Layout();
+}
+
+void BBLTopbar::OnSearchField(wxAuiToolBarEvent& event)
+{
+    if (!m_search_shown)
+        return;
+    // The palette is modal-less but takes focus; open it after this click is handled.
+    wxGetApp().CallAfter([] {
+        if (GUI::MainFrame *frame = GUI::wxGetApp().mainframe)
+            GUI::CommandPalette::ShowPalette(frame);
+    });
 }
 
 void BBLTopbar::SetUpdateReady(bool ready)
@@ -1414,6 +1521,13 @@ void BBLTopbar::update_responsive_title(int width)
     if (width < 0)
         width = GetClientSize().GetWidth();
 
+    // The search field gives way first on a narrow bar, before the project chip shrinks.
+    const bool search_fits = width >= FromDIP(TOPBAR_SEARCH_MIN_BAR_W);
+    if (m_search_item && search_fits != m_search_shown) {
+        m_search_shown = search_fits;
+        realize_with_hidden_items();
+    }
+
     wxGCDC dc(this);
     dc.SetFont(GetFont());
 
@@ -1475,6 +1589,10 @@ void BBLTopbar::Rescale() {
     rebuild_lan_drop_indicator();
     if (m_language_item)
         m_language_item->SetBitmap(topbar_language_switch_bitmap(this, topbar_language_index()));
+    if (m_search_item) {
+        m_search_item->SetBitmap(topbar_search_field_bitmap(this, false));
+        m_search_item->SetHoverBitmap(topbar_search_field_bitmap(this, true));
+    }
     if (m_update_item) {
         m_update_item->SetBitmap(topbar_update_chip_bitmap(this, false));
         m_update_item->SetHoverBitmap(topbar_update_chip_bitmap(this, true));

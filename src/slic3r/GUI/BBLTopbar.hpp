@@ -46,6 +46,8 @@ public:
     void OnLanDropIndicator(wxAuiToolBarEvent& event);
     void OnLanguageSwitch(wxAuiToolBarEvent& event);
     void OnUpdateChip(wxAuiToolBarEvent& event);
+    // Graphite shell search field: opens the command palette.
+    void OnSearchField(wxAuiToolBarEvent& event);
     // Shows the title bar update chip while a downloaded update waits for a restart.
     void SetUpdateReady(bool ready);
 
@@ -119,6 +121,11 @@ private:
     wxAuiToolBarItem* m_update_spacer{nullptr};
     bool              m_update_ready{false};
     void apply_update_visibility();
+    wxAuiToolBarItem* m_search_item{nullptr};
+    wxAuiToolBarItem* m_search_spacer{nullptr};
+    // Starts hidden; update_responsive_title() shows it once the bar is wide enough.
+    bool              m_search_shown{false};
+    void apply_search_visibility();
     wxAuiToolBarItem* m_notification_item{nullptr};
     int               m_notification_unread{0};
     // The popover, created on first click and reused (hidden, never destroyed
