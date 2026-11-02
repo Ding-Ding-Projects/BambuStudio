@@ -1621,8 +1621,13 @@ namespace Slic3r
                     }
                 }
                 //BBS: GUI refactor: move to the right
-                imgui.set_next_window_pos(float(canvas_width - right_margin * m_scale), 0.0f, ImGuiCond_Always, 1.0f, 0.0f);
-                ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+                // Graphite shell: the dock floats half a density gap in from the
+                // top and right canvas edges as a rounded panel. The corner stays
+                // the small radius, whose cut (about 3 px) is less than the 4 px
+                // the dock's content keeps from its edge.
+                const float dock_inset = 0.5f * float(MD3::Metrics::active().gap) * m_scale;
+                imgui.set_next_window_pos(float(canvas_width - right_margin * m_scale) - dock_inset, dock_inset, ImGuiCond_Always, 1.0f, 0.0f);
+                ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, float(MD3::Metrics::active().small_radius) * m_scale);
                 ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0, 0.0));
                 const ImVec4 primary = md3_imgui_color(MD3::Role::Primary, m_is_dark);
                 const ImVec4 primary_container = md3_imgui_color(MD3::Role::PrimaryContainer, m_is_dark);
@@ -1645,9 +1650,9 @@ namespace Slic3r
                 // wash out on the light surface.
                 ImGui::PushStyleColor(ImGuiCol_Text, md3_imgui_color(MD3::Role::OnSurface, m_is_dark));
                 ImGui::SetNextWindowBgAlpha(1.0f);
-                const float max_height = std::max(1.0f, static_cast<float>(cnv_size.get_height()) - float(MD3::Metrics::preview_timeline_height) * m_scale);
+                const float max_height = std::max(1.0f, static_cast<float>(cnv_size.get_height()) - float(MD3::Metrics::preview_timeline_height) * m_scale - dock_inset);
                 const float child_height = 0.3333f * max_height;
-                const float available_width = std::max(1.0f, static_cast<float>(canvas_width) - right_margin * m_scale);
+                const float available_width = std::max(1.0f, static_cast<float>(canvas_width) - right_margin * m_scale - dock_inset);
                 ensure_legend_fold_restored();
                 const bool dock_collapsed = !m_legend_fold.expanded();
                 const float window_padding = 4.0f * m_scale;
@@ -1663,7 +1668,8 @@ namespace Slic3r
                 imgui.begin(std::string("Legend"), ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
                                                    ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove |
                                                    ImGuiWindowFlags_HorizontalScrollbar);
-                m_legend_width = legend_width;
+                // The inset counts as dock width, so neighbours keep clear of the panel.
+                m_legend_width = legend_width + dock_inset;
                 m_legend_expanded = !dock_collapsed;
                 // One full-width span for the dock blocks that are neither chip rows
                 // nor data tables (the view-mode overflow combo and the statistics
