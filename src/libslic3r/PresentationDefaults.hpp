@@ -59,6 +59,13 @@ inline const std::vector<Entry> &entries()
         {"narrator_rate_yue", "0"},
         {"narrator_pitch_en", "0"},
         {"narrator_pitch_yue", "0"},
+        {"narrator_track_printer", "true"},
+        {"narrator_track_app", "true"},
+        {"narrator_track_accessibility", "true"},
+        {"narrator_quiet_hours_enabled", "false"},
+        {"narrator_quiet_hours_start", "22:00"},
+        {"narrator_quiet_hours_end", "07:00"},
+        {"narrator_respect_focus_assist", "true"},
     };
     return table;
 }

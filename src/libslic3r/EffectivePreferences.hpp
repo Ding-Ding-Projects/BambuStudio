@@ -29,7 +29,10 @@ inline const std::vector<Descriptor>& descriptors()
         {"narrator_language", Kind::Choice, 0, 0, {"en", "yue_HK", "both"}},
         {"narrator_voice_en", Kind::Text}, {"narrator_voice_yue", Kind::Text},
         {"narrator_rate_en", Kind::Integer, -10, 10}, {"narrator_rate_yue", Kind::Integer, -10, 10},
-        {"narrator_pitch_en", Kind::Integer, -10, 10}, {"narrator_pitch_yue", Kind::Integer, -10, 10}
+        {"narrator_pitch_en", Kind::Integer, -10, 10}, {"narrator_pitch_yue", Kind::Integer, -10, 10},
+        {"narrator_track_printer", Kind::Boolean}, {"narrator_track_app", Kind::Boolean}, {"narrator_track_accessibility", Kind::Boolean},
+        {"narrator_quiet_hours_enabled", Kind::Boolean}, {"narrator_respect_focus_assist", Kind::Boolean},
+        {"narrator_quiet_hours_start", Kind::Text, 0, 0, {}, 5}, {"narrator_quiet_hours_end", Kind::Text, 0, 0, {}, 5}
     };
     return list;
 }

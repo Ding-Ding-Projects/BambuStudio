@@ -3,6 +3,9 @@
 
 #include <wx/string.h>
 #include "PersonalModes/SapiVoice.hpp"
+#include "Narration/NarrationEvents.hpp"
+#include "Narration/NarrationPolicy.hpp"
+#include "Narration/VoiceCatalog.hpp"
 #include <string>
 #include <vector>
 
@@ -30,9 +33,22 @@ bool delivery_failed();
 enum class ExternalMirrorStatus { Unconfigured, PlaybackCompletionUnavailable };
 ExternalMirrorStatus external_mirror_status();
 void set_quiet(bool quiet, bool screen_reader_active);
+// Environment verdict from NarratorEnvironment (quiet hours, Focus Assist, ...):
+// Held cancels everything, ErrorsOnly keeps only queued errors.
+void set_environment_state(Narration::EnvironmentState state);
 
-// Queue a line under a category ("state", "error", "scan", ...). Categories
-// other than "error" respect the cooldown; "error" always speaks.
+// GUI-thread only. Maps an event summary to the three funny-level tones, applies
+// the master/track/quiet policy, de-duplicates and enqueues on the event's own
+// track. The utterance never contains a path, account name or token.
+void narrate(const Narration::Event& event);
+// Speaks a short sample in one language with the voice currently selected for it.
+// Explicit user action: bypasses the master and track switches, not a held environment.
+void preview(bool cantonese);
+// Every voice the platform lists, including OneCore voices that cannot be spoken yet.
+std::vector<Narration::CatalogVoice> catalog();
+
+// Deprecated single-language producers; new code should call narrate() or
+// say_tracks(). Both now travel on the Accessibility track.
 void say(const wxString &line, const std::string &category = "state");
 
 // Queue regardless of narrator_enabled, for flows with their

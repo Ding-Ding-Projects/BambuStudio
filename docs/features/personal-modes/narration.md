@@ -52,3 +52,84 @@ finish at different times. `external_mirror_status()` reports `Unconfigured` or
 `PlaybackCompletionUnavailable` for the owning settings/status control to label
 this distinction. It does not claim network delivery or playback success. Adding
 reliable per-player completion remains separate integration work.
+
+## Event narration, tracks, tone and quiet hours
+
+All event narration enters through `TtsNarrator::narrate(Narration::Event)` on the GUI
+thread. The pure logic lives in standard-library-only headers under
+`src/slic3r/GUI/Narration/`:
+
+- `NarrationEvents.hpp` lists the events and their three tones. An event carries at
+  most one integer (a printer error code). It never carries a file path, printer name,
+  account name or token, so an utterance cannot disclose private data.
+- `NarrationTransitions.hpp` turns printer snapshots into events on state transitions
+  only (print started, paused, resumed, finished, failed, cancelled, filament runout,
+  AMS error, other printer error) and de-duplicates identical events inside a 30 second
+  window. The first sight of a printer only records its state, so opening the app next to
+  an old finished job or a standing error stays silent. Stage 6 (filament runout), error
+  `0x0300400C` (task cancelled) and error module `0x07` (AMS) follow community-documented
+  values and are not yet confirmed on hardware. A door open/closed event is deliberately
+  absent: `MachineObject` has no door field on this branch, and the detector carries a
+  marked hook for it.
+- `NarrationPolicy.hpp` holds the settings keys and the quiet decision.
+- `VoiceCatalog.hpp` classifies voice language attributes and merges voice sources.
+
+### Application events
+
+Slicing finished (once per slice job, on the last plate of a slice-all run), slicing
+failed, export finished, an update ready to install, and any error notification are
+spoken as short summaries. The notification text itself is never spoken.
+
+### Tone follows the funny level
+
+Each event has three English source strings and three Cantonese translations. Funny
+levels 1 and 2 choose the plain wording, level 3 the friendly wording and levels 4 and 5
+the playful wording, separately for English and Cantonese. Every variant carries the same
+facts; spoken errors still name the failure and what to do about it.
+
+### Independent tracks
+
+Events travel on three tracks: printer, application and accessibility (voice previews and
+the filament scanner). Each track has its own switch (`narrator_track_printer`,
+`narrator_track_app`, `narrator_track_accessibility`, all on by default once the master
+switch `narrator_enabled` is on). The speech queue keys replacement and cooldown by track
+and category, so an event on one track never replaces or throttles an event on another.
+Errors keep priority and are never replaced. The legacy `say()` and `say_now()` functions
+are deprecated wrappers that use the accessibility track; the filament scanner now calls
+`say_tracks()` and follows the narration language setting instead of the interface
+language.
+
+### Quiet hours and Focus Assist
+
+`NarratorEnvironment` evaluates, once a second:
+
+| Condition | Result |
+| --- | --- |
+| Quiet narration switch, active screen reader, or the app's quiet hours (`narrator_quiet_hours_enabled`, `_start`, `_end`, half-hour steps, may wrap midnight) | Held: nothing speaks and queued speech is cancelled |
+| Windows Focus Assist quiet time, a full-screen app or presentation mode, while `narrator_respect_focus_assist` is on | Errors only: queued ordinary events are dropped, errors still speak |
+| Otherwise | Open |
+
+The Windows state comes from `SHQueryUserNotificationState`. It does not distinguish
+Focus Assist priority-only from alarms-only, so both are treated alike. A voice preview
+the user starts works with the master switch off, but never while the state is Held.
+
+### Voice picker, preview and OneCore voices
+
+Preferences lists the installed SAPI voices per language and has a **Preview** button for
+each language that speaks a short sample with the effective voice. The status line states
+the effective voice, a kept-but-missing selection, and whether the effective voice is an
+online (network-backed) voice. Windows publishes natural and OneCore voices, including
+Hong Kong Cantonese, under a separate registry inventory. `enumerate_onecore_voices()`
+lists them read-only. **This build cannot speak with a OneCore voice**, because playback
+goes through the classic SAPI interface; when a Hong Kong Cantonese voice exists only
+there, Preferences says so instead of hiding it. Speaking with those voices needs a
+Windows.Media.SpeechSynthesis playback path, which is not implemented.
+
+### Verification
+
+`node tests/narration/narration.test.mjs` compiles and runs the standard-library checks
+(event tones, transitions, de-duplication, quiet hours, Focus Assist, track independence,
+voice classification); add `--negative` to break nine rules in scratch copies and require
+each break to fail. `node tests/narration/narration_wiring.test.mjs` checks producers,
+settings, catalogue completeness and build wiring. Native behaviour in the built
+application has not been observed on Windows.

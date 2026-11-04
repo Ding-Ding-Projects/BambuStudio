@@ -1095,12 +1095,17 @@
     {
       "route": "personal-modes/narration.md",
       "title": "Completion-aware narration",
-      "sha256": "b960e1938d63e54812afb72df1c286180de578e50e69b68fd885601245127022"
+      "sha256": "68f8eda4205b9289fa81de2af06ae437dcc12a0406aa08f853e21e0653c92819"
+    },
+    {
+      "route": "personal-modes/narration.yue_HK.md",
+      "title": "旁白：逐段播放、事件同語音揀選",
+      "sha256": "c96a891c3bb9040f9d63956671ee0692f9607aacc910d6f78d91eff9181a44e0"
     },
     {
       "route": "personal-modes/README.md",
       "title": "Personal presentation services",
-      "sha256": "edb07166cd8c88b99425202faa0349bb0dad7388a7ed4b1cde256fcb5d37a485"
+      "sha256": "cf9f3e283b2184d298b2d7c6dafb313c9c61ed57ddbb52a017d7eea9d294fa19"
     },
     {
       "route": "personal-modes/school-mode.md",
@@ -2070,7 +2075,7 @@
       "bytes": 1979
     }
   ],
-  "bundle_sha256": "4861c3d25935753c62bac43d2014d048b4d304972d66e8bb46225545141ccf6a",
+  "bundle_sha256": "6e3ea66050f3b56138d44b3e37892caa300fbcf2cc00818fa62b15548e6e2212",
   "unavailable_references": [
     {
       "source": "api/README.md",

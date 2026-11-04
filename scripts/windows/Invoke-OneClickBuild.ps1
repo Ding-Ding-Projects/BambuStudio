@@ -885,14 +885,28 @@ function Invoke-ApplicationBuild {
     $pathPolicyCurrent = (Test-Path -LiteralPath $appCache -PathType Leaf) -and
         (Select-String -LiteralPath $appCache -SimpleMatch -Pattern 'BAMBU_RELEASE_SOURCE_PATH_POLICY:INTERNAL=msvc-pathmap-v1' -Quiet)
     $forceConfigure = ($env:BAMBU_RECONFIGURE -eq '1') -or -not $pathPolicyCurrent
+    # A cache without its generated projects cannot be built: the explicit
+    # target builds below name project files that only a configure writes.
+    $generatedProjects = @(
+        'ALL_BUILD.vcxproj',
+        'src\BambuStudio.vcxproj',
+        'src\slic3r\GUI\DeviceWeb\device_page_build.vcxproj'
+    )
+    $missingProjects = @($generatedProjects | Where-Object { -not (Test-Path -LiteralPath (Join-Path $buildDirectory $_) -PathType Leaf) })
+    if ($missingProjects.Count -gt 0 -and (Test-Path -LiteralPath $appCache -PathType Leaf)) {
+        Write-BuildLog "The build tree at $buildDirectory is missing generated project files ($($missingProjects -join ', ')); configuring again."
+        $forceConfigure = $true
+    }
     if ($Clean -or $forceConfigure -or -not $cacheMatches) {
         $python = Get-PythonInterpreterPath
         if ([string]::IsNullOrWhiteSpace($python)) {
             throw 'Python 3 is required to compile the English and Cantonese catalogs, and none was found.'
         }
+        # Release only: an empty debug wx configuration folder must not make
+        # FindwxWidgets demand debug libraries that this build never produces.
         Preserve-ApplicationConfiguration -BuildDirectory $buildDirectory
         Invoke-RepositoryCommand "Configuring Bambu Studio ($($Toolchain.Generator))..." {
-            Invoke-LoggedNativeCommand -FilePath $Toolchain.CMake -Arguments @('-S', $script:RepositoryRoot, '-B', $buildDirectory, '-G', $Toolchain.Generator, '-A', 'x64', "-DCMAKE_GENERATOR_INSTANCE=$($Toolchain.GeneratorInstance)", '-DSLIC3R_MSVC_PDB=OFF', '-DBBL_RELEASE_TO_PUBLIC=1', '-DBBL_INTERNAL_TESTING=0', '-DSLIC3R_BUILD_TESTS=OFF', "-DCMAKE_PREFIX_PATH=$prefixPath", "-DCMAKE_INSTALL_PREFIX=$InstallPrefix", "-DBAMBU_APPLICATION_CACHE_ID:STRING=$cacheIdentity", "-DLOCAL_CONVERTER_QPDF_SDK:PATH=$pdfSdk", '-DCMAKE_CONFIGURATION_TYPES=Release', '-DCMAKE_BUILD_TYPE=Release', "-DWIN10SDK_PATH=$($Toolchain.SdkIncludePath)", "-DPython3_EXECUTABLE=$python")
+            Invoke-LoggedNativeCommand -FilePath $Toolchain.CMake -Arguments @('-S', $script:RepositoryRoot, '-B', $buildDirectory, '-G', $Toolchain.Generator, '-A', 'x64', "-DCMAKE_GENERATOR_INSTANCE=$($Toolchain.GeneratorInstance)", '-DSLIC3R_MSVC_PDB=OFF', '-DBBL_RELEASE_TO_PUBLIC=1', '-DBBL_INTERNAL_TESTING=0', '-DSLIC3R_BUILD_TESTS=OFF', "-DCMAKE_PREFIX_PATH=$prefixPath", "-DCMAKE_INSTALL_PREFIX=$InstallPrefix", "-DBAMBU_APPLICATION_CACHE_ID:STRING=$cacheIdentity", "-DLOCAL_CONVERTER_QPDF_SDK:PATH=$pdfSdk", '-DCMAKE_CONFIGURATION_TYPES=Release', '-DCMAKE_BUILD_TYPE=Release', '-DwxWidgets_USE_REL_AND_DBG=OFF', "-DWIN10SDK_PATH=$($Toolchain.SdkIncludePath)", "-DPython3_EXECUTABLE=$python")
         }
     } else {
         Write-BuildLog "Reusing the configured build tree at $buildDirectory (set BAMBU_RECONFIGURE=1 to force a configure; note it recompiles everything)."

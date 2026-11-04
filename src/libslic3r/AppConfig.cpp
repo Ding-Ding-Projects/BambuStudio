@@ -103,7 +103,9 @@ void AppConfig::set_defaults()
 {
     // Shipped presentation values come from the one table the reset paths and
     // the blank-editor presets also read (PresentationDefaults.hpp).
-    for (const auto* key : {"narrator_enabled", "narrator_language", "narrator_rate_en", "narrator_rate_yue", "narrator_pitch_en", "narrator_pitch_yue"})
+    for (const auto* key : {"narrator_enabled", "narrator_language", "narrator_rate_en", "narrator_rate_yue", "narrator_pitch_en", "narrator_pitch_yue",
+                                "narrator_track_printer", "narrator_track_app", "narrator_track_accessibility", "narrator_quiet_hours_enabled",
+                                "narrator_quiet_hours_start", "narrator_quiet_hours_end", "narrator_respect_focus_assist"})
         if (get(key).empty()) set(key, PresentationDefaults::value_or_empty(key));
     // Unknown settings from newer or edited profiles use the system default.
     if (get("motion_preference") != "system" && get("motion_preference") != "reduced")

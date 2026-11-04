@@ -2423,12 +2423,17 @@
       "dependsOn": [
         "Route every rendered message through the per-language funny-level ladder"
       ],
-      "status": "open",
-      "landedIn": null,
-      "testReferences": [],
-      "documentationReferences": [],
+      "status": "landed",
+      "landedIn": "aa0dc557a",
+      "testReferences": [
+        "tests/narration/narration.test.mjs",
+        "tests/narration/narration_wiring.test.mjs"
+      ],
+      "documentationReferences": [
+        "docs/features/personal-modes/narration.md"
+      ],
       "runtimeEvidence": [],
-      "note": null
+      "note": "Printer transitions and slice, export, update and error events are narrated with funny-level tone on independent tracks. Source and node tests only; the built application has not been observed speaking them."
     },
     {
       "id": "narration#02",
@@ -2450,10 +2455,14 @@
       "dependsOn": [],
       "status": "open",
       "landedIn": null,
-      "testReferences": [],
-      "documentationReferences": [],
+      "testReferences": [
+        "tests/narration/narration.test.mjs"
+      ],
+      "documentationReferences": [
+        "docs/features/personal-modes/narration.md"
+      ],
       "runtimeEvidence": [],
-      "note": null
+      "note": "Partly done in aa0dc557a: the picker has a preview button, states network-backed voices, and lists OneCore and natural voices from the system speech inventory. This build cannot speak with a OneCore voice (no Windows.Media.SpeechSynthesis playback), so a Hong Kong Cantonese voice that exists only there is reported but not selectable. Stays open until playback exists."
     },
     {
       "id": "narration#03",
@@ -2467,12 +2476,16 @@
       ],
       "hotFiles": [],
       "dependsOn": [],
-      "status": "open",
-      "landedIn": null,
-      "testReferences": [],
-      "documentationReferences": [],
+      "status": "landed",
+      "landedIn": "aa0dc557a",
+      "testReferences": [
+        "tests/narration/narration.test.mjs"
+      ],
+      "documentationReferences": [
+        "docs/features/personal-modes/narration.md"
+      ],
       "runtimeEvidence": [],
-      "note": null
+      "note": "App quiet hours (half-hour steps, wrap past midnight) and Windows Focus Assist, full-screen and presentation states via SHQueryUserNotificationState. Priority-only and alarms-only Focus Assist are not distinguished. Not observed on Windows."
     },
     {
       "id": "narration#04",
@@ -2488,12 +2501,17 @@
       ],
       "hotFiles": [],
       "dependsOn": [],
-      "status": "open",
-      "landedIn": null,
-      "testReferences": [],
-      "documentationReferences": [],
+      "status": "landed",
+      "landedIn": "aa0dc557a",
+      "testReferences": [
+        "tests/narration/narration.test.mjs",
+        "tests/narration/narration_wiring.test.mjs"
+      ],
+      "documentationReferences": [
+        "docs/features/personal-modes/narration.md"
+      ],
       "runtimeEvidence": [],
-      "note": null
+      "note": "The filament scanner uses say_tracks and the narration language; say() and say_now() remain as deprecated wrappers on the accessibility track. Replacement and cooldown are keyed by track."
     },
     {
       "id": "narration#05",
@@ -2512,12 +2530,17 @@
       "dependsOn": [
         "Refresh string extraction and complete the Cantonese catalogue for newer surfaces"
       ],
-      "status": "open",
-      "landedIn": null,
-      "testReferences": [],
-      "documentationReferences": [],
+      "status": "landed",
+      "landedIn": "27ecec97a",
+      "testReferences": [
+        "tests/narration/narration_wiring.test.mjs"
+      ],
+      "documentationReferences": [
+        "docs/features/personal-modes/narration.md",
+        "docs/features/personal-modes/narration.yue_HK.md"
+      ],
       "runtimeEvidence": [],
-      "note": null
+      "note": "New narrator strings and every spoken line have agent-drafted Cantonese entries and the Cantonese article exists. The Cantonese is agent-drafted and awaits human review."
     },
     {
       "id": "narration#06",
@@ -2537,10 +2560,13 @@
       ],
       "status": "open",
       "landedIn": null,
-      "testReferences": [],
+      "testReferences": [
+        "tests/narration/narration.test.mjs",
+        "tests/narration/narration_wiring.test.mjs"
+      ],
       "documentationReferences": [],
       "runtimeEvidence": [],
-      "note": null
+      "note": "Source-level matrix added in aa0dc557a (tests/narration): tones, transitions, de-duplication, quiet hours, track independence, voice classification, wiring, with mutation-based negative modes. Still missing: native personal_modes cases for no speech synthesis, empty-then-populated enumeration, rate and pitch bounds, restart persistence and all three language modes, which need the Windows runtime."
     },
     {
       "id": "display-name#01",
