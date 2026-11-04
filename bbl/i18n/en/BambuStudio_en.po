@@ -32487,3 +32487,6 @@ msgstr "Ink Dispenser-B"
 
 msgid "AMS 3H"
 msgstr "Ink Dispenser 3H"
+
+msgid "Switch camera"
+msgstr ""

@@ -47646,3 +47646,2728 @@ msgstr "呢部電腦已安裝香港粵語語音，但此版本只可以使用 Wi
 #. review-status: agent-drafted
 msgid "This voice uses an online service and may be silent when offline."
 msgstr "呢個語音使用網上服務，離線時可能冇聲。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "%s is not supported by the current %s hotend. Please confirm the filament type and try again."
+msgstr "目前嘅 %s 熱端唔支援 %s。請確認墨水類型後再試多次。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "%s is not supported by the current 2.85 mm TPU hotend. Please confirm the filament type and try again."
+msgstr "目前嘅 2.85 mm TPU 熱端唔支援 %s。請確認墨水類型後再試多次。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "PPA-CF does not support AMS feeding. Use an external spool instead."
+msgstr "PPA-CF 唔支援墨水機送料。請改用外掛墨水架。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "%s does not support %s printing, as filament may break in the bent PTFE tube above the toolhead."
+msgstr "%s 唔支援 %s 打印，因為墨水可能喺工具頭上方彎曲嘅 PTFE 管入面斷裂。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Special attention should be paid to the feeding method of TPU."
+msgstr "要特別留意 TPU 嘅送料方式。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid " Please "
+msgstr " 請 "
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "refer to the Wiki User Guide"
+msgstr "參閱維基使用指南"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid " before continuing."
+msgstr " 後再繼續。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "%s filament is brittle. Use %s feeding with caution."
+msgstr "%s 墨水易脆。使用 %s 送料時請小心。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "%s filament has a higher risk of clogging when printed with a 0.2mm hotend. Use another compatible hotend before printing."
+msgstr "使用 0.2mm 熱端打印 %s 墨水時，堵塞風險較高。打印前請改用其他相容嘅熱端。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Use %s in %s with caution, as it may break in the bent PTFE tube above the toolhead."
+msgstr "%s 喺 %s 中使用時請小心，因為佢可能喺工具頭上方彎曲嘅 PTFE 管入面斷裂。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "PLA Glow may wear the %s first stage feeder. Use an external spool instead."
+msgstr "夜光 PLA 可能會磨損 %s 首級進料器。請改用外掛墨水架。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "%s filament may wear the %s feed inlet, has high feeding resistance. We recommend an external spool."
+msgstr "%s 墨水可能會磨損 %s 進料口，而且送料阻力大。建議使用外掛墨水架。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "%s filament is brittle and has high feeding resistance. Use caution when loading it through %s."
+msgstr "%s 墨水易脆而且送料阻力大。經 %s 入料時請小心。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "PPA-CF filament does not support %s feeding. Use an external spool instead."
+msgstr "PPA-CF 墨水唔支援 %s 送料。請改用外掛墨水架。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "%s may fail to load or unload due to the Filament Track Switch."
+msgstr "受墨水路徑切換器影響，%s 可能會入料或退料失敗。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Affected by the Filament Track Switch, %s cannot be used. Use an external spool instead."
+msgstr "受墨水路徑切換器影響，%s 冇辦法使用。請改用外掛墨水架。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "%s is not supported with a standard %s nozzle."
+msgstr "%s 唔支援搭配標準 %s 噴嘴使用。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "%s is only supported for printing with the main extruder."
+msgstr "%s 只支援用主擠出機打印。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "%s is used with the auxiliary extruder and carries a higher risk, which may result in print failure or equipment malfunction."
+msgstr "%s 搭配副擠出機使用，風險較高，可能導致打印失敗或設備故障。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Affected by the Filament Track Switch, %s may break inside the filament tube."
+msgstr "受墨水路徑切換器影響，%s 可能會喺墨水管入面斷裂。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "%s is used with the auxiliary extruder and may impact print quality."
+msgstr "%s 搭配副擠出機使用，可能影響打印質素。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "%s used with a high-flow %s nozzle may affect print quality."
+msgstr "%s 搭配高流量 %s 噴嘴使用時，可能影響打印質素。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "%s used with a high-flow %s nozzle may cause a clog."
+msgstr "%s 搭配高流量 %s 噴嘴使用時，可能造成堵塞。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "%s used with a high-flow %s nozzle may cause oozing."
+msgstr "%s 搭配高流量 %s 噴嘴使用時，可能造成滲漏。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "%s used with a high-flow %s nozzle may lead to difficult extrusion."
+msgstr "%s 搭配高流量 %s 噴嘴使用時，可能導致擠出困難。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "%s used with a high-flow %s nozzle may result in poor quality in overhang and bridge areas of the model."
+msgstr "%s 搭配高流量 %s 噴嘴使用時，模型嘅懸空同橋接位置質素可能欠佳。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "%s used with a standard %s nozzle may affect print quality."
+msgstr "%s 搭配標準 %s 噴嘴使用時，可能影響打印質素。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "%s used with a standard %s nozzle may cause oozing."
+msgstr "%s 搭配標準 %s 噴嘴使用時，可能造成滲漏。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "%s used with a standard %s nozzle may lead to difficult extrusion."
+msgstr "%s 搭配標準 %s 噴嘴使用時，可能導致擠出困難。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Affected by the Filament Track Switch, %s may fail to load or unload."
+msgstr "受墨水路徑切換器影響，%s 可能會入料或退料失敗。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "When using an auxiliary extruder, printing %s with a high-flow %s nozzle may affect model quality."
+msgstr "使用副擠出機時，用高流量 %s 噴嘴打印 %s 可能會影響模型質素。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "When using an auxiliary extruder, printing %s with a high-flow %s nozzle may cause a clog."
+msgstr "使用副擠出機時，用高流量 %s 噴嘴打印 %s 可能會造成堵塞。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "When using an auxiliary extruder, printing %s with a standard %s nozzle may affect model quality."
+msgstr "使用副擠出機時，用標準 %s 噴嘴打印 %s 可能會影響模型質素。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The total weight must bigger than remain weight."
+msgstr "總重量必須大過剩餘重量。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Please enter a valid remaining weight from 1g to 10000g."
+msgstr "請輸入 1g 至 10000g 之間有效嘅剩餘重量。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Please enter a valid total weight from 1g to 10000g."
+msgstr "請輸入 1g 至 10000g 之間有效嘅總重量。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "TPU285"
+msgstr "TPU285"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Hotend & Filament"
+msgstr "熱端同墨水"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Lift Hotend Rack"
+msgstr "升起熱端架"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Recenter Hotend Rack"
+msgstr "熱端架回中"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Lower Hotend Rack"
+msgstr "降低熱端架"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Lowered"
+msgstr "已降低"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Centered"
+msgstr "已回中"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Pen"
+msgstr "筆"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Cutter"
+msgstr "切刀"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Laser"
+msgstr "激光"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Unclamped"
+msgstr "未夾緊"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Add refill filament"
+msgstr "新增續料墨水"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Add material group"
+msgstr "新增材料組"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "AMS Bridge Debug"
+msgstr "墨水機橋接除錯"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Switch extruder"
+msgstr "切換擠出機"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Switch hotend"
+msgstr "切換熱端"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Batch pull back the filaments"
+msgstr "批量抽回墨水"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Nesting PrintTool"
+msgstr "打印工具頭歸位緊"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Purge filament"
+msgstr "沖刷墨水"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Please manually pull out the filament from slot %1%."
+msgstr "請手動將墨水由槽位 %1% 抽出。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Please manually pull out the filament from hotend %1% on the toolhead."
+msgstr "請手動將墨水由工具頭上嘅熱端 %1% 抽出。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Please manually insert the filament into the loading port of hotend %1% on the toolhead until it cannot be pushed any further."
+msgstr "請手動將墨水插入工具頭上熱端 %1% 嘅進料口，直至推唔入為止。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Please manually insert the filament from slot %1% into the extruder loading port until it cannot be pushed any further."
+msgstr "請手動將槽位 %1% 嘅墨水插入擠出機進料口，直至推唔入為止。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Slot %1% filament loading in progress"
+msgstr "槽位 %1% 墨水入料緊"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Slot %1% filament unloading in progress"
+msgstr "槽位 %1% 墨水退料緊"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Other filaments are info-only"
+msgstr "其他墨水只供參考"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Filament not removed"
+msgstr "墨水未移除"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Hotend rack moving"
+msgstr "熱端架移動緊"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Homing PrintTool Rack"
+msgstr "打印工具頭架回原點緊"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Homing Toolhead"
+msgstr "工具頭回原點緊"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Calibrating PrintTool Rack Position"
+msgstr "校準打印工具頭架位置緊"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Heating Hotend"
+msgstr "熱端加熱緊"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Cutting Filament"
+msgstr "切割墨水緊"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Unlocking Tool"
+msgstr "工具解鎖緊"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Raising PrintTool Rack"
+msgstr "升起打印工具頭架緊"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Nesting Tool"
+msgstr "工具歸位緊"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Fetching Tool"
+msgstr "取回工具緊"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Locking Tool"
+msgstr "工具鎖定緊"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Moving PrintTool Rack"
+msgstr "移動打印工具頭架緊"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Refreshing Hotend"
+msgstr "重新整理熱端緊"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Reading (%1% / %2%)"
+msgstr "讀取緊 (%1% / %2%)"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Reading Hotend %1%"
+msgstr "讀取熱端 %1% 緊"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Please wait..."
+msgstr "請稍候..."
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Confirm to exit this process?"
+msgstr "確定要退出呢個流程嗎？"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "If the filament is not pulled out, subsequent printing may pause due to filament switching. Please operate carefully."
+msgstr "如果墨水未抽出，之後嘅打印可能會因為換墨水而暫停。請小心操作。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Still exit"
+msgstr "仍要退出"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Empty slot"
+msgstr "空槽位"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "RFID is being read"
+msgstr "讀取緊 RFID"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Filament change in progress"
+msgstr "更換墨水緊"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Slot is in error state"
+msgstr "槽位處於錯誤狀態"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Filament already loaded"
+msgstr "墨水已入料"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Ready to load"
+msgstr "準備入料"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Loaded"
+msgstr "已入料"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "TPU pending read"
+msgstr "TPU 待讀取"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Unknown filament"
+msgstr "未知墨水"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Other batch mode active"
+msgstr "其他批量模式啟用緊"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "External filament already loaded into hotend"
+msgstr "外部墨水已裝入熱端"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The current tool is not a nozzle"
+msgstr "目前嘅工具唔係噴嘴"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "There are no nozzle installed"
+msgstr "未安裝任何噴嘴"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Nozzle is in error state"
+msgstr "噴嘴處於錯誤狀態"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Nozzle has been detached"
+msgstr "噴嘴已脫離"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Nozzle type is unknown"
+msgstr "噴嘴類型未知"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Slot not loaded"
+msgstr "槽位未入料"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "No filament information available"
+msgstr "冇可用嘅墨水資訊"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Cannot read all while printing or upgrading"
+msgstr "打印或升級期間冇辦法全部讀取"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Unable to read filament information.\nFilament is currently loaded in the feeding inlet. Please pull it out first and try again."
+msgstr "冇辦法讀取墨水資訊。\n進料口目前裝有墨水。請先抽出再試多次。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The printer is busy on other job"
+msgstr "打印機正忙於其他工作"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Cannot stop filament change while printing or calibrating"
+msgstr "打印或校準期間冇辦法停止更換墨水"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "No slots selected for batch run"
+msgstr "未揀選任何槽位進行批量執行"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "All selected slots are invalid"
+msgstr "所有揀選嘅槽位都無效"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "MQTT publish failed for multi_slot_ams_change_filament"
+msgstr "multi_slot_ams_change_filament 嘅 MQTT 發佈失敗"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Hotend Details"
+msgstr "熱端詳細資料"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "PrintTool communication error. Please check the PrintTool cable and try again."
+msgstr "打印工具頭通訊錯誤。請檢查打印工具頭連接線後再試多次。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "PrintTool detached. Cannot load."
+msgstr "打印工具頭已脫離。冇辦法入料。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "PrintTool communication error. Cannot operate."
+msgstr "打印工具頭通訊錯誤。冇辦法操作。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The current filament may not be fully loaded into the PrintTool"
+msgstr "目前嘅墨水可能未完全裝入打印工具頭"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Hotend type unknown"
+msgstr "熱端類型不明"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The current filament may not be fully loaded into the PrintTool, which may cause printing issues. Please pull the filament out of the PrintTool, then click \"Load\" to complete loading."
+msgstr "目前嘅墨水可能未完全裝入打印工具頭，可能導致打印問題。請將墨水由打印工具頭抽出，然後撳「入料」完成入料。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Hotend type unknown. Please edit the hotend type on the printer and try again."
+msgstr "熱端類型未知。請喺打印機上編輯熱端類型後再試多次。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Hotend rack is busy"
+msgstr "熱端架忙緊"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Hotend rack cannot read all"
+msgstr "熱端架冇辦法全部讀取"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Settings for CutTool and DrawTool are not supported yet."
+msgstr "暫時未支援切割工具頭同繪圖工具頭嘅設定。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Invalid hotend display_index"
+msgstr "熱端 display_index 無效"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Invalid hotend temperature payload"
+msgstr "熱端溫度資料無效"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "No hotend rack"
+msgstr "冇熱端架"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Hotend cannot set temperature"
+msgstr "熱端冇辦法設定溫度"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Invalid hotend addr_id"
+msgstr "熱端 addr_id 無效"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Loading/Unloading"
+msgstr "入料／退料"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Checking"
+msgstr "檢查緊"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Heat fault"
+msgstr "加熱故障"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Self test"
+msgstr "自我檢測"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "No selected machine"
+msgstr "未揀選機器"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Please check the hotend cable and try again."
+msgstr "請檢查熱端連接線後再試多次。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Hotend communication error"
+msgstr "熱端通訊錯誤"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Remove \"%s\" from this refill group?"
+msgstr "要由呢個續料組移除「%s」嗎？"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The refill group will be automatically deleted after removal."
+msgstr "移除後，續料組會自動刪除。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "This will delete all manually added filament in current group, please proceed with caution."
+msgstr "呢個操作會刪除目前組別入面所有手動新增嘅墨水，請小心操作。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Reset Refill Group"
+msgstr "重設續料組"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "When the current spool runs out, the printer automatically continues with a spool of the same brand, type, and color. Refill relations can also be edited manually, so spools of the same type in a different color can be used for refilling."
+msgstr "當目前嘅料盤用完，打印機會自動繼續使用相同品牌、類型同顏色嘅料盤。續料關係都可以手動編輯，所以可以用顏色唔同但類型相同嘅料盤續料。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Drag spools to adjust their priority."
+msgstr "拖曳料盤以調整優先次序。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "The system has created auto-refill groups based on material type, color, and brand."
+msgstr "系統已按材料類型、顏色同品牌建立自動續料組。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "When printing, after the current spool runs out, the printer automatically switches to the next compatible spool in the group order and loops back to the first spool after the last one."
+msgstr "打印時，當目前嘅料盤用完後，打印機會按組內次序自動切換到下一個相容嘅料盤，並喺最後一個之後循環返去第一個料盤。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Connected Slots"
+msgstr "已連接槽位"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Ctrl+left-click:select multiple objects.\nAlt+left-click:select multiple parts."
+msgstr "Ctrl+左鍵：選擇多個物件。\nAlt+左鍵：選擇多個零件。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Repair object: %s"
+msgstr "修復物件：%s"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Simplification method"
+msgstr "簡化方法"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Triangles after simplification: %1%"
+msgstr "簡化後嘅三角形數目：%1%"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Keep all painting"
+msgstr "保留所有上色"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Includes color, seam, support and fuzzy skin painting. If unchecked, all painting will be removed from the result."
+msgstr "包括顏色、接縫、支撐同絨毛表面上色。如果取消剔選，結果入面所有上色都會被移除。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "All painting (color, seam, support and fuzzy skin) will be removed from the simplified model. Check \"Keep all painting\" to keep it."
+msgstr "簡化後嘅模型會移除所有上色（顏色、接縫、支撐同絨毛表面）。剔選「保留所有上色」就可以保留。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Calculating simplified preview..."
+msgstr "計算簡化預覽緊..."
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Transferring painting to the simplified mesh..."
+msgstr "轉移上色去簡化網格緊..."
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Air Purifier"
+msgstr "空氣淨化機"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgctxt "AirPurifier"
+msgid "Max"
+msgstr "最大"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgctxt "air_duct"
+msgid "Right(Heating)"
+msgstr "右側（加熱）"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgctxt "air_duct_chamber"
+msgid "Chamber"
+msgstr "機艙"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "No valid computation result. This parameter cannot be adjusted."
+msgstr "冇有效嘅運算結果。呢個參數冇辦法調整。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Set filament match color difference threshold"
+msgstr "設定墨水配對色差門檻"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Color tolerance for automatic filament matching. Higher value = easier to match."
+msgstr "自動配對墨水嘅顏色容差。數值愈高，愈容易配對成功。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "The project supports up to %1% physical filaments."
+msgstr "項目最多支援 %1% 種實體墨水。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Complete All Filaments"
+msgstr "完成所有墨水"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Up to %d colors supported."
+msgstr "最多支援 %d 種顏色。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The project has too many filaments. Adding the mixing kit exceeds the %1% filament limit, so at least %2% project filament(s) must be deleted first. The following unused project filaments will be deleted automatically:"
+msgstr "項目入面嘅墨水太多。加入混色套件會超過 %1% 種墨水嘅上限，所以必須先刪除至少 %2% 種項目墨水。以下未使用嘅項目墨水會自動刪除："
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The project has too many filaments. Adding the mixing kit exceeds the %1% filament limit. Please delete at least %2% filament(s) on the Prepare page, then add the kit again."
+msgstr "項目入面嘅墨水太多。加入混色套件會超過 %1% 種墨水嘅上限。請喺「準備」頁面刪除至少 %2% 種墨水，然後再加入套件。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Existing project filaments"
+msgstr "現有項目墨水"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "What is the CMYKW mixing kit?"
+msgstr "CMYKW 混色套件係咩？"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "After official print testing, you only need a standard CMYKW mixing kit to mix hundreds of color effects."
+msgstr "經過官方打印測試，你只需要一套標準 CMYKW 混色套件，就可以混合出數百種顏色效果。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "5-color CMYKW"
+msgstr "五色 CMYKW"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Cyan · Magenta · Yellow · Black · White"
+msgstr "青色 · 洋紅色 · 黃色 · 黑色 · 白色"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "The mixing kit is already in the project filament list. Use it now?"
+msgstr "混色套件已經喺項目墨水清單入面。而家使用嗎？"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Use now"
+msgstr "而家使用"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Reread"
+msgstr "重新讀取"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Total Weight"
+msgstr "總重量"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Remain Weight"
+msgstr "剩餘重量"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Please select the filament to match."
+msgstr "請選擇要配對嘅墨水。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Only for AMS/AMS 2pro/AMS HT."
+msgstr "只適用於墨水機／墨水機 2pro／墨水機 HT。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "The AMS will automatically read the information of inserted filament on start-up. It will take about 1 minute.The reading process will roll filament spools."
+msgstr "墨水機開機時會自動讀取已插入墨水嘅資訊，大約需要 1 分鐘。讀取過程會轉動墨水料盤。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Automatically refresh unloaded filaments"
+msgstr "自動重新整理未入料嘅墨水"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "For official filaments, the filament type is automatically refreshed when entering the Device page. To avoid frequent refreshes, automatic refreshes occur no more than once per minute."
+msgstr "對於官方墨水，進入「裝置」頁面時會自動重新整理墨水類型。為免太頻密重新整理，自動重新整理每分鐘最多一次。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "To ensure the print quality of the prime tower interface layer, the interface layer print temperature should preferably be greater than or equal to the nozzle temperature."
+msgstr "為確保擦料塔介面層嘅打印質素，介面層嘅打印溫度最好大過或等於噴嘴溫度。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "AMS nozzle"
+msgstr "墨水機噴嘴"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Mixed color sublayer is enabled. Using it with variable layer height may affect print quality."
+msgstr "已啟用混色子層。同可變層高一齊使用可能會影響打印質素。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Wiki for details"
+msgstr "詳情請參閱維基"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Plate %1%: the support ring of %2% extends beyond the plate boundary."
+msgstr "打印板 %1%：%2% 嘅支撐環超出咗打印板邊界。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Plate %1%: the support ring of %2% overlaps %3%."
+msgstr "打印板 %1%：%2% 嘅支撐環同 %3% 重疊。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Plate %1%: the support rings of %2% and %3% overlap."
+msgstr "打印板 %1%：%2% 同 %3% 嘅支撐環重疊。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Generation of a prime tower is not supported on your printer if multiple materials and a support structure are used. Integrated Support is enabled for slicing."
+msgstr "如果使用多種材料同支撐結構，你嘅打印機唔支援產生擦料塔。切片時已啟用整合支撐。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "The 3mf file is Beta version %s, current version: %s"
+msgstr "呢個 3mf 檔案係 Beta 版本 %s，目前版本：%s"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "The 3mf file is version %s, current version: %s"
+msgstr "呢個 3mf 檔案係版本 %s，目前版本：%s"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Importing a newer 3mf file may cause compatibility issues. We recommend downloading the latest version before use. Please click"
+msgstr "匯入較新嘅 3mf 檔案可能會引致相容性問題。建議使用前先下載最新版本。請撳"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Download Latest Version"
+msgstr "下載最新版本"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Collapse panel"
+msgstr "收埋面板"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Expand panel"
+msgstr "展開面板"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The sliced model is incompatible with this printer. You may have used an outdated or unsupported slicer or G-code. To print this model on this printer, please re-slice it using the latest version of Bambu Studio."
+msgstr "已切片嘅模型同呢部打印機唔相容。你可能用咗過時或者唔支援嘅切片軟件或者 G-code。如果想喺呢部打印機打印呢個模型，請用最新版本嘅 Bambu Studio 重新切片。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Support ring"
+msgstr "支撐環"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Printing with different nozzle diameters and support ring is experimental. The support ring may not work correctly with mismatched nozzle sizes."
+msgstr "用唔同噴嘴直徑配合支撐環打印屬於實驗性功能。噴嘴尺寸唔一致時，支撐環可能唔能正常運作。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Different nozzle diameters are not allowed when the support ring is enabled."
+msgstr "啟用支撐環時，唔准使用唔同嘅噴嘴直徑。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The support ring is currently only supported with the relative extruder addressing (use_relative_e_distances=1)."
+msgstr "支撐環目前只支援相對擠出定址 (use_relative_e_distances=1)。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Ooze prevention is currently not supported with the support ring enabled."
+msgstr "啟用支撐環時，目前唔支援防滲料功能。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The support ring is not supported in \"By object\" print. Switch to \"By layer\" or disable the support ring."
+msgstr "「按物件」打印唔支援支撐環。請切換到「按層」或者停用支撐環。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The support ring requires that all objects have the same layer heights"
+msgstr "支撐環要求所有物件都使用相同嘅層高"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The support ring requires that all objects are printed over the same number of raft layers"
+msgstr "支撐環要求所有物件都用相同層數嘅筏層打印"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The support ring requires that all objects are sliced with the same layer heights."
+msgstr "支撐環要求所有物件都用相同嘅層高切片。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The support ring is only supported if all objects have the same variable layer height"
+msgstr "只有所有物件都使用相同嘅可變層高，先支援支撐環"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Organic tree support cannot generate a support ring. Please switch to another support type."
+msgstr "有機樹狀支撐冇辦法產生支撐環。請切換到其他支撐類型。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Failed to assign filaments to nozzles for the support ring."
+msgstr "為支撐環分配墨水到噴嘴失敗。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The support ring extends outside the area both nozzles can reach. Move the affected object closer to the center of the plate."
+msgstr "支撐環超出兩個噴嘴都去到嘅範圍。請將受影響嘅物件移近打印板中心。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Generate a ring around the object. Tree supports may land on the ring."
+msgstr "喺物件周圍產生一個環。樹狀支撐可能會落喺環上面。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Support ring object gap"
+msgstr "支撐環與物件嘅間隙"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Horizontal distance between the projected model boundary and the innermost support ring path."
+msgstr "投影模型邊界同最內側支撐環路徑之間嘅水平距離。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Support ring angle"
+msgstr "支撐環角度"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Angle the support ring keeps around the object, measured from the centre of the ring. The rest is left open, centred on the direction of the chamber camera, so it can see the object. Every ring of the structure is opened along the same two directions, and tree supports keep branches out of the opening. A smaller angle leaves less wipe length per ring, so the ring grows wider. A set angle keeps one piece, from 200° to 300°. -1 means auto: the angle is worked out from the purge of each filament change, so the purge is laid a few rings thick. When that comes out below 200°, the ring is split into two facing pieces with a second opening on the side away from the camera."
+msgstr "支撐環圍繞物件保留嘅角度，由環中心開始量度。其餘位置保持開放，以機艙相機嘅方向為中心，令相機睇到物件。結構入面每一圈都沿同樣兩個方向開口，而樹狀支撐會令分支避開開口。角度愈細，每圈嘅擦拭長度愈短，所以環會變得愈闊。設定角度會保留一段完整嘅環，範圍係 200° 至 300°。-1 代表自動：角度會根據每次換墨水嘅沖刷量計算，令沖刷物鋪成幾圈厚。當計算結果低過 200° 時，環會分成兩段相對嘅部分，並喺遠離相機嘅一邊開第二個開口。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Support ring skip points"
+msgstr "支撐環跳過點"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Leave gaps in the support ring outer wall at each wipe entry so the nozzle can reach the wipe path from outside the ring, and travel around the ring contour instead of crossing the model."
+msgstr "喺每個擦拭入口嘅支撐環外牆留空位，令噴嘴可以由環外面去到擦拭路徑，並沿住環嘅輪廓移動，而唔使橫過模型。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Support ring wall loops"
+msgstr "支撐環牆圈數"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Number of walls, inner wall included, in the support ring of each object whose ring does not carry the filament changes. The ring that carries them is not affected."
+msgstr "每個物件支撐環嘅牆數（包括內牆），適用於唔負責換墨水動作嘅環。負責換墨水嘅環唔受影響。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Support ring generation failed because no printable model projection was found."
+msgstr "支撐環產生失敗，因為搵唔到可打印嘅模型投影。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Support ring generation failed while adapting tool-change paths."
+msgstr "調整換工具路徑時，支撐環產生失敗。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Generating support ring"
+msgstr "產生支撐環緊"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Generating support ring: layer %1%"
+msgstr "產生支撐環緊：第 %1% 層"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Start Anyway"
+msgstr "仍然開始"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "You have selected High-temperature Bed Leveling. To prevent filament from softening in the extruder, please unload the filament before calibration."
+msgstr "你已選擇高溫熱床調平。為免墨水喺擠出機入面軟化，請喺校準前先退出墨水。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Live Camera Recording"
+msgstr "即時相機錄影"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "External storage is not installed. Recording is not supported."
+msgstr "未安裝外部儲存裝置，唔支援錄影。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "BirdsEye Camera Recording"
+msgstr "俯視相機錄影"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "External Storage"
+msgstr "外部儲存"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Timelapse can only be set when starting a task."
+msgstr "縮時攝影只可以喺開始工作時設定。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Not Installed"
+msgstr "未安裝"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Abnormal"
+msgstr "異常"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Stay on this page"
+msgstr "留喺呢頁"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Hide %s"
+msgstr "隱藏 %s"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Switch to BirdsEye Camera"
+msgstr "切換到俯視相機"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Switch to Liveview Camera"
+msgstr "切換到即時預覽相機"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Switch live camera view"
+msgstr "切換即時相機畫面"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Current camera is abnormal"
+msgstr "目前相機異常"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Non-live image."
+msgstr "非即時影像。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Captured at %s"
+msgstr "拍攝於 %s"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Switch camera"
+msgstr "切換相機"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "For users under the age of majority, some services will be restricted. See our {0} for Bambu Lab Account. To understand our privacy practices, see {1}."
+msgstr "未滿法定年齡嘅使用者，部分服務會受到限制。有關 Bambu Lab 帳戶，請參閱我哋嘅 {0}。想了解我哋嘅私隱做法，請參閱 {1}。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Age Requirements"
+msgstr "年齡要求"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Privacy Notice"
+msgstr "私隱聲明"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Live Camera recording"
+msgstr "即時相機錄影"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "BirdsEye Camera recording"
+msgstr "俯視相機錄影"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Timelapse recording"
+msgstr "縮時攝影錄影"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Go Live streaming"
+msgstr "開始直播"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Automatically logged out"
+msgstr "已自動登出"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "For users under the age of majority, some services will be restricted ."
+msgstr "未滿法定年齡嘅使用者，部分服務會受到限制。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Automatically logged out. Please log in again after binding a parent/\nguardian account. "
+msgstr "已自動登出。綁定家長／\n監護人帳戶後，請重新登入。 "
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "See our "
+msgstr "請參閱我哋嘅 "
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Age Requirements for Bambu Lab Account"
+msgstr "Bambu Lab 帳戶嘅年齡要求"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "To understand our privacy practices, see "
+msgstr "想了解我哋嘅私隱做法，請參閱 "
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Active operations"
+msgstr "進行中嘅操作"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Live"
+msgstr "即時"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Zoom %.1fx"
+msgstr "縮放 %.1fx"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Print queue"
+msgstr "打印佇列"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Please adjust the nozzle diameter/flow of the affected filament in the filament panel."
+msgstr "請喺墨水面板調整受影響墨水嘅噴嘴直徑／流量。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Read-only, automatically calculated from the base initial layer height"
+msgstr "唯讀，由基礎初始層高自動計算"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Read-only, automatically calculated from the base layer height"
+msgstr "唯讀，由基礎層高自動計算"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Read-only, automatically calculated from the base value"
+msgstr "唯讀，由基礎數值自動計算"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Notify only"
+msgstr "只通知"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Slow down toolhead"
+msgstr "工具頭減速"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "When the door is opened during printing, the printer slows down the toolhead related moves for safety. This may increase the toolhead switching time and affect the print quality."
+msgstr "打印期間打開門嘅時候，打印機為咗安全會減慢同工具頭有關嘅移動速度。呢樣可能會增加工具頭切換時間，並影響打印質素。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Enable Slow Down Toolhead?"
+msgstr "要啟用工具頭減速嗎？"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Enable Anyway"
+msgstr "仍然啟用"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Print Loosening Detection"
+msgstr "打印鬆脫偵測"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Detects air printing caused by nozzle clogging, filament tangling, or filament grinding."
+msgstr "偵測由噴嘴堵塞、墨水纏繞或者磨料引致嘅空打。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Recommended only when using mixed-color filament, to get a better layered-color effect. This feature is disabled by default when variable layer height is enabled."
+msgstr "建議只喺使用混色墨水時開啟，以獲得更好嘅分層色彩效果。啟用可變層高時，呢個功能預設會停用。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Mixing filaments of different types or nozzle diameters is not supported. Please fix the marked mixed filaments in the left filament list."
+msgstr "唔支援混合唔同類型或者唔同噴嘴直徑嘅墨水。請修正左邊墨水清單入面標記咗嘅混合墨水。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Change nozzle diameter"
+msgstr "更改噴嘴直徑"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "This filament does not support printing with the current nozzle"
+msgstr "呢種墨水唔支援用目前嘅噴嘴打印"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The current nozzle settings have no nozzle of this type"
+msgstr "目前嘅噴嘴設定入面冇呢種類型嘅噴嘴"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The current nozzle settings have no nozzle that fits this filament"
+msgstr "目前嘅噴嘴設定入面冇適合呢種墨水嘅噴嘴"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "This filament does not support printing with the %s nozzle"
+msgstr "呢種墨水唔支援用 %s 噴嘴打印"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The filament you are deleting is used by model \"%s\". After deletion, the model's filament will be reset to the first remaining filament."
+msgstr "你正在刪除嘅墨水被模型「%s」使用。刪除後，模型嘅墨水會重設為第一款剩低嘅墨水。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Tip: If you want to replace it with another filament, please use the \"Merge with\" function on the right side of the filament list."
+msgstr "提示：如果想換成另一款墨水，請使用墨水清單右邊嘅「合併到」功能。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "It is also used by the following mixed filaments, which will become unusable after deletion:"
+msgstr "佢亦都用於以下混合墨水，刪除後呢啲混合墨水將會用唔到："
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The filament you are deleting is used by the following mixed filaments, which will become unusable after deletion:"
+msgstr "你正在刪除嘅墨水用於以下混合墨水，刪除後呢啲混合墨水將會用唔到："
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Mixed filament %d"
+msgstr "混合墨水 %d"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Continue deleting"
+msgstr "繼續刪除"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "filament slot %d %s"
+msgstr "墨水槽位 %d %s"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The current printer configuration does not support %s from the AMS. It has been replaced with %s by default."
+msgstr "目前嘅打印機設定唔支援由墨水機使用 %s。已預設改用 %s。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Cannot mix filaments using different nozzle diameters"
+msgstr "冇辦法混合使用唔同噴嘴直徑嘅墨水"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Up to %d mixed filaments can be created"
+msgstr "最多可以建立 %d 款混合墨水"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "At least two filaments are required to create a mixed filament"
+msgstr "建立混合墨水至少需要兩款墨水"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Up to %d filaments can be created"
+msgstr "最多可以建立 %d 款墨水"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Please modify the original project filament diameter."
+msgstr "請修改原本項目墨水嘅直徑。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Mixed filament %s has broken component references."
+msgstr "混合墨水 %s 嘅組成部分參照已損壞。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Mixed filament %s mixes different filament types, which is not supported."
+msgstr "混合墨水 %s 混合咗唔同類型嘅墨水，唔支援呢樣操作。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Mixed filament %s mixes different nozzle diameters, which is not supported."
+msgstr "混合墨水 %s 混合咗唔同嘅噴嘴直徑，唔支援呢樣操作。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Please fix the marked mixed filaments in the left filament list."
+msgstr "請修正左邊墨水清單入面標記咗嘅混合墨水。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Filament %s is not configured for the %s nozzle. Please change the nozzle or the filament before use."
+msgstr "墨水 %s 未針對 %s 噴嘴設定。使用前請更改噴嘴或者墨水。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Filament %s is not configured for the current nozzle settings. Please change the nozzle or the filament before use."
+msgstr "墨水 %s 未針對目前嘅噴嘴設定。使用前請更改噴嘴或者墨水。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Filament %s has no %s nozzle in the nozzle settings. Please add that nozzle type before use."
+msgstr "墨水 %s 喺噴嘴設定入面冇 %s 噴嘴。使用前請先加入該類型嘅噴嘴。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Filament %s has no nozzle in the nozzle settings that fits it. Please add that nozzle type before use."
+msgstr "墨水 %s 喺噴嘴設定入面冇適合佢嘅噴嘴。使用前請先加入該類型嘅噴嘴。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Filament %s has no preset for the %s nozzle. Please create the matching filament preset."
+msgstr "墨水 %s 冇 %s 噴嘴嘅預設。請建立相符嘅墨水預設。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Filament %s has no preset for the current nozzle settings. Please create the matching filament preset."
+msgstr "墨水 %s 冇目前噴嘴設定嘅預設。請建立相符嘅墨水預設。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Add the nozzle"
+msgstr "加入噴嘴"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Add a new preset"
+msgstr "新增預設"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "3MF textures are unsupported and have been discarded."
+msgstr "唔支援 3MF 紋理，已經捨棄。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Parts without color will default to gray."
+msgstr "冇顏色嘅零件預設為灰色。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "\"%1%\" uses both mixed color sublayer and variable layer height, which may affect print quality."
+msgstr "「%1%」同時使用混色子層同可變層高，可能會影響打印質素。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The currently connected printer is not available, please check the status of %s before syncing."
+msgstr "目前連接嘅打印機用唔到，同步前請先檢查 %s 嘅狀態。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "For users under the age of majority, some services will be restricted. This is managed by your parent or guardian in Family Hub."
+msgstr "未滿法定年齡嘅使用者，部分服務會受到限制。呢個由你嘅家長或者監護人喺家庭中心管理。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Don't check printer information when loading 3MF"
+msgstr "載入 3MF 時唔檢查打印機資訊"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "No prompt to migrate the preset when the loaded 3MF does not match the connected printer"
+msgstr "載入嘅 3MF 同連接嘅打印機唔相符時，唔提示遷移預設"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Import Texture Model"
+msgstr "匯入紋理模型"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Color Tolerance of Filament Matching"
+msgstr "墨水配對嘅顏色容差"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "CIEDE2000 difference used when matching imported texture colors to filaments. Filaments within this band are treated as equally close. This does not merge colors and does not change the match threshold in the texture import dialog."
+msgstr "將匯入嘅紋理顏色同墨水配對時使用嘅 CIEDE2000 色差。喺呢個範圍內嘅墨水會被視為同樣接近。呢個設定唔會合併顏色，亦唔會更改紋理匯入對話框入面嘅配對門檻。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "- Sync printer presets after loading a file\n- \"Load 3MF\" dialog settings\n- Executing post-processing scripts\n- Support structure recommendation prompt\n- Unsaved projects.\n- Delete a filament used by a model"
+msgstr "- 載入檔案後同步打印機預設\n- 「載入 3MF」對話框設定\n- 執行後處理腳本\n- 支撐結構建議提示\n- 未儲存嘅項目。\n- 刪除模型使用緊嘅墨水"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "This filament is not compatible with the nozzle it is loaded on"
+msgstr "呢種墨水同佢所裝上嘅噴嘴唔相容"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "To select this filament, change the nozzle settings first."
+msgstr "如果想選擇呢種墨水，請先更改噴嘴設定。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Unavailable Nozzles"
+msgstr "用唔到嘅噴嘴"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Color mixing only supports single-color filaments."
+msgstr "混色只支援單色墨水。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "No PrintTool available. Please install a compatible tool and try again."
+msgstr "冇可用嘅打印工具頭。請安裝相容嘅工具後再試多次。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "PrintTool detached. Please install before printing."
+msgstr "打印工具頭已脫離。打印前請先安裝。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "CutTool detached. Please install before printing."
+msgstr "切割工具頭已脫離。打印前請先安裝。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "DrawTool detached. Please install before printing."
+msgstr "繪圖工具頭已脫離。打印前請先安裝。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "None of the current tools have completed Docking Calibration. Please calibrate and try again."
+msgstr "目前所有工具都未完成對接校準。請先校準再試多次。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Add to queue"
+msgstr "加入佇列"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Pre-print check"
+msgstr "打印前檢查"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Only the current sliced plate can be added to the print queue."
+msgstr "只有目前已切片嘅打印板先可以加入打印佇列。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The current filament mapping is invalid and the print would fail. Please select the filaments manually again."
+msgstr "目前嘅墨水對應無效，打印會失敗。請重新手動選擇墨水。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Print immediately"
+msgstr "即時打印"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The print queue does not support the Filament Track Switch yet."
+msgstr "打印佇列暫時未支援墨水路徑切換器。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "PrintToolRack moving, please wait."
+msgstr "打印工具頭架移動緊，請稍候。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Filament in slots %s may not have been properly loaded to the PrintTool. Please see the loading guide."
+msgstr "槽位 %s 嘅墨水可能未正確裝入打印工具頭。請參閱入料指南。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Filament are not loaded in PrintTool %s. Printing may pause for filament change. Please load the filament before printing."
+msgstr "打印工具頭 %s 未有入料。打印可能會因為換墨水而暫停。打印前請先入料。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Filament are not loaded in Slot %s. Printing may pause for filament change. Please load the filament before printing."
+msgstr "槽位 %s 未有入料。打印可能會因為換墨水而暫停。打印前請先入料。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "PrintTool %d is loaded with %s filament and cannot unload automatically. Please pull it out manually."
+msgstr "打印工具頭 %d 已裝入 %s 墨水，而且冇辦法自動退料。請手動抽出。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "External AMS and %1$s filaments are both selected for PrintTool %2$d. Because %3$s cannot unload automatically, you will need to change the filament manually."
+msgstr "打印工具頭 %2$d 同時選用咗外部墨水機同 %1$s 墨水。由於 %3$s 冇辦法自動退料，你需要手動更換墨水。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "TPU in slot %d may slip out during PrintTool change. Move it to another slot and retry."
+msgstr "槽位 %d 嘅 TPU 可能會喺更換打印工具頭時滑出。請將佢移去其他槽位再試。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Low-temperature filament residue detected in Hotend %s. High chamber temperature printing may cause nozzle clogging. Please load filament first."
+msgstr "喺熱端 %s 偵測到低溫墨水殘留。高機艙溫度打印可能會造成噴嘴堵塞。請先入料。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Cold pull in progress. Unable to start a task."
+msgstr "冷拔進行緊。冇辦法開始工作。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The slicing result of the current plate is invalid. Please re-slice and try again"
+msgstr "目前打印板嘅切片結果無效。請重新切片後再試"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Low-temperature filament residue detected in Hotend. High chamber temperature printing may cause nozzle clogging. Please load filament first."
+msgstr "喺熱端偵測到低溫墨水殘留。高機艙溫度打印可能會造成噴嘴堵塞。請先入料。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Printing a project that uses multiple nozzle diameters directly from storage is not supported yet. You can download the file and import it into Studio to print."
+msgstr "暫時未支援直接由儲存空間打印使用多種噴嘴直徑嘅項目。你可以下載檔案再匯入 Studio 打印。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "When enabling ironing, We recommend the following settings:"
+msgstr "啟用熨燙時，建議使用以下設定："
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Layer height cannot exceed nozzle diameter. It will be reset to the default value."
+msgstr "層高唔可以超過噴嘴直徑。佢會被重設為預設值。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Selected only"
+msgstr "只限已選取項目"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "All objects"
+msgstr "所有物件"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Auxiliary part cooling fan (left)"
+msgstr "輔助部件冷卻風扇（左）"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Auxiliary part cooling fan (right)"
+msgstr "輔助部件冷卻風扇（右）"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Repairing"
+msgstr "修復緊"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Successfully added to print queue. Will automatically jump to the print queue page in %ss"
+msgstr "已成功加入打印佇列。%s 秒後會自動跳去打印佇列頁面"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Adding print job to queue"
+msgstr "加入打印工作到佇列緊"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Filament assigned to a nozzle of incompatible diameter. Please regroup so each filament stays on a nozzle whose diameter it supports."
+msgstr "墨水被分配到直徑唔相容嘅噴嘴。請重新分組，令每款墨水都留喺佢支援直徑嘅噴嘴上。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Nozzle assignment error: no compatible fixed nozzle is available for the fixed filament group. Please check the nozzle setup or regroup."
+msgstr "噴嘴分配錯誤：固定墨水組冇可用嘅相容固定噴嘴。請檢查噴嘴設定或重新分組。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Nozzle assignment error: no nozzle matches the diameter and flow selected for one of the filaments. Please check the nozzle setup."
+msgstr "噴嘴分配錯誤：冇噴嘴同其中一款墨水所選嘅直徑同流量相符。請檢查噴嘴設定。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Nozzle assignment error: invalid per-filament nozzle map. Please check the nozzle setup or regroup."
+msgstr "噴嘴分配錯誤：每款墨水嘅噴嘴對應無效。請檢查噴嘴設定或重新分組。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Nozzle assignment error: per-filament nozzle map points to an empty or unavailable nozzle."
+msgstr "噴嘴分配錯誤：每款墨水嘅噴嘴對應指向空白或者用唔到嘅噴嘴。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Printing with different nozzle diameters and prime tower is experimental. The prime tower may not work correctly with mismatched nozzle sizes."
+msgstr "用唔同噴嘴直徑配合擦料塔打印屬於實驗性功能。噴嘴尺寸唔一致時，擦料塔可能唔能正常運作。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Set special optional auxiliary cooling fan for the first certain layers."
+msgstr "為頭幾層設定特殊嘅選用輔助冷卻風扇。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Optional auxiliary fan speed will be ramped up linearly from layer \"For the first\" to maximum at layer \"Full fan speed at layer\". \"Full fan speed at layer\" will be ignored if lower than \"For the first\", in which case the fan will be running at maximum allowed speed at layer \"For the first\" + 1."
+msgstr "選用輔助風扇速度會由「針對首個」層開始線性遞增，直至「喺層處全速風扇」嗰一層達到最大值。如果「喺層處全速風扇」低過「針對首個」，就會被忽略，此時風扇會喺「針對首個」+ 1 層以最大允許速度運行。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Special optional auxiliary cooling fan speed, effective only for the first x layers"
+msgstr "特殊選用輔助冷卻風扇速度，只對首個 x 層有效"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Idle travel cooling"
+msgstr "空駛冷卻"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "When filament change length is zero, perform idle travel cooling to help the nozzle cool down. Disabling this will turn off the heater directly without idle travel, which saves print time but may cause stringing for some materials."
+msgstr "當換墨水長度為零時，進行空駛冷卻幫助噴嘴降溫。停用呢項會直接關閉加熱器而唔做空駛，可以節省打印時間，但某啲材料可能會拉絲。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Prime tower speed factor curve"
+msgstr "擦料塔速度係數曲線"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Controls the speed factor ramp when priming on the wipe tower after a tool change. Enter comma-separated multipliers of the target speed, one per wipe line. For example: \"0.33,0.375,0.458,0.875,0.875\" means the 1st line runs at 33%, the 2nd at 37.5%, and so on. If fewer than 5 values are given, the last value is reused for remaining lines. Each value is clamped to 0.01 ~ 5.0. Leave empty to use the built-in default curve (0.33, 0.375, 0.458, 0.875, 0.875)."
+msgstr "控制換工具後喺擦料塔上預沖刷時嘅速度係數變化。輸入以逗號分隔嘅目標速度倍數，每條擦料線一個。例如「0.33,0.375,0.458,0.875,0.875」表示第 1 條線以 33% 速度行，第 2 條以 37.5% 速度行，如此類推。如果少過 5 個數值，其餘線條會沿用最後一個數值。每個數值會限制喺 0.01 至 5.0 之間。留空就使用內置預設曲線 (0.33, 0.375, 0.458, 0.875, 0.875)。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Pre-heating when extruder change"
+msgstr "換擠出機時預熱"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Pre-heat the hotend during the idle period before an extruder change."
+msgstr "喺換擠出機前嘅閒置時間預熱熱端。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Fin extrude safe temperature"
+msgstr "鰭片擠出安全溫度"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Safe hotend temperature for fin extrusion. 0 means disabled. Accessible in custom G-code via fins_extrude_safe_temp."
+msgstr "鰭片擠出時嘅熱端安全溫度。0 代表停用。可以喺自訂 G-code 入面透過 fins_extrude_safe_temp 取用。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Default wipe tower position"
+msgstr "擦料塔預設位置"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Normalized default position of the wipe tower, each axis in [0,1] relative to bed width/depth."
+msgstr "擦料塔嘅標準化預設位置，每個軸相對於熱床闊度／深度，範圍係 [0,1]。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Sync auxiliary fan to second fan"
+msgstr "將輔助風扇同步到第二風扇"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Enable this if the printer has a second auxiliary part cooling fan that should use the same speed as the auxiliary fan"
+msgstr "如果打印機有第二個輔助部件冷卻風扇，而且應該使用同輔助風扇相同嘅速度，請啟用呢個選項"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Independent optional auxiliary fan control"
+msgstr "獨立選用輔助風扇控制"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Enable this if the printer has an optional auxiliary part cooling fan that can be adjusted separately from the standard one"
+msgstr "如果打印機有可以同標準風扇分開調整嘅選用輔助部件冷卻風扇，請啟用呢個選項"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Standard auxiliary fan side"
+msgstr "標準輔助風扇位置"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Physical side of the standard auxiliary part cooling fan. Only used to tell the two fans apart in the user interface"
+msgstr "標準輔助部件冷卻風扇嘅實際位置。只用嚟喺使用者介面入面分辨兩個風扇"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Generate interlocking beam structure at the locations where different filaments touch, only between two parts that both enable this option. This improves the adhesion between filaments, especially models printed in different materials."
+msgstr "喺唔同墨水接觸嘅位置產生互鎖梁結構，只會喺兩個都啟用呢個選項嘅零件之間產生。呢樣可以改善墨水之間嘅黏合，尤其係用唔同材料打印嘅模型。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Speed of the optional auxiliary part cooling fan. It will run at this speed during printing except the first several layers which are defined by no cooling layers"
+msgstr "選用輔助部件冷卻風扇嘅速度。打印期間會以呢個速度運行，但由無冷卻層所定義嘅頭幾層除外"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Tip diameter"
+msgstr "尖端直徑"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Diameter a support branch starts with where it touches the overhang. A thicker tip is stronger and sticks to the overhang better, but leaves heavier marks on the surface and is harder to remove. Values below the support extrusion width or above the branch diameter are clamped. Applies to every tree support style."
+msgstr "支撐分支接觸懸空位置時嘅起始直徑。尖端愈粗，愈堅固，亦更易黏住懸空位，但會喺表面留下較明顯嘅痕跡，亦更難移除。低過支撐擠出闊度或者高過分支直徑嘅數值會被限制。適用於所有樹狀支撐樣式。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Prime tower feedrate factor"
+msgstr "擦料塔進給率係數"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Feedrate scaling factor for prime/wipe tower extrusion when hotends are handled as extruders. It does not affect all tower travel moves. 1.0 means no change; values below 1.0 slow down, above 1.0 speed up."
+msgstr "當熱端被當作擠出機處理時，擦料塔擠出嘅進給率縮放係數。佢唔會影響所有塔嘅空駛移動。1.0 代表唔變；細過 1.0 會減速，大過 1.0 會加速。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Tail speed factor"
+msgstr "尾段速度係數"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Scale the printing speed of the last section printed each time before the toolhead leaves the prime tower (the length is set by the tail slowdown volume) relative to the tower printing speed. That trailing section may be the outer wall, a tool-change wipe or infill, whichever comes last. Lower values slow it down to soften the flow change when moving back to the model. Does not affect the first layer."
+msgstr "每次工具頭離開擦料塔前，最後打印嘅一段（長度由尾段減速體積設定）會按呢個係數相對塔嘅打印速度縮放。嗰一段可能係外牆、換工具擦拭或者填充，視乎邊樣最後。數值愈低，速度愈慢，令返回模型時嘅流量變化更柔和。唔影響首層。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Tail slowdown volume"
+msgstr "尾段減速體積"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Only the final part printed each time before the toolhead leaves the prime tower, measured as this extruded volume, is slowed down by the tail speed factor; the rest keeps the normal tower speed. That trailing part may be the outer wall, a tool-change wipe or infill. Set to 0 to slow down the whole tower path of each visit. Does not affect the first layer."
+msgstr "每次工具頭離開擦料塔前，只有最後打印嘅部分（以呢個擠出體積計算）會按尾段速度係數減速；其餘部分維持塔嘅正常速度。嗰一段可能係外牆、換工具擦拭或者填充。設為 0 就會令每次進塔嘅整條路徑都減速。唔影響首層。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "The acceleration used for prime tower extrusions. Does not affect the first layer. 0 means using the global default acceleration."
+msgstr "擦料塔擠出使用嘅加速度。唔影響首層。0 代表使用全域預設加速度。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Line width for prime tower normal wiping paths. 0 means auto-calculated from nozzle diameter."
+msgstr "擦料塔一般擦拭路徑嘅線寬。0 代表按噴嘴直徑自動計算。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Ramming line width"
+msgstr "預沖刷線寬"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Line width for prime tower nozzle-change (ramming) paths. 0 means using the default mapping table."
+msgstr "擦料塔換噴嘴（預沖刷）路徑嘅線寬。0 代表使用預設對應表。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "The speed of wipe movement before printing on the prime tower during tool change. 0 means using prime tower max speed."
+msgstr "換工具期間，喺擦料塔上打印前嘅擦拭移動速度。0 代表使用擦料塔最大速度。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Wipe distance"
+msgstr "擦拭距離"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "The wipe path distance during tool change. 0 means using the filament-level wipe distance."
+msgstr "換工具期間嘅擦拭路徑距離。0 代表使用墨水層級嘅擦拭距離。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Flat ironing"
+msgstr "平面熨燙"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Enable flat ironing for prime tower to smooth the top surface after wiping"
+msgstr "為擦料塔啟用平面熨燙，喺擦拭後整平頂面"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Line ironing"
+msgstr "線性熨燙"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Enable line ironing for prime tower wipe paths"
+msgstr "為擦料塔擦拭路徑啟用線性熨燙"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Speed of prime tower ironing movements"
+msgstr "擦料塔熨燙移動嘅速度"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Side scrape after tool change"
+msgstr "換工具後側刮"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "After a tool change and before the wipe line, move the nozzle to the prime tower side wall and do a diagonal lift scrape (travel only, no extrusion). This scrapes the oozed filament stub onto the side wall instead of letting it pile up on the prime tower top surface."
+msgstr "換工具後、擦拭線之前，將噴嘴移到擦料塔側牆，進行斜向抬升刮除（只移動，唔擠出）。呢個動作會將滲出嘅墨水殘段刮到側牆上，而唔係令佢堆積喺擦料塔頂面。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Side scrape walls"
+msgstr "側刮牆面"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Which pair of opposite prime tower walls the diagonal scrape runs on. Note that enabling the side scrape always disables depth shrinkage of the prime tower (the outer wall stays at the full depth on every layer), regardless of this setting, so that the scrape can descend safely outside the walls."
+msgstr "斜向刮除喺擦料塔邊一組相對嘅牆面進行。請注意，只要啟用側刮，就一定會停用擦料塔嘅深度收縮（外牆每一層都保持完整深度），唔受呢個設定影響，令刮除動作可以安全咁喺牆外面下降。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Left and right"
+msgstr "左右側"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Front and back"
+msgstr "前後側"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Side scrape length"
+msgstr "側刮長度"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Horizontal distance the nozzle travels inward from the prime tower side wall during the diagonal scrape."
+msgstr "斜向刮除期間，噴嘴由擦料塔側牆向內移動嘅水平距離。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Side scrape lift height"
+msgstr "側刮抬降高度"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "How far the nozzle descends below the current wipe-tower top before the diagonal scrape. The actual descent is clamped so the nozzle stays above the wipe tower's brim and first layer (avoids hitting the brim or the bed when the tower is still short). Layers with no room left for a descent get no scrape."
+msgstr "斜向刮除前，噴嘴喺目前擦料塔頂面下面下降嘅距離。實際下降量會受到限制，令噴嘴保持喺擦料塔裙邊同首層上面（避免塔仲矮嘅時候撞到裙邊或者熱床）。冇空間下降嘅層就唔會進行刮除。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Side scrape speed"
+msgstr "側刮速度"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Movement speed of the diagonal side scrape."
+msgstr "斜向側刮嘅移動速度。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Side scrape wall gap"
+msgstr "側刮牆面間隙"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Distance kept between the diagonal side scrape line and the prime tower outer wall. A positive value keeps the scrape outside the wall; the outer wall position is taken as the outermost of the current and previous layer walls at the scrape location so the scrape never cuts into the tower."
+msgstr "斜向側刮線同擦料塔外牆之間保留嘅距離。正數代表刮除喺牆外面進行；外牆位置取刮除位置處本層同上一層牆嘅最外側，確保刮除唔會切入塔身。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Side scrape point spacing"
+msgstr "側刮點間距"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Target distance between consecutive side scrape start points along one side wall. Scrape starts are spread over both side walls so the ooze stubs do not pile up at a single spot. The number of points is derived from this spacing and the length of the straight part of the side wall, so the effective spacing can be smaller than requested when the straight part is short."
+msgstr "同一面側牆上，相鄰側刮起點之間嘅目標距離。刮除起點會分散喺兩面側牆，令滲出嘅殘段唔會堆喺同一個位置。點數由呢個間距同側牆直段嘅長度計算出嚟，所以直段較短時，實際間距可能細過設定值。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Side scrape along-wall length"
+msgstr "側刮沿牆長度"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Upper bound for the empty travel along the side wall performed right after the diagonal scrape, before the nozzle moves to the wipe line start. It smears the ooze stub further along the wall. The travel never leaves the straight part of the side wall, so the actual length is only the room left between the scrape start and the end of that straight part. On a rib prime tower the straight part can be just a few millimetres, in which case the travel is much shorter than the value set here."
+msgstr "斜向刮除之後、噴嘴移去擦拭線起點之前，沿側牆空駛嘅長度上限。呢個動作會將滲出嘅殘段沿牆面抹開。空駛唔會離開側牆嘅直段，所以實際長度只係刮除起點到直段尾端之間剩低嘅空間。喺肋狀擦料塔上，直段可能只有幾毫米，此時空駛長度會遠短過呢度設定嘅數值。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Filament switch retraction length"
+msgstr "換墨水回抽長度"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Filament switch extra length on restart"
+msgstr "換墨水重新開始時嘅額外長度"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Mixed filament components must use the same nozzle diameter in multi-nozzle-diameter mode. Invalid slot: "
+msgstr "多噴嘴直徑模式下，混合墨水嘅組成部分必須使用相同嘅噴嘴直徑。無效槽位： "
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Nozzle Type and Diameter"
+msgstr "噴嘴類型同直徑"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Not Selected"
+msgstr "未選取"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Failed to get calibration parameters. Calibration results can only be obtained on the client that started the calibration."
+msgstr "冇辦法取得校準參數。校準結果只可以喺啟動校準嘅客戶端取得。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "PrintTool"
+msgstr "打印工具頭"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Another mesh boolean operation is running. Please try again after it finishes."
+msgstr "另一個網格布林運算正在執行。請等佢完成後再試。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Set filament placement"
+msgstr "設定墨水擺放"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Automatically and intelligently assigns filaments to minimize filament time consumption"
+msgstr "自動智能分配墨水，將墨水消耗時間減到最低"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Intelligently assigns filaments based on the filaments currently loaded in the printer's nozzles"
+msgstr "根據打印機噴嘴目前已裝入嘅墨水，智能分配墨水"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Intelligently assigns filaments based on the filaments currently installed in the printer's AMS"
+msgstr "根據打印機墨水機目前已安裝嘅墨水，智能分配墨水"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Manually assign filaments by nozzle type"
+msgstr "按噴嘴類型手動分配墨水"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Nozzle %s"
+msgstr "噴嘴 %s"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Error: a filament is assigned to a nozzle of incompatible diameter. Please regroup so each filament stays on a nozzle whose diameter it supports."
+msgstr "錯誤：墨水被分配到直徑唔相容嘅噴嘴。請重新分組，令每款墨水都留喺佢支援直徑嘅噴嘴上。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "We will slice according to this arrangement:"
+msgstr "我哋會按照呢個安排進行切片："
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Nozzle (%d)"
+msgstr "噴嘴 (%d)"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Tips: Under a %smm nozzle diameter, there are no mixed nozzle types, so no custom settings are needed."
+msgstr "提示：喺 %smm 噴嘴直徑下，唔會混用多種噴嘴類型，所以唔需要自訂設定。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Error: The nozzle type is not supported, so the filament cannot be moved."
+msgstr "錯誤：唔支援呢種噴嘴類型，所以冇辦法移動墨水。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Error: the nozzle configuration changed. Please reopen the filament grouping dialog."
+msgstr "錯誤：噴嘴設定已經改變。請重新打開墨水分組對話框。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Nozzle (%d) - %s"
+msgstr "噴嘴 (%d) - %s"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "TPU"
+msgstr "TPU"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Caution: Printing with mixed nozzle diameters is experimental. Please verify your print settings (extrusion widths, layer height, etc.) are compatible with all selected nozzle sizes."
+msgstr "注意：用混合噴嘴直徑打印屬於實驗性功能。請確認你嘅打印設定（擠出闊度、層高等）同所有已選嘅噴嘴尺寸相容。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "No usable nozzle is detected on your printer."
+msgstr "你嘅打印機上偵測唔到可用嘅噴嘴。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Your printer has nozzles of different diameters installed."
+msgstr "你嘅打印機安裝咗唔同直徑嘅噴嘴。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "All nozzles installed on your printer have the same diameter."
+msgstr "你嘅打印機上安裝嘅所有噴嘴直徑都一樣。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Perform a full prime tower purge with speed and temperature transitions for optimal print quality."
+msgstr "進行完整嘅擦料塔沖刷，並帶有速度同溫度過渡，以獲得最佳打印質素。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Reduces prime waste and prints faster. May cause slight color mixing(only for H2C and H3C external 1st/2nd Gen AMS nozzles) or small surface defects."
+msgstr "減少預擠廢料，打印更快。可能會造成輕微混色（只適用於 H2C 同 H3C 外置第一／二代墨水機噴嘴）或細微嘅表面瑕疵。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "TPU Usage Notes"
+msgstr "TPU 使用注意事項"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "TPU Filament Installation && Feeding Guide"
+msgstr "TPU 墨水安裝同送料指南"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Important Notice:"
+msgstr "重要通知："
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "• First time printing with TPU ? We strongly recommend reading the official guide first to avoid clogs or feeding failures.\n• If you are using 2.85 mm TPU, make sure a TPU285 nozzle is installed and the device information has been synced."
+msgstr "• 第一次用 TPU 打印？強烈建議先閱讀官方指南，避免堵塞或者送料失敗。\n• 如果你使用 2.85 mm TPU，請確保已安裝 TPU285 噴嘴，而且已同步裝置資訊。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Don't show this again"
+msgstr "唔好再顯示"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "View User Guide"
+msgstr "查看使用指南"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "I know risks, continue"
+msgstr "我知道風險，繼續"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "After turning on, the AMS automatically rotates slots where filament ends are stowed on the spool, for better drying"
+msgstr "開啟後，墨水機會自動轉動墨水尾端收埋喺料盤上嘅槽位，令乾燥效果更好"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Minimum time value cannot be less than %d."
+msgstr "時間最小值唔可以細過 %d。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Maximum time value cannot be greater than %d."
+msgstr "時間最大值唔可以大過 %d。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The current drying temperature is higher than the softening temperature of some filaments. Filament ends left in the inlet may soften and clog it. Pull out the filaments marked with an exclamation mark before drying."
+msgstr "目前嘅乾燥溫度高過部分墨水嘅軟化溫度。留喺進料口嘅墨水尾端可能會軟化並堵塞進料口。乾燥前請抽出標有感嘆號嘅墨水。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Slots that currently support drying:"
+msgstr "目前支援乾燥嘅槽位："
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "It is recommended to pull the filament end out of the inlet before drying to prevent it from softening due to high temperature."
+msgstr "建議乾燥前先將墨水尾端由進料口抽出，避免因高溫而軟化。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "For better drying results, pull the filament end out of the inlet and allow it to rotate."
+msgstr "為咗獲得更好嘅乾燥效果，請將墨水尾端由進料口抽出，並讓料盤轉動。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "AMS 3H"
+msgstr "墨水機 3H"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Mixed result preview"
+msgstr "混合結果預覽"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "- Delete Filament"
+msgstr "- 刪除墨水"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "cannot be mixed. Please select filaments using the same nozzle diameter."
+msgstr "無法混合。請選擇使用相同噴嘴直徑嘅墨水。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "No mix is available for the target color"
+msgstr "目標顏色冇可用嘅混色方案"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Manual Mixing"
+msgstr "手動混合"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Color Matching"
+msgstr "顏色配對"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Target Filament"
+msgstr "目標墨水"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "(The system will mix 2-3 filaments to approximate this color)"
+msgstr "（系統會混合 2-3 款墨水，嚟近似呢個顏色）"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Target color filament"
+msgstr "目標顏色墨水"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Select Target Color"
+msgstr "選擇目標顏色"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Mixed Result"
+msgstr "混合結果"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Discard changes and match again"
+msgstr "捨棄更改並重新配對"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "No results"
+msgstr "冇結果"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Replace the target color on models with the mixed result"
+msgstr "用混色結果取代模型上嘅目標顏色"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Transparent filaments are not supported for color matching."
+msgstr "顏色配對唔支援透明墨水。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Gradient filaments are not supported for color matching."
+msgstr "顏色配對唔支援漸變墨水。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Multicolor filaments are not supported for color matching."
+msgstr "顏色配對唔支援多色墨水。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "No filament can be used as the target color. Gradient, multi-color, transparent and support filaments are not supported."
+msgstr "冇墨水可以用作目標顏色。唔支援漸變、多色、透明同支撐墨水。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "No available mixing recipe was found."
+msgstr "搵唔到可用嘅混色配方。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The current printer has no compatible PLA Palette filament."
+msgstr "目前嘅打印機冇相容嘅 PLA Palette 墨水。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Set nozzle diameter"
+msgstr "設定噴嘴直徑"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Single-diameter mode"
+msgstr "單一直徑模式"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Multi-diameter mode"
+msgstr "多直徑模式"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "This filament does not support the %smm nozzle, or no matching nozzle is configured."
+msgstr "呢種墨水唔支援 %smm 噴嘴，或者未設定相符嘅噴嘴。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "This printer isn’t configured with a %s mm nozzle. Please configure it in “Settings” before slicing."
+msgstr "呢部打印機未設定 %s mm 噴嘴。切片前請喺「設定」入面設定。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "No nozzle is installed in this slot."
+msgstr "呢個槽位未安裝噴嘴。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Hotend information is unknown. Please refresh nozzle information before use."
+msgstr "熱端資訊未知。使用前請重新整理噴嘴資訊。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Nozzle diameter mismatch. This nozzle cannot be used."
+msgstr "噴嘴直徑唔符。呢個噴嘴用唔到。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Nozzle Settings"
+msgstr "噴嘴設定"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Set your printer's nozzle installation status"
+msgstr "設定打印機嘅噴嘴安裝狀態"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The %s nozzle is in use by project filaments. Changing it will move them to 0.4 Standard. Change it anyway?"
+msgstr "噴嘴 %s 正被項目墨水使用。更改後會將佢哋移去 0.4 標準款。仍要更改嗎？"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "External AMS"
+msgstr "外置墨水機"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "To pick this, change the nozzle settings first"
+msgstr "如果想選擇呢項，請先更改噴嘴設定"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The filament in this slot cannot print with this nozzle"
+msgstr "呢個槽位入面嘅墨水唔可以用呢個噴嘴打印"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Successfully synchronized Printer information."
+msgstr "已成功同步打印機資訊。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "When using soluble material for the support, We recommend the following settings:\nnormal (auto) support type, 1 support wall loop, 0 top z distance, 0 bottom z distance, 0 interface spacing, 0 support/object xy distance, \ninterlaced rectilinear pattern, disable independent support layer height and use soluble materials for both support interface and support base"
+msgstr "使用可溶解材料做支撐時，建議以下設定：\n一般（自動）支撐類型、1 圈支撐牆、頂部 Z 距離 0、底部 Z 距離 0、介面間距 0、支撐／物件 XY 距離 0、\n交錯直線圖案、停用獨立支撐層高，並且喺支撐介面同支撐底座都使用可溶解材料"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "When using soluble material for the support, We recommend the following settings:\nnormal (auto) support type, 1 support wall loop, 0 top z distance, 0 interface spacing, 0 support/object xy distance, interlaced rectilinear \npattern, disable independent support layer height and use soluble materials for both support interface and support base"
+msgstr "使用可溶解材料做支撐時，建議以下設定：\n一般（自動）支撐類型、1 圈支撐牆、頂部 Z 距離 0、介面間距 0、支撐／物件 XY 距離 0、交錯直線\n圖案、停用獨立支撐層高，並且喺支撐介面同支撐底座都使用可溶解材料"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The following settings of the current plate will be restored to default:"
+msgstr "目前打印板嘅以下設定將會恢復為預設值："
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Restore these settings of the current plate to default?"
+msgstr "要將目前打印板嘅呢啲設定恢復為預設值嗎？"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The following settings locked on the current selection will be restored to default:"
+msgstr "目前選取範圍入面鎖定嘅以下設定將會恢復為預設值："
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Restore these settings of the current selection to default?"
+msgstr "要將目前選取範圍嘅呢啲設定恢復為預設值嗎？"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The following settings locked on the objects below will be restored to default:"
+msgstr "以下物件入面鎖定嘅以下設定將會恢復為預設值："
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Restore these settings to default?"
+msgstr "要將呢啲設定恢復為預設值嗎？"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The following global settings will be restored to default:"
+msgstr "以下全域設定將會恢復為預設值："
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Restore these global settings to default?"
+msgstr "要將呢啲全域設定恢復為預設值嗎？"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "It looks like you are no longer using a support material combination for the support interface. Are you exiting support material usage?"
+msgstr "你好似已經冇再為支撐介面使用支撐材料組合。你係咪要退出使用支撐材料？"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The same settings applied globally will be restored as well."
+msgstr "全域套用嘅相同設定亦會一併恢復。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Other objects also have these settings locked:"
+msgstr "其他物件亦鎖定咗呢啲設定："
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Affected objects:"
+msgstr "受影響嘅物件："
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "These objects also have these settings locked:"
+msgstr "呢啲物件亦鎖定咗呢啲設定："
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Restore the current selection only, or all of them?"
+msgstr "只恢復目前選取範圍，定係全部恢復？"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Restore all of them to default?"
+msgstr "要將全部恢復為預設值嗎？"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Color mixing requires at least two filaments of the same type, but only one is available. The following filaments will be added based on the model colors:"
+msgstr "混色至少需要兩款相同類型嘅墨水，但目前只有一款可用。系統會按模型顏色加入以下墨水："
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Color mixing requires at least two filaments of the same type. The following filaments will be added based on the model colors:"
+msgstr "混色至少需要兩款相同類型嘅墨水。系統會按模型顏色加入以下墨水："
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "New filament"
+msgstr "新墨水"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Note: You can also delete or modify the newly added filaments in the drop-down list of the filament matching dialog."
+msgstr "注意：你亦可以喺墨水配對對話框嘅下拉清單入面刪除或者修改新加入嘅墨水。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Nozzle %d "
+msgstr "噴嘴 %d "
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Unknown Filament"
+msgstr "未知墨水"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Hotend status is abnormal and not available. Click to update firmware."
+msgstr "熱端狀態異常，用唔到。撳一下更新韌體。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Extruder Settings"
+msgstr "擠出機設定"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Hotend status is abnormal. Please update the firmware."
+msgstr "熱端狀態異常。請更新韌體。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Update Firmware"
+msgstr "更新韌體"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Current printer status"
+msgstr "目前打印機狀態"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Connected printer %s, view printer status"
+msgstr "已連接打印機 %s，查看打印機狀態"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Sync Printer Information"
+msgstr "同步打印機資訊"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The printer model and settings in this 3MF file don't match the connected printer. Do you want to adapt these slicing settings for this printer?"
+msgstr "呢個 3MF 檔案入面嘅打印機型號同設定，同已連接嘅打印機唔相符。你想為呢部打印機調整呢啲切片設定嗎？"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Printer model comparison"
+msgstr "打印機型號比較"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Nozzle comparison"
+msgstr "噴嘴比較"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Note: After adapting the settings, some print parameters will be automatically adjusted for the new printer model."
+msgstr "注意：調整設定後，部分打印參數會按新嘅打印機型號自動調整。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "3MF File Settings"
+msgstr "3MF 檔案設定"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Connected Printer"
+msgstr "已連接嘅打印機"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "%s (only supported)"
+msgstr "%s（只係支援）"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Using a larger nozzle after adapting the settings may reduce fine details in your model. Please proceed with caution."
+msgstr "調整設定後使用較大嘅噴嘴，可能會令模型嘅細節減少。請小心操作。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Don't show this again when opening 3MF files"
+msgstr "打開 3MF 檔案時唔再顯示"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Adapt Settings"
+msgstr "調整設定"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Nozzle %d: "
+msgstr "噴嘴 %d： "
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Nozzle Details"
+msgstr "噴嘴詳細資料"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "4 slots AMS"
+msgstr "4 槽位墨水機"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "1 slot AMS"
+msgstr "1 槽位墨水機"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Remove this AMS"
+msgstr "移除呢部墨水機"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The current nozzle diameter is incompatible with the printer"
+msgstr "目前嘅噴嘴直徑同打印機唔相容"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Mixing high- and low-temperature filaments is not recommended."
+msgstr "唔建議混合高溫同低溫墨水。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Nozzle and Filament Sync"
+msgstr "噴嘴同墨水同步"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Direct Override"
+msgstr "直接覆寫"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "After modification, the filament list cannot be restored."
+msgstr "修改後，墨水清單冇辦法恢復。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Overwrite the project filaments list with the filaments in the printer."
+msgstr "用打印機入面嘅墨水覆寫項目墨水清單。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Match the project filaments with the filaments in the printer according to the matching mode. After syncing, the mapped results will be used."
+msgstr "按配對模式將項目墨水同打印機入面嘅墨水配對。同步後會使用對應結果。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Filament matching"
+msgstr "墨水配對"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Color first"
+msgstr "顏色優先"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Precision first"
+msgstr "精度優先"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "AMS-3H"
+msgstr "墨水機-3H"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgctxt "NarrowBlock"
+msgid "AMS-3H"
+msgstr "墨水機-3H"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "AMS-B"
+msgstr "墨水機-B"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgctxt "NarrowBlock"
+msgid "AMS-B"
+msgstr "墨水機-B"
