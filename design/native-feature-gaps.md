@@ -8,8 +8,8 @@ Audit source commit: `38c76dfdf572d7881c3f13f67dda4b0bb88a3c16`. Completion clai
 
 | Status | Meaning | Gaps |
 | --- | --- | ---: |
-| open | Not implemented, or implemented only in part. | 379 |
-| landed | Source, documentation and focused tests are on main (landedIn names the commit). Native behaviour is not yet observed on Windows. | 19 |
+| open | Not implemented, or implemented only in part. | 375 |
+| landed | Source, documentation and focused tests are on main (landedIn names the commit). Native behaviour is not yet observed on Windows. | 23 |
 | verified | Landed, and observed working in a built Windows application (runtimeEvidence names the record). | 0 |
 | total | | 398 |
 
@@ -23,7 +23,7 @@ Audit source commit: `38c76dfdf572d7881c3f13f67dda4b0bb88a3c16`. Completion clai
 | language-voice | [language](#language) | partial | 6 | 0 | 0 |
 | language-voice | [funny-emoji](#funny-emoji) | partial | 7 | 0 | 0 |
 | language-voice | [personal-vocabulary](#personal-vocabulary) | partial | 5 | 0 | 0 |
-| language-voice | [narration](#narration) | partial | 6 | 0 | 0 |
+| language-voice | [narration](#narration) | partial | 2 | 4 | 0 |
 | language-voice | [display-name](#display-name) | partial | 3 | 0 | 0 |
 | language-voice | [dim-sum](#dim-sum) | partial | 7 | 1 | 0 |
 | material-appearance | [material-design](#material-design) | partial | 10 | 0 | 0 |
@@ -177,11 +177,11 @@ The narrator is off by default (narrator_enabled=false) and uses a SAPI late-bou
 
 | Gap | Size | Needs Windows | Status | Title | Landed in |
 | --- | --- | --- | --- | --- | --- |
-| `narration#01` | M | yes | open | Narrate application events, with funny-level tone, not only printer state |  |
+| `narration#01` | M | yes | landed | Narrate application events, with funny-level tone, not only printer state | `aa0dc557a` |
 | `narration#02` | L | yes | open | Enumerate OneCore and natural platform voices, including Hong Kong Cantonese, and report network capability where the platform exposes it |  |
-| `narration#03` | S | yes | open | Respect Windows quiet hours and Focus Assist in narration |  |
-| `narration#04` | S | no | open | Migrate legacy say() and say_now() producers to independent speech tracks |  |
-| `narration#05` | S | no | open | Localize narrator settings and add the Cantonese narration article |  |
+| `narration#03` | S | yes | landed | Respect Windows quiet hours and Focus Assist in narration | `aa0dc557a` |
+| `narration#04` | S | no | landed | Migrate legacy say() and say_now() producers to independent speech tracks | `aa0dc557a` |
+| `narration#05` | S | no | landed | Localize narrator settings and add the Cantonese narration article | `27ecec97a` |
 | `narration#06` | M | yes | open | Narrator and voice-picker test matrix |  |
 
 ## display-name

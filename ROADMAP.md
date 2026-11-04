@@ -939,3 +939,22 @@ truth; the counts here are a snapshot.
 - [x] Restore and verify tracked resources after the cleanup directory-link incident.
 - [x] Retain the seven remote histories outside main and the other ownership-unverified remote refs.
 - [ ] Remove three ignored dependency source directories and redundant temporary archive files, blocked by automatic approval review; retained in place.
+
+## Narrator events, tracks and quiet hours, 4 November 2026
+
+Branch `ai/feature/20261104-narrator`. Native runtime on Windows is not verified for any item below.
+
+- [x] Pure narration logic (events, three funny-level tones, transitions, de-duplication, quiet hours, track keys, voice classification) with a compiled fixture and a mutation-based `--negative` mode.
+- [x] Printer events on state transitions: print started, paused, resumed, finished, failed, cancelled, filament runout, AMS error and other printer errors. Stage 6, error `0x0300400C` and error module `0x07` are community-documented values, unconfirmed on hardware.
+- [ ] Printer door opened and closed: `MachineObject` has no door field on this branch; a marked hook exists in `NarrationTransitions.hpp`.
+- [x] Application events: slicing finished and failed, export done, update ready, error notifications. Summaries only; no paths, names or account details are spoken.
+- [x] Master switch, three per-track switches, persisted settings, palette rows, scheduled-settings registry entries.
+- [x] Quiet hours and Windows Focus Assist, full-screen and presentation states.
+- [x] `say()` and `say_now()` producers migrated to tracks; the filament scanner follows the narration language.
+- [x] Preferences voice preview buttons and network-capability statement; OneCore voices listed read-only.
+- [ ] Speak with OneCore and natural voices (needs a Windows.Media.SpeechSynthesis playback path).
+- [x] English and agent-drafted Hong Kong Cantonese strings and article.
+- [ ] Human review of the Cantonese strings and article.
+- [ ] Native `personal_modes` cases for no speech synthesis, empty-then-populated enumeration, rate and pitch bounds, restart persistence and all language modes.
+- [ ] Build the application and observe the narrator, Preferences controls and quiet hours on Windows.
+
