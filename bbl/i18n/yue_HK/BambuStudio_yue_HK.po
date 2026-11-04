@@ -47216,3 +47216,123 @@ msgstr "門（測試版）"
 #. review-status: agent-drafted
 msgid "Closed"
 msgstr "關閉"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Listening on this computer only"
+msgstr "只喺呢部電腦監聽"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "No token is available"
+msgstr "冇可用嘅令牌"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "The port is already in use"
+msgstr "連接埠已被佔用"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "%1% at http://127.0.0.1:%2%/api/v1/"
+msgstr "%1%，位址 http://127.0.0.1:%2%/api/v1/"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Status API state"
+msgstr "狀態 API 嘅狀態"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Access token"
+msgstr "存取令牌"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Show token"
+msgstr "顯示令牌"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Copy token"
+msgstr "複製令牌"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Regenerate token"
+msgstr "重新產生令牌"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Send it as Authorization: Bearer <token>. It is kept in the application settings and is never written to a log. Regenerating it stops the old one at once."
+msgstr "用 Authorization: Bearer <令牌> 嘅形式傳送。令牌存放喺應用程式設定，永遠唔會寫入日誌。重新產生會即時令舊令牌失效。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Hide token"
+msgstr "隱藏令牌"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Token copied to the clipboard."
+msgstr "令牌已複製到剪貼簿。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "The clipboard is not available. Show the token and copy it."
+msgstr "用唔到剪貼簿。請顯示令牌再自行複製。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "A new token could not be made."
+msgstr "整唔到新令牌。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "A new token was made. The old one no longer works."
+msgstr "已經產生新令牌，舊令牌用唔到。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Other programs on this computer can read the door state and the printer list over a local, read-only web interface. It listens on 127.0.0.1 only, needs the access token, and answers GET requests only."
+msgstr "呢部電腦上嘅其他程式可以經本機唯讀網頁介面讀取門狀態同打印機清單。佢只喺 127.0.0.1 監聽，要有存取令牌，而且只回應 GET 請求。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Local status API"
+msgstr "本機狀態 API"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Serve printer status on this computer"
+msgstr "喺呢部電腦提供打印機狀態"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Let programs on this computer read the printer list and the door state. Off by default."
+msgstr "等呢部電腦上嘅程式讀取打印機清單同門狀態。預設關閉。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Port"
+msgstr "連接埠"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "The port on 127.0.0.1 that the status API listens on."
+msgstr "狀態 API 喺 127.0.0.1 上面監聽嘅連接埠。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Local status API, off by default"
+msgstr "本機狀態 API，預設關閉"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Copy or regenerate the bearer token of the status API"
+msgstr "複製或者重新產生狀態 API 嘅持有人令牌"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Where the status API listens"
+msgstr "狀態 API 喺邊度監聽"
