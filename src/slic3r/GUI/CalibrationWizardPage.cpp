@@ -515,14 +515,14 @@ FilamentExtendComboBox::FilamentExtendComboBox(wxWindow* parent, int nozzle_id, 
     /* Owner-drawn Button instead of a native wxStaticText: its text is painted via dc.DrawText,
        so the disabled state renders crisply (grey) rather than MSW's blurry embossed static text. */
     m_subams_label = new Button(m_subams_panel, wxEmptyString, "", wxBORDER_NONE);
-    m_subams_label->SetBackgroundColor(StateColor(*wxWHITE));
+    m_subams_label->SetVariant(Button::Variant::Text);
     m_subams_label->SetBorderWidth(0);
     m_subams_label->SetCornerRadius(0);
     m_subams_label->SetCanFocus(false);
     m_subams_label->SetPaddingSize(wxSize(0, 0));
     m_subams_label->SetTextColor(StateColor(
-        std::make_pair(wxColour(0xAC, 0xAC, 0xAC), (int) StateColor::Disabled),
-        std::make_pair(wxColour("#262E30"),        (int) StateColor::Normal)));
+        std::make_pair(StateColor::semantic(MD3::Role::OnSurfaceVariant), (int) StateColor::Disabled),
+        std::make_pair(StateColor::semantic(MD3::Role::OnSurface),        (int) StateColor::Normal)));
     /* Clicking the text opens the popup, same as clicking the panel; disabled Button won't fire.
        Hovering the centred label keeps the panel border highlighted; the panel's own leave clears it. */
     m_subams_label->Bind(wxEVT_BUTTON,       [this](wxCommandEvent&)  { NotifySubAmsClick(); });
@@ -599,11 +599,11 @@ void FilamentExtendComboBox::RefreshSubAmsLabel(const wxString& empty_fallback)
         window->Bind(wxEVT_BUTTON, [this](wxCommandEvent& evt) { NotifySubAmsClick(); evt.Skip(); });
     };
 
-    auto ensure_picker = [&](size_t index) -> wxBitmapButton* {
+    auto ensure_picker = [&](size_t index) -> Button* {
         while (m_subams_picker_buttons.size() <= index) {
-            auto* picker = new wxBitmapButton(m_subams_panel, wxID_ANY, wxNullBitmap, wxDefaultPosition,
-                                              wxSize(picker_w, picker_h),
-                                              wxBU_EXACTFIT | wxBU_AUTODRAW | wxBORDER_NONE);
+            // Kit icon button carrying the swatch as a data image.
+            auto* picker = new Button(m_subams_panel, "", "", 0, 0);
+            picker->SetIconButton(Button::IconShape::Square, picker_w);
             picker->SetBackgroundColour(StateColor::darkModeColorFor(*wxWHITE));
             forward_click(picker);
             m_subams_picker_buttons.push_back(picker);
@@ -620,8 +620,8 @@ void FilamentExtendComboBox::RefreshSubAmsLabel(const wxString& empty_fallback)
         picker->SetSize(wxSize(picker_w, picker_h));
         if (auto it = m_subams_picker_chips.find(tray_id); it != m_subams_picker_chips.end()) {
             if (wxBitmap* bmp = get_extruder_color_icon(it->second.first, it->second.second, picker_w, picker_h)) {
-                picker->SetBitmap(*bmp);
-                picker->SetBitmapDisabled(*bmp);
+                picker->SetIconBitmap(*bmp);
+                picker->SetIconBitmapDisabled(*bmp);
             }
         }
         picker->Show(true);
@@ -631,9 +631,8 @@ void FilamentExtendComboBox::RefreshSubAmsLabel(const wxString& empty_fallback)
 
     if (overflow) {
         if (!m_subams_ellipsis_picker) {
-            m_subams_ellipsis_picker = new wxButton(m_subams_panel, wxID_ANY, "...", wxDefaultPosition,
-                                                    wxSize(picker_w, picker_h),
-                                                    wxBU_EXACTFIT | wxBU_AUTODRAW | wxBORDER_NONE);
+            m_subams_ellipsis_picker = new Button(m_subams_panel, "...", "", wxBORDER_NONE);
+            m_subams_ellipsis_picker->SetVariant(Button::Variant::Text);
             m_subams_ellipsis_picker->SetBackgroundColour(StateColor::darkModeColorFor(*wxWHITE));
             forward_click(m_subams_ellipsis_picker);
         }

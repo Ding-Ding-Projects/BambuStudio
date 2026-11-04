@@ -1,3 +1,5 @@
+#include "MaterialIcon.hpp"
+#include "Button.hpp"
 #include "NozzleSettingsCardDialog.hpp"
 
 #include <algorithm>
@@ -42,6 +44,7 @@
 #include "slic3r/GUI/DeviceManager.hpp"
 #include "libslic3r/PresetBundle.hpp"
 #include "libslic3r/PrintConfig.hpp"
+#include "slic3r/GUI/Widgets/MD3DialogChrome.hpp"
 
 namespace Slic3r::GUI {
 namespace {
@@ -200,7 +203,7 @@ private:
     NozzleVolumeType m_volume{nvtStandard};
 
     PillView         *m_title{nullptr};
-    wxStaticBitmap *m_edit_icon{nullptr};
+    Button         *m_edit_icon{nullptr};
     wxBitmap        m_badge_bmp;     // "badge" (synced check), drawn at the card's top-right corner
     bool            m_synced{false}; // whether this nozzle still matches the machine-seeded config
     Label          *m_diameter_value{nullptr};
@@ -259,10 +262,13 @@ void NozzleCard::build_header(wxSizer *v, int number)
     row->Add(m_title, 0, wxALIGN_CENTER_VERTICAL);
     row->AddStretchSpacer();
 
-    m_edit_icon = new wxStaticBitmap(this, wxID_ANY, create_scaled_bitmap("edit", this, 14), wxDefaultPosition, FromDIP(wxSize(14, 14)), 0);
-    m_edit_icon->SetBackgroundColour(GetBackgroundColour());
-    m_edit_icon->SetCursor(wxCursor(wxCURSOR_HAND));
-    m_edit_icon->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &) { show_edit_menu(); });
+    // A kit icon button, so the edit menu opens from a real, keyboard-reachable control.
+    m_edit_icon = new Button(this, "", "", 0, 0, wxID_ANY);
+    m_edit_icon->SetIconButton(Button::IconShape::Square, FromDIP(20));
+    m_edit_icon->SetGlyph(MaterialIcon::Edit, 14);
+    m_edit_icon->SetName(_L("Edit"));
+    m_edit_icon->SetToolTip(m_edit_icon->GetName());
+    m_edit_icon->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { show_edit_menu(); });
     row->Add(m_edit_icon, 0, wxALIGN_CENTER_VERTICAL | wxLEFT | wxRIGHT, FromDIP(4));
 
     m_badge_bmp = create_scaled_bitmap("badge", this, 16); // drawn at the card's top-right corner in OnPaint
@@ -683,8 +689,9 @@ NozzleSettingsCardDialog::NozzleSettingsCardDialog(wxWindow *parent, const wxStr
 
     SetBackgroundColour(*wxWHITE);
     create_layout(seeds);
-    CentreOnParent();
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
+    CentreOnParent();
 }
 
 void NozzleSettingsCardDialog::create_layout(const std::vector<NozzleConfig> &seeds)

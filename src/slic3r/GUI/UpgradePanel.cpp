@@ -594,8 +594,8 @@ wxString MachineInfoPanel::get_device_info_text() const
 
 void MachineInfoPanel::createHotendAmsWidgets(wxBoxSizer* main_left_sizer)
 {
-    m_hotend_ams_line_above = new wxStaticLine(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_HORIZONTAL);
-    m_hotend_ams_line_above->SetBackgroundColour(wxColour(206, 206, 206));
+    m_hotend_ams_line_above = new StaticLine(this);
+    m_hotend_ams_line_above->SetLineColour(StateColor::semantic(MD3::Role::OutlineVariant));
 
     m_hotend_ams_img = new wxStaticBitmap(this, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxSize(FromDIP(200), FromDIP(200)));
     m_hotend_ams_img->SetBitmap(m_img_hotend_ams.bmp());
@@ -1823,8 +1823,8 @@ void MachineInfoPanel::show_filatrack(bool show)
 
 void MachineInfoPanel::createAirPurifierWidgets(wxBoxSizer* main_left_sizer)
 {
-    m_air_purifier_line_above = new wxStaticLine(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_HORIZONTAL);
-    m_air_purifier_line_above->SetBackgroundColour(wxColour(206, 206, 206));
+    m_air_purifier_line_above = new StaticLine(this);
+    m_air_purifier_line_above->SetLineColour(StateColor::semantic(MD3::Role::OutlineVariant));
     main_left_sizer->Add(m_air_purifier_line_above, 0, wxEXPAND | wxLEFT, FromDIP(40));
 
     m_air_purifier_img = new wxStaticBitmap(this, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxSize(FromDIP(200), FromDIP(200)));

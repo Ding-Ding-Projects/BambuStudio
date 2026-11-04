@@ -189,6 +189,8 @@ private:
     bool            m_overwrite{false};
     bool            m_advanced_open{false};
 
+    wxSizer *m_column{nullptr}; ///< the root MappingFirstSizer; GetSizer() is the caption wrapper after Adopt
+    int       m_caption_h{0};   ///< height of the kit caption strip, 0 until adopted
     int m_fitted_h{0};      ///< the client height relayout() last set; 0 until the first fit
     int m_height_offset{0}; ///< the height the user dragged in or out, kept on top of the fitted content height
 

@@ -1,3 +1,5 @@
+#include "MaterialIcon.hpp"
+#include "Button.hpp"
 #include "NozzleAmsRow.hpp"
 
 #include <algorithm>
@@ -216,14 +218,16 @@ void show_ams_delete_popup(int extruder_index, AMSPreview *preview, const std::v
     }
 
     auto *popup = new RoundedPopupWindow(preview, 2, false);
-    popup->SetBackgroundColour(ThemeColor::White);
+    popup->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
 
-    const ScalableBitmap trash_icon(popup, wxGetApp().dark_mode() ? "trash_dark" : "trash", 12);
-    auto                *del = new wxStaticBitmap(popup, wxID_ANY, trash_icon.bmp());
-    del->SetBackgroundColour(wxGetApp().dark_mode() ? StateColor::darkModeColorFor(ThemeColor::White) : ThemeColor::White);
-    del->SetToolTip(_L("Remove this AMS"));
+    // A kit icon button, so the action is a real, keyboard-reachable control with a name.
+    auto *del = new Button(popup, "", "", 0, 0, wxID_ANY);
+    del->SetIconButton(Button::IconShape::Square, popup->FromDIP(20), false, true);
+    del->SetGlyph(MaterialIcon::Delete, 14);
+    del->SetName(_L("Remove this AMS"));
+    del->SetToolTip(del->GetName());
 
-    auto remove_this_ams = [extruder_index, preview, &previews, on_changed, popup](wxMouseEvent &) {
+    auto remove_this_ams = [extruder_index, preview, &previews, on_changed, popup](wxCommandEvent &) {
         auto it = std::find(previews.begin(), previews.end(), preview);
         if (it != previews.end()) {
             const size_t index  = std::distance(previews.begin(), it);
@@ -236,15 +240,7 @@ void show_ams_delete_popup(int extruder_index, AMSPreview *preview, const std::v
         popup->Dismiss();
     };
 
-    // The release is the usual click, except on macOS: wxStaticBitmap is an NSImageView, and
-    // wxWidgetCocoaImpl::mouseEvent hands any mouse event wx leaves unhandled to the native
-    // NSControl, whose own mouseDown takes the button sequence over so the release never arrives.
-    // Acting on the press there keeps wx from calling super at all.
-#ifdef __WXOSX__
-    del->Bind(wxEVT_LEFT_DOWN, remove_this_ams);
-#else
-    del->Bind(wxEVT_LEFT_UP, remove_this_ams);
-#endif
+    del->Bind(wxEVT_BUTTON, remove_this_ams);
 
     auto *sizer = new wxBoxSizer(wxHORIZONTAL);
     sizer->Add(del, 0, wxALL, popup->FromDIP(2));
@@ -334,7 +330,7 @@ NozzleAmsRow::NozzleAmsRow(wxWindow *parent, int extruder_index, const wxString 
 
     // Corner check, outside the content padding: this row's 4-slot and 1-slot counts match the connected printer.
     if (band) {
-        m_sync_badge = new wxStaticBitmap(this, wxID_ANY, create_scaled_bitmap("badge", this, 16), wxDefaultPosition, FromDIP(wxSize(16, 16)), 0);
+        m_sync_badge = new wxStaticBitmap(this, wxID_ANY, MaterialIcon::bitmap(this, MaterialIcon::CheckCircle, 16, StateColor::semantic(MD3::Role::Primary)), wxDefaultPosition, FromDIP(wxSize(16, 16)), 0);
         m_sync_badge->Hide();
         outer->Add(m_sync_badge, 0, wxALIGN_TOP);
     }

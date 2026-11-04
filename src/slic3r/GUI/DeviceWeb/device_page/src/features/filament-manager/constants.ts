@@ -93,27 +93,22 @@ export function formatSlotLocation(
   multiExternal = false,
 ): string | null {
   if (!deviceName) return null;
-  const amsTypeName = (amsType != null && amsType >= 0 && slotId !== '255')
-    ? toInlineBilingual(AMS_TYPE_NAMES[amsType]?.(t) ?? t('AMS({{n}})', { n: amsType }))
-    : null;
+  // Slot 255 is the single external spool; amsType 0 is an external spool on a
+  // multi-nozzle printer, where the slot id numbers the spool.
+  const isExternal = amsType === 0 || slotId === '255';
   // This label lands inline in a single "device · AMS type · slot" breadcrumb
   // (DetailDialog, SpoolTable), so it cannot host BilingualText's stacked
   // secondary line; toInlineBilingual keeps both languages on the one line
   // the breadcrumb needs instead of dropping the Cantonese half on the floor.
-  const slotLabel = trayLabel
-    ? trayLabel
-    : slotId === '255'
-      ? toInlineBilingual(t('External Spool'))
-  const isExternal = amsType === 0;
   let amsTypeName: string | null = null;
   let slotLabel: string | null = null;
   if (isExternal) {
-    slotLabel = (multiExternal && slotId != null && slotId !== '')
-      ? t('External Spool {{n}}', { n: 256 - Number(slotId) })
-      : t('External Spool');
+    slotLabel = (multiExternal && slotId != null && slotId !== '' && slotId !== '255')
+      ? toInlineBilingual(t('External Spool {{n}}', { n: 256 - Number(slotId) }))
+      : toInlineBilingual(t('External Spool'));
   } else {
     amsTypeName = (amsType != null && amsType >= 0)
-      ? (AMS_TYPE_NAMES[amsType] ?? `AMS(${amsType})`)
+      ? toInlineBilingual(AMS_TYPE_NAMES[amsType]?.(t) ?? t('AMS({{n}})', { n: amsType }))
       : null;
     slotLabel = trayLabel
       ? trayLabel

@@ -414,22 +414,11 @@ void HistoryWindow::build_nozzle_tab_panel()
 
 void HistoryWindow::update_nozzle_tab_styles()
 {
-    StateColor btn_bg_selected(std::pair<wxColour, int>(wxColour("#DBFDE7"), StateColor::Normal));
-    StateColor btn_bg_normal(std::pair<wxColour, int>(wxColour("#FFFFFF"), StateColor::Normal));
-
     for (int i = 0; i < (int)m_nozzle_tab_btns.size(); i++) {
         auto btn = m_nozzle_tab_btns[i];
         bool selected = (i == 0 && !m_selected_nozzle_pos.has_value()) ||
                         (i >= 1 && m_selected_nozzle_pos.has_value() && m_selected_nozzle_pos.value() == (0x10 | (i - 1)));
-        if (selected) {
-            btn->SetBackgroundColor(btn_bg_selected);
-            btn->SetBorderColor(wxColour("#00AE42"));
-            btn->SetTextColor(wxColour("#262E30"));
-        } else {
-            btn->SetBackgroundColor(btn_bg_normal);
-            btn->SetBorderColor(wxColour("#EEEEEE"));
-            btn->SetTextColor(wxColour("#262E30"));
-        }
+        btn->SetVariant(selected ? Button::Variant::Tonal : Button::Variant::Outlined);
         btn->SetBackgroundColour(*wxWHITE);
         btn->Refresh();
     }

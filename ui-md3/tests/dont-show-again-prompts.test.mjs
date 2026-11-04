@@ -54,8 +54,8 @@ const showDialog = between(statusPanel, /void StatusPanel::show_new_official_fil
 const openHint = between(statusPanel, /void StatusPanel::open_new_official_filament_hint\(/, /\n\}\n/, 'open_new_official_filament_hint');
 const dismissAll = between(statusPanel, /void StatusPanel::dismiss_all_filament_hint_ui\(/, /\nvoid StatusPanel::show_new_official_filament_dlg\(/, 'dismiss_all_filament_hint_ui');
 
-const inkHpp = read(...gui('AMSMaterialsSetting.hpp'));
-const inkCpp = read(...gui('AMSMaterialsSetting.cpp'));
+const inkHpp = read(...gui('AMSNewFilamentDialogs.hpp'));
+const inkCpp = read(...gui('AMSNewFilamentDialogs.cpp'));
 const inkDialogCreate = between(inkCpp, /void AMSNewOfficialFilamentDlg::create\(\)/, /\nvoid AMSNewOfficialFilamentDlg::on_record_new\(/, 'AMSNewOfficialFilamentDlg::create');
 const inkDialogContext = between(inkCpp, /void AMSNewOfficialFilamentDlg::SetTrayContext\(/, /\nvoid AMSNewOfficialFilamentDlg::SetSoftMatchData\(/, 'AMSNewOfficialFilamentDlg::SetTrayContext');
 

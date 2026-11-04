@@ -88,11 +88,11 @@ test('a stacked line paints its label across the row and its buttons and field i
   assert.match(render, /const int row_width = ctrl->GetSize\(\)\.x - h_pos2 \+ h_pos3 - h_pos - ctrl->m_em_unit \* 3;\s*field->getWindow\(\)->SetSize\(std::max\(row_width, Field::def_width_wider\(\) \* ctrl->m_em_unit\), -1\);/);
   // Text and buttons centre in the band they sit in, which is the whole row when nothing is stacked.
   const text = fn(panel, 'wxCoord OG_CustomCtrl::CtrlLine::draw_text(');
-  assert.match(text, /\} else if \(is_main && label_band > 0\) \{\s*pos\.y = pos\.y \+ lround\(\(label_band - size\.y\) \/ 2\);\s*\} else \{\s*pos\.y = pos\.y \+ lround\(\(height - label_band - size\.y\) \/ 2\);/);
+  assert.match(text, /\} else if \(is_main && label_band > 0\) \{\s*pos\.y = pos\.y \+ lround\(\(label_band - size\.y\) \/ 2\);\s*\} else \{\s*pos\.y = pos\.y \+ lround\(\(content_height\(\) - label_band - size\.y\) \/ 2\);/);
   const blink = fn(panel, 'wxPoint OG_CustomCtrl::CtrlLine::draw_blinking_bmp(wxDC& dc, wxPoint pos, bool is_blinking)');
-  assert.match(blink, /lround\(\(height - label_band - get_bitmap_size\(bmp_blinking\)\.GetHeight\(\)\) \/ 2\)/);
+  assert.match(blink, /lround\(\(content_height\(\) - label_band - get_bitmap_size\(bmp_blinking\)\.GetHeight\(\)\) \/ 2\)/);
   const act = fn(panel, 'wxCoord OG_CustomCtrl::CtrlLine::draw_act_bmps(');
-  assert.match(act, /\} else \{\s*pos\.y \+= lround\(\(height - label_band - get_bitmap_size\(bmp_undo\)\.GetHeight\(\)\) \/ 2\);/);
+  assert.match(act, /\} else \{\s*pos\.y \+= lround\(\(content_height\(\) - label_band - get_bitmap_size\(bmp_undo\)\.GetHeight\(\)\) \/ 2\);/);
 });
 
 test('the Plate Settings page stacks its dropdown rows', async () => {

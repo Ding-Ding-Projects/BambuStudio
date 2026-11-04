@@ -28,6 +28,7 @@
 #include "libslic3r/Utils.hpp"
 #include "DeviceErrorDialog.hpp"
 #include <wx/html/htmlwin.h>
+#include "Widgets/MD3HtmlWindow.hpp"
 #include <boost/algorithm/string/replace.hpp>
 #include "WindowShadow.hpp"
 #include "Widgets/StateColor.hpp"
@@ -2444,7 +2445,7 @@ public:
         wxBoxSizer *root = new wxBoxSizer(wxVERTICAL);
 
         wxBoxSizer *title_row = new wxBoxSizer(wxHORIZONTAL);
-        m_icon = new wxStaticBitmap(this, wxID_ANY, create_scaled_bitmap("warning", this, 17));
+        m_icon = new wxStaticBitmap(this, wxID_ANY, MaterialIcon::bitmap(this, MaterialIcon::Warning, 17, StateColor::semantic(MD3::Role::Error)));
         title_row->Add(m_icon, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(6));
         m_title = new Label(this, Label::Head_14, _L("Attention!"));
         title_row->Add(m_title, 0, wxALIGN_CENTER_VERTICAL);
@@ -2453,7 +2454,7 @@ public:
         m_sep = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, FromDIP(1)));
         root->Add(m_sep, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(12));
 
-        m_html = new wxHtmlWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHW_SCROLLBAR_NEVER);
+        m_html = new MD3HtmlWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHW_SCROLLBAR_NEVER);
         m_html->SetBorders(0);
         m_html->Bind(wxEVT_HTML_LINK_CLICKED, [](wxHtmlLinkEvent &event) {
             wxLaunchDefaultBrowser(event.GetLinkInfo().GetHref());
@@ -3223,7 +3224,7 @@ wxBoxSizer *StatusBasePanel::create_temp_control(wxWindow *parent)
     m_nozzle_empty_hint->SetMinSize(TEMP_CTRL_MIN_SIZE_ALIGN_ONE_ICON);
     m_nozzle_empty_hint->SetMaxSize(TEMP_CTRL_MIN_SIZE_ALIGN_ONE_ICON);
     auto nozzle_empty_hint_sizer = new wxBoxSizer(wxHORIZONTAL);
-    m_nozzle_empty_hint_icon = new wxStaticBitmap(m_nozzle_empty_hint, wxID_ANY, create_scaled_bitmap("monitor_nozzle_temp", this, 16),
+    m_nozzle_empty_hint_icon = new wxStaticBitmap(m_nozzle_empty_hint, wxID_ANY, MaterialIcon::bitmap(this, MaterialIcon::Thermostat, 16, StateColor::semantic(MD3::Role::OnSurfaceVariant)),
                                                   wxDefaultPosition, wxSize(FromDIP(16), FromDIP(16)), 0);
     m_nozzle_empty_hint_label = new Label(m_nozzle_empty_hint, _L("Unclamped"));
     m_nozzle_empty_hint_label->SetFont(Label::Body_12);

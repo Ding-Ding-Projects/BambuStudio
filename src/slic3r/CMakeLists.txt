@@ -303,8 +303,6 @@ set(SLIC3R_GUI_SOURCES
     GUI/WorkflowPrintPanel.cpp
     GUI/WorkflowPrintPanel.hpp
     GUI/WorkflowPrintState.hpp
-    GUI/PerfTrace.cpp
-    GUI/PerfTrace.hpp
     GUI/BBLTopbar.cpp
     GUI/BBLTopbar.hpp
     GUI/BedShapeDialog.cpp

@@ -1,6 +1,7 @@
 #include "wgtDeviceAutoRefillWebDialog.h"
 
-#include "slic3r/GUI/I18N.hpp"
+#include "slic3r/GUI/I18N.hpp"#include "slic3r/GUI/Widgets/MD3DialogChrome.hpp"
+
 #include "slic3r/GUI/DeviceWeb/DeviceWebHost.hpp"
 #include "slic3r/GUI/AmsMappingPopup.hpp"
 #include "slic3r/GUI/DeviceManager.hpp"
@@ -64,6 +65,7 @@ wgtDeviceAutoRefillWebDialog::wgtDeviceAutoRefillWebDialog(wxWindow* parent)
     m_refresh_timer.SetOwner(this);
     Bind(wxEVT_TIMER, &wgtDeviceAutoRefillWebDialog::OnRefreshTimer, this);
     Layout();
+    MD3DialogCaption::Adopt(this);
     CentreOnParent();
 }
 

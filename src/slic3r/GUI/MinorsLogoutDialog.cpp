@@ -2,6 +2,7 @@
 #include "GUI_App.hpp"
 #include "Widgets/Label.hpp"
 #include "Widgets/StateColor.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 #include <wx/dcbuffer.h>
 #include <slic3r/GUI/I18N.hpp>
 
@@ -205,14 +206,8 @@ MinorsLogoutDialog::MinorsLogoutDialog(wxWindow* parent, wxString signin_url)
     auto body = new RichTextLabel(this, std::move(segs), body_width);
     sizer_main->Add(body, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(20));
 
-    StateColor btn_bg_green(std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed),
-                            std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-                            std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
-
     m_button_got_it = new Button(this, _L("Got it"));
-    m_button_got_it->SetBackgroundColor(btn_bg_green);
-    m_button_got_it->SetBorderColor(*wxWHITE);
-    m_button_got_it->SetTextColor(wxColour("#FFFFFE"));
+    m_button_got_it->SetVariant(Button::Variant::Filled);
     m_button_got_it->SetFont(Label::Body_12);
     m_button_got_it->SetMinSize(wxSize(FromDIP(68), FromDIP(24)));
     m_button_got_it->SetCornerRadius(FromDIP(12));
@@ -231,8 +226,9 @@ MinorsLogoutDialog::MinorsLogoutDialog(wxWindow* parent, wxString signin_url)
     Layout();
     sizer_main->Fit(this);
 
-    CenterOnParent();
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
+    CenterOnParent();
 }
 
 void MinorsLogoutDialog::on_dpi_changed(const wxRect& suggested_rect)

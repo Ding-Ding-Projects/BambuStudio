@@ -1,4 +1,5 @@
 #include "MappingRow.hpp"
+#include "MD3ScrolledWindow.hpp"
 
 #include <wx/dcbuffer.h>
 #include <wx/dcgraph.h>
@@ -397,7 +398,7 @@ wxWindow *MappingRow::dest_anchor() const { return m_dst_box; }
 
 // -------------------------------------------------------------------------------------------------
 MappingList::MappingList(wxWindow *parent)
-    : wxScrolledWindow(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL)
+    : MD3ScrolledWindow(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL)
 {
     SetScrollRate(0, FromDIP(12));
     SetSizer(new wxBoxSizer(wxVERTICAL));

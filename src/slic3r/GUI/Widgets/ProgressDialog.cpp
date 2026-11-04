@@ -287,7 +287,7 @@ bool ProgressDialog::CreatePercentLayout(wxSizer *sizer_main, int maximum, const
 
     // Every label has a fixed size so that updating its text never triggers a relayout.
     auto create_label = [this](long style, const wxFont &font, const wxColour &colour) {
-        wxStaticText *label = new wxStaticText(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, style | wxST_NO_AUTORESIZE);
+        wxStaticText *label = new ::Label(this, wxEmptyString, style | wxST_NO_AUTORESIZE);
         label->SetFont(font);
         label->SetForegroundColour(colour);
         label->SetBackgroundColour(PROGRESSDIALOG_DEF_BK);

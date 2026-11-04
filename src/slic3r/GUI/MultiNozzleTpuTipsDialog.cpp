@@ -1,4 +1,5 @@
 #include "MultiNozzleTpuTipsDialog.hpp"
+#include "Widgets/MaterialIcon.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -22,6 +23,7 @@
 #include "Widgets/CheckBox.hpp"
 #include "Widgets/Label.hpp"
 #include "Widgets/StateColor.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 
 namespace Slic3r { namespace GUI {
 
@@ -30,7 +32,6 @@ static const std::string  TPU_GUIDE_URL   = "https://e.bambulab.com/t?c=NslBZddI
 static const int          CONTENT_WIDTH_DIP   = 460;
 static const char        *TIPS_IMAGE_NAME       = "tpu_tips";
 static const int          TIPS_IMAGE_HEIGHT_DIP = 204;
-static const char        *WARN_ICON_NAME        = "warning";
 static const int          WARN_ICON_SIZE_DIP    = 16;
 static const int          BULLET_INDENT_DIP     = WARN_ICON_SIZE_DIP + 6;
 static const int          BUTTON_HEIGHT_DIP     = 32;
@@ -38,7 +39,6 @@ static const int          TIPS_LINE_GAP_DIP     = 2;
 
 static const wxColour TextPrimaryColor   = wxColour("#262E30");
 static const wxColour TextSecondaryColor = wxColour("#6B6B6B");
-static const wxColour BrandGreenColor    = wxColour("#00AE42");
 
 // One label per wrapped line, with a small gap, because wxStaticText has no line-spacing control.
 static void layout_tips_text(wxWindow *parent, wxBoxSizer *sizer, const wxString &text, int wrap_width)
@@ -119,7 +119,7 @@ MultiNozzleTpuTipsDialog::MultiNozzleTpuTipsDialog(wxWindow *parent)
     main_sizer->Add(m_heading_label, 0, wxLEFT | wxRIGHT, padding);
 
     auto *title_row = new wxBoxSizer(wxHORIZONTAL);
-    m_warn_icon     = new wxStaticBitmap(this, wxID_ANY, create_scaled_bitmap(WARN_ICON_NAME, this, WARN_ICON_SIZE_DIP), wxDefaultPosition,
+    m_warn_icon     = new wxStaticBitmap(this, wxID_ANY, MaterialIcon::bitmap(this, MaterialIcon::Warning, WARN_ICON_SIZE_DIP, StateColor::semantic(MD3::Role::Error)), wxDefaultPosition,
                                          wxSize(FromDIP(WARN_ICON_SIZE_DIP), FromDIP(WARN_ICON_SIZE_DIP)));
     auto *title_label = new Label(this, Label::Body_14, _L("Important Notice:"));
     title_label->SetForegroundColour(TextPrimaryColor);
@@ -152,13 +152,8 @@ MultiNozzleTpuTipsDialog::MultiNozzleTpuTipsDialog(wxWindow *parent)
     main_sizer->Add(check_sizer, 0, wxLEFT | wxRIGHT | wxTOP, padding);
 
     auto *btn_sizer = new wxBoxSizer(wxHORIZONTAL);
-    StateColor btn_bg_green(std::pair<wxColour, int>(wxColour("#1B8844"), StateColor::Pressed),
-                            std::pair<wxColour, int>(wxColour("#3DCB73"), StateColor::Hovered),
-                            std::pair<wxColour, int>(BrandGreenColor, StateColor::Normal));
     m_guide_btn = new Button(this, _L("View User Guide"));
-    m_guide_btn->SetBackgroundColor(btn_bg_green);
-    m_guide_btn->SetBorderColor(BrandGreenColor);
-    m_guide_btn->SetTextColor(wxColour("#FFFFFE"));
+    m_guide_btn->SetVariant(Button::Variant::Filled);
     m_guide_btn->SetFont(Label::Body_14);
     m_guide_btn->SetPaddingSize(wxSize(FromDIP(18), FromDIP(4)));
     m_guide_btn->SetMinSize(wxSize(-1, FromDIP(BUTTON_HEIGHT_DIP)));
@@ -169,13 +164,8 @@ MultiNozzleTpuTipsDialog::MultiNozzleTpuTipsDialog(wxWindow *parent)
     });
     btn_sizer->Add(m_guide_btn, 0, wxALIGN_CENTER_VERTICAL);
 
-    StateColor btn_bg_white(std::pair<wxColour, int>(wxColour(206, 206, 206), StateColor::Pressed),
-                            std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Hovered),
-                            std::pair<wxColour, int>(*wxWHITE, StateColor::Normal));
     m_confirm_btn = new Button(this, _L("I know risks, continue"));
-    m_confirm_btn->SetBackgroundColor(btn_bg_white);
-    m_confirm_btn->SetBorderColor(wxColour("#C2C2C2"));
-    m_confirm_btn->SetTextColor(TextPrimaryColor);
+    m_confirm_btn->SetVariant(Button::Variant::Outlined);
     m_confirm_btn->SetFont(Label::Body_14);
     m_confirm_btn->SetPaddingSize(wxSize(FromDIP(18), FromDIP(4)));
     m_confirm_btn->SetMinSize(wxSize(-1, FromDIP(BUTTON_HEIGHT_DIP)));
@@ -197,8 +187,9 @@ MultiNozzleTpuTipsDialog::MultiNozzleTpuTipsDialog(wxWindow *parent)
     SetSizer(main_sizer);
     Layout();
     Fit();
-    CenterOnParent();
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
+    CenterOnParent();
 }
 
 void MultiNozzleTpuTipsDialog::save_dont_show_choice()
@@ -219,7 +210,7 @@ void MultiNozzleTpuTipsDialog::on_dpi_changed(const wxRect &suggested_rect)
     if (m_heading_label)
         m_heading_label->Wrap(FromDIP(CONTENT_WIDTH_DIP));
     if (m_warn_icon)
-        m_warn_icon->SetBitmap(create_scaled_bitmap(WARN_ICON_NAME, this, WARN_ICON_SIZE_DIP));
+        m_warn_icon->SetBitmap(MaterialIcon::bitmap(this, MaterialIcon::Warning, WARN_ICON_SIZE_DIP, StateColor::semantic(MD3::Role::Error)));
     if (m_tips_sizer) {
         layout_tips_text(this, m_tips_sizer, m_tips_text, FromDIP(CONTENT_WIDTH_DIP - BULLET_INDENT_DIP));
         for (size_t i = 0; i < m_tips_sizer->GetItemCount(); ++i) {

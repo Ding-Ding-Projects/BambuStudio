@@ -40,6 +40,7 @@ namespace MaterialIcon {
 enum Glyph : uint32_t {
     Videocam             = 0xE04B,
     Fullscreen           = 0xE5D0,
+    Cameraswitch         = 0xEFEB,
     FullscreenExit       = 0xE5D1,
     Settings             = 0xE8B8,
     SdCard               = 0xE623,

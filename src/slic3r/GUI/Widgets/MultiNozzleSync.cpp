@@ -83,12 +83,13 @@ ManualNozzleCountDialog::ManualNozzleCountDialog(wxWindow *parent, NozzleVolumeT
     }
 
     if (show_tpu) {
-        auto *tpu_label = new wxStaticText(content, wxID_ANY, _L("TPU"));
+        auto *tpu_label = new ::Label(content, _L("TPU"));
         choice_sizer->Add(tpu_label, 0, wxALL | wxALIGN_LEFT, FromDIP(5));
 
-        m_tpu_choice = new wxChoice(content, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(100), -1), nozzle_choices);
+        m_tpu_choice = new ComboBox(content, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(100), -1), 0, nullptr, wxCB_READONLY);
+        for (const auto &choice : nozzle_choices)
+            m_tpu_choice->Append(choice);
         m_tpu_choice->SetSelection(tpu_count);
-        m_tpu_choice->SetBackgroundColour(*wxWHITE);
         choice_sizer->Add(m_tpu_choice, 0, wxLEFT | wxBOTTOM | wxRIGHT, FromDIP(10));
     }
 
@@ -150,7 +151,7 @@ ManualNozzleCountDialog::ManualNozzleCountDialog(wxWindow *parent, NozzleVolumeT
     if (m_highflow_choice)
         m_highflow_choice->Bind(wxEVT_COMBOBOX, update_nozzle_error);
     if (m_tpu_choice)
-        m_tpu_choice->Bind(wxEVT_CHOICE, update_nozzle_error);
+        m_tpu_choice->Bind(wxEVT_COMBOBOX, update_nozzle_error);
     if (m_e3d_choice)
         m_e3d_choice->Bind(wxEVT_COMBOBOX, update_nozzle_error);
 

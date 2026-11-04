@@ -1,4 +1,5 @@
 #include "NozzleSettingsListDialog.hpp"
+#include "MaterialIcon.hpp"
 
 #include <algorithm>
 #include <functional>
@@ -40,6 +41,7 @@
 #include "slic3r/GUI/DeviceManager.hpp"
 #include "libslic3r/PresetBundle.hpp"
 #include "libslic3r/PrintConfig.hpp"
+#include "slic3r/GUI/Widgets/MD3DialogChrome.hpp"
 
 namespace Slic3r::GUI {
 namespace {
@@ -264,7 +266,7 @@ NozzleRow::FilamentView NozzleRow::build_filament_view(wxWindow *parent, const F
     filament.box   = new StaticBox(filament.panel, wxID_ANY, wxDefaultPosition, dip(parent, 16, 16), wxBORDER_NONE);
     filament.box->SetCornerRadius(dip(parent, 2));
     filament.box->SetBorderColor(wxColour("#BFBFBF"));
-    filament.question = new wxStaticText(filament.box, wxID_ANY, "?");
+    filament.question = new ::Label(filament.box, "?");
     filament.question->SetFont(Label::Body_10);
     filament.question->SetForegroundColour(wxColour("#5C5C5C"));
     filament.question->SetBackgroundStyle(wxBG_STYLE_TRANSPARENT);
@@ -508,13 +510,11 @@ public:
     DisclosureView(wxWindow *parent, const wxString &text, std::function<void(bool expanded)> on_toggle)
         : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE)
         , m_on_toggle(std::move(on_toggle))
-        , m_expanded_icon(this, "drop_down_green", 16)
-        , m_collapsed_icon(this, "drop_right_green", 16)
     {
         SetBackgroundColour(parent->GetBackgroundColour());
         m_label = new Label(this, Label::Body_13, text);
         m_label->SetForegroundColour(ThemeColor::BrandGreen);
-        m_chevron = new wxStaticBitmap(this, wxID_ANY, m_collapsed_icon.bmp());
+        m_chevron = new wxStaticBitmap(this, wxID_ANY, MaterialIcon::bitmap(this, MaterialIcon::ChevronRight, 16, StateColor::semantic(MD3::Role::Primary)));
 
         auto *sizer = new wxBoxSizer(wxHORIZONTAL);
         sizer->Add(m_label, 0, wxALIGN_CENTER_VERTICAL);
@@ -527,8 +527,6 @@ public:
             target->Bind(wxEVT_LEFT_UP, [this](wxMouseEvent &) { toggle(); });
         }
         Bind(wxEVT_DPI_CHANGED, [this](wxDPIChangedEvent &e) {
-            m_expanded_icon.msw_rescale();
-            m_collapsed_icon.msw_rescale();
             update_chevron();
             e.Skip();
         });
@@ -542,11 +540,9 @@ private:
         if (m_on_toggle) m_on_toggle(m_expanded);
     }
 
-    void update_chevron() { m_chevron->SetBitmap((m_expanded ? m_expanded_icon : m_collapsed_icon).bmp()); }
+    void update_chevron() { m_chevron->SetBitmap(MaterialIcon::bitmap(this, m_expanded ? MaterialIcon::ExpandMore : MaterialIcon::ChevronRight, 16, StateColor::semantic(MD3::Role::Primary))); }
 
     std::function<void(bool)> m_on_toggle;
-    ScalableBitmap            m_expanded_icon;
-    ScalableBitmap            m_collapsed_icon;
     Label                    *m_label{nullptr};
     wxStaticBitmap           *m_chevron{nullptr};
     bool                      m_expanded{false};
@@ -657,8 +653,9 @@ NozzleSettingsListDialog::NozzleSettingsListDialog(wxWindow                     
 
     SetBackgroundColour(*wxWHITE);
     create_layout(left_seeds, right_seeds);
-    CentreOnParent();
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
+    CentreOnParent();
 }
 
 void NozzleSettingsListDialog::create_layout(const std::vector<NozzleConfig> &left_seeds, const std::vector<NozzleConfig> &right_seeds)
@@ -811,7 +808,7 @@ void NozzleSettingsListDialog::update_dialog_state()
 void NozzleSettingsListDialog::show_synced(bool show)
 {
     if (show && !m_badge && m_columns_container) {
-        m_badge = new wxStaticBitmap(m_columns_container, wxID_ANY, ScalableBitmap(m_columns_container, "badge", 18).bmp());
+        m_badge = new wxStaticBitmap(m_columns_container, wxID_ANY, MaterialIcon::bitmap(m_columns_container, MaterialIcon::CheckCircle, 18, StateColor::semantic(MD3::Role::Primary)));
         m_badge->SetBackgroundColour(m_columns_container->GetBackgroundColour());
         layout_badge();
     }

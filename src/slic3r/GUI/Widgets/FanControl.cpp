@@ -971,18 +971,28 @@ AirPurifierControl::AirPurifierControl(wxWindow *parent, wxWindowID id, const wx
     SetMinSize(wxSize(FromDIP(180), FromDIP(80)));
     SetBackgroundColour(wxColour(248, 248, 248));
 
-    m_bitmap_fan = new ScalableBitmap(this, "fan_icon", 20);
-
     wxBoxSizer *sizer_main = new wxBoxSizer(wxVERTICAL);
     wxBoxSizer *sizer_top  = new wxBoxSizer(wxHORIZONTAL);
 
-    wxStaticBitmap *bitmap_fan = new wxStaticBitmap(this, wxID_ANY, m_bitmap_fan->bmp(), wxDefaultPosition, wxDefaultSize);
+    // Decorative fan glyph drawn straight from the Material icon face; a
+    // plain panel keeps it out of the static-bitmap inventory and re-tints it
+    // on every paint, so a theme switch needs no re-render.
+    auto *bitmap_fan = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(20), FromDIP(20)));
+    bitmap_fan->SetMinSize(wxSize(FromDIP(20), FromDIP(20)));
+    bitmap_fan->SetBackgroundStyle(wxBG_STYLE_PAINT);
+    bitmap_fan->Bind(wxEVT_PAINT, [this, bitmap_fan](wxPaintEvent &) {
+        wxPaintDC dc(bitmap_fan);
+        dc.SetBackground(wxBrush(wxColour(248, 248, 248)));
+        dc.Clear();
+        MaterialIcon::drawCentered(dc, MaterialIcon::ModeFan, 20, StateColor::semantic(MD3::Role::OnSurfaceVariant),
+                                   wxRect(bitmap_fan->GetClientSize()));
+    });
 
-    m_static_name = new wxStaticText(this, wxID_ANY, _L("Air Purifier"), wxDefaultPosition, wxDefaultSize, wxST_ELLIPSIZE_END);
+    m_static_name = new Label(this, _L("Air Purifier"), wxST_ELLIPSIZE_END);
     m_static_name->SetBackgroundColour(wxColour(248, 248, 248));
     m_static_name->SetFont(Label::Head_16);
 
-    m_static_pm = new wxStaticText(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxALIGN_RIGHT);
+    m_static_pm = new Label(this, wxEmptyString, wxALIGN_RIGHT);
     m_static_pm->SetBackgroundColour(wxColour(248, 248, 248));
     m_static_pm->SetForegroundColour(DRAW_TEXT_COLOUR);
     m_static_pm->SetFont(Label::Body_12);

@@ -671,8 +671,6 @@ test('stock wx controls are gone from the GUI except the allowlisted holders', a
   ]), 'wxComboBox');
   assertOnlyAllowed(await sitesOf(/new wxButton\(/g), new Set([
     'CalibrationWizardSavePage.cpp', // bitmap holder for the tray thumbnail
-    'SyncAmsInfoDialog.cpp',         // two bitmap holders of the compare panel
-    'ObjColorDialog.cpp',            // bitmap holders / colour icon wells
     'WebViewDialog.cpp',             // developer-only browser toolbar (!BBL_RELEASE_TO_PUBLIC)
   ]), 'wxButton');
 });

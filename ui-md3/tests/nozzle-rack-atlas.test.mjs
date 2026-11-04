@@ -5,6 +5,12 @@ import test from 'node:test';
 
 const base = '50715f4355e8b845042bd4809bac2da2ce5c40f4';
 const prefix = 'src/slic3r/GUI/DeviceTab/';
+// Refreshed for the Bambu Studio v02.09.01.70 upstream merge: upstream commit f2e9f6ed5 rewrote this
+// one function (direct-connected rack lookup by stable address id). The merged body is identical to
+// upstream's v02.09.01.70 body, so it is pinned to the merge commit; every other function stays
+// pinned to the original baseline.
+const refreshedBase = '88a19d7d61d5d0b5a3cc2734c5f1582d06a70f70';
+const refreshedMethods = new Set(['wgtDeviceNozzleRackHotendUpdate::UpdateRackNozzleInfo']);
 const read = (name, ref = process.env.ATLAS_SOURCE_REF) => ref
   ? execFileSync('git', ['show', `${ref}:${prefix}${name}.cpp`], {encoding:'utf8'}).replace(/\r\n/g, '\n')
   : readFileSync(`${prefix}${name}.cpp`, 'utf8').replace(/\r\n/g, '\n');
@@ -66,6 +72,6 @@ test('hardware, mapping, identity and firmware decisions remain byte-identical',
   ];
   for (const [file, methods] of groups) for (const method of methods) {
     const normalize = text => text.replace('    MeasureRow();\n', '');
-    assert.equal(normalize(body(read(file), method)), normalize(body(read(file, base), method)), method);
+    assert.equal(normalize(body(read(file), method)), normalize(body(read(file, refreshedMethods.has(method) ? refreshedBase : base), method)), method);
   }
 });

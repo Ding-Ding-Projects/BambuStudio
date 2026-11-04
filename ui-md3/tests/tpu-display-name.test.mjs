@@ -253,7 +253,8 @@ test('the mixed ink dialog shows the ink wording in its message and its names', 
   const source = read(...gui('MixedFilamentDialog.cpp'));
   assert.ok(source.includes('wxString::Format(_L("Slot %s (%s)"), slots, I18N::display_material_type(it->first))'));
   assert.doesNotMatch(source, /_L\("Slot %s \(%s\)"\),\s*slots,\s*wxString::FromUTF8\(it->first\)/, 'the mismatch message does not show the raw type');
-  assert.equal((source.match(/m_physical_names\(display_preset_names\(physical_names\)\)/g) || []).length, 2, 'both constructors list display names');
+  assert.equal((source.match(/m_physical_names\(display_preset_names\(physical_names\)\)/g) || []).length, 1, 'the edit constructor lists display names');
+  assert.equal((source.match(/m_physical_names\s*=\s*display_preset_names\(info\.names\)/g) || []).length, 1, 'the loader-fed dialog lists display names through set_physical_info');
   assert.match(source, /shown\.push_back\(std::string\(I18N::display_material_name\(name\)\.ToUTF8\(\)\.data\(\)\)\);/);
   // The groups and the comparison still use the stored types.
   assert.ok(source.includes('type_groups[m_physical_types[phys - 1]].push_back(phys);'), 'types are grouped as stored');
@@ -263,8 +264,9 @@ test('the changes dialog and the support suggestion show the ink wording', () =>
   const unsaved = read(...gui('UnsavedChangesDialog.cpp'));
   assert.match(unsaved, /if \(opt_key == "filament_type"\)\s*return I18N::display_material_type\(strings->get_at\(opt_idx\)\);/);
   const tab = read(...gui('Tab.cpp'));
-  assert.ok(tab.includes('slot_str += " " + I18N::display_material_type(filament->config.option<ConfigOptionStrings>("filament_type")->values[0]);'));
-  assert.ok(tab.includes('I18N::display_material_name(support_material_display_name), I18N::display_material_name(model_material_display_name)'));
+  const advisor = read(...gui('SupportComboAdvisor.cpp'));
+  assert.ok(advisor.includes('slot_str += " " + I18N::display_material_type(filament->config.option<ConfigOptionStrings>("filament_type")->values[0]);'));
+  assert.ok(tab.includes('I18N::display_material_name(rec.support_material_display_name), I18N::display_material_name(rec.model_material_display_name)'));
 });
 
 test('the ink slot picker lists system presets in the ink wording and still returns the alias', () => {

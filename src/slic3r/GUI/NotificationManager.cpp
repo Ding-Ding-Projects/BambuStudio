@@ -521,6 +521,13 @@ void NotificationManager::PopNotification::render(GLCanvas3D& canvas, float init
 			if (m_minimize_b_visible)
 				render_minimize_button(imgui, win_tr.x, win_tr.y);
 		}
+	}
+	// In Preview the G-code window (shown while the moves slider is scrubbed)
+	// opens in this column, and a narrow canvas leaves the card over the dock:
+	// a notification stays readable, with its close button reachable, in front.
+	// Never while a popup is open: a slider menu the person just opened wins.
+	if (beside_preview && !ImGui::IsPopupOpen("", ImGuiPopupFlags_AnyPopup))
+		ImGui::BringWindowToDisplayFront(ImGui::GetCurrentWindow());
 	imgui.end();
 
 	restore_default_theme();
@@ -802,11 +809,14 @@ void NotificationManager::PopNotification::count_lines()
 		m_lines_count++;
 	}
 	// hypertext calculation, the card layout puts the hypertexts on their own lines
-    if (!use_card_layout() && !m_hypertext.empty()) {
+    if (!m_hypertext.empty()) {
         const float available_width = m_window_width - m_window_width_offset;
         // The link texts are decided here, once per layout, and drawn as decided.
         m_hypertext_shown        = bilingual_link_text(m_hypertext, available_width);
         m_second_hypertext_shown = bilingual_link_text(m_second_hypertext, available_width);
+    }
+    if (!use_card_layout() && !m_hypertext.empty()) {
+        const float available_width = m_window_width - m_window_width_offset;
         const float x_offset = m_left_indentation;
         const float link_spacing = ImGui::CalcTextSize("   ").x;
         int prev_end = m_endlines.size() > 1 ? m_endlines[m_endlines.size() - 2] : 0; // m_endlines.size() - 2 because we are fitting hypertext instead of last endline
@@ -1016,17 +1026,17 @@ void NotificationManager::PopNotification::render_text(ImGuiWrapper& imgui, cons
 		std::string hypertext;
 		{
 			BoldFontScope bold(imgui, is_solid_card());
-			hypertext = ellipsize_middle(m_hypertext, text_width);
+			hypertext = ellipsize_middle(m_hypertext_shown, text_width);
 		}
 		render_hypertext(imgui, x_offset, hypertext_y, hypertext);
 
-		if (!m_second_hypertext.empty()) {
+		if (!m_second_hypertext_shown.empty()) {
 			float second_hypertext_x = x_offset + hypertext_width(imgui, hypertext) + ImGui::CalcTextSize("   ").x;
 			if (count_card_hypertext_lines(imgui) > 1) {
 				second_hypertext_x = x_offset;
 				hypertext_y += shift_y;
 			}
-			render_hypertext(imgui, second_hypertext_x, hypertext_y, m_second_hypertext, false, true);
+			render_hypertext(imgui, second_hypertext_x, hypertext_y, m_second_hypertext_shown, false, true);
 		}
 	}
 	else if (!m_hypertext.empty()) {
@@ -1152,11 +1162,11 @@ size_t NotificationManager::PopNotification::count_card_hypertext_lines(ImGuiWra
 	// Collapsed notifications show the "More" link behind the text instead.
 	if (m_hypertext.empty() || (!m_multiline && m_lines_count > 2))
 		return 0;
-	if (m_second_hypertext.empty())
+	if (m_second_hypertext_shown.empty())
 		return 1;
 	const float text_width = m_window_width - m_window_width_offset;
-	const float first_w    = std::min(hypertext_width(imgui, m_hypertext), text_width);
-	return first_w + ImGui::CalcTextSize("   ").x + hypertext_width(imgui, m_second_hypertext) > text_width ? 2 : 1;
+	const float first_w    = std::min(hypertext_width(imgui, m_hypertext_shown), text_width);
+	return first_w + ImGui::CalcTextSize("   ").x + hypertext_width(imgui, m_second_hypertext_shown) > text_width ? 2 : 1;
 }
 
 bool NotificationManager::PopNotification::render_card_button(const char* id, const ImVec2& pos, wchar_t icon, bool flip_v, bool always_emphasized)

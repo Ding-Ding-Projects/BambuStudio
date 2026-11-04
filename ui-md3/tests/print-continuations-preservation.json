@@ -1,9 +1,10 @@
 {
   "baseline": "b5c42ce78a8e021509bdc504e5a40ab62d9cd8e4",
+  "refreshed": "ConfirmBeforeSendDialog::on_hide refreshed for the Bambu Studio v02.09.01.70 upstream merge: upstream commit 3ce590bc1 changed it to write show_again_config_value; the merged body equals the upstream v02.09.01.70 body. All other entries keep the original baseline.",
   "functions": [
     {
       "signature": "void ConfirmBeforeSendDialog::on_hide(",
-      "sha256": "661164d4b7fb5371bf8fa0df38784f3ce141afbbff107c4122b2b77465b29296"
+      "sha256": "38087bceb2bf1bc284b5c2c91c229897a23ed255fc1aee2787f0c1231bb00301"
     },
     {
       "signature": "void ConfirmBeforeSendDialog::OnHeaderClose(",

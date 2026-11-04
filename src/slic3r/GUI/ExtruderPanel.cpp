@@ -1,4 +1,5 @@
 #include "ExtruderPanel.hpp"
+#include "Widgets/MD3ScrolledWindow.hpp"
 
 #include <wx/bitmap.h>
 #include <wx/event.h>
@@ -29,16 +30,6 @@
 #include "libslic3r/Log.hpp"
 
 namespace Slic3r::GUI {
-
-static const wxColour SelectedBgColor      = ThemeColor::BrandGreen;
-static const wxColour SelectedBorderColor  = SelectedBgColor;
-static const wxColour SelectedTextColor    = ThemeColor::WhiteFixed;
-static const wxColour HasNozzleBgColor     = ThemeColor::White;
-static const wxColour HasNozzleBorderColor = ThemeColor::Grey400;
-static const wxColour HasNozzleTextColor   = ThemeColor::TextPrimary;
-static const wxColour NoNozzleBgColor      = ThemeColor::White;
-static const wxColour NoNozzleBorderColor  = ThemeColor::Grey300;
-static const wxColour NoNozzleTextColor    = ThemeColor::Grey400;
 
 // Per-extruder AMS caps, matching the ones show_ams_add_menu enforces when adding a unit.
 constexpr size_t MAX_AMS_4_SLOT = 4;
@@ -308,29 +299,9 @@ void DiameterButtonPanel::UpdateSingleButtonState(Button *btn, const wxString &d
         }
     }
 
-    StateColor bg_color, text_color, border_color;
-
-    switch (state) {
-    case Selected:
-        bg_color.append(SelectedBgColor, StateColor::Normal);
-        text_color.append(SelectedTextColor, StateColor::Normal);
-        border_color.append(SelectedBorderColor, StateColor::Normal);
-        break;
-    case HasNozzle:
-        bg_color.append(HasNozzleBgColor, StateColor::Normal);
-        text_color.append(HasNozzleTextColor, StateColor::Normal);
-        border_color.append(HasNozzleBorderColor, StateColor::Normal);
-        break;
-    case NoNozzle:
-        bg_color.append(NoNozzleBgColor, StateColor::Normal);
-        text_color.append(NoNozzleTextColor, StateColor::Normal);
-        border_color.append(NoNozzleBorderColor, StateColor::Normal);
-        break;
-    }
-
-    btn->SetBackgroundColor(bg_color);
-    btn->SetTextColor(text_color);
-    btn->SetBorderColor(border_color);
+    // MD3: the chosen diameter is the Tonal selection, the others are Outlined; a diameter with no
+    // matching nozzle is also greyed. The kit variants carry light and dark mode.
+    btn->SetVariant(state == Selected ? Button::Variant::Tonal : Button::Variant::Outlined);
     btn->SetGrayed(state == NoNozzle);
 
     wxString tip = m_tooltip_context == FilamentContext
@@ -700,10 +671,10 @@ constexpr int SCROLLBAR_GAP     = 4;  // content bottom to the slim scrollbar
 constexpr int WHEEL_SCROLL_STEP = 40; // pixels per wheel notch
 
 /// \brief A scrolled window that never shows the native scrollbar; SlimScrollbar stands in for it.
-class BarlessScrolledWindow : public wxScrolledWindow
+class BarlessScrolledWindow : public MD3ScrolledWindow
 {
 public:
-    explicit BarlessScrolledWindow(wxWindow *parent) : wxScrolledWindow(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE)
+    explicit BarlessScrolledWindow(wxWindow *parent) : MD3ScrolledWindow(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE)
     {
         // wxScrolled::Create turns a style naming neither direction into both, so wxOSX builds a
         // horizontal and a vertical bar here even though this window never asks for either, and the

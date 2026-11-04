@@ -1,4 +1,5 @@
 #include "CameraPopup.hpp"
+#include "Widgets/MaterialIcon.hpp"
 #include "Widgets/MD3ScrolledWindow.hpp"
 
 #include "I18N.hpp"
@@ -69,7 +70,7 @@ CameraPopup::CameraPopup(wxWindow *parent)
     m_switch_recording = new SwitchButton(m_panel);
 
     //no-storage hint for Auto-record Monitoring
-    m_text_recording_hint = new wxStaticText(m_panel, wxID_ANY, wxEmptyString);
+    m_text_recording_hint = new Label(m_panel);
     m_text_recording_hint->SetFont(Label::Body_14);
     m_text_recording_hint->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     m_text_recording_hint->Hide();
@@ -101,7 +102,7 @@ CameraPopup::CameraPopup(wxWindow *parent)
     m_switch_visual_cam_rec->Hide();
 
     //no-storage hint for per-camera recording (placed under BirdsEye Camera Recording)
-    m_text_cam_rec_hint = new wxStaticText(m_panel, wxID_ANY, wxEmptyString);
+    m_text_cam_rec_hint = new Label(m_panel);
     m_text_cam_rec_hint->SetFont(Label::Body_14);
     m_text_cam_rec_hint->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     m_text_cam_rec_hint->Hide();
@@ -194,8 +195,8 @@ CameraPopup::CameraPopup(wxWindow *parent)
 
     //timelapse hint
     wxBoxSizer* timelapse_hint_sizer = new wxBoxSizer(wxHORIZONTAL);
-    auto timelapse_hint_icon = new wxStaticBitmap(m_panel, wxID_ANY, create_scaled_bitmap("liveview_timelapse_warning", m_panel, 14));
-    m_text_timelapse_hint = new wxStaticText(m_panel, wxID_ANY, wxEmptyString);
+    auto timelapse_hint_icon = new wxStaticBitmap(m_panel, wxID_ANY, MaterialIcon::bitmap(m_panel, MaterialIcon::Warning, 14, StateColor::semantic(MD3::Role::Error)));
+    m_text_timelapse_hint = new Label(m_panel);
     m_text_timelapse_hint->SetFont(Label::Body_14);
     m_text_timelapse_hint->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     m_wrap_hints.push_back({m_text_timelapse_hint, _L("Timelapse can only be set when starting a task."), 50});
@@ -544,7 +545,7 @@ std::string CameraPopup::to_resolution_msg_string(CameraResolution resolution) {
 void CameraPopup::wrap_hints()
 {
     for (auto& h : m_wrap_hints) {
-        if (h.text) h.text->SetMinSize(wxSize(1, -1));
+        if (h.text) h.text->SetMinSize(wxSize(FromDIP(1), -1));
     }
 
     const int target = main_sizer->CalcMin().x;

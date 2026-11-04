@@ -1,4 +1,5 @@
 #include "AMSNewFilamentDialogs.hpp"
+#include "Widgets/MaterialIcon.hpp"
 
 #include "GUI_App.hpp"
 #include "I18N.hpp"
@@ -6,6 +7,7 @@
 #include "EncodedFilament.hpp"
 #include "FilamentBitmapUtils.hpp"
 #include "Widgets/Label.hpp"
+#include "Widgets/StateColor.hpp"
 #include "Widgets/Button.hpp"
 #include "Widgets/ComboBox.hpp"
 #include "Widgets/MD3DialogChrome.hpp"
@@ -356,10 +358,9 @@ void AMSNewOfficialFilamentDlg::create()
     // Title row: hint icon + bold title (text set per case in populate_link_combo())
     auto* title_row = new wxBoxSizer(wxHORIZONTAL);
     auto* info_bmp = new wxStaticBitmap(this, wxID_ANY,
-        create_scaled_bitmap("ams_filament_hint", this, 16),
+        MaterialIcon::bitmap(this, MaterialIcon::Info, 16, StateColor::semantic(MD3::Role::OnSurfaceVariant)),
         wxDefaultPosition, wxSize(FromDIP(16), FromDIP(16)));
-    m_title = new wxStaticText(this, wxID_ANY, wxEmptyString,
-        wxDefaultPosition, wxDefaultSize, wxALIGN_LEFT);
+    m_title = new Label(this, wxEmptyString, wxALIGN_LEFT);
     m_title->SetFont(::Label::Head_16);
     m_title->Wrap(FromDIP(340));
     title_row->Add(info_bmp, 0, wxALIGN_TOP | wxRIGHT, FromDIP(6));
@@ -372,8 +373,7 @@ void AMSNewOfficialFilamentDlg::create()
     sizer->Hide(m_hit_card);
 
     // Hit+candidates case: "Matched filament" label + dropdown
-    m_match_label = new wxStaticText(this, wxID_ANY, _L("Matched filament"),
-        wxDefaultPosition, wxDefaultSize, wxALIGN_LEFT);
+    m_match_label = new Label(this, _L("Matched filament"), wxALIGN_LEFT);
     m_match_label->SetFont(::Label::Body_13);
     m_match_label->SetForegroundColour(StateColor::darkModeColorFor(wxColour(0x90, 0x90, 0x90)));
     // Left/right = 12 to left-align with the combo box below; small bottom gap to it.
@@ -671,11 +671,9 @@ void AMSNewFilamentRecordedDlg::create(const FilamentSpool& sp)
     // Title row: hint icon + bold info text
     auto* title_row = new wxBoxSizer(wxHORIZONTAL);
     auto* hint_bmp = new wxStaticBitmap(this, wxID_ANY,
-        create_scaled_bitmap("ams_filament_hint", this, 16),
+        MaterialIcon::bitmap(this, MaterialIcon::Info, 16, StateColor::semantic(MD3::Role::OnSurfaceVariant)),
         wxDefaultPosition, wxSize(FromDIP(16), FromDIP(16)));
-    auto* label = new wxStaticText(this, wxID_ANY,
-        _L("New filament information has been recorded."),
-        wxDefaultPosition, wxDefaultSize, wxALIGN_LEFT);
+    auto* label = new Label(this, _L("New filament information has been recorded."), wxALIGN_LEFT);
     label->SetFont(::Label::Head_16);
     label->Wrap(FromDIP(340));
     title_row->Add(hint_bmp, 0, wxALIGN_TOP | wxRIGHT, FromDIP(6));

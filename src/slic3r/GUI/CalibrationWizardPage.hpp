@@ -20,7 +20,6 @@
 #include "../slic3r/Utils/CalibUtils.hpp"
 #include "../../libslic3r/Calib.hpp"
 
-class wxBitmapButton;
 
 namespace Slic3r { namespace GUI {
 
@@ -232,8 +231,8 @@ private:
     wxPanel*  m_subams_panel{nullptr};
     Button*   m_subams_label{nullptr};
     wxBoxSizer* m_subams_picker_sizer{nullptr};
-    std::vector<wxBitmapButton*> m_subams_picker_buttons;
-    wxButton* m_subams_ellipsis_picker{nullptr};
+    std::vector<Button*> m_subams_picker_buttons;
+    Button*   m_subams_ellipsis_picker{nullptr};
     bool      m_subams_mode{false};
     bool      m_subams_enabled{true};
     bool      m_subams_hover{false};

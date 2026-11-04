@@ -1,6 +1,7 @@
 #include "wgtDeviceFilamentHotendWebDialog.h"
 
-#include "slic3r/GUI/I18N.hpp"
+#include "slic3r/GUI/I18N.hpp"#include "slic3r/GUI/Widgets/MD3DialogChrome.hpp"
+
 #include "slic3r/GUI/DeviceWeb/DeviceWebHost.hpp"
 
 #include <algorithm>
@@ -38,6 +39,7 @@ wgtDeviceFilamentHotendWebDialog::wgtDeviceFilamentHotendWebDialog(wxWindow* par
     SetSizer(root);
     Bind(wxEVT_SHOW, &wgtDeviceFilamentHotendWebDialog::OnShow, this);
     Layout();
+    MD3DialogCaption::Adopt(this);
     CentreOnParent();
 }
 

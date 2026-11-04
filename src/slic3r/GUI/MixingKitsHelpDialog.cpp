@@ -1,4 +1,5 @@
 #include "MixingKitsHelpDialog.hpp"
+#include "Widgets/MaterialIcon.hpp"
 
 #include "GUI.hpp"
 #include "GUI_App.hpp"
@@ -214,7 +215,7 @@ wxWindow* MixingKitsHelpDialog::create_capacity_warning(wxWindow* parent)
     auto* warning_row = new wxBoxSizer(wxHORIZONTAL);
     // Reuse the shared warning / error icons so this hint matches the other prompts.
     auto* icon = new wxStaticBitmap(panel, wxID_ANY,
-                                    create_scaled_bitmap(can_delete ? "warning" : "error", panel, 16));
+                                    MaterialIcon::bitmap(panel, (can_delete ? MaterialIcon::Warning : MaterialIcon::Error), 16, StateColor::semantic(MD3::Role::Error)));
     warning_row->Add(icon, 0, wxRIGHT, FromDIP(6));
 
     const wxString text = can_delete

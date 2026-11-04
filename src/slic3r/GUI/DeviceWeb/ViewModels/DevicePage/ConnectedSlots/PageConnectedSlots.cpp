@@ -11,7 +11,8 @@
 
 #include "slic3r/GUI/DeviceWeb/DeviceWebHost.hpp"
 #include "slic3r/GUI/GUI_App.hpp"
-#include "slic3r/GUI/I18N.hpp"
+#include "slic3r/GUI/I18N.hpp"#include "slic3r/GUI/Widgets/MD3DialogChrome.hpp"
+
 #include "slic3r/GUI/MainFrame.hpp"
 
 #include <string>
@@ -44,6 +45,12 @@ ConnectedSlotsDialog::ConnectedSlotsDialog(wxWindow* parent)
     SetClientSize(wxSize(FromDIP(kDialogWidthDip), FromDIP(kDialogHeightDip)));
     SetMinClientSize(wxSize(FromDIP(kDialogWidthDip), FromDIP(kDialogHeightDip)));
 
+    m_content = new wxBoxSizer(wxVERTICAL);
+    SetSizer(m_content);
+    MD3DialogCaption::Adopt(this);
+    // The strip sits above the content, so the minimum grows by its height.
+    SetMinClientSize(GetMinClientSize() + wxSize(0, MD3DialogCaption::Height(this)));
+
     m_refresh_timer.SetOwner(this);
     Bind(wxEVT_TIMER, &ConnectedSlotsDialog::OnRefreshTimer, this);
     // Stop the pump before teardown starts: a queued tick must never reach a VM
@@ -61,6 +68,12 @@ ConnectedSlotsDialog::ConnectedSlotsDialog(wxWindow* parent)
 ConnectedSlotsDialog::~ConnectedSlotsDialog()
 {
     m_refresh_timer.Stop();
+}
+
+void ConnectedSlotsDialog::AddContent(wxWindow* content)
+{
+    m_content->Add(content, 1, wxEXPAND);
+    Layout();
 }
 
 void ConnectedSlotsDialog::StartRefreshPump(ConnectedSlotsVM* vm)
@@ -98,10 +111,7 @@ void open_connected_slots_dialog(const nlohmann::json& payload)
         dlg.StartRefreshPump(vm);
     }
 
-    auto* sizer = new wxBoxSizer(wxVERTICAL);
-    sizer->Add(host, 1, wxEXPAND);
-    dlg.SetSizer(sizer);
-    dlg.Layout();
+    dlg.AddContent(host);
     dlg.ShowModal();
 }
 

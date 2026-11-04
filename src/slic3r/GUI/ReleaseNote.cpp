@@ -282,7 +282,7 @@ ReleaseNoteDialog::ReleaseNoteDialog(Plater *plater /*= nullptr*/)
         ph /= "tooltip/releasenote.html";
     }
     auto url = ph.string();
-    std::replace(url.begin(), url.end(), '\', '/');
+    std::replace(url.begin(), url.end(), '\\', '/');
     url = "file:///" + url;
     m_vebview_release_note->LoadURL(from_u8(url));
 
@@ -1722,14 +1722,7 @@ void ConfirmBeforeSendDialog::edit_ok_button_txt(const wxString& txt, bool switc
 
     if (switch_white)
     {
-        StateColor btn_bg_white(std::pair<wxColour, int>(wxColour(206, 206, 206), StateColor::Pressed),
-                                std::pair<wxColour, int>(wxColour(238, 238, 238), StateColor::Hovered),
-                                std::pair<wxColour, int>(*wxWHITE, StateColor::Normal));
-        StateColor btn_text_white(std::pair<wxColour, int>(*wxLIGHT_GREY, StateColor::Disabled),
-                                  std::pair<wxColour, int>(*wxBLACK, StateColor::Normal));
-        m_button_ok->SetBackgroundColor(btn_bg_white);
-        m_button_ok->SetBorderColor(wxColour(38, 46, 48));
-        m_button_ok->SetTextColor(btn_text_white);
+        m_button_ok->SetVariant(Button::Variant::Outlined);
     }
     rescale();
 }
@@ -2792,22 +2785,10 @@ ExpandCenterDialog::ExpandCenterDialog(wxWindow* parent /*= nullptr*/) :
     m_button_activate->SetToolTip(tooltip_text);
     m_button_activate->Bind(wxEVT_LEFT_DOWN, &ExpandCenterDialog::on_open_expand, this);
 
-    // Uninstall button - only shown when Helio is already enabled. Styled as a
-    // de-emphasized Helio-brand secondary button (matching the outlined
-    // secondary buttons in HelioHistoryDialog) using the named Helio palette.
-    StateColor btn_bg_uninstall(std::pair<wxColour, int>(HELIO_CARD_HIGHLIGHT, StateColor::Hovered),
-                                std::pair<wxColour, int>(HELIO_CARD_BG, StateColor::Normal));
+    // Uninstall button - only shown when Helio is already enabled. A
+    // de-emphasized secondary action, so it takes the kit Outlined variant.
     Button* m_button_uninstall = new Button(this, _L("Uninstall"));
-    m_button_uninstall->SetBackgroundColor(btn_bg_uninstall);
-    m_button_uninstall->SetBorderColor(HELIO_BORDER);
-    // Helio primary text for all states
-    StateColor uninstall_btn_text(std::pair<wxColour, int>(HELIO_TEXT, StateColor::Disabled),
-                                  std::pair<wxColour, int>(HELIO_TEXT, StateColor::Hovered),
-                                  std::pair<wxColour, int>(HELIO_TEXT, StateColor::Pressed),
-                                  std::pair<wxColour, int>(HELIO_TEXT, StateColor::Enabled),
-                                  std::pair<wxColour, int>(HELIO_TEXT, StateColor::Normal));
-    m_button_uninstall->SetTextColor(uninstall_btn_text);
-    m_button_uninstall->SetTextColorNormal(HELIO_TEXT);
+    m_button_uninstall->SetVariant(Button::Variant::Outlined);
     m_button_uninstall->SetFont(Label::Body_13);
     m_button_uninstall->SetSize(wxSize(FromDIP(120), FromDIP(28)));
     m_button_uninstall->SetMinSize(wxSize(FromDIP(120), FromDIP(28)));

@@ -26,6 +26,7 @@
 #include <wx/sizer.h>
 #include <wx/string.h>
 #include <wx/timer.h>
+#include "slic3r/GUI/Widgets/MD3DialogChrome.hpp"
 
 namespace Slic3r ::GUI {
 
@@ -705,8 +706,9 @@ SyncMachineInfoDialog::SyncMachineInfoDialog(wxWindow *parent, MachineObject *ob
 {
     SetBackgroundColour(C(ThemeColor::White));
     BuildLayout(entries);
-    CenterOnParent();
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
+    CenterOnParent();
 
     m_poll_timer.Bind(wxEVT_TIMER, [this](wxTimerEvent &) { OnPollTick(); });
     m_poll_timer.Start(100);

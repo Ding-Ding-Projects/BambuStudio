@@ -10,7 +10,8 @@
 #include "slic3r/GUI/GUI_App.hpp"
 #include "slic3r/GUI/I18N.hpp"
 #include "slic3r/GUI/MainFrame.hpp"
-#include "slic3r/GUI/wxExtensions.hpp"
+#include "slic3r/GUI/wxExtensions.hpp"#include "slic3r/GUI/Widgets/MD3DialogChrome.hpp"
+
 
 #include <boost/format.hpp>
 
@@ -35,10 +36,27 @@ public:
     {
         SetClientSize(wxSize(FromDIP(kDialogWidthDip), FromDIP(content_height)));
         SetMinClientSize(wxSize(FromDIP(kDialogWidthDip), FromDIP(content_height)));
+
+        m_content = new wxBoxSizer(wxVERTICAL);
+        SetSizer(m_content);
+        MD3DialogCaption::Adopt(this);
+        // The strip sits above the content, so the minimum grows by its height.
+        SetMinClientSize(GetMinClientSize() + wxSize(0, MD3DialogCaption::Height(this)));
+    }
+
+    /// Adopt() wraps the root sizer under the caption strip, so the content goes
+    /// into the sizer the constructor installed, never a replacement root.
+    void AddContent(wxWindow* content)
+    {
+        m_content->Add(content, 1, wxEXPAND);
+        Layout();
     }
 
 protected:
     void on_dpi_changed(const wxRect& suggested_rect) override { SetSize(suggested_rect.GetSize()); }
+
+private:
+    wxBoxSizer* m_content{nullptr};
 };
 
 /// Weak handle to the dialog currently on screen, so the web side can close it.
@@ -88,10 +106,7 @@ int open_dialog(const nlohmann::json& payload)
     const std::string route = (boost::format("/device_page/ams_ext_filament_edit?intent=%1%&mode=%2%&slots=%3%&run_slots=%4%") % intent % mode % slots % run_slots).str();
     auto* host = new DeviceWebHost(&dlg, DeviceWebHostMode::DevicePageAmsFilamentHotend, route);
     host->SetMinSize(wxSize(dlg.FromDIP(kDialogWidthDip), dlg.FromDIP(content_height)));
-    auto* sizer = new wxBoxSizer(wxVERTICAL);
-    sizer->Add(host, 1, wxEXPAND);
-    dlg.SetSizer(sizer);
-    dlg.Layout();
+    dlg.AddContent(host);
     const int result = dlg.ShowModal();
 
     if (active_dialog() == &dlg) active_dialog() = nullptr;

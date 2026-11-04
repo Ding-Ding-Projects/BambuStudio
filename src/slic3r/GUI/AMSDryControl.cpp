@@ -5,6 +5,7 @@
 #include "Widgets/TextInput.hpp"
 #include "Widgets/CheckBox.hpp"
 #include "Widgets/StaticLine.hpp"
+#include "Widgets/MaterialIcon.hpp"
 #include "DeviceCore/DevFilaSystem.h"
 #include "GUI_App.hpp"
 #include "I18N.hpp"
@@ -1084,8 +1085,8 @@ wxBoxSizer* AMSDryCtrWin::create_guide_error_section(wxPanel* parent)
 {
     // Error icon + ThemeColor::Danger text
     m_guide_error_sizer = new wxBoxSizer(wxHORIZONTAL);
-    m_guide_error_bmp = ScalableBitmap(parent, "error", 16);
-    m_guide_error_icon = new wxStaticBitmap(parent, wxID_ANY, m_guide_error_bmp.bmp());
+    m_guide_error_bmp = ScalableBitmap(parent, MaterialIcon::bitmap(parent, MaterialIcon::Error, 16, StateColor::semantic(MD3::Role::Error)));
+    m_guide_error_icon = new wxStaticBitmap(parent, wxID_ANY, MaterialIcon::bitmap(parent, MaterialIcon::Error, 16, StateColor::semantic(MD3::Role::Error)));
     m_guide_error_sizer->Add(m_guide_error_icon, 0, wxTOP, FromDIP(2));
     m_guide_error_label = new Label(parent, "");
     m_guide_error_label->SetForegroundColour(StateColor::darkModeColorFor(ThemeColor::Danger));
@@ -1540,7 +1541,7 @@ void AMSDryCtrWin::msw_rescale()
     if (m_time_input) {m_time_input->Rescale();}
     if (m_humidity_img && m_humidity_image.bmp().IsOk()) {m_humidity_image.msw_rescale(); m_humidity_img->SetBitmap(m_humidity_image.bmp());}
     if (m_image_placeholder && m_guide_image.bmp().IsOk()) {m_guide_image.msw_rescale();m_image_placeholder->SetBitmap(m_guide_image.bmp());}
-    if (m_guide_error_icon) {m_guide_error_bmp.msw_rescale();m_guide_error_icon->SetBitmap(m_guide_error_bmp.bmp());}
+    if (m_guide_error_icon) {m_guide_error_bmp = ScalableBitmap(this, MaterialIcon::bitmap(this, MaterialIcon::Error, 16, StateColor::semantic(MD3::Role::Error)));m_guide_error_icon->SetBitmap(m_guide_error_bmp.bmp());}
     if (m_image_description_icon && m_description_icon_bitmap.bmp().IsOk()) {m_description_icon_bitmap.msw_rescale(); m_image_description_icon->SetBitmap(m_description_icon_bitmap.bmp());}
 
     // Rescale and update button sizes based on text content

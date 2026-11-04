@@ -10,6 +10,7 @@
 #include "Widgets/StateColor.hpp"
 #include "Widgets/StaticBox.hpp"
 #include "wxExtensions.hpp"
+#include "Widgets/MD3DialogChrome.hpp"
 
 #include <wx/sizer.h>
 
@@ -60,6 +61,7 @@ MixSupplementFilamentDialog::MixSupplementFilamentDialog(wxWindow*              
     build_ui(rows, family_has_color);
     wxGetApp().UpdateDlgDarkUI(this);
     relayout();
+    MD3DialogCaption::Adopt(this);
     CenterOnParent();
 }
 
@@ -106,15 +108,7 @@ void MixSupplementFilamentDialog::build_ui(const std::vector<Row>& rows, bool fa
     }
 
     m_btn_new = new Button(this, _L("New filament"));
-    m_btn_new->SetBackgroundColor(StateColor(
-        std::pair<wxColour, int>(StateColor::darkModeColorFor(wxColour("#F4F4F4")), StateColor::Disabled),
-        std::pair<wxColour, int>(StateColor::darkModeColorFor(wxColour("#EEEEEE")), StateColor::Pressed),
-        std::pair<wxColour, int>(StateColor::darkModeColorFor(wxColour("#F8F8F8")), StateColor::Hovered),
-        std::pair<wxColour, int>(StateColor::darkModeColorFor(*wxWHITE), StateColor::Normal)));
-    m_btn_new->SetBorderColor(StateColor(std::pair<wxColour, int>(StateColor::darkModeColorFor(COLOR_BORDER), StateColor::Normal)));
-    m_btn_new->SetTextColor(StateColor(
-        std::pair<wxColour, int>(StateColor::darkModeColorFor(wxColour("#ACACAC")), StateColor::Disabled),
-        std::pair<wxColour, int>(text_dark(), StateColor::Normal)));
+    m_btn_new->SetVariant(Button::Variant::Outlined);
     m_btn_new->SetFont(Label::Body_14);
     m_btn_new->SetMinSize(wxSize(-1, FromDIP(32)));
     m_btn_new->SetCornerRadius(FromDIP(4));
@@ -136,29 +130,15 @@ void MixSupplementFilamentDialog::build_ui(const std::vector<Row>& rows, bool fa
 
     main->AddSpacer(FromDIP(24));
 
-    StateColor ok_bg(
-        std::pair<wxColour, int>(wxColour(144, 144, 144), StateColor::Disabled),
-        std::pair<wxColour, int>(wxColour(27, 136, 68), StateColor::Pressed),
-        std::pair<wxColour, int>(wxColour(61, 203, 115), StateColor::Hovered),
-        std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
-    StateColor ok_bd(
-        std::pair<wxColour, int>(wxColour(144, 144, 144), StateColor::Disabled),
-        std::pair<wxColour, int>(wxColour(0, 174, 66), StateColor::Normal));
-    StateColor ok_text(std::pair<wxColour, int>(wxColour("#FFFFFE"), StateColor::Normal));
-
     m_btn_ok = new Button(this, _L("OK"));
-    m_btn_ok->SetBackgroundColor(ok_bg);
-    m_btn_ok->SetBorderColor(ok_bd);
-    m_btn_ok->SetTextColor(ok_text);
+    m_btn_ok->SetVariant(Button::Variant::Filled);
     m_btn_ok->SetFont(Label::Body_14);
     m_btn_ok->SetMinSize(wxSize(FromDIP(72), FromDIP(32)));
     m_btn_ok->SetCornerRadius(FromDIP(16));
     m_btn_ok->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { EndModal(wxID_OK); });
 
     m_btn_cancel = new Button(this, _L("Cancel"));
-    m_btn_cancel->SetBackgroundColor(StateColor::darkModeColorFor(*wxWHITE));
-    m_btn_cancel->SetBorderColor(StateColor::darkModeColorFor(wxColour("#CECECE")));
-    m_btn_cancel->SetTextColor(text_dark());
+    m_btn_cancel->SetVariant(Button::Variant::Outlined);
     m_btn_cancel->SetFont(Label::Body_14);
     m_btn_cancel->SetMinSize(wxSize(FromDIP(72), FromDIP(32)));
     m_btn_cancel->SetCornerRadius(FromDIP(16));

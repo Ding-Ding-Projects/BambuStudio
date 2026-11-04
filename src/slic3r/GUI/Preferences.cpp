@@ -823,8 +823,9 @@ wxBoxSizer *PreferencesDialog::create_item_int_slider(
     }
 
     // 80 + 8 + 56 matches COMBOBOX_WIDTH so the row lines up with other controls.
-    auto *slider = new wxSlider(parent, wxID_ANY, value, range_min, range_max, wxDefaultPosition,
+    auto *slider = new ::Slider(parent, value, range_min, range_max, false, wxDefaultPosition,
                                 wxSize(FromDIP(80), FromDIP(ITEM_MIN_HEIGHT)));
+    slider->SetName(title); // screen-reader name (SliderAccessible reads GetName())
     auto *input = new ::TextInput(parent, wxString::Format("%d", value), wxEmptyString, wxEmptyString, wxDefaultPosition,
                                   wxSize(FromDIP(56), FromDIP(ITEM_MIN_HEIGHT)), wxTE_PROCESS_ENTER);
     StateColor input_bg(std::pair<wxColour, int>(ThemeColor::Grey250, StateColor::Disabled), std::pair<wxColour, int>(ThemeColor::White, StateColor::Enabled));
@@ -852,7 +853,7 @@ wxBoxSizer *PreferencesDialog::create_item_int_slider(
         app_config->save();
     };
 
-    slider->Bind(wxEVT_SLIDER, [commit, slider](wxCommandEvent &) { commit(slider->GetValue()); });
+    slider->SetOnChange([commit](int next) { commit(next); });
     input->GetTextCtrl()->Bind(wxEVT_TEXT_ENTER, [commit, input, slider](wxCommandEvent &e) {
         long entered = 0;
         if (!input->GetTextCtrl()->GetValue().ToLong(&entered))

@@ -5229,7 +5229,7 @@ void TextureImportDialog::build_preview_panel(wxWindow* parent, wxSizer* sizer)
         m_caption_row->SetSizer(caption_sizer);
     } else {
         // Part of the caption row, so it is only shown in the first step as well.
-        m_hint_icon = new wxStaticBitmap(m_caption_row, wxID_ANY, create_scaled_bitmap("warning", this, 16),
+        m_hint_icon = new wxStaticBitmap(m_caption_row, wxID_ANY, MaterialIcon::bitmap(this, MaterialIcon::Warning, 16, StateColor::semantic(MD3::Role::Error)),
                                          wxDefaultPosition, FromDIP(wxSize(16, 16)), 0);
         m_hint_icon->SetBackgroundColour(m_caption_row->GetBackgroundColour());
         m_lbl_hint = new Label(m_caption_row, Label::Body_13, m_hint);

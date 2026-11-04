@@ -59,15 +59,15 @@ void wgtHotendRackControl::create_ui()
 {
     SetBackgroundColour(*wxWHITE);
 
-    StateColor rack_btn_bd(std::pair<wxColour, int>(kButtonHoverBorder, StateColor::Hovered),
-                           std::pair<wxColour, int>(kButtonNormalBg, StateColor::Normal));
-    StateColor rack_btn_text(std::make_pair(kTextDisabled, (int) StateColor::Disabled),
-                             std::make_pair(kTextNormal, (int) StateColor::Normal));
+    StateColor rack_btn_bd(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::Primary), StateColor::Hovered),
+                           std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerHigh), StateColor::Normal));
+    StateColor rack_btn_text(std::make_pair(StateColor::semantic(MD3::Role::OnSurfaceVariant), (int) StateColor::Disabled),
+                             std::make_pair(StateColor::semantic(MD3::Role::OnSurface), (int) StateColor::Normal));
 
     auto button_size = wxSize(FromDIP(kButtonWidthDip), FromDIP(kButtonHeightDip));
-    auto build_btn = [&](const wxString& icon, const wxColour& normal_bg) {
-        StateColor rack_btn_bg(std::pair<wxColour, int>(kButtonPressedBg, StateColor::Pressed),
-                               std::pair<wxColour, int>(normal_bg, StateColor::Normal));
+    auto build_btn = [&](const wxString& icon, MD3::Role normal_role) {
+        StateColor rack_btn_bg(std::pair<wxColour, int>(StateColor::semantic(MD3::Role::SurfaceContainerHighest), StateColor::Pressed),
+                               std::pair<wxColour, int>(StateColor::semantic(normal_role), StateColor::Normal));
         auto* btn = new Button(this, wxEmptyString, icon, 0, FromDIP(kIconSizeDip));
         btn->SetFont(::Label::Body_12);
         btn->SetBorderWidth(0);
@@ -83,9 +83,9 @@ void wgtHotendRackControl::create_ui()
         return btn;
     };
 
-    m_btn_lift = build_btn("monitor_hotend_rack_lift", kButtonNormalBg);
-    m_btn_center = build_btn("monitor_hotend_rack_center", kButtonCenterBg);
-    m_btn_lower = build_btn("monitor_hotend_rack_lower", kButtonNormalBg);
+    m_btn_lift = build_btn("monitor_hotend_rack_lift", MD3::Role::SurfaceContainerHigh);
+    m_btn_center = build_btn("monitor_hotend_rack_center", MD3::Role::SurfaceContainerHighest);
+    m_btn_lower = build_btn("monitor_hotend_rack_lower", MD3::Role::SurfaceContainerHigh);
 
     m_btn_lift->SetToolTip(_L("Lift Hotend Rack"));
     m_btn_center->SetToolTip(_L("Recenter Hotend Rack"));
@@ -95,7 +95,7 @@ void wgtHotendRackControl::create_ui()
     m_btn_center->Bind(wxEVT_COMMAND_BUTTON_CLICKED, [this](wxCommandEvent&) { dispatch_rack_move(RackMoveDir::Center); });
     m_btn_lower->Bind(wxEVT_COMMAND_BUTTON_CLICKED, [this](wxCommandEvent&) { dispatch_rack_move(RackMoveDir::Lower); });
 
-    m_label = new wxStaticText(this, wxID_ANY, _L("Hotend Rack"));
+    m_label = new Label(this, _L("Hotend Rack"));
     m_label->SetFont(::Label::Body_12);
     m_label->SetForegroundColour(kLabelNormal);
 

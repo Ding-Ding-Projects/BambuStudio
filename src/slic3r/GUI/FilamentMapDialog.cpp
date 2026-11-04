@@ -1,4 +1,5 @@
 #include "FilamentMapDialog.hpp"
+#include "Widgets/MD3ScrolledWindow.hpp"
 #include "FilamentMapPanel.hpp"
 #include "Widgets/Button.hpp"
 #include "Widgets/LinkLabel.hpp"
@@ -552,7 +553,7 @@ void FilamentMapDialog::make_body(
         default_auto_mode = modes_to_use.front();
 
     if (show_manual_mode && is_multi_nozzle_mode) {
-        m_manual_scroll = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL | wxBORDER_NONE);
+        m_manual_scroll = new MD3ScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL | wxBORDER_NONE);
         m_manual_scroll->SetBackgroundColour(*wxWHITE);
         m_manual_scroll->SetScrollRate(0, FromDIP(10));
         auto *scroll_sizer = new wxBoxSizer(wxVERTICAL);

@@ -1,4 +1,5 @@
 #include "SyncPresetWithPrinterDialog.hpp"
+#include "MaterialIcon.hpp"
 
 #include "Button.hpp"
 #include "CheckBox.hpp"
@@ -33,6 +34,7 @@
 #include <wx/sizer.h>
 #include <wx/statbmp.h>
 #include "libslic3r/Log.hpp"
+#include "slic3r/GUI/Widgets/MD3DialogChrome.hpp"
 
 namespace Slic3r { namespace GUI {
 
@@ -434,8 +436,9 @@ SyncPresetWithPrinterDialog::SyncPresetWithPrinterDialog(wxWindow *parent, Print
 
     SetBackgroundColour(C(ThemeColor::White));
     build_layout();
-    CenterOnParent();
     wxGetApp().UpdateDlgDarkUI(this);
+    MD3DialogCaption::Adopt(this);
+    CenterOnParent();
 }
 
 void SyncPresetWithPrinterDialog::build_layout()
@@ -682,7 +685,7 @@ wxWindow *SyncPresetWithPrinterDialog::build_detail_loss_hint(wxWindow *parent)
     auto *panel = new wxPanel(parent);
     panel->SetBackgroundColour(parent->GetBackgroundColour());
 
-    auto *icon = new wxStaticBitmap(panel, wxID_ANY, create_scaled_bitmap("warning", panel, 16));
+    auto *icon = new wxStaticBitmap(panel, wxID_ANY, MaterialIcon::bitmap(panel, MaterialIcon::Warning, 16, StateColor::semantic(MD3::Role::Error)));
     auto *label = new Label(panel, _L("Using a larger nozzle after adapting the settings may reduce fine details in your model. Please proceed with caution."));
     label->SetFont(Label::Body_14);
     label->SetForegroundColour(C(ThemeColor::Warning));

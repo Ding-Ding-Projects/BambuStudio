@@ -1,4 +1,5 @@
 #include "MixedFilamentDialog.hpp"
+#include "Widgets/MaterialIcon.hpp"
 #include "Widgets/MD3ScrolledWindow.hpp"
 
 #include <algorithm>
@@ -2532,7 +2533,7 @@ wxBoxSizer* MixedFilamentDialog::create_mode_tabs()
     m_btn_tab_manual = make_tab(_L("Manual Mixing"), false);
     m_btn_tab_match  = make_tab(_L("Color Matching"), true);
 
-    m_lbl_wiki = new wxStaticText(this, wxID_ANY, _L("Wiki"));
+    m_lbl_wiki = new ::Label(this, _L("Wiki"));
     m_lbl_wiki->SetForegroundColour(wxColour(0, 174, 66));
     m_lbl_wiki->SetFont(::Label::Body_13.Underlined());
     m_lbl_wiki->SetCursor(wxCursor(wxCURSOR_HAND));
@@ -2565,7 +2566,7 @@ wxBoxSizer* MixedFilamentDialog::create_match_header()
         marker->SetBackgroundColour(wxColour("#00AE42"));
         row->Add(marker, 0, wxALIGN_CENTER_VERTICAL);
 
-        auto* label = new wxStaticText(this, wxID_ANY, title);
+        auto* label = new ::Label(this, title);
         label->SetForegroundColour(StateColor::darkModeColorFor(wxColour("#262E30")));
         label->SetFont(::Label::Head_14);
         row->Add(label, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(8));
@@ -2574,8 +2575,7 @@ wxBoxSizer* MixedFilamentDialog::create_match_header()
     auto* target_title_row = new wxBoxSizer(wxHORIZONTAL);
     make_section_title(target_title_row, _L("Target Filament"));
     const wxString target_hint_text = _L("(The system will mix 2-3 filaments to approximate this color)");
-    auto* target_hint = new wxStaticText(this, wxID_ANY, target_hint_text, wxDefaultPosition, wxDefaultSize,
-                                         wxST_ELLIPSIZE_END);
+    auto* target_hint = new ::Label(this, target_hint_text, wxST_ELLIPSIZE_END);
     // Long translations are ellipsized instead of widening the dialog.
     target_hint->SetMinSize(wxSize(FromDIP(1), -1));
     target_hint->SetToolTip(target_hint_text);
@@ -2595,7 +2595,7 @@ wxBoxSizer* MixedFilamentDialog::create_match_header()
     target_row->Add(m_target_preview_canvas, 0);
 
     auto* target_select_sizer = new wxBoxSizer(wxVERTICAL);
-    auto* target_label = new wxStaticText(this, wxID_ANY, _L("Select Target Color"));
+    auto* target_label = new ::Label(this, _L("Select Target Color"));
     target_label->SetForegroundColour(wxColour("#909090"));
     target_label->SetFont(::Label::Body_13);
     target_select_sizer->Add(target_label, 0);
@@ -2632,7 +2632,7 @@ wxBoxSizer* MixedFilamentDialog::create_match_header()
     result_row->SetMinSize(wxSize(-1, m_btn_rematch->GetBestSize().GetHeight()));
     result_row->AddStretchSpacer(1);
 
-    m_lbl_official_kit = new wxStaticText(this, wxID_ANY, _L("Use official mixing kits →"));
+    m_lbl_official_kit = new ::Label(this, _L("Use official mixing kits →"));
     m_lbl_official_kit->SetForegroundColour(wxColour(0, 174, 66));
     m_lbl_official_kit->SetFont(::Label::Body_13);
     m_lbl_official_kit->SetCursor(wxCursor(wxCURSOR_HAND));
@@ -2646,10 +2646,9 @@ wxBoxSizer* MixedFilamentDialog::create_match_header()
     m_match_empty_sizer = new wxBoxSizer(wxVERTICAL);
     // preset_empty(_dark) provides the illustration for both themes.
     auto* empty_bmp = new wxStaticBitmap(this, wxID_ANY,
-        create_scaled_bitmap(wxGetApp().dark_mode() ? "preset_empty_dark" : "preset_empty", this, 90));
+        MaterialIcon::bitmap(this, MaterialIcon::Inventory2, 90, StateColor::semantic(MD3::Role::OnSurfaceVariant)));
     m_match_empty_sizer->Add(empty_bmp, 0, wxALIGN_CENTER_HORIZONTAL);
-    m_match_status = new wxStaticText(this, wxID_ANY, _L("No results"), wxDefaultPosition, wxDefaultSize,
-                                      wxALIGN_CENTER_HORIZONTAL);
+    m_match_status = new ::Label(this, _L("No results"), wxALIGN_CENTER_HORIZONTAL);
     m_match_status->SetForegroundColour(wxColour("#909090"));
     m_match_status->SetFont(::Label::Body_13);
     m_match_empty_sizer->Add(m_match_status, 0, wxALIGN_CENTER_HORIZONTAL | wxTOP, FromDIP(8));
@@ -2668,7 +2667,7 @@ wxBoxSizer* MixedFilamentDialog::create_replace_target_option()
     m_chk_replace_target->SetValue(false);
     m_replace_sizer->Add(m_chk_replace_target, 0, wxALIGN_CENTER_VERTICAL);
 
-    auto* label = new wxStaticText(this, wxID_ANY, _L("Replace the target color on models with the mixed result"));
+    auto* label = new ::Label(this, _L("Replace the target color on models with the mixed result"));
     m_lbl_replace_target = label;
     label->SetFont(::Label::Body_13);
     // Wrap within the base dialog width so this option never widens the dialog.
@@ -2690,11 +2689,7 @@ void MixedFilamentDialog::update_tab_styles()
     auto style = [](Button* btn, bool selected) {
         if (!btn)
             return;
-        const wxColour selected_bg = wxGetApp().dark_mode() ? StateColor::darkModeColorFor(*wxWHITE)
-                                                            : wxColour("#E5F7EC");
-        btn->SetBackgroundColor(selected ? selected_bg : wxColour("#FFFFFF"));
-        btn->SetBorderColor(selected ? wxColour("#00AE42") : wxColour("#CECECE"));
-        btn->SetTextColor(selected ? wxColour("#00AE42") : wxColour("#262E30"));
+        btn->SetVariant(selected ? Button::Variant::Tonal : Button::Variant::Outlined);
         btn->Refresh();
     };
     style(m_btn_tab_manual, !m_match_mode);

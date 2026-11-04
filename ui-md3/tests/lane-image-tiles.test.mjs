@@ -26,10 +26,10 @@ const fn = (source, signature) => {
 };
 
 const FILES = [
-  'ObjColorDialog.cpp',
-  'ObjColorDialog.hpp',
-  'SyncAmsInfoDialog.cpp',
-  'SyncAmsInfoDialog.hpp',
+  'TextureImportDialog.cpp',
+  'TextureImportDialog.hpp',
+  'SyncAmsDialog.cpp',
+  'SyncAmsDialog.hpp',
   'CalibrationWizardSavePage.cpp',
   'CalibrationWizardSavePage.hpp',
 ];
@@ -62,75 +62,10 @@ function assertTileRecipe(body, who, label) {
   return { padding, minSize };
 }
 
-test('the colour import thumbnails are flat kit tiles on the well surface', async () => {
-  const cpp = await read('ObjColorDialog.cpp');
-  const ctor = fn(cpp, 'ObjColorPanel::ObjColorPanel(');
-  for (const [who, size, fill] of [
-    ['m_left_image_button', 'LEFT_THUMBNAIL_SIZE_WIDTH', 'SurfaceContainerHigh'],
-    ['m_right_image_button', 'RIGHT_THUMBNAIL_SIZE_WIDTH', 'SurfaceContainerHigh'],
-  ]) {
-    assert.match(ctor, new RegExp(`${who}\\s*=\\s*new Button\\(m_two_image_panel, wxEmptyString, wxEmptyString, wxBORDER_NONE, 0\\);`), `${who} must be a kit Button`);
-    assertTileRecipe(ctor, who, who);
-    assert.match(ctor, new RegExp(`${who}->SetMinSize\\(wxSize\\(FromDIP\\(${size}\\), FromDIP\\(${size}\\)\\)\\);`), `${who} must be sized through FromDIP`);
-    assert.match(ctor, new RegExp(`${who}->SetBackgroundColorNormal\\(StateColor::semantic\\(MD3::Role::${fill}\\)\\);`), `${who} fill must be the ${fill} role`);
-    assert.doesNotMatch(cpp, new RegExp(`${who}->SetBackgroundColour\\(`), `${who}: the window background is not the tile fill`);
-    assert.match(cpp, new RegExp(`${who}->SetIconBitmap\\(`), `${who} must show its bitmap through SetIconBitmap`);
-    assert.doesNotMatch(cpp, new RegExp(`${who}->SetBitmap\\(`), `${who} must not call the native SetBitmap`);
-  }
-  const hpp = await read('ObjColorDialog.hpp');
-  assert.match(hpp, /\bButton\s*\*\s*m_left_image_button\b/);
-  assert.match(hpp, /\bButton\s*\*\s*m_right_image_button\b/);
-  assert.match(hpp, /create_sizer_thumbnail\(Button\s*\*\s*image_button, bool left\)/);
-  assert.match(cpp, /ObjColorPanel::create_sizer_thumbnail\(Button\s*\*\s*image_button, bool left\)/);
-  assert.doesNotMatch(hpp, /\bm_image_button\b/, 'the never-assigned m_image_button member is gone');
-});
-
-test('the colour import swatches are kit tiles on the page surface and keep their Tab order clean', async () => {
-  const cpp = await read('ObjColorDialog.cpp');
-  const hpp = await read('ObjColorDialog.hpp');
-  assert.match(hpp, /std::vector<Button\s*\*>\s*m_extruder_icon_list;/);
-  assert.match(hpp, /std::vector<Button\s*\*>\s*m_color_cluster_icon_list;/);
-
-  const slot = fn(cpp, 'wxBoxSizer *ObjColorPanel::create_extruder_icon_and_rgba_sizer(');
-  const cluster = fn(cpp, 'wxBoxSizer *ObjColorPanel::create_color_icon_map_rgba_sizer(');
-  for (const [body, label] of [[slot, 'the slot swatch'], [cluster, 'the cluster swatch']]) {
-    assert.match(body, /Button\s*\*\s*icon\s*=\s*new Button\(parent, wxEmptyString, wxEmptyString, wxBORDER_NONE, 0\);/, `${label} must be a kit Button`);
-    const { minSize } = assertTileRecipe(body, 'icon', label);
-    assert.match(body, /icon->SetMinSize\(ICON_SIZE\);/, `${label} must be the DPI-aware 16 DIP size`);
-    assert.match(body, /icon->SetBackgroundColorNormal\(StateColor::semantic\(MD3::Role::SurfaceContainerLowest\)\);/, `${label} fill must be the page role`);
-    const bitmap = body.search(/icon->SetIconBitmap\(\*get_extruder_color_icon\(/);
-    assert.notEqual(bitmap, -1, `${label} must show its bitmap through SetIconBitmap`);
-    assert.ok(minSize < bitmap, `${label}: the bitmap must be set after the minimum size`);
-    assert.equal((body.match(/SetCanFocus\(false\)/g) ?? []).length, 1, `${label}: exactly one SetCanFocus(false)`);
-  }
-  assert.match(cluster, /get_extruder_color_icon\(color\.GetAsString\(wxC2S_HTML_SYNTAX\)\.ToStdString\(\), "", FromDIP\(16\), FromDIP\(16\)\)/, 'the cluster swatch keeps its empty label');
-
-  assert.match(fn(cpp, 'void ObjColorPanel::msw_rescale()'), /m_extruder_icon_list\[i\]->SetIconBitmap\(bitmap\);/, 'a DPI change re-bitmaps the slot swatches through the kit');
-  assert.match(fn(cpp, 'void ObjColorPanel::draw_new_table()'), /m_color_cluster_icon_list\[id\]->SetIconBitmap\(\*get_extruder_color_icon\(/, 'the table redraw re-bitmaps the cluster swatches through the kit');
-  assert.doesNotMatch(cpp, /(?:m_extruder_icon_list\[i\]|m_color_cluster_icon_list\[id\])->SetBitmap\(/);
-});
-
-test('the Sync AMS thumbnails are flat kit tiles on the compare panel surface', async () => {
-  const cpp = await read('SyncAmsInfoDialog.cpp');
-  const hpp = await read('SyncAmsInfoDialog.hpp');
-  assert.match(hpp, /\bButton\s*\*\s*m_left_image_button\s*=\s*nullptr;/);
-  assert.match(hpp, /\bButton\s*\*\s*m_right_image_button\s*=\s*nullptr;/);
-  assert.match(hpp, /create_sizer_thumbnail\(Button\s*\*\s*image_button, bool left\)/);
-  assert.match(cpp, /SyncAmsInfoDialog::create_sizer_thumbnail\(Button\s*\*\s*image_button, bool left\)/);
-  for (const [who, size] of [
-    ['m_left_image_button', 'LEFT_THUMBNAIL_SIZE_WIDTH'],
-    ['m_right_image_button', 'RIGHT_THUMBNAIL_SIZE_WIDTH'],
-  ]) {
-    assert.match(cpp, new RegExp(`${who}\\s*=\\s*new Button\\(m_two_image_panel, wxEmptyString, wxEmptyString, wxBORDER_NONE, 0\\);`), `${who} must be a kit Button`);
-    assertTileRecipe(cpp, who, who);
-    assert.match(cpp, new RegExp(`${who}->SetMinSize\\(wxSize\\(FromDIP\\(${size}\\), FromDIP\\(${size}\\)\\)\\);`), `${who} must be sized through FromDIP`);
-    const fills = cpp.match(new RegExp(`${who}->SetBackgroundColorNormal\\(StateColor::semantic\\(MD3::Role::SurfaceContainer\\)\\);`, 'g')) ?? [];
-    assert.equal(fills.length, 2, `${who}: the fill is set at creation and again each time the dialog is shown`);
-    assert.doesNotMatch(cpp, new RegExp(`${who}->SetBackgroundColour\\(`), `${who}: the window background is not the tile fill`);
-    assert.match(cpp, new RegExp(`${who}->SetIconBitmap\\(`), `${who} must show its bitmap through SetIconBitmap`);
-    assert.doesNotMatch(cpp, new RegExp(`${who}->SetBitmap\\(`), `${who} must not call the native SetBitmap`);
-  }
-});
+// The colour import thumbnail wells and swatches (ObjColorDialog) and the Sync AMS compare-panel
+// thumbnail tiles (SyncAmsInfoDialog) have no equivalent surface any more: upstream removed
+// ObjColorDialog in be763c901 (standard 3MF colour import goes through TextureImportDialog) and
+// the old Sync AMS compare panel in 42d6cea63 (SyncAmsDialog uses ModelPreview cards instead).
 
 test('the Record Factor tray swatch is a kit icon button that follows the plate and is not stretched', async () => {
   const cpp = await read('CalibrationWizardSavePage.cpp');
@@ -150,15 +85,22 @@ test('the Record Factor tray swatch is a kit icon button that follows the plate 
   assert.match(cpp, /#include "Widgets\/Button\.hpp"/);
 });
 
-test('the colour import dialog hands its Cancel button to the dark-mode pass as the window it is', async () => {
-  const cpp = await read('ObjColorDialog.cpp');
+test('the texture import dialog Cancel is a kit Button the dark-mode pass sees as a window', async () => {
+  const cpp = await read('TextureImportDialog.cpp');
   assert.doesNotMatch(cpp, /static_cast<wxButton\s*\*>/, 'the Cancel button is a kit Button, not a wxButton');
-  assert.match(cpp, /update_ui\(this->FindWindowById\(wxID_CANCEL, this\)\);/);
+  assert.match(cpp, /auto\*\s*cancel_btn\s*=\s*new Button\(this, _L\("Cancel"\), "", 0, 0, wxID_CANCEL\);/);
+  assert.match(cpp, /cancel_btn->SetVariant\(Button::Variant::Outlined\);/);
+  assert.match(cpp, /wxGetApp\(\)\.UpdateDlgDarkUI\(this\);/);
 });
 
-test('the Sync AMS loading animation path outlives the call that loads it', async () => {
-  const cpp = await read('SyncAmsInfoDialog.cpp');
+test('the Sync AMS dialog is a kit caption shell with kit footer variants and no dangling resource path', async () => {
+  const cpp = await read('SyncAmsDialog.cpp');
+  // The old loading.gif animation (SyncAmsInfoDialog, removed in 42d6cea63) is gone; the lifetime
+  // rule it protected still applies to any resource path taken in this file.
   assert.doesNotMatch(cpp, /Slic3r::var\([^)]*\)\s*\.c_str\(\)/, 'a pointer into the temporary std::string is dangling once the statement ends');
-  assert.match(cpp, /const std::string gif_path = Slic3r::var\("loading\.gif"\);/);
-  assert.match(cpp, /m_gif_ctrl->LoadFile\(from_u8\(gif_path\)\)/);
+  assert.match(cpp, /MD3DialogCaption::Adopt\(this, _L\("Nozzle and Filament Sync"\)\);/);
+  assert.match(cpp, /ok->SetVariant\(::Button::Variant::Filled\);/);
+  assert.match(cpp, /cancel->SetVariant\(::Button::Variant::Outlined\);/);
+  assert.match(cpp, /wxGetApp\(\)\.UpdateDlgDarkUI\(this\);/);
+  assert.doesNotMatch(cpp, /new\s+wxButton\s*\(/);
 });

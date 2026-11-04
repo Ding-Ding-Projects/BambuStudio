@@ -29,12 +29,16 @@ public:
     /// it received when the dialog opened.
     void StartRefreshPump(ConnectedSlotsVM* vm);
 
+    /// Adds the page host under the caption strip installed by the constructor.
+    void AddContent(wxWindow* content);
+
 protected:
     void on_dpi_changed(const wxRect& suggested_rect) override;
 
 private:
     void OnRefreshTimer(wxTimerEvent& evt);
 
+    wxBoxSizer*       m_content{nullptr};
     wxTimer           m_refresh_timer;
     ConnectedSlotsVM* m_vm{nullptr}; ///< Owned by the host's manager, not by us.
 };

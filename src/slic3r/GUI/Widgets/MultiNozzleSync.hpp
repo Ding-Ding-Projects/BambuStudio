@@ -33,7 +33,7 @@ public:
 private:
     ComboBox* m_standard_choice { nullptr };
     ComboBox* m_highflow_choice { nullptr };
-    wxChoice* m_tpu_choice { nullptr };
+    ComboBox* m_tpu_choice { nullptr };
     ComboBox* m_e3d_choice { nullptr };
     Button* m_confirm_btn{ nullptr };
     Label* m_error_label{ nullptr };

@@ -356,21 +356,45 @@ DevAmsSlotId DevAmsTray::get_ams_slot_id() const
     return ams_slot_id;
 }
 
-long long DevAmsTray::get_tray_flag_bit() const {
-    auto ams_slot_id = get_ams_slot_id();
-    if (ams_type == DevAmsType::AMS || ams_type == DevAmsType::AMS_LITE || ams_type == DevAmsType::N3F) {
-        return ams_slot_id.first * 4 + ams_slot_id.second;
+static long long sGetAmsFlagBit(const DevAmsTray* tray) {
+    const auto ams_slot_id = tray->get_ams_slot_id();
+    const long long ams_id = ams_slot_id.first;
+    const long long slot_id = ams_slot_id.second;
+    const auto& ams_type = tray->ams_type;
+    if (ams_id < 0 || slot_id < 0) return -1;
+
+    long long bit = -1;
+    if (ams_type == DevAmsType::AMS_LITE_MIXED || (ams_type == DevAmsType::AMS_LITE && tray->is_ams_lite_mixed)) {
+        if (slot_id >= 4) return -1;
+        bit = 24 + slot_id;
+    } else if (ams_type == DevAmsType::AMS || ams_type == DevAmsType::AMS_LITE || ams_type == DevAmsType::N3F) {
+        if (slot_id >= 4) return -1;
+        bit = ams_id * 4 + slot_id;
     } else if (ams_type == DevAmsType::N3S) {
-        return 16 + (ams_slot_id.first - 128) + ams_slot_id.second;
-    } else if (ams_type == DevAmsType::AMS_LITE_MIXED) {
-        return 24 + ams_slot_id.second;
+        // AMS HT has one slot per unit, unlike four-slot AMS models.
+        if (ams_id < 128 || slot_id != 0) return -1;
+        bit = 16 + (ams_id - 128);
     } else if (ams_type == DevAmsType::ZMULTI_A) {
-        return 28 + ams_slot_id.second;
+        bit = 28 + slot_id;
     } else if (ams_type == DevAmsType::ZMULTI_B) {
-        return 37 + ams_slot_id.second;
+        bit = 37 + slot_id;
     }
 
-    return -1;
+    // The older unit types live in the low 32 bits; the multi-slot types use the
+    // wider telemetry field. Validate before the unsigned right shift.
+    const int limit = (ams_type == DevAmsType::ZMULTI_A || ams_type == DevAmsType::ZMULTI_B)
+        ? std::numeric_limits<std::uint64_t>::digits : std::numeric_limits<std::uint32_t>::digits;
+    return bit >= 0 && bit < limit ? bit : -1;
+}
+
+long long DevAmsTray::get_tray_flag_bit() const {
+    return sGetAmsFlagBit(this);
+}
+
+bool DevAmsTray::is_reading(long long tray_reading_bits) const
+{
+    const auto bit = sGetAmsFlagBit(this);
+    return bit >= 0 && DevUtil::get_flag_bits(tray_reading_bits, bit);
 }
 
 bool DevAmsTray::is_reading(MachineObject* obj) const
@@ -397,7 +421,7 @@ bool DevAmsTray::is_reading(MachineObject* obj) const
             }
         }
 
-        return DevUtil::get_flag_bits(obj->tray_reading_bits, get_tray_flag_bit());
+        return is_reading(obj->tray_reading_bits);
     }
 
     return false;
@@ -420,7 +444,8 @@ bool DevAmsTray::is_reading_done(MachineObject* obj) const
             }
         }
 
-        return DevUtil::get_flag_bits(obj->tray_read_done_bits, get_tray_flag_bit());
+        const auto bit = get_tray_flag_bit();
+        return bit >= 0 && DevUtil::get_flag_bits(obj->tray_read_done_bits, bit);
     }
 
     return false;

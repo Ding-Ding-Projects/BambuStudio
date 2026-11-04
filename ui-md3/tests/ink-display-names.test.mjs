@@ -74,8 +74,8 @@ test('GetDisplayName translates the name when it is built, never at static initi
   // context the lookup asks for, or the catalogues and the lookup stop matching.
   const table = block(source, /s_ams_display_formats\s*=\s*\{/, /\n\};/, 's_ams_display_formats');
   const fallback = source.match(/s_ams_default_display_format\s*=\s*[^;]*;/)[0];
-  assert.equal((table + fallback).match(/L_CONTEXT\("[^"]+",\s*"NarrowBlock"\)/g)?.length, 5, 'four table entries and the fallback use NarrowBlock');
-  assert.equal((table + fallback).match(/L_CONTEXT\(/g)?.length, 5, 'no entry uses another context');
+  assert.equal((table + fallback).match(/L_CONTEXT\("[^"]+",\s*"NarrowBlock"\)/g)?.length, 7, 'the six table entries and the fallback use NarrowBlock');
+  assert.equal((table + fallback).match(/L_CONTEXT\(/g)?.length, 7, 'no entry uses another context');
   assert.match(fn, /_L\(\s*names->full\s*\)/, 'the wide form is translated');
   assert.match(fn, /wxString::Format\(\s*ams_display_format\s*,\s*loc\s*\)/);
   const header = read(...gui('DeviceCore/DevFilaSystem.h'));
@@ -175,7 +175,7 @@ test('the device page names its dispenser types and unit chips through t()', () 
   assert.match(constants, /t\('AMS\(\{\{n\}\}\)', \{ n: amsType \}\)/);
 
   assert.doesNotMatch(read(...devicePage('src/features/filament-manager/AddEditDialog.tsx')), /title=\{`AMS \$\{/);
-  assert.match(read(...devicePage('src/features/filament-manager/AddEditDialog.tsx')), /title=\{t\('AMS \{\{n\}\}'/);
+  assert.match(read(...devicePage('src/features/filament-manager/AddEditDialog.tsx')), /title=\{(?:isExtUnit \? t\('Virtual Slot'\) : \(u\.display_name \|\| )?t\('AMS \{\{n\}\}'/);
 
   const chips = read(...devicePage('src/features/device-page/ams-control-web/components/AmsPreviewBar.tsx'));
   assert.doesNotMatch(chips, /aria-label=\{`AMS \$\{/);

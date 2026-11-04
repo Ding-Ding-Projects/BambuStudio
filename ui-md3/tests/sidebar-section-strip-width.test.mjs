@@ -36,9 +36,11 @@ test('the pane minimum, default and every width request include the strip', () =
   // panel's first size. Every other use goes through default_width().
   const bodyOnly = [...code.matchAll(/FromDIP\(MD3::Metrics::active\(\)\.sidebar_width\)/g)].length;
   assert.equal(bodyOnly, 3, 'sidebar_width is read raw only by default_width(), the scroller minimum and the panel constructor');
-  assert.match(code, /\.MinSize\(wxSize\(this->sidebar->default_width\(\), 90 \* wxGetApp\(\)\.em_unit\(\)\)\)/);
+  // The floor is min_width(), which is default_width() (body plus strip) widened only when the nozzle card needs more.
+  assert.match(code, /int Sidebar::min_width\(\) const[\s\S]*?return std::max\(default_width\(\), card_w\);/);
+  assert.match(code, /\.MinSize\(wxSize\(this->sidebar->min_width\(\), 90 \* wxGetApp\(\)\.em_unit\(\)\)\)/);
   assert.match(code, /\.BestSize\(wxSize\(this->sidebar->default_width\(\), 90 \* wxGetApp\(\)\.em_unit\(\)\)\)/);
-  assert.match(code, /pane\.MinSize\(wxSize\(this->sidebar->default_width\(\), 90 \* em\)\);/);
+  assert.match(code, /pane\.MinSize\(wxSize\(this->sidebar->min_width\(\), 90 \* em\)\);/);
   assert.match(code, /const int def_w = p->sidebar->default_width\(\);/);
   const advanced = [...code.matchAll(/FromDIP\(ADVANCED_SIDEBAR_WIDTH\)( \+ [^,;)]*section_strip_width\(\))?/g)];
   assert.ok(advanced.length >= 3, 'the tree width is requested from the toggle, the startup size event and a strip move');

@@ -1,4 +1,5 @@
 #pragma once
+#include "MD3ScrolledWindow.hpp"
 
 #include <functional>
 
@@ -67,7 +68,7 @@ private:
 /**
  * \brief Vertical list of \ref MappingRow that scrolls past ~5 rows.
  */
-class MappingList : public wxScrolledWindow
+class MappingList : public MD3ScrolledWindow
 {
 public:
     explicit MappingList(wxWindow *parent);

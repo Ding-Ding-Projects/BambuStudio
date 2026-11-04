@@ -186,8 +186,7 @@ void AMSSetting::create()
     sizer_filament_tab_auto_read_rfid->Add(m_checkbox_filament_tab_auto_read_rfid, 0, wxALIGN_CENTER_VERTICAL);
     sizer_filament_tab_auto_read_rfid->Add(0, 0, 0, wxLEFT, FromDIP(12));
 
-    m_title_filament_tab_auto_read_rfid = new wxStaticText(
-        m_panel_body, wxID_ANY, _L("Automatically refresh unloaded filaments"), wxDefaultPosition, wxDefaultSize, 0);
+    m_title_filament_tab_auto_read_rfid = new Label(m_panel_body, _L("Automatically refresh unloaded filaments"));
     m_title_filament_tab_auto_read_rfid->SetFont(::Label::Head_13);
     m_title_filament_tab_auto_read_rfid->SetForegroundColour(AMS_SETTING_GREY800);
     m_title_filament_tab_auto_read_rfid->Wrap(AMS_SETTING_BODY_WIDTH);

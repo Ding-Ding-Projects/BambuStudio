@@ -122,6 +122,8 @@ public:
     // status
     bool is_tray_info_ready() const;
     bool is_reading(MachineObject* obj) const;
+    // Type-aware reading flag for a raw telemetry mask (shared by the native and web views).
+    bool is_reading(long long tray_reading_bits) const;
     bool is_reading_done(MachineObject* obj) const;
 
     bool is_unset_third_filament() const;

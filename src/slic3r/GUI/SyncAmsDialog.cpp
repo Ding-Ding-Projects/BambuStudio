@@ -1,4 +1,5 @@
 #include "SyncAmsDialog.hpp"
+#include "Widgets/MaterialIcon.hpp"
 
 #include <algorithm>
 #include <array>
@@ -48,6 +49,7 @@
 #include "Widgets/Label.hpp"
 #include "Widgets/LinkLabel.hpp"
 #include "Widgets/MappingRow.hpp"
+#include "Widgets/MD3DialogChrome.hpp" // MD3DialogCaption: the kit caption shell
 #include "Widgets/RoundedRectangle.hpp" // shared fill+border card surface
 #include "Widgets/StateColor.hpp"
 #include "libslic3r/PresetBundle.hpp" // project filaments + config, for the source list
@@ -415,7 +417,7 @@ bool syncs_ext_spools_only()
  */
 wxSizer *build_mix_temp_tip(wxWindow *parent, const wxColour &bg)
 {
-    auto *icon = new wxStaticBitmap(parent, wxID_ANY, create_scaled_bitmap("warning", parent, 16));
+    auto *icon = new wxStaticBitmap(parent, wxID_ANY, MaterialIcon::bitmap(parent, MaterialIcon::Warning, 16, StateColor::semantic(MD3::Role::Error)));
     icon->SetBackgroundColour(bg);
     auto *text = new ::Label(parent, _L("Mixing high- and low-temperature filaments is not recommended."), LB_AUTO_WRAP);
     text->SetFont(::Label::Body_13);
@@ -564,6 +566,7 @@ SyncAmsDialog::SyncAmsDialog(wxWindow *parent, bool deferrable)
     root->add_mapping(mapping, m_mapping_list, inset);
     root->AddSpacer(spacing);
     root->Add(build_footer(deferrable), 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, inset);
+    m_column = root; // kept: Adopt below wraps the root sizer under the caption strip
     SetSizer(root);
 
     Bind(wxEVT_CLOSE_WINDOW, [this](wxCloseEvent &) { EndModal(wxID_CANCEL); });
@@ -577,7 +580,11 @@ SyncAmsDialog::SyncAmsDialog(wxWindow *parent, bool deferrable)
     const int content_w = GetBestSize().GetWidth();
     SetClientSize(content_w, GetClientSize().GetHeight());
     SetMinClientSize(wxSize(content_w, -1));
+    wxGetApp().UpdateDlgDarkUI(this);
     set_mode(false);
+    MD3DialogCaption::Adopt(this, _L("Nozzle and Filament Sync")); // last layout act
+    m_caption_h = MD3DialogCaption::Height(this);
+    relayout();
     CentreOnScreen();
 }
 
@@ -601,7 +608,7 @@ wxWindow *SyncAmsDialog::build_header()
     m_desc->SetMinSize(FromDIP(wxSize(640, -1)));
 
     auto *warn      = new wxBoxSizer(wxHORIZONTAL);
-    auto *warn_icon = new wxStaticBitmap(card, wxID_ANY, create_scaled_bitmap("warning_gray", card, 16));
+    auto *warn_icon = new wxStaticBitmap(card, wxID_ANY, MaterialIcon::bitmap(card, MaterialIcon::Warning, 16, StateColor::semantic(MD3::Role::OnSurfaceVariant)));
     warn_icon->SetBackgroundColour(card_bg); // the card paints its own fill; the bitmap does not inherit it
     auto *warn_text = new ::Label(card, _L("After modification, the filament list cannot be restored."));
     warn_text->SetFont(::Label::Body_12);
@@ -639,12 +646,12 @@ void SyncAmsDialog::set_mode(bool overwrite)
 
 void SyncAmsDialog::relayout()
 {
-    auto *column = static_cast<MappingFirstSizer *>(GetSizer());
+    auto *column = static_cast<MappingFirstSizer *>(m_column);
     if (!column) return; // still building; the constructor relays out once the column is set
     wxWindowUpdateLocker freeze(this); // the resize and the relayout paint once, at the final layout
     // The floor changes with the mode and the row count, so refresh it on every relayout.
     const wxSize floor = column->GetMinSize();
-    SetMinClientSize(wxSize(std::max(GetMinClientSize().x, floor.x), floor.y));
+    SetMinClientSize(wxSize(std::max(GetMinClientSize().x, floor.x), floor.y + m_caption_h));
     const wxSize min = GetMinClientSize();
 
     // A height other than the one we set last came from a user drag; keep it as an offset on the content height.
@@ -655,7 +662,7 @@ void SyncAmsDialog::relayout()
     const wxDisplay display(IsShown() || !GetParent() ? static_cast<wxWindow *>(this) : GetParent());
     const int       frame_h = GetSize().y - GetClientSize().y;
     const int       max_h   = display.GetClientArea().height - frame_h;
-    const int       h       = std::min(std::min(column->natural_height(), max_h) + m_height_offset, max_h);
+    const int       h       = std::min(std::min(column->natural_height() + m_caption_h, max_h) + m_height_offset, max_h);
     SetClientSize(wxSize(std::max(GetClientSize().x, min.x), std::max(h, min.y)));
     Layout();
     m_fitted_h = GetClientSize().y;
@@ -970,7 +977,7 @@ wxWindow *SyncAmsDialog::build_mapping_section()
 
     m_detail_loss_hint = new wxPanel(m_mapping_panel);
     m_detail_loss_hint->SetBackgroundColour(m_mapping_panel->GetBackgroundColour());
-    auto *hint_icon = new wxStaticBitmap(m_detail_loss_hint, wxID_ANY, create_scaled_bitmap("warning", m_detail_loss_hint, 16));
+    auto *hint_icon = new wxStaticBitmap(m_detail_loss_hint, wxID_ANY, MaterialIcon::bitmap(m_detail_loss_hint, MaterialIcon::Warning, 16, StateColor::semantic(MD3::Role::Error)));
     auto *hint_text = new ::Label(m_detail_loss_hint, _L("Using a larger nozzle after adapting the settings may reduce fine details in your model. Please proceed with caution."),
                                   LB_AUTO_WRAP);
     hint_text->SetFont(::Label::Body_14);
@@ -997,7 +1004,7 @@ wxWindow *SyncAmsDialog::build_mapping_section()
 
 wxSizer *SyncAmsDialog::build_advanced()
 {
-    m_advanced_icon = new wxStaticBitmap(m_mapping_panel, wxID_ANY, create_scaled_bitmap("advanced_option3", m_mapping_panel, 16));
+    m_advanced_icon = new wxStaticBitmap(m_mapping_panel, wxID_ANY, MaterialIcon::bitmap(m_mapping_panel, MaterialIcon::ExpandMore, 16, StateColor::semantic(MD3::Role::Primary)));
     auto *expander  = new ::Label(m_mapping_panel, _L("Advanced settings"));
     expander->SetFont(::Label::Body_13);
     expander->SetForegroundColour(StateColor::darkModeColorFor(ThemeColor::BrandGreen));
@@ -1043,7 +1050,7 @@ void SyncAmsDialog::toggle_advanced()
 {
     m_advanced_open = !m_advanced_open;
     m_advanced_body->Show(m_advanced_open);
-    m_advanced_icon->SetBitmap(create_scaled_bitmap(m_advanced_open ? "advanced_option4" : "advanced_option3", m_mapping_panel, 16));
+    m_advanced_icon->SetBitmap(MaterialIcon::bitmap(m_mapping_panel, (m_advanced_open ? MaterialIcon::ExpandLess : MaterialIcon::ExpandMore), 16, StateColor::semantic(MD3::Role::Primary)));
     relayout(); // the shown body enlarges the content, so the dialog grows to fit it
 }
 
@@ -1055,16 +1062,9 @@ wxSizer *SyncAmsDialog::build_footer(bool deferrable)
         b->SetMinSize(FromDIP(wxSize(96, 30)));
         b->SetCornerRadius(FromDIP(12));
     }
-    StateColor ok_bg(std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
-                     std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
-    StateColor cancel_bg(std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Pressed), std::pair<wxColour, int>(ThemeColor::Grey300, StateColor::Hovered),
-                         std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
-    ok->SetBackgroundColor(ok_bg);
-    ok->SetBorderColorNormal(StateColor::darkModeColorFor(ThemeColor::BrandGreen));
-    ok->SetTextColorNormal(ThemeColor::WhiteFixed);
-    cancel->SetBackgroundColor(cancel_bg);
-    cancel->SetBorderColorNormal(StateColor::darkModeColorFor(ThemeColor::Grey400));
-    cancel->SetTextColorNormal(StateColor::darkModeColorFor(ThemeColor::TextPrimary));
+    // Kit variants: Filled primary action, Outlined dismissal; both follow the theme roles.
+    ok->SetVariant(::Button::Variant::Filled);
+    cancel->SetVariant(::Button::Variant::Outlined);
 
     cancel->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { EndModal(wxID_CANCEL); });
     ok->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { deal_ok(); EndModal(wxID_OK); });

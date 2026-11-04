@@ -152,27 +152,18 @@ MediaPlayCtrl::MediaPlayCtrl(wxWindow *parent, wxMediaCtrl3 *media_ctrl, const w
     m_button_play->SetToolTip(_L("Play or stop the camera live view"));
     m_button_play->SetName(_L("Play or stop the camera live view"));
 
-    m_button_camera_switch = new Button(this, "", "dev_camera_switch_icon", wxBORDER_NONE);
-    m_button_camera_switch->SetCanFocus(false);
-    {
-        auto parent_bg = StaticBox::GetParentBackgroundColor(this);
-        m_button_camera_switch->SetBackgroundColor(StateColor(
-            std::make_pair(parent_bg, (int) StateColor::Disabled),
-            std::make_pair(*wxLIGHT_GREY, (int) StateColor::Hovered),
-            std::make_pair(parent_bg, (int) StateColor::Normal)));
-    }
+    // MD3: the camera strip's icon buttons are Material Symbols glyphs, named for screen readers.
+    m_button_camera_switch = new Button(this, "", "", wxBORDER_NONE);
+    m_button_camera_switch->SetGlyph(MaterialIcon::Cameraswitch);
+    m_button_camera_switch->SetIconButton(Button::IconShape::Square, 32);
+    m_button_camera_switch->SetName(_L("Switch camera"));
     m_button_camera_switch->Hide();
     m_button_camera_switch->Disable();
 
-    m_button_fullscreen = new Button(this, "", "liveview_fullscreen", wxBORDER_NONE);
-    m_button_fullscreen->SetCanFocus(false);
-    {
-        auto parent_bg = StaticBox::GetParentBackgroundColor(this);
-        m_button_fullscreen->SetBackgroundColor(StateColor(
-            std::make_pair(parent_bg, (int) StateColor::Disabled),
-            std::make_pair(*wxLIGHT_GREY, (int) StateColor::Hovered),
-            std::make_pair(parent_bg, (int) StateColor::Normal)));
-    }
+    m_button_fullscreen = new Button(this, "", "", wxBORDER_NONE);
+    m_button_fullscreen->SetGlyph(MaterialIcon::Fullscreen);
+    m_button_fullscreen->SetIconButton(Button::IconShape::Square, 32);
+    m_button_fullscreen->SetName(_L("Enter Camera Full Screen"));
     m_button_fullscreen->SetToolTip(_L("Enter Camera Full Screen"));
     m_button_fullscreen->Disable();
 

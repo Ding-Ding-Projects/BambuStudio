@@ -12,7 +12,8 @@
 #include "slic3r/GUI/GUI_App.hpp"
 #include "slic3r/GUI/I18N.hpp"
 #include "slic3r/GUI/MainFrame.hpp"
-#include "slic3r/GUI/wxExtensions.hpp"
+#include "slic3r/GUI/wxExtensions.hpp"#include "slic3r/GUI/Widgets/MD3DialogChrome.hpp"
+
 
 #include <chrono>
 #include <cstdint>
@@ -36,10 +37,27 @@ public:
     {
         SetClientSize(wxSize(FromDIP(kDialogWidthDip), FromDIP(kDialogHeightDip)));
         SetMinClientSize(wxSize(FromDIP(kDialogMinWidthDip), FromDIP(kDialogMinHeightDip)));
+
+        m_content = new wxBoxSizer(wxVERTICAL);
+        SetSizer(m_content);
+        MD3DialogCaption::Adopt(this);
+        // The strip sits above the content, so the minimum grows by its height.
+        SetMinClientSize(GetMinClientSize() + wxSize(0, MD3DialogCaption::Height(this)));
+    }
+
+    /// Adopt() wraps the root sizer under the caption strip, so the content goes
+    /// into the sizer the constructor installed, never a replacement root.
+    void AddContent(wxWindow* content)
+    {
+        m_content->Add(content, 1, wxEXPAND);
+        Layout();
     }
 
 protected:
     void on_dpi_changed(const wxRect& suggested_rect) override { SetSize(suggested_rect.GetSize()); }
+
+private:
+    wxBoxSizer* m_content{nullptr};
 };
 
 /// Handed over from the page VM to the dialog VM, which cannot rebuild it: the
@@ -62,10 +80,7 @@ void open_bridge_debug_dialog()
     AmsBridgeDebugDialog dlg(parent);
     auto* host = new DeviceWebHost(&dlg, DeviceWebHostMode::DevicePageAmsFilamentHotend, "/device_page/ams_bridge_debug");
     host->SetMinSize(wxSize(dlg.FromDIP(kDialogMinWidthDip), dlg.FromDIP(kDialogMinHeightDip)));
-    auto* sizer = new wxBoxSizer(wxVERTICAL);
-    sizer->Add(host, 1, wxEXPAND);
-    dlg.SetSizer(sizer);
-    dlg.Layout();
+    dlg.AddContent(host);
     dlg.ShowModal();
 }
 

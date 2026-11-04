@@ -1145,7 +1145,7 @@ struct Sidebar::priv
     void reset_filament_combo_min_heights();
 
     std::vector<NozzleChipButton*> filament_nozzle_labels;
-    std::vector<wxStaticLine*> filament_nozzle_dividers;
+    std::vector<::StaticLine*> filament_nozzle_dividers;
     // Figma node 7808:13253: the incompatibility marker is an exclamation icon living inside the
     // combo box right after the diameter/flow badge, not a separate icon out at the row's edge.
     // Plain wxStaticBitmap rather than ScalableButton: a native themed push-button ignores
@@ -6193,7 +6193,8 @@ void Sidebar::init_filament_combo(PlaterPresetComboBox **combo, const int filame
 
     const wxColour row_fill = StateColor::semantic(MD3::Role::SurfaceContainerHighest);
 
-    auto *nozzle_divider = new wxStaticLine(*combo, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(1), FromDIP(14)), wxLI_VERTICAL);
+    auto *nozzle_divider = new ::StaticLine(*combo, true);
+    nozzle_divider->SetSize(wxSize(FromDIP(1), FromDIP(14)));
 
     // NozzleChipButton (a Button subclass) rather than a bare wxStaticText so hovering gets a
     // native grey background and the click still fires wxEVT_BUTTON like the chips
@@ -6243,7 +6244,7 @@ void Sidebar::init_filament_combo(PlaterPresetComboBox **combo, const int filame
     // outside combo. Unlike the diameter/flow badge, this icon is not gated on
     // filament_nozzle_chip_supported(): single-diameter-mode machines hide the diameter badge
     // entirely but still need a visible in-row marker when a slot is incompatible.
-    auto *incompatible_icon = new wxStaticBitmap(*combo, wxID_ANY, create_scaled_bitmap("error", *combo, 16));
+    auto *incompatible_icon = new wxStaticBitmap(*combo, wxID_ANY, MaterialIcon::bitmap(*combo, MaterialIcon::Error, 16, StateColor::semantic(MD3::Role::Error)));
     // combo (a TextInput/StaticBox) paints its own background per-state; a native themed button
     // parented into it ignores SetBackgroundColour and paints its own button-face box, so this is
     // a plain static bitmap instead -- it isn't clickable, only shown with a tooltip, and actually
@@ -6428,7 +6429,7 @@ void Sidebar::priv::refresh_filament_nozzle_label(size_t idx, int filament_idx)
     if (idx >= filament_nozzle_labels.size())
         return;
     NozzleChipButton *label = filament_nozzle_labels[idx];
-    wxStaticLine *divider = idx < filament_nozzle_dividers.size() ? filament_nozzle_dividers[idx] : nullptr;
+    ::StaticLine *divider = idx < filament_nozzle_dividers.size() ? filament_nozzle_dividers[idx] : nullptr;
     if (label == nullptr || filament_idx < 0)
         return;
 
@@ -6585,7 +6586,7 @@ int Sidebar::priv::natural_divider_x(size_t idx)
         return -1;
     PlaterPresetComboBox *combo   = combos_filament[idx];
     NozzleChipButton     *label   = filament_nozzle_labels[idx];
-    wxStaticLine         *divider = filament_nozzle_dividers[idx];
+    ::StaticLine         *divider = filament_nozzle_dividers[idx];
     wxStaticBitmap       *icon    = idx < filament_incompatible_icons.size() ? filament_incompatible_icons[idx] : nullptr;
     if (combo == nullptr || label == nullptr || divider == nullptr || !label->IsShown())
         return -1;
@@ -6633,7 +6634,7 @@ void Sidebar::priv::reposition_filament_nozzle_indicator(size_t idx)
         return;
     PlaterPresetComboBox *combo   = combos_filament[idx];
     NozzleChipButton      *label   = filament_nozzle_labels[idx];
-    wxStaticLine          *divider = filament_nozzle_dividers[idx];
+    ::StaticLine          *divider = filament_nozzle_dividers[idx];
     wxStaticBitmap        *icon    = idx < filament_incompatible_icons.size() ? filament_incompatible_icons[idx] : nullptr;
     if (combo == nullptr || label == nullptr || divider == nullptr)
         return;
@@ -10204,22 +10205,19 @@ void Sidebar::update_mixed_filament_list(bool reload_3d)
                 nozzle_text = mixed_slot_nozzle_label(comp_ids, physical_indices, selected_diameters, volume_maps);
             const wxString cp_nozzle_label = wxString::FromUTF8(nozzle_text);
             Button *nozzle_lbl = nullptr;
-            wxStaticLine *nozzle_divider = nullptr;
+            ::StaticLine *nozzle_divider = nullptr;
             int cp_nozzle_reserve = 0;
             const int cp_chip_right  = FromDIP(8);
             const int cp_chip_gap    = FromDIP(8);
             const int cp_chip_inset  = FromDIP(3);
             if (!cp_nozzle_label.empty()) {
-                nozzle_divider = new wxStaticLine(content_panel, wxID_ANY, wxDefaultPosition,
-                                                  wxSize(FromDIP(1), FromDIP(14)), wxLI_VERTICAL);
+                nozzle_divider = new ::StaticLine(content_panel, true);
+                nozzle_divider->SetSize(wxSize(FromDIP(1), FromDIP(14)));
                 nozzle_lbl = new Button(content_panel, wxEmptyString, "", wxBORDER_NONE);
                 nozzle_lbl->SetFont(Label::Body_13);
+                nozzle_lbl->SetVariant(Button::Variant::Text);
                 nozzle_lbl->SetTextColorNormal(StateColor::semantic(MD3::Role::OnSurfaceVariant));
                 nozzle_lbl->SetBackgroundColour(mc_bg);
-                StateColor nozzle_label_bg(std::make_pair(mc_bg, (int) StateColor::Hovered),
-                                           std::make_pair(mc_bg, (int) StateColor::Normal));
-                nozzle_label_bg.setTakeFocusedAsHovered(false);
-                nozzle_lbl->SetBackgroundColor(nozzle_label_bg);
                 nozzle_lbl->SetPaddingSize(wxSize(FromDIP(6), FromDIP(2)));
                 nozzle_lbl->SetCornerRadius(FromDIP(4));
                 nozzle_lbl->SetLabel(cp_nozzle_label);

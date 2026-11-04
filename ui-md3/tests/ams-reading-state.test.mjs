@@ -32,6 +32,7 @@ function translate(source) {
   return source.replace(/\/\/[^\n]*/g, '')
     .replace(/DevAmsType::/g, 'types.')
     .replace(/std::numeric_limits<std::uint32_t>::digits/g, '32')
+    .replace(/std::numeric_limits<std::uint64_t>::digits/g, '64')
     .replace(/\bconst\s+(?:auto\s*&?|long long|std::int64_t|int)\s+/g, 'const ')
     .replace(/\b(?:auto|long long|std::int64_t|int)\s+/g, 'let ')
     .replace(/tray->/g, 'tray.');
@@ -39,7 +40,7 @@ function translate(source) {
 
 const bitBody = translate(body(model, 'static long long sGetAmsFlagBit('));
 const bitIndex = new Function('tray', 'types', bitBody);
-const readBody = translate(body(model, 'bool DevAmsTray::is_reading('))
+const readBody = translate(body(model, 'bool DevAmsTray::is_reading(long long'))
   .replace(/sGetAmsFlagBit\(this\)/g, 'bitIndex(tray, types)')
   .replace(/DevUtil::get_flag_bits/g, 'flagBits');
 const readFlag = new Function('tray', 'tray_reading_bits', 'types', 'bitIndex', 'flagBits', readBody);
@@ -56,6 +57,7 @@ const parsedReadingFlag = readingFlagAssignment && new Function('ams',
 const readingFlagDefault = modelHeader.match(/bool\s+is_ams_lite_mixed\s*=\s*(false|true);/);
 const resetTray = new Function('tray', body(model, 'void DevAmsTray::reset()')
   .replace(/\/\/[^\n]*/g, '')
+  .replace(/m_rfid_refresh_token\.reset\(\);/g, '') // control token, not reading identity
   .replace(/\b([A-Za-z_]\w*)\s*=(?!=)/g, 'tray.$1 =')
   .replace(/(\d+\.\d+)f\b/g, '$1'));
 
@@ -178,5 +180,7 @@ test('native and web displays share the canonical reader', () => {
   assert.match(loop, /tray_it->second->is_reading\(obj->tray_reading_bits\)/);
   assert.doesNotMatch(loop, /<<|check_flag|IsAmsLiteMixed/);
   assert.match(read('src/slic3r/GUI/DeviceWeb/ViewModels/DevicePage/AmsControlWeb/ViewModelDataBuilder.cpp'),
-    /tray->is_reading\(machine_obj->tray_reading_bits\)/);
+    /tray->is_reading\(machine_obj\)/);
+  // The object overload must route through the same bounded mask reader.
+  assert.match(body(model, 'bool DevAmsTray::is_reading(MachineObject*'), /is_reading\(obj->tray_reading_bits\)/);
 });

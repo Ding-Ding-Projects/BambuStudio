@@ -120,7 +120,7 @@ protected:
     /* hotend integrated ams info */
     wxBoxSizer*            m_hotend_ams_sizer = nullptr;
     wxStaticBitmap*        m_hotend_ams_img = nullptr;
-    wxStaticLine*          m_hotend_ams_line_above = nullptr;
+    StaticLine*          m_hotend_ams_line_above = nullptr;
     uiDeviceUpdateVersion* m_hotend_ams_version = nullptr;
 
     /* air_pump info*/
@@ -168,7 +168,7 @@ protected:
     /* air purifier */
     wxBoxSizer*            m_air_purifier_sizer = nullptr;
     wxStaticBitmap*        m_air_purifier_img = nullptr;
-    wxStaticLine*          m_air_purifier_line_above = nullptr;
+    StaticLine*          m_air_purifier_line_above = nullptr;
     uiDeviceUpdateVersion* m_air_purifier_version = nullptr;
 
     /* nozzle_rack*/

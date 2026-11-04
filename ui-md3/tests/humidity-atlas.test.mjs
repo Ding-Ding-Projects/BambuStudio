@@ -37,9 +37,16 @@ test('level and percentage telemetry assignments and formatting remain unchanged
     removeFinalLayout(body(historical(percentPath), 'void uiAmsPercentHumidityDryPopup::UpdateContents()')));
 });
 
+// Refreshed for the Bambu Studio v02.09.01.70 upstream merge. Upstream changed these two files
+// (remote drying window, virtual-tray lookup, log framework, read-slot result); the fork's
+// redesign did not. The differences from the original baseline 0f034f2 are exactly upstream's
+// own hunks (da8b44ee3..v02.09.01.70: 579712cca, 3e46e23a9, 9cfdde3be, 1f57f20db, 96b6f1865,
+// b8661541e, a20790efa, bf25dd029, 7e8af939e for AMSControl.cpp; fbebe983d, cd96497de, 1f57f20db,
+// 63e741b10 for ViewModelActions.cpp), so the preserved reference is the merge commit.
+const capabilityRoutingBaseline = '88a19d7d61d5d0b5a3cc2734c5f1582d06a70f70';
 test('native and embedded capability routing is byte-identical to the preserved baseline', () => {
   for (const file of ['src/slic3r/GUI/Widgets/AMSControl.cpp', 'src/slic3r/GUI/DeviceWeb/ViewModels/DevicePage/AmsControlWeb/ViewModelActions.cpp'])
-    assert.equal(read(file), historical(file));
+    assert.equal(read(file), historical(file, capabilityRoutingBaseline));
 });
 
 test('production legend geometry contains every ordered bitmap at supported widths and scales', () => {

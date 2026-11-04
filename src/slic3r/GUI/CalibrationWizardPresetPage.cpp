@@ -1,5 +1,6 @@
 #include <wx/wrapsizer.h>
 #include <wx/scrolwin.h>
+#include "Widgets/MD3ScrolledWindow.hpp"
 #include "Widgets/MD3Tokens.hpp"
 #include "Widgets/StateColor.hpp"
 #include <regex>
@@ -3574,7 +3575,7 @@ SubAmsPopup::SubAmsPopup(wxWindow* parent)
     });
 
     auto* root = new wxBoxSizer(wxVERTICAL);
-    m_scroll = new wxScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize,
+    m_scroll = new MD3ScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize,
                                     wxVSCROLL | wxBORDER_NONE);
     m_scroll->SetBackgroundColour(*wxWHITE);
 #ifdef __WXOSX__

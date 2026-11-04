@@ -41,7 +41,8 @@ test('resolution choices derive their extent from both real controls and padded 
 test('camera popup uses a shared tonal body and measured content width', () => {
   assert.match(popup, /m_panel->SetBackgroundColour\(StateColor::semantic\(MD3::Role::SurfaceContainerLow\)\)/);
   assert.match(popup, /item->SetBackgroundColour\(StateColor::semantic\(MD3::Role::SurfaceContainerLow\)\)/);
-  assert.match(popup, /main_sizer->Add\(top_sizer, 0, wxEXPAND \| wxALL, FromDIP\(16\)\)/);
+  assert.match(popup, /main_sizer->Add\(grid_recording, 0, wxEXPAND \| wxLEFT \| wxRIGHT \| wxTOP, FromDIP\(10\)\)/);
+  assert.match(popup, /main_sizer->Add\(grid_rest, 0, wxEXPAND \| wxLEFT \| wxRIGHT \| wxBOTTOM, FromDIP\(10\)\)/);
 });
 
 test('temperature extent grows for measured text and paint uses the allocated height', () => {

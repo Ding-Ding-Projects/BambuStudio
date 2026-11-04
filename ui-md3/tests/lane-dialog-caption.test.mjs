@@ -271,7 +271,6 @@ const fileNamed = async (name) => (await guiFiles()).find((f) => f.file === name
 // out. Adding a class here is a decision somebody has to justify in this list, never a way to
 // turn the sweep green.
 const ALLOWED_WITHOUT_CAPTION = new Map([
-  ['AMSTraySettingBase', 'abstract base: AMSMaterialsSetting, the derived class, adopts in its own constructor'],
   ['AmsControlWebDebugDialog', 'developer-only page of the web AMS view, adopts outside its constructor, in the function that builds it'],
   ['BedShapeDialog', 'its constructor is empty; build_dialog(), which every caller runs before showing it, adopts'],
   ['DPIDialog', 'the DPI-aware base class itself: it draws no chrome and has no constructor of its own'],
@@ -290,7 +289,7 @@ const CONVERTED = [
   { cls: 'uiAmsPercentHumidityDryPopup', file: 'DeviceTab/uiAmsHumidityPopup.cpp', title: 'Current AMS humidity', step: 'Create', adopts: 1 },
   { cls: 'TextureImportAddFilamentDialog', file: 'TextureImportDialog.cpp', title: 'Add Filament', step: null, adopts: 1 },
   { cls: 'FilaManagerPromptDialog', file: 'AMSMaterialsSetting.cpp', title: 'Add to Filament Library?', step: null, adopts: 1 },
-  { cls: 'AMSNewFilamentRecordedDlg', file: 'AMSMaterialsSetting.cpp', title: 'New Filament', step: null, adopts: 1 },
+  { cls: 'AMSNewFilamentRecordedDlg', file: 'AMSNewFilamentDialogs.cpp', title: 'New Filament', step: null, adopts: 1 },
 ];
 
 test('the five dialogs that wore the native title bar adopt the kit caption with their own title', async () => {

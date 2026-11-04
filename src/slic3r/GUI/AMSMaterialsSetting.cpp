@@ -231,9 +231,7 @@ void AMSMaterialsSetting::create()
     m_button_reset->Bind(wxEVT_BUTTON, &AMSMaterialsSetting::on_select_reset, this);
 
     m_button_reread = new Button(this, _L("Reread"));
-    m_button_reread->SetBackgroundColor(m_btn_bg_gray);
-    m_button_reread->SetBorderColor(AMS_MATERIALS_SETTING_GREY900);
-    m_button_reread->SetTextColor(AMS_MATERIALS_SETTING_GREY900);
+    m_button_reread->SetVariant(Button::Variant::Outlined);
     m_button_reread->SetMinSize(AMS_MATERIALS_SETTING_BUTTON_SIZE);
     m_button_reread->SetCornerRadius(FromDIP(12));
     m_button_reread->Bind(wxEVT_BUTTON, &AMSMaterialsSetting::on_select_reread, this);
@@ -384,8 +382,7 @@ void AMSMaterialsSetting::create_panel_weight(wxWindow* parent)
     wxBoxSizer* m_sizer_filament_weight = new wxBoxSizer(wxHORIZONTAL);
     const wxSize weight_label_size(AMS_MATERIALS_SETTING_LABEL_WIDTH, -1);
 
-    auto m_title_filament_weight = new wxStaticText(m_panel_filament_weight, wxID_ANY, _L("Weight"), wxDefaultPosition,
-                                                     wxSize(AMS_MATERIALS_SETTING_CALI_COL_INDENT, -1), 0);
+    auto m_title_filament_weight = new Label(m_panel_filament_weight, _L("Weight"), 0, wxSize(AMS_MATERIALS_SETTING_CALI_COL_INDENT, -1));
     m_title_filament_weight->SetFont(::Label::Body_13);
     m_title_filament_weight->SetForegroundColour(AMS_MATERIALS_SETTING_GREY800);
     m_title_filament_weight->Wrap(-1);
@@ -394,7 +391,7 @@ void AMSMaterialsSetting::create_panel_weight(wxWindow* parent)
     wxBoxSizer* sizer_weight_inputs = new wxBoxSizer(wxVERTICAL);
 
     wxBoxSizer* m_sizer_total_weight = new wxBoxSizer(wxHORIZONTAL);
-    auto m_title_total_weight = new wxStaticText(m_panel_filament_weight, wxID_ANY, _L("Total Weight"), wxDefaultPosition, weight_label_size, 0);
+    auto m_title_total_weight = new Label(m_panel_filament_weight, _L("Total Weight"), 0, weight_label_size);
     m_title_total_weight->SetFont(::Label::Body_13);
     m_title_total_weight->SetForegroundColour(AMS_MATERIALS_SETTING_GREY800);
     m_title_total_weight->Wrap(-1);
@@ -403,13 +400,13 @@ void AMSMaterialsSetting::create_panel_weight(wxWindow* parent)
     m_input_total_weight->GetTextCtrl()->SetValidator(wxTextValidator(wxFILTER_NUMERIC));
     m_input_total_weight->GetTextCtrl()->SetSize(wxSize(-1, FromDIP(20)));
     m_sizer_total_weight->Add(m_input_total_weight, 0, wxALIGN_CENTER, 0);
-    auto m_unit_total_weight = new wxStaticText(m_panel_filament_weight, wxID_ANY, "g", wxDefaultPosition, wxDefaultSize, 0);
+    auto m_unit_total_weight = new Label(m_panel_filament_weight, "g");
     m_unit_total_weight->SetFont(::Label::Body_13);
     m_unit_total_weight->SetForegroundColour(AMS_MATERIALS_SETTING_GREY800);
     m_sizer_total_weight->Add(m_unit_total_weight, 0, wxALIGN_CENTER | wxLEFT, FromDIP(6));
 
     wxBoxSizer* m_sizer_remain_weight = new wxBoxSizer(wxHORIZONTAL);
-    auto m_title_remain_weight = new wxStaticText(m_panel_filament_weight, wxID_ANY, _L("Remain Weight"), wxDefaultPosition, weight_label_size, 0);
+    auto m_title_remain_weight = new Label(m_panel_filament_weight, _L("Remain Weight"), 0, weight_label_size);
     m_title_remain_weight->SetFont(::Label::Body_13);
     m_title_remain_weight->SetForegroundColour(AMS_MATERIALS_SETTING_GREY800);
     m_title_remain_weight->Wrap(-1);
@@ -420,7 +417,7 @@ void AMSMaterialsSetting::create_panel_weight(wxWindow* parent)
     m_input_remain_weight->GetTextCtrl()->Bind(wxEVT_TEXT,
         [this](wxCommandEvent& e) { e.Skip(); clamp_remain_weight_input(); update_total_weight_preview(); });
     m_sizer_remain_weight->Add(m_input_remain_weight, 0, wxALIGN_CENTER, 0);
-    auto m_unit_remain_weight = new wxStaticText(m_panel_filament_weight, wxID_ANY, "g", wxDefaultPosition, wxDefaultSize, 0);
+    auto m_unit_remain_weight = new Label(m_panel_filament_weight, "g");
     m_unit_remain_weight->SetFont(::Label::Body_13);
     m_unit_remain_weight->SetForegroundColour(AMS_MATERIALS_SETTING_GREY800);
     m_sizer_remain_weight->Add(m_unit_remain_weight, 0, wxALIGN_CENTER | wxLEFT, FromDIP(6));
@@ -461,11 +458,11 @@ void AMSMaterialsSetting::create_panel_rfid_display(wxWindow* parent)
     sizer_top->Add(m_rfid_clr_picker, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(12));
 
     auto* sizer_names = new wxBoxSizer(wxVERTICAL);
-    m_rfid_lbl_brand = new wxStaticText(panel_top, wxID_ANY, wxEmptyString);
+    m_rfid_lbl_brand = new Label(panel_top);
     m_rfid_lbl_brand->SetFont(Label::Body_14);
     m_rfid_lbl_brand->SetForegroundColour(AMS_MATERIALS_SETTING_GREY900);
 
-    m_rfid_lbl_color_name = new wxStaticText(panel_top, wxID_ANY, wxEmptyString);
+    m_rfid_lbl_color_name = new Label(panel_top);
     m_rfid_lbl_color_name->SetFont(Label::Body_13);
     m_rfid_lbl_color_name->SetForegroundColour(AMS_MATERIALS_SETTING_GREY700);
 
@@ -481,7 +478,7 @@ void AMSMaterialsSetting::create_panel_rfid_display(wxWindow* parent)
     m_rfid_panel_info->SetBorderColor(StateColor(std::make_pair(wxColour(248, 248, 248), (int)StateColor::Normal)));
     auto* sizer_info = new wxBoxSizer(wxVERTICAL);
 
-    m_rfid_lbl_temp = new wxStaticText(m_rfid_panel_info, wxID_ANY, wxEmptyString);
+    m_rfid_lbl_temp = new Label(m_rfid_panel_info);
     m_rfid_lbl_temp->SetFont(Label::Body_13);
     m_rfid_lbl_temp->SetForegroundColour(AMS_MATERIALS_SETTING_GREY700);
     m_rfid_lbl_temp->SetBackgroundColour(StateColor::darkModeColorFor(wxColour(248, 248, 248)));
@@ -489,10 +486,10 @@ void AMSMaterialsSetting::create_panel_rfid_display(wxWindow* parent)
     m_rfid_panel_sn = new wxPanel(m_rfid_panel_info, wxID_ANY);
     m_rfid_panel_sn->SetBackgroundColour(StateColor::darkModeColorFor(wxColour(248, 248, 248)));
     auto* sizer_sn = new wxBoxSizer(wxHORIZONTAL);
-    auto* lbl_sn_title = new wxStaticText(m_rfid_panel_sn, wxID_ANY, _L("SN") + ": ");
+    auto* lbl_sn_title = new Label(m_rfid_panel_sn, _L("SN") + ": ");
     lbl_sn_title->SetFont(Label::Body_13);
     lbl_sn_title->SetForegroundColour(AMS_MATERIALS_SETTING_GREY700);
-    m_rfid_lbl_sn = new wxStaticText(m_rfid_panel_sn, wxID_ANY, wxEmptyString);
+    m_rfid_lbl_sn = new Label(m_rfid_panel_sn);
     m_rfid_lbl_sn->SetFont(Label::Body_13);
     m_rfid_lbl_sn->SetForegroundColour(AMS_MATERIALS_SETTING_GREY700);
     sizer_sn->Add(lbl_sn_title, 0, wxALIGN_CENTER_VERTICAL, 0);

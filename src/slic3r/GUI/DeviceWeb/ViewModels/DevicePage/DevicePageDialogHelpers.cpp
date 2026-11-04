@@ -6,7 +6,8 @@
 #include "slic3r/GUI/AmsMappingPopup.hpp"
 #include "slic3r/GUI/DeviceWeb/DeviceWebHost.hpp"
 #include "slic3r/GUI/GUI_App.hpp"
-#include "slic3r/GUI/I18N.hpp"
+#include "slic3r/GUI/I18N.hpp"#include "slic3r/GUI/Widgets/MD3DialogChrome.hpp"
+
 #include "slic3r/GUI/MainFrame.hpp"
 #include "slic3r/GUI/MsgDialog.hpp"
 #include "slic3r/GUI/Monitor.hpp"
@@ -42,10 +43,27 @@ public:
     {
         SetClientSize(wxSize(FromDIP(kAutoRefillPickerWidthDip), FromDIP(kAutoRefillPickerHeightDip)));
         SetMinClientSize(wxSize(FromDIP(kAutoRefillPickerWidthDip), FromDIP(kAutoRefillPickerHeightDip)));
+
+        m_content = new wxBoxSizer(wxVERTICAL);
+        SetSizer(m_content);
+        MD3DialogCaption::Adopt(this);
+        // The strip sits above the content, so the minimum grows by its height.
+        SetMinClientSize(GetMinClientSize() + wxSize(0, MD3DialogCaption::Height(this)));
+    }
+
+    /// Adopt() wraps the root sizer under the caption strip, so the content goes
+    /// into the sizer the constructor installed, never a replacement root.
+    void AddContent(wxWindow* content)
+    {
+        m_content->Add(content, 1, wxEXPAND);
+        Layout();
     }
 
 protected:
     void on_dpi_changed(const wxRect& suggested_rect) override { SetSize(suggested_rect.GetSize()); }
+
+private:
+    wxBoxSizer* m_content{nullptr};
 };
 
 // Feeds the ownerless drying dialog with the state of the selected machine,
@@ -258,10 +276,7 @@ void OpenAutoRefillFilamentsDialog(MachineObject*                     machine_ob
     if (auto* vm = host->GetAutoRefillRefillInfoVM())
         vm->Refresh(machine_obj);
 
-    auto* sizer = new wxBoxSizer(wxVERTICAL);
-    sizer->Add(host, 1, wxEXPAND);
-    dialog.SetSizer(sizer);
-    dialog.Layout();
+    dialog.AddContent(host);
     dialog.CentreOnParent();
     dialog.ShowModal();
 

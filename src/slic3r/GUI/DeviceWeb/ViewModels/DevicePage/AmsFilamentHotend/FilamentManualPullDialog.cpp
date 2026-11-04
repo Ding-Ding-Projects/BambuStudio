@@ -10,7 +10,8 @@
 #include "slic3r/GUI/GUI_App.hpp"
 #include "slic3r/GUI/MainFrame.hpp"
 #include "slic3r/GUI/MsgDialog.hpp"
-#include "slic3r/GUI/wxExtensions.hpp"
+#include "slic3r/GUI/wxExtensions.hpp"#include "slic3r/GUI/Widgets/MD3DialogChrome.hpp"
+
 
 #include <wx/dialog.h>
 #include <wx/sizer.h>
@@ -30,10 +31,27 @@ public:
         SetName(kFilamentManualPullDialogName);
         SetClientSize(wxSize(FromDIP(636), FromDIP(358)));
         SetMinClientSize(wxSize(FromDIP(520), FromDIP(300)));
+
+        m_content = new wxBoxSizer(wxVERTICAL);
+        SetSizer(m_content);
+        MD3DialogCaption::Adopt(this);
+        // The strip sits above the content, so the minimum grows by its height.
+        SetMinClientSize(GetMinClientSize() + wxSize(0, MD3DialogCaption::Height(this)));
+    }
+
+    /// Adopt() wraps the root sizer under the caption strip, so the content goes
+    /// into the sizer the constructor installed, never a replacement root.
+    void AddContent(wxWindow* content)
+    {
+        m_content->Add(content, 1, wxEXPAND);
+        Layout();
     }
 
 protected:
     void on_dpi_changed(const wxRect& suggested_rect) override { SetSize(suggested_rect.GetSize()); }
+
+private:
+    wxBoxSizer* m_content{nullptr};
 };
 
 } // namespace
@@ -48,10 +66,7 @@ void open_filament_manual_pull_dialog()
     FilamentManualPullDialog dlg(parent);
     auto* host = new DeviceWebHost(&dlg, DeviceWebHostMode::DevicePageAmsFilamentHotend, "/device_page/filament_manual_pull");
     host->SetMinSize(wxSize(dlg.FromDIP(520), dlg.FromDIP(300)));
-    auto* sizer = new wxBoxSizer(wxVERTICAL);
-    sizer->Add(host, 1, wxEXPAND);
-    dlg.SetSizer(sizer);
-    dlg.Layout();
+    dlg.AddContent(host);
     dlg.ShowModal();
 }
 

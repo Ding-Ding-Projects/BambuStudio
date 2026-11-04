@@ -5,7 +5,7 @@ import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 
-// ScalableButton is the flat icon button behind 53 construction lines in 22
+// ScalableButton is the flat icon button behind construction lines in 27
 // files: the Prepare sidebar, the object list, the Device tab, the print dialogs
 // and the calibration pages. It was a wxButton, so it drew only its bitmap: no
 // hover wash, no focus ring, yet a real native button that took the Tab stop and
@@ -120,9 +120,11 @@ const CONSTRUCTING_FILES = [
   'GUI_ObjectTableSettings.cpp', 'GUI_ObjectTable.cpp', 'GUI_ObjectSettings.cpp',
   'DeviceTab/wgtDeviceNozzleRack.cpp', 'FilamentMapPanel.cpp', 'ParamsPanel.cpp',
   'PlateSettingsDialog.cpp', 'PlateMoveDialog.cpp', 'PrePrintChecker.cpp', 'Plater.cpp',
-  'PresetComboBoxes.cpp', 'SelectMachine.cpp', 'Tab.cpp', 'SyncAmsInfoDialog.cpp',
+  'PresetComboBoxes.cpp', 'SelectMachine.cpp', 'Tab.cpp', 'SyncAmsDialog.cpp',
   'SendMultiMachinePage.cpp', 'UnsavedChangesDialog.cpp', 'StatusPanel.cpp',
   'Widgets/SideTools.cpp', 'Widgets/StaticGroup.cpp',
+  'DeviceTab/wgtRackExtruder.cpp', 'ExtruderPanelGroup.cpp', 'MixedFilamentDialog.cpp',
+  'MixSupplementFilamentDialog.cpp', 'Widgets/NozzleAmsRow.cpp', // new with upstream v02.09.01.70
 ];
 // Classes that derive from ScalableButton and sit in a header that does not reach
 // Widgets/Button.hpp yet. PlusMinusButton (GUI_ObjectLayers.hpp) is converted on its
@@ -133,7 +135,7 @@ const DERIVING_WITHOUT_BUTTON_HEADER = new Set([
 ]);
 
 test('every source that constructs a ScalableButton reaches Widgets/Button.hpp', async () => {
-  assert.equal(CONSTRUCTING_FILES.length, 22, 'the include-closure scan found 22 constructing files');
+  assert.equal(CONSTRUCTING_FILES.length, 27, 'the include-closure scan found 27 constructing files');
   const missing = [];
   for (const file of CONSTRUCTING_FILES) {
     const full = path.join(gui, file);
