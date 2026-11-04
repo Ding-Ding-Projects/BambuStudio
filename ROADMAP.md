@@ -1,3 +1,18 @@
+## Device live readings and printer options, 4 November 2026
+
+Branch `ai/feature/20261104-device-live-states`. Details: [`docs/features/device/live-readings.md`](docs/features/device/live-readings.md).
+
+- [x] Show the readings the application already parses but did not surface, as read-only chips under the Control heading: Wi-Fi signal (`wifi_signal`), air duct mode (`device.airduct.modeCur`), the configured open-door reaction (`xcam_door_open_check`) and the installed nozzle per extruder. Each chip is hidden when the printer does not report the value.
+- [x] Localize the new strings, with Cantonese entries and refreshed coverage; document the feature in English and Cantonese.
+- [x] Add `tests/device_live_readings.test.mjs`: compiles the real standard-library header and pins the wiring to the parsed fields (passes with g++; fails with `--negative`).
+- [x] Offer Print Options whenever the printer reports support for any option the dialog can show, so a printer that reports only filament tangle, nozzle blob, foreign-object, displacement, air purification, snapshot or save-to-storage support still reaches them (applies to the H2C too).
+- [x] Offer Safety Options for idle heating protection on models whose configuration does not enable the safety dialog (H2D, H2S, H2C), without duplicating the door-open check that Print Options already holds for them.
+- [ ] Show a live door open or closed reading: not possible yet, because no status field for it is parsed. Identify the field in the protocol, parse it, then add the chip.
+- [ ] Show chamber fan speed: the value defaults to zero when unreported, so an unreported fan cannot be told from a stopped one. Needs a "reported" flag in `DevFan` first.
+- [ ] Enable `support_safety_options` or `support_first_layer_inspect` for the H2 family only with evidence from a real printer; both are `false` in the shipped printer configurations and were left unchanged.
+- [ ] Native build of this change: not run here, because a Release build was in progress in the main checkout.
+- [ ] Verify the strip, the Print Options entry and the Safety Options entry on a real H2C and on one other model, and capture the strip in English and Cantonese.
+
 ## Upstream port, 20 October 2026
 
 Branch `claude/bambu-express-print-mode-jkx766`.
