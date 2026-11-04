@@ -11,100 +11,238 @@
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..500,0..1,0&display=swap" rel="stylesheet">
 <style>
-.ms{font-family:"Material Symbols Outlined";font-weight:400;font-style:normal;font-size:22px;line-height:1;letter-spacing:normal;text-transform:none;white-space:nowrap;direction:ltr;font-feature-settings:"liga";-webkit-font-smoothing:antialiased}
+.gs{--bg:#0e1311;--s0:#0a0e0c;--s1:#141a17;--s2:#18201c;--s3:#1f2823;--s4:#28322c;--ol:#34413a;--tx:#e3ebe5;--tx2:#a9b6ad;--tx3:#7c8a81;--pri:#6fdc98;--onpri:#00391c;--pric:#0f5130;--onpric:#9ff7bf;--sec:#24342b;--onsec:#cde9d6;--amb:#ffb870;--ambc:#3d2a14;--blu:#8ab4ff;--bluc:#1a2740;--errc:#93000a;--onerrc:#ffdad6;--err:#ffb4ab;
+--d2:100ms;--d3:150ms;--d4:200ms;--d6:300ms;--d8:400ms;--d10:500ms;--d12:600ms;
+--e-std:cubic-bezier(.2,0,0,1);--e-dec:cubic-bezier(0,0,0,1);--e-acc:cubic-bezier(.3,0,1,1);--e-emp-dec:cubic-bezier(.05,.7,.1,1);--e-emp-acc:cubic-bezier(.3,0,.8,.15);--e-spring:cubic-bezier(.34,1.45,.64,1);
+font-family:Roboto,system-ui,sans-serif;color:var(--tx);background:var(--bg)}
+.gs,.gs *{box-sizing:border-box}
+.gs button,.gs select,.gs input{font:inherit;color:inherit}
+.gs .ms{font-family:"Material Symbols Outlined";font-weight:400;font-style:normal;font-size:20px;line-height:1;letter-spacing:normal;text-transform:none;white-space:nowrap;direction:ltr;font-feature-settings:"liga";-webkit-font-smoothing:antialiased;flex-shrink:0}
+.gs .mono{font-family:"Roboto Mono",monospace;font-variant-numeric:tabular-nums}
+.gs .lbl{font-size:13px;font-weight:500;letter-spacing:.01em;color:var(--tx2)}
+.gs .sub{font-size:12px;color:var(--tx2)}
+.gs .row{display:flex;align-items:center;gap:10px}
+.gs .grow{flex:1;min-width:0}
+/* surfaces */
+.gs .card{background:var(--s2);border-radius:28px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.04),0 1px 2px rgba(0,0,0,.4);transition:transform var(--d6) var(--e-spring),box-shadow var(--d4) var(--e-std),background-color var(--d4) var(--e-std)}
+.gs .tile{background:var(--s1);border-radius:16px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.03);transition:transform var(--d6) var(--e-spring),background-color var(--d4) var(--e-std),box-shadow var(--d4) var(--e-std)}
+.gs .float{background:rgba(31,40,35,.84);-webkit-backdrop-filter:blur(18px) saturate(1.25);backdrop-filter:blur(18px) saturate(1.25);box-shadow:inset 0 0 0 1px rgba(255,255,255,.06),0 10px 28px rgba(0,0,0,.38)}
+.gs .lift{cursor:pointer}
+.gs .lift:hover{transform:translateY(-2px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.07),0 10px 24px rgba(0,0,0,.4);background-color:var(--s3)}
+.gs .lift:active{transform:translateY(0) scale(.985);transition-duration:var(--d2)}
+/* state layers: hover 8 %, focus 10 %, press 12 % */
+.gs .sl{position:relative;overflow:hidden;cursor:pointer;transition:background-color var(--d4) var(--e-std),transform var(--d4) var(--e-spring),box-shadow var(--d4) var(--e-std),border-radius var(--d4) var(--e-std)}
+.gs .sl::after{content:"";position:absolute;inset:0;background:currentColor;opacity:0;pointer-events:none;transition:opacity var(--d3) var(--e-std)}
+.gs .sl:hover::after{opacity:.08}.gs .sl:focus-visible::after{opacity:.1}.gs .sl:active::after{opacity:.12}
+.gs .sl:active{transform:scale(.97)}
+.gs button:focus-visible,.gs a:focus-visible,.gs select:focus-visible{outline:2px solid var(--pri);outline-offset:2px}
+.gs .btn{height:48px;padding:0 22px;border-radius:24px;border:0;display:inline-flex;align-items:center;justify-content:center;gap:8px;font-size:14px;font-weight:500;text-decoration:none;white-space:nowrap}
+.gs .btn:hover{border-radius:16px}
+.gs .btn:active{border-radius:14px}
+.gs .btn-fill{background:var(--pri);color:var(--onpri);font-weight:700}
+.gs .btn-tonal{background:var(--sec);color:var(--onsec)}
+.gs .btn-out{background:transparent;color:var(--tx);box-shadow:inset 0 0 0 1px var(--ol)}
+.gs .btn-text{background:transparent;color:var(--pri);padding:0 14px}
+.gs .btn-danger{background:var(--errc);color:var(--onerrc)}
+.gs .btn-s{height:36px;padding:0 16px;font-size:13px}
+.gs .btn-xs{height:30px;padding:0 12px;font-size:12px}
+.gs .ib{width:40px;height:40px;border-radius:14px;border:0;background:transparent;color:var(--tx2);display:inline-grid;place-items:center;padding:0}
+.gs .ib:hover{color:var(--tx);border-radius:12px}
+.gs .ib.on{background:var(--pri);color:var(--onpri)}
+.gs .chip{height:32px;padding:0 14px;border-radius:16px;border:0;background:transparent;color:var(--tx2);box-shadow:inset 0 0 0 1px var(--ol);display:inline-flex;align-items:center;gap:6px;font-size:13px;white-space:nowrap}
+.gs .chip.on{background:var(--sec);color:var(--onsec);box-shadow:none;font-weight:500}
+.gs .chip .ms{font-size:16px}
+.gs .kbd{font-family:"Roboto Mono",monospace;font-size:11px;padding:1px 6px;border-radius:6px;background:var(--s3);color:var(--tx2)}
+/* segmented control with a sliding thumb */
+.gs .seg{position:relative;display:grid;grid-template-columns:repeat(var(--n),1fr);padding:4px;border-radius:999px;background:var(--s1)}
+.gs .seg::before{content:"";position:absolute;top:4px;bottom:4px;left:4px;width:calc((100% - 8px)/var(--n));transform:translateX(calc(var(--i)*100%));background:var(--sec);border-radius:999px;transition:transform var(--d8) var(--e-spring)}
+.gs .seg>button{position:relative;z-index:1;height:30px;border:0;background:transparent;color:var(--tx2);font-size:12px;border-radius:999px;transition:color var(--d4) var(--e-std)}
+.gs .seg>button.on{color:var(--onsec);font-weight:500}
+/* switch: knob grows on press, slides with a spring */
+.gs .sw{width:48px;height:28px;border-radius:14px;border:0;padding:0;position:relative;background:var(--s4);box-shadow:inset 0 0 0 2px var(--ol);transition:background-color var(--d4) var(--e-std),box-shadow var(--d4) var(--e-std);flex-shrink:0}
+.gs .sw i{position:absolute;left:6px;top:6px;width:16px;height:16px;border-radius:8px;background:var(--tx2);transition:transform var(--d6) var(--e-spring),width var(--d3) var(--e-std),height var(--d3) var(--e-std),top var(--d3) var(--e-std),background-color var(--d4) var(--e-std)}
+.gs .sw[aria-checked=true]{background:var(--pri);box-shadow:none}
+.gs .sw[aria-checked=true] i{transform:translateX(20px);width:20px;height:20px;top:4px;left:4px;background:var(--onpri)}
+.gs .sw:active i{width:24px}
+/* progress with shimmer */
+.gs .prog{height:6px;border-radius:3px;background:var(--ol);position:relative;overflow:hidden}
+.gs .prog>i{display:block;height:100%;border-radius:3px;background:var(--pri);position:relative;overflow:hidden;animation:gs-grow var(--d12) var(--e-emp-dec) both}
+.gs .prog>i::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.45),transparent);transform:translateX(-100%);animation:gs-shimmer 1.8s var(--e-std) infinite}
+.gs .dot{width:8px;height:8px;border-radius:4px;flex-shrink:0}
+.gs .live{animation:gs-pulse 2s var(--e-std) infinite}
+.gs .field{height:36px;border-radius:12px;background:var(--s3);border:0;box-shadow:inset 0 0 0 1px var(--ol);padding:0 10px;font-size:13px;color:var(--tx);transition:box-shadow var(--d4) var(--e-std)}
+.gs .field:hover{box-shadow:inset 0 0 0 1px var(--tx3)}
+.gs .field:focus{outline:none;box-shadow:inset 0 0 0 2px var(--pri)}
+.gs .search{height:36px;border-radius:18px;background:var(--s3);display:flex;align-items:center;gap:8px;padding:0 6px 0 12px;color:var(--tx2);font-size:13px;box-shadow:inset 0 0 0 1px transparent;transition:box-shadow var(--d4) var(--e-std)}
+.gs .search:hover{box-shadow:inset 0 0 0 1px var(--ol)}
+.gs .rx{font-family:"Roboto Mono",monospace;font-size:12px;height:24px;padding:0 8px;border-radius:12px;border:0;background:var(--s4);color:var(--tx2);cursor:pointer;transition:background-color var(--d4) var(--e-std),color var(--d4) var(--e-std)}
+.gs .rx:hover{background:var(--sec);color:var(--onsec)}
+/* motion keyframes (MD3 duration and easing tokens, see design/interface-motion.md) */
+@keyframes gs-axis{from{opacity:0;transform:translateX(var(--dx,28px))}to{opacity:1;transform:none}}
+@keyframes gs-rise{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes gs-fade{from{opacity:0}to{opacity:1}}
+@keyframes gs-pop{from{opacity:0;transform:scale(.9) translateY(12px)}to{opacity:1;transform:none}}
+@keyframes gs-grow{from{width:0}}
+@keyframes gs-shimmer{to{transform:translateX(100%)}}
+@keyframes gs-pulse{0%,100%{opacity:1}50%{opacity:.35}}
+@keyframes gs-toast{from{opacity:0;transform:translateY(28px) scale(.96)}to{opacity:1;transform:none}}
+@keyframes gs-ind{from{transform:translateY(calc(var(--idx)*-64px))}to{transform:none}}
+@keyframes gs-layer{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+.gs .screen{animation:gs-axis var(--d6) var(--e-emp-dec) both}
+.gs .st>*{animation:gs-rise var(--d8) var(--e-emp-dec) both}
+.gs .st>*:nth-child(1){animation-delay:0ms}.gs .st>*:nth-child(2){animation-delay:40ms}.gs .st>*:nth-child(3){animation-delay:80ms}.gs .st>*:nth-child(4){animation-delay:120ms}.gs .st>*:nth-child(5){animation-delay:160ms}.gs .st>*:nth-child(6){animation-delay:200ms}.gs .st>*:nth-child(7){animation-delay:240ms}.gs .st>*:nth-child(8){animation-delay:280ms}.gs .st>*:nth-child(9){animation-delay:320ms}.gs .st>*:nth-child(10){animation-delay:360ms}.gs .st>*:nth-child(n+11){animation-delay:400ms}
+.gs .dlg{animation:gs-pop var(--d6) var(--e-emp-dec) both}
+.gs .toast{animation:gs-toast var(--d6) var(--e-emp-dec) both;animation-delay:500ms}
+.gs .scrim{animation:gs-fade var(--d4) var(--e-std) both}
+.gs .scrubbing{animation:gs-layer var(--d8) var(--e-std) 1}
+@media (prefers-reduced-motion:reduce){
+  .gs *,.gs *::before,.gs *::after{animation-duration:.01ms!important;animation-delay:0s!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+  .gs .prog>i::after{display:none}
+  .gs .live{opacity:1}
+  .gs .lift:hover{transform:none}
+}
 body{margin:0;background:#0e1311}
-a{color:#6fdc98}a:hover{color:#9ff7bf}
+a{color:#6fdc98}
+.gs .hnav{display:flex;flex-direction:column;gap:2px}
+.gs .hn{height:44px;padding:0 12px;border-radius:22px;display:flex;align-items:center;gap:10px;font-size:13.5px;white-space:nowrap;color:var(--tx2);text-decoration:none}
+.gs .hn.on{background:var(--sec);color:var(--onsec);font-weight:500}
+.gs .hn .nw{margin-left:auto;font-size:10px;font-weight:700;padding:2px 7px;border-radius:8px;background:var(--amb);color:#2a1700}
+.gs .proj{display:flex;gap:12px;align-items:center;padding:10px;border-radius:20px;background:var(--s1);color:var(--tx);text-decoration:none;position:relative;box-shadow:inset 0 0 0 1px rgba(255,255,255,.03)}
+.gs .proj .th{width:76px;height:76px;border-radius:14px;display:grid;place-items:center;flex-shrink:0;transition:border-radius var(--d6) var(--e-spring)}
+.gs .proj:hover .th{border-radius:26px}
+.gs .proj .acts{display:flex;gap:2px;opacity:0;transform:translateX(6px);transition:opacity var(--d4) var(--e-std),transform var(--d4) var(--e-std)}
+.gs .proj:hover .acts,.gs .proj:focus-within .acts{opacity:1;transform:none}
+.gs .proj .acts .ib{width:30px;height:30px;border-radius:10px}
+.gs .sect-h{display:flex;align-items:center;gap:8px;min-height:32px}
+.gs .sect-h h2{margin:0;font-size:17px;font-weight:500;flex:1}
+.gs .thumb{height:92px;border-radius:14px;display:grid;place-items:center}
+.gs .hrow{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:14px;background:var(--s1);font-size:13px}
+.gs .pill{height:22px;padding:0 9px;border-radius:11px;font-size:11px;font-weight:500;display:inline-flex;align-items:center}
 </style>
 </helmet>
-<div style="width: 100%; height: 900px; display: flex; flex-direction: column; background: #0e1311; color: #e3ebe5; font-family: Roboto, system-ui, sans-serif; overflow: hidden">
+<div class="gs" style="width: 100%; height: 900px; display: flex; flex-direction: column; overflow: hidden">
   <dc-import name="TitleBar" active="home" hint-size="100%,48px"></dc-import>
   <div style="flex: 1; display: flex; min-height: 0">
     <dc-import name="NavRail" active="home" hint-size="88px,852px"></dc-import>
-    <main style="flex: 1; min-width: 0; padding: 28px 32px; display: flex; flex-direction: column; gap: 24px; overflow: hidden">
-      <section style="display: flex; align-items: flex-end; gap: 24px; flex-wrap: wrap">
-        <div style="flex: 1; min-width: 320px">
-                    <h1 style="margin: 6px 0 0; font-size: 40px; line-height: 1.1; font-weight: 500; letter-spacing: -.01em">What are we printing today?</h1>
+    <div class="screen" style="flex: 1; min-width: 0; padding: 16px 24px 20px 12px; display: grid; grid-template-columns: 216px minmax(0, 1fr) 304px; grid-template-rows: auto minmax(0, 1fr); gap: 16px 16px">
+
+      <nav class="card st" aria-label="Home navigation" style="grid-row: span 2; padding: 14px 10px; display: flex; flex-direction: column; gap: 10px; border-radius: 28px">
+        <div class="row" style="gap: 10px; padding: 4px 6px 8px">
+          <span style="width: 40px; height: 40px; border-radius: 20px; background: var(--s4); display: grid; place-items: center; flex-shrink: 0"><span class="ms" aria-hidden="true" style="color: var(--tx2)">person</span></span>
+          <div class="grow"><div style="font-size: 14px; font-weight: 500">Not signed in</div><div class="sub"><a href="#" style="text-decoration: none">login</a> / <a href="#" style="text-decoration: none">register</a></div></div>
         </div>
-        <div style="display: flex; gap: 10px">
-          <button style="height: 48px; padding: 0 20px; border-radius: 16px; border: 1px solid #34413a; background: transparent; color: #e3ebe5; font: inherit; font-size: 14px; font-weight: 500">Open project</button>
-          <button style="height: 48px; padding: 0 22px; border-radius: 16px; border: 0; background: #6fdc98; color: #00391c; font: inherit; font-size: 14px; font-weight: 700">New project</button>
+        <div class="search"><span class="ms" aria-hidden="true" style="font-size: 16px">search</span><span class="grow">Search</span><button class="rx" aria-label="Regex search">.*</button></div>
+        <div class="hnav">
+          <a href="#" class="hn sl"><span class="ms" aria-hidden="true">photo_library</span>Library</a>
+          <a href="#" class="hn on sl" aria-current="page"><span class="ms" aria-hidden="true">history</span>Recent</a>
+          <a href="#" class="hn sl"><span class="ms" aria-hidden="true">public</span>Online Models</a>
+          <a href="#" class="hn sl"><span class="ms" aria-hidden="true">draw</span>MakerLab<span class="nw">New</span></a>
+          <a href="#" class="hn sl"><span class="ms" aria-hidden="true">storefront</span>Maker’s Supply<span class="nw">New</span></a>
+          <a href="#" class="hn sl"><span class="ms" aria-hidden="true">receipt_long</span>Print History</a>
+          <a href="#" class="hn sl"><span class="ms" aria-hidden="true">menu_book</span>User Manual</a>
         </div>
+        <div class="grow"></div>
+        <button class="btn btn-text btn-s sl" style="justify-content: flex-start"><span class="ms" aria-hidden="true" style="font-size: 18px">logout</span>log out</button>
+      </nav>
+
+      <section style="grid-column: 2 / span 2; display: flex; align-items: flex-end; gap: 24px; padding: 6px 4px 0">
+        <div class="grow"><div class="sub" style="font-size: 13px">Bambu Studio</div><h1 style="margin: 2px 0 0; font-size: 36px; line-height: 1.1; font-weight: 500; letter-spacing: -.015em">What are we printing today?</h1></div>
+        <div class="row" style="gap: 10px"><button class="btn btn-out sl"><span class="ms" aria-hidden="true" style="font-size: 20px">folder_open</span>Open Project</button><button class="btn btn-fill sl"><span class="ms" aria-hidden="true" style="font-size: 20px">add</span>Create new project</button></div>
       </section>
 
-      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; flex: 1; min-height: 0">
-        <section style="grid-column: span 2; background: #18201c; border-radius: 24px; padding: 20px; display: flex; flex-direction: column; gap: 14px; min-height: 0">
-          <div style="display: flex; align-items: center; justify-content: space-between">
-            <h2 style="margin: 0; font-size: 18px; font-weight: 500">Recent projects</h2>
-            <div style="height: 34px; width: 260px; border-radius: 17px; background: #1f2823; display: flex; align-items: center; gap: 8px; padding: 0 12px; color: #a9b6ad; font-size: 13px"><span class="ms" aria-hidden="true" style="font-size: 15px">search</span><span style="flex: 1">Filter projects</span><span style="font-family: 'Roboto Mono', monospace; font-size: 11px">.*</span></div>
-          </div>
-          <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-rows: minmax(0, 1fr); gap: 12px; flex: 1; min-height: 0">
+      <div style="display: flex; flex-direction: column; gap: 16px; min-height: 0; min-width: 0">
+        <section class="card st" aria-label="Recent files" style="padding: 18px 20px; display: flex; flex-direction: column; gap: 12px; flex: 1; min-height: 0">
+          <div class="sect-h"><h2>Recent Files</h2>
+            <div class="search" style="width: 230px"><span class="ms" aria-hidden="true" style="font-size: 16px">search</span><span class="grow">Filter projects</span><button class="rx" aria-label="Regex search">.*</button></div>
+            <button class="btn btn-text btn-s sl">MORE<span class="ms" aria-hidden="true" style="font-size: 18px">chevron_right</span></button></div>
+          <div class="st" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: minmax(0, 1fr); gap: 10px; flex: 1; min-height: 0">
             <sc-for list="{{projects}}" as="p" hint-placeholder-count="6">
-              <a href="Main.dc.html" style="display: flex; flex-direction: column; gap: 8px; padding: 10px; border-radius: 18px; background: #141a17; color: #e3ebe5; text-decoration: none">
-                <span style="flex: 1; min-height: 108px; border-radius: 12px; background: {{p.tint}}; display: grid; place-items: center"><span class="ms" aria-hidden="true" style="font-size: 44px; color: {{p.stroke}}">{{p.glyph}}</span></span>
-                <span style="font-size: 14px; font-weight: 500">{{p.name}}</span>
-                <span style="font-size: 12px; color: #a9b6ad; display: flex; justify-content: space-between">{{p.when}}<span style="font-family: 'Roboto Mono', monospace">{{p.rev}}</span></span>
+              <a href="Main.dc.html" class="proj lift">
+                <span class="th" style="background: {{p.tint}}"><span class="ms" aria-hidden="true" style="font-size: 36px; color: {{p.stroke}}">{{p.glyph}}</span></span>
+                <span class="grow" style="display: flex; flex-direction: column; gap: 3px"><span style="font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{p.name}}</span><span class="sub">{{p.when}}</span><span class="mono" style="font-size: 11px; color: var(--tx2)">{{p.rev}}</span></span>
+                <span class="acts"><button class="ib sl" aria-label="Open in explorer" title="open in explorer"><span class="ms" aria-hidden="true" style="font-size: 18px">folder_open</span></button><button class="ib sl" aria-label="Remove" title="Remove"><span class="ms" aria-hidden="true" style="font-size: 18px">close</span></button></span>
               </a>
             </sc-for>
           </div>
         </section>
-
-        <div style="display: flex; flex-direction: column; gap: 16px; min-height: 0">
-          <section style="background: #0f5130; color: #9ff7bf; border-radius: 24px; padding: 20px; display: flex; flex-direction: column; gap: 10px">
-            <div style="font-size: 11px; letter-spacing: .08em; text-transform: uppercase; font-weight: 500">LAN model drop</div>
-            <div style="display: flex; gap: 14px; align-items: center">
-              <div aria-label="Invite QR code" role="img" style="width: 84px; height: 84px; border-radius: 12px; background: #e3ebe5; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); padding: 6px; box-sizing: border-box; gap: 2px">
-                <sc-for list="{{qr}}" as="q" hint-placeholder-count="49"><span style="background: {{q}}; border-radius: 1px"></span></sc-for>
-              </div>
-              <div style="flex: 1; font-size: 13px; line-height: 1.4">Send a model to this computer from any device on your network.<div style="margin-top: 6px; font-family: 'Roboto Mono', monospace; font-size: 12px">192.168.1.24:8790</div></div>
+        <div style="display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 16px; height: 216px; flex-shrink: 0">
+          <section class="card" aria-label="Online Models" style="padding: 16px 18px; display: flex; flex-direction: column; gap: 10px">
+            <div class="sect-h"><h2 style="font-size: 16px">Online Models</h2><button class="btn btn-text btn-s sl">MORE<span class="ms" aria-hidden="true" style="font-size: 18px">chevron_right</span></button></div>
+            <div class="st" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; flex: 1">
+              <sc-for list="{{models}}" as="m" hint-placeholder-count="3">
+                <div class="tile lift" style="padding: 8px; display: flex; flex-direction: column; gap: 6px"><span class="thumb" style="background: {{m.tint}}; height: 70px"><span class="ms" aria-hidden="true" style="font-size: 32px; color: {{m.stroke}}">{{m.glyph}}</span></span><span style="font-size: 12px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{m.name}}</span></div>
+              </sc-for>
             </div>
-            <button style="height: 36px; border-radius: 12px; border: 0; background: #9ff7bf; color: #00391c; font: inherit; font-size: 13px; font-weight: 500">Copy invite link</button>
           </section>
-
-          <section style="background: #18201c; border-radius: 24px; padding: 20px; display: flex; flex-direction: column; gap: 10px">
-            <div style="font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: #a9b6ad; font-weight: 500">Printers</div>
-            <sc-for list="{{printers}}" as="pr" hint-placeholder-count="3">
-              <div style="display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: 14px; background: #141a17; font-size: 13px">
-                <div style="display: flex; align-items: center; gap: 10px"><span style="width: 8px; height: 8px; border-radius: 4px; background: {{pr.dot}}"></span><span style="flex: 1">{{pr.name}}</span><span style="color: #a9b6ad; font-family: 'Roboto Mono', monospace; font-size: 12px">{{pr.state}}</span></div>
-                <div style="height: 4px; border-radius: 2px; background: #28322c"><div style="height: 4px; border-radius: 2px; width: {{pr.progress}}; background: {{pr.dot}}"></div></div>
-              </div>
+          <section class="card" aria-label="Print History" style="padding: 16px 18px; display: flex; flex-direction: column; gap: 8px">
+            <div class="sect-h"><h2 style="font-size: 16px">Print History</h2><button class="btn btn-text btn-s sl">MORE<span class="ms" aria-hidden="true" style="font-size: 18px">chevron_right</span></button></div>
+            <sc-for list="{{history}}" as="h" hint-placeholder-count="3">
+              <div class="hrow"><span class="grow" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{h.name}}</span><span class="pill" style="background: {{h.bg}}; color: {{h.fg}}">{{h.state}}</span></div>
             </sc-for>
-            <div style="display: flex; gap: 8px; align-items: center; padding-top: 8px; border-top: 1px solid #28322c; font-size: 12px; color: #a9b6ad">
-              <span class="ms" aria-hidden="true" style="font-size: 16px; color: #8ab4ff">home</span>
-              Home Assistant handover ready
-            </div>
-          </section>
-
-          <section style="margin-top: auto; background: #18201c; border-radius: 24px; padding: 20px; display: flex; gap: 12px; align-items: center">
-            <span class="ms" aria-hidden="true" style="font-size: 22px; color: #ffb870">music_note</span>
-            <div style="flex: 1; font-size: 13px"><div style="font-weight: 500">Melody creator</div><div style="color: #a9b6ad; font-size: 12px">Compose a tune your printer plays</div></div>
-            <a href="Dialogs.dc.html" style="font-size: 13px; font-weight: 500; text-decoration: none">Open</a>
           </section>
         </div>
       </div>
-    </main>
+
+      <div style="display: flex; flex-direction: column; gap: 16px; min-height: 0">
+        <section class="card st" aria-label="LAN model drop" style="background: var(--pric); color: var(--onpric); padding: 18px 20px; display: flex; flex-direction: column; gap: 10px">
+          <div style="font-size: 13px; font-weight: 500">LAN model drop</div>
+          <div class="row" style="gap: 14px; align-items: center">
+            <div aria-label="Invite QR code" role="img" style="width: 84px; height: 84px; border-radius: 14px; background: var(--tx); display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); padding: 7px; gap: 2px">
+              <sc-for list="{{qr}}" as="q" hint-placeholder-count="49"><span style="background: {{q}}; border-radius: 1px"></span></sc-for>
+            </div>
+            <div class="grow" style="font-size: 13px; line-height: 1.4">Send a model to this computer from any device on your network.<div class="row" style="margin-top: 4px; gap: 2px"><span class="mono" style="font-size: 12px">192.168.1.24:8790</span><button class="ib sl" aria-label="Copy invite link" title="Copy invite link" style="width: 28px; height: 28px; border-radius: 10px; color: var(--onpric)"><span class="ms" aria-hidden="true" style="font-size: 16px">content_copy</span></button></div></div>
+          </div>
+          <div class="row" style="gap: 8px"><button class="btn btn-s sl grow" style="background: var(--onpric); color: var(--onpri)">Show invite</button><button class="btn btn-s btn-out sl grow" style="color: var(--onpric); box-shadow: inset 0 0 0 1px rgba(159,247,191,.45)">Open settings</button></div>
+        </section>
+
+        <section class="card" aria-label="Printers" style="padding: 18px 20px; display: flex; flex-direction: column; gap: 8px; flex: 1; min-height: 0">
+          <div class="sect-h"><span class="lbl grow">Printers</span><button class="btn btn-text btn-xs sl">Open Device</button></div>
+          <sc-for list="{{printers}}" as="pr" hint-placeholder-count="3">
+            <div class="tile lift" style="display: flex; flex-direction: column; justify-content: center; gap: 8px; padding: 10px 12px; font-size: 13px; flex: 1; max-height: 84px">
+              <div class="row"><span class="dot" style="background: {{pr.dot}}"></span><span class="grow">{{pr.name}}</span><span class="mono" style="color: var(--tx2); font-size: 12px">{{pr.state}}</span></div>
+              <div class="prog" style="height: 4px; display: {{pr.bar}}"><i style="width: {{pr.progress}}; background: {{pr.dot}}"></i></div>
+            </div>
+          </sc-for>
+          <div class="row sub" style="gap: 8px; padding-top: 8px; border-top: 1px solid var(--s4)"><span class="ms" aria-hidden="true" style="font-size: 18px; color: var(--blu)">home</span>Home Assistant handover ready</div>
+        </section>
+
+        <section class="card lift" aria-label="Melody creator" style=" padding: 16px 20px; display: flex; gap: 12px; align-items: center">
+          <span class="ms" aria-hidden="true" style="font-size: 24px; color: var(--amb)">music_note</span>
+          <div class="grow" style="font-size: 14px"><div style="font-weight: 500">Melody creator</div><div class="sub">Compose a tune your printer plays</div></div>
+          <a href="Dialogs.dc.html" class="btn btn-tonal btn-s sl">Open</a>
+        </section>
+      </div>
+    </div>
   </div>
 </div>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
 class Component extends DCLogic {
   renderVals() {
-    const cube = 'M12 2 3 7v10l9 5 9-5V7zM3 7l9 5 9-5M12 12v10';
-    const gear = 'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2';
-    const vase = 'M9 3h6M10 3c0 4-4 6-4 11a6 6 0 0 0 12 0c0-5-4-7-4-11';
     const seed = '0110100101100111010110100110100101101100101110010'.split('');
     return {
       projects: [
-        { name: 'bracket_v3', glyph: 'deployed_code', when: 'Today, 14:10', rev: 'r12', tint: '#0f5130', stroke: '#9ff7bf', d: cube },
-        { name: 'Gear train set', glyph: 'settings', when: 'Yesterday', rev: 'r4', tint: '#1f2823', stroke: '#a9b6ad', d: gear },
-        { name: 'Spiral vase', glyph: 'water_full', when: 'Fri', rev: 'r2', tint: '#3d2a14', stroke: '#ffb870', d: vase },
-        { name: 'Cable clips x24', glyph: 'cable', when: 'Thu', rev: 'r7', tint: '#1f2823', stroke: '#a9b6ad', d: cube },
-        { name: 'Desk organiser', glyph: 'inventory_2', when: '28 Oct', rev: 'r3', tint: '#1a2740', stroke: '#8ab4ff', d: cube },
-        { name: 'Benchy (calibration)', glyph: 'sailing', when: '27 Oct', rev: 'r1', tint: '#1f2823', stroke: '#a9b6ad', d: vase }
+        { name: 'bracket_v3.3mf', glyph: 'deployed_code', when: 'Today, 14:10', rev: 'r12', tint: '#0f5130', stroke: '#9ff7bf' },
+        { name: 'Gear train set.3mf', glyph: 'settings', when: 'Yesterday', rev: 'r4', tint: '#1f2823', stroke: '#a9b6ad' },
+        { name: 'Spiral vase.3mf', glyph: 'water_full', when: 'Fri', rev: 'r2', tint: '#3d2a14', stroke: '#ffb870' },
+        { name: 'Cable clips x24.3mf', glyph: 'cable', when: 'Thu', rev: 'r7', tint: '#1f2823', stroke: '#a9b6ad' },
+        { name: 'Desk organiser.3mf', glyph: 'inventory_2', when: '28 Oct', rev: 'r3', tint: '#1a2740', stroke: '#8ab4ff' },
+        { name: 'Benchy (calibration).3mf', glyph: 'sailing', when: '27 Oct', rev: 'r1', tint: '#1f2823', stroke: '#a9b6ad' }
+      ],
+      models: [
+        { name: 'Phone stand', glyph: 'smartphone', tint: '#1a2740', stroke: '#8ab4ff' },
+        { name: 'Planter, low poly', glyph: 'potted_plant', tint: '#0f5130', stroke: '#9ff7bf' },
+        { name: 'Cable comb', glyph: 'cable', tint: '#3d2a14', stroke: '#ffb870' }
+      ],
+      history: [
+        { name: 'bracket_v3 · P1S Garage', state: 'Printing', bg: '#1a2740', fg: '#8ab4ff' },
+        { name: 'Cable clips x24', state: 'Success', bg: '#0f5130', fg: '#9ff7bf' },
+        { name: 'Spiral vase', state: 'Success', bg: '#0f5130', fg: '#9ff7bf' }
       ],
       printers: [
-        { name: 'X1 Carbon · Studio', state: 'Idle', dot: '#6fdc98', progress: '0%' },
-        { name: 'P1S · Garage', state: '62% · 38 m', dot: '#8ab4ff', progress: '62%' },
-        { name: 'A1 mini · Desk', state: 'Offline', dot: '#7c8a81', progress: '0%' }
+        { name: 'X1 Carbon · Studio', state: 'Idle', dot: '#6fdc98', progress: '0%', bar: 'none' },
+        { name: 'P1S · Garage', state: '62% · 38 m', dot: '#8ab4ff', progress: '62%', bar: 'block' },
+        { name: 'A1 mini · Desk', state: 'Offline', dot: '#7c8a81', progress: '0%', bar: 'none' }
       ],
       qr: seed.map((b) => (b === '1' ? '#0a0e0c' : '#e3ebe5'))
     };
