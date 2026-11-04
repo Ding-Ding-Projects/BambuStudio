@@ -102,6 +102,8 @@ Registry default_registry() {
     r.add({"narrator_voice_en","English narrator voice","英文朗讀聲音",Kind::Text});
     r.add({"narrator_voice_yue","Cantonese narrator voice","廣東話朗讀聲音",Kind::Text});
     for(const auto* key:{"narrator_rate_en","narrator_rate_yue","narrator_pitch_en","narrator_pitch_yue"}) r.add({key,key,"朗讀速度或音調",Kind::Integer,-10,10});
+    for(const auto* key:{"narrator_track_printer","narrator_track_app","narrator_track_accessibility","narrator_quiet_hours_enabled","narrator_respect_focus_assist"})
+        r.add({key,key,"朗讀軌道、靜音時段或專注輔助",Kind::Boolean});
     return r;
 }
 bool valid_date(Date d) {

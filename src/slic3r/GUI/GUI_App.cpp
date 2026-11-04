@@ -598,6 +598,8 @@ static void push_auto_update_ready_notification(const std::string &tag)
     // The title bar chip offers the same restart and stays until the app restarts.
     if (MainFrame *frame = wxGetApp().mainframe; frame != nullptr && frame->topbar() != nullptr)
         frame->topbar()->SetUpdateReady(true);
+    // Spoken summary only: the event carries no version string, path or account.
+    TtsNarrator::narrate({Narration::EventKind::UpdateReady, 0});
     Plater              *plater  = wxGetApp().plater();
     NotificationManager *manager = plater ? plater->get_notification_manager() : nullptr;
     if (manager == nullptr)
@@ -1655,7 +1657,7 @@ void GUI_App::post_init()
     TtsNarrator::install();
     m_narrator_environment = std::make_unique<FeatureServices::NarratorEnvironment>([this] {
         return app_config && app_config->get("narrator_quiet") == "true";
-    });
+    }, [this](const char* key) { return app_config ? app_config->get(key) : std::string(); });
 
     // Funny level disclosure (non-blocking snackbar, recorded so it fires once).
     show_funny_level_disclosure_once();

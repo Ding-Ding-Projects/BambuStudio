@@ -578,9 +578,16 @@ void FilamentScanDialog::announce(const wxString &slot_label, const wxString &fi
     new AnnounceOverlay(slot_label.Upper(),
                         brand.IsEmpty() ? fila_type : brand + " " + fila_type, swatch);
     if (m_tts_toggle != nullptr && m_tts_toggle->GetValue())
+    {
+        // Independent speech tracks: the narration language setting decides English,
+        // Cantonese or both, not the interface language. The scanner's own TTS
+        // checkbox is the consent, so this bypasses the master switch.
         // TRN: TTS line; %1$s filament type, %2$s slot label.
-        TtsNarrator::say_now(wxString::Format(_L("Filament identified: %s. Load it into %s."),
-                                              fila_type, slot_label));
+        const auto tracks = I18N::language_mode_service().narration(wxString::FromUTF8("Filament identified: %s. Load it into %s."));
+        TtsNarrator::say_tracks(wxString::Format(tracks.primary, fila_type, slot_label),
+                                tracks.secondary.empty() ? wxString() : wxString::Format(tracks.secondary, fila_type, slot_label),
+                                "scan", true);
+    }
 }
 
 } } // namespace Slic3r::GUI

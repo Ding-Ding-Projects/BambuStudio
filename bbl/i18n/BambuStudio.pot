@@ -29528,3 +29528,171 @@ msgstr ""
 #: resources/data/helio_hints.ini: [hint: First-Time-Right Reliability]
 msgid "First-Time-Right Reliability\nLess babysitting, more predictable output. Example: a small farm running PETG parts avoids 'fail at hour 6' surprises and keeps batches on schedule."
 msgstr ""
+
+msgid "Printing started."
+msgstr ""
+
+msgid "Your print has started."
+msgstr ""
+
+msgid "And we're off. The print has started."
+msgstr ""
+
+msgid "Print paused."
+msgstr ""
+
+msgid "The print is paused."
+msgstr ""
+
+msgid "The print has paused. Take a breather."
+msgstr ""
+
+msgid "Printing resumed."
+msgstr ""
+
+msgid "The print has resumed."
+msgstr ""
+
+msgid "Back to work. The print has resumed."
+msgstr ""
+
+msgid "Print finished."
+msgstr ""
+
+msgid "Your print is finished."
+msgstr ""
+
+msgid "Print finished. Time to peel it off the plate."
+msgstr ""
+
+msgid "Print failed."
+msgstr ""
+
+msgid "The print has failed. Check the printer."
+msgstr ""
+
+msgid "Oh no, the print failed. Check the printer."
+msgstr ""
+
+msgid "Print cancelled."
+msgstr ""
+
+msgid "The print was cancelled."
+msgstr ""
+
+msgid "The print was cancelled. Nothing more to see here."
+msgstr ""
+
+msgid "Filament has run out. Load more filament."
+msgstr ""
+
+msgid "The printer has run out of filament. Load more to continue."
+msgstr ""
+
+msgid "The spool is empty and the printer is hungry. Load more filament."
+msgstr ""
+
+msgid "AMS error. Check the printer screen."
+msgstr ""
+
+msgid "The AMS reported an error. Check the printer screen."
+msgstr ""
+
+msgid "The AMS is complaining. Check the printer screen."
+msgstr ""
+
+msgid "Printer error %06X. Check the device screen for details."
+msgstr ""
+
+msgid "Slicing finished."
+msgstr ""
+
+msgid "Slicing is finished. Your plate is ready."
+msgstr ""
+
+msgid "Slicing done. Fresh layers, straight from the oven."
+msgstr ""
+
+msgid "Slicing failed. Check the notification for details."
+msgstr ""
+
+msgid "Export finished."
+msgstr ""
+
+msgid "Export finished successfully."
+msgstr ""
+
+msgid "Export done. Your file is safely written."
+msgstr ""
+
+msgid "An update is ready. Restart to install it."
+msgstr ""
+
+msgid "An update is ready. Restart the app to install it."
+msgstr ""
+
+msgid "A fresh version is ready. Restart the app to install it."
+msgstr ""
+
+msgid "An error occurred. Check the notification for details."
+msgstr ""
+
+msgid "This is a preview of the selected narrator voice."
+msgstr ""
+
+msgid "Narrate printer events"
+msgstr ""
+
+msgid "Print state, filament runout and printer errors."
+msgstr ""
+
+msgid "Narrate application events"
+msgstr ""
+
+msgid "Slicing, export, update and error summaries. File names and account details are never spoken."
+msgstr ""
+
+msgid "Narrate previews and scanner prompts"
+msgstr ""
+
+msgid "Voice previews and the filament scanner."
+msgstr ""
+
+msgid "Narrator quiet hours"
+msgstr ""
+
+msgid "Stay silent during the hours below. Silence also applies to errors."
+msgstr ""
+
+msgid "Quiet hours start"
+msgstr ""
+
+msgid "Narration is silent from this time."
+msgstr ""
+
+msgid "Quiet hours end"
+msgstr ""
+
+msgid "Narration resumes at this time."
+msgstr ""
+
+msgid "Respect Focus Assist"
+msgstr ""
+
+msgid "Only speak errors while Windows Focus Assist, a full-screen app or a presentation is active."
+msgstr ""
+
+msgid "Preview Cantonese voice"
+msgstr ""
+
+msgid "Preview English voice"
+msgstr ""
+
+msgid "Speak a short sample with the voice that is in effect. Works even when the narrator is off."
+msgstr ""
+
+msgid "A Hong Kong Cantonese voice is installed on this computer, but this build can only speak with voices that Windows exposes to the classic speech interface. It is listed by Windows but cannot be selected here yet."
+msgstr ""
+
+msgid "This voice uses an online service and may be silent when offline."
+msgstr ""

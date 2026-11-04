@@ -18,6 +18,9 @@
 #include "PersonalModes/SpeechQueue.hpp"
 #include "PersonalModes/SapiVoice.hpp"
 #include "PersonalModes/SchoolMode.hpp"
+#include "Narration/NarrationTransitions.hpp"
+#include "Narration/OneCoreVoices.hpp"
+#include "LanguageMode.hpp"
 
 #ifdef _WIN32
 // SAPI is used through IDispatch late binding ("SAPI.SpVoice") instead of
@@ -40,6 +43,10 @@ bool s_quiet = false;
 bool s_screen_reader = false;
 bool s_delivery_failed = false;
 bool s_last_suppressed = true;
+bool s_errors_only = false;
+Narration::PrinterTransitionDetector s_detector;
+Narration::EventDeduper s_deduper;
+std::vector<Narration::CatalogVoice> s_catalog;
 
 PersonalModes::SapiVoice& voice() {
     if (!s_voice) s_voice = std::make_unique<PersonalModes::SapiVoice>();
@@ -50,14 +57,34 @@ bool narrator_enabled() {
     return wxGetApp().app_config->get("narrator_enabled") == "true";
 }
 
-void say_event(const wxString& source, const std::string& category) {
-    const auto tracks = I18N::language_mode_service().narration(source);
-    say_tracks(tracks.primary, tracks.secondary, category);
-}
-
 int number(const char* key) {
     try { return std::clamp(std::stoi(wxGetApp().app_config->get(key)), -10, 10); }
     catch (...) { return 0; }
+}
+
+void pump_queue();
+
+bool config_bool(const char* key, bool fallback) {
+    return Narration::parse_bool(wxGetApp().app_config->get(key), fallback);
+}
+
+// Shared enqueue path. `track` keeps replacement and cooldown independent.
+void enqueue_tracks(const wxString& english, const wxString& cantonese, const std::string& category,
+                    Narration::Track track, bool consent, bool cooldown_exempt) {
+    PersonalModes::SpeechEvent event;
+    event.category = category;
+    event.explicit_consent = consent;
+    event.track = Narration::track_name(track);
+    event.cooldown_exempt = cooldown_exempt;
+    auto language = wxGetApp().app_config->get("narrator_language");
+    if (PersonalModes::school_presentation_suppressed.load()) language = "en";
+    if (language != "yue_HK" && !english.empty())
+        event.tracks.push_back({english.ToStdWstring(), PersonalModes::SpeechLanguage::English});
+    if ((language == "yue_HK" || language == "both") && !cantonese.empty())
+        event.tracks.push_back({cantonese.ToStdWstring(), PersonalModes::SpeechLanguage::Cantonese});
+    if (event.tracks.empty()) return;
+    if (!s_queue.enqueue(std::move(event))) s_delivery_failed = true;
+    pump_queue();
 }
 
 void pump_queue() {
@@ -74,6 +101,7 @@ void pump_queue() {
         s_backend_inflight = false;
         return;
     }
+    if (s_errors_only) s_queue.drop_non_errors();
     const bool completed = !s_backend_inflight || voice().complete();
     if (!completed) return;
     s_backend_inflight = false;
@@ -93,6 +121,11 @@ void pump_queue() {
 }
 // --- printer state watch ----------------------------------------------------
 
+Narration::EnvironmentState environment_now() {
+    if (s_quiet || s_screen_reader) return Narration::EnvironmentState::Held;
+    return s_errors_only ? Narration::EnvironmentState::ErrorsOnly : Narration::EnvironmentState::Open;
+}
+
 class NarratorTimer : public wxTimer
 {
 public:
@@ -107,39 +140,24 @@ public:
         MachineObject *obj = manager != nullptr ? manager->get_selected_machine() : nullptr;
         if (obj == nullptr)
             return;
-        const std::string status = obj->print_status;
-        if (!m_last_status.empty() && status != m_last_status) {
-            // TRN: TTS lines for printer state changes.
-            if (status == "RUNNING")      say_event("Printing started.", "state");
-            else if (status == "FINISH") {
-                say_event("Print finished.", "state");
-                if (wxGetApp().app_config->get("ha_flash_on_finish") == "true")
-                    HomeAssistant::flash_lights(0, 200, 80); // green pulse
-            }
-            else if (status == "PAUSE")   say_event("Print paused.", "state");
-            else if (status == "FAILED") {
-                say_event("Print failed.", "error");
-                if (wxGetApp().app_config->get("ha_flash_on_error") == "true")
-                    HomeAssistant::flash_lights(230, 30, 30); // red flash
-            }
+        // The detector fires on transitions only; the machine id is compared, never spoken.
+        Narration::PrinterSnapshot snapshot;
+        snapshot.machine = obj->get_dev_id();
+        snapshot.status  = obj->print_status;
+        snapshot.stage   = obj->mc_print_stage;
+        snapshot.error   = obj->print_error;
+        for (const auto& event : s_detector.observe(snapshot)) {
+            narrate(event);
+            if (event.kind == Narration::EventKind::PrintFinished && wxGetApp().app_config->get("ha_flash_on_finish") == "true")
+                HomeAssistant::flash_lights(0, 200, 80); // green pulse
+            if ((event.kind == Narration::EventKind::PrintFailed || event.kind == Narration::EventKind::PrinterError ||
+                 event.kind == Narration::EventKind::AmsError) && wxGetApp().app_config->get("ha_flash_on_error") == "true")
+                HomeAssistant::flash_lights(230, 30, 30); // red flash
         }
-        m_last_status = status;
-        const int error = obj->print_error;
-        if (error != 0 && error != m_last_error) {
-            // TRN: TTS line for a printer error; %06X is the hexadecimal error code.
-            auto tracks = I18N::language_mode_service().narration("Printer error %06X. Check the device screen for details.");
-            say_tracks(wxString::Format(tracks.primary, (unsigned)error),
-                tracks.secondary.empty() ? wxString() : wxString::Format(tracks.secondary, (unsigned)error), "error");
-            if (wxGetApp().app_config->get("ha_flash_on_error") == "true")
-                HomeAssistant::flash_lights(230, 30, 30);
-        }
-        m_last_error = error;
     }
 
 private:
     unsigned m_ticks = 0;
-    std::string m_last_status;
-    int         m_last_error { 0 };
 };
 
 NarratorTimer *timer()
@@ -150,52 +168,95 @@ NarratorTimer *timer()
 
 } // namespace
 
-void say_tracks(const wxString& english, const wxString& cantonese, const std::string& category, bool consent)
+void narrate(const Narration::Event& event)
 {
-    if (!consent && !narrator_enabled()) return;
+    using namespace Narration;
+    const bool consent = event.kind == EventKind::VoicePreview;
+    AdmitInput admit_in;
+    admit_in.master           = narrator_enabled();
+    admit_in.track_enabled    = config_bool(track_key(track_of(event.kind)), true);
+    admit_in.kind             = event.kind;
+    admit_in.explicit_consent = consent;
+    admit_in.environment      = environment_now();
+    if (!admit(admit_in)) return;
+    if (!consent && !s_deduper.admit(event)) return;
+    auto& service = I18N::language_mode_service();
+    const auto msgid_for = [&](I18N::FunnyLanguage language) {
+        return wxString::FromUTF8(utterance_msgid(event.kind, tone_for_level(service.funny_level(language))));
+    };
+    wxString english = service.narration(msgid_for(I18N::FunnyLanguage::English)).primary;
+    wxString cantonese = service.narration(msgid_for(I18N::FunnyLanguage::Cantonese)).secondary;
+    if (has_code(event.kind)) {
+        english = wxString::Format(english, static_cast<unsigned>(event.code));
+        if (!cantonese.empty()) cantonese = wxString::Format(cantonese, static_cast<unsigned>(event.code));
+    }
+    // Transitions are already de-duplicated, so the legacy per-category cooldown is skipped.
+    enqueue_tracks(english, cantonese, category_of(event.kind), track_of(event.kind), consent, true);
+}
+
+void preview(bool cantonese)
+{
+    using namespace Narration;
+    AdmitInput admit_in;
+    admit_in.kind             = EventKind::VoicePreview;
+    admit_in.explicit_consent = true;
+    admit_in.environment      = environment_now();
+    if (!admit(admit_in)) return;
+    const wxString msgid = wxString::FromUTF8(utterance_msgid(EventKind::VoicePreview, Tone::Serious));
+    const auto tracks = I18N::language_mode_service().narration(msgid);
+    const wxString text = cantonese ? tracks.secondary : tracks.primary;
+    if (text.empty()) { s_delivery_failed = true; return; } // no Cantonese wording available
     PersonalModes::SpeechEvent event;
-    event.category = category;
-    event.explicit_consent = consent;
-    auto language = wxGetApp().app_config->get("narrator_language");
-    if (PersonalModes::school_presentation_suppressed.load()) language = "en";
-    if (language != "yue_HK" && !english.empty())
-        event.tracks.push_back({english.ToStdWstring(), PersonalModes::SpeechLanguage::English});
-    if ((language == "yue_HK" || language == "both") && !cantonese.empty())
-        event.tracks.push_back({cantonese.ToStdWstring(), PersonalModes::SpeechLanguage::Cantonese});
+    event.category = "preview";
+    event.explicit_consent = true;
+    event.track = track_name(Track::Accessibility);
+    event.cooldown_exempt = true;
+    event.tracks.push_back({text.ToStdWstring(), cantonese ? PersonalModes::SpeechLanguage::Cantonese : PersonalModes::SpeechLanguage::English});
     if (!s_queue.enqueue(std::move(event))) s_delivery_failed = true;
     pump_queue();
+}
+
+void say_tracks(const wxString& english, const wxString& cantonese, const std::string& category, bool consent)
+{
+    if (!consent && (!narrator_enabled() || !config_bool(Narration::track_key(Narration::Track::Accessibility), true))) return;
+    // Producers that supply their own tracks travel on the accessibility track,
+    // so they never replace or throttle printer or application events.
+    enqueue_tracks(english, cantonese, category, Narration::Track::Accessibility, consent, false);
 }
 
 void say(const wxString& line, const std::string& category)
 {
-    // Legacy callers provide one already-localized line. The owning producer
-    // should use say_tracks for language-independent event narration.
-    PersonalModes::SpeechEvent event;
+    // Deprecated: one already-localized line. Prefer narrate() or say_tracks().
+    // The line follows the interface language, as before, but now rides the
+    // accessibility track instead of sharing printer categories.
     if (!narrator_enabled()) return;
-    event.category = category;
-    const auto language = wxGetApp().app_config->get("language");
-    event.tracks.push_back({line.ToStdWstring(), language == "yue_HK" && !PersonalModes::school_presentation_suppressed.load()
-        ? PersonalModes::SpeechLanguage::Cantonese : PersonalModes::SpeechLanguage::English});
-    if (!s_queue.enqueue(std::move(event))) s_delivery_failed = true;
-    pump_queue();
+    const bool cantonese = wxGetApp().app_config->get("language") == "yue_HK" && !PersonalModes::school_presentation_suppressed.load();
+    say_tracks(cantonese ? wxString() : line, cantonese ? line : wxString(), category, false);
 }
 
 void say_now(const wxString& line)
 {
-    PersonalModes::SpeechEvent event;
-    event.category = "preview";
-    event.explicit_consent = true;
-    const auto language = wxGetApp().app_config->get("language");
-    event.tracks.push_back({line.ToStdWstring(), language == "yue_HK" && !PersonalModes::school_presentation_suppressed.load()
-        ? PersonalModes::SpeechLanguage::Cantonese : PersonalModes::SpeechLanguage::English});
-    if (!s_queue.enqueue(std::move(event))) s_delivery_failed = true;
-    pump_queue();
+    // Deprecated: explicit-consent single line (filament scanner used it before
+    // migrating to say_tracks). Kept for source compatibility.
+    const bool cantonese = wxGetApp().app_config->get("language") == "yue_HK" && !PersonalModes::school_presentation_suppressed.load();
+    say_tracks(cantonese ? wxString() : line, cantonese ? line : wxString(), "preview", true);
 }
 
 std::vector<PersonalModes::VoiceInfo> voices()
 {
     s_voices = voice().enumerate();
     return s_voices;
+}
+
+std::vector<Narration::CatalogVoice> catalog()
+{
+    std::vector<Narration::CatalogVoice> sapi;
+    for (const auto& v : voices()) {
+        Narration::CatalogVoice c; c.id = v.id; c.name = v.name; c.english = v.english; c.cantonese = v.cantonese;
+        sapi.push_back(std::move(c));
+    }
+    s_catalog = Narration::merge(sapi, Narration::enumerate_onecore_voices());
+    return s_catalog;
 }
 
 PersonalModes::VoiceStatus voice_status(bool cantonese)
@@ -211,6 +272,11 @@ ExternalMirrorStatus external_mirror_status()
         ? ExternalMirrorStatus::PlaybackCompletionUnavailable : ExternalMirrorStatus::Unconfigured;
 }
 void set_quiet(bool quiet, bool screen_reader_active) { s_quiet = quiet; s_screen_reader = screen_reader_active; pump_queue(); }
+void set_environment_state(Narration::EnvironmentState state)
+{
+    s_errors_only = state == Narration::EnvironmentState::ErrorsOnly;
+    pump_queue();
+}
 void install() { s_voices = voice().enumerate(); timer()->Start(kPollMs); }
 void shutdown() { timer()->Stop(); s_queue.cancel(); if (s_voice) s_voice->stop(); s_voice.reset(); s_backend_inflight = false; }
 } } } // namespace Slic3r::GUI::TtsNarrator
