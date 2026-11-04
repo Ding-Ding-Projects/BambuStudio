@@ -902,9 +902,11 @@ function Invoke-ApplicationBuild {
         if ([string]::IsNullOrWhiteSpace($python)) {
             throw 'Python 3 is required to compile the English and Cantonese catalogs, and none was found.'
         }
+        # Release only: an empty debug wx configuration folder must not make
+        # FindwxWidgets demand debug libraries that this build never produces.
         Preserve-ApplicationConfiguration -BuildDirectory $buildDirectory
         Invoke-RepositoryCommand "Configuring Bambu Studio ($($Toolchain.Generator))..." {
-            Invoke-LoggedNativeCommand -FilePath $Toolchain.CMake -Arguments @('-S', $script:RepositoryRoot, '-B', $buildDirectory, '-G', $Toolchain.Generator, '-A', 'x64', "-DCMAKE_GENERATOR_INSTANCE=$($Toolchain.GeneratorInstance)", '-DSLIC3R_MSVC_PDB=OFF', '-DBBL_RELEASE_TO_PUBLIC=1', '-DBBL_INTERNAL_TESTING=0', '-DSLIC3R_BUILD_TESTS=OFF', "-DCMAKE_PREFIX_PATH=$prefixPath", "-DCMAKE_INSTALL_PREFIX=$InstallPrefix", "-DBAMBU_APPLICATION_CACHE_ID:STRING=$cacheIdentity", "-DLOCAL_CONVERTER_QPDF_SDK:PATH=$pdfSdk", '-DCMAKE_CONFIGURATION_TYPES=Release', '-DCMAKE_BUILD_TYPE=Release', "-DWIN10SDK_PATH=$($Toolchain.SdkIncludePath)", "-DPython3_EXECUTABLE=$python")
+            Invoke-LoggedNativeCommand -FilePath $Toolchain.CMake -Arguments @('-S', $script:RepositoryRoot, '-B', $buildDirectory, '-G', $Toolchain.Generator, '-A', 'x64', "-DCMAKE_GENERATOR_INSTANCE=$($Toolchain.GeneratorInstance)", '-DSLIC3R_MSVC_PDB=OFF', '-DBBL_RELEASE_TO_PUBLIC=1', '-DBBL_INTERNAL_TESTING=0', '-DSLIC3R_BUILD_TESTS=OFF', "-DCMAKE_PREFIX_PATH=$prefixPath", "-DCMAKE_INSTALL_PREFIX=$InstallPrefix", "-DBAMBU_APPLICATION_CACHE_ID:STRING=$cacheIdentity", "-DLOCAL_CONVERTER_QPDF_SDK:PATH=$pdfSdk", '-DCMAKE_CONFIGURATION_TYPES=Release', '-DCMAKE_BUILD_TYPE=Release', '-DwxWidgets_USE_REL_AND_DBG=OFF', "-DWIN10SDK_PATH=$($Toolchain.SdkIncludePath)", "-DPython3_EXECUTABLE=$python")
         }
     } else {
         Write-BuildLog "Reusing the configured build tree at $buildDirectory (set BAMBU_RECONFIGURE=1 to force a configure; note it recompiles everything)."
