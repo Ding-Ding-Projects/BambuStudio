@@ -735,12 +735,22 @@
     {
       "route": "device/README.md",
       "title": "Device features",
-      "sha256": "e5c4c372f236e28e85a4955df85b708419d84ecc81e5fbc382488970607d3fb4"
+      "sha256": "b3a4377cc7272e617c04b0cd590ea73e251dbd7d200bc080ae606351f90208c6"
     },
     {
       "route": "device/README.yue_HK.md",
       "title": "設備功能",
-      "sha256": "3f65240ec8a5fba986db26d176fce62ed21dc90387f4a960574401b27fe8b988"
+      "sha256": "141c3a17c691666a763da46f739a0d26a5ad3658dd74bc3a5910b2cb637a545f"
+    },
+    {
+      "route": "device/status-api.md",
+      "title": "Local printer status API",
+      "sha256": "e504a7e43b96ccb91a69ab383b0593995c336d963e8a1211efc95ce1275da5cd"
+    },
+    {
+      "route": "device/status-api.yue_HK.md",
+      "title": "本機打印機狀態 API",
+      "sha256": "d8256a1db15fa19df66aec01a910645b9ad3597ebb48a729c2fd737ea8f95490"
     },
     {
       "route": "documentation/instruction-mirror.md",
@@ -2060,7 +2070,7 @@
       "bytes": 1979
     }
   ],
-  "bundle_sha256": "321d75fc7edd55b6e17f0b64f08d6733a99ceb6dc36789f0a4007930a2399f22",
+  "bundle_sha256": "f6714ddf1dac6eb311a308a81dd01b777ff008aed878ca9f85633ef6ac2b2638",
   "unavailable_references": [
     {
       "source": "api/README.md",
@@ -2585,6 +2595,26 @@
     {
       "source": "design-system/themed-surface-colors.yue_HK.md",
       "target": "../../screenshots/version-history/history-dialog-dark.png",
+      "kind": "link"
+    },
+    {
+      "source": "device/README.md",
+      "target": "status-api.postman_collection.json",
+      "kind": "link"
+    },
+    {
+      "source": "device/README.yue_HK.md",
+      "target": "status-api.postman_collection.json",
+      "kind": "link"
+    },
+    {
+      "source": "device/status-api.md",
+      "target": "status-api.postman_collection.json",
+      "kind": "link"
+    },
+    {
+      "source": "device/status-api.yue_HK.md",
+      "target": "status-api.postman_collection.json",
       "kind": "link"
     },
     {

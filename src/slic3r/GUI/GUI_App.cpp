@@ -114,6 +114,7 @@
 #include "PreferencesHistory.hpp"
 #include "PrinterWatch.hpp"
 #include "LanModelDrop/LanModelDropStation.hpp"
+#include "StatusApi/StatusApiServer.hpp"
 #include "Melody/MelodyCreatorDialog.hpp"
 #include "DimSumSurprise.hpp"
 #include "TtsNarrator.hpp"
@@ -1650,6 +1651,9 @@ void GUI_App::post_init()
     // LAN model drop (off by default): polls the drop site on a worker thread while switched on.
     LanModelDrop::start_after_startup();
 
+    // Local status API (off by default): read-only, 127.0.0.1 only.
+    StatusApi::start_after_startup();
+
     // TTS narrator (opt-in, off by default): printer state changes + errors,
     // with optional Home Assistant speakers and alert lights.
     TtsNarrator::install();
@@ -2063,6 +2067,7 @@ void GUI_App::shutdown()
     // Before any window is destroyed: cancel, wake and join the LAN model drop worker, and drop the
     // callbacks it queued for the GUI thread.
     LanModelDrop::shutdown();
+    StatusApi::shutdown();
     Schedule::Scheduler::instance().shutdown();
     HomeAssistant::shutdown();
     set_closing(true);
@@ -3490,6 +3495,7 @@ int GUI_App::OnExit()
     // Normally done in shutdown(); repeated here (it is idempotent) so the worker is joined on
     // every exit path.
     LanModelDrop::shutdown();
+    StatusApi::shutdown();
     if (m_automation_bridge) {
         m_automation_bridge->stop();
         m_automation_bridge.reset();

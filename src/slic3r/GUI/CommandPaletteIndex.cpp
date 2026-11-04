@@ -80,7 +80,7 @@ void store_palette_size(PaletteSize size,
 const std::vector<const char *> &preference_page_names()
 {
     static const std::vector<const char *> names = {
-        L("Appearance"), L("General"), L("User"), L("3D"), L("Other"), L("Developer Tools"), L("LAN model drop"),
+        L("Appearance"), L("General"), L("User"), L("3D"), L("Other"), L("Developer Tools"), L("LAN model drop"), L("Local status API"),
     };
     return names;
 }
@@ -169,6 +169,11 @@ const std::vector<PreferenceEntry> &preference_entries()
         {"lan_drop_address", L("Drop site address"), L("Where Bambu Studio reaches the LAN drop site"), PageLanDrop},
         {"lan_drop_station_key", L("Station key"), L("Kept protected with Windows data protection"), PageLanDrop},
         {"lan_drop_code", L("Drop code"), L("New code stops older links"), PageLanDrop},
+        // Local status API ---------------------------------------------------------
+        {"status_api_enabled", L("Serve printer status on this computer"), L("Local status API, off by default"), PageStatusApi},
+        {"status_api_port", L("Port"), L("The port on 127.0.0.1 that the status API listens on."), PageStatusApi},
+        {"status_api_token", L("Access token"), L("Copy or regenerate the bearer token of the status API"), PageStatusApi},
+        {"status_api_state", L("Status API state"), L("Where the status API listens"), PageStatusApi},
         // Developer Tools (non-public builds) ------------------------------------
         {"internal_developer_mode", L("Internal developer mode"), "", PageDeveloper},
         {"enable_ssl_for_mqtt", L("Enable SSL(MQTT)"), "", PageDeveloper},
