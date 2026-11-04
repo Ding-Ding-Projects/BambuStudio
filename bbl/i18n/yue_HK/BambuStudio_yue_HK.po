@@ -47176,3 +47176,33 @@ msgstr "搜尋指令同設定"
 #. review-status: agent-drafted
 msgid "Search commands and settings (%s)"
 msgstr "搜尋指令同設定（%s）"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Wi-Fi signal"
+msgstr "Wi-Fi 訊號"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Strong"
+msgstr "強"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Fair"
+msgstr "中等"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Weak"
+msgstr "弱"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Air duct"
+msgstr "風道"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Live printer readings"
+msgstr "打印機即時狀態"

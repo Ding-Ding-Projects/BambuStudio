@@ -30458,3 +30458,21 @@ msgstr ""
 
 msgid "The saved vocabulary could not be removed from this device, so nothing changed."
 msgstr ""
+
+msgid "Wi-Fi signal"
+msgstr ""
+
+msgid "Strong"
+msgstr ""
+
+msgid "Fair"
+msgstr ""
+
+msgid "Weak"
+msgstr ""
+
+msgid "Air duct"
+msgstr ""
+
+msgid "Live printer readings"
+msgstr ""
