@@ -814,6 +814,9 @@ list(APPEND SLIC3R_GUI_SOURCES
     GUI/Widgets/MD3Dialog.hpp
     GUI/Widgets/CameraHUD.cpp
     GUI/Widgets/CameraHUD.hpp
+    GUI/Widgets/DeviceLiveStrip.cpp
+    GUI/Widgets/DeviceLiveStrip.hpp
+    GUI/DeviceLiveReadings.hpp
     GUI/Widgets/BoundedRegex.cpp
     GUI/Widgets/BoundedRegex.hpp
     GUI/Widgets/BoundedRegexProtocol.hpp
