@@ -30473,3 +30473,99 @@ msgstr ""
 
 msgid "The saved vocabulary could not be removed from this device, so nothing changed."
 msgstr ""
+
+msgid "Wi-Fi signal"
+msgstr ""
+
+msgid "Strong"
+msgstr ""
+
+msgid "Fair"
+msgstr ""
+
+msgid "Weak"
+msgstr ""
+
+msgid "Air duct"
+msgstr ""
+
+msgid "Door (beta)"
+msgstr ""
+
+msgid "Closed"
+msgstr ""
+
+msgid "Live printer readings"
+msgstr ""
+
+msgid "Listening on this computer only"
+msgstr ""
+
+msgid "No token is available"
+msgstr ""
+
+msgid "The port is already in use"
+msgstr ""
+
+msgid "%1% at http://127.0.0.1:%2%/api/v1/"
+msgstr ""
+
+msgid "Status API state"
+msgstr ""
+
+msgid "Access token"
+msgstr ""
+
+msgid "Show token"
+msgstr ""
+
+msgid "Copy token"
+msgstr ""
+
+msgid "Regenerate token"
+msgstr ""
+
+msgid "Send it as Authorization: Bearer <token>. It is kept in the application settings and is never written to a log. Regenerating it stops the old one at once."
+msgstr ""
+
+msgid "Hide token"
+msgstr ""
+
+msgid "Token copied to the clipboard."
+msgstr ""
+
+msgid "The clipboard is not available. Show the token and copy it."
+msgstr ""
+
+msgid "A new token could not be made."
+msgstr ""
+
+msgid "A new token was made. The old one no longer works."
+msgstr ""
+
+msgid "Other programs on this computer can read the door state and the printer list over a local, read-only web interface. It listens on 127.0.0.1 only, needs the access token, and answers GET requests only."
+msgstr ""
+
+msgid "Local status API"
+msgstr ""
+
+msgid "Serve printer status on this computer"
+msgstr ""
+
+msgid "Let programs on this computer read the printer list and the door state. Off by default."
+msgstr ""
+
+msgid "Port"
+msgstr ""
+
+msgid "The port on 127.0.0.1 that the status API listens on."
+msgstr ""
+
+msgid "Local status API, off by default"
+msgstr ""
+
+msgid "Copy or regenerate the bearer token of the status API"
+msgstr ""
+
+msgid "Where the status API listens"
+msgstr ""

@@ -5,6 +5,8 @@
 #include "TtsNarrator.hpp"
 #include "LanModelDrop/LanModelDropStation.hpp"
 #include "LanModelDrop/LanModelDropUi.hpp"
+#include "StatusApi/StatusApiServer.hpp"
+#include "StatusApi/StatusApiUi.hpp"
 #include "PersonalModes/SchoolMode.hpp"
 #include "FeatureServices/PresentationRoutes.hpp"
 #include "FeatureServices/SchoolCredentials.hpp"
@@ -1268,6 +1270,10 @@ wxBoxSizer *PreferencesDialog::create_item_checkbox(wxString title, wxWindow *pa
         if (param == LanModelDrop::kEnabledConfigKey)
             LanModelDrop::apply_settings();
 
+        // Local status API: start or stop the loopback listener at once.
+        if (param == StatusApi::kEnabledConfigKey)
+            StatusApi::apply_settings();
+
         if (param == "sync_user_preset") {
             bool sync = app_config->get("sync_user_preset") == "true" ? true : false;
             if (sync) {
@@ -1680,6 +1686,8 @@ void PreferencesDialog::create()
     add_tab("other", _CTX(L_CONTEXT("Other", "Preference"), "Preference"), create_other_tab());
     // A section of its own, never behind an advanced toggle (docs/features/application-integration/lan-model-drop.md).
     add_tab("lan_drop", _L("LAN model drop"), create_lan_drop_tab());
+    // Off by default; local and read-only (docs/features/device/status-api.md).
+    add_tab("status_api", _L("Local status API"), create_status_api_tab());
 
 #if !BBL_RELEASE_TO_PUBLIC
     add_tab("developer", _L("Developer Tools"), create_developer_tab());
@@ -3614,6 +3622,37 @@ wxWindow *PreferencesDialog::create_lan_drop_tab()
     auto *code = LanModelDrop::create_code_row(scrolled);
     sizer->Add(code, flags);
     register_option_row("lan_drop_code", nullptr, code);
+
+    sizer->AddSpacer(FromDIP(20));
+    scrolled->SetSizer(sizer);
+    scrolled->FitInside();
+    return scrolled;
+}
+
+// Local status API: a read-only, loopback-only web interface for the printer list and the door state.
+// Off by default. The switch comes first, then the port and the access token.
+wxWindow *PreferencesDialog::create_status_api_tab()
+{
+    auto        scrolled = new ScrollPanel(m_book);
+    wxBoxSizer *sizer    = new wxBoxSizer(wxVERTICAL);
+    auto        flags    = wxSizerFlags().Expand().Border(wxTOP, FromDIP(8));
+
+    sizer->Add(create_item_title(_L("Local status API"), scrolled, _L("Local status API")), wxSizerFlags().Expand().Border(wxTOP, FromDIP(16)));
+    sizer->Add(StatusApi::create_intro_row(scrolled), flags);
+    sizer->Add(create_item_checkbox(_L("Serve printer status on this computer"), scrolled,
+                                    _L("Let programs on this computer read the printer list and the door state. Off by default."), 50,
+                                    StatusApi::kEnabledConfigKey),
+               flags);
+    sizer->Add(create_item_input(_L("Port"), wxString(), scrolled, _L("The port on 127.0.0.1 that the status API listens on."),
+                                 StatusApi::kPortConfigKey,
+                                 [](wxString) { StatusApi::apply_settings(); }),
+               flags);
+    auto *token = StatusApi::create_token_row(scrolled);
+    sizer->Add(token, flags);
+    register_option_row("status_api_token", nullptr, token);
+    auto *status = StatusApi::create_status_row(scrolled);
+    sizer->Add(status, flags);
+    register_option_row("status_api_state", nullptr, status);
 
     sizer->AddSpacer(FromDIP(20));
     scrolled->SetSizer(sizer);

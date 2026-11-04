@@ -713,6 +713,16 @@
       "sha256": "4b3936c2d9679ba369acdddc91d1268670dfb97e4c1e4348cce87d3387801543"
     },
     {
+      "route": "device/live-readings.md",
+      "title": "Live printer readings and printer options",
+      "sha256": "1f8ce7bd156fd663c589bd1e0e3b2a61c13002557ce1654071f2c2731575f2b7"
+    },
+    {
+      "route": "device/live-readings.yue_HK.md",
+      "title": "打印機即時讀數同打印機選項",
+      "sha256": "5fcbfbf1ab1a4626871f0a157c7d6b3eebcbb8f26c2ff3ae1575440017594855"
+    },
+    {
       "route": "device/printer-melody.md",
       "title": "Printer melodies",
       "sha256": "e508889b53deed6dc7574c0716bd842a6274d69a61bdab5059f39a6f9d9a3e6b"
@@ -725,12 +735,22 @@
     {
       "route": "device/README.md",
       "title": "Device features",
-      "sha256": "b97a0cc04924df60aad90990225db9e9a89464ffd4efcfd16e65fa902f89a11b"
+      "sha256": "b3a4377cc7272e617c04b0cd590ea73e251dbd7d200bc080ae606351f90208c6"
     },
     {
       "route": "device/README.yue_HK.md",
       "title": "設備功能",
-      "sha256": "53d2152038d9e3b6aaf3c9ed810af7702a59ed448aee58dc13b36b55e34fb4e9"
+      "sha256": "141c3a17c691666a763da46f739a0d26a5ad3658dd74bc3a5910b2cb637a545f"
+    },
+    {
+      "route": "device/status-api.md",
+      "title": "Local printer status API",
+      "sha256": "e504a7e43b96ccb91a69ab383b0593995c336d963e8a1211efc95ce1275da5cd"
+    },
+    {
+      "route": "device/status-api.yue_HK.md",
+      "title": "本機打印機狀態 API",
+      "sha256": "d8256a1db15fa19df66aec01a910645b9ad3597ebb48a729c2fd737ea8f95490"
     },
     {
       "route": "documentation/instruction-mirror.md",
@@ -2050,7 +2070,7 @@
       "bytes": 1979
     }
   ],
-  "bundle_sha256": "a394099fa694d65a06ff499659dd1b69a030581d64067bd270d155a1ba927bb4",
+  "bundle_sha256": "4861c3d25935753c62bac43d2014d048b4d304972d66e8bb46225545141ccf6a",
   "unavailable_references": [
     {
       "source": "api/README.md",
@@ -2575,6 +2595,26 @@
     {
       "source": "design-system/themed-surface-colors.yue_HK.md",
       "target": "../../screenshots/version-history/history-dialog-dark.png",
+      "kind": "link"
+    },
+    {
+      "source": "device/README.md",
+      "target": "status-api.postman_collection.json",
+      "kind": "link"
+    },
+    {
+      "source": "device/README.yue_HK.md",
+      "target": "status-api.postman_collection.json",
+      "kind": "link"
+    },
+    {
+      "source": "device/status-api.md",
+      "target": "status-api.postman_collection.json",
+      "kind": "link"
+    },
+    {
+      "source": "device/status-api.yue_HK.md",
+      "target": "status-api.postman_collection.json",
       "kind": "link"
     },
     {

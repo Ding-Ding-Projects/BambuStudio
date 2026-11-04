@@ -814,6 +814,9 @@ list(APPEND SLIC3R_GUI_SOURCES
     GUI/Widgets/MD3Dialog.hpp
     GUI/Widgets/CameraHUD.cpp
     GUI/Widgets/CameraHUD.hpp
+    GUI/Widgets/DeviceLiveStrip.cpp
+    GUI/Widgets/DeviceLiveStrip.hpp
+    GUI/DeviceLiveReadings.hpp
     GUI/Widgets/BoundedRegex.cpp
     GUI/Widgets/BoundedRegex.hpp
     GUI/Widgets/BoundedRegexProtocol.hpp
@@ -929,6 +932,11 @@ list(APPEND SLIC3R_GUI_SOURCES
     GUI/LanModelDrop/LanModelDropStation.hpp
     GUI/LanModelDrop/LanModelDropUi.cpp
     GUI/LanModelDrop/LanModelDropUi.hpp
+    GUI/StatusApi/StatusApiCore.hpp
+    GUI/StatusApi/StatusApiServer.cpp
+    GUI/StatusApi/StatusApiServer.hpp
+    GUI/StatusApi/StatusApiUi.cpp
+    GUI/StatusApi/StatusApiUi.hpp
     GUI/DimSumSurprise.cpp
     GUI/DimSumSurprise.hpp
     GUI/DimSumSurpriseModel.hpp

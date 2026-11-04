@@ -11,6 +11,8 @@
 #include "MsgDialog.hpp"
 
 #include "DeviceCore/DevConfig.h"
+#include "DeviceCore/DevConfigUtil.h"
+#include "DeviceLiveReadings.hpp"
 #include "DeviceCore/DevExtruderSystem.h"
 #include "DeviceCore/DevNozzleSystem.h"
 #include "DeviceCore/DevPrintOptions.h"
@@ -138,7 +140,10 @@ void SafetyOptionsDialog::update_options(MachineObject* obj_)
 }
 
 void SafetyOptionsDialog::updateOpenDoorCheck(MachineObject *obj) {
-    if (!obj || !obj->support_door_open_check()) {
+    // Printers whose configuration does not enable the safety dialog keep the door-open check in Print Options;
+    // this dialog is then reached only for the idle heating protection and must not repeat the door control.
+    if (!obj || !DeviceLive::safety_dialog_shows_door_check(DevPrinterConfigUtil::support_safety_options(obj->printer_type),
+                                                          obj->support_door_open_check())) {
         m_cb_open_door->Hide();
         m_text_open_door->Hide();
         m_open_door_switch_board->Hide();
