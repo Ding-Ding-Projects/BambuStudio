@@ -40,4 +40,4 @@ Not verified yet: the hosted Windows build of the command palette, the title bar
 
 ## Next steps
 
-The design also rounds the canvas frame, rearranges the Preview controls (view chips, layer slider and the bottom bar) and restyles Device and the Send print and Melody creator dialogs. Those are not implemented yet. The full design is in `design/graphite-shell/`.
+The design also rounds the canvas frame, rearranges the Preview controls (view chips, layer slider and the bottom bar) and restyles Device and the Send print and Melody creator dialogs. Those are not implemented yet. The full design is in `design/graphite-shell/`. The feature inventory that keeps the redesign from dropping any feature is `design/graphite-shell/FEATURE_PARITY.md`, and the motion specification is the Graphite shell section of `design/interface-motion.md`.

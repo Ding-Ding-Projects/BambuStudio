@@ -12,7 +12,7 @@
     },
     "Dialogs.dc.html": {
       "expand": "fill",
-      "h": 720,
+      "h": 900,
       "title": "Send print, Melody creator, command palette",
       "w": 1440,
       "x": 0,
@@ -58,7 +58,7 @@
     },
     "Tokens.dc.html": {
       "expand": "fill",
-      "h": 1000,
+      "h": 1447,
       "title": "Graphite tokens",
       "w": 1440,
       "x": 1792,

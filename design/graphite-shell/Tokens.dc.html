@@ -9,72 +9,197 @@
 <x-dc>
 <helmet>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..500,0..1,0&display=swap" rel="stylesheet">
 <style>
+.gs{--bg:#0e1311;--s0:#0a0e0c;--s1:#141a17;--s2:#18201c;--s3:#1f2823;--s4:#28322c;--ol:#34413a;--tx:#e3ebe5;--tx2:#a9b6ad;--tx3:#7c8a81;--pri:#6fdc98;--onpri:#00391c;--pric:#0f5130;--onpric:#9ff7bf;--sec:#24342b;--onsec:#cde9d6;--amb:#ffb870;--ambc:#3d2a14;--blu:#8ab4ff;--bluc:#1a2740;--errc:#93000a;--onerrc:#ffdad6;--err:#ffb4ab;
+--d2:100ms;--d3:150ms;--d4:200ms;--d6:300ms;--d8:400ms;--d10:500ms;--d12:600ms;
+--e-std:cubic-bezier(.2,0,0,1);--e-dec:cubic-bezier(0,0,0,1);--e-acc:cubic-bezier(.3,0,1,1);--e-emp-dec:cubic-bezier(.05,.7,.1,1);--e-emp-acc:cubic-bezier(.3,0,.8,.15);--e-spring:cubic-bezier(.34,1.45,.64,1);
+font-family:Roboto,system-ui,sans-serif;color:var(--tx);background:var(--bg)}
+.gs,.gs *{box-sizing:border-box}
+.gs button,.gs select,.gs input{font:inherit;color:inherit}
+.gs .ms{font-family:"Material Symbols Outlined";font-weight:400;font-style:normal;font-size:20px;line-height:1;letter-spacing:normal;text-transform:none;white-space:nowrap;direction:ltr;font-feature-settings:"liga";-webkit-font-smoothing:antialiased;flex-shrink:0}
+.gs .mono{font-family:"Roboto Mono",monospace;font-variant-numeric:tabular-nums}
+.gs .lbl{font-size:13px;font-weight:500;letter-spacing:.01em;color:var(--tx2)}
+.gs .sub{font-size:12px;color:var(--tx2)}
+.gs .row{display:flex;align-items:center;gap:10px}
+.gs .grow{flex:1;min-width:0}
+/* surfaces */
+.gs .card{background:var(--s2);border-radius:28px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.04),0 1px 2px rgba(0,0,0,.4);transition:transform var(--d6) var(--e-spring),box-shadow var(--d4) var(--e-std),background-color var(--d4) var(--e-std)}
+.gs .tile{background:var(--s1);border-radius:16px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.03);transition:transform var(--d6) var(--e-spring),background-color var(--d4) var(--e-std),box-shadow var(--d4) var(--e-std)}
+.gs .float{background:rgba(31,40,35,.84);-webkit-backdrop-filter:blur(18px) saturate(1.25);backdrop-filter:blur(18px) saturate(1.25);box-shadow:inset 0 0 0 1px rgba(255,255,255,.06),0 10px 28px rgba(0,0,0,.38)}
+.gs .lift{cursor:pointer}
+.gs .lift:hover{transform:translateY(-2px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.07),0 10px 24px rgba(0,0,0,.4);background-color:var(--s3)}
+.gs .lift:active{transform:translateY(0) scale(.985);transition-duration:var(--d2)}
+/* state layers: hover 8 %, focus 10 %, press 12 % */
+.gs .sl{position:relative;overflow:hidden;cursor:pointer;transition:background-color var(--d4) var(--e-std),transform var(--d4) var(--e-spring),box-shadow var(--d4) var(--e-std),border-radius var(--d4) var(--e-std)}
+.gs .sl::after{content:"";position:absolute;inset:0;background:currentColor;opacity:0;pointer-events:none;transition:opacity var(--d3) var(--e-std)}
+.gs .sl:hover::after{opacity:.08}.gs .sl:focus-visible::after{opacity:.1}.gs .sl:active::after{opacity:.12}
+.gs .sl:active{transform:scale(.97)}
+.gs button:focus-visible,.gs a:focus-visible,.gs select:focus-visible{outline:2px solid var(--pri);outline-offset:2px}
+.gs .btn{height:48px;padding:0 22px;border-radius:24px;border:0;display:inline-flex;align-items:center;justify-content:center;gap:8px;font-size:14px;font-weight:500;text-decoration:none;white-space:nowrap}
+.gs .btn:hover{border-radius:16px}
+.gs .btn:active{border-radius:14px}
+.gs .btn-fill{background:var(--pri);color:var(--onpri);font-weight:700}
+.gs .btn-tonal{background:var(--sec);color:var(--onsec)}
+.gs .btn-out{background:transparent;color:var(--tx);box-shadow:inset 0 0 0 1px var(--ol)}
+.gs .btn-text{background:transparent;color:var(--pri);padding:0 14px}
+.gs .btn-danger{background:var(--errc);color:var(--onerrc)}
+.gs .btn-s{height:36px;padding:0 16px;font-size:13px}
+.gs .btn-xs{height:30px;padding:0 12px;font-size:12px}
+.gs .ib{width:40px;height:40px;border-radius:14px;border:0;background:transparent;color:var(--tx2);display:inline-grid;place-items:center;padding:0}
+.gs .ib:hover{color:var(--tx);border-radius:12px}
+.gs .ib.on{background:var(--pri);color:var(--onpri)}
+.gs .chip{height:32px;padding:0 14px;border-radius:16px;border:0;background:transparent;color:var(--tx2);box-shadow:inset 0 0 0 1px var(--ol);display:inline-flex;align-items:center;gap:6px;font-size:13px;white-space:nowrap}
+.gs .chip.on{background:var(--sec);color:var(--onsec);box-shadow:none;font-weight:500}
+.gs .chip .ms{font-size:16px}
+.gs .kbd{font-family:"Roboto Mono",monospace;font-size:11px;padding:1px 6px;border-radius:6px;background:var(--s3);color:var(--tx2)}
+/* segmented control with a sliding thumb */
+.gs .seg{position:relative;display:grid;grid-template-columns:repeat(var(--n),1fr);padding:4px;border-radius:999px;background:var(--s1)}
+.gs .seg::before{content:"";position:absolute;top:4px;bottom:4px;left:4px;width:calc((100% - 8px)/var(--n));transform:translateX(calc(var(--i)*100%));background:var(--sec);border-radius:999px;transition:transform var(--d8) var(--e-spring)}
+.gs .seg>button{position:relative;z-index:1;height:30px;border:0;background:transparent;color:var(--tx2);font-size:12px;border-radius:999px;transition:color var(--d4) var(--e-std)}
+.gs .seg>button.on{color:var(--onsec);font-weight:500}
+/* switch: knob grows on press, slides with a spring */
+.gs .sw{width:48px;height:28px;border-radius:14px;border:0;padding:0;position:relative;background:var(--s4);box-shadow:inset 0 0 0 2px var(--ol);transition:background-color var(--d4) var(--e-std),box-shadow var(--d4) var(--e-std);flex-shrink:0}
+.gs .sw i{position:absolute;left:6px;top:6px;width:16px;height:16px;border-radius:8px;background:var(--tx2);transition:transform var(--d6) var(--e-spring),width var(--d3) var(--e-std),height var(--d3) var(--e-std),top var(--d3) var(--e-std),background-color var(--d4) var(--e-std)}
+.gs .sw[aria-checked=true]{background:var(--pri);box-shadow:none}
+.gs .sw[aria-checked=true] i{transform:translateX(20px);width:20px;height:20px;top:4px;left:4px;background:var(--onpri)}
+.gs .sw:active i{width:24px}
+/* progress with shimmer */
+.gs .prog{height:6px;border-radius:3px;background:var(--ol);position:relative;overflow:hidden}
+.gs .prog>i{display:block;height:100%;border-radius:3px;background:var(--pri);position:relative;overflow:hidden;animation:gs-grow var(--d12) var(--e-emp-dec) both}
+.gs .prog>i::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.45),transparent);transform:translateX(-100%);animation:gs-shimmer 1.8s var(--e-std) infinite}
+.gs .dot{width:8px;height:8px;border-radius:4px;flex-shrink:0}
+.gs .live{animation:gs-pulse 2s var(--e-std) infinite}
+.gs .field{height:36px;border-radius:12px;background:var(--s3);border:0;box-shadow:inset 0 0 0 1px var(--ol);padding:0 10px;font-size:13px;color:var(--tx);transition:box-shadow var(--d4) var(--e-std)}
+.gs .field:hover{box-shadow:inset 0 0 0 1px var(--tx3)}
+.gs .field:focus{outline:none;box-shadow:inset 0 0 0 2px var(--pri)}
+.gs .search{height:36px;border-radius:18px;background:var(--s3);display:flex;align-items:center;gap:8px;padding:0 6px 0 12px;color:var(--tx2);font-size:13px;box-shadow:inset 0 0 0 1px transparent;transition:box-shadow var(--d4) var(--e-std)}
+.gs .search:hover{box-shadow:inset 0 0 0 1px var(--ol)}
+.gs .rx{font-family:"Roboto Mono",monospace;font-size:12px;height:24px;padding:0 8px;border-radius:12px;border:0;background:var(--s4);color:var(--tx2);cursor:pointer;transition:background-color var(--d4) var(--e-std),color var(--d4) var(--e-std)}
+.gs .rx:hover{background:var(--sec);color:var(--onsec)}
+/* motion keyframes (MD3 duration and easing tokens, see design/interface-motion.md) */
+@keyframes gs-axis{from{opacity:0;transform:translateX(var(--dx,28px))}to{opacity:1;transform:none}}
+@keyframes gs-rise{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes gs-fade{from{opacity:0}to{opacity:1}}
+@keyframes gs-pop{from{opacity:0;transform:scale(.9) translateY(12px)}to{opacity:1;transform:none}}
+@keyframes gs-grow{from{width:0}}
+@keyframes gs-shimmer{to{transform:translateX(100%)}}
+@keyframes gs-pulse{0%,100%{opacity:1}50%{opacity:.35}}
+@keyframes gs-toast{from{opacity:0;transform:translateY(28px) scale(.96)}to{opacity:1;transform:none}}
+@keyframes gs-ind{from{transform:translateY(calc(var(--idx)*-64px))}to{transform:none}}
+@keyframes gs-layer{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+.gs .screen{animation:gs-axis var(--d6) var(--e-emp-dec) both}
+.gs .st>*{animation:gs-rise var(--d8) var(--e-emp-dec) both}
+.gs .st>*:nth-child(1){animation-delay:0ms}.gs .st>*:nth-child(2){animation-delay:40ms}.gs .st>*:nth-child(3){animation-delay:80ms}.gs .st>*:nth-child(4){animation-delay:120ms}.gs .st>*:nth-child(5){animation-delay:160ms}.gs .st>*:nth-child(6){animation-delay:200ms}.gs .st>*:nth-child(7){animation-delay:240ms}.gs .st>*:nth-child(8){animation-delay:280ms}.gs .st>*:nth-child(9){animation-delay:320ms}.gs .st>*:nth-child(10){animation-delay:360ms}.gs .st>*:nth-child(n+11){animation-delay:400ms}
+.gs .dlg{animation:gs-pop var(--d6) var(--e-emp-dec) both}
+.gs .toast{animation:gs-toast var(--d6) var(--e-emp-dec) both;animation-delay:500ms}
+.gs .scrim{animation:gs-fade var(--d4) var(--e-std) both}
+.gs .scrubbing{animation:gs-layer var(--d8) var(--e-std) 1}
+@media (prefers-reduced-motion:reduce){
+  .gs *,.gs *::before,.gs *::after{animation-duration:.01ms!important;animation-delay:0s!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+  .gs .prog>i::after{display:none}
+  .gs .live{opacity:1}
+  .gs .lift:hover{transform:none}
+}
 body{margin:0;background:#0e1311}
+.gs h2{margin:0 0 12px;font-size:16px;font-weight:500}
+.gs .pn{background:var(--s2);border-radius:28px;padding:20px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.04)}
+.gs .tr{display:grid;grid-template-columns:150px 70px 1fr;gap:10px;align-items:center;font-size:12px;padding:4px 0}
+.gs .bar{height:8px;border-radius:4px;background:var(--pri);transform-origin:left;opacity:.5;width:100%}
+.gs .tr:hover .bar{animation:gs-bar var(--t) var(--ez) both}
+@keyframes gs-bar{from{transform:scaleX(.02);opacity:1}to{transform:scaleX(1);opacity:1}}
+.gs .demo{display:flex;gap:12px;flex-wrap:wrap}
+.gs .demo button{height:40px}
+@media (prefers-reduced-motion:reduce){.gs .tr:hover .bar{animation:none;opacity:1}}
 </style>
 </helmet>
-<div style="width: 100%; min-height: 1000px; box-sizing: border-box; padding: 40px; display: flex; flex-direction: column; gap: 28px; background: #0e1311; color: #e3ebe5; font-family: Roboto, system-ui, sans-serif">
-  <header>
-    <h1 style="margin: 0; font-size: 32px; font-weight: 500">Graphite: colour roles, type and shape</h1>
-    <p style="margin: 6px 0 0; color: #a9b6ad; font-size: 14px">Green-tinted graphite neutrals, one mint accent, amber for heat, blue for network. Roles map one to one onto MD3::Role in the native kit.</p>
+<div class="gs" style="width: 100%; min-height: 1280px; padding: 40px; display: flex; flex-direction: column; gap: 24px">
+  <header class="screen">
+    <h1 style="margin: 0; font-size: 34px; font-weight: 500; letter-spacing: -.01em">Graphite: colour roles, type, shape and motion</h1>
+    <p style="margin: 6px 0 0; color: var(--tx2); font-size: 14px">Green-tinted graphite neutrals, one mint accent, amber for heat, blue for network. Roles map one to one onto MD3::Role in the native kit. Hover a duration row to play its easing.</p>
   </header>
-  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px">
-    <section style="background: #18201c; border-radius: 24px; padding: 20px">
-      <h2 style="margin: 0 0 14px; font-size: 16px; font-weight: 500">Dark (default)</h2>
+  <div class="st" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px">
+    <section class="pn">
+      <h2>Dark (default)</h2>
       <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px">
         <sc-for list="{{dark}}" as="s" hint-placeholder-count="24">
-          <div style="border-radius: 12px; overflow: hidden; border: 1px solid #34413a">
+          <div class="lift" style="border-radius: 14px; overflow: hidden; border: 1px solid #34413a">
             <div style="height: 44px; background: {{s.hex}}"></div>
-            <div style="padding: 6px 8px; font-size: 11px; background: #141a17"><div>{{s.name}}</div><div style="font-family: 'Roboto Mono', monospace; color: #a9b6ad">{{s.hex}}</div></div>
+            <div style="padding: 6px 8px; font-size: 11px; background: #141a17"><div>{{s.name}}</div><div class="mono" style="color: #a9b6ad">{{s.hex}}</div></div>
           </div>
         </sc-for>
       </div>
     </section>
-    <section style="background: #f5f8f5; color: #131c17; border-radius: 24px; padding: 20px">
-      <h2 style="margin: 0 0 14px; font-size: 16px; font-weight: 500">Light</h2>
+    <section style="background: #f5f8f5; color: #131c17; border-radius: 28px; padding: 20px">
+      <h2>Light</h2>
       <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px">
         <sc-for list="{{light}}" as="s" hint-placeholder-count="24">
-          <div style="border-radius: 12px; overflow: hidden; border: 1px solid #c0ccc4">
+          <div class="lift" style="border-radius: 14px; overflow: hidden; border: 1px solid #c0ccc4">
             <div style="height: 44px; background: {{s.hex}}"></div>
-            <div style="padding: 6px 8px; font-size: 11px; background: #ffffff"><div>{{s.name}}</div><div style="font-family: 'Roboto Mono', monospace; color: #3f4c44">{{s.hex}}</div></div>
+            <div style="padding: 6px 8px; font-size: 11px; background: #ffffff"><div>{{s.name}}</div><div class="mono" style="color: #3f4c44">{{s.hex}}</div></div>
           </div>
         </sc-for>
       </div>
     </section>
   </div>
-  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px">
-    <section style="background: #18201c; border-radius: 24px; padding: 20px; display: flex; flex-direction: column; gap: 8px">
-      <h2 style="margin: 0 0 6px; font-size: 16px; font-weight: 500">Type (Roboto, Roboto Mono)</h2>
-      <div style="font-size: 40px; line-height: 1.1">Display 40</div>
+
+  <div class="st" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px">
+    <section class="pn" style="display: flex; flex-direction: column; gap: 8px">
+      <h2>Type (Roboto, Roboto Mono)</h2>
+      <div style="font-size: 40px; line-height: 1.1; font-weight: 500; letter-spacing: -.015em">Display 40 medium</div>
       <div style="font-size: 22px; font-weight: 500">Title 22 medium</div>
       <div style="font-size: 14px">Body 14 · compact 13</div>
-      <div style="font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: #a9b6ad; font-weight: 500">Section label 11</div>
-      <div style="font-family: 'Roboto Mono', monospace; font-size: 15px">1 h 42 m · 38.6 g · 220°C</div>
+      <div class="lbl">Section label 13 medium, sentence case</div>
+      <div class="mono" style="font-size: 15px">1 h 42 m · 38.6 g · 220°C</div>
+      <p class="sub" style="margin: 4px 0 0">Section labels drop the old uppercase 11 px tracked style: sentence case at 13 px reads as modern and holds up in Cantonese.</p>
     </section>
-    <section style="background: #18201c; border-radius: 24px; padding: 20px; display: flex; flex-direction: column; gap: 10px">
-      <h2 style="margin: 0 0 6px; font-size: 16px; font-weight: 500">Shape</h2>
+    <section class="pn" style="display: flex; flex-direction: column; gap: 10px">
+      <h2>Shape</h2>
       <div style="display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap">
-        <div style="width: 64px; height: 64px; border-radius: 28px; background: #1f2823; display: grid; place-items: center; font-size: 11px">28</div>
-        <div style="width: 64px; height: 64px; border-radius: 24px; background: #1f2823; display: grid; place-items: center; font-size: 11px">24</div>
-        <div style="width: 64px; height: 64px; border-radius: 20px; background: #1f2823; display: grid; place-items: center; font-size: 11px">20</div>
-        <div style="width: 64px; height: 64px; border-radius: 16px; background: #1f2823; display: grid; place-items: center; font-size: 11px">16</div>
-        <div style="width: 64px; height: 64px; border-radius: 12px; background: #1f2823; display: grid; place-items: center; font-size: 11px">12</div>
+        <div style="width: 60px; height: 60px; border-radius: 32px; background: var(--s3); display: grid; place-items: center; font-size: 11px">32</div>
+        <div style="width: 60px; height: 60px; border-radius: 28px; background: var(--s3); display: grid; place-items: center; font-size: 11px">28</div>
+        <div style="width: 60px; height: 60px; border-radius: 22px; background: var(--s3); display: grid; place-items: center; font-size: 11px">22</div>
+        <div style="width: 60px; height: 60px; border-radius: 16px; background: var(--s3); display: grid; place-items: center; font-size: 11px">16</div>
+        <div style="width: 60px; height: 60px; border-radius: 12px; background: var(--s3); display: grid; place-items: center; font-size: 11px">12</div>
       </div>
-      <p style="margin: 0; font-size: 13px; color: #a9b6ad">Dialogs 28 · canvas and panels 24 · cards 20 · action buttons 16 · rows and chips 12. Panels float on the ground with 12 px gaps, no hairlines.</p>
+      <div class="demo"><button class="btn btn-fill sl">Pill to 16</button><button class="btn btn-tonal sl">Hover me</button></div>
+      <p class="sub" style="margin: 0">Dialogs 32 · cards and canvas 28 · floating toolbars 22 · tiles and chips 16 · fields 12. Buttons are pills that morph to 16 px on hover and 14 px on press (Expressive shape morph). Panels float on the ground with 10 to 12 px gaps.</p>
     </section>
-    <section style="background: #18201c; border-radius: 24px; padding: 20px; display: flex; flex-direction: column; gap: 10px">
-      <h2 style="margin: 0 0 6px; font-size: 16px; font-weight: 500">Accents</h2>
+    <section class="pn" style="display: flex; flex-direction: column; gap: 10px">
+      <h2>Accents and elevation</h2>
       <div style="display: flex; gap: 10px">
-        <div style="flex: 1; height: 56px; border-radius: 14px; background: #6fdc98; color: #00391c; display: grid; place-items: center; font-size: 12px; font-weight: 500">Primary</div>
-        <div style="flex: 1; height: 56px; border-radius: 14px; background: #ffb870; color: #3d2400; display: grid; place-items: center; font-size: 12px; font-weight: 500">Heat</div>
-        <div style="flex: 1; height: 56px; border-radius: 14px; background: #8ab4ff; color: #0a2a5c; display: grid; place-items: center; font-size: 12px; font-weight: 500">Network</div>
+        <div style="flex: 1; height: 56px; border-radius: 16px; background: #6fdc98; color: #00391c; display: grid; place-items: center; font-size: 12px; font-weight: 500">Primary</div>
+        <div style="flex: 1; height: 56px; border-radius: 16px; background: #ffb870; color: #3d2400; display: grid; place-items: center; font-size: 12px; font-weight: 500">Heat</div>
+        <div style="flex: 1; height: 56px; border-radius: 16px; background: #8ab4ff; color: #0a2a5c; display: grid; place-items: center; font-size: 12px; font-weight: 500">Network</div>
       </div>
-      <p style="margin: 0; font-size: 13px; color: #a9b6ad">Heat marks temperatures and unsaved state; Network marks printers, LAN and Home Assistant.</p>
+      <p class="sub" style="margin: 0">Heat marks temperatures and unsaved state; Network marks printers, LAN and Home Assistant.</p>
+      <div style="display: flex; gap: 12px; margin-top: 4px">
+        <div class="card" style="flex: 1; height: 64px; border-radius: 20px; display: grid; place-items: center; font-size: 12px">Level 1 card</div>
+        <div class="float" style="flex: 1; height: 64px; border-radius: 20px; display: grid; place-items: center; font-size: 12px">Level 3 float</div>
+      </div>
+      <p class="sub" style="margin: 0">Level 1: tonal surface with a 4 % white inner edge. Level 3: translucent surface, 18 px backdrop blur and a 28 px soft shadow, used only for controls floating over the 3D canvas.</p>
+    </section>
+  </div>
+
+  <div class="st" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px">
+    <section class="pn">
+      <h2>Motion: duration tokens (hover a row to play it)</h2>
+      <sc-for list="{{durations}}" as="d" hint-placeholder-count="8">
+        <div class="tr" style="--t: {{d.ms}}ms; --ez: cubic-bezier(.2,0,0,1)"><span class="mono">{{d.name}}</span><span class="mono" style="color: var(--tx2)">{{d.ms}} ms</span><div style="background: var(--s1); border-radius: 4px; overflow: hidden"><div class="bar"></div></div></div>
+      </sc-for>
+      <p class="sub" style="margin: 8px 0 0">Short (50 to 200 ms) for state layers and small controls. Medium (250 to 400 ms) for selection, cards and switches. Long (450 to 600 ms) for screen and dialog entrances.</p>
+    </section>
+    <section class="pn">
+      <h2>Motion: easing tokens</h2>
+      <sc-for list="{{easings}}" as="e" hint-placeholder-count="6">
+        <div class="tr" style="--t: 700ms; --ez: {{e.css}}; grid-template-columns: 190px 150px 1fr"><span>{{e.name}}</span><span class="mono" style="color: var(--tx2)">{{e.curve}}</span><div style="background: var(--s1); border-radius: 4px; overflow: hidden"><div class="bar"></div></div></div>
+      </sc-for>
+      <p class="sub" style="margin: 8px 0 0">Emphasized curves are drawn as paths in Material Design 3; the cubic approximations here are the ones the native animator can also evaluate. The spring is an overshoot approximation of the Expressive spatial spring, used only for position, size and shape, never for colour or opacity.</p>
     </section>
   </div>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1000}}'>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1280}}'>
 class Component extends DCLogic {
   renderVals() {
     const names = ['surface','surfaceDim','surfaceBright','scLowest','scLow','sc','scHigh','scHighest','onSurface','onSurfaceVariant','outline','outlineVariant','primary','onPrimary','primaryContainer','onPrimaryContainer','secondaryContainer','onSecondaryContainer','error','errorContainer','inverseSurface','inverseOn','onError','onErrorContainer'];
@@ -82,7 +207,20 @@ class Component extends DCLogic {
     const light = ['#f5f8f5','#d5ddd7','#fafcfa','#ffffff','#eef3ef','#e7eee9','#dfe8e2','#d6e1da','#131c17','#3f4c44','#66766c','#c0ccc4','#146c2e','#ffffff','#a6f4b8','#00210c','#d3e8da','#0e1f15','#ba1a1a','#ffdad6','#2b322e','#edf2ee','#ffffff','#410002'];
     return {
       dark: names.map((n, i) => ({ name: n, hex: dark[i] })),
-      light: names.map((n, i) => ({ name: n, hex: light[i] }))
+      light: names.map((n, i) => ({ name: n, hex: light[i] })),
+      durations: [
+        { name: 'short2', ms: '100' }, { name: 'short3', ms: '150' }, { name: 'short4', ms: '200' },
+        { name: 'medium1', ms: '250' }, { name: 'medium2', ms: '300' }, { name: 'medium4', ms: '400' },
+        { name: 'long2', ms: '500' }, { name: 'long4', ms: '600' }
+      ],
+      easings: [
+        { name: 'standard', curve: '.2, 0, 0, 1', css: 'cubic-bezier(.2,0,0,1)' },
+        { name: 'standard decelerate', curve: '0, 0, 0, 1', css: 'cubic-bezier(0,0,0,1)' },
+        { name: 'standard accelerate', curve: '.3, 0, 1, 1', css: 'cubic-bezier(.3,0,1,1)' },
+        { name: 'emphasized decelerate', curve: '.05, .7, .1, 1', css: 'cubic-bezier(.05,.7,.1,1)' },
+        { name: 'emphasized accelerate', curve: '.3, 0, .8, .15', css: 'cubic-bezier(.3,0,.8,.15)' },
+        { name: 'expressive spring', curve: '.34, 1.45, .64, 1', css: 'cubic-bezier(.34,1.45,.64,1)' }
+      ]
     };
   }
 }
