@@ -11,43 +11,154 @@
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..500,0..1,0&display=swap" rel="stylesheet">
 <style>
-.ms{font-family:"Material Symbols Outlined";font-weight:400;font-style:normal;font-size:22px;line-height:1;letter-spacing:normal;text-transform:none;white-space:nowrap;direction:ltr;font-feature-settings:"liga";-webkit-font-smoothing:antialiased}
+.gs{--bg:#0e1311;--s0:#0a0e0c;--s1:#141a17;--s2:#18201c;--s3:#1f2823;--s4:#28322c;--ol:#34413a;--tx:#e3ebe5;--tx2:#a9b6ad;--tx3:#7c8a81;--pri:#6fdc98;--onpri:#00391c;--pric:#0f5130;--onpric:#9ff7bf;--sec:#24342b;--onsec:#cde9d6;--amb:#ffb870;--ambc:#3d2a14;--blu:#8ab4ff;--bluc:#1a2740;--errc:#93000a;--onerrc:#ffdad6;--err:#ffb4ab;
+--d2:100ms;--d3:150ms;--d4:200ms;--d6:300ms;--d8:400ms;--d10:500ms;--d12:600ms;
+--e-std:cubic-bezier(.2,0,0,1);--e-dec:cubic-bezier(0,0,0,1);--e-acc:cubic-bezier(.3,0,1,1);--e-emp-dec:cubic-bezier(.05,.7,.1,1);--e-emp-acc:cubic-bezier(.3,0,.8,.15);--e-spring:cubic-bezier(.34,1.45,.64,1);
+font-family:Roboto,system-ui,sans-serif;color:var(--tx);background:var(--bg)}
+.gs,.gs *{box-sizing:border-box}
+.gs button,.gs select,.gs input{font:inherit;color:inherit}
+.gs .ms{font-family:"Material Symbols Outlined";font-weight:400;font-style:normal;font-size:20px;line-height:1;letter-spacing:normal;text-transform:none;white-space:nowrap;direction:ltr;font-feature-settings:"liga";-webkit-font-smoothing:antialiased;flex-shrink:0}
+.gs .mono{font-family:"Roboto Mono",monospace;font-variant-numeric:tabular-nums}
+.gs .lbl{font-size:13px;font-weight:500;letter-spacing:.01em;color:var(--tx2)}
+.gs .sub{font-size:12px;color:var(--tx2)}
+.gs .row{display:flex;align-items:center;gap:10px}
+.gs .grow{flex:1;min-width:0}
+/* surfaces */
+.gs .card{background:var(--s2);border-radius:28px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.04),0 1px 2px rgba(0,0,0,.4);transition:transform var(--d6) var(--e-spring),box-shadow var(--d4) var(--e-std),background-color var(--d4) var(--e-std)}
+.gs .tile{background:var(--s1);border-radius:16px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.03);transition:transform var(--d6) var(--e-spring),background-color var(--d4) var(--e-std),box-shadow var(--d4) var(--e-std)}
+.gs .float{background:rgba(31,40,35,.84);-webkit-backdrop-filter:blur(18px) saturate(1.25);backdrop-filter:blur(18px) saturate(1.25);box-shadow:inset 0 0 0 1px rgba(255,255,255,.06),0 10px 28px rgba(0,0,0,.38)}
+.gs .lift{cursor:pointer}
+.gs .lift:hover{transform:translateY(-2px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.07),0 10px 24px rgba(0,0,0,.4);background-color:var(--s3)}
+.gs .lift:active{transform:translateY(0) scale(.985);transition-duration:var(--d2)}
+/* state layers: hover 8 %, focus 10 %, press 12 % */
+.gs .sl{position:relative;overflow:hidden;cursor:pointer;transition:background-color var(--d4) var(--e-std),transform var(--d4) var(--e-spring),box-shadow var(--d4) var(--e-std),border-radius var(--d4) var(--e-std)}
+.gs .sl::after{content:"";position:absolute;inset:0;background:currentColor;opacity:0;pointer-events:none;transition:opacity var(--d3) var(--e-std)}
+.gs .sl:hover::after{opacity:.08}.gs .sl:focus-visible::after{opacity:.1}.gs .sl:active::after{opacity:.12}
+.gs .sl:active{transform:scale(.97)}
+.gs button:focus-visible,.gs a:focus-visible,.gs select:focus-visible{outline:2px solid var(--pri);outline-offset:2px}
+.gs .btn{height:48px;padding:0 22px;border-radius:24px;border:0;display:inline-flex;align-items:center;justify-content:center;gap:8px;font-size:14px;font-weight:500;text-decoration:none;white-space:nowrap}
+.gs .btn:hover{border-radius:16px}
+.gs .btn:active{border-radius:14px}
+.gs .btn-fill{background:var(--pri);color:var(--onpri);font-weight:700}
+.gs .btn-tonal{background:var(--sec);color:var(--onsec)}
+.gs .btn-out{background:transparent;color:var(--tx);box-shadow:inset 0 0 0 1px var(--ol)}
+.gs .btn-text{background:transparent;color:var(--pri);padding:0 14px}
+.gs .btn-danger{background:var(--errc);color:var(--onerrc)}
+.gs .btn-s{height:36px;padding:0 16px;font-size:13px}
+.gs .btn-xs{height:30px;padding:0 12px;font-size:12px}
+.gs .ib{width:40px;height:40px;border-radius:14px;border:0;background:transparent;color:var(--tx2);display:inline-grid;place-items:center;padding:0}
+.gs .ib:hover{color:var(--tx);border-radius:12px}
+.gs .ib.on{background:var(--pri);color:var(--onpri)}
+.gs .chip{height:32px;padding:0 14px;border-radius:16px;border:0;background:transparent;color:var(--tx2);box-shadow:inset 0 0 0 1px var(--ol);display:inline-flex;align-items:center;gap:6px;font-size:13px;white-space:nowrap}
+.gs .chip.on{background:var(--sec);color:var(--onsec);box-shadow:none;font-weight:500}
+.gs .chip .ms{font-size:16px}
+.gs .kbd{font-family:"Roboto Mono",monospace;font-size:11px;padding:1px 6px;border-radius:6px;background:var(--s3);color:var(--tx2)}
+/* segmented control with a sliding thumb */
+.gs .seg{position:relative;display:grid;grid-template-columns:repeat(var(--n),1fr);padding:4px;border-radius:999px;background:var(--s1)}
+.gs .seg::before{content:"";position:absolute;top:4px;bottom:4px;left:4px;width:calc((100% - 8px)/var(--n));transform:translateX(calc(var(--i)*100%));background:var(--sec);border-radius:999px;transition:transform var(--d8) var(--e-spring)}
+.gs .seg>button{position:relative;z-index:1;height:30px;border:0;background:transparent;color:var(--tx2);font-size:12px;border-radius:999px;transition:color var(--d4) var(--e-std)}
+.gs .seg>button.on{color:var(--onsec);font-weight:500}
+/* switch: knob grows on press, slides with a spring */
+.gs .sw{width:48px;height:28px;border-radius:14px;border:0;padding:0;position:relative;background:var(--s4);box-shadow:inset 0 0 0 2px var(--ol);transition:background-color var(--d4) var(--e-std),box-shadow var(--d4) var(--e-std);flex-shrink:0}
+.gs .sw i{position:absolute;left:6px;top:6px;width:16px;height:16px;border-radius:8px;background:var(--tx2);transition:transform var(--d6) var(--e-spring),width var(--d3) var(--e-std),height var(--d3) var(--e-std),top var(--d3) var(--e-std),background-color var(--d4) var(--e-std)}
+.gs .sw[aria-checked=true]{background:var(--pri);box-shadow:none}
+.gs .sw[aria-checked=true] i{transform:translateX(20px);width:20px;height:20px;top:4px;left:4px;background:var(--onpri)}
+.gs .sw:active i{width:24px}
+/* progress with shimmer */
+.gs .prog{height:6px;border-radius:3px;background:var(--ol);position:relative;overflow:hidden}
+.gs .prog>i{display:block;height:100%;border-radius:3px;background:var(--pri);position:relative;overflow:hidden;animation:gs-grow var(--d12) var(--e-emp-dec) both}
+.gs .prog>i::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.45),transparent);transform:translateX(-100%);animation:gs-shimmer 1.8s var(--e-std) infinite}
+.gs .dot{width:8px;height:8px;border-radius:4px;flex-shrink:0}
+.gs .live{animation:gs-pulse 2s var(--e-std) infinite}
+.gs .field{height:36px;border-radius:12px;background:var(--s3);border:0;box-shadow:inset 0 0 0 1px var(--ol);padding:0 10px;font-size:13px;color:var(--tx);transition:box-shadow var(--d4) var(--e-std)}
+.gs .field:hover{box-shadow:inset 0 0 0 1px var(--tx3)}
+.gs .field:focus{outline:none;box-shadow:inset 0 0 0 2px var(--pri)}
+.gs .search{height:36px;border-radius:18px;background:var(--s3);display:flex;align-items:center;gap:8px;padding:0 6px 0 12px;color:var(--tx2);font-size:13px;box-shadow:inset 0 0 0 1px transparent;transition:box-shadow var(--d4) var(--e-std)}
+.gs .search:hover{box-shadow:inset 0 0 0 1px var(--ol)}
+.gs .rx{font-family:"Roboto Mono",monospace;font-size:12px;height:24px;padding:0 8px;border-radius:12px;border:0;background:var(--s4);color:var(--tx2);cursor:pointer;transition:background-color var(--d4) var(--e-std),color var(--d4) var(--e-std)}
+.gs .rx:hover{background:var(--sec);color:var(--onsec)}
+/* motion keyframes (MD3 duration and easing tokens, see design/interface-motion.md) */
+@keyframes gs-axis{from{opacity:0;transform:translateX(var(--dx,28px))}to{opacity:1;transform:none}}
+@keyframes gs-rise{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes gs-fade{from{opacity:0}to{opacity:1}}
+@keyframes gs-pop{from{opacity:0;transform:scale(.9) translateY(12px)}to{opacity:1;transform:none}}
+@keyframes gs-grow{from{width:0}}
+@keyframes gs-shimmer{to{transform:translateX(100%)}}
+@keyframes gs-pulse{0%,100%{opacity:1}50%{opacity:.35}}
+@keyframes gs-toast{from{opacity:0;transform:translateY(28px) scale(.96)}to{opacity:1;transform:none}}
+@keyframes gs-ind{from{transform:translateY(calc(var(--idx)*-64px))}to{transform:none}}
+@keyframes gs-layer{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+.gs .screen{animation:gs-axis var(--d6) var(--e-emp-dec) both}
+.gs .st>*{animation:gs-rise var(--d8) var(--e-emp-dec) both}
+.gs .st>*:nth-child(1){animation-delay:0ms}.gs .st>*:nth-child(2){animation-delay:40ms}.gs .st>*:nth-child(3){animation-delay:80ms}.gs .st>*:nth-child(4){animation-delay:120ms}.gs .st>*:nth-child(5){animation-delay:160ms}.gs .st>*:nth-child(6){animation-delay:200ms}.gs .st>*:nth-child(7){animation-delay:240ms}.gs .st>*:nth-child(8){animation-delay:280ms}.gs .st>*:nth-child(9){animation-delay:320ms}.gs .st>*:nth-child(10){animation-delay:360ms}.gs .st>*:nth-child(n+11){animation-delay:400ms}
+.gs .dlg{animation:gs-pop var(--d6) var(--e-emp-dec) both}
+.gs .toast{animation:gs-toast var(--d6) var(--e-emp-dec) both;animation-delay:500ms}
+.gs .scrim{animation:gs-fade var(--d4) var(--e-std) both}
+.gs .scrubbing{animation:gs-layer var(--d8) var(--e-std) 1}
+@media (prefers-reduced-motion:reduce){
+  .gs *,.gs *::before,.gs *::after{animation-duration:.01ms!important;animation-delay:0s!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+  .gs .prog>i::after{display:none}
+  .gs .live{opacity:1}
+  .gs .lift:hover{transform:none}
+}
 body{margin:0}
+.gs .tb{height:48px;width:100%;display:flex;align-items:center;gap:6px;padding:0 0 0 12px;background:var(--s0);border-bottom:1px solid var(--s3)}
+.gs .menu{height:32px;padding:0 9px;border:0;border-radius:10px;background:transparent;color:var(--tx);font-size:13px}
+.gs .menu:hover{border-radius:8px}
+.gs .pchip{height:32px;display:flex;align-items:center;gap:8px;padding:0 12px;border-radius:12px;text-decoration:none;font-size:13px;color:var(--tx2);max-width:170px}
+.gs .pchip.on{background:var(--s3);color:var(--tx);font-weight:500}
+.gs .seg.sm{padding:3px}
+.gs .seg.sm::before{top:3px;bottom:3px;left:3px;width:calc((100% - 6px)/var(--n))}
+.gs .seg.sm>button{height:26px;padding:0 6px}
+.gs .badge{position:absolute;right:3px;top:3px;min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:var(--amb);color:#2a1700;font-size:10px;font-weight:700;display:grid;place-items:center;animation:gs-pop var(--d6) var(--e-spring) both;animation-delay:400ms}
+.gs .wc{width:46px;height:48px;border:0;background:transparent;color:var(--tx2);display:grid;place-items:center;transition:background-color var(--d3) var(--e-std),color var(--d3) var(--e-std)}
+.gs .wc:hover{background:var(--s3);color:var(--tx)}
+.gs .wc.x:hover{background:#c42b1c;color:#fff}
 </style>
 </helmet>
-<header style="height: 48px; width: 100%; box-sizing: border-box; display: flex; align-items: center; gap: 10px; padding: 0 0 0 14px; background: #0a0e0c; color: #e3ebe5; font-family: Roboto, system-ui, sans-serif; border-bottom: 1px solid #1f2823">
-  <div style="width: 28px; height: 28px; border-radius: 9px; background: #6fdc98; display: grid; place-items: center; flex-shrink: 0; color: #00391c"><span class="ms" aria-hidden="true" style="font-size: 16px; color: #00391c">deployed_code</span></div>
-  <nav aria-label="Projects" style="display: flex; gap: 4px; min-width: 0">
-    <a href="#" style="height: 32px; display: flex; align-items: center; gap: 8px; padding: 0 12px; border-radius: 10px; background: #1f2823; color: #e3ebe5; text-decoration: none; font-size: 13px; font-weight: 500">bracket_v3.3mf<span style="width: 6px; height: 6px; border-radius: 3px; background: #ffb870"></span></a>
-    <a href="#" style="height: 32px; display: flex; align-items: center; padding: 0 12px; border-radius: 10px; color: #a9b6ad; text-decoration: none; font-size: 13px">Untitled</a>
-    <button aria-label="New project tab" style="width: 32px; height: 32px; border-radius: 10px; border: 0; background: transparent; color: #a9b6ad; display: grid; place-items: center"><span class="ms" aria-hidden="true" style="font-size: 18px">add</span></button>
+<header class="gs tb" aria-label="Title bar">
+  <div title="Bambu Studio" style="width: 28px; height: 28px; margin-right: 4px; border-radius: 9px; background: var(--pri); display: grid; place-items: center; flex-shrink: 0; color: var(--onpri)"><span class="ms" aria-hidden="true" style="font-size: 16px">deployed_code</span></div>
+  <nav aria-label="Menus" style="display: flex; gap: 0; flex-shrink: 0">
+    <button class="menu sl">File</button>
+    <button class="menu sl">Edit</button>
+    <button class="menu sl">View</button>
+    <button class="menu sl">Objects</button>
+    <button class="menu sl">Calibration</button>
+    <button class="menu sl">Help</button>
+  </nav>
+  <nav aria-label="Projects" style="display: flex; gap: 2px; min-width: 0; margin-left: 6px">
+    <a href="#" class="pchip on sl" style="min-width: 0">bracket_v3.3mf<span class="dot" style="background: var(--amb)"></span></a>
+    <button class="ib sl" aria-label="New project tab" style="width: 32px; height: 32px; border-radius: 10px"><span class="ms" aria-hidden="true" style="font-size: 18px">add</span></button>
   </nav>
   <div style="flex: 1; display: flex; justify-content: center; min-width: 0">
-    <button style="width: min(460px, 100%); height: 32px; border-radius: 16px; border: 1px solid #28322c; background: #141a17; color: #a9b6ad; display: flex; align-items: center; gap: 8px; padding: 0 12px; font: inherit; font-size: 13px">
-      <span class="ms" aria-hidden="true" style="font-size: 15px">search</span>
-      <span style="flex: 1; text-align: left">Search commands, settings, inks</span>
-      <span style="font-family: 'Roboto Mono', monospace; font-size: 11px; padding: 1px 6px; border-radius: 6px; background: #1f2823">.*</span>
-      <span style="font-family: 'Roboto Mono', monospace; font-size: 11px; padding: 1px 6px; border-radius: 6px; background: #1f2823">Ctrl K</span>
+    <button class="search sl" style="width: min(360px, 100%); min-width: 170px; height: 34px; border: 0; text-align: left">
+      <span class="ms" aria-hidden="true" style="font-size: 16px">search</span>
+      <span class="grow" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Search commands and settings</span>
+      <span class="rx" style="height: 22px; line-height: 22px; padding: 0 7px" title="Regex search">.*</span>
+      <span class="kbd">Ctrl K</span>
     </button>
   </div>
-  <button style="height: 30px; display: flex; align-items: center; gap: 6px; padding: 0 10px; border-radius: 15px; border: 0; background: #141a17; color: #a9b6ad; font-family: 'Roboto Mono', monospace; font-size: 12px"><span class="ms" aria-hidden="true" style="font-size: 14px; color: #6fdc98">account_tree</span>main</button>
-  <div role="group" aria-label="Language" style="display: flex; padding: 3px; border-radius: 12px; background: #141a17">
-    <button style="height: 26px; padding: 0 10px; border-radius: 9px; border: 0; background: {{enBg}}; color: {{enFg}}; font: inherit; font-size: 12px; font-weight: 500">EN</button>
-    <button style="height: 26px; padding: 0 10px; border-radius: 9px; border: 0; background: transparent; color: #a9b6ad; font: inherit; font-size: 12px">粵</button>
-    <button style="height: 26px; padding: 0 10px; border-radius: 9px; border: 0; background: transparent; color: #a9b6ad; font: inherit; font-size: 12px">雙</button>
+  <button class="sl" aria-label="Version history: main" style="height: 30px; display: flex; align-items: center; gap: 6px; padding: 0 10px; border-radius: 15px; border: 0; background: var(--s1); color: var(--tx2)"><span class="ms" aria-hidden="true" style="font-size: 16px; color: var(--pri)">account_tree</span><span class="mono" style="font-size: 12px">main</span><span class="mono" style="font-size: 11px; color: var(--tx3)">r12</span></button>
+  <button class="ib sl" aria-label="LAN model drop: 2 received files waiting" style="position: relative; width: 36px; height: 36px; border-radius: 18px"><span class="ms" aria-hidden="true" style="font-size: 20px; color: var(--pri)">qr_code_2</span><span class="badge" style="right: 0; top: 0">2</span></button>
+  <button class="ib sl" aria-label="Notifications (3 unread)" style="position: relative; width: 36px; height: 36px; border-radius: 18px"><span class="ms" aria-hidden="true">notifications</span><span class="badge" style="right: 0; top: 0">3</span></button>
+  <button class="ib sl" aria-label="Appearance" style="width: 36px; height: 36px; border-radius: 18px"><span class="ms" aria-hidden="true">palette</span></button>
+  <div class="seg sm" role="group" aria-label="Language" style="--n: 3; --i: 0; width: 108px">
+    <button class="on" aria-pressed="true">EN</button>
+    <button aria-pressed="false">粵</button>
+    <button aria-pressed="false">雙</button>
   </div>
-  <button style="height: 30px; display: flex; align-items: center; gap: 6px; padding: 0 12px; border-radius: 15px; border: 0; background: #0f5130; color: #9ff7bf; font: inherit; font-size: 12px; font-weight: 500"><span class="ms" aria-hidden="true" style="font-size: 14px">download</span>Restart to update</button>
-  <div style="display: flex; height: 48px">
-    <button aria-label="Minimize" style="width: 46px; border: 0; background: transparent; color: #a9b6ad"><span class="ms" aria-hidden="true" style="font-size: 18px">remove</span></button>
-    <button aria-label="Maximize" style="width: 46px; border: 0; background: transparent; color: #a9b6ad"><span class="ms" aria-hidden="true" style="font-size: 16px">crop_square</span></button>
-    <button aria-label="Close" style="width: 46px; border: 0; background: transparent; color: #a9b6ad"><span class="ms" aria-hidden="true" style="font-size: 18px">close</span></button>
+  <button class="btn btn-xs sl" style="background: var(--pric); color: var(--onpric); height: 30px; border-radius: 15px; padding: 0 12px"><span class="ms" aria-hidden="true" style="font-size: 16px">download</span>Restart to update</button>
+  <div style="display: flex; height: 48px; margin-left: 2px">
+    <button class="wc" aria-label="Minimize"><span class="ms" aria-hidden="true" style="font-size: 18px">remove</span></button>
+    <button class="wc" aria-label="Maximize"><span class="ms" aria-hidden="true" style="font-size: 16px">crop_square</span></button>
+    <button class="wc x" aria-label="Close window"><span class="ms" aria-hidden="true" style="font-size: 18px">close</span></button>
   </div>
 </header>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"active":{"editor":"text","default":"prepare"},"$preview":{"width":1440,"height":48}}'>
 class Component extends DCLogic {
   renderVals() {
-    return { enBg: '#24342b', enFg: '#cde9d6' };
+    return {};
   }
 }
 </script>
