@@ -64,13 +64,16 @@ thread. The pure logic lives in standard-library-only headers under
   account name or token, so an utterance cannot disclose private data.
 - `NarrationTransitions.hpp` turns printer snapshots into events on state transitions
   only (print started, paused, resumed, finished, failed, cancelled, filament runout,
-  AMS error, other printer error) and de-duplicates identical events inside a 30 second
+  AMS error, other printer error, door opened, door closed) and de-duplicates identical events inside a 30 second
   window. The first sight of a printer only records its state, so opening the app next to
   an old finished job or a standing error stays silent. Stage 6 (filament runout), error
   `0x0300400C` (task cancelled) and error module `0x07` (AMS) follow community-documented
-  values and are not yet confirmed on hardware. A door open/closed event is deliberately
-  absent: `MachineObject` has no door field on this branch, and the detector carries a
-  marked hook for it.
+  values and are not yet confirmed on hardware. Door opened and door closed are spoken
+  only on printers that report door-open detection support, and only when the door
+  changes while the app is watching: a door already open at startup, or a reading that
+  disappears and returns, stays silent. The door reading comes from a community-documented
+  status bit (bit 23 of `home_flag` or `print.stat`), so the door events are beta, like
+  the door reading on the print monitor.
 - `NarrationPolicy.hpp` holds the settings keys and the quiet decision.
 - `VoiceCatalog.hpp` classifies voice language attributes and merges voice sources.
 

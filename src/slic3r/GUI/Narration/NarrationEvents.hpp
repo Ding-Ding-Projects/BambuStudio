@@ -16,7 +16,7 @@ enum class Track { Printer, App, Accessibility };
 
 enum class EventKind {
     PrintStarted, PrintPaused, PrintResumed, PrintFinished, PrintFailed, PrintCancelled,
-    FilamentRunout, AmsError, PrinterError,
+    FilamentRunout, AmsError, PrinterError, DoorOpened, DoorClosed,
     SliceFinished, SliceFailed, ExportDone, UpdateReady, AppError,
     VoicePreview
 };
@@ -40,6 +40,7 @@ inline Track track_of(EventKind kind)
     case EventKind::PrintStarted: case EventKind::PrintPaused: case EventKind::PrintResumed:
     case EventKind::PrintFinished: case EventKind::PrintFailed: case EventKind::PrintCancelled:
     case EventKind::FilamentRunout: case EventKind::AmsError: case EventKind::PrinterError:
+    case EventKind::DoorOpened: case EventKind::DoorClosed:
         return Track::Printer;
     case EventKind::VoicePreview:
         return Track::Accessibility;
@@ -86,6 +87,8 @@ inline const char* const* utterance_row(EventKind kind)
          "The AMS is complaining. Check the printer screen."},
         {"Printer error %06X. Check the device screen for details.", "Printer error %06X. Check the device screen for details.",
          "Printer error %06X. Check the device screen for details."},
+        {"Printer door opened.", "The printer door is open.", "The printer door just opened. Mind your fingers."},
+        {"Printer door closed.", "The printer door is closed.", "The printer door is closed again. All snug."},
         {"Slicing finished.", "Slicing is finished. Your plate is ready.", "Slicing done. Fresh layers, straight from the oven."},
         {"Slicing failed. Check the notification for details.", "Slicing failed. Check the notification for details.",
          "Slicing failed. Check the notification for details."},

@@ -19,9 +19,10 @@ struct PrinterSnapshot {
     std::string status;       // RUNNING, PAUSE, FINISH, FAILED, IDLE, ...
     int stage = -1;           // mc_print_stage; -1 when unknown
     int error = 0;            // print_error; 0 when none
-    // HOOK(door): MachineObject has no door_open_bit on this branch. When it
-    // gains one, add a `door_open` field here and a DoorOpened / DoorClosed
-    // transition below, with matching EventKind values and catalogue strings.
+    // Live door sensor: 1 open, 0 closed, -1 when the printer has no door sensor or
+    // has not reported the bit (see DeviceLive::door_open_reading). The reading comes
+    // from a community-documented status bit, so the feature is labelled beta.
+    int door_open = -1;
 };
 
 // Community-documented values, not yet confirmed on hardware by this project:
@@ -76,6 +77,10 @@ public:
             if (((now.error >> 24) & 0xff) == kAmsErrorModule) out.push_back({EventKind::AmsError, 0});
             else out.push_back({EventKind::PrinterError, now.error});
         }
+        const bool door_known = now.door_open == 0 || now.door_open == 1;
+        const bool door_was_known = m_last.door_open == 0 || m_last.door_open == 1;
+        if (door_known && door_was_known && now.door_open != m_last.door_open)
+            out.push_back({now.door_open == 1 ? EventKind::DoorOpened : EventKind::DoorClosed, 0});
         m_last = now;
         return out;
     }

@@ -47434,6 +47434,36 @@ msgstr "打印取消咗，冇嘢好睇喇。"
 
 #. reviewed-category: slicing-printing
 #. review-status: agent-drafted
+msgid "Printer door opened."
+msgstr "打印機門打開咗。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "The printer door is open."
+msgstr "打印機道門開咗。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "The printer door just opened. Mind your fingers."
+msgstr "打印機道門啱啱打開咗，小心手指。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Printer door closed."
+msgstr "打印機門關咗。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "The printer door is closed."
+msgstr "打印機道門關咗。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "The printer door is closed again. All snug."
+msgstr "打印機道門又關返好喇，穩陣。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
 msgid "Filament has run out. Load more filament."
 msgstr "墨水用完。請補充墨水。"
 

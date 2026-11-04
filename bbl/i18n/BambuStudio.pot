@@ -29694,6 +29694,24 @@ msgstr ""
 msgid "The print was cancelled. Nothing more to see here."
 msgstr ""
 
+msgid "Printer door opened."
+msgstr ""
+
+msgid "The printer door is open."
+msgstr ""
+
+msgid "The printer door just opened. Mind your fingers."
+msgstr ""
+
+msgid "Printer door closed."
+msgstr ""
+
+msgid "The printer door is closed."
+msgstr ""
+
+msgid "The printer door is closed again. All snug."
+msgstr ""
+
 msgid "Filament has run out. Load more filament."
 msgstr ""
 

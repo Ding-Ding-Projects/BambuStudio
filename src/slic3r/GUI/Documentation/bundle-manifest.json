@@ -425,7 +425,7 @@
     {
       "route": "design-system/graphite-shell.md",
       "title": "Graphite shell",
-      "sha256": "c1ab368b9a1af679d735ebc7f5cbd3cb7ed3a5b38b31880d8d095d6a72a62ff8"
+      "sha256": "42aac060141065acf929ccbdb3a8755cb42633402d90b50caf469e2d47d0235c"
     },
     {
       "route": "design-system/graphite-shell.yue_HK.md",
@@ -1095,12 +1095,12 @@
     {
       "route": "personal-modes/narration.md",
       "title": "Completion-aware narration",
-      "sha256": "68f8eda4205b9289fa81de2af06ae437dcc12a0406aa08f853e21e0653c92819"
+      "sha256": "7f61c9b97e35208d9f2dbdbf74ceda6d95ca7d7063cd9f4a9cbbbc074abbd986"
     },
     {
       "route": "personal-modes/narration.yue_HK.md",
       "title": "旁白：逐段播放、事件同語音揀選",
-      "sha256": "c96a891c3bb9040f9d63956671ee0692f9607aacc910d6f78d91eff9181a44e0"
+      "sha256": "cd6177c95a62d4e1c4d86938ce65360406652b0887f4bd1e4864a804ef0ee870"
     },
     {
       "route": "personal-modes/README.md",
@@ -2075,7 +2075,7 @@
       "bytes": 1979
     }
   ],
-  "bundle_sha256": "6e3ea66050f3b56138d44b3e37892caa300fbcf2cc00818fa62b15548e6e2212",
+  "bundle_sha256": "4538dc614de79b1cf08a37c915e35f5820dd1d3e2d363e7681fe481f303362ea",
   "unavailable_references": [
     {
       "source": "api/README.md",

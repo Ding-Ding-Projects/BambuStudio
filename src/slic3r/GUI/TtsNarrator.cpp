@@ -4,6 +4,7 @@
 #include "HomeAssistant.hpp"
 #include "I18N.hpp"
 #include "DeviceManager.hpp"
+#include "DeviceLiveReadings.hpp"
 #include "DeviceCore/DevManager.h"
 
 #include "libslic3r/AppConfig.hpp"
@@ -146,6 +147,8 @@ public:
         snapshot.status  = obj->print_status;
         snapshot.stage   = obj->mc_print_stage;
         snapshot.error   = obj->print_error;
+        if (const auto open = DeviceLive::door_open_reading(obj->door_open_bit, obj->support_door_open_check()))
+            snapshot.door_open = *open ? 1 : 0;
         for (const auto& event : s_detector.observe(snapshot)) {
             narrate(event);
             if (event.kind == Narration::EventKind::PrintFinished && wxGetApp().app_config->get("ha_flash_on_finish") == "true")

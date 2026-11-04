@@ -81,6 +81,29 @@ static void transitions()
     CHECK(has(s.observe(snap("PAUSE", -1, 0, "other")), EventKind::PrintPaused));
 }
 
+static PrinterSnapshot door(int open, const char* machine = "m1")
+{
+    PrinterSnapshot s = snap("IDLE", -1, 0, machine); s.door_open = open; return s;
+}
+
+static void door_transitions()
+{
+    PrinterTransitionDetector d;
+    CHECK(d.observe(door(1)).empty());                            // a door already open at startup stays silent
+    CHECK(d.observe(door(1)).empty());                            // no change, no event
+    auto closed = d.observe(door(0));
+    CHECK(closed.size() == 1 && closed[0].kind == EventKind::DoorClosed);
+    auto opened = d.observe(door(1));
+    CHECK(opened.size() == 1 && opened[0].kind == EventKind::DoorOpened);
+    CHECK(d.observe(door(-1)).empty());                           // the reading going away is not a door change
+    CHECK(d.observe(door(0)).empty());                            // nor is it coming back
+    CHECK(d.observe(door(1, "other")).empty());                   // another printer reseeds
+    CHECK(track_of(EventKind::DoorOpened) == Track::Printer && !is_error(EventKind::DoorClosed) &&
+          !has_code(EventKind::DoorOpened));
+    CHECK(std::strstr(utterance_msgid(EventKind::DoorOpened, Tone::Playful), "door") != nullptr);
+    CHECK(std::strstr(utterance_msgid(EventKind::DoorClosed, Tone::Serious), "closed") != nullptr);
+}
+
 static void dedupe()
 {
     EventDeduper dd(std::chrono::seconds(30));
@@ -192,7 +215,7 @@ static void voices()
 
 int main()
 {
-    events_and_tone(); transitions(); dedupe(); policy(); tracks(); voices();
+    events_and_tone(); transitions(); door_transitions(); dedupe(); policy(); tracks(); voices();
     if (failures) { std::printf("%d failure(s)\n", failures); return 1; }
     std::printf("narration fixture: all checks passed\n");
     return 0;
