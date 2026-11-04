@@ -112,12 +112,11 @@ const Device_pageHotend_detailRoute =
     path: '/device_page/hotend_detail',
     getParentRoute: () => rootRouteImport,
   } as any)
-const Device_pagePrint_queueRoute =
-  Device_pagePrint_queueRouteImport.update({
-    id: '/device_page/print_queue',
-    path: '/device_page/print_queue',
-    getParentRoute: () => rootRouteImport,
-  } as any)
+const Device_pagePrint_queueRoute = Device_pagePrint_queueRouteImport.update({
+  id: '/device_page/print_queue',
+  path: '/device_page/print_queue',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -379,7 +378,8 @@ const rootRouteChildren: RootRouteChildren = {
   Device_pageAms_ext_operationRoute: Device_pageAms_ext_operationRoute,
   Device_pageAms_filament_hotendRoute: Device_pageAms_filament_hotendRoute,
   Device_pageAms_mapping_hotendRoute: Device_pageAms_mapping_hotendRoute,
-  Device_pageAuto_refill_refill_infoRoute: Device_pageAuto_refill_refill_infoRoute,
+  Device_pageAuto_refill_refill_infoRoute:
+    Device_pageAuto_refill_refill_infoRoute,
   Device_pageConnected_slotsRoute: Device_pageConnected_slotsRoute,
   Device_pageFilament_manual_pullRoute: Device_pageFilament_manual_pullRoute,
   Device_pageHotend_detailRoute: Device_pageHotend_detailRoute,
