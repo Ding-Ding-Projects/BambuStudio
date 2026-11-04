@@ -114,6 +114,7 @@
 #include "PreferencesHistory.hpp"
 #include "PrinterWatch.hpp"
 #include "LanModelDrop/LanModelDropStation.hpp"
+#include "StatusApi/StatusApiServer.hpp"
 #include "Melody/MelodyCreatorDialog.hpp"
 #include "DimSumSurprise.hpp"
 #include "TtsNarrator.hpp"
@@ -598,6 +599,8 @@ static void push_auto_update_ready_notification(const std::string &tag)
     // The title bar chip offers the same restart and stays until the app restarts.
     if (MainFrame *frame = wxGetApp().mainframe; frame != nullptr && frame->topbar() != nullptr)
         frame->topbar()->SetUpdateReady(true);
+    // Spoken summary only: the event carries no version string, path or account.
+    TtsNarrator::narrate({Narration::EventKind::UpdateReady, 0});
     Plater              *plater  = wxGetApp().plater();
     NotificationManager *manager = plater ? plater->get_notification_manager() : nullptr;
     if (manager == nullptr)
@@ -1650,12 +1653,15 @@ void GUI_App::post_init()
     // LAN model drop (off by default): polls the drop site on a worker thread while switched on.
     LanModelDrop::start_after_startup();
 
+    // Local status API (off by default): read-only, 127.0.0.1 only.
+    StatusApi::start_after_startup();
+
     // TTS narrator (opt-in, off by default): printer state changes + errors,
     // with optional Home Assistant speakers and alert lights.
     TtsNarrator::install();
     m_narrator_environment = std::make_unique<FeatureServices::NarratorEnvironment>([this] {
         return app_config && app_config->get("narrator_quiet") == "true";
-    });
+    }, [this](const char* key) { return app_config ? app_config->get(key) : std::string(); });
 
     // Funny level disclosure (non-blocking snackbar, recorded so it fires once).
     show_funny_level_disclosure_once();
@@ -2063,6 +2069,7 @@ void GUI_App::shutdown()
     // Before any window is destroyed: cancel, wake and join the LAN model drop worker, and drop the
     // callbacks it queued for the GUI thread.
     LanModelDrop::shutdown();
+    StatusApi::shutdown();
     Schedule::Scheduler::instance().shutdown();
     HomeAssistant::shutdown();
     set_closing(true);
@@ -3490,6 +3497,7 @@ int GUI_App::OnExit()
     // Normally done in shutdown(); repeated here (it is idempotent) so the worker is joined on
     // every exit path.
     LanModelDrop::shutdown();
+    StatusApi::shutdown();
     if (m_automation_bridge) {
         m_automation_bridge->stop();
         m_automation_bridge.reset();

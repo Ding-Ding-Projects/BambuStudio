@@ -58,6 +58,12 @@ static void gcode_assertions()
           "M1006 A60 B10 L100 C64 D10 M80 E0 F10 N0\n"
           "M1006 A67 B20 L100 C0 D20 M0 E0 F20 N0\n"
           "M1006 W\nM18\n;===== melody end =====\n");
+    // The printer payload drops every comment line and keeps the commands in order.
+    CHECK(melody_to_printer_gcode(m) ==
+          "M17\nM400 S1\nM1006 S1\n"
+          "M1006 A60 B10 L100 C64 D10 M80 E0 F10 N0\n"
+          "M1006 A67 B20 L100 C0 D20 M0 E0 F20 N0\n"
+          "M1006 W\nM18\n");
     // Round trip through the importer.
     Melody back;
     CHECK(melody_parse_gcode(g, back));

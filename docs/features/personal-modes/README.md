@@ -8,11 +8,11 @@ control or a workspace accommodation is already visible in the packaged applicat
 | --- | --- | --- |
 | Shared presentation mode | `SchoolMode.hpp`, `SchoolStore.hpp`, `SchoolRuntime.hpp` | Application lifetime owner, credential adapter, settings and palette filtering |
 | Attention accommodations | `AttentionModes.hpp` | Five settings controls, active workspace callbacks, persistence and history |
-| Serialized narration | `SpeechQueue.hpp`, `SapiVoice.hpp`, `TtsNarrator.cpp` | Voice controls, quiet/screen-reader state, teardown and additional event producers |
+| Serialized narration | `SpeechQueue.hpp`, `SapiVoice.hpp`, `TtsNarrator.cpp`, `Narration/*.hpp` | Event tracks, tone, quiet hours, voice picker and preview; OneCore playback is not implemented |
 
 - [Shared record and effective presentation](school-mode.md)
 - [Attention accommodations](attention.md)
-- [Narration and voice selection](narration.md)
+- [Narration and voice selection](narration.md) ([廣東話](narration.yue_HK.md))
 - [Application integration checklist](integration.md)
 - [Funny-level defaults and existing preferences](funny-default.md)
 

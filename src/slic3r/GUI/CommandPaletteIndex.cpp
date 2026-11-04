@@ -80,7 +80,7 @@ void store_palette_size(PaletteSize size,
 const std::vector<const char *> &preference_page_names()
 {
     static const std::vector<const char *> names = {
-        L("Appearance"), L("General"), L("User"), L("3D"), L("Other"), L("Developer Tools"), L("LAN model drop"),
+        L("Appearance"), L("General"), L("User"), L("3D"), L("Other"), L("Developer Tools"), L("LAN model drop"), L("Local status API"),
     };
     return names;
 }
@@ -141,6 +141,13 @@ const std::vector<PreferenceEntry> &preference_entries()
         {"school_mode", L("Presentation mode"), L("Shared local presentation and unlock settings"), PageGeneral},
         {"narrator_enabled", L("Enable narrator"), L("Narrator"), PageOther},
         {"narrator_quiet", L("Quiet narration"), L("Pause local speech without changing saved voice choices"), PageOther},
+        {"narrator_track_printer", L("Narrate printer events"), L("Print state, filament runout and printer errors."), PageOther},
+        {"narrator_track_app", L("Narrate application events"), L("Slicing, export, update and error summaries. File names and account details are never spoken."), PageOther},
+        {"narrator_track_accessibility", L("Narrate previews and scanner prompts"), L("Voice previews and the filament scanner."), PageOther},
+        {"narrator_quiet_hours_enabled", L("Narrator quiet hours"), L("Stay silent during the hours below. Silence also applies to errors."), PageOther},
+        {"narrator_quiet_hours_start", L("Quiet hours start"), L("Narration is silent from this time."), PageOther},
+        {"narrator_quiet_hours_end", L("Quiet hours end"), L("Narration resumes at this time."), PageOther},
+        {"narrator_respect_focus_assist", L("Respect Focus Assist"), L("Only speak errors while Windows Focus Assist, a full-screen app or a presentation is active."), PageOther},
         {"narrator_language", L("Narration language"), L("Independent of the interface language"), PageOther},
         {"narrator_voice_en", L("English voice"), L("Installed narrator voice"), PageOther},
         {"narrator_voice_yue", L("Cantonese voice"), L("Installed narrator voice"), PageOther},
@@ -169,6 +176,11 @@ const std::vector<PreferenceEntry> &preference_entries()
         {"lan_drop_address", L("Drop site address"), L("Where Bambu Studio reaches the LAN drop site"), PageLanDrop},
         {"lan_drop_station_key", L("Station key"), L("Kept protected with Windows data protection"), PageLanDrop},
         {"lan_drop_code", L("Drop code"), L("New code stops older links"), PageLanDrop},
+        // Local status API ---------------------------------------------------------
+        {"status_api_enabled", L("Serve printer status on this computer"), L("Local status API, off by default"), PageStatusApi},
+        {"status_api_port", L("Port"), L("The port on 127.0.0.1 that the status API listens on."), PageStatusApi},
+        {"status_api_token", L("Access token"), L("Copy or regenerate the bearer token of the status API"), PageStatusApi},
+        {"status_api_state", L("Status API state"), L("Where the status API listens"), PageStatusApi},
         // Developer Tools (non-public builds) ------------------------------------
         {"internal_developer_mode", L("Internal developer mode"), "", PageDeveloper},
         {"enable_ssl_for_mqtt", L("Enable SSL(MQTT)"), "", PageDeveloper},

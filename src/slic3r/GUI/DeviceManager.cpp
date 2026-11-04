@@ -1061,6 +1061,7 @@ void MachineObject::parse_state_changed_event()
 void MachineObject::parse_home_flag(int flag)
 {
     m_home_flag = flag;
+    door_open_bit = (flag >> 23) & 0x1;
 
     is_220V_voltage = ((flag >> 3) & 0x1) != 0;
 
@@ -4550,6 +4551,7 @@ void MachineObject::parse_new_info(json print)
 
     if (!stat.empty()) {
         camera_recording = get_flag_bits(stat, 7);
+        door_open_bit    = get_flag_bits(stat, 23);
         m_lamp->SetLampCloseRecheck((get_flag_bits(stat, 36) == 1));
     }
 

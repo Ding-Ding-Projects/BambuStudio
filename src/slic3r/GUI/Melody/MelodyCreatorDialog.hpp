@@ -50,6 +50,8 @@ private:
     void import_notation();
     void load_preset(int index);
     void preview();
+    void fill_printers();
+    void choose_printer(int index);
     void play_on_printer();
     void copy_gcode();
     void insert_into_printer_gcode(const char *key, const wxString &field_name);
@@ -60,6 +62,8 @@ private:
     TextInput               *m_name{nullptr};
     SpinInput               *m_tick_ms{nullptr};
     ComboBox                *m_presets{nullptr};
+    ComboBox                *m_printers{nullptr};
+    std::vector<std::string> m_printer_ids;
     MD3Grid                 *m_grid{nullptr};
     TextInput               *m_notation{nullptr};
     Label                   *m_status{nullptr};

@@ -154,6 +154,23 @@ inline std::string melody_to_gcode(const Melody &melody)
     return out.str();
 }
 
+// The same commands as melody_to_gcode() without the marker and name comment
+// lines, for sending straight to a printer as a `gcode_line` command. The
+// printer runs that payload as live commands, and every other command the
+// application sends that way carries no comments, so neither does this one.
+inline std::string melody_to_printer_gcode(const Melody &melody)
+{
+    std::istringstream in(melody_to_gcode(melody));
+    std::ostringstream out;
+    std::string        line;
+    while (std::getline(in, line)) {
+        const size_t start = line.find_first_not_of(" \t");
+        if (start == std::string::npos || line[start] == ';') continue;
+        out << line << "\n";
+    }
+    return out.str();
+}
+
 // Reads every `M1006 A.. B.. L.. C.. D.. M.. E.. F.. N..` line of `text` (a
 // stock start G-code, a finish G-code or a block written above) into
 // `out.steps`; `S1` and `W` lines are skipped. A `; melody name:` line sets

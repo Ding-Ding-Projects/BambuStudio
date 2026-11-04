@@ -42,6 +42,7 @@
 #include <wx/zstream.h>
 
 #include "StopPrintGate.hpp"
+#include "DeviceLiveReadings.hpp"
 
 #include "DeviceCore/DevAxis.h"
 #include "DeviceCore/DevBed.h"
@@ -2611,6 +2612,11 @@ wxBoxSizer *StatusBasePanel::create_machine_control_page(wxWindow *parent)
     bSizer_control_title->Fit(m_panel_control_title);
     bSizer_right->Add(m_panel_control_title, 0, wxALL | wxEXPAND, 0);
 
+    // Read-only live readings (signal, air duct, door check setting, installed nozzles). Hidden until
+    // the printer reports at least one of them.
+    m_live_strip = new DeviceLiveStrip(parent);
+    bSizer_right->Add(m_live_strip, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(8));
+
     wxBoxSizer *bSizer_control = new wxBoxSizer(wxVERTICAL);
 
     auto temperature_sizer     = create_temp_axis_group(parent);
@@ -4060,6 +4066,7 @@ void StatusPanel::update(MachineObject *obj)
 
     update_temp_ctrl(obj);
     update_misc_ctrl(obj);
+    update_live_readings(obj);
 
     update_calib_history(obj);
     update_ams(obj);
@@ -4088,8 +4095,27 @@ void StatusPanel::update(MachineObject *obj)
 
         DevConfig *config = obj->GetConfig();
 
-        if (config->SupportFirstLayerInspect() || config->SupportAIMonitor() || obj->GetPrintOptions()->GetDetectionOption(PrintOptionEnum::Buildplate_Mark_Detection)->is_support_detect ||
-            obj->GetPrintOptions()->GetDetectionOption(PrintOptionEnum::Auto_Recovery_Detection)->is_support_detect) {
+        // Offer Print Options when the printer supports any option the dialog can show, not only the
+        // few that used to gate the button. Each entry below has a row in PrintOptionsDialog that is
+        // itself gated on the same capability, so no dead control appears.
+        static const PrintOptionEnum print_option_entries[] = {
+            PrintOptionEnum::AI_Monitoring,             PrintOptionEnum::Spaghetti_Detection,        PrintOptionEnum::PurgeChutePileup_Detection,
+            PrintOptionEnum::NozzleClumping_Detection,  PrintOptionEnum::AirPrinting_Detection,      PrintOptionEnum::Buildplate_Mark_Detection,
+            PrintOptionEnum::Buildplate_Type_Detection, PrintOptionEnum::Buildplate_Align_Detection, PrintOptionEnum::Auto_Recovery_Detection,
+            PrintOptionEnum::Allow_Prompt_Sound_Detection, PrintOptionEnum::Filament_Tangle_Detection, PrintOptionEnum::Nozzle_Blob_Detection,
+            PrintOptionEnum::Smart_Nozzle_Blob_Detection, PrintOptionEnum::Purify_Air_At_Print_End,  PrintOptionEnum::Snapshot_Detection,
+            PrintOptionEnum::FOD_Check_Detection,       PrintOptionEnum::Displacement_Detection};
+        bool any_print_option_supported = config->SupportFirstLayerInspect() || config->SupportAIMonitor() || config->SupportSaveRemotePrintFileToStorage();
+        for (PrintOptionEnum entry : print_option_entries) {
+            if (obj->GetPrintOptions()->GetDetectionOption(entry)->is_support_detect) {
+                any_print_option_supported = true;
+                break;
+            }
+        }
+        // The door-open check lives in Print Options on printers whose configuration does not enable the safety dialog.
+        if (obj->support_door_open_check() && !supports_safety) any_print_option_supported = true;
+
+        if (any_print_option_supported) {
             m_options_btn->Show();
             if (print_options_dlg) {
                 print_options_dlg->update_machine_obj(obj);
@@ -4099,15 +4125,12 @@ void StatusPanel::update(MachineObject *obj)
             m_options_btn->Hide();
         }
 
-        if (obj->support_door_open_check()) {
-            if (supports_safety) {
-                m_safety_btn->Show();
-                if (safety_options_dlg) {
-                    safety_options_dlg->update_machine_obj(obj);
-                    safety_options_dlg->update_options(obj);
-                }
-            } else {
-                m_safety_btn->Hide();
+        const bool idle_heating_supported = obj->GetPrintOptions()->GetDetectionOption(PrintOptionEnum::Idle_Heating_Protect_Detection)->is_support_detect;
+        if (DeviceLive::safety_entry_visible(supports_safety, obj->support_door_open_check(), idle_heating_supported)) {
+            m_safety_btn->Show();
+            if (safety_options_dlg) {
+                safety_options_dlg->update_machine_obj(obj);
+                safety_options_dlg->update_options(obj);
             }
         } else {
             m_safety_btn->Hide();
@@ -4533,6 +4556,89 @@ void StatusPanel::update_misc_ctrl(MachineObject *obj)
         m_switch_speed->SetSelection(seg);
         m_speed_sync_guard = false;
     }
+}
+
+void StatusPanel::update_live_readings(MachineObject *obj)
+{
+    if (!m_live_strip) return;
+    if (!obj) {
+        m_live_strip->SetReadings({});
+        return;
+    }
+
+    std::vector<DeviceLiveStrip::Reading> readings;
+
+    // Wi-Fi signal: MachineObject::wifi_signal, copied from the "wifi_signal" status field. Hidden when
+    // the printer has not reported a parsable value (for example on a wired connection).
+    if (const auto dbm = DeviceLive::parse_wifi_dbm(obj->wifi_signal)) {
+        wxString quality;
+        switch (DeviceLive::classify_wifi_dbm(*dbm)) {
+        case DeviceLive::WifiQuality::Strong: quality = _L("Strong"); break;
+        case DeviceLive::WifiQuality::Fair: quality = _L("Fair"); break;
+        case DeviceLive::WifiQuality::Weak: quality = _L("Weak"); break;
+        }
+        readings.push_back({_L("Wi-Fi signal"), wxString::Format("%d dBm, %s", *dbm, quality)});
+    }
+
+    // Air duct mode: device.airduct.modeCur parsed by DevFan::ParseV3_0. Only printers that report an air
+    // duct and a known mode show it.
+    if (obj->GetFan() && obj->GetFan()->GetSupportAirduct()) {
+        if (const auto mode = DeviceLive::air_duct_mode_label(obj->GetFan()->GetAirDuctData().curren_mode)) {
+            wxString value;
+            switch (*mode) {
+            case DeviceLive::AirDuctModeLabel::Cooling: value = _L("Cooling"); break;
+            case DeviceLive::AirDuctModeLabel::Heating: value = _L("Heating"); break;
+            case DeviceLive::AirDuctModeLabel::Exhaust: value = _L("Exhaust"); break;
+            case DeviceLive::AirDuctModeLabel::FullCooling: value = _L("Full Cooling"); break;
+            }
+            readings.push_back({_L("Air duct"), value});
+        }
+    }
+
+    // Open door detection: the configured reaction to an open door (xcam cfg bits 20-21). This is a setting,
+    // not a door sensor reading, and the label says "detection" accordingly. Shown only where the printer
+    // reports support (fun bit 12).
+    if (obj->support_door_open_check()) {
+        if (const auto setting = DeviceLive::door_check_setting(static_cast<int>(obj->get_door_open_check_state()))) {
+            wxString value;
+            switch (*setting) {
+            case DeviceLive::DoorCheckSetting::Off: value = _L("Off"); break;
+            case DeviceLive::DoorCheckSetting::Warning: value = _L("Warning"); break;
+            case DeviceLive::DoorCheckSetting::PausePrint: value = _L("Pause printing"); break;
+            }
+            readings.push_back({_L("Open Door Detection"), value});
+        }
+    }
+
+    // Door sensor: MachineObject::door_open_bit (bit 23 of home_flag or print.stat). The bit position is
+    // taken from community protocol notes rather than a vendor document, so the label marks it as beta.
+    if (const auto open = DeviceLive::door_open_reading(obj->door_open_bit, obj->support_door_open_check()))
+        readings.push_back({_L("Door (beta)"), *open ? _L("Open") : _L("Closed")});
+
+    // Installed nozzle per extruder: DevNozzleSystem extruder nozzles (diameter, material, flow type). The
+    // flow type is added only when it is not the default standard flow, because the default is also what an
+    // unreported flow type holds.
+    if (DevNozzleSystem *nozzle_system = obj->GetNozzleSystem()) {
+        const int extruder_count = obj->GetExtderSystem()->GetTotalExtderCount();
+        for (int ext_id = 0; ext_id < extruder_count && ext_id < 2; ++ext_id) {
+            const DevNozzle nozzle = nozzle_system->GetExtNozzle(ext_id);
+            if (nozzle.IsEmpty()) continue;
+            if (!DeviceLive::nozzle_reading_usable(nozzle.GetNozzleDiameter(), nozzle.GetNozzleType() != NozzleType::ntUndefine, nozzle.IsInfoReliable(),
+                                                   nozzle.IsUnknown() || nozzle.IsAbnormal()))
+                continue;
+
+            wxString value = wxString::FromUTF8(DeviceLive::format_nozzle_diameter(nozzle.GetNozzleDiameter())) + ", " + nozzle.GetNozzleTypeStr();
+            if (nozzle.GetNozzleFlowType() != NozzleFlowType::S_FLOW && nozzle.GetNozzleFlowType() != NozzleFlowType::NONE_FLOWTYPE)
+                value += ", " + nozzle.GetNozzleFlowTypeStr();
+
+            wxString label = _L("Nozzle");
+            if (extruder_count >= 2)
+                label = _L(DevPrinterConfigUtil::get_toolhead_display_name(obj->printer_type, ext_id, ToolHeadComponent::Nozzle, ToolHeadNameCase::TitleCase, true));
+            readings.push_back({label, value});
+        }
+    }
+
+    m_live_strip->SetReadings(readings);
 }
 
 void StatusPanel::update_extruder_status(MachineObject *obj)
@@ -6595,7 +6701,8 @@ void StatusPanel::on_show_safety_options(wxCommandEvent &event)
     if (obj) {
         std::string current_printer_type = obj->printer_type;
         bool        supports_safety      = DevPrinterConfigUtil::support_safety_options(current_printer_type);
-        if (supports_safety) {
+        const bool  idle_heating_supported = obj->GetPrintOptions()->GetDetectionOption(PrintOptionEnum::Idle_Heating_Protect_Detection)->is_support_detect;
+        if (DeviceLive::safety_entry_visible(supports_safety, obj->support_door_open_check(), idle_heating_supported)) {
             if (safety_options_dlg == nullptr) {
                 safety_options_dlg = new SafetyOptionsDialog(this);
                 safety_options_dlg->update_machine_obj(obj);
@@ -6844,6 +6951,7 @@ void StatusPanel::on_sys_color_changed()
     SetBackgroundColour(device_page_color());
     m_machine_ctrl_panel->SetBackgroundColour(device_page_color());
     m_panel_control_title->SetBackgroundColour(device_title_color());
+    if (m_live_strip) m_live_strip->msw_rescale();
     // The HUD owns its dark/system palette. Rescale refreshes its backgrounds,
     // chips, and status glyphs when high contrast or another system colour changes.
     if (m_camera_hud) {
@@ -6976,6 +7084,7 @@ void StatusPanel::msw_rescale()
     // The camera HUD (and its chips) are rescaled by rescale_camera_icons() below.
     m_bmToggleBtn_timelapse->Rescale();
     layout_control_title(m_panel_control_title, m_staticText_control);
+    if (m_live_strip) m_live_strip->msw_rescale();
     // m_staticText_control->SetMinSize(wxSize(-1, PAGE_TITLE_HEIGHT));
     m_media_play_ctrl->msw_rescale();
     m_bpButton_xy->SetBitmap(m_bitmap_axis_home);

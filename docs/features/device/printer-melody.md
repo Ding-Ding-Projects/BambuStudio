@@ -30,7 +30,8 @@ Read against the stock tunes, every `M1006` line is one time step with three voi
 Footer actions:
 
 - **Preview** plays the melody on this computer with square waves. The timbre is not the printer's; it only shows the shape of the tune.
-- **Play on printer** sends the M1006 block to the printer selected on the Device page through the same route the Device page uses for its own commands. It is refused while no printer is selected, the printer is not connected or it is printing, and a notification confirms the send.
+- **Printer** lists your printers with their state (Connected, Printing or Offline) and starts on the printer selected on the Device page. Choosing another one selects it on the Device page too, so it may take a moment to connect. The list refreshes each time it is opened.
+- **Play on printer** sends the melody to the chosen printer through the same route the Device page uses for its own commands. Only the commands are sent: the marker and name comment lines that the start and end G-code keep are left out, because every other live command the application sends carries none. It is refused while no printer is chosen, the printer is not connected or it is printing, and a notification confirms the send. Whether a given printer model and firmware plays M1006 sent this way has not been observed from this build.
 - **Copy G-code** puts the block on the clipboard.
 - **Add to start G-code** and **Add to end G-code** write the block, inside `;===== melody start =====` and `;===== melody end =====` markers, into the printer preset's start or end G-code. An earlier melody block is replaced, otherwise the block is appended. The usual custom G-code validation runs first, and the preset must be saved to keep the change.
 - **Save** and **Open** keep melodies as JSON files, by default under the application data directory's `melodies` folder; the last folder is remembered.

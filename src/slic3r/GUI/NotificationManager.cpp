@@ -33,6 +33,7 @@
 #include <wx/glcanvas.h>
 
 #include "GUI_App.hpp"
+#include "TtsNarrator.hpp"
 #include "FilamentMapDialog.hpp"
 
 #ifndef IMGUI_DEFINE_MATH_OPERATORS
@@ -2707,6 +2708,7 @@ void NotificationManager::set_simplify_suggestion_multiline(const ObjectID oid, 
 
 void NotificationManager::push_exporting_finished_notification(const std::string& path, const std::string& dir_path, bool on_removable)
 {
+	TtsNarrator::narrate({Narration::EventKind::ExportDone, 0});
 	close_notification_of_type(NotificationType::ExportFinished);
 	NotificationData data{ NotificationType::ExportFinished, NotificationLevel::RegularNotificationLevel, on_removable ? 0 : 20,  _u8L("Export successfully.") + "\n" + path };
 	push_notification_data(std::make_unique<NotificationManager::ExportFinishedNotification>(data, m_id_provider, m_evt_handler, on_removable, path, dir_path), 0);
@@ -3054,6 +3056,9 @@ bool NotificationManager::push_notification_data(std::unique_ptr<NotificationMan
                 m_pop_notifications.back()->update(notification->get_data());
 		}
 	} else {
+		// Spoken summary only (opt-in narrator): the event carries no notification text.
+		if (notification->get_data().level == NotificationLevel::ErrorNotificationLevel)
+			TtsNarrator::narrate({notification->get_type() == NotificationType::SlicingError ? Narration::EventKind::SliceFailed : Narration::EventKind::AppError, 0});
 		record_history_push(notification.get());
 		m_pop_notifications.emplace_back(std::move(notification));
 

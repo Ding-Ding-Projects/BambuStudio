@@ -29248,6 +29248,21 @@ msgstr ""
 msgid "Select a printer on the Device page first."
 msgstr ""
 
+msgid "The printer Play on printer sends to. Choosing one also selects it on the Device page."
+msgstr ""
+
+msgid "No printers found"
+msgstr ""
+
+msgid "That printer could not be selected. Try it on the Device page."
+msgstr ""
+
+msgid "Printer selected. It may take a moment to connect."
+msgstr ""
+
+msgid "Choose a printer in the Printer list first."
+msgstr ""
+
 msgid "The selected printer is not connected."
 msgstr ""
 
@@ -30457,4 +30472,253 @@ msgid "The vocabulary file was not applied, and the wording on screen has not ch
 msgstr ""
 
 msgid "The saved vocabulary could not be removed from this device, so nothing changed."
+msgstr ""
+
+msgid "Wi-Fi signal"
+msgstr ""
+
+msgid "Strong"
+msgstr ""
+
+msgid "Fair"
+msgstr ""
+
+msgid "Weak"
+msgstr ""
+
+msgid "Air duct"
+msgstr ""
+
+msgid "Door (beta)"
+msgstr ""
+
+msgid "Closed"
+msgstr ""
+
+msgid "Live printer readings"
+msgstr ""
+
+msgid "Listening on this computer only"
+msgstr ""
+
+msgid "No token is available"
+msgstr ""
+
+msgid "The port is already in use"
+msgstr ""
+
+msgid "%1% at http://127.0.0.1:%2%/api/v1/"
+msgstr ""
+
+msgid "Status API state"
+msgstr ""
+
+msgid "Access token"
+msgstr ""
+
+msgid "Show token"
+msgstr ""
+
+msgid "Copy token"
+msgstr ""
+
+msgid "Regenerate token"
+msgstr ""
+
+msgid "Send it as Authorization: Bearer <token>. It is kept in the application settings and is never written to a log. Regenerating it stops the old one at once."
+msgstr ""
+
+msgid "Hide token"
+msgstr ""
+
+msgid "Token copied to the clipboard."
+msgstr ""
+
+msgid "The clipboard is not available. Show the token and copy it."
+msgstr ""
+
+msgid "A new token could not be made."
+msgstr ""
+
+msgid "A new token was made. The old one no longer works."
+msgstr ""
+
+msgid "Other programs on this computer can read the door state and the printer list over a local, read-only web interface. It listens on 127.0.0.1 only, needs the access token, and answers GET requests only."
+msgstr ""
+
+msgid "Local status API"
+msgstr ""
+
+msgid "Serve printer status on this computer"
+msgstr ""
+
+msgid "Let programs on this computer read the printer list and the door state. Off by default."
+msgstr ""
+
+msgid "Port"
+msgstr ""
+
+msgid "The port on 127.0.0.1 that the status API listens on."
+msgstr ""
+
+msgid "Local status API, off by default"
+msgstr ""
+
+msgid "Copy or regenerate the bearer token of the status API"
+msgstr ""
+
+msgid "Where the status API listens"
+msgstr ""
+
+msgid "Your print has started."
+msgstr ""
+
+msgid "And we're off. The print has started."
+msgstr ""
+
+msgid "The print is paused."
+msgstr ""
+
+msgid "The print has paused. Take a breather."
+msgstr ""
+
+msgid "Printing resumed."
+msgstr ""
+
+msgid "The print has resumed."
+msgstr ""
+
+msgid "Back to work. The print has resumed."
+msgstr ""
+
+msgid "Your print is finished."
+msgstr ""
+
+msgid "Print finished. Time to peel it off the plate."
+msgstr ""
+
+msgid "The print has failed. Check the printer."
+msgstr ""
+
+msgid "Oh no, the print failed. Check the printer."
+msgstr ""
+
+msgid "Print cancelled."
+msgstr ""
+
+msgid "The print was cancelled."
+msgstr ""
+
+msgid "The print was cancelled. Nothing more to see here."
+msgstr ""
+
+msgid "Filament has run out. Load more filament."
+msgstr ""
+
+msgid "The printer has run out of filament. Load more to continue."
+msgstr ""
+
+msgid "The spool is empty and the printer is hungry. Load more filament."
+msgstr ""
+
+msgid "AMS error. Check the printer screen."
+msgstr ""
+
+msgid "The AMS reported an error. Check the printer screen."
+msgstr ""
+
+msgid "The AMS is complaining. Check the printer screen."
+msgstr ""
+
+msgid "Slicing finished."
+msgstr ""
+
+msgid "Slicing is finished. Your plate is ready."
+msgstr ""
+
+msgid "Slicing done. Fresh layers, straight from the oven."
+msgstr ""
+
+msgid "Slicing failed. Check the notification for details."
+msgstr ""
+
+msgid "Export finished."
+msgstr ""
+
+msgid "Export finished successfully."
+msgstr ""
+
+msgid "Export done. Your file is safely written."
+msgstr ""
+
+msgid "An update is ready. Restart to install it."
+msgstr ""
+
+msgid "An update is ready. Restart the app to install it."
+msgstr ""
+
+msgid "A fresh version is ready. Restart the app to install it."
+msgstr ""
+
+msgid "An error occurred. Check the notification for details."
+msgstr ""
+
+msgid "This is a preview of the selected narrator voice."
+msgstr ""
+
+msgid "Narrate printer events"
+msgstr ""
+
+msgid "Print state, filament runout and printer errors."
+msgstr ""
+
+msgid "Narrate application events"
+msgstr ""
+
+msgid "Slicing, export, update and error summaries. File names and account details are never spoken."
+msgstr ""
+
+msgid "Narrate previews and scanner prompts"
+msgstr ""
+
+msgid "Voice previews and the filament scanner."
+msgstr ""
+
+msgid "Narrator quiet hours"
+msgstr ""
+
+msgid "Stay silent during the hours below. Silence also applies to errors."
+msgstr ""
+
+msgid "Quiet hours start"
+msgstr ""
+
+msgid "Narration is silent from this time."
+msgstr ""
+
+msgid "Quiet hours end"
+msgstr ""
+
+msgid "Narration resumes at this time."
+msgstr ""
+
+msgid "Respect Focus Assist"
+msgstr ""
+
+msgid "Only speak errors while Windows Focus Assist, a full-screen app or a presentation is active."
+msgstr ""
+
+msgid "Preview Cantonese voice"
+msgstr ""
+
+msgid "Preview English voice"
+msgstr ""
+
+msgid "Speak a short sample with the voice that is in effect. Works even when the narrator is off."
+msgstr ""
+
+msgid "A Hong Kong Cantonese voice is installed on this computer, but this build can only speak with voices that Windows exposes to the classic speech interface. It is listed by Windows but cannot be selected here yet."
+msgstr ""
+
+msgid "This voice uses an online service and may be silent when offline."
 msgstr ""

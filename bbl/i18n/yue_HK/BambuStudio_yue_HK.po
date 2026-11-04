@@ -47176,3 +47176,443 @@ msgstr "搜尋指令同設定"
 #. review-status: agent-drafted
 msgid "Search commands and settings (%s)"
 msgstr "搜尋指令同設定（%s）"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "The printer Play on printer sends to. Choosing one also selects it on the Device page."
+msgstr "「喺打印機播放」會送去呢部打印機。揀咗之後，設備頁面都會一齊選取佢。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "No printers found"
+msgstr "搵唔到打印機"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "That printer could not be selected. Try it on the Device page."
+msgstr "選取唔到呢部打印機，請喺設備頁面再試。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Printer selected. It may take a moment to connect."
+msgstr "已選取打印機，可能要等一陣先連線到。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Choose a printer in the Printer list first."
+msgstr "請先喺打印機清單揀一部打印機。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Wi-Fi signal"
+msgstr "Wi-Fi 訊號"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Strong"
+msgstr "強"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Fair"
+msgstr "中等"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Weak"
+msgstr "弱"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Air duct"
+msgstr "風道"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Live printer readings"
+msgstr "打印機即時狀態"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Door (beta)"
+msgstr "門（測試版）"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Closed"
+msgstr "關閉"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Listening on this computer only"
+msgstr "只喺呢部電腦監聽"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "No token is available"
+msgstr "冇可用嘅令牌"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "The port is already in use"
+msgstr "連接埠已被佔用"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "%1% at http://127.0.0.1:%2%/api/v1/"
+msgstr "%1%，位址 http://127.0.0.1:%2%/api/v1/"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Status API state"
+msgstr "狀態 API 嘅狀態"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Access token"
+msgstr "存取令牌"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Show token"
+msgstr "顯示令牌"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Copy token"
+msgstr "複製令牌"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Regenerate token"
+msgstr "重新產生令牌"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Send it as Authorization: Bearer <token>. It is kept in the application settings and is never written to a log. Regenerating it stops the old one at once."
+msgstr "用 Authorization: Bearer <令牌> 嘅形式傳送。令牌存放喺應用程式設定，永遠唔會寫入日誌。重新產生會即時令舊令牌失效。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Hide token"
+msgstr "隱藏令牌"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Token copied to the clipboard."
+msgstr "令牌已複製到剪貼簿。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "The clipboard is not available. Show the token and copy it."
+msgstr "用唔到剪貼簿。請顯示令牌再自行複製。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "A new token could not be made."
+msgstr "整唔到新令牌。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "A new token was made. The old one no longer works."
+msgstr "已經產生新令牌，舊令牌用唔到。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Other programs on this computer can read the door state and the printer list over a local, read-only web interface. It listens on 127.0.0.1 only, needs the access token, and answers GET requests only."
+msgstr "呢部電腦上嘅其他程式可以經本機唯讀網頁介面讀取門狀態同打印機清單。佢只喺 127.0.0.1 監聽，要有存取令牌，而且只回應 GET 請求。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Local status API"
+msgstr "本機狀態 API"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Serve printer status on this computer"
+msgstr "喺呢部電腦提供打印機狀態"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Let programs on this computer read the printer list and the door state. Off by default."
+msgstr "等呢部電腦上嘅程式讀取打印機清單同門狀態。預設關閉。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Port"
+msgstr "連接埠"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "The port on 127.0.0.1 that the status API listens on."
+msgstr "狀態 API 喺 127.0.0.1 上面監聽嘅連接埠。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Local status API, off by default"
+msgstr "本機狀態 API，預設關閉"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Copy or regenerate the bearer token of the status API"
+msgstr "複製或者重新產生狀態 API 嘅持有人令牌"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Where the status API listens"
+msgstr "狀態 API 喺邊度監聽"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Your print has started."
+msgstr "打印開始咗。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "And we're off. The print has started."
+msgstr "出發喇！打印開始咗。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "The print is paused."
+msgstr "打印暫停咗。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "The print has paused. Take a breather."
+msgstr "打印暫停咗，休息一陣先。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Printing resumed."
+msgstr "打印已繼續。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "The print has resumed."
+msgstr "打印繼續咗。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Back to work. The print has resumed."
+msgstr "返工喇！打印繼續咗。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Your print is finished."
+msgstr "打印完成喇。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Print finished. Time to peel it off the plate."
+msgstr "打印完成！可以由打印板拎起件嘢喇。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "The print has failed. Check the printer."
+msgstr "打印失敗咗，請檢查打印機。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Oh no, the print failed. Check the printer."
+msgstr "嘩，打印失敗咗，請檢查打印機。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Print cancelled."
+msgstr "打印已取消。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "The print was cancelled."
+msgstr "打印已經取消咗。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "The print was cancelled. Nothing more to see here."
+msgstr "打印取消咗，冇嘢好睇喇。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Filament has run out. Load more filament."
+msgstr "墨水用完。請補充墨水。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "The printer has run out of filament. Load more to continue."
+msgstr "打印機冇咗墨水，請補充先可以繼續。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "The spool is empty and the printer is hungry. Load more filament."
+msgstr "墨水盤空晒，打印機肚餓，請補充墨水。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "AMS error. Check the printer screen."
+msgstr "墨水機出錯。請睇下打印機畫面。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "The AMS reported an error. Check the printer screen."
+msgstr "墨水機報告有錯誤，請睇下打印機畫面。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "The AMS is complaining. Check the printer screen."
+msgstr "墨水機嗌救命，請睇下打印機畫面。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Slicing finished."
+msgstr "切片完成。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Slicing is finished. Your plate is ready."
+msgstr "切片完成，打印板準備好喇。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Slicing done. Fresh layers, straight from the oven."
+msgstr "切片搞掂，新鮮出爐嘅層層疊疊。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Slicing failed. Check the notification for details."
+msgstr "切片失敗。請睇通知了解詳情。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Export finished."
+msgstr "匯出完成。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Export finished successfully."
+msgstr "已成功匯出。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Export done. Your file is safely written."
+msgstr "匯出搞掂，檔案已經安全寫好。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "An update is ready. Restart to install it."
+msgstr "更新準備好喇。重新啟動就會安裝。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "An update is ready. Restart the app to install it."
+msgstr "有更新準備好，重新啟動軟件就會安裝。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "A fresh version is ready. Restart the app to install it."
+msgstr "新版本準備好喇，重新啟動軟件就會安裝。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "An error occurred. Check the notification for details."
+msgstr "發生錯誤。請睇通知了解詳情。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "This is a preview of the selected narrator voice."
+msgstr "呢段係所選旁白語音嘅試聽。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Narrate printer events"
+msgstr "旁白講述打印機事件"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Print state, filament runout and printer errors."
+msgstr "打印狀態、墨水用完同打印機錯誤。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Narrate application events"
+msgstr "旁白講述軟件事件"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Slicing, export, update and error summaries. File names and account details are never spoken."
+msgstr "切片、匯出、更新同錯誤摘要。唔會讀出檔案名稱或者帳戶資料。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Narrate previews and scanner prompts"
+msgstr "旁白講述試聽同掃描提示"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Voice previews and the filament scanner."
+msgstr "語音試聽同墨水掃描器。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Narrator quiet hours"
+msgstr "旁白靜音時段"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Stay silent during the hours below. Silence also applies to errors."
+msgstr "喺以下時段保持靜音，錯誤提示都唔會讀出。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Quiet hours start"
+msgstr "靜音時段開始"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Narration is silent from this time."
+msgstr "由呢個時間開始，旁白保持靜音。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Quiet hours end"
+msgstr "靜音時段結束"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Narration resumes at this time."
+msgstr "到呢個時間，旁白恢復。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Respect Focus Assist"
+msgstr "遵守專注輔助"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Only speak errors while Windows Focus Assist, a full-screen app or a presentation is active."
+msgstr "當 Windows 專注輔助、全螢幕軟件或者簡報模式啟用時，只讀出錯誤。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Preview Cantonese voice"
+msgstr "試聽廣東話語音"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Preview English voice"
+msgstr "試聽英語語音"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Speak a short sample with the voice that is in effect. Works even when the narrator is off."
+msgstr "用目前生效嘅語音讀一小段示範。就算旁白關閉都用得。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "A Hong Kong Cantonese voice is installed on this computer, but this build can only speak with voices that Windows exposes to the classic speech interface. It is listed by Windows but cannot be selected here yet."
+msgstr "呢部電腦已安裝香港粵語語音，但此版本只可以使用 Windows 向傳統語音介面公開嘅語音。Windows 有列出呢個語音，但暫時未能喺度揀選。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "This voice uses an online service and may be silent when offline."
+msgstr "呢個語音使用網上服務，離線時可能冇聲。"

@@ -116,6 +116,7 @@
 
 #include "GUI.hpp"
 #include "GUI_App.hpp"
+#include "TtsNarrator.hpp"
 #include "GuiColor.hpp"
 #include "GUI_ObjectList.hpp"
 #include "GUI_Utils.hpp"
@@ -16997,6 +16998,7 @@ void Plater::priv::on_process_completed(SlicingProcessCompletedEvent &evt)
                 // We postpone the error message instead.
                 q->m_tracking_popup_menu_error_message = message.first;
             } else {
+                TtsNarrator::narrate({Narration::EventKind::SliceFailed, 0});
                 show_error(q, message.first, message.second.size() != 0 && message.second[0] != 0);
                 notification_manager->set_slicing_progress_hidden();
             }
@@ -17035,6 +17037,9 @@ void Plater::priv::on_process_completed(SlicingProcessCompletedEvent &evt)
     // mesh stats per plate + GPU/OpenGL info
     if (!has_error && !evt.cancelled() && evt.success()) {
         track_slice_mesh_stat();
+        // Spoken summary only, once per slice job (the last plate of a slice-all run).
+        if (is_finished)
+            TtsNarrator::narrate({Narration::EventKind::SliceFinished, 0});
         // Re-push warnings from completed PrintObject steps that were not re-run
         // but whose UI notifications were cleared by on_slicing_began().
         if (this->printer_technology == ptFFF) {

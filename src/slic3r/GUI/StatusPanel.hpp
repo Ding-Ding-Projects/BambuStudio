@@ -30,6 +30,7 @@
 #include "Widgets/TextArea.hpp"
 #include "Widgets/AxisCtrlButton.hpp"
 #include "Widgets/CameraHUD.hpp"
+#include "Widgets/DeviceLiveStrip.hpp"
 #include "Widgets/TextInput.hpp"
 #include "Widgets/TempInput.hpp"
 #include "Widgets/StaticLine.hpp"
@@ -469,6 +470,9 @@ protected:
     wxPanel *       m_panel_monitoring_title{ nullptr };
     wxPanel *       m_panel_printing_title;
     wxPanel *       m_panel_control_title;
+    // Read-only chips for printer readings that are parsed but not shown elsewhere; hidden when the
+    // printer reports none of them.
+    DeviceLiveStrip *m_live_strip{nullptr};
 
     wxStaticText*   m_staticText_consumption_of_time;
     wxStaticText *  m_staticText_consumption_of_weight;
@@ -888,6 +892,7 @@ protected:
     void update_sdcard_subtask(MachineObject *obj);
     void update_temp_ctrl(MachineObject *obj);
     void update_misc_ctrl(MachineObject *obj);
+    void update_live_readings(MachineObject *obj);
     void update_ams(MachineObject* obj);
     void update_calib_history(MachineObject* obj);
     void update_filament_loading_panel(MachineObject* obj);

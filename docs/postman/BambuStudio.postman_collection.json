@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "7560ee71-b311-4bc4-a9c9-e70c5999446c",
     "name": "Bambu Studio - Master API Collection",
-    "description": "Master index of HTTP contracts served by Bambu Studio. At present it contains only the five-minute Home Assistant printer-discovery endpoint. Defaults are non-routable TEST-NET placeholders. Never save or export real pairing tokens, printer access codes, or response bodies.",
+    "description": "Master index of HTTP contracts served by Bambu Studio. It contains the five-minute Home Assistant printer-discovery endpoint and the loopback-only local printer status API. Defaults are non-routable TEST-NET placeholders. Never save or export real pairing tokens, status API tokens, printer access codes, or response bodies.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
@@ -71,6 +71,352 @@
           ]
         }
       ]
+    },
+    {
+      "name": "Local printer status API",
+      "description": "Off-by-default, loopback-only, read-only API for the printer list and the beta door state. Details: docs/features/device/status-api.md.",
+      "item": [
+        {
+          "name": "Health",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://127.0.0.1:{{status_port}}/api/v1/health",
+              "protocol": "http",
+              "host": [
+                "127",
+                "0",
+                "0",
+                "1"
+              ],
+              "port": "{{status_port}}",
+              "path": [
+                "api",
+                "v1",
+                "health"
+              ]
+            },
+            "description": "Authenticated liveness check.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{status_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Response is not cacheable and has no CORS header', function () {",
+                  "  pm.expect(pm.response.headers.get('Cache-Control')).to.eql('no-store');",
+                  "  pm.expect(pm.response.headers.get('Access-Control-Allow-Origin')).to.eql(undefined);",
+                  "});",
+                  "pm.test('Body reports api_version 1', function () {",
+                  "  pm.expect(pm.response.json().api_version).to.eql(1);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List printers",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://127.0.0.1:{{status_port}}/api/v1/printers",
+              "protocol": "http",
+              "host": [
+                "127",
+                "0",
+                "0",
+                "1"
+              ],
+              "port": "{{status_port}}",
+              "path": [
+                "api",
+                "v1",
+                "printers"
+              ]
+            },
+            "description": "The printers listed under My devices.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{status_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Response is not cacheable and has no CORS header', function () {",
+                  "  pm.expect(pm.response.headers.get('Cache-Control')).to.eql('no-store');",
+                  "  pm.expect(pm.response.headers.get('Access-Control-Allow-Origin')).to.eql(undefined);",
+                  "});",
+                  "pm.test('printers is an array', function () {",
+                  "  pm.expect(pm.response.json().printers).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Door state",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://127.0.0.1:{{status_port}}/api/v1/printers/{{dev_id}}/door",
+              "protocol": "http",
+              "host": [
+                "127",
+                "0",
+                "0",
+                "1"
+              ],
+              "port": "{{status_port}}",
+              "path": [
+                "api",
+                "v1",
+                "printers",
+                "{{dev_id}}",
+                "door"
+              ]
+            },
+            "description": "Beta door reading from bit 23 of home_flag or print.stat.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{status_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Response is not cacheable and has no CORS header', function () {",
+                  "  pm.expect(pm.response.headers.get('Cache-Control')).to.eql('no-store');",
+                  "  pm.expect(pm.response.headers.get('Access-Control-Allow-Origin')).to.eql(undefined);",
+                  "});",
+                  "pm.test('Door state is open, closed or unknown', function () {",
+                  "  const b = pm.response.json();",
+                  "  pm.expect(['open','closed','unknown']).to.include(b.state);",
+                  "  pm.expect(b.beta).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Door state, unknown printer",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://127.0.0.1:{{status_port}}/api/v1/printers/no-such-printer/door",
+              "protocol": "http",
+              "host": [
+                "127",
+                "0",
+                "0",
+                "1"
+              ],
+              "port": "{{status_port}}",
+              "path": [
+                "api",
+                "v1",
+                "printers",
+                "no-such-printer",
+                "door"
+              ]
+            },
+            "description": "Expect 404 printer_not_found.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{status_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 404', function () {",
+                  "  pm.response.to.have.status(404);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Without a token",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://127.0.0.1:{{status_port}}/api/v1/printers",
+              "protocol": "http",
+              "host": [
+                "127",
+                "0",
+                "0",
+                "1"
+              ],
+              "port": "{{status_port}}",
+              "path": [
+                "api",
+                "v1",
+                "printers"
+              ]
+            },
+            "description": "Expect 401 with WWW-Authenticate: Bearer.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 401', function () {",
+                  "  pm.response.to.have.status(401);",
+                  "  pm.expect(pm.response.headers.get('WWW-Authenticate')).to.include('Bearer');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Wrong method",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://127.0.0.1:{{status_port}}/api/v1/printers",
+              "protocol": "http",
+              "host": [
+                "127",
+                "0",
+                "0",
+                "1"
+              ],
+              "port": "{{status_port}}",
+              "path": [
+                "api",
+                "v1",
+                "printers"
+              ]
+            },
+            "description": "Expect 405 with Allow: GET.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{status_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 405', function () {",
+                  "  pm.response.to.have.status(405);",
+                  "  pm.expect(pm.response.headers.get('Allow')).to.eql('GET');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
     }
   ],
   "variable": [
@@ -91,6 +437,24 @@
       "value": "replace-in-a-disposable-local-environment",
       "type": "string",
       "description": "Set from the active pairing TXT record. Never save or export the real value."
+    },
+    {
+      "key": "status_port",
+      "value": "18787",
+      "type": "string",
+      "description": "The port set under Preferences > Local status API."
+    },
+    {
+      "key": "status_token",
+      "value": "replace-in-a-disposable-local-environment",
+      "type": "string",
+      "description": "The access token from Preferences > Local status API. Never save or export the real value."
+    },
+    {
+      "key": "dev_id",
+      "value": "REPLACE_WITH_A_PRINTER_SERIAL",
+      "type": "string",
+      "description": "A dev_id from the printer list."
     }
   ]
 }

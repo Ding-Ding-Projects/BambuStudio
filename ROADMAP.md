@@ -1,3 +1,31 @@
+## Local printer status API, 4 November 2026
+
+Branch `ai/feature/20261104-door-status-api`. Details: [`docs/features/device/status-api.md`](docs/features/device/status-api.md).
+
+- [x] Add a local, read-only status API that is off by default: `GET /api/v1/printers`, `GET /api/v1/printers/{dev_id}/door` and `GET /api/v1/health`, bound to 127.0.0.1 only, bearer token required (constant-time comparison), GET only, bounded request size and time, no CORS headers.
+- [x] Keep the routing, authorization and JSON rules in a standard-library-only header (`StatusApiCore.hpp`) and feed it a mutex-protected snapshot taken on the GUI thread, so the server thread never reads a printer object.
+- [x] Add the Preferences section (switch, port, masked token with Show, Copy and Regenerate) and the command palette entries; localize the strings with Cantonese entries and refresh coverage.
+- [x] Document the API in English and Cantonese, add a category Postman collection and include it in the master collection; regenerate the documentation bundle.
+- [x] Add `tests/status_api.test.mjs` with `tests/status_api_fixture.cpp`: behaviour of the real header plus source pins (passes with MSVC; `--negative` shows each removed guard is caught).
+- [ ] Build the application with the new files and run it: the Boost.Beast listener, the wxTimer snapshot and the Preferences rows have not been compiled or driven. Native runtime is not verified.
+- [ ] Check the door state against a real printer that reports door-open support (bit 23 of `home_flag` or `print.stat` is from community notes).
+- [ ] Decide whether the token should move to protected storage like the LAN drop station key; today it is in the application settings file.
+
+## Device live readings and printer options, 4 November 2026
+
+Branch `ai/feature/20261104-device-live-states`. Details: [`docs/features/device/live-readings.md`](docs/features/device/live-readings.md).
+
+- [x] Show the readings the application already parses but did not surface, as read-only chips under the Control heading: Wi-Fi signal (`wifi_signal`), air duct mode (`device.airduct.modeCur`), the configured open-door reaction (`xcam_door_open_check`) and the installed nozzle per extruder. Each chip is hidden when the printer does not report the value.
+- [x] Localize the new strings, with Cantonese entries and refreshed coverage; document the feature in English and Cantonese.
+- [x] Add `tests/device_live_readings.test.mjs`: compiles the real standard-library header and pins the wiring to the parsed fields (passes with g++; fails with `--negative`).
+- [x] Offer Print Options whenever the printer reports support for any option the dialog can show, so a printer that reports only filament tangle, nozzle blob, foreign-object, displacement, air purification, snapshot or save-to-storage support still reaches them (applies to the H2C too).
+- [x] Offer Safety Options for idle heating protection on models whose configuration does not enable the safety dialog (H2D, H2S, H2C), without duplicating the door-open check that Print Options already holds for them.
+- [x] Show a live door open or closed reading as a beta chip, from bit 23 of `home_flag` or `print.stat` (community protocol notes). Not yet checked against a real printer.
+- [ ] Show chamber fan speed: the value defaults to zero when unreported, so an unreported fan cannot be told from a stopped one. Needs a "reported" flag in `DevFan` first.
+- [ ] Enable `support_safety_options` or `support_first_layer_inspect` for the H2 family only with evidence from a real printer; both are `false` in the shipped printer configurations and were left unchanged.
+- [ ] Native build of this change: not run here, because a Release build was in progress in the main checkout.
+- [ ] Verify the strip, the Print Options entry and the Safety Options entry on a real H2C and on one other model, and capture the strip in English and Cantonese.
+
 ## Upstream port, 20 October 2026
 
 Branch `claude/bambu-express-print-mode-jkx766`.
@@ -939,3 +967,22 @@ truth; the counts here are a snapshot.
 - [x] Restore and verify tracked resources after the cleanup directory-link incident.
 - [x] Retain the seven remote histories outside main and the other ownership-unverified remote refs.
 - [ ] Remove three ignored dependency source directories and redundant temporary archive files, blocked by automatic approval review; retained in place.
+
+## Narrator events, tracks and quiet hours, 4 November 2026
+
+Branch `ai/feature/20261104-narrator`. Native runtime on Windows is not verified for any item below.
+
+- [x] Pure narration logic (events, three funny-level tones, transitions, de-duplication, quiet hours, track keys, voice classification) with a compiled fixture and a mutation-based `--negative` mode.
+- [x] Printer events on state transitions: print started, paused, resumed, finished, failed, cancelled, filament runout, AMS error and other printer errors. Stage 6, error `0x0300400C` and error module `0x07` are community-documented values, unconfirmed on hardware.
+- [ ] Printer door opened and closed: `MachineObject` has no door field on this branch; a marked hook exists in `NarrationTransitions.hpp`.
+- [x] Application events: slicing finished and failed, export done, update ready, error notifications. Summaries only; no paths, names or account details are spoken.
+- [x] Master switch, three per-track switches, persisted settings, palette rows, scheduled-settings registry entries.
+- [x] Quiet hours and Windows Focus Assist, full-screen and presentation states.
+- [x] `say()` and `say_now()` producers migrated to tracks; the filament scanner follows the narration language.
+- [x] Preferences voice preview buttons and network-capability statement; OneCore voices listed read-only.
+- [ ] Speak with OneCore and natural voices (needs a Windows.Media.SpeechSynthesis playback path).
+- [x] English and agent-drafted Hong Kong Cantonese strings and article.
+- [ ] Human review of the Cantonese strings and article.
+- [ ] Native `personal_modes` cases for no speech synthesis, empty-then-populated enumeration, rate and pitch bounds, restart persistence and all language modes.
+- [ ] Build the application and observe the narrator, Preferences controls and quiet hours on Windows.
+

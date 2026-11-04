@@ -5,6 +5,8 @@
 #include "TtsNarrator.hpp"
 #include "LanModelDrop/LanModelDropStation.hpp"
 #include "LanModelDrop/LanModelDropUi.hpp"
+#include "StatusApi/StatusApiServer.hpp"
+#include "StatusApi/StatusApiUi.hpp"
 #include "PersonalModes/SchoolMode.hpp"
 #include "FeatureServices/PresentationRoutes.hpp"
 #include "FeatureServices/SchoolCredentials.hpp"
@@ -1268,6 +1270,10 @@ wxBoxSizer *PreferencesDialog::create_item_checkbox(wxString title, wxWindow *pa
         if (param == LanModelDrop::kEnabledConfigKey)
             LanModelDrop::apply_settings();
 
+        // Local status API: start or stop the loopback listener at once.
+        if (param == StatusApi::kEnabledConfigKey)
+            StatusApi::apply_settings();
+
         if (param == "sync_user_preset") {
             bool sync = app_config->get("sync_user_preset") == "true" ? true : false;
             if (sync) {
@@ -1680,6 +1686,8 @@ void PreferencesDialog::create()
     add_tab("other", _CTX(L_CONTEXT("Other", "Preference"), "Preference"), create_other_tab());
     // A section of its own, never behind an advanced toggle (docs/features/application-integration/lan-model-drop.md).
     add_tab("lan_drop", _L("LAN model drop"), create_lan_drop_tab());
+    // Off by default; local and read-only (docs/features/device/status-api.md).
+    add_tab("status_api", _L("Local status API"), create_status_api_tab());
 
 #if !BBL_RELEASE_TO_PUBLIC
     add_tab("developer", _L("Developer Tools"), create_developer_tab());
@@ -3432,7 +3440,32 @@ wxWindow *PreferencesDialog::create_other_tab()
     sizer->Add(create_item_combobox(_L("Narration language"), scrolled,
         _L("Independent of the interface language. Both speaks English first."),
         "narrator_language", speech_languages, speech_values, {}, [](int) {}), flags);
+    // Independent narration tracks: each has its own switch and its own queue
+    // bookkeeping, so one kind of event never replaces or silences another.
+    sizer->Add(create_item_checkbox(_L("Narrate printer events"), scrolled,
+        _L("Print state, filament runout and printer errors."), 50, "narrator_track_printer"), flags);
+    sizer->Add(create_item_checkbox(_L("Narrate application events"), scrolled,
+        _L("Slicing, export, update and error summaries. File names and account details are never spoken."), 50, "narrator_track_app"), flags);
+    sizer->Add(create_item_checkbox(_L("Narrate previews and scanner prompts"), scrolled,
+        _L("Voice previews and the filament scanner."), 50, "narrator_track_accessibility"), flags);
+    sizer->Add(create_item_checkbox(_L("Narrator quiet hours"), scrolled,
+        _L("Stay silent during the hours below. Silence also applies to errors."), 50, "narrator_quiet_hours_enabled"), flags);
+    {
+        std::vector<wxString> clock_labels;
+        std::vector<std::string> clock_values;
+        for (int minute = 0; minute < 24 * 60; minute += 30) {
+            clock_values.push_back(std::string(wxString::Format("%02d:%02d", minute / 60, minute % 60).ToUTF8().data()));
+            clock_labels.push_back(wxString::FromUTF8(clock_values.back()));
+        }
+        sizer->Add(create_item_combobox(_L("Quiet hours start"), scrolled, _L("Narration is silent from this time."),
+            "narrator_quiet_hours_start", clock_labels, clock_values, {}, [](int) {}), flags);
+        sizer->Add(create_item_combobox(_L("Quiet hours end"), scrolled, _L("Narration resumes at this time."),
+            "narrator_quiet_hours_end", clock_labels, clock_values, {}, [](int) {}), flags);
+    }
+    sizer->Add(create_item_checkbox(_L("Respect Focus Assist"), scrolled,
+        _L("Only speak errors while Windows Focus Assist, a full-screen app or a presentation is active."), 50, "narrator_respect_focus_assist"), flags);
     const auto installed_voices = TtsNarrator::voices();
+    const auto all_voices = TtsNarrator::catalog();
     for (bool cantonese : {false, true}) {
         if (cantonese && PersonalModes::school_presentation_suppressed.load()) continue;
         const std::string voice_key = cantonese ? "narrator_voice_yue" : "narrator_voice_en";
@@ -3454,7 +3487,8 @@ wxWindow *PreferencesDialog::create_other_tab()
             wxString text = !effective.available ? _L("No installed voice can speak this language.") :
                 _L("Effective voice:") + " " + wxString(effective.effective_name);
             if (effective.selected_missing) text += "\n" + _L("Selected voice is missing; the saved choice is kept.");
-            text += "\n" + _L("Voice network capability is unknown.");
+            const bool network = Narration::classify_network(effective.effective_name) == Narration::NetworkCapability::NetworkBacked;
+            text += "\n" + (network ? _L("This voice uses an online service and may be silent when offline.") : _L("Voice network capability is unknown."));
             status->SetLabel(text);
             status->Wrap(status->FromDIP(420));
             status->GetParent()->Layout();
@@ -3488,6 +3522,21 @@ wxWindow *PreferencesDialog::create_other_tab()
         });
         sizer->Add(status, flags);
         refresh_status(0);
+        auto* preview_btn = new Button(scrolled, cantonese ? _L("Preview Cantonese voice") : _L("Preview English voice"));
+        m_button_list[m_button_list.size()] = preview_btn;
+        preview_btn->SetVariant(Button::Variant::Outlined);
+        preview_btn->SetButtonSize(Button::Size::Small);
+        preview_btn->SetToolTip(_L("Speak a short sample with the voice that is in effect. Works even when the narrator is off."));
+        preview_btn->Bind(wxEVT_BUTTON, [cantonese, refresh_status](wxCommandEvent&) {
+            TtsNarrator::preview(cantonese);
+            refresh_status(0);
+        });
+        sizer->Add(preview_btn, flags);
+        if (cantonese && Narration::cantonese_installed_but_unusable(all_voices)) {
+            auto* note = new Label(scrolled, _L("A Hong Kong Cantonese voice is installed on this computer, but this build can only speak with voices that Windows exposes to the classic speech interface. It is listed by Windows but cannot be selected here yet."));
+            note->Wrap(FromDIP(420));
+            sizer->Add(note, flags);
+        }
         std::vector<wxString> number_labels;
         std::vector<std::string> number_values;
         for (int n = -10; n <= 10; ++n) { number_labels.push_back(wxString::Format("%d", n)); number_values.push_back(std::to_string(n)); }
@@ -3614,6 +3663,37 @@ wxWindow *PreferencesDialog::create_lan_drop_tab()
     auto *code = LanModelDrop::create_code_row(scrolled);
     sizer->Add(code, flags);
     register_option_row("lan_drop_code", nullptr, code);
+
+    sizer->AddSpacer(FromDIP(20));
+    scrolled->SetSizer(sizer);
+    scrolled->FitInside();
+    return scrolled;
+}
+
+// Local status API: a read-only, loopback-only web interface for the printer list and the door state.
+// Off by default. The switch comes first, then the port and the access token.
+wxWindow *PreferencesDialog::create_status_api_tab()
+{
+    auto        scrolled = new ScrollPanel(m_book);
+    wxBoxSizer *sizer    = new wxBoxSizer(wxVERTICAL);
+    auto        flags    = wxSizerFlags().Expand().Border(wxTOP, FromDIP(8));
+
+    sizer->Add(create_item_title(_L("Local status API"), scrolled, _L("Local status API")), wxSizerFlags().Expand().Border(wxTOP, FromDIP(16)));
+    sizer->Add(StatusApi::create_intro_row(scrolled), flags);
+    sizer->Add(create_item_checkbox(_L("Serve printer status on this computer"), scrolled,
+                                    _L("Let programs on this computer read the printer list and the door state. Off by default."), 50,
+                                    StatusApi::kEnabledConfigKey),
+               flags);
+    sizer->Add(create_item_input(_L("Port"), wxString(), scrolled, _L("The port on 127.0.0.1 that the status API listens on."),
+                                 StatusApi::kPortConfigKey,
+                                 [](wxString) { StatusApi::apply_settings(); }),
+               flags);
+    auto *token = StatusApi::create_token_row(scrolled);
+    sizer->Add(token, flags);
+    register_option_row("status_api_token", nullptr, token);
+    auto *status = StatusApi::create_status_row(scrolled);
+    sizer->Add(status, flags);
+    register_option_row("status_api_state", nullptr, status);
 
     sizer->AddSpacer(FromDIP(20));
     scrolled->SetSizer(sizer);

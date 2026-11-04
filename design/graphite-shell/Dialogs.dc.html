@@ -11,73 +11,217 @@
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..500,0..1,0&display=swap" rel="stylesheet">
 <style>
-.ms{font-family:"Material Symbols Outlined";font-weight:400;font-style:normal;font-size:22px;line-height:1;letter-spacing:normal;text-transform:none;white-space:nowrap;direction:ltr;font-feature-settings:"liga";-webkit-font-smoothing:antialiased}
+.gs{--bg:#0e1311;--s0:#0a0e0c;--s1:#141a17;--s2:#18201c;--s3:#1f2823;--s4:#28322c;--ol:#34413a;--tx:#e3ebe5;--tx2:#a9b6ad;--tx3:#7c8a81;--pri:#6fdc98;--onpri:#00391c;--pric:#0f5130;--onpric:#9ff7bf;--sec:#24342b;--onsec:#cde9d6;--amb:#ffb870;--ambc:#3d2a14;--blu:#8ab4ff;--bluc:#1a2740;--errc:#93000a;--onerrc:#ffdad6;--err:#ffb4ab;
+--d2:100ms;--d3:150ms;--d4:200ms;--d6:300ms;--d8:400ms;--d10:500ms;--d12:600ms;
+--e-std:cubic-bezier(.2,0,0,1);--e-dec:cubic-bezier(0,0,0,1);--e-acc:cubic-bezier(.3,0,1,1);--e-emp-dec:cubic-bezier(.05,.7,.1,1);--e-emp-acc:cubic-bezier(.3,0,.8,.15);--e-spring:cubic-bezier(.34,1.45,.64,1);
+font-family:Roboto,system-ui,sans-serif;color:var(--tx);background:var(--bg)}
+.gs,.gs *{box-sizing:border-box}
+.gs button,.gs select,.gs input{font:inherit;color:inherit}
+.gs .ms{font-family:"Material Symbols Outlined";font-weight:400;font-style:normal;font-size:20px;line-height:1;letter-spacing:normal;text-transform:none;white-space:nowrap;direction:ltr;font-feature-settings:"liga";-webkit-font-smoothing:antialiased;flex-shrink:0}
+.gs .mono{font-family:"Roboto Mono",monospace;font-variant-numeric:tabular-nums}
+.gs .lbl{font-size:13px;font-weight:500;letter-spacing:.01em;color:var(--tx2)}
+.gs .sub{font-size:12px;color:var(--tx2)}
+.gs .row{display:flex;align-items:center;gap:10px}
+.gs .grow{flex:1;min-width:0}
+/* surfaces */
+.gs .card{background:var(--s2);border-radius:28px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.04),0 1px 2px rgba(0,0,0,.4);transition:transform var(--d6) var(--e-spring),box-shadow var(--d4) var(--e-std),background-color var(--d4) var(--e-std)}
+.gs .tile{background:var(--s1);border-radius:16px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.03);transition:transform var(--d6) var(--e-spring),background-color var(--d4) var(--e-std),box-shadow var(--d4) var(--e-std)}
+.gs .float{background:rgba(31,40,35,.84);-webkit-backdrop-filter:blur(18px) saturate(1.25);backdrop-filter:blur(18px) saturate(1.25);box-shadow:inset 0 0 0 1px rgba(255,255,255,.06),0 10px 28px rgba(0,0,0,.38)}
+.gs .lift{cursor:pointer}
+.gs .lift:hover{transform:translateY(-2px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.07),0 10px 24px rgba(0,0,0,.4);background-color:var(--s3)}
+.gs .lift:active{transform:translateY(0) scale(.985);transition-duration:var(--d2)}
+/* state layers: hover 8 %, focus 10 %, press 12 % */
+.gs .sl{position:relative;overflow:hidden;cursor:pointer;transition:background-color var(--d4) var(--e-std),transform var(--d4) var(--e-spring),box-shadow var(--d4) var(--e-std),border-radius var(--d4) var(--e-std)}
+.gs .sl::after{content:"";position:absolute;inset:0;background:currentColor;opacity:0;pointer-events:none;transition:opacity var(--d3) var(--e-std)}
+.gs .sl:hover::after{opacity:.08}.gs .sl:focus-visible::after{opacity:.1}.gs .sl:active::after{opacity:.12}
+.gs .sl:active{transform:scale(.97)}
+.gs button:focus-visible,.gs a:focus-visible,.gs select:focus-visible{outline:2px solid var(--pri);outline-offset:2px}
+.gs .btn{height:48px;padding:0 22px;border-radius:24px;border:0;display:inline-flex;align-items:center;justify-content:center;gap:8px;font-size:14px;font-weight:500;text-decoration:none;white-space:nowrap}
+.gs .btn:hover{border-radius:16px}
+.gs .btn:active{border-radius:14px}
+.gs .btn-fill{background:var(--pri);color:var(--onpri);font-weight:700}
+.gs .btn-tonal{background:var(--sec);color:var(--onsec)}
+.gs .btn-out{background:transparent;color:var(--tx);box-shadow:inset 0 0 0 1px var(--ol)}
+.gs .btn-text{background:transparent;color:var(--pri);padding:0 14px}
+.gs .btn-danger{background:var(--errc);color:var(--onerrc)}
+.gs .btn-s{height:36px;padding:0 16px;font-size:13px}
+.gs .btn-xs{height:30px;padding:0 12px;font-size:12px}
+.gs .ib{width:40px;height:40px;border-radius:14px;border:0;background:transparent;color:var(--tx2);display:inline-grid;place-items:center;padding:0}
+.gs .ib:hover{color:var(--tx);border-radius:12px}
+.gs .ib.on{background:var(--pri);color:var(--onpri)}
+.gs .chip{height:32px;padding:0 14px;border-radius:16px;border:0;background:transparent;color:var(--tx2);box-shadow:inset 0 0 0 1px var(--ol);display:inline-flex;align-items:center;gap:6px;font-size:13px;white-space:nowrap}
+.gs .chip.on{background:var(--sec);color:var(--onsec);box-shadow:none;font-weight:500}
+.gs .chip .ms{font-size:16px}
+.gs .kbd{font-family:"Roboto Mono",monospace;font-size:11px;padding:1px 6px;border-radius:6px;background:var(--s3);color:var(--tx2)}
+/* segmented control with a sliding thumb */
+.gs .seg{position:relative;display:grid;grid-template-columns:repeat(var(--n),1fr);padding:4px;border-radius:999px;background:var(--s1)}
+.gs .seg::before{content:"";position:absolute;top:4px;bottom:4px;left:4px;width:calc((100% - 8px)/var(--n));transform:translateX(calc(var(--i)*100%));background:var(--sec);border-radius:999px;transition:transform var(--d8) var(--e-spring)}
+.gs .seg>button{position:relative;z-index:1;height:30px;border:0;background:transparent;color:var(--tx2);font-size:12px;border-radius:999px;transition:color var(--d4) var(--e-std)}
+.gs .seg>button.on{color:var(--onsec);font-weight:500}
+/* switch: knob grows on press, slides with a spring */
+.gs .sw{width:48px;height:28px;border-radius:14px;border:0;padding:0;position:relative;background:var(--s4);box-shadow:inset 0 0 0 2px var(--ol);transition:background-color var(--d4) var(--e-std),box-shadow var(--d4) var(--e-std);flex-shrink:0}
+.gs .sw i{position:absolute;left:6px;top:6px;width:16px;height:16px;border-radius:8px;background:var(--tx2);transition:transform var(--d6) var(--e-spring),width var(--d3) var(--e-std),height var(--d3) var(--e-std),top var(--d3) var(--e-std),background-color var(--d4) var(--e-std)}
+.gs .sw[aria-checked=true]{background:var(--pri);box-shadow:none}
+.gs .sw[aria-checked=true] i{transform:translateX(20px);width:20px;height:20px;top:4px;left:4px;background:var(--onpri)}
+.gs .sw:active i{width:24px}
+/* progress with shimmer */
+.gs .prog{height:6px;border-radius:3px;background:var(--ol);position:relative;overflow:hidden}
+.gs .prog>i{display:block;height:100%;border-radius:3px;background:var(--pri);position:relative;overflow:hidden;animation:gs-grow var(--d12) var(--e-emp-dec) both}
+.gs .prog>i::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.45),transparent);transform:translateX(-100%);animation:gs-shimmer 1.8s var(--e-std) infinite}
+.gs .dot{width:8px;height:8px;border-radius:4px;flex-shrink:0}
+.gs .live{animation:gs-pulse 2s var(--e-std) infinite}
+.gs .field{height:36px;border-radius:12px;background:var(--s3);border:0;box-shadow:inset 0 0 0 1px var(--ol);padding:0 10px;font-size:13px;color:var(--tx);transition:box-shadow var(--d4) var(--e-std)}
+.gs .field:hover{box-shadow:inset 0 0 0 1px var(--tx3)}
+.gs .field:focus{outline:none;box-shadow:inset 0 0 0 2px var(--pri)}
+.gs .search{height:36px;border-radius:18px;background:var(--s3);display:flex;align-items:center;gap:8px;padding:0 6px 0 12px;color:var(--tx2);font-size:13px;box-shadow:inset 0 0 0 1px transparent;transition:box-shadow var(--d4) var(--e-std)}
+.gs .search:hover{box-shadow:inset 0 0 0 1px var(--ol)}
+.gs .rx{font-family:"Roboto Mono",monospace;font-size:12px;height:24px;padding:0 8px;border-radius:12px;border:0;background:var(--s4);color:var(--tx2);cursor:pointer;transition:background-color var(--d4) var(--e-std),color var(--d4) var(--e-std)}
+.gs .rx:hover{background:var(--sec);color:var(--onsec)}
+/* motion keyframes (MD3 duration and easing tokens, see design/interface-motion.md) */
+@keyframes gs-axis{from{opacity:0;transform:translateX(var(--dx,28px))}to{opacity:1;transform:none}}
+@keyframes gs-rise{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes gs-fade{from{opacity:0}to{opacity:1}}
+@keyframes gs-pop{from{opacity:0;transform:scale(.9) translateY(12px)}to{opacity:1;transform:none}}
+@keyframes gs-grow{from{width:0}}
+@keyframes gs-shimmer{to{transform:translateX(100%)}}
+@keyframes gs-pulse{0%,100%{opacity:1}50%{opacity:.35}}
+@keyframes gs-toast{from{opacity:0;transform:translateY(28px) scale(.96)}to{opacity:1;transform:none}}
+@keyframes gs-ind{from{transform:translateY(calc(var(--idx)*-64px))}to{transform:none}}
+@keyframes gs-layer{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+.gs .screen{animation:gs-axis var(--d6) var(--e-emp-dec) both}
+.gs .st>*{animation:gs-rise var(--d8) var(--e-emp-dec) both}
+.gs .st>*:nth-child(1){animation-delay:0ms}.gs .st>*:nth-child(2){animation-delay:40ms}.gs .st>*:nth-child(3){animation-delay:80ms}.gs .st>*:nth-child(4){animation-delay:120ms}.gs .st>*:nth-child(5){animation-delay:160ms}.gs .st>*:nth-child(6){animation-delay:200ms}.gs .st>*:nth-child(7){animation-delay:240ms}.gs .st>*:nth-child(8){animation-delay:280ms}.gs .st>*:nth-child(9){animation-delay:320ms}.gs .st>*:nth-child(10){animation-delay:360ms}.gs .st>*:nth-child(n+11){animation-delay:400ms}
+.gs .dlg{animation:gs-pop var(--d6) var(--e-emp-dec) both}
+.gs .toast{animation:gs-toast var(--d6) var(--e-emp-dec) both;animation-delay:500ms}
+.gs .scrim{animation:gs-fade var(--d4) var(--e-std) both}
+.gs .scrubbing{animation:gs-layer var(--d8) var(--e-std) 1}
+@media (prefers-reduced-motion:reduce){
+  .gs *,.gs *::before,.gs *::after{animation-duration:.01ms!important;animation-delay:0s!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+  .gs .prog>i::after{display:none}
+  .gs .live{opacity:1}
+  .gs .lift:hover{transform:none}
+}
 body{margin:0;background:#0e1311}
+.gs .dg{background:var(--s3);border-radius:32px;padding:24px;display:flex;flex-direction:column;gap:14px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06),0 24px 64px rgba(0,0,0,.5)}
+.gs .dg h2{margin:0;font-size:22px;font-weight:500}
+.gs .ck{display:flex;align-items:center;gap:12px;font-size:14px;min-height:32px;cursor:pointer;border-radius:12px;padding:0 6px;margin:0 -6px;transition:background-color var(--d4) var(--e-std)}
+.gs .ck:hover{background:rgba(255,255,255,.04)}
+.gs .ck input{width:18px;height:18px;accent-color:#6fdc98}
+.gs .map{display:flex;align-items:center;gap:8px;height:40px;padding:0 10px;border-radius:14px;background:var(--s1);font-size:13px}
+.gs .sw-chip{width:22px;height:22px;border-radius:7px;display:grid;place-items:center;font-size:11px;font-weight:700}
+.gs .cell{height:26px;border-radius:7px;transition:transform var(--d4) var(--e-spring),background-color var(--d4) var(--e-std);cursor:pointer}
+.gs .cell:hover{transform:scale(1.12)}
+.gs .cmd{display:flex;align-items:center;gap:12px;padding:0 20px;height:44px;font-size:14px;transition:background-color var(--d3) var(--e-std)}
+.gs .cmd:hover{background:rgba(255,255,255,.05)}
+.gs .gh{padding:10px 20px 4px;font-size:12px;font-weight:500;color:var(--tx3)}
+.gs .inp{height:36px;border-radius:12px;background:var(--s1);border:0;box-shadow:inset 0 0 0 1px var(--ol);padding:0 10px;font-family:"Roboto Mono",monospace;font-size:13px;color:var(--tx);width:100%;min-width:0}
+.gs .inp:focus{outline:none;box-shadow:inset 0 0 0 2px var(--pri)}
 </style>
 </helmet>
-<div style="width: 100%; min-height: 720px; box-sizing: border-box; padding: 40px; display: flex; gap: 32px; align-items: flex-start; justify-content: center; flex-wrap: wrap; background: #0e1311; color: #e3ebe5; font-family: Roboto, system-ui, sans-serif">
+<div class="gs" style="width: 100%; min-height: 900px; padding: 32px 24px; display: flex; gap: 24px; align-items: flex-start; justify-content: center; background: radial-gradient(90% 70% at 50% 0%, #17211c 0%, #0e1311 70%)">
 
-  <section aria-label="Send print job" style="flex: 1 1 400px; max-width: 460px; background: #1f2823; border-radius: 28px; padding: 24px; display: flex; flex-direction: column; gap: 16px">
-    <h2 style="margin: 0; font-size: 22px; font-weight: 500">Send print job</h2>
-    <div style="display: flex; gap: 12px; padding: 12px; border-radius: 16px; background: #141a17">
-      <span style="width: 64px; height: 64px; border-radius: 12px; background: #0f5130; display: grid; place-items: center"><span class="ms" aria-hidden="true" style="font-size: 32px; color: #9ff7bf">deployed_code</span></span>
-      <div style="font-size: 13px; display: flex; flex-direction: column; gap: 4px"><span style="font-weight: 500; font-size: 15px">bracket_v3 · Plate 1</span><span style="color: #a9b6ad; font-family: 'Roboto Mono', monospace">1 h 42 m · 38.6 g</span><span style="color: #a9b6ad">to X1 Carbon · Studio</span></div>
+  <section class="dg dlg" role="dialog" aria-label="Send print job" style="flex: 0 0 404px; animation-delay: 0ms">
+    <div class="row"><h2 class="grow">Send print job</h2><button class="ib sl" aria-label="Close"><span class="ms" aria-hidden="true">close</span></button></div>
+    <div class="row" style="gap: 12px; padding: 12px; border-radius: 20px; background: var(--s1)">
+      <span style="width: 64px; height: 64px; border-radius: 14px; background: var(--pric); display: grid; place-items: center"><span class="ms" aria-hidden="true" style="font-size: 32px; color: var(--onpric)">deployed_code</span></span>
+      <div style="display: flex; flex-direction: column; gap: 3px"><span style="font-weight: 500; font-size: 15px">bracket_v3 · Plate 1</span><span class="sub mono">1 h 42 m · 38.6 g</span></div>
     </div>
-    <div style="display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: 16px; background: #0f5130; color: #9ff7bf">
-      <span class="ms" aria-hidden="true" style="font-size: 20px">bolt</span>
-      <div style="flex: 1"><div style="font-size: 14px; font-weight: 500">Express print mode</div><div style="font-size: 12px; opacity: .85">Keeps heating, homing, AMS load and purge</div></div>
-      <button role="switch" aria-checked="true" aria-label="Express print mode" style="width: 44px; height: 24px; border-radius: 12px; border: 0; padding: 0; background: #6fdc98; position: relative"><span style="position: absolute; right: 3px; top: 3px; width: 18px; height: 18px; border-radius: 9px; background: #00391c"></span></button>
+    <div class="row" style="gap: 8px">
+      <label class="sub grow" style="display: flex; flex-direction: column; gap: 3px">Printer<select class="field" style="width: 100%"><option>X1 Carbon · Studio</option></select></label>
+      <label class="sub" style="display: flex; flex-direction: column; gap: 3px; width: 128px">Bed type<select class="field"><option>Textured PEI</option></select></label>
+      <button class="ib sl" aria-label="Refresh printers" style="margin-top: 16px"><span class="ms" aria-hidden="true">refresh</span></button>
     </div>
-    <sc-for list="{{rows}}" as="r" hint-placeholder-count="4">
-      <label style="display: flex; align-items: center; gap: 12px; font-size: 14px; color: {{r.fg}}">
-        <input type="checkbox" checked="{{r.checked}}" disabled="{{r.disabled}}" style="width: 18px; height: 18px; accent-color: #6fdc98">
-        <span style="flex: 1">{{r.name}}</span><span style="font-size: 12px; color: #a9b6ad">{{r.note}}</span>
-      </label>
-    </sc-for>
-    <div style="display: flex; justify-content: flex-end; gap: 8px; padding-top: 8px">
-      <button style="height: 44px; padding: 0 20px; border-radius: 14px; border: 0; background: transparent; color: #6fdc98; font: inherit; font-size: 14px; font-weight: 500">Cancel</button>
-      <button style="height: 44px; padding: 0 24px; border-radius: 14px; border: 0; background: #6fdc98; color: #00391c; font: inherit; font-size: 14px; font-weight: 700">Send</button>
+    <div class="row" style="gap: 12px; padding: 12px 14px; border-radius: 18px; background: var(--pric); color: var(--onpric)">
+      <span class="ms" aria-hidden="true">bolt</span>
+      <div class="grow"><div style="font-size: 14px; font-weight: 500">Express print mode</div><div style="font-size: 12px; opacity: .85">Keeps heating, homing, AMS load and purge</div></div>
+      <button class="sw" role="switch" aria-checked="true" aria-label="Express print mode"><i></i></button>
     </div>
-  </section>
-
-  <div style="flex: 1 1 520px; max-width: 640px; display: flex; flex-direction: column; gap: 32px">
-  <section aria-label="Melody creator" style="background: #1f2823; border-radius: 28px; padding: 24px; display: flex; flex-direction: column; gap: 14px">
-    <div style="display: flex; align-items: center; gap: 12px"><h2 style="margin: 0; font-size: 22px; font-weight: 500; flex: 1">Melody creator</h2><select style="height: 36px; border-radius: 10px; background: #141a17; color: #e3ebe5; border: 1px solid #34413a; padding: 0 10px; font: inherit; font-size: 13px"><option>Preset: X1 start tune</option></select></div>
-    <div style="border-radius: 16px; background: #141a17; padding: 12px; display: grid; grid-template-columns: 56px repeat(16, minmax(0, 1fr)); gap: 3px">
-      <sc-for list="{{voices}}" as="v" hint-placeholder-count="3">
-        <span style="font-size: 11px; color: #a9b6ad; align-self: center">{{v.name}}</span>
-        <sc-for list="{{v.steps}}" as="s" hint-placeholder-count="16"><span style="height: 28px; border-radius: 6px; background: {{s}}"></span></sc-for>
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <sc-for list="{{rows}}" as="r" hint-placeholder-count="5">
+        <label class="ck" style="color: {{r.fg}}">
+          <input type="checkbox" checked="{{r.checked}}" disabled="{{r.disabled}}">
+          <span class="grow">{{r.name}}</span><span class="sub">{{r.note}}</span>
+        </label>
       </sc-for>
     </div>
-    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; font-size: 12px">
-      <label style="display: flex; flex-direction: column; gap: 4px; color: #a9b6ad">Note<input value="E5" style="height: 36px; border-radius: 10px; background: #141a17; color: #e3ebe5; border: 1px solid #34413a; padding: 0 10px; font-family: 'Roboto Mono', monospace"></label>
-      <label style="display: flex; flex-direction: column; gap: 4px; color: #a9b6ad">Ticks<input value="4" style="height: 36px; border-radius: 10px; background: #141a17; color: #e3ebe5; border: 1px solid #34413a; padding: 0 10px; font-family: 'Roboto Mono', monospace"></label>
-      <label style="display: flex; flex-direction: column; gap: 4px; color: #a9b6ad">Volume<input value="80" style="height: 36px; border-radius: 10px; background: #141a17; color: #e3ebe5; border: 1px solid #34413a; padding: 0 10px; font-family: 'Roboto Mono', monospace"></label>
+    <div class="lbl" style="font-size: 12px; margin-top: 2px">Ink mapping (AMS)</div>
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <sc-for list="{{maps}}" as="m" hint-placeholder-count="4">
+        <div class="map"><span class="sw-chip" style="background: {{m.a}}; color: {{m.af}}">{{m.n}}</span><span class="grow">{{m.name}}</span><span class="ms" aria-hidden="true" style="font-size: 18px; color: var(--tx3)">arrow_forward</span><span class="sw-chip" style="background: {{m.b}}; color: {{m.bf}}">{{m.s}}</span><span class="mono sub" style="width: 40px; text-align: right">{{m.slot}}</span></div>
+      </sc-for>
     </div>
-    <div style="display: flex; gap: 8px; flex-wrap: wrap">
-      <button style="height: 40px; padding: 0 16px; border-radius: 12px; border: 0; background: #24342b; color: #cde9d6; font: inherit; font-size: 13px; font-weight: 500">Preview here</button>
-      <button style="height: 40px; padding: 0 16px; border-radius: 12px; border: 1px solid #34413a; background: transparent; color: #e3ebe5; font: inherit; font-size: 13px">Play on printer</button>
-      <button style="height: 40px; padding: 0 16px; border-radius: 12px; border: 1px solid #34413a; background: transparent; color: #e3ebe5; font: inherit; font-size: 13px">Copy G-code</button>
-      <button style="height: 40px; padding: 0 16px; border-radius: 12px; border: 0; background: #6fdc98; color: #00391c; font: inherit; font-size: 13px; font-weight: 700">Add to start G-code</button>
+    <div class="row" style="justify-content: flex-end; gap: 8px; padding-top: 6px">
+      <button class="btn btn-text sl">Cancel</button>
+      <button class="btn btn-tonal sl"><span class="ms" aria-hidden="true" style="font-size: 18px">send</span>Send</button>
+      <button class="btn btn-fill sl"><span class="ms" aria-hidden="true" style="font-size: 18px">print</span>Print</button>
     </div>
   </section>
 
-  <section aria-label="Command palette" style="background: #1f2823; border-radius: 28px; overflow: hidden">
-    <div style="display: flex; align-items: center; gap: 10px; padding: 16px 20px; border-bottom: 1px solid #34413a">
-      <span class="ms" aria-hidden="true" style="font-size: 18px; color: #a9b6ad">search</span>
-      <input value="^(slice|print)" aria-label="Search commands" style="flex: 1; border: 0; background: transparent; color: #e3ebe5; font-family: 'Roboto Mono', monospace; font-size: 15px; outline: none">
-      <span style="font-family: 'Roboto Mono', monospace; font-size: 11px; padding: 2px 8px; border-radius: 6px; background: #0f5130; color: #9ff7bf">.* regex</span>
+  <section class="dg dlg" role="dialog" aria-label="Melody creator" style="flex: 0 0 520px; animation-delay: 70ms">
+    <div class="row"><h2 class="grow">Melody creator</h2><button class="ib sl" aria-label="Close"><span class="ms" aria-hidden="true">close</span></button></div>
+    <div class="sub" style="line-height: 1.4">Compose a tune the printer plays through M1006: three voices per step, each with a note, a duration in ticks and a volume.</div>
+    <div class="row" style="gap: 8px">
+      <label class="sub grow" style="display: flex; flex-direction: column; gap: 3px">Melody name<input class="inp" value="My tune" style="font-family: Roboto, sans-serif; font-size: 14px"></label>
+      <label class="sub" style="display: flex; flex-direction: column; gap: 3px; width: 200px">Preset<select class="field" style="width: 100%"><option>Bambu Lab X1 start</option></select></label>
     </div>
-    <sc-for list="{{commands}}" as="c" hint-placeholder-count="5">
-      <div style="display: flex; align-items: center; gap: 12px; padding: 12px 20px; background: {{c.bg}}; font-size: 14px">
-        <span style="flex: 1">{{c.name}}</span><span style="font-size: 12px; color: #a9b6ad">{{c.where}}</span><span style="font-family: 'Roboto Mono', monospace; font-size: 11px; color: #a9b6ad">{{c.key}}</span>
-      </div>
-    </sc-for>
+    <div class="row" style="gap: 6px; flex-wrap: wrap">
+      <button class="btn btn-tonal btn-xs sl"><span class="ms" aria-hidden="true" style="font-size: 16px">add</span>Add step</button>
+      <button class="btn btn-out btn-xs sl"><span class="ms" aria-hidden="true" style="font-size: 16px">content_copy</span>Duplicate</button>
+      <button class="btn btn-out btn-xs sl"><span class="ms" aria-hidden="true" style="font-size: 16px">delete</span>Delete step</button>
+      <button class="ib sl" aria-label="Move up" style="width: 30px; height: 30px; border-radius: 10px"><span class="ms" aria-hidden="true" style="font-size: 18px">arrow_upward</span></button>
+      <button class="ib sl" aria-label="Move down" style="width: 30px; height: 30px; border-radius: 10px"><span class="ms" aria-hidden="true" style="font-size: 18px">arrow_downward</span></button>
+      <span class="grow"></span>
+      <button class="btn btn-text btn-xs sl"><span class="ms" aria-hidden="true" style="font-size: 16px">folder_open</span>Open melody</button>
+    </div>
+    <div style="border-radius: 20px; background: var(--s1); padding: 12px; display: grid; grid-template-columns: 52px repeat(16, minmax(0, 1fr)); gap: 3px">
+      <sc-for list="{{voices}}" as="v" hint-placeholder-count="3">
+        <span class="sub" style="font-size: 11px; align-self: center">{{v.name}}</span>
+        <sc-for list="{{v.steps}}" as="s" hint-placeholder-count="16"><span class="cell" style="background: {{s}}"></span></sc-for>
+      </sc-for>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; font-size: 12px">
+      <label class="sub" style="display: flex; flex-direction: column; gap: 3px">Note<input class="inp" value="E5"></label>
+      <label class="sub" style="display: flex; flex-direction: column; gap: 3px">Ticks<input class="inp" value="4"></label>
+      <label class="sub" style="display: flex; flex-direction: column; gap: 3px">Volume<input class="inp" value="80"></label>
+      <label class="sub" style="display: flex; flex-direction: column; gap: 3px">Tick (ms)<input class="inp" value="120"></label>
+    </div>
+    <div class="row sub" style="gap: 8px"><span class="ms" aria-hidden="true" style="font-size: 16px">info</span>16 steps, about 3.2 s at 120 ms per tick.</div>
+    <div class="row" style="gap: 8px; flex-wrap: wrap">
+      <button class="btn btn-tonal btn-s sl"><span class="ms" aria-hidden="true" style="font-size: 18px">play_arrow</span>Preview</button>
+      <button class="btn btn-out btn-s sl">Play on printer</button>
+      <button class="btn btn-out btn-s sl">Copy G-code</button>
+    </div>
+    <div class="row" style="gap: 8px; flex-wrap: wrap; justify-content: flex-end">
+      <button class="btn btn-out btn-s sl">Add to end G-code</button>
+      <button class="btn btn-fill btn-s sl">Add to start G-code</button>
+    </div>
   </section>
+
+  <div style="flex: 0 0 384px; display: flex; flex-direction: column; gap: 16px">
+    <section class="dg dlg" role="dialog" aria-label="Command palette" style="padding: 0; gap: 0; overflow: hidden; border-radius: 32px; animation-delay: 140ms">
+      <div class="row" style="padding: 14px 16px 12px 20px; gap: 8px; border-bottom: 1px solid var(--ol)">
+        <span class="ms" aria-hidden="true" style="color: var(--tx2)">search</span>
+        <input value="^(slice|print)" aria-label="Search commands, settings and pages" style="flex: 1; min-width: 0; border: 0; background: transparent; color: var(--tx); font-family: 'Roboto Mono', monospace; font-size: 15px; outline: none">
+        <button class="rx" style="background: var(--pric); color: var(--onpric)" aria-pressed="true">.* regex</button>
+        <button class="ib sl" aria-label="Expand the palette to the full window" style="width: 30px; height: 30px; border-radius: 10px"><span class="ms" aria-hidden="true" style="font-size: 18px">open_in_full</span></button>
+      </div>
+      <div class="gh">Commands</div>
+      <sc-for list="{{commands}}" as="c" hint-placeholder-count="5">
+        <div class="cmd" style="background: {{c.bg}}"><span class="ms" aria-hidden="true" style="font-size: 18px; color: var(--tx2)">{{c.glyph}}</span><span class="grow">{{c.name}}</span><span class="sub">{{c.where}}</span><span class="kbd">{{c.key}}</span></div>
+      </sc-for>
+      <div class="gh">Settings and pages</div>
+      <div class="cmd"><span class="ms" aria-hidden="true" style="font-size: 18px; color: var(--tx2)">settings</span><span class="grow">Open Preferences</span><span class="sub">Setting</span></div>
+      <div class="cmd"><span class="ms" aria-hidden="true" style="font-size: 18px; color: var(--tx2)">menu_book</span><span class="grow">Documentation</span><span class="sub">Help</span></div>
+      <div class="gh">Appearance</div>
+      <div class="row" style="padding: 4px 20px 16px; gap: 8px; flex-wrap: wrap">
+        <div class="seg" style="--n: 2; --i: 1; width: 150px"><button>Light</button><button class="on">Dark</button></div>
+        <div class="seg" style="--n: 2; --i: 0; width: 190px"><button class="on">Comfortable</button><button>Compact</button></div>
+      </div>
+    </section>
   </div>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":720}}'>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
 class Component extends DCLogic {
   renderVals() {
     const pat = (bits, on) => bits.split('').map((b) => (b === '1' ? on : '#28322c'));
@@ -86,7 +230,14 @@ class Component extends DCLogic {
         { name: 'Bed leveling', note: 'Off in express', checked: false, disabled: true, fg: '#7c8a81' },
         { name: 'Flow dynamics calibration', note: 'Off in express', checked: false, disabled: true, fg: '#7c8a81' },
         { name: 'Timelapse', note: '', checked: true, disabled: false, fg: '#e3ebe5' },
-        { name: 'Use AMS', note: '4 inks mapped', checked: true, disabled: false, fg: '#e3ebe5' }
+        { name: 'Use AMS', note: '4 inks mapped', checked: true, disabled: false, fg: '#e3ebe5' },
+        { name: 'Auto Refill', note: '', checked: true, disabled: false, fg: '#e3ebe5' }
+      ],
+      maps: [
+        { n: '1', name: 'PLA Basic', a: '#00ae42', af: '#fff', s: 'A1', b: '#00ae42', bf: '#fff', slot: '82%' },
+        { n: '2', name: 'PLA Matte', a: '#f2ead8', af: '#1a1a1a', s: 'A2', b: '#f2ead8', bf: '#1a1a1a', slot: '40%' },
+        { n: '3', name: 'PETG HF', a: '#3a3a3a', af: '#fff', s: 'A3', b: '#3a3a3a', bf: '#fff', slot: '96%' },
+        { n: '4', name: 'TPU 95A', a: '#ff7a1a', af: '#1a1a1a', s: 'A4', b: '#ff7a1a', bf: '#1a1a1a', slot: '12%' }
       ],
       voices: [
         { name: 'Voice 1', steps: pat('1010110010101100', '#6fdc98') },
@@ -94,11 +245,11 @@ class Component extends DCLogic {
         { name: 'Voice 3', steps: pat('0010001000100011', '#ffb870') }
       ],
       commands: [
-        { name: 'Slice plate', where: 'Prepare', key: 'Ctrl R', bg: '#24342b' },
-        { name: 'Slice all plates', where: 'Prepare', key: 'Ctrl Shift R', bg: 'transparent' },
-        { name: 'Print plate', where: 'Prepare', key: 'Ctrl P', bg: 'transparent' },
-        { name: 'Print all', where: 'Prepare', key: '', bg: 'transparent' },
-        { name: 'Printer melodies', where: 'File', key: '', bg: 'transparent' }
+        { name: 'Slice plate', glyph: 'layers', where: 'Prepare', key: 'Ctrl R', bg: '#24342b' },
+        { name: 'Slice all plates', glyph: 'layers', where: 'Prepare', key: 'Ctrl Shift R', bg: 'transparent' },
+        { name: 'Print plate', glyph: 'print', where: 'Prepare', key: 'Ctrl P', bg: 'transparent' },
+        { name: 'Print all', glyph: 'print', where: 'Prepare', key: '', bg: 'transparent' },
+        { name: 'Printer melodies', glyph: 'music_note', where: 'File', key: '', bg: 'transparent' }
       ]
     };
   }

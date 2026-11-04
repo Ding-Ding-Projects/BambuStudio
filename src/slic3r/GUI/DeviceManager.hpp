@@ -436,6 +436,10 @@ public:
     int     mc_left_time;           /* left time in seconds */
     int     last_mc_print_stage;
     int     m_home_flag = 0;
+    // Door sensor bit 23 of home_flag (older protocol) or of print.stat (newer protocol): -1 not
+    // reported, 0 closed, 1 open. The bit position comes from community protocol notes, not from
+    // a vendor document, so the print monitor labels the reading as beta.
+    int     door_open_bit = -1;
     int     hw_switch_state;
     bool    is_system_printing();
 
