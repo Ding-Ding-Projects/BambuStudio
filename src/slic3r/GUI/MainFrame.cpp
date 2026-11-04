@@ -3415,13 +3415,21 @@ wxSizer* MainFrame::create_side_tools(wxWindow* parent)
     m_slice_send_btn->SetName(_L("Slice and Send"));
     m_slice_print_btn->SetToolTip(_L("Slice this plate, then choose a printer and confirm printing."));
     m_slice_send_btn->SetToolTip(_L("Slice this plate, then send it to a printer without starting a print."));
-    // A text chevron remains visible even when the optional symbol font is
-    // unavailable. Accessible names describe the action instead of the glyph.
-    m_slice_option_btn = new SideButton(slice_panel, wxString::FromUTF8("\xE2\x96\xBE"), "");
+    // The option buttons draw the Material Symbols chevron. The text chevron is
+    // only a fallback for a missing symbol face, because the UI text font has no
+    // glyph for U+25BE and would draw a missing-glyph box. Accessible names
+    // describe the action instead of the glyph.
+    const bool symbol_chevron = MaterialIcon::available();
+    const wxString option_label = symbol_chevron ? wxString() : wxString::FromUTF8("\xE2\x96\xBE");
+    m_slice_option_btn = new SideButton(slice_panel, option_label, "");
     m_slice_option_btn->SetName(_L("Slice options"));
     m_print_btn = new SideButton(print_panel, _L("Print plate"), "");
-    m_print_option_btn = new SideButton(print_panel, wxString::FromUTF8("\xE2\x96\xBE"), "");
+    m_print_option_btn = new SideButton(print_panel, option_label, "");
     m_print_option_btn->SetName(_L("Print options"));
+    if (symbol_chevron) {
+        m_slice_option_btn->SetLeadingGlyph(MaterialIcon::ExpandMore);
+        m_print_option_btn->SetLeadingGlyph(MaterialIcon::ExpandMore);
+    }
 
     // Keyboard traversal matches main action, then its adjacent options.
     m_slice_option_btn->MoveAfterInTabOrder(m_slice_btn);
