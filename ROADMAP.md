@@ -1,3 +1,16 @@
+## Local printer status API, 4 November 2026
+
+Branch `ai/feature/20261104-door-status-api`. Details: [`docs/features/device/status-api.md`](docs/features/device/status-api.md).
+
+- [x] Add a local, read-only status API that is off by default: `GET /api/v1/printers`, `GET /api/v1/printers/{dev_id}/door` and `GET /api/v1/health`, bound to 127.0.0.1 only, bearer token required (constant-time comparison), GET only, bounded request size and time, no CORS headers.
+- [x] Keep the routing, authorization and JSON rules in a standard-library-only header (`StatusApiCore.hpp`) and feed it a mutex-protected snapshot taken on the GUI thread, so the server thread never reads a printer object.
+- [x] Add the Preferences section (switch, port, masked token with Show, Copy and Regenerate) and the command palette entries; localize the strings with Cantonese entries and refresh coverage.
+- [x] Document the API in English and Cantonese, add a category Postman collection and include it in the master collection; regenerate the documentation bundle.
+- [x] Add `tests/status_api.test.mjs` with `tests/status_api_fixture.cpp`: behaviour of the real header plus source pins (passes with MSVC; `--negative` shows each removed guard is caught).
+- [ ] Build the application with the new files and run it: the Boost.Beast listener, the wxTimer snapshot and the Preferences rows have not been compiled or driven. Native runtime is not verified.
+- [ ] Check the door state against a real printer that reports door-open support (bit 23 of `home_flag` or `print.stat` is from community notes).
+- [ ] Decide whether the token should move to protected storage like the LAN drop station key; today it is in the application settings file.
+
 ## Device live readings and printer options, 4 November 2026
 
 Branch `ai/feature/20261104-device-live-states`. Details: [`docs/features/device/live-readings.md`](docs/features/device/live-readings.md).
