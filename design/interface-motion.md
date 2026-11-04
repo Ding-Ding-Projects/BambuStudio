@@ -82,3 +82,82 @@ Immediate selection, cancellation, validation and dismissal semantics are
 intentional. Reduced motion intentionally settles visuals without intermediate
 movement. Neither exemption excuses missing full-motion feedback elsewhere.
 All remaining installed and rendered evidence stays explicitly pending.
+
+## Graphite shell motion specification
+
+This section specifies the motion drawn into the Graphite shell artboards (`graphite-shell/*.dc.html`). It is a design specification: the artboards prove timing, easing and sequencing in a browser, and the native kit has to implement each row on its own animator. Nothing here claims that a native control already behaves this way; the native status of each slice stays in the tables above.
+
+### Tokens
+
+Durations and easing come from the Material Design 3 motion tokens. The artboards define them as CSS custom properties (`--d2` to `--d12`, `--e-std`, `--e-dec`, `--e-acc`, `--e-emp-dec`, `--e-emp-acc`, `--e-spring`) and the Tokens artboard plays each one on hover.
+
+| Token | Value | Use |
+| --- | --- | --- |
+| short2 | 100 ms | press feedback, hover state layer on small controls |
+| short3 | 150 ms | state layer fade, scrim and toast exit |
+| short4 | 200 ms | colour and elevation changes, scrim enter |
+| medium2 | 300 ms | selection, card lift, switch knob, screen shared-axis entrance, dialog entrance |
+| medium4 | 400 ms | segmented thumb, rail indicator, staggered content entrance |
+| long2 | 500 ms | reserved for large surface transitions |
+| long4 | 600 ms | progress bar growth on first display |
+| standard | cubic-bezier(.2, 0, 0, 1) | state and colour changes, element moves that stay on screen |
+| standard decelerate | cubic-bezier(0, 0, 0, 1) | elements entering at full size |
+| standard accelerate | cubic-bezier(.3, 0, 1, 1) | elements leaving the screen |
+| emphasized decelerate | cubic-bezier(.05, .7, .1, 1) | entrances: screens, dialogs, toasts, staggered cards |
+| emphasized accelerate | cubic-bezier(.3, 0, .8, .15) | exits of dialogs and the palette |
+| expressive spring | cubic-bezier(.34, 1.45, .64, 1) | position, size and shape only: rail indicator, segmented thumb, switch knob, card lift, button shape morph |
+
+The spring is an overshoot approximation of the Expressive spatial spring. It is never applied to colour or opacity, and a native implementation may replace it with a damped spring that settles within the same duration.
+
+### Interaction map
+
+Every row has an enter or change definition, an exit where one applies, the native control it maps to, and the reduced-motion equivalent. The reduced-motion equivalent applies when the saved preference or the system setting asks for reduced motion: the state changes immediately, with no travel, scale or shimmer, and focus rings and selection stay fully visible.
+
+| Interaction | Motion | Duration and easing | Native control | Reduced motion |
+| --- | --- | --- | --- | --- |
+| Rail selection indicator | The mint pill slides from the previous destination to the new one; the destination label colour cross-fades | 400 ms spring (position), 200 ms standard (label) | `ButtonsListCtrl` and `Notebook` selected tile | Pill jumps; label colour changes at once |
+| Rail tile hover and press | 8 % state layer on hover; pill scales to 92 % while pressed | 100 ms standard, 300 ms spring on release | `ButtonsListCtrl` tile paint | State layer only, no scale |
+| Screen change between workspaces | Shared axis on the horizontal axis: the incoming screen fades in while travelling 28 px toward its resting position; the outgoing screen fades out in 90 ms without travel | 300 ms emphasized decelerate in, 90 ms standard accelerate out | `Notebook::DoShowPage` and `Tabbook::DoShowPage` page content (not implemented natively today, see the page content scope above) | Cross-fade replaced by an immediate swap |
+| Staggered content entrance | Cards and rows rise 14 px and fade in, 40 ms apart, up to ten items, the rest at the end of the sequence | 400 ms emphasized decelerate, 40 ms step | Home web page cards (CSS in `resources/web/homepage3`), Prepare sidebar cards on first show | All items shown at once |
+| Card hover and press | Card lifts 2 px with a deeper shadow and moves to the next surface step; press returns it and scales to 98.5 % | 300 ms spring, 100 ms on press | `StaticBox` and card paint routing | Surface colour change only |
+| Button shape morph | A pill button changes its corner radius to 16 px on hover and 14 px while pressed, with a 12 % state layer | 200 ms standard | `Button` and `SideButton` paint | Radius stays; state layer only |
+| Segmented control | The selected thumb slides under the labels; label colour fades | 400 ms spring, 200 ms standard | `TabStrip` pill, language switch, World or Object toggle, print speed levels | Thumb jumps |
+| Switch | Knob slides 20 px, grows from 16 to 20 px and the track fills; the knob widens to 24 px while pressed | 300 ms spring, 150 ms size | `SwitchButton` | Knob jumps; track colour changes |
+| Chip and toggle state change | Fill and label colour cross-fade; check glyph swaps in the Preview option chips | 200 ms standard | `Button` chip states and the Preview option toggles | Immediate |
+| Dialog enter | Scrim fades in; the dialog scales from 90 % and rises 12 px while fading in | 200 ms standard (scrim), 300 ms emphasized decelerate (dialog) | Captioned dialog entrance (`MD3TransientEntrance`): Send print job, Melody creator | Dialog appears at once |
+| Dialog exit | The dialog scales to 95 % and fades; the scrim fades out | 150 ms emphasized accelerate | Same owner | Immediate |
+| Command palette open | Scales from 94 % and fades in from the title bar search field; list rows follow with a 20 ms step for the first six | 300 ms emphasized decelerate | `CommandPalette` owned entrance | Immediate |
+| Command row hover | 5 % state layer | 150 ms standard | Palette row paint | Colour only |
+| Printing progress | The bar grows from zero on first display; while a job is running a soft highlight travels along the filled part every 1.8 s | 600 ms emphasized decelerate, 1.8 s loop | `StatusPanel` progress, `ProgressBar` | No growth and no travelling highlight; the filled width shows the value |
+| Live camera indicator | The red dot fades between full and 35 % opacity every 2 s while the stream is live | 2 s standard loop | `StatusPanel` camera badge | Static dot |
+| Layer slider scrubbing | The handle halo grows on hover; the layer value bubble follows the handle without lag; the current layer outline nudges up 3 px when the layer changes | 150 ms standard (halo and bubble), 400 ms standard (nudge) | `IMSlider` (ImGui), see the canvas tooltip scope above | Halo and bubble only; no nudge |
+| Legend item hover | The colour swatch scales to 125 % | 300 ms spring | Preview legend (`GCodeRenderer`) | No scale |
+| Toast enter | Rises 28 px from below and fades in; leaves by fading out in 150 ms | 300 ms emphasized decelerate, 500 ms delay after the screen settles in the artboards | `NotificationManager` | Immediate |
+| Badge enter | Notification and LAN badges pop in from 90 % | 300 ms spring | `BBLTopbar` bell and LAN indicator bitmaps | Immediate |
+| Slot and tube hover | AMS tubes and project thumbnails move up 3 px and scale 5 % or round their corners | 300 ms spring | AMS panel (web or native), Home project tiles | No movement |
+| Fan and temperature sliders | Handle halo on hover | 200 ms standard | Device fan and temperature controls | Halo only |
+
+### Behaviour rules
+
+- Semantic state changes stay immediate: selection, cancellation, validation and dismissal take effect when the user acts, and the visual transition follows.
+- Hit targets never move with a decorative transform; lift and scale effects animate the paint, not the input rectangle.
+- Only real activity loops: the progress highlight while a job runs and the live camera dot while a stream is live. Idle surfaces do not animate continuously.
+- Entrance sequences play once when a screen is shown and are not replayed on every redraw.
+- Every animation has a reduced-motion equivalent, which is a state change with no intermediate frames, and the static frames in `graphite-shell/frames/` are what that mode shows.
+- Entrances are capped at 600 ms and staggers at ten items so screens never feel slower than the content loads.
+
+### Artboard reference
+
+The artboards carry the motion as shared CSS classes. They are the reference for timing and sequencing, not shipped code.
+
+| Class | Purpose |
+| --- | --- |
+| `.screen` | Shared-axis entrance of a workspace |
+| `.st` | Staggered entrance of the children |
+| `.lift`, `.sl` | Card lift and state layers |
+| `.seg`, `.sw` | Segmented control thumb and switch |
+| `.prog` | Progress growth and highlight |
+| `.dlg`, `.scrim`, `.toast` | Dialog, scrim and toast entrances |
+| `.ind` (NavRail) | Selection indicator slide, driven by the `active` property |
+
+The `prefers-reduced-motion: reduce` block at the end of the shared CSS collapses every duration, removes the highlight travel and keeps the final state visible. It was checked by rendering the artboards with reduced motion emulated, and the result matches the full-motion frame at rest. The dialog exit, the outgoing screen fade and the palette row stagger are specified here but are not drawn in the static artboards, because the artboards only show enter states.
