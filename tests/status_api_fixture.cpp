@@ -77,7 +77,7 @@ int main()
               host_header_is_loopback("[::1]:9") && host_header_is_loopback("[::1]"),
           "loopback Host names are accepted");
     check(!host_header_is_loopback("") && !host_header_is_loopback("127.0.0.1.evil.com") && !host_header_is_loopback("localhost:") &&
-              !host_header_is_loopback("localhost:80x") && !host_header_is_loopback("10.0.0.5") && !host_header_is_loopback("[::1"),
+              !host_header_is_loopback("localhost:80x") && !host_header_is_loopback("203.0.113.5") && !host_header_is_loopback("[::1"),
           "other Host values are refused");
 
     // GET only.
