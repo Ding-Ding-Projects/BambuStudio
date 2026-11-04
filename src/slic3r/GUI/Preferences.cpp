@@ -5,6 +5,7 @@
 #include "TtsNarrator.hpp"
 #include "LanModelDrop/LanModelDropStation.hpp"
 #include "LanModelDrop/LanModelDropUi.hpp"
+#include "StatusApi/StatusApiCore.hpp"
 #include "StatusApi/StatusApiServer.hpp"
 #include "StatusApi/StatusApiUi.hpp"
 #include "PersonalModes/SchoolMode.hpp"

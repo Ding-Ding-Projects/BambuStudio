@@ -116,7 +116,8 @@ private:
         m_response->set(http::field::server, "BambuStudio-StatusApi");
         m_response->set(http::field::content_type, "application/json; charset=utf-8");
         m_response->set(http::field::cache_control, "no-store");
-        m_response->set(http::field::x_content_type_options, "nosniff");
+        // Boost.Beast has no named field for this header, so it is set by name.
+        m_response->set("X-Content-Type-Options", "nosniff");
         if (!r.allow.empty()) m_response->set(http::field::allow, r.allow);
         if (r.www_authenticate) m_response->set(http::field::www_authenticate, "Bearer realm=\"bambu-studio-status\"");
         m_response->body() = r.body;
