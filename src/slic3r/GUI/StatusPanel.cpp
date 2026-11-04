@@ -4610,6 +4610,11 @@ void StatusPanel::update_live_readings(MachineObject *obj)
         }
     }
 
+    // Door sensor: MachineObject::door_open_bit (bit 23 of home_flag or print.stat). The bit position is
+    // taken from community protocol notes rather than a vendor document, so the label marks it as beta.
+    if (const auto open = DeviceLive::door_open_reading(obj->door_open_bit, obj->support_door_open_check()))
+        readings.push_back({_L("Door (beta)"), *open ? _L("Open") : _L("Closed")});
+
     // Installed nozzle per extruder: DevNozzleSystem extruder nozzles (diameter, material, flow type). The
     // flow type is added only when it is not the default standard flow, because the default is also what an
     // unreported flow type holds.

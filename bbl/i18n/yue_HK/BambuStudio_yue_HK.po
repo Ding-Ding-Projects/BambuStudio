@@ -47206,3 +47206,13 @@ msgstr "風道"
 #. review-status: agent-drafted
 msgid "Live printer readings"
 msgstr "打印機即時狀態"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Door (beta)"
+msgstr "門（測試版）"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Closed"
+msgstr "關閉"

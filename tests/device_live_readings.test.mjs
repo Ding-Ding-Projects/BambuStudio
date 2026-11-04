@@ -61,7 +61,10 @@ check(deviceManager.includes('xcam_door_open_check = (DoorOpenCheckState) get_fl
       live.includes('support_door_open_check()'), 'door detection chip reads the parsed setting and is gated on the support flag');
 check(live.includes('GetExtNozzle(ext_id)') && live.includes('nozzle_reading_usable') && live.includes('IsInfoReliable()'),
       'nozzle chips read per-extruder nozzles and require reliable information');
-check(!/door.*open.*sensor|IsDoorOpen|is_door_open/i.test(live), 'no invented live door sensor reading');
+check(read('src/slic3r/GUI/DeviceManager.cpp').includes('door_open_bit = (flag >> 23) & 0x1;') && deviceManager.includes('door_open_bit    = get_flag_bits(stat, 23);'),
+      'door sensor chip is fed from home_flag or print.stat bit 23');
+check(live.includes('DeviceLive::door_open_reading(obj->door_open_bit, obj->support_door_open_check())') && live.includes('_L("Door (beta)")'),
+      'door sensor chip is gated on door support and labelled beta, because the bit comes from community notes');
 
 // Honest labelling and localization.
 check(live.includes('_L("Open Door Detection")'), 'door chip is labelled as a detection setting, not a sensor');
@@ -130,6 +133,8 @@ int main() {
   check(!air_duct_mode_label(-1).has_value() && !air_duct_mode_label(255).has_value() && !air_duct_mode_label(4).has_value(), "unreported or unknown air duct mode is hidden");
   check(door_check_setting(0) == DoorCheckSetting::Off && door_check_setting(1) == DoorCheckSetting::Warning && door_check_setting(2) == DoorCheckSetting::PausePrint, "door setting maps");
   check(!door_check_setting(3).has_value() && !door_check_setting(-1).has_value(), "unknown door setting is hidden");
+  check(door_open_reading(1, true) == true && door_open_reading(0, true) == false, "door sensor bit maps to open and closed");
+  check(!door_open_reading(1, false).has_value() && !door_open_reading(-1, true).has_value(), "door sensor hidden without support or report");
   check(nozzle_reading_usable(0.4f, true, true, false), "reliable nozzle is shown");
   check(!nozzle_reading_usable(0.0f, true, true, false), "zero diameter is hidden");
   check(!nozzle_reading_usable(0.4f, false, true, false), "unknown material is hidden");

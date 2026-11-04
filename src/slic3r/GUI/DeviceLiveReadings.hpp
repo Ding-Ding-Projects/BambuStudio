@@ -106,6 +106,15 @@ inline std::optional<DoorCheckSetting> door_check_setting(int state)
     }
 }
 
+// Live door sensor. MachineObject::door_open_bit holds bit 23 of home_flag or print.stat
+// (-1 when neither was reported). Only printers that report door-open detection support
+// have a door sensor, so the reading is hidden on every other printer.
+inline std::optional<bool> door_open_reading(int bit, bool printer_has_door_sensor)
+{
+    if (!printer_has_door_sensor || (bit != 0 && bit != 1)) return std::nullopt;
+    return bit == 1;
+}
+
 // ---------------------------------------------------------------------------------
 // Installed nozzle. DevNozzle carries diameter, material and flow type per extruder.
 // ---------------------------------------------------------------------------------

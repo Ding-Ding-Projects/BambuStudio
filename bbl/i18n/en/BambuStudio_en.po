@@ -30474,5 +30474,11 @@ msgstr ""
 msgid "Air duct"
 msgstr ""
 
+msgid "Door (beta)"
+msgstr ""
+
+msgid "Closed"
+msgstr ""
+
 msgid "Live printer readings"
 msgstr ""

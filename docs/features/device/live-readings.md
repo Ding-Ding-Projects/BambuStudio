@@ -17,7 +17,7 @@ Each chip is a label and a value. A chip appears only when its value was reporte
 
 The signal quality words are a display heuristic, not a protocol value: -60 dBm or stronger is Strong, down to -75 dBm is Fair, anything weaker is Weak.
 
-**Door state is not shown.** The application does not parse a live door-open or door-closed value from the printer, so the strip has no door sensor reading. The Open Door Detection chip shows the setting that decides what the printer does when the door opens, and its label says so. A live door reading needs the status field identified in the protocol and parsed first.
+**Door (beta)** shows Open or Closed on printers that report door-open support. It reads bit 23 of `home_flag` (older status messages) or of `print.stat` (newer ones), stored in `MachineObject::door_open_bit`. That bit position comes from community protocol notes, not from a vendor document, and it has not been checked against a real printer from this build, so the chip is labelled beta. It is hidden when the printer reports neither field or has no door sensor. The Open Door Detection chip is separate: it shows the setting that decides what the printer does when the door opens.
 
 **Chamber temperature, nozzle and bed temperature, fan speeds, speed level, chamber light, storage state, AMS humidity and drying** are already shown elsewhere on the Device tab and are not repeated here. The chamber fan speed is parsed with a default of zero when absent, so an unreported value cannot be told apart from a stopped fan; it is therefore not offered as a chip.
 
