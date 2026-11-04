@@ -885,6 +885,18 @@ function Invoke-ApplicationBuild {
     $pathPolicyCurrent = (Test-Path -LiteralPath $appCache -PathType Leaf) -and
         (Select-String -LiteralPath $appCache -SimpleMatch -Pattern 'BAMBU_RELEASE_SOURCE_PATH_POLICY:INTERNAL=msvc-pathmap-v1' -Quiet)
     $forceConfigure = ($env:BAMBU_RECONFIGURE -eq '1') -or -not $pathPolicyCurrent
+    # A cache without its generated projects cannot be built: the explicit
+    # target builds below name project files that only a configure writes.
+    $generatedProjects = @(
+        'ALL_BUILD.vcxproj',
+        'src\BambuStudio.vcxproj',
+        'src\slic3r\GUI\DeviceWeb\device_page_build.vcxproj'
+    )
+    $missingProjects = @($generatedProjects | Where-Object { -not (Test-Path -LiteralPath (Join-Path $buildDirectory $_) -PathType Leaf) })
+    if ($missingProjects.Count -gt 0 -and (Test-Path -LiteralPath $appCache -PathType Leaf)) {
+        Write-BuildLog "The build tree at $buildDirectory is missing generated project files ($($missingProjects -join ', ')); configuring again."
+        $forceConfigure = $true
+    }
     if ($Clean -or $forceConfigure -or -not $cacheMatches) {
         $python = Get-PythonInterpreterPath
         if ([string]::IsNullOrWhiteSpace($python)) {
