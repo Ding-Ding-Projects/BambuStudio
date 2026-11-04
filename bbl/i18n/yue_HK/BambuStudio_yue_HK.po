@@ -47176,3 +47176,28 @@ msgstr "搜尋指令同設定"
 #. review-status: agent-drafted
 msgid "Search commands and settings (%s)"
 msgstr "搜尋指令同設定（%s）"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "The printer Play on printer sends to. Choosing one also selects it on the Device page."
+msgstr "「喺打印機播放」會送去呢部打印機。揀咗之後，設備頁面都會一齊選取佢。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "No printers found"
+msgstr "搵唔到打印機"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "That printer could not be selected. Try it on the Device page."
+msgstr "選取唔到呢部打印機，請喺設備頁面再試。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Printer selected. It may take a moment to connect."
+msgstr "已選取打印機，可能要等一陣先連線到。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Choose a printer in the Printer list first."
+msgstr "請先喺打印機清單揀一部打印機。"

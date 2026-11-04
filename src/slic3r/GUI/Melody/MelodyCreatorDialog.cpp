@@ -165,7 +165,21 @@ MelodyCreatorDialog::MelodyCreatorDialog(wxWindow *parent)
         m_presets->Bind(wxEVT_COMBOBOX, [this](wxCommandEvent &e) { load_preset(m_presets->GetSelection()); e.Skip(); });
         preset_col->Add(m_presets, 0);
         row->Add(preset_col, 0, wxLEFT, FromDIP(16));
+
+        auto *printer_col = new wxBoxSizer(wxVERTICAL);
+        printer_col->Add(make_label(_L("Printer")), 0, wxBOTTOM, FromDIP(4));
+        m_printers = new ComboBox(host, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(220), -1), 0, nullptr, wxCB_READONLY);
+        m_printers->SetFont(Label::Body_13);
+        m_printers->GetDropDown().SetFont(Label::Body_13);
+        m_printers->SetCornerRadius(FromDIP(10));
+        m_printers->SetName(_L("Printer"));
+        m_printers->SetToolTip(_L("The printer Play on printer sends to. Choosing one also selects it on the Device page."));
+        m_printers->Bind(wxEVT_COMBOBOX_DROPDOWN, [this](wxCommandEvent &e) { fill_printers(); e.Skip(); });
+        m_printers->Bind(wxEVT_COMBOBOX, [this](wxCommandEvent &e) { choose_printer(m_printers->GetSelection()); e.Skip(); });
+        printer_col->Add(m_printers, 0);
+        row->Add(printer_col, 0, wxLEFT, FromDIP(16));
         body->Add(row, 0, wxEXPAND);
+        fill_printers();
     }
 
     // --- the step table ---------------------------------------------------
@@ -451,16 +465,55 @@ void MelodyCreatorDialog::preview()
     update_status(_L("The preview cannot play on this computer. Play on printer still works."), true);
 }
 
+void MelodyCreatorDialog::fill_printers()
+{
+    DeviceManager *dev = wxGetApp().getDeviceManager();
+    MachineObject *selected = dev ? dev->get_selected_machine() : nullptr;
+    m_printers->Clear();
+    m_printer_ids.clear();
+    int selection = wxNOT_FOUND;
+    if (dev) {
+        for (const auto &[id, obj] : dev->get_my_machine_list()) {
+            if (!obj) continue;
+            const wxString state = obj->is_connected() ? (obj->is_in_printing() ? _L("Printing") : _L("Connected")) : _L("Offline");
+            m_printers->Append(wxString::Format("%s (%s)", wxString::FromUTF8(obj->get_dev_name()), state));
+            if (selected && selected->get_dev_id() == id) selection = static_cast<int>(m_printer_ids.size());
+            m_printer_ids.push_back(id);
+        }
+    }
+    if (m_printer_ids.empty()) {
+        m_printers->Append(_L("No printers found"));
+        m_printers->SetSelection(0);
+        m_printers->Enable(false);
+        return;
+    }
+    m_printers->Enable(true);
+    if (selection != wxNOT_FOUND) m_printers->SetSelection(selection);
+}
+
+void MelodyCreatorDialog::choose_printer(int index)
+{
+    if (index < 0 || index >= static_cast<int>(m_printer_ids.size())) return;
+    DeviceManager *dev = wxGetApp().getDeviceManager();
+    if (!dev) return;
+    MachineObject *selected = dev->get_selected_machine();
+    if (selected && selected->get_dev_id() == m_printer_ids[index]) return;
+    if (!dev->set_selected_machine(m_printer_ids[index]))
+        update_status(_L("That printer could not be selected. Try it on the Device page."), true);
+    else
+        update_status(_L("Printer selected. It may take a moment to connect."));
+}
+
 void MelodyCreatorDialog::play_on_printer()
 {
     wxString why;
     if (!melody_ready(why)) { update_status(why, true); return; }
     DeviceManager *dev = wxGetApp().getDeviceManager();
     MachineObject *obj = dev ? dev->get_selected_machine() : nullptr;
-    if (!obj) { update_status(_L("Select a printer on the Device page first."), true); return; }
+    if (!obj) { update_status(_L("Choose a printer in the Printer list first."), true); return; }
     if (!obj->is_connected()) { update_status(_L("The selected printer is not connected."), true); return; }
     if (obj->is_in_printing()) { update_status(_L("The printer is printing. Play the melody when it is idle."), true); return; }
-    const int result = obj->publish_gcode(melody_to_gcode(m_melody));
+    const int result = obj->publish_gcode(melody_to_printer_gcode(m_melody));
     if (result != 0) { update_status(wxString::Format(_L("The printer did not accept the melody (code %d)."), result), true); return; }
     const wxString sent = wxString::Format(_L("Melody sent to %s."), wxString::FromUTF8(obj->get_dev_name()));
     update_status(sent);

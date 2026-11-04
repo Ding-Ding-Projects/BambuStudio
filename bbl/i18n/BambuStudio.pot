@@ -25953,6 +25953,21 @@ msgstr ""
 msgid "Select a printer on the Device page first."
 msgstr ""
 
+msgid "The printer Play on printer sends to. Choosing one also selects it on the Device page."
+msgstr ""
+
+msgid "No printers found"
+msgstr ""
+
+msgid "That printer could not be selected. Try it on the Device page."
+msgstr ""
+
+msgid "Printer selected. It may take a moment to connect."
+msgstr ""
+
+msgid "Choose a printer in the Printer list first."
+msgstr ""
+
 msgid "The selected printer is not connected."
 msgstr ""
 
