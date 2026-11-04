@@ -14,6 +14,7 @@ class TabCtrl : public StaticBox
 
     int sel = -1;
     wxFont bold;
+    bool fit_all_items = false;
 
     // Current workspace accent scheme. The active-tab label and the active
     // indicator resolve Primary through this scheme so a sub-tab strip hosted in
@@ -104,6 +105,8 @@ public:
     // workspace scheme (Brand / Preview / Device). Re-applies the scheme-aware
     // default label colour to every tab and repaints the indicator.
     void SetColorScheme(MD3::ColorScheme scheme);
+    // Best width covers all items, so none is hidden for lack of space
+    void SetFitAllItems(bool fit);
 
     /* fakes */
     int GetFirstVisibleItem() const;
@@ -112,6 +115,8 @@ public:
 
 private:
     virtual void DoSetSize(int x, int y, int width, int height, int sizeFlags = wxSIZE_AUTO);
+
+    wxSize DoGetBestSize() const override;
 
 #ifdef __WIN32__
     WXLRESULT MSWWindowProc(WXUINT nMsg, WXWPARAM wParam, WXLPARAM lParam) override;

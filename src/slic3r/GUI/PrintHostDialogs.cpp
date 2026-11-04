@@ -16,7 +16,6 @@
 #include <wx/debug.h>
 #include <wx/msgdlg.h>
 
-#include <boost/log/trivial.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/nowide/convert.hpp>
 
@@ -36,6 +35,7 @@
 #include "Widgets/Label.hpp"
 #include "Widgets/StateColor.hpp"
 #include "Widgets/TextInput.hpp"
+#include "libslic3r/Log.hpp"
 
 namespace fs = boost::filesystem;
 

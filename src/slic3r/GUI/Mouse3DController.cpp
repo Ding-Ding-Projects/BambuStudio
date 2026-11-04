@@ -12,10 +12,10 @@
 #include <wx/glcanvas.h>
 
 #include <boost/nowide/convert.hpp>
-#include <boost/log/trivial.hpp>
 #include "I18N.hpp"
 
 #include <bitset>
+#include "libslic3r/Log.hpp"
 
 //unofficial linux lib
 //#include <spnav.h>
@@ -170,7 +170,7 @@ static std::string detect_attached_device()
         // Enumerates devices
         hid_device_info* devices = hid_enumerate(0, 0);
         if (devices == nullptr)
-            BOOST_LOG_TRIVIAL(trace) << "detect_attached_device() - no HID device enumerated.";
+            BOOST_LOG_TRIVIAL(trace) << "no HID device enumerated.";
         else {
             // Searches for 1st connected 3Dconnexion device
             struct DeviceData
@@ -881,12 +881,12 @@ bool Mouse3DController::connect_device()
     // Enumerates devices
     hid_device_info* devices = hid_enumerate(0, 0);
     if (devices == nullptr) {
-        BOOST_LOG_TRIVIAL(trace) << "Mouse3DController::connect_device() - no HID device enumerated.";
+        BOOST_LOG_TRIVIAL(trace) << "no HID device enumerated.";
         return false;
     }
 
 #ifdef _WIN32
-    BOOST_LOG_TRIVIAL(trace) << "Mouse3DController::connect_device() - enumerating HID devices.";
+    BOOST_LOG_TRIVIAL(trace) << "enumerating HID devices.";
 #endif // _WIN32
 
     // Searches for 1st connected 3Dconnexion device

@@ -78,7 +78,7 @@ const balanced = (gcode) => {
 // Commands that never belong to an express start: leveling, vibration checks,
 // camera, laser, scanner and plate detections, the sound, cog noise reduction
 // and the z offset calibration.
-const FORBIDDEN = /^(G29(\s|$)|M970|M971|M972|M974|M1006|M982\.2|G383(\s|$))/;
+const FORBIDDEN = /^(G29(\s|$)|M970|M971(\s|\.|$)|M972|M974|M1006|M982\.2|G383(\s|$))/;
 const SKIPPED_MARKERS = /^;=+\s*(wipe nozzle|wipe right nozzle|mech mode|check scanner|laser and rgb|detection start|z ofst cali|start printer sound|printer start sound)/;
 
 const families = [
@@ -93,6 +93,7 @@ const families = [
   { match: /^Bambu Lab H2S /, prime: /^;=+\s*nozzle load line/, normal: ['M1006 S1', 'M982.2 S1', 'M972 S24', 'M972 S41', 'M972 S19', 'M970.3', 'M974'] },
   { match: /^Bambu Lab P2S /, prime: /^;=+\s*nozzle load line/, normal: ['M1006 S1', 'M982.2 S1', 'M972 S24', 'M972 S42', 'M972 S19', 'M970.3', 'M974'] },
   { match: /^Bambu Lab X2D /, prime: /^;=+\s*nozzle load line/, normal: ['M1006 S1', 'M982.2 S1', 'M972 S24', 'M972 S26', 'M972 S19', 'G383 O0', 'M970.3', 'M974'] },
+  { match: /^Bambu Lab H3C /, prime: /^;=+\s*nozzle load line/, normal: ['M1006 S1', 'M982.2 S1', 'M972 S24', 'M972 S41', 'M970.3', 'M974'] },
 ];
 
 const familyOf = (name) => {
@@ -135,7 +136,7 @@ const checkTemplate = (name, gcode) => {
 const names = templateFiles();
 
 test('every Bambu Lab start template is guarded for express print mode', () => {
-  assert.equal(names.length, 29, 'the 29 start templates are all checked');
+  assert.equal(names.length, 30, 'the 30 start templates are all checked');
   for (const name of names) checkTemplate(name, loadGcode(name));
 });
 

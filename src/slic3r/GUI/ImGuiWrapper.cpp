@@ -13,7 +13,6 @@
 #include "Plater.hpp"
 
 #include <boost/format.hpp>
-#include <boost/log/trivial.hpp>
 #include <boost/filesystem.hpp>
 #if ENABLE_ENHANCED_IMGUI_SLIDER_FLOAT
 #include <boost/algorithm/string/predicate.hpp>
@@ -63,6 +62,7 @@
 #include "nanosvg/nanosvgrast.h"
 #include "OpenGLManager.hpp"
 #include "GUI_App.hpp"
+#include "libslic3r/Log.hpp"
 
 namespace Slic3r {
 namespace GUI {
@@ -422,6 +422,8 @@ static const std::map<const wchar_t, std::string> font_icons_large = {
     //{ImGui::DocumentationDarkButton     , "notification_documentation_dark"      },
     //{ImGui::DocumentationHoverDarkButton, "notification_documentation_hover_dark"},
     {ImGui::BlockNotifErrorIcon,          "block_notification_error"             },
+    {ImGui::CloseNotifCardButton,         "notification_card_close"              },
+    {ImGui::CollapseNotifCardButton,      "notification_card_collapse"           },
     {ImGui::PrevArrowBtnIcon,             "notification_arrow_left"              },
     {ImGui::NextArrowBtnIcon,             "notification_arrow_right"             },
     {ImGui::CompleteIcon,                 "notification_slicing_complete"        },

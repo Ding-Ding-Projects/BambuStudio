@@ -1,5 +1,6 @@
 #include "IMSlider.hpp"
 #include "libslic3r/GCode.hpp"
+#include "libslic3r/PrintConfig.hpp"
 #include "GUI_App.hpp"
 #include "GLCanvas3D.hpp"
 #include "ImGuiWrapper.hpp"
@@ -16,6 +17,7 @@
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
+#include "libslic3r/Log.hpp"
 
 namespace Slic3r {
 
@@ -279,7 +281,10 @@ void IMSlider::SetTicksValues(const Info &custom_gcode_per_print_z)
         // post_ticks_changed_event();
     }
 
-    if (m_ticks.has_tick_with_code(ToolChange) && !m_can_change_color) {
+    const bool tool_change_disabled =
+        !m_can_change_color ||
+        multi_nozzle_diameter_mode_enabled(wxGetApp().preset_bundle->project_config);
+    if (m_ticks.has_tick_with_code(ToolChange) && tool_change_disabled) {
         if (!wxGetApp().plater()->only_gcode_mode() && !wxGetApp().plater()->using_exported_file())
         {
             m_ticks.erase_all_ticks_with_code(ToolChange);
@@ -416,6 +421,9 @@ void IMSlider::add_custom_gcode(std::string custom_gcode)
 void IMSlider::add_code_as_tick(Type type, int selected_extruder)
 {
     if (m_selection == ssUndef) return;
+    if (type == ToolChange &&
+        multi_nozzle_diameter_mode_enabled(wxGetApp().preset_bundle->project_config))
+        return;
     const int tick = m_selection == ssLower ? m_lower_value : m_higher_value;
 
     if (!check_ticks_changed_event(type)) {
@@ -1581,7 +1589,7 @@ void IMSlider::render_input_custom_gcode(std::string custom_gcode)
         if (set_focus && !ImGui::IsAnyItemActive() && !ImGui::IsMouseClicked(0)) {
             if (m_request_canvas_focus) m_request_canvas_focus();
             ImGui::SetKeyboardFocusHere(0);
-            strcpy(m_custom_gcode, custom_gcode.c_str());
+            snprintf(m_custom_gcode, sizeof(m_custom_gcode), "%s", custom_gcode.c_str());
         }
         const int text_height = 6;
         const ImGuiInputTextFlags flag  = ImGuiInputTextFlags_Multiline;
@@ -1741,6 +1749,8 @@ void IMSlider::render_menu() {
 void IMSlider::render_add_menu()
 {
     const int extruder_num = int(m_extruder_colors.size());
+    // Changing filament is unavailable in multi-nozzle-diameter mode.
+    const bool can_change_filament = m_can_change_color && !multi_nozzle_diameter_mode_enabled(wxGetApp().preset_bundle->project_config);
     if (m_show_menu) ImGui::OpenPopup("slider_add_menu_popup");
     constrain_canvas_menu();
     if (!ImGui::BeginPopup("slider_add_menu_popup")) return;
@@ -1766,7 +1776,7 @@ void IMSlider::render_add_menu()
     // Preserve the original action order even though the optional row is last in the mask.
     if (has_template && item(3, enabled, _u8L("Insert template custom G-code at the beginning of this layer.").c_str())) add_code_as_tick(Template);
     if (item(2, true, nullptr)) m_show_go_to_layer_dialog = true;
-    if (extruder_num > 1 && visible.back() && begin_menu(labels.back().c_str(), m_can_change_color)) {
+    if (extruder_num > 1 && visible.back() && begin_menu(labels.back().c_str(), can_change_filament)) {
         std::vector<std::string> filaments;
         for (int i = 0; i < extruder_num; ++i) filaments.push_back(_u8L("Filament ") + std::to_string(i + 1));
         ImGui::PushID(this);
@@ -1791,6 +1801,7 @@ void IMSlider::render_edit_menu(const TickCode& tick)
     constrain_canvas_menu();
     if (!ImGui::BeginPopup("slider_edit_menu_popup")) return;
     auto& imgui = *wxGetApp().imgui();
+    const bool can_change_filament = m_can_change_color && !multi_nozzle_diameter_mode_enabled(wxGetApp().preset_bundle->project_config);
     std::vector<std::string> labels;
     switch (tick.type) {
     case CustomGCode::PausePrint: labels = {_u8L("Delete Pause")}; break;
@@ -1811,7 +1822,7 @@ void IMSlider::render_edit_menu(const TickCode& tick)
     for (size_t i = 0; i < labels.size(); ++i) {
         if (!visible[i]) continue;
         if (tick.type == CustomGCode::ToolChange && i == 0 && labels.size() == 2) {
-            if (begin_menu(labels[i].c_str(), m_can_change_color)) {
+            if (begin_menu(labels[i].c_str(), can_change_filament)) {
                 std::vector<std::string> filaments;
                 for (size_t n = 0; n < m_extruder_colors.size(); ++n) filaments.push_back(_u8L("Filament ") + std::to_string(n + 1));
                 ImGui::PushID(this);
@@ -1956,6 +1967,9 @@ std::string IMSlider::get_label(int tick, LabelType label_type)
     } else {
         if (label_type == ltEstimatedTime) {
             if (m_is_wipe_tower) {
+                // Per-tick times follow print order, so index them directly instead of merging repeated Z values.
+                if (m_layers_times.size() == m_values.size())
+                    return value < m_layers_times.size() ? short_and_splitted_time(get_time_dhms(m_layers_times[value])) : "";
                 size_t layer_number = get_layer_number(value, label_type);
                 return (layer_number == size_t(-1) || layer_number == m_layers_times.size()) ? "" : short_and_splitted_time(get_time_dhms(m_layers_times[layer_number]));
             }

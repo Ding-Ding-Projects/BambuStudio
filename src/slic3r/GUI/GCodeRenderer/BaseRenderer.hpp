@@ -195,7 +195,7 @@ namespace Slic3r {
                 virtual bool load_toolpaths(const GCodeProcessorResult& gcode_result, const BuildVolume& build_volume, const std::vector<BoundingBoxf3>& exclude_bounding_box) = 0;
                 void update_toolpath_outside_state(const GCodeProcessorResult& gcode_result, const BuildVolume& build_volume,
                     const std::vector<BoundingBoxf3>& exclude_bounding_box, Points&& pts);
-                void render_shells();
+                void render_shells(bool skip_wipe_tower = false);
                 void render_slider(int canvas_width, int canvas_height);
                 virtual void render_legend(float& legend_height, int canvas_width, int canvas_height, int right_margin);
                 void apply_view_type_selection(int view_type_sel, EViewType type);
@@ -274,6 +274,10 @@ namespace Slic3r {
                 bool m_legend_fold_restored{ false };
                 // Canvas the fold button was last published on (for the accessibility bridge).
                 wxWindow* m_legend_fold_canvas{ nullptr };
+                bool   m_single_ext_multi_nozzle{ false };
+                int    m_ams_nozzle_idx{ -1 };
+                int    m_total_nozzle_count{ 1 };
+                bool m_fold{ false };
                 std::vector<size_t> m_ssid_to_moveid_map;
                 // feedrate-true playback: cumulative print seconds per moves-slider
                 // tick, forward-filled (only TimeBlock-owning moves carry a prefix

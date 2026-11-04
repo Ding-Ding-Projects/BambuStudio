@@ -31,7 +31,7 @@
 
 #include <algorithm>
 #include <cmath>
-#include <boost/log/trivial.hpp>
+#include "libslic3r/Log.hpp"
 
 #define TOPBAR_ICON_SIZE  18
 #define TOPBAR_TITLE_WIDTH  300

@@ -27,7 +27,7 @@ public:
     // Recolour the active-tab label + indicator for the current workspace scheme
     // (Brand / Preview / Device); defaults to Brand.
     void SetColorScheme(MD3::ColorScheme scheme);
-    void showNewTag(int sel, bool show = false);
+    void showNewTag(int sel, int count = 0);
     void Rescale();
     bool InsertPage(size_t n, const wxString& text, bool bSelect = false, const std::string& bmp_name = "");
     void RemovePage(size_t n);

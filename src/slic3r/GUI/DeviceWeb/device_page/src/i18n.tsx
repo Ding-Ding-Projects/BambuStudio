@@ -98,8 +98,10 @@ i18n
       vi_VN: { translation: vi_VN },
       zh_TW: { translation: zh_TW },
     },
-    // When a key has no translation, return the key itself (English original text)
-    parseMissingKeyHandler: (key) => key,
+    // When a key has no translation, i18next already falls back to the key
+    // (English source sentence) AND runs interpolation on it. Do NOT add a
+    // parseMissingKeyHandler that returns the raw key, otherwise interpolation
+    // is skipped and placeholders like `{{op}}` will leak to the UI.
   });
 
 // Keep <html lang> in step with the active mode: once at boot, then again on

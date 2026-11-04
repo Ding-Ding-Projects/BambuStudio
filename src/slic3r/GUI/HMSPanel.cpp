@@ -23,8 +23,6 @@ namespace GUI {
 #define HMS_NOTIFY_CHROME_W (20 * 2 + 18 + 8 + 14 + 8)
 #define HMS_NOTIFY_TEXT_MIN_W 120
 
-wxDEFINE_EVENT(EVT_ALREADY_READ_HMS, wxCommandEvent);
-
 static wxString hms_row_text(const std::string& dev_id, DevHMSItem& item)
 {
     const std::string long_code = item.get_long_error_code();
@@ -44,7 +42,6 @@ HMSNotifyItem::HMSNotifyItem(const std::string& dev_id, wxWindow *parent, DevHMS
     : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL)
     , m_hms_item(item)
     , dev_id(dev_id)
-    , long_error_code(item.get_long_error_code())
     , m_url(get_hms_wiki_url(item.get_long_error_code()))
 {
     init_bitmaps();
@@ -151,10 +148,6 @@ HMSNotifyItem::HMSNotifyItem(const std::string& dev_id, wxWindow *parent, DevHMS
         }
         });
     m_hms_content->Bind(wxEVT_LEFT_UP, [this](wxMouseEvent& e) {
-            wxCommandEvent evt(EVT_ALREADY_READ_HMS);
-            evt.SetString(long_error_code);
-            wxPostEvent(wxGetApp().mainframe->m_monitor, evt);
-
             if (!m_url.empty()) wxLaunchDefaultBrowser(m_url);
         });
 #endif
@@ -220,6 +213,10 @@ wxBitmap & HMSNotifyItem::get_notify_bitmap()
 HMSPanel::HMSPanel(wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSize &size, long style)
     :wxPanel(parent, id, pos, size, style)
 {
+#ifdef __WINDOWS__
+    SetDoubleBuffered(true);
+#endif //__WINDOWS__
+
     // MD3: the notification list sits on the workspace page surface so the
     // SurfaceContainerLow cards stand off it in both light and dark.
     this->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceDim));

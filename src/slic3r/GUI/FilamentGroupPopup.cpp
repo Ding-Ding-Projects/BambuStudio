@@ -7,6 +7,7 @@
 #include "PartPlate.hpp"
 #include "Plater.hpp"
 #include "FilamentMapDialog.hpp"
+#include "FilamentMapPanel.hpp"
 #include "DeviceCore/DevConfigUtil.h"
 #include "Widgets/MaterialIcon.hpp"
 #include "Widgets/Label.hpp"
@@ -16,6 +17,7 @@
 #include <wx/graphics.h>
 
 #include <algorithm>
+#include "libslic3r/Log.hpp"
 
 namespace Slic3r { namespace GUI {
 
@@ -35,7 +37,29 @@ static bool should_pop_up()
     const auto &preset_bundle    = wxGetApp().preset_bundle;
     const auto &full_config      = preset_bundle->full_config();
     const auto  nozzle_diameters = full_config.option<ConfigOptionFloatsNullable>("nozzle_diameter");
-    return nozzle_diameters->size() > 1;
+    const auto  extruder_max_nozzle_count = full_config.option<ConfigOptionIntsNullable>("extruder_max_nozzle_count");
+    bool support_multi_nozzle = extruder_max_nozzle_count
+        && std::any_of(
+            extruder_max_nozzle_count->values.begin(),
+            extruder_max_nozzle_count->values.end(),
+            [](int val) { return val > 1; });
+    return (nozzle_diameters && nozzle_diameters->size() > 1) || support_multi_nozzle;
+}
+
+static void get_nozzle_group_names(wxString &left_name, wxString &right_name)
+{
+    if (is_single_ext_multi_nozzle(wxGetApp().preset_bundle->full_config())) {
+        const auto &full_config = wxGetApp().preset_bundle->full_config();
+        auto nozzle_count_opt = full_config.option<ConfigOptionIntsNullable>("extruder_max_nozzle_count");
+        int total = (nozzle_count_opt && !nozzle_count_opt->values.empty()) ? nozzle_count_opt->values[0] : 1;
+        int ams_idx = full_config.opt_int("ams_nozzle_idx", 0);
+        left_name  = get_ams_nozzle_label(ams_idx).Lower();
+        right_name = get_fixed_nozzle_label(total, ams_idx).Lower();
+    } else {
+        std::string pt = wxGetApp().preset_bundle->printers.get_edited_preset().get_printer_type(wxGetApp().preset_bundle);
+        left_name  = _L(DevPrinterConfigUtil::get_toolhead_display_name(pt, DEPUTY_EXTRUDER_ID, ToolHeadComponent::Nozzle, ToolHeadNameCase::LowerCase));
+        right_name = _L(DevPrinterConfigUtil::get_toolhead_display_name(pt, MAIN_EXTRUDER_ID, ToolHeadComponent::Nozzle, ToolHeadNameCase::LowerCase));
+    }
 }
 
 FilamentMapMode get_preferred_filament_map_mode_for_current_printer()
@@ -48,7 +72,7 @@ FilamentMapMode get_preferred_filament_map_mode_for_current_printer()
         mode_str = app_config->get("prefered_filament_map_mode");
     auto                                    iter          = enum_keys_map.find(mode_str);
     if (iter == enum_keys_map.end()) {
-        BOOST_LOG_TRIVIAL(warning) << __FUNCTION__ << boost::format("Could not get prefered_filament_map_mode from app config, use AutoForFlsuh mode");
+        BOOST_LOG_TRIVIAL(warning) << boost::format("Could not get prefered_filament_map_mode from app config, use AutoForFlsuh mode");
         return FilamentMapMode::fmmAutoForFlush;
     }
     const auto mode = FilamentMapMode(iter->second);
@@ -75,10 +99,10 @@ bool play_dual_extruder_slice_video()
 {
     const wxString video_url = "https://e.bambulab.com/t?c=HDB24RlwSmt77YFH";
     if (wxLaunchDefaultBrowser(video_url)) {
-        BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << boost::format("Video is being played using the system's default browser.");
+        BOOST_LOG_TRIVIAL(info) << boost::format("Video is being played using the system's default browser.");
         return true;
     }
-    BOOST_LOG_TRIVIAL(error) << __FUNCTION__ << boost::format("launch system's default browser failed");
+    BOOST_LOG_TRIVIAL(error) << boost::format("launch system's default browser failed");
     return false;
 }
 
@@ -86,10 +110,10 @@ bool play_dual_extruder_print_tpu_video()
 {
     const wxString video_url = "https://e.bambulab.com/t?c=fwWqpBg37Liel92N";
     if (wxLaunchDefaultBrowser(video_url)){
-        BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << boost::format("Print Tpu Video is being played using the system's default browser.");
+        BOOST_LOG_TRIVIAL(info) << boost::format("Print Tpu Video is being played using the system's default browser.");
         return true;
     }
-    BOOST_LOG_TRIVIAL(error) << __FUNCTION__ << boost::format("launch system's default browser failed");
+    BOOST_LOG_TRIVIAL(error) << boost::format("launch system's default browser failed");
     return false;
 }
 
@@ -97,10 +121,10 @@ bool open_filament_group_wiki()
 {
     const wxString wiki_url = "https://e.bambulab.com/t?c=mOkvsXkJ9pldGYp9";
     if (wxLaunchDefaultBrowser(wiki_url)) {
-        BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << boost::format("Wiki is being displayed using the system's default browser.");
+        BOOST_LOG_TRIVIAL(info) << boost::format("Wiki is being displayed using the system's default browser.");
         return true;
     }
-    BOOST_LOG_TRIVIAL(error) << __FUNCTION__ << boost::format("launch system's default browser failed");
+    BOOST_LOG_TRIVIAL(error) << boost::format("launch system's default browser failed");
     return false;
 }
 
@@ -193,9 +217,8 @@ void FilamentGroupPopup::RecreateUIElements()
     const wxString PreferLeftLabel   = _L("Prefer left nozzle");
     const wxString PreferRightLabel  = _L("Prefer right nozzle");
 
-    std::string pt = wxGetApp().preset_bundle->printers.get_edited_preset().get_printer_type(wxGetApp().preset_bundle);
-    wxString main_nozzle_lower   = _L(DevPrinterConfigUtil::get_toolhead_display_name(pt, MAIN_EXTRUDER_ID, ToolHeadComponent::Nozzle, ToolHeadNameCase::LowerCase));
-    wxString deputy_nozzle_lower = _L(DevPrinterConfigUtil::get_toolhead_display_name(pt, DEPUTY_EXTRUDER_ID, ToolHeadComponent::Nozzle, ToolHeadNameCase::LowerCase));
+    wxString deputy_nozzle_lower, main_nozzle_lower;
+    get_nozzle_group_names(deputy_nozzle_lower, main_nozzle_lower);
 
     const wxString AutoForFlushDetail = wxString::Format(_L("Generates filament grouping for the %s and %s based on the most filament-saving principles to minimize waste"), deputy_nozzle_lower, main_nozzle_lower);
     const wxString AutoForMatchDetail = wxString::Format(_L("Generates filament grouping for the %s and %s based on the printer's actual filament status, reducing the need for manual filament adjustment"), deputy_nozzle_lower, main_nozzle_lower);
@@ -379,24 +402,42 @@ void FilamentGroupPopup::UpdateNozzleLabels()
     if (detail_infos.empty())
         return;
 
-    std::string pt = wxGetApp().preset_bundle->printers.get_edited_preset().get_printer_type(wxGetApp().preset_bundle);
-    wxString main_nozzle_lower   = _L(DevPrinterConfigUtil::get_toolhead_display_name(pt, MAIN_EXTRUDER_ID, ToolHeadComponent::Nozzle, ToolHeadNameCase::LowerCase));
-    wxString deputy_nozzle_lower = _L(DevPrinterConfigUtil::get_toolhead_display_name(pt, DEPUTY_EXTRUDER_ID, ToolHeadComponent::Nozzle, ToolHeadNameCase::LowerCase));
+    wxString deputy_nozzle_lower, main_nozzle_lower;
+    get_nozzle_group_names(deputy_nozzle_lower, main_nozzle_lower);
+
+    const auto full_config = wxGetApp().preset_bundle->full_config();
+    const bool single_ext_multi_nozzle = is_single_ext_multi_nozzle(full_config);
+    const bool no_ams = single_ext_multi_nozzle
+        && get_effective_ams_nozzle_idx(full_config) < 0;
 
     for (size_t idx = 0; idx < m_all_modes.size() && idx < detail_infos.size(); ++idx) {
-        wxString detail;
+        wxString label, detail;
         switch (m_all_modes[idx]) {
             case fmmAutoForFlush:
-                detail = wxString::Format(_L("Generates filament grouping for the %s and %s based on the most filament-saving principles to minimize waste"), deputy_nozzle_lower, main_nozzle_lower);
+                if (single_ext_multi_nozzle) {
+                    label  = no_ams ? _L("Default") : _L("Filament-Saving Mode");
+                    detail = _L("Automatically and intelligently assigns filaments to minimize filament time consumption");
+                } else {
+                    label  = _L("Filament-Saving Mode");
+                    detail = wxString::Format(_L("Generates filament grouping for the %s and %s based on the most filament-saving principles to minimize waste"), deputy_nozzle_lower, main_nozzle_lower);
+                }
                 break;
             case fmmAutoForMatch:
-                detail = wxString::Format(_L("Generates filament grouping for the %s and %s based on the printer's actual filament status, reducing the need for manual filament adjustment"), deputy_nozzle_lower, main_nozzle_lower);
+                label  = _L("Convenience Mode");
+                detail = single_ext_multi_nozzle
+                    ? (no_ams ? _L("Intelligently assigns filaments based on the filaments currently loaded in the printer's nozzles") :
+                                _L("Intelligently assigns filaments based on the filaments currently installed in the printer's AMS"))
+                    : wxString::Format(_L("Generates filament grouping for the %s and %s based on the printer's actual filament status, reducing the need for manual filament adjustment"), deputy_nozzle_lower, main_nozzle_lower);
                 break;
             case fmmAutoForQuality:
+                label  = _L("Quality Mode");
                 detail = wxString::Format(_L("Generates filament grouping for the %s and %s based on quality optimization principles"), deputy_nozzle_lower, main_nozzle_lower);
                 break;
             case fmmManual:
-                detail = wxString::Format(_L("Manually assign filament to the %s or %s"), deputy_nozzle_lower, main_nozzle_lower);
+                label = no_ams ? _L("Custom") : _L("Custom Mode");
+                detail = single_ext_multi_nozzle
+                    ? _L("Manually assign filaments by nozzle type")
+                    : wxString::Format(_L("Manually assign filament to the %s or %s"), deputy_nozzle_lower, main_nozzle_lower);
                 break;
             case fmmPreferLeft:
                 detail = _L("Prefer the left nozzle for compatible materials, then use the right nozzle as needed.");
@@ -406,6 +447,8 @@ void FilamentGroupPopup::UpdateNozzleLabels()
                 break;
             default: continue;
         }
+        if (idx < button_labels.size())
+            button_labels[idx]->SetLabel(label);
         detail_infos[idx]->SetLabel(detail);
         detail_infos[idx]->Wrap(FromDIP(320));
     }
@@ -502,16 +545,18 @@ void FilamentGroupPopup::Init(const std::vector<FilamentMapMode>& available_mode
     }
 
     m_mode = GetFilamentMapMode();
-    if (m_mode == fmmAutoForMatch && !m_connected) {
-        // A disconnected printer changes what is selectable in this popup,
-        // not the explicit choice stored by an imported project or plate.
-        m_mode = fmmAutoForFlush;
-    }
-    else if (std::find(m_available_modes.begin(), m_available_modes.end(), m_mode) == m_available_modes.end()) {
-        // An imported plate may carry an explicit choice. Hiding an unavailable
-        // row must not rewrite that saved project configuration.
-        m_mode = fmmAutoForFlush;
-    }
+    // fmmNozzleManual is the internal representation of Custom mode for multi-nozzle machines;
+    // treat it as fmmManual in the UI
+    if (m_mode == fmmNozzleManual)
+        m_mode = fmmManual;
+
+    // Display only: hovering must not change the config behind a valid slice result, and an
+    // imported project or plate may carry an explicit choice that stays as saved. The same fallback,
+    // and the slice-all sync across plates, are written by try_pop_up_before_slice() right before slicing.
+    // A disconnected printer changes what is selectable in this popup, not the stored choice.
+    m_mode = resolve_fallback_filament_map_mode(m_mode, m_available_modes, m_connected);
+    if (std::find(m_available_modes.begin(), m_available_modes.end(), m_mode) == m_available_modes.end())
+        m_mode = m_available_modes.empty() ? fmmAutoForFlush : m_available_modes.front();
 
     UpdateButtonStatus();
     GetSizer()->Layout();
@@ -521,6 +566,13 @@ void FilamentGroupPopup::Init(const std::vector<FilamentMapMode>& available_mode
 
 void FilamentGroupPopup::tryPopup(Plater* plater,PartPlate* partplate,bool slice_all)
 {
+    const auto full_config = wxGetApp().preset_bundle->full_config();
+    if (should_skip_filament_grouping(full_config)) {
+        if (m_active)
+            Dismiss();
+        return;
+    }
+
     if (should_pop_up()) {
         UpdateNozzleLabels();
         bool connect_status = plater->get_machine_sync_status();
@@ -529,20 +581,33 @@ void FilamentGroupPopup::tryPopup(Plater* plater,PartPlate* partplate,bool slice
         this->m_sync_plate = true;
         this->m_slice_all = slice_all;
 
-        std::vector<FilamentMapMode> requested_modes = { fmmAutoForFlush, fmmAutoForMatch, fmmAutoForQuality,
-                                                        fmmPreferLeft, fmmPreferRight };
-        Print* print_obj = partplate ? partplate->fff_print() : nullptr;
-        std::vector<FilamentMapMode> new_available_modes = resolve_available_auto_modes(print_obj, requested_modes, connect_status);
-
-        new_available_modes.push_back(fmmManual);
+        std::vector<FilamentMapMode> new_available_modes;
+        const bool single_ext_multi_nozzle = is_single_ext_multi_nozzle(full_config);
+        if (single_ext_multi_nozzle) {
+            new_available_modes = get_single_ext_multi_nozzle_auto_modes(full_config);
+            if (can_customize_filament_grouping(full_config))
+                new_available_modes.push_back(fmmManual);
+        } else {
+            std::vector<FilamentMapMode> requested_modes = { fmmAutoForFlush, fmmAutoForMatch, fmmAutoForQuality,
+                                                            fmmPreferLeft, fmmPreferRight };
+            Print* print_obj = partplate ? partplate->fff_print() : nullptr;
+            new_available_modes = resolve_available_auto_modes(print_obj, requested_modes, connect_status);
+            new_available_modes.push_back(fmmManual);
+        }
 
         // Check if available modes changed
         bool modes_changed = (m_available_modes != new_available_modes);
         m_available_modes = new_available_modes;
 
+        // The dual-extruder slice video does not apply to single-extruder multi-nozzle machines, hide it for now.
+        const bool show_video = !single_ext_multi_nozzle;
+        const bool video_changed = video_link->IsShown() != show_video;
+        video_link->Show(show_video);
+
         if (m_active) {
-            if (m_connected != connect_status || modes_changed) { Init(m_available_modes); }
+            const bool connection_changed = m_connected != connect_status;
             m_connected = connect_status;
+            if (connection_changed || modes_changed || video_changed) { Init(m_available_modes); }
             ResetTimer();
         }
         else {
@@ -656,13 +721,13 @@ void FilamentGroupPopup::OnRadioBtn(int idx)
 {
     if (idx < 0 || static_cast<size_t>(idx) >= m_all_modes.size())
         return;
-        
+
     FilamentMapMode mode = m_all_modes.at(idx);
-    
+
     // Check if this mode is available
     if (std::find(m_available_modes.begin(), m_available_modes.end(), mode) == m_available_modes.end())
         return;
-    
+
     if (mode == FilamentMapMode::fmmAutoForMatch && !m_connected)
         return;
     if (m_mode != mode) {

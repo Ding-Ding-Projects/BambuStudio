@@ -163,6 +163,11 @@ public:
     // debug mode — the boolean preference rows are now MD3 SwitchButtons.
     ::SwitchButton * m_developer_mode_ckeckbox   = {nullptr};
     ::SwitchButton * m_internal_developer_mode_ckeckbox = {nullptr};
+    ::SwitchButton * m_privacy_checkbox          = {nullptr};
+
+    // Re-apply the minor UEP lock to the "Join User Experience Program" switch
+    // after an async decision update, so an open Preferences page reflects it live.
+    void refresh_privacy_checkbox();
 
     wxString m_developer_mode_def;
     wxString m_internal_developer_mode_def;
@@ -193,6 +198,7 @@ public:
     wxWindow* create_item_downloads(wxWindow* parent, int padding_left, std::string param);
     wxWindow* create_item_external_editor(wxWindow* parent, int padding_left, std::string param);
     wxBoxSizer *create_item_input(wxString title, wxString title2, wxWindow *parent, wxString tooltip, std::string param, std::function<void(wxString)> onchange = {});
+    wxBoxSizer *create_item_int_slider(wxString title, wxWindow *parent, wxString tooltip, std::string param, int range_min, int range_max, int default_value);
     wxBoxSizer *create_item_range_input(
         wxString title, wxWindow *parent, wxString tooltip, std::string param, float range_min, float range_max, int keep_digital,std::function<void(wxString)> onchange = {});
     wxBoxSizer *create_item_range_two_input(wxString                      title,

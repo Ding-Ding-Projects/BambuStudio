@@ -12,6 +12,8 @@
 #include <wx/scrolwin.h>
 #include <wx/clipbrd.h>
 #include <wx/checkbox.h>
+#include <wx/dcbuffer.h>
+#include <wx/dcclient.h>
 #include <wx/html/htmlwin.h>
 #include <wx/textctrl.h>
 #include <wx/frame.h>
@@ -19,6 +21,7 @@
 #include <wx/dcmemory.h>
 #include <wx/region.h>
 
+#include <algorithm>
 #include <boost/algorithm/string/replace.hpp>
 
 #include "Widgets/Label.hpp"
@@ -36,6 +39,7 @@
 #include "wxExtensions.hpp"
 #include "slic3r/GUI/MainFrame.hpp"
 #include "GUI_App.hpp"
+#include "libslic3r/Log.hpp"
 #define MSG_DLG_MAX_SIZE wxSize(-1, FromDIP(464))//notice:ban setting the maximum width value
 namespace Slic3r {
 namespace GUI {
@@ -1208,7 +1212,7 @@ void FilamentWarningDialog::BuildContent()
             text->Wrap(FromDIP(400));
             messages_sizer->Add(text, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(5));
         } else {
-            Label *link = new Label(this, message + " " + _L("Please refer to Wiki before use->"));
+            Label *link = new Label(this, message + _L(" Please ") + _L("refer to the Wiki User Guide") + _L(" before continuing."));
             link->SetForegroundColour(StateColor::semantic(MD3::Role::Primary));
             link->SetFont(::Label::Body_12);
             link->Wrap(FromDIP(400));

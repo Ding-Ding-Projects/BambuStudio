@@ -11,12 +11,10 @@ class TabButton : public StaticBox
     wxSize   minSize;
     wxSize   paddingSize;
     ScalableBitmap icon;
-    ScalableBitmap newtag_img;
 
     StateColor   text_color;
     StateColor   border_color;
     bool pressedDown = false;
-    bool show_new_tag = false;
     // Kit selected-tab anatomy: the selected TabButton paints a 3px rounded
     // Primary indicator on its inner (content-facing) edge. m_scheme resolves
     // that Primary for the host workspace (Brand / Preview / Device).
@@ -24,6 +22,7 @@ class TabButton : public StaticBox
     MD3::ColorScheme m_scheme   = MD3::ColorScheme::Brand;
     MD3::Motion::Anim m_selection_motion;
     double m_selection_emphasis = 1.0;
+    int  new_tag_count = 0;
 
 public:
     TabButton();
@@ -60,8 +59,8 @@ public:
 
     void Rescale();
 
-    void ShowNewTag(bool tag = false) {show_new_tag = tag; Refresh();};
-    bool GetShowNewTag() const { return show_new_tag; };
+    void ShowNewTag(int count) {new_tag_count = count; Refresh();};
+    int GetNewTagCount() const { return new_tag_count; };
 
 private:
     void paintEvent(wxPaintEvent& evt);

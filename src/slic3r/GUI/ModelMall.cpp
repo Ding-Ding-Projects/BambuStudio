@@ -12,6 +12,7 @@
 #include "Plater.hpp"
 #include "Widgets/MaterialIcon.hpp"
 #include "Widgets/StateColor.hpp"
+#include "libslic3r/Log.hpp"
 
 namespace Slic3r {
 namespace GUI {
@@ -148,6 +149,7 @@ namespace GUI {
 
         }
         catch (std::exception& /*e*/) {
+            BOOST_LOG_TRIVIAL(warning) << current_exception_message();
             // wxMessageBox(e.what(), "json Exception", MB_OK);
         }
     }

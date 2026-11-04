@@ -69,6 +69,18 @@ public:
     // promoted border stays contextual instead of falling back to brand green.
     void SetSchemeAccent(MD3::ColorScheme scheme);
 
+    // The badge is a corner ribbon cut to sit flush in this control's top-right corner, so its own
+    // top-right has to be cut the same way the control is: the default asset is rounded, and a square
+    // host leaves that rounding as an unfilled notch. Hosts that are not rounded name a square-cut
+    // asset here instead of rounding themselves to match a shape shared with unrelated controls.
+    // Takes effect on the next ShowBadge(true).
+    void SetBadgeIcon(const std::string &icon_name) { badge_icon_name = icon_name; }
+
+    // Lets an owning widget avoid positioning other content over the badge, which is always
+    // drawn flush at this control's own top-right corner and must not be moved from there.
+    bool HasBadge() const { return badge.bmp().IsOk(); }
+    int GetBadgeWidth() const { return badge.bmp().IsOk() ? badge.bmp().GetScaledSize().x : 0; }
+
 protected:
     void SetDefaultCornerRadius(double radius_dip);
     void RescaleDefaultCornerRadius();
@@ -97,6 +109,7 @@ protected:
     StateColor   background_color;
     StateColor   background_color2;
     ScalableBitmap badge;
+    std::string    badge_icon_name = "badge";
 
     // Interactive-card state. m_hover_anim is the resting(0) -> hover(1) border
     // promotion factor, eased by a short timer so the OutlineVariant -> Primary

@@ -7,7 +7,6 @@
 #include <functional>
 
 #include <boost/optional.hpp>
-#include <boost/log/trivial.hpp>
 
 class Button;
 #include <wx/frame.h>
@@ -27,6 +26,7 @@ class Button;
 #include "../libslic3r/libslic3r_version.h"
 #include "../libslic3r/Utils.hpp"
 #include "wxExtensions.hpp"
+#include "libslic3r/Log.hpp"
 
 
 class wxCheckBox;

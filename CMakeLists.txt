@@ -105,6 +105,19 @@ elseif (MSVC)
             message(STATUS " is cross compile set to true.............")
             set(IS_CROSS_COMPILE TRUE)
         endif ()
+        if (CMAKE_GENERATOR_PLATFORM STREQUAL "ARM64EC")
+            # On ARM64EC the x86 SIMD headers (immintrin.h etc.) refuse direct
+            # inclusion - they must come via <intrin.h> so the softintrin
+            # emulation layer is set up first. Several bundled libraries
+            # (eigen, imgui, clipper2, tinybvh, libigl, minih264) include them
+            # directly, so force-include intrin.h globally instead of patching
+            # each one.
+            add_compile_options(/FIintrin.h)
+            # Software implementations of x86 intrinsics that have no native
+            # ARM64EC lowering (e.g. _mm_cvtsd_si64). MSBuild does not add this
+            # automatically for CMake-generated projects.
+            add_link_options(softintrin.lib)
+        endif ()
 endif ()
 
 # Proposal for C++ unit tests and sandboxes
@@ -152,13 +165,23 @@ if (MSVC)
     endif ()
     # /bigobj (Increase Number of Sections in .Obj file)
     # error C3859: virtual memory range for PCH exceeded; please recompile with a command line option of '-Zm90' or greater
-    # Generate symbols at every build target, even for the release — except
-    # when SLIC3R_MSVC_PDB=OFF (hosted CI): /Zi makes the parallel cl processes
-    # of a Ninja build share one compiler PDB and fail with C1041, and CI ships
-    # no PDBs anyway. Local builds keep the default ON and still get /Zi.
+    # Generate symbols at every build target, even for the release - except
+    # when SLIC3R_MSVC_PDB=OFF (hosted CI), which ships no PDBs anyway.
     add_compile_options(-bigobj -Zm520)
     if (SLIC3R_MSVC_PDB)
-        add_compile_options(/Zi)
+        if (CMAKE_GENERATOR MATCHES "Ninja")
+            # /Z7 embeds debug info in the objects instead of writing per-target
+            # .pdb files during compilation: /Zi's shared-PDB writes fail with
+            # C1041 under Ninja's parallelism. Only debug-carrying configs get it:
+            # embedding into every object of a Release build pushes
+            # libslic3r_gui.lib past the 4 GB .lib format limit (LNK1248).
+            add_compile_options("$<$<OR:$<CONFIG:RelWithDebInfo>,$<CONFIG:Debug>>:/Z7>")
+            # The merged Debug PDB outgrows the 4 GB cap of the default 4 KB page
+            # size (LNK1140); 8 KB pages raise the cap to 8 GB.
+            add_link_options("$<$<OR:$<CONFIG:RelWithDebInfo>,$<CONFIG:Debug>>:/PDBPAGESIZE:8192>")
+        else ()
+            add_compile_options(/Zi)
+        endif ()
     endif ()
     # Disable STL4007: Many result_type typedefs and all argument_type, first_argument_type, and second_argument_type typedefs are deprecated in C++17.
     #FIXME Remove this line after eigen library adapts to the new C++17 adaptor rules.
@@ -221,8 +244,6 @@ endif()
 # Once we get rid of Perl and libslic3r is linked statically, we can get rid of -fPIC
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-# WIN10SDK_PATH is used to point CMake to the WIN10 SDK installation directory.
-# We pick it from environment if it is not defined in another way
 if(WIN32)
     if(EXISTS "${CMAKE_SOURCE_DIR}/scripts/hooks/pre-commit"  AND EXISTS "${CMAKE_SOURCE_DIR}/.git")
        if(IS_DIRECTORY "${CMAKE_SOURCE_DIR}/.git")
@@ -244,37 +265,6 @@ if(WIN32)
         find_program(PKG_CONFIG_EXECUTABLE NAMES pkg-config)
     endif()
     find_package(PkgConfig REQUIRED)
-    if(NOT DEFINED WIN10SDK_PATH)
-        if(DEFINED ENV{WIN10SDK_PATH})
-                set(WIN10SDK_PATH "$ENV{WIN10SDK_PATH}")
-        endif()
-    endif()
-    if(DEFINED WIN10SDK_PATH)
-        #BBS: modify win10sdk_path
-        if (EXISTS "${WIN10SDK_PATH}/winrt/windows.graphics.printing3d.h")
-            set(WIN10SDK_INCLUDE_PATH "${WIN10SDK_PATH}")
-        else()
-            message("WIN10SDK_PATH is invalid: ${WIN10SDK_PATH}")
-            message("${WIN10SDK_PATH}/winrt/windows.graphics.printing3d.h was not found")
-            message("STL fixing by the Netfabb service will not be compiled")
-            unset(WIN10SDK_PATH)
-        endif()
-    else()
-        # Try to use the default Windows 10 SDK path.
-        set(WIN10SDK_INCLUDE_PATH "$ENV{WindowsSdkDir}/Include/$ENV{WindowsSDKVersion}")
-        if (NOT EXISTS "${WIN10SDK_INCLUDE_PATH}/winrt/windows.graphics.printing3d.h")
-            message("${WIN10SDK_INCLUDE_PATH}/winrt/windows.graphics.printing3d.h was not found")
-            message("STL fixing by the Netfabb service will not be compiled")
-            unset(WIN10SDK_INCLUDE_PATH)
-        endif()
-    endif()
-    if(WIN10SDK_INCLUDE_PATH)
-        message("Building with Win10 Netfabb STL fixing service support")
-        add_definitions(-DHAS_WIN10SDK)
-        include_directories("${WIN10SDK_INCLUDE_PATH}")
-    else()
-        message("Building without Win10 Netfabb STL fixing service support")
-    endif()
 endif()
 
 if (APPLE)
@@ -735,7 +725,15 @@ function(bambustudio_copy_dlls target config postfix output_dlls)
         set(_bits 32)
     endif ()
 
-    if ((CMAKE_SYSTEM_PROCESSOR MATCHES "^(ARM64|aarch64)$") OR (CMAKE_GENERATOR_PLATFORM STREQUAL "ARM64"))
+    # Generator platform takes precedence over the host processor so an ARM64
+    # host can build x64 or ARM64EC targets (both consume the x64 runtime DLLs;
+    # ARM64EC processes load x64 DLLs via emulation).
+    set(_copydll_plat "${CMAKE_GENERATOR_PLATFORM}")
+    if (NOT _copydll_plat)
+        set(_copydll_plat "${CMAKE_SYSTEM_PROCESSOR}")
+    endif ()
+    string(TOUPPER "${_copydll_plat}" _copydll_plat)
+    if (_copydll_plat MATCHES "^(ARM64|AARCH64)$")
         set(_gmpdll win_arm64/gmp-10.dll)
         set(_mpfrdll win_arm64/mpfr-6.dll)
         set(output_gmpdll gmp-10.dll)

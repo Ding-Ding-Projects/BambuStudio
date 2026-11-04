@@ -76,14 +76,16 @@ function Test-JsonValues {
     param([Parameter(Mandatory)] [string] $Path, [Parameter(Mandatory)] [string] $Surface,
           [Parameter(Mandatory)] [regex[]] $Terms)
     if (-not (Test-Path -LiteralPath $Path)) { throw "Missing catalogue '$Path'." }
-    $json = Get-Content -LiteralPath $Path -Raw | ConvertFrom-Json
+    # -AsHashtable: the catalogues carry keys that differ only in case ("External spool" and
+    # "External Spool"), which ConvertFrom-Json refuses to put on one object.
+    $json = Get-Content -LiteralPath $Path -Raw | ConvertFrom-Json -AsHashtable
     $checked = 0
-    foreach ($prop in $json.PSObject.Properties) {
+    foreach ($prop in $json.GetEnumerator()) {
         $value = [string] $prop.Value          # the KEY is an identifier; only the value renders
         if ([string]::IsNullOrWhiteSpace($value)) { continue }
         $checked++
         foreach ($t in $Terms) {
-            if ($t.IsMatch($value)) { Add-Failure -Surface $Surface -Location "$(Split-Path $Path -Leaf) key '$($prop.Name)'" -Text $value; break }
+            if ($t.IsMatch($value)) { Add-Failure -Surface $Surface -Location "$(Split-Path $Path -Leaf) key '$($prop.Key)'" -Text $value; break }
         }
     }
     Write-Host ("  {0}: {1} values checked" -f $Surface, $checked)

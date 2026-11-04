@@ -21,6 +21,7 @@
 #include "Widgets/MaterialIcon.hpp"
 #include "Widgets/MD3DialogChrome.hpp"
 #include "GUI_Factories.hpp"
+#include "libslic3r/Log.hpp"
 
 
 namespace Slic3r {
@@ -555,7 +556,7 @@ void ParamsPanel::OnActivate()
     if (m_current_tab == NULL)
     {
         //the first time
-        BOOST_LOG_TRIVIAL(debug) << __FUNCTION__ << boost::format(": first time opened, set current tab to print");
+        BOOST_LOG_TRIVIAL(debug) << boost::format("first time opened, set current tab to print");
         // BBS: open/close tab
         //m_current_tab = m_tab_print;
         set_active_tab(m_tab_print ? m_tab_print : m_tab_filament);
@@ -582,7 +583,7 @@ void ParamsPanel::OnToggled(wxCommandEvent& event)
     bool value = dynamic_cast<SwitchButton*>(event.GetEventObject())->GetValue();
     int mode_id;
 
-    BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << boost::format(": Advanced mode toogle to %1%") % value;
+    BOOST_LOG_TRIVIAL(info) << boost::format("Advanced mode toogle to %1%") % value;
 
     if (value)
     {
@@ -660,7 +661,7 @@ void ParamsPanel::set_active_tab(wxPanel* tab)
     }
 
     m_current_tab = tab;
-    BOOST_LOG_TRIVIAL(debug) << __FUNCTION__ << boost::format(": set current to %1%, type=%2%") % cur_tab % cur_tab?cur_tab->type():-1;
+    BOOST_LOG_TRIVIAL(debug) << boost::format("set current to %1%, type=%2%") % cur_tab % (cur_tab ? cur_tab->type() : -1);
     update_mode();
 
     // BBS: open/close tab

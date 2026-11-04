@@ -11,6 +11,7 @@
 #include "ReleaseNote.hpp"
 
 #include <wx/modalhook.h>
+#include "libslic3r/Log.hpp"
 
 namespace Slic3r {
 namespace GUI

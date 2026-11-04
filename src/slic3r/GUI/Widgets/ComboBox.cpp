@@ -4,6 +4,8 @@
 #include "StateColor.hpp"
 #include "MaterialIcon.hpp"
 
+#include <algorithm>
+#include <wx/dcclient.h>
 #include <wx/dcgraph.h>
 
 BEGIN_EVENT_TABLE(ComboBox, TextInput)
@@ -147,8 +149,10 @@ int ComboBox::GetSelection() const {
 
 void ComboBox::SetSelection(int n)
 {
-    if (n == drop.selection)
+    if (n == drop.selection) {
+        sync_closed_suffix();
         return;
+    }
     drop.SetSelection(n);
     SetLabel(drop.GetValue());
     if (drop.selection >= 0 && drop.iconSize.y > 0 && items[drop.selection].icon_textctrl.IsOk()) {
@@ -170,6 +174,7 @@ void ComboBox::SetSelection(int n)
     } else {
         SetStaticTips(wxEmptyString, wxNullBitmap);
     }
+    sync_closed_suffix();
 
 }
 void ComboBox::SelectAndNotify(int n) {
@@ -185,6 +190,7 @@ void ComboBox::Rescale()
     // guard breaks the SetIcon() -> Rescale() re-entry so this cannot recurse.
     if (m_chevron_shown)
         applyDropChevron();
+    update_closed_suffix_reserve();
 }
 
 // Build the trailing dropdown affordance as a Material Symbols ExpandMore glyph
@@ -241,6 +247,7 @@ void ComboBox::SetValue(const wxString &value)
     } else {
         SetStaticTips(wxEmptyString, wxNullBitmap);
     }
+    sync_closed_suffix();
 }
 
 void ComboBox::SetLabel(const wxString &value)
@@ -343,6 +350,7 @@ void ComboBox::DoClear()
     applyDropChevron();
     items.clear();
     drop.Invalidate(true, true);
+    SetRightSuffix(wxEmptyString);
 }
 
 void ComboBox::DoDeleteOneItem(unsigned int pos)
@@ -382,6 +390,21 @@ void ComboBox::SetItemTooltip(unsigned int n, wxString const &value) {
     if (n >= items.size()) return;
     items[n].tip = value;
     if (n == drop.GetSelection()) drop.SetToolTip(value);
+}
+
+wxString ComboBox::GetItemSuffix(unsigned int n) const
+{
+    if (n >= items.size()) return wxString();
+    return items[n].suffix;
+}
+
+void ComboBox::SetItemSuffix(unsigned int n, wxString const &value)
+{
+    if (n >= items.size()) return;
+    items[n].suffix = value;
+    drop.Invalidate();
+    if ((int)n == drop.GetSelection())
+        sync_closed_suffix();
 }
 
 wxBitmap ComboBox::GetItemBitmap(unsigned int n) { return items[n].icon; }
@@ -515,6 +538,55 @@ WXLRESULT ComboBox::MSWWindowProc(WXUINT nMsg, WXWPARAM wParam, WXLPARAM lParam)
 }
 
 #endif
+
+void ComboBox::SetRightSuffix(const wxString &suffix)
+{
+    if (m_closed_suffix == suffix)
+        return;
+    m_closed_suffix = suffix;
+    update_closed_suffix_reserve();
+    Refresh();
+}
+
+void ComboBox::update_closed_suffix_reserve()
+{
+    if (m_closed_suffix.IsEmpty()) {
+        SetReservedRightWidth(0);
+        return;
+    }
+    wxClientDC dc(this);
+    dc.SetFont(::Label::Body_13);
+    const wxSize sSize = dc.GetTextExtent(m_closed_suffix);
+    SetReservedRightWidth(sSize.x + FromDIP(8) + FromDIP(12));
+}
+
+void ComboBox::sync_closed_suffix()
+{
+    if (drop.selection >= 0 && drop.selection < (int)items.size())
+        SetRightSuffix(items[drop.selection].suffix);
+    else
+        SetRightSuffix(wxEmptyString);
+}
+
+void ComboBox::render(wxDC &dc)
+{
+    TextInput::render(dc);
+    if (m_closed_suffix.IsEmpty())
+        return;
+
+    dc.SetFont(::Label::Body_13);
+    const wxSize sSize = dc.GetTextExtent(m_closed_suffix);
+    const wxSize size  = GetSize();
+    const int    pad   = FromDIP(8);
+    int          sx    = size.x - pad - sSize.x;
+    int          left  = FromDIP(5) + FromDIP(20);
+    if (m_keep_drop_arrow)
+        left += FromDIP(4) + FromDIP(28) + FromDIP(7);
+    sx = (std::max)(sx, left + FromDIP(12));
+    const int sy = (size.y - sSize.y) / 2;
+    dc.SetTextForeground(StateColor::darkModeColorFor(wxColour("#ACACAC")));
+    dc.DrawText(m_closed_suffix, wxPoint(sx, sy));
+}
 
 void ComboBox::sendComboBoxEvent()
 {

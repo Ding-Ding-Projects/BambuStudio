@@ -27,7 +27,6 @@
 #include <boost/algorithm/hex.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/trim_all.hpp>
-#include <boost/log/trivial.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/uuid/detail/md5.hpp>
 
@@ -42,6 +41,7 @@
 
 #include <atomic>
 #include <thread>
+#include "libslic3r/Log.hpp"
 
 #ifdef _WIN32
     #include <windows.h>

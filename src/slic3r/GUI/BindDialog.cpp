@@ -24,6 +24,7 @@
 
 #include "DeviceCore/DevManager.h"
 #include "Widgets/Label.hpp"
+#include "libslic3r/Log.hpp"
 
 namespace Slic3r {
 namespace GUI {
@@ -235,6 +236,8 @@ PingCodeBindDialog::PingCodeBindDialog(Plater* plater /*= nullptr*/)
     m_button_close->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(PingCodeBindDialog::on_cancel), NULL, this);
 
     m_simplebook->SetSelection(0);
+
+    wxGetApp().UpdateDlgDarkUI(this);
     MD3DialogCaption::Adopt(this);
 }
 
@@ -352,7 +355,7 @@ PingCodeBindDialog::~PingCodeBindDialog() {
 }
 
  BindMachineDialog::BindMachineDialog(Plater *plater /*= nullptr*/)
-     : DPIDialog(static_cast<wxWindow *>(wxGetApp().mainframe), wxID_ANY, _L("Log in printer"), wxDefaultPosition, wxDefaultSize, wxCAPTION)
+     : DPIDialog(static_cast<wxWindow *>(wxGetApp().mainframe), wxID_ANY, _L("Log in printer"), wxDefaultPosition, wxDefaultSize, wxCAPTION | wxCLOSE_BOX)
  {
 
 #ifdef __WINDOWS__
@@ -766,6 +769,7 @@ PingCodeBindDialog::~PingCodeBindDialog() {
          }
      }
      catch (...) {
+         BOOST_LOG_TRIVIAL(warning) << current_exception_message();
          ;
      }
 
@@ -923,7 +927,9 @@ void BindMachineDialog::on_show(wxShowEvent &event)
             auto bitmap = create_scaled_bitmap(img, this, FromDIP(80));
             m_printer_img->SetBitmap(bitmap);
         }
-        catch (...){}
+        catch (...){
+            BOOST_LOG_TRIVIAL(warning) << current_exception_message();
+        }
 
         m_printer_img->Refresh();
         m_printer_img->Show();
@@ -1143,7 +1149,9 @@ void UnBindMachineDialog::on_show(wxShowEvent &event)
         try {
             auto bitmap = create_scaled_bitmap(img, this, FromDIP(80));
             m_printer_img->SetBitmap(bitmap);
-        } catch (...) {}
+        } catch (...) {
+            BOOST_LOG_TRIVIAL(warning) << current_exception_message();
+        }
 
         m_printer_img->Refresh();
         m_printer_img->Show();

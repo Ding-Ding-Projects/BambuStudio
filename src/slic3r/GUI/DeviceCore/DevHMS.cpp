@@ -2,6 +2,7 @@
 #include "DevHMS.h"
 #include "../DeviceManager.hpp"
 #include "../PrinterHistory.hpp"
+#include "libslic3r/Log.hpp"
 
 namespace Slic3r
 {
@@ -79,6 +80,7 @@ void DevHMS::ParseHMSItems(const json& hms_json, bool fresh_report, bool complet
     catch (const std::exception&)
     {
         // Keep the previous valid state; malformed telemetry is not a clear.
+        BOOST_LOG_TRIVIAL(warning) << current_exception_message();
     }
 }
 }

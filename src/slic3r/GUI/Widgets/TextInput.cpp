@@ -203,6 +203,16 @@ void TextInput::SetTextColor(StateColor const& color)
     state_handler.update_binds();
 }
 
+void TextInput::SetReservedRightWidth(int width)
+{
+    if (width < 0)
+        width = 0;
+    if (m_reserved_right_width == width)
+        return;
+    m_reserved_right_width = width;
+    Refresh();
+}
+
 void TextInput::Rescale()
 {
     SetDefaultCornerRadius(MD3::Metrics::active().small_radius);
@@ -354,13 +364,22 @@ void TextInput::render(wxDC& dc)
     if (!m.editable && (GetWindowStyle() & wxALIGN_CENTER_HORIZONTAL))
         label_x = std::max(label_x, (size.x - std::max(m.label.x, m.support.x)) / 2);
     const int label_y = (size.y - stack_height) / 2;
+    // Width the label text must never be drawn under (e.g. an overlay button placed
+    // on top of this control by its owner); see SetReservedRightWidth().
+    const int label_room = std::max(0, size.x - label_x - FromDIP(5) - m_reserved_right_width);
     dc.SetFont(GetFont());
     dc.SetTextForeground(label_color.colorForStates(states));
-    dc.DrawText(wxWindow::GetLabel(), label_x, label_y);
+    wxString label_text = wxWindow::GetLabel();
+    if (m_reserved_right_width > 0 && m.label.x > label_room)
+        label_text = wxControl::Ellipsize(label_text, dc, wxELLIPSIZE_END, label_room);
+    dc.DrawText(label_text, label_x, label_y);
     if (!static_tips.empty()) {
         dc.SetFont(Label::Body_12);
         dc.SetTextForeground(label_color.colorForStates(states));
-        dc.DrawText(static_tips, label_x, label_y + m.label.y + support_gap);
+        wxString tips_text = static_tips;
+        if (m_reserved_right_width > 0 && m.support.x > label_room)
+            tips_text = wxControl::Ellipsize(tips_text, dc, wxELLIPSIZE_END, label_room);
+        dc.DrawText(tips_text, label_x, label_y + m.label.y + support_gap);
     }
     dc.SetFont(text_ctrl->GetFont());
     dc.SetTextForeground(label_color.colorForStates(states));

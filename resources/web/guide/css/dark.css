@@ -110,3 +110,9 @@ body
 .CValues {
   background-color: var(--md-sc);
 }
+
+/*----Printer selection----*/
+.PImg
+{
+	background-color: var(--md-sc-high);
+}

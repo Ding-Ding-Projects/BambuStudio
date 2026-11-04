@@ -50,7 +50,7 @@ private:
     bool            m_click{false};
     bool            m_focused{false};
     bool            m_none_printer{true};
-    int             last_printer_signal = 0;
+    WifiSignal      last_printer_signal = WifiSignal::NONE;
 
     ScalableBitmap  m_printing_img;
     ScalableBitmap  m_arrow_img;

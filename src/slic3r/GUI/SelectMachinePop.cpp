@@ -38,6 +38,7 @@
 
 #include "DeviceCore/DevManager.h"
 #include "Widgets/Label.hpp"
+#include "libslic3r/Log.hpp"
 
 namespace Slic3r { namespace GUI {
 

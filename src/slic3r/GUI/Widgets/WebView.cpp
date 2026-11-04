@@ -6,8 +6,6 @@
 #include "slic3r/GUI/MsgDialog.hpp"
 #include "slic3r/Utils/MacDarkMode.hpp"
 
-#include <boost/log/trivial.hpp>
-
 #include <chrono>
 #include <deque>
 #include <memory>
@@ -26,6 +24,7 @@
 #include <wx/osx/webview_webkit.h>
 #endif
 #include <wx/uri.h>
+#include "libslic3r/Log.hpp"
 #if defined(__WIN32__) || defined(__WXMAC__)
 #include "wx/private/jsscriptwrapper.h"
 #endif
@@ -1233,6 +1232,7 @@ bool WebView::RunScript(wxWebView *webView, wxString const &javascript, bool for
         return true;
 #endif
     } catch (std::exception &/*e*/) {
+        BOOST_LOG_TRIVIAL(warning) << Slic3r::current_exception_message();
         return false;
     }
 }

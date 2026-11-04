@@ -132,6 +132,20 @@ P2S_RULES = [
     rule("first homing checks", r"^M972 S24 P0$", r"^M972 S42 P0 T5000"),
 ] + H2_COMMON
 
+H3C_RULES = [
+    sound_rule(),
+    COG,
+    rule("first homing camera checks", r"^M972 S24 P0 T30000", r"^M972 S41 P0$"),
+    # The H3C runs two build plate detection blocks outside its detection section:
+    # the heatbed presence check and the camera checks. Each rule guards the next
+    # unguarded one.
+    rule("heatbed presence detection", r"^M1002 judge_flag build_plate_detect_flag", r"^M623"),
+    rule("camera detections", r"^M1002 judge_flag build_plate_detect_flag", r"^M623"),
+    rule("detection", r"^;=+\s*detection start", r"^;=+\s*detection end"),
+    rule("wipe nozzle", r"^;=+\s*wipe nozzle start", r"^;=+\s*wipe nozzle end"),
+    rule("mech mode sweep", r"^;=+\s*mech mode sweep start", r"^;=+\s*mech mode sweep end"),
+]
+
 # Order matters: the first matching family wins.
 FAMILIES = [
     ("Bambu Lab X1 Carbon ", X1_RULES),
@@ -148,6 +162,7 @@ FAMILIES = [
     ("Bambu Lab H2S ", H2D_RULES),
     ("Bambu Lab P2S ", P2S_RULES),
     ("Bambu Lab X2D ", X2D_RULES),
+    ("Bambu Lab H3C ", H3C_RULES),
 ]
 
 

@@ -15,6 +15,7 @@
 #include "../Utils/FrameBuffer.hpp"
 #include <atomic>
 #include "CameraViewGeometry.hpp"
+#include <limits>
 
 wxDECLARE_EVENT(EVT_MEDIA_CTRL_VIEW_CHANGED, wxCommandEvent);
 wxDECLARE_EVENT(EVT_MEDIA_CTRL_STAT, wxCommandEvent);
@@ -45,9 +46,7 @@ void wxMediaCtrl_OnSize(wxWindow * ctrl, wxSize const & videoSize, int width, in
 #define BAMBU_DYNAMIC
 #include <condition_variable>
 #include <thread>
-#ifndef _WIN32
-#include <wx/image.h>
-#endif
+#include <wx/image.h> // full type needed for the m_idle_image_raw member
 #include "Printer/BambuTunnel.h"
 #include "Printer/LiveViewTrackContext.h"
 
@@ -84,8 +83,11 @@ public:
 
     wxSize GetVideoSize();
 
+    wxSize GetIdleImageSize() const { return m_idle_image_size; }
+
     void SetConstrainByAspectRatio(bool constrain) { m_constrain_by_aspect_ratio = constrain; }
     bool GetConstrainByAspectRatio() const { return m_constrain_by_aspect_ratio; }
+    void SuppressPauseIcon(bool suppress);
     void SetTrackChannel(const BambuLiveViewTrack::ChannelInfo& info);
 
     void UpdateSessionStat();
@@ -102,7 +104,7 @@ protected:
 
     void paintEvent(wxPaintEvent &evt);
 
-    void DrawLiveviewLogo(wxGraphicsContext *gc, double bg_x, double bg_y, double bg_w, double bg_h);
+    void DrawLiveviewPause(wxGraphicsContext *gc, double bg_x, double bg_y, double bg_w, double bg_h);
 
     void mouseWheelEvent(wxMouseEvent &evt);
 
@@ -126,9 +128,13 @@ protected:
 
 private:
     wxString m_idle_image;
+    wxImage  m_idle_image_raw; // last idle image applied via the wxImage overload (UI thread only)
+    wxSize   m_idle_image_size = wxDefaultSize;
     wxString m_watermark_text;
-    wxBitmap m_logo_bitmap;      // cached rasterized logo (UI thread only)
-    wxSize   m_logo_bitmap_size;
+    wxString m_live_badge_text;
+    wxBitmap m_pause_bitmap;     // cached rasterized pause icon (UI thread only)
+    wxSize   m_pause_bitmap_size;
+    bool     m_suppress_pause_icon = false; // hide the pause placeholder from INITIALIZING onward
     wxMediaState m_state  = wxMEDIASTATE_STOPPED;
     int m_error  = 0;
     wxSize m_video_size = wxDefaultSize;

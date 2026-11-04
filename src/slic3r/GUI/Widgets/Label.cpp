@@ -20,6 +20,7 @@
 #include <wx/font.h>
 #include <wx/fontenum.h>
 #include <wx/settings.h>
+#include "libslic3r/Log.hpp"
 
 namespace {
 
@@ -689,7 +690,7 @@ Label::Label(wxWindow *parent, wxFont const &font, wxString const &text, long st
     // here would leak into hundreds of converted labels at once.
     SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     if (style & LB_PROPAGATE_MOUSE_EVENT) {
-        for (auto evt : { wxEVT_LEFT_UP, wxEVT_LEFT_DOWN })
+        for (auto evt : { wxEVT_LEFT_UP, wxEVT_LEFT_DOWN, wxEVT_LEFT_DCLICK })
             Bind(evt, [this] (auto & e) { GetParent()->GetEventHandler()->ProcessEventLocally(e); });
     };
     if (style & LB_AUTO_WRAP) {
