@@ -974,7 +974,7 @@ Branch `ai/feature/20261104-narrator`. Native runtime on Windows is not verified
 
 - [x] Pure narration logic (events, three funny-level tones, transitions, de-duplication, quiet hours, track keys, voice classification) with a compiled fixture and a mutation-based `--negative` mode.
 - [x] Printer events on state transitions: print started, paused, resumed, finished, failed, cancelled, filament runout, AMS error and other printer errors. Stage 6, error `0x0300400C` and error module `0x07` are community-documented values, unconfirmed on hardware.
-- [ ] Printer door opened and closed: `MachineObject` has no door field on this branch; a marked hook exists in `NarrationTransitions.hpp`.
+- [x] Printer door opened and closed: spoken on transitions only, for printers that report door-open detection support, from the same beta status bit as the print monitor chip (`ai/feature/20261104-door-narration`, fixture checks). Not yet heard on a real printer.
 - [x] Application events: slicing finished and failed, export done, update ready, error notifications. Summaries only; no paths, names or account details are spoken.
 - [x] Master switch, three per-track switches, persisted settings, palette rows, scheduled-settings registry entries.
 - [x] Quiet hours and Windows Focus Assist, full-screen and presentation states.

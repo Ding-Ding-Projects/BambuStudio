@@ -1,5 +1,18 @@
 # Bambu Studio handoff
 
+## Device, narrator, status API and design integration, 4 November 2026
+
+Objective: bring the latest design surfaces into the built application, fix the melody printer send, add live print-monitor readings, a local status API and a narrator, and add door narration.
+
+On `main` (read back on the remote):
+- `9085b4524` and `08abb2f9b`: the one-click build configures again when the generated projects are missing, and the Release configure no longer asks for debug wxWidgets libraries. A full local build of `08abb2f9b` compiled and installed; the run then stopped at the final clean-source check because the DeviceWeb build left a stale index entry on `routeTree.gen.ts` with byte-identical content. Refreshing the index cleared it.
+- `3c23e6a31`: merge of `ai/integration/20261104-device-design-narration`, which carries the melody printer list and commands-only send, the live readings strip and beta door reading, the read-only local status API, the narrator, and the refreshed graphite-shell design surfaces.
+- `dac0ebed4`: example addresses in the Home artboard and the status API fixture now come from the RFC 5737 documentation ranges.
+
+On `ai/feature/20261104-door-narration` (`702dec42b`, read back on the remote): door opened and door closed narration with English and Cantonese strings, fixture checks and both narration articles.
+
+Verified: the melody, live readings, status API, narration and narration wiring source tests, the Cantonese catalogue check and the documentation bundle check. Not verified: the build of `dac0ebed4` with the new C++ (running at the time of writing), the running application against the artboards, the melody and door readings on a physical printer, and the hosted design project, which needs an interactive `/design-login`.
+
 ## Remaining branch integration, 20 October 2026
 
 The remaining source contributions have been reconciled on `main`. See [the source coverage and verification record](docs/integration/branch-integration-20261020.md) for the four merge commits, three superseded LAN branches preserved through the existing squash, and exact baseline comparison. The tested source candidate is `b07eaf67478dbdcdf485de1010845c44a7b9751a`. Native Windows build/runtime, live-container browser verification and printer acceptance remain pending. Historical sections below describe their original checkpoints and are not the current branch inventory.
