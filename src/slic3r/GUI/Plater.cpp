@@ -1569,7 +1569,7 @@ void Sidebar::priv::show_filament_switcher_dialog(bool is_ready, bool is_manual)
     // Ready-state introductions are not shown automatically.
     if (!is_ready && is_manual) {
         fila_switch_warning_shown = true;
-        show_fila_switch_msg(false);
+        show_filament_switcher_tip(false);
     }
 }
 
@@ -3493,7 +3493,7 @@ void Sidebar::priv::create_dual_extruder_groups()
     extruder_separator_icon->SetSize(wxSize(FromDIP(24), FromDIP(24)));
     extruder_separator_icon->Hide();
     extruder_separator_icon->Bind(wxEVT_BUTTON, [this](wxCommandEvent &evt) {
-        show_fila_switch_msg(is_fila_switch_ready());
+        show_filament_switcher_tip(is_fila_switch_ready());
         evt.Skip();
     });
     left_extruder->Bind(wxEVT_SIZE, [this](wxSizeEvent &evt) {
@@ -28385,7 +28385,7 @@ bool Plater::validate_print_setup_filament_maps(int expected_plate_index, const 
         for (int filament : used) {
             if (maps[filament - 1] != extruder + 1) continue;
             const auto required_type = static_cast<NozzleVolumeType>(required_types[filament - 1]);
-            if (wxGetApp().preset_bundle->extruder_nozzle_stat.get_extruder_nozzle_count(extruder, required_type) == 0) {
+            if (wxGetApp().preset_bundle->nozzle_inventory.count(extruder, required_type) == 0) {
                 reason = wxString::Format(_L("The %s extruder has no available nozzle of the required type."),
                     extruder == 0 ? _L("left") : _L("right"));
                 return false;

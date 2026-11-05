@@ -259,7 +259,7 @@ wxBoxSizer* SafetyOptionsDialog::create_settings_group(wxWindow* parent)
     m_open_door_switch_board->Disable();
     m_text_open_door_caption = new Label(parent, _L("Choose the behavior when the door is opened during tasks."));
     m_text_open_door_caption->SetFont(Label::Body_12);
-    m_text_open_door_caption->SetForegroundColour(STATIC_TEXT_CAPTION_COL);
+    m_text_open_door_caption->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     m_open_door_mode_switch = new MultiSwitchButton(parent);
     m_open_door_mode_switch->SetFitOptionsToText();
     m_open_door_mode_switch->SetOptions(OpenDoorCheck::ModeSwitchOptions());

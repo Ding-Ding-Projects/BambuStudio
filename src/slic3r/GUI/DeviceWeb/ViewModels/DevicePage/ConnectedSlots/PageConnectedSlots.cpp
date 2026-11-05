@@ -11,7 +11,8 @@
 
 #include "slic3r/GUI/DeviceWeb/DeviceWebHost.hpp"
 #include "slic3r/GUI/GUI_App.hpp"
-#include "slic3r/GUI/I18N.hpp"#include "slic3r/GUI/Widgets/MD3DialogChrome.hpp"
+#include "slic3r/GUI/I18N.hpp"
+#include "slic3r/GUI/Widgets/MD3DialogChrome.hpp"
 
 #include "slic3r/GUI/MainFrame.hpp"
 

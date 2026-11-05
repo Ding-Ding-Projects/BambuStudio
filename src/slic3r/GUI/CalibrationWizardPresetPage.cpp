@@ -3589,7 +3589,7 @@ SubAmsPopup::SubAmsPopup(wxWindow* parent)
     constexpr int POOL_SIZE = 18;
     for (int i = 0; i < POOL_SIZE; ++i) {
         auto* row       = new wxBoxSizer(wxHORIZONTAL);
-        auto* radio_btn = new RadioBox(m_scroll);
+        auto* radio_btn = new LabeledRadioButton(m_scroll);
         radio_btn->SetBackgroundColour(*wxWHITE);
 
         auto* check_box = new CheckBox(m_scroll);

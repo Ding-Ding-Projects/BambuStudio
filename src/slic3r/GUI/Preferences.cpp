@@ -809,7 +809,11 @@ wxBoxSizer *PreferencesDialog::create_item_int_slider(
 {
     wxBoxSizer *sizer_input = new wxBoxSizer(wxHORIZONTAL);
     sizer_input->SetMinSize(wxSize(-1, FromDIP(ITEM_MIN_HEIGHT)));
-    auto input_title = make_row_title(parent, title, FromDIP(TITLE_WIDTH), tooltip);
+    auto input_title = new Label(parent, title, 0, wxSize(FromDIP(TITLE_WIDTH), -1));
+    input_title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+    input_title->SetFont(::Label::Body_13);
+    input_title->SetToolTip(tooltip);
+    input_title->Wrap(-1);
 
     int value = default_value;
     const std::string stored = app_config->get(param);
@@ -834,7 +838,7 @@ wxBoxSizer *PreferencesDialog::create_item_int_slider(
     input->GetTextCtrl()->SetValidator(validator);
 
     sizer_input->AddSpacer(FromDIP(ITEM_LEFT_PADDING));
-    sizer_input->Add(input_title, wxSizerFlags().CenterVertical().Proportion(1).Border(wxRIGHT, FromDIP(TITLE_CONTROL_GAP)));
+    sizer_input->Add(input_title, wxSizerFlags().CenterVertical().Proportion(1).Border(wxRIGHT, FromDIP(8)));
     sizer_input->Add(slider, wxSizerFlags().CenterVertical());
     sizer_input->AddSpacer(FromDIP(8));
     sizer_input->Add(input, wxSizerFlags().CenterVertical().Border(wxRIGHT, FromDIP(ITEM_RIGHT_PADDING)));

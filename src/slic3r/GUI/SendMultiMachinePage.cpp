@@ -16,7 +16,8 @@
 #include "Widgets/Label.hpp"
 #include <algorithm>
 #include <cmath>
-#include "libslic3r/Log.hpp"
+#include "libslic3r/Log.hpp"
+#include "DeviceCore/DevSliceContext.hpp"
 
 namespace Slic3r {
 namespace GUI {
@@ -95,7 +96,7 @@ static bool build_farm_nozzle_payload(MachineObject *device, Plater *plater, int
             reason = _L("The printer returned an invalid nozzle mapping. Refresh it before sending.");
             return false;
         }
-        controller->SetPlater(plater);
+        controller->SetSliceContext(DevSliceContext::CreateFromNormal(PrintFromType::FROM_NORMAL, plater));
         for (int filament : used_filaments) {
             const auto mapped_nozzles = controller->GetMappedNozzlePosVecByFilaId(filament - 1);
             if (mapped_nozzles.empty() ||

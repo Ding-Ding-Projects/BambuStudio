@@ -2684,8 +2684,8 @@ void GUI::VirtualFilamentComboBox::update_color_chip()
     const int   height = lround(2 * em);
     wxBitmap   *bmp    = get_extruder_color_icon(m_color_hex, "", width, height);
     if (bmp) {
-        clr_picker->SetBitmap(*bmp);
-        clr_picker->SetBitmapDisabled(*bmp);
+        clr_picker->SetIconBitmap(*bmp);
+        clr_picker->SetIconBitmapDisabled(*bmp);
     }
 #ifdef __WXOSX__
     clr_picker->SetLabel(clr_picker->GetLabel()); // Let setBezelStyle: be called

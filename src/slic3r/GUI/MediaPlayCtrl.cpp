@@ -207,52 +207,52 @@ MediaPlayCtrl::MediaPlayCtrl(wxWindow *parent, wxMediaCtrl3 *media_ctrl, const w
     });
 
     m_button_play->Bind(wxEVT_COMMAND_BUTTON_CLICKED, [this](auto &e) { TogglePlay(); });
-    m_button_play->Bind(wxEVT_RIGHT_UP, [this](auto & e) { Play(); });
-
-    m_media_ctrl->Bind(wxEVT_LEFT_UP, [this](auto &e) {
-        // A drag-to-pan release on a zoomed view must not toggle playback.
-        if (m_media_ctrl->GetZoom() <= 1.0)
-            TogglePlay();
-        e.Skip();
-    });
-
-    m_button_camera_switch->Bind(wxEVT_COMMAND_BUTTON_CLICKED, [this](auto &e) {
-        // Capture m_obj locally to ensure consistent pointer during event handling
-        MachineObject* obj = m_obj;
-        if (!obj || obj->support_liveview_cams.empty()) {
-            return;
-        }
-
-        // Find the next camera index
-        int next_camera = 0;
-        int current_idx = -1;
-
-        // Find current camera in supported cameras list
-        for (size_t i = 0; i < obj->support_liveview_cams.size(); ++i) {
-            if (obj->support_liveview_cams[i] == obj->liveview_current_camera) {
-                current_idx = i;
-                break;
-            }
-        }
-
-        // Get the next camera (wrap around to 0 if at the end)
-        if (current_idx >= 0) {
-            next_camera = obj->support_liveview_cams[(current_idx + 1) % obj->support_liveview_cams.size()];
-        } else if (!obj->support_liveview_cams.empty()) {
-            // If current camera not found in list, use the first one
-            next_camera = obj->support_liveview_cams[0];
-        }
-
-        BOOST_LOG_TRIVIAL(info) << "Camera switch: current_camera=" << obj->liveview_current_camera
-                                << " (idx=" << current_idx << "), switch_to=" << next_camera;
-        obj->command_switch_camera(next_camera);
-    });
-
-    m_button_fullscreen->Bind(wxEVT_COMMAND_BUTTON_CLICKED, [this](auto &e) {
-        wxCommandEvent evt(EVT_MEDIA_FULLSCREEN);
-        evt.SetEventObject(this);
-        wxPostEvent(GetParent(), evt);
-    });
+    m_button_play->Bind(wxEVT_RIGHT_UP, [this](auto & e) { Play(); });
+
+    m_media_ctrl->Bind(wxEVT_LEFT_UP, [this](auto &e) {
+        // A drag-to-pan release on a zoomed view must not toggle playback.
+        if (m_media_ctrl->GetZoom() <= 1.0)
+            TogglePlay();
+        e.Skip();
+    });
+
+    m_button_camera_switch->Bind(wxEVT_COMMAND_BUTTON_CLICKED, [this](auto &e) {
+        // Capture m_obj locally to ensure consistent pointer during event handling
+        MachineObject* obj = m_obj;
+        if (!obj || obj->support_liveview_cams.empty()) {
+            return;
+        }
+
+        // Find the next camera index
+        int next_camera = 0;
+        int current_idx = -1;
+
+        // Find current camera in supported cameras list
+        for (size_t i = 0; i < obj->support_liveview_cams.size(); ++i) {
+            if (obj->support_liveview_cams[i] == obj->liveview_current_camera) {
+                current_idx = i;
+                break;
+            }
+        }
+
+        // Get the next camera (wrap around to 0 if at the end)
+        if (current_idx >= 0) {
+            next_camera = obj->support_liveview_cams[(current_idx + 1) % obj->support_liveview_cams.size()];
+        } else if (!obj->support_liveview_cams.empty()) {
+            // If current camera not found in list, use the first one
+            next_camera = obj->support_liveview_cams[0];
+        }
+
+        BOOST_LOG_TRIVIAL(info) << "Camera switch: current_camera=" << obj->liveview_current_camera
+                                << " (idx=" << current_idx << "), switch_to=" << next_camera;
+        obj->command_switch_camera(next_camera);
+    });
+
+    m_button_fullscreen->Bind(wxEVT_COMMAND_BUTTON_CLICKED, [this](auto &e) {
+        wxCommandEvent evt(EVT_MEDIA_FULLSCREEN);
+        evt.SetEventObject(this);
+        wxPostEvent(GetParent(), evt);
+    });
     m_label_status->Bind(wxEVT_LEFT_UP, [this](auto &e) {
         auto url = wxString::Format(L"https://wiki.bambulab.com/%s/software/bambu-studio/faq/live-view", wxGetApp().current_language_code_safe() == "zh_CN" ? "zh" : "en");
         wxLaunchDefaultBrowser(url);
@@ -378,34 +378,34 @@ void MediaPlayCtrl::SetMachineObject(MachineObject* obj)
     m_obj = obj;
 
     std::string machine = obj ? obj->get_dev_id() : "";
-    const bool was_eligible = m_was_eligible;
-
-    // Update camera switch button visibility based on support_liveview_cams
-    bool should_show = obj && is_support_switch_cam(obj->support_liveview_cams);
-    bool is_shown = m_button_camera_switch->IsShown();
-
-    if (should_show != is_shown) {
-        if (should_show) {
-            m_button_camera_switch->Show();
-        } else {
-            m_button_camera_switch->Hide();
-        }
-        Layout();
-    }
-    bool is_playing = (m_last_state == wxMEDIASTATE_PLAYING || m_last_state == wxMEDIASTATE_PAUSED);
-    m_button_camera_switch->Enable(should_show && is_playing);
-    update_camera_switch_tooltip();
-
-    // Check camera validity only for machines with camera switching support
-    // For old machines (liveview_current_camera == -1) or single-camera machines, skip to avoid clearing existing status
-    if (obj && is_support_switch_cam(obj->support_liveview_cams)) {
-        if (!is_valid_camera(obj->liveview_current_camera)) {
-            SetStatus(_L("Current camera is abnormal"), false);
-            BOOST_LOG_TRIVIAL(warning) << "invalid camera " << obj->liveview_current_camera;
-        } else if (m_last_state == MEDIASTATE_IDLE) {
-            SetStatus(_L(""), false);
-        }
-    }
+    const bool was_eligible = m_was_eligible;
+
+    // Update camera switch button visibility based on support_liveview_cams
+    bool should_show = obj && is_support_switch_cam(obj->support_liveview_cams);
+    bool is_shown = m_button_camera_switch->IsShown();
+
+    if (should_show != is_shown) {
+        if (should_show) {
+            m_button_camera_switch->Show();
+        } else {
+            m_button_camera_switch->Hide();
+        }
+        Layout();
+    }
+    bool is_playing = (m_last_state == wxMEDIASTATE_PLAYING || m_last_state == wxMEDIASTATE_PAUSED);
+    m_button_camera_switch->Enable(should_show && is_playing);
+    update_camera_switch_tooltip();
+
+    // Check camera validity only for machines with camera switching support
+    // For old machines (liveview_current_camera == -1) or single-camera machines, skip to avoid clearing existing status
+    if (obj && is_support_switch_cam(obj->support_liveview_cams)) {
+        if (!is_valid_camera(obj->liveview_current_camera)) {
+            SetStatus(_L("Current camera is abnormal"), false);
+            BOOST_LOG_TRIVIAL(warning) << "invalid camera " << obj->liveview_current_camera;
+        } else if (m_last_state == MEDIASTATE_IDLE) {
+            SetStatus(_L(""), false);
+        }
+    }
     if (obj) {
         m_obj            = obj;
         m_camera_exists  = obj->has_ipcam;

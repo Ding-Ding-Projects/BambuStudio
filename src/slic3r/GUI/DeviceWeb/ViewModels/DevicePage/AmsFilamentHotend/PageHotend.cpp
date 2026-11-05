@@ -16,7 +16,8 @@
 #include "slic3r/GUI/fila_manager/wgtFilaManagerSync.h"
 #include "slic3r/GUI/MainFrame.hpp"
 #include "slic3r/GUI/MsgDialog.hpp"
-#include "slic3r/GUI/wxExtensions.hpp"#include "slic3r/GUI/Widgets/MD3DialogChrome.hpp"
+#include "slic3r/GUI/wxExtensions.hpp"
+#include "slic3r/GUI/Widgets/MD3DialogChrome.hpp"
 
 
 #include <algorithm>

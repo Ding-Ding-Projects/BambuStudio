@@ -2194,7 +2194,6 @@ std::string NotificationManager::type_name(NotificationType type)
     case NotificationType::AssemblyInfo: return "AssemblyInfo";
     case NotificationType::BBLIsolatedVolumeInfo: return "BBLIsolatedVolumeInfo";
     case NotificationType::BBLAssemblyFarFromOrigin: return "BBLAssemblyFarFromOrigin";
-    case NotificationType::BBLIntersectsVolumeInfo: return "BBLIntersectsVolumeInfo";
     case NotificationType::BBLArcFittingInfo: return "BBLArcFittingInfo";
     case NotificationType::BBLCalibExtruderMismatch: return "BBLCalibExtruderMismatch";
     case NotificationType::ProjectHistoryFailure: return "ProjectHistoryFailure";
