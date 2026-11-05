@@ -2230,7 +2230,9 @@ int CLI::run(int argc, char **argv)
                         current_filaments_system_name.resize(size - 2);
                         for (int index = 1; index < (size - 1); index++) {
                             if (current_inherits_group[index].empty()) {
-                                current_filaments_system_name[index-1] = current_filaments_name[index-1];
+                                // A bare 3MF can list more inherits slots than filament names.
+                                current_filaments_system_name[index-1] =
+                                    (index - 1 < (int) current_filaments_name.size()) ? current_filaments_name[index-1] : std::string();
                             }
                             else {
                                 current_filaments_system_name[index-1] = current_inherits_group[index];
@@ -2246,7 +2248,8 @@ int CLI::run(int argc, char **argv)
                     filament_count = current_filaments_name.size();
                     converted_filaments_system_name = current_filaments_system_name;
                     for (int f_index = 0; f_index < filament_count; f_index++) {
-                        convert_filament_preset_name(current_printer_system_name, converted_filaments_system_name[f_index]);
+                        if (f_index < (int) converted_filaments_system_name.size())
+                            convert_filament_preset_name(current_printer_system_name, converted_filaments_system_name[f_index]);
                         used_filament_set.insert(f_index+1);
                     }
                     upward_compatible_printers = config.option<ConfigOptionStrings>("upward_compatible_machine", true)->values;
