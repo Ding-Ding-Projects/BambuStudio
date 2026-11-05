@@ -5,7 +5,10 @@ const cardTextSource = readFileSync(new URL('../src/features/device-page/ams-fil
 const vmHeaderSource = readFileSync(new URL('../../ViewModels/DevicePage/AmsFilamentHotend/ViewModel.hpp', import.meta.url), 'utf8');
 const vmSource = readFileSync(new URL('../../ViewModels/DevicePage/AmsFilamentHotend/ViewModel.cpp', import.meta.url), 'utf8');
 const hotendPageSource = readFileSync(new URL('../../ViewModels/DevicePage/AmsFilamentHotend/PageHotend.cpp', import.meta.url), 'utf8');
-const schemaSource = readFileSync(new URL('../../ViewModels/DevicePage/AmsFilamentHotend/Schema.hpp', import.meta.url), 'utf8');
+// The filament card keys moved from Schema.hpp to SchemaFilamentSlot.hpp upstream; read both.
+const schemaSource = ['Schema.hpp', 'SchemaFilamentSlot.hpp']
+  .map((name) => readFileSync(new URL(`../../ViewModels/DevicePage/AmsFilamentHotend/${name}`, import.meta.url), 'utf8'))
+  .join('\n');
 
 assert.match(
   cardTextSource,
@@ -21,25 +24,25 @@ assert.match(
 
 assert.match(
   vmSource,
-  /filaments\.get_preset_alias\(preset,\s*true\)/,
-  'ResolveFilamentCardText should use the same preset alias as FilamentManager Material Type fallback',
+  /get_filament_by_filament_id\(filament_id,\s*"",\s*true\)[\s\S]*get_filament_by_filament_id\(filament_id,\s*"",\s*false\)/,
+  'ResolveFilamentCardText should look the filament id up in system presets before user presets',
 );
 
 assert.match(
   vmSource,
-  /StripFilamentVendorPrefix\(shown_name,\s*preset\.config\.get_filament_vendor\(\),\s*fallback_type\)/,
+  /StripFilamentVendorPrefix\(fila_item->filament_name,\s*fila_item->vendor,\s*fallback_type\)/,
   'ResolveFilamentCardText should hide the vendor prefix like FilamentManager Material Type',
 );
 
 assert.match(
   vmSource,
-  /preset\.filament_id != tray->setting_id/,
-  'ResolveFilamentCardText should match the tray filament id against local presets',
+  /if \(!tray->sub_brands\.empty\(\)\) return tray->sub_brands;[\s\S]*ResolveFilamentCardText\(tray->get_filament_id\(\),\s*fallback_type\)/,
+  'ResolveFilamentCardText should prefer the tray sub-brand, then resolve the tray filament id',
 );
 
 assert.match(
   hotendPageSource,
-  /filament_name = ResolveFilamentCardText\(tray,\s*filament_type\);/,
+  /filament_name = ResolveFilamentCardText\(tray,\s*(?:slot_)?filament_type\);/,
   'BuildSlot should use the VM resolver for card.text/name',
 );
 

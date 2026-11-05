@@ -11,6 +11,11 @@ plugin installed, on a hidden desktop through PrintWindow. `BambuStudio.dll` SHA
 | `home-bilingual-before-login-fix.png` | Home page before the fix: the bilingual login and register labels stack inside a 36 px row and run into the network plugin notice. This layout predates the merge. |
 | `home-bilingual-after-login-fix.png` | The same page with the Home login button as one bilingual group and a growing row, served from the same build with only `left.html` and `left.css` replaced. |
 | `setup-wizard-bilingual.png` | First-run setup wizard of the merged build. |
+| `prepare-canvas-cube-software-gl.png` | Prepare workspace of the same build with `cube.stl` loaded, rendered by the bundled Mesa llvmpipe software renderer: the build plate with the cube, the scene toolbar, the gizmo rail, the view cube and the object counter. The real-GPU PrintWindow route leaves this pane blank, so this capture used a copy of the install with the Mesa DLLs beside the executable. |
 
-Not covered here: the 3D canvas, the device page with a printer, and the other language and theme
-combinations.
+Command-line slicing of the same build: `bambu-studio.exe --slice 0 --outputdir <dir> cube.stl` exits 0
+and writes complete G-code (100 layers, 28 min 36 s estimated). Adding `--export-3mf result.3mf` writes
+the same G-code and then exits with a segmentation fault; this is open and not yet diagnosed.
+
+Not covered here: slicing from the GUI (the owner-drawn Slice button does not accept a background
+click on this route), the device page with a printer, and the other language and theme combinations.
