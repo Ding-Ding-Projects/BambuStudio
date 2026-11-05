@@ -1,5 +1,25 @@
 # Bambu Studio handoff
 
+## Upstream v02.09.01.70 merge, 4 November 2026
+
+Objective: bring upstream `bambulab/BambuStudio` tag `v02.09.01.70` (the `master` tip `56a57d00a`, 1,200 commits since 28 September 2026) into the fork. The product version moves from 2.8 to `02.09.01.70`.
+
+Branch `ai/feature/20261104-upstream-v02.09.01.70`, read back on the remote:
+- `88a19d7d6`: the merge itself. Build files keep the fork's MSVC options and source lists and add upstream's Ninja PDB route, the `nozzle_inventory` and `libslic3r_utils` test targets and the ARM64EC OpenSSL block. The fork's workflows are kept. Upstream logging moved from `utils.cpp` to `Log.cpp`, and the fork's exception suppressor moved with it. The H2D, P2S and X2D start G-code takes upstream's version with the express-mode guards reapplied, and the new H3C family has its own guard rules.
+- `d6a814a92`: the upstream dialogs and panels brought onto the fork's Material Design 3 kit (labels, lines, button variants, dialog captions, glyph icons), plus restored helpers that the merge dropped.
+- `9d6186a8b` and `18315e94e`: the device page lockfile repaired with one `postcss` version, and the generated route tree.
+- `15d81ac1d` and `823bc94b2`: Cantonese for 229 new device page keys and 544 new app messages, each marked agent-drafted for review.
+- `28705f9a1`: the camera status members, fullscreen handler and last-state caches that the merged `StatusPanel.hpp` lost, and a duplicate `ProgressBar::GetValue`.
+
+Translation catalogues: `en.po` was merged three ways with nothing removed and 158 ink-wording overrides; the vi, th, ro, id and el catalogues are an order-preserving union; `BambuStudio.pot` was regenerated. Upstream deleted 185 messages whose source strings no longer exist; their translations stay in the catalogues as unused entries.
+
+Verified: the node contract suite fails exactly the same 21 checks as `main` at `a91f49462`, none new; the device page i18n and accessibility checks pass; the Cantonese catalogue check passes in strict mode; the ink-wording check reports no findings; `StatusPanel.cpp` compiles on its own after `28705f9a1`. Not verified at the time of writing: the full local build of `28705f9a1` (running), the running application, the hosted branch build and a release.
+
+Open items:
+- `tests/cardTextSource.test.ts` fails, but the merged `ViewModel.cpp` matches upstream byte for byte, so the stale test comes from upstream.
+- Terms with no earlier example in the Cantonese catalogue should be read by a native speaker: 打印工具頭, 切割工具頭, 繪圖工具頭, 熱端架, 歸位, 冷拔, 對接校準, 支撐環 and 混色套件.
+- The resized sync dialog for AMS information has not been seen on screen; the spool card colours are hard-coded; the Inventory2, CheckCircle and ExpandMore glyphs are approximations of the upstream art.
+
 ## Device, narrator, status API and design integration, 4 November 2026
 
 Objective: bring the latest design surfaces into the built application, fix the melody printer send, add live print-monitor readings, a local status API and a narrator, and add door narration.
