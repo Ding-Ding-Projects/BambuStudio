@@ -1,6 +1,6 @@
 ---
 translation-of: personal-vocabulary.md
-source-sha256: ef49164925414e5bf5906aea98804338cacaa0edab623cafc0eff4fb3556a701
+source-sha256: 825a3849a71eac80b1a8f75be7b152f65267d2abbb7721d89725c0e4a8646db2
 review-status: agent-drafted
 ---
 
@@ -11,6 +11,25 @@ Preferences > Appearance > Personal vocabulary 載入本機版本 1 JSON 檔。�
 ```json
 {"schemaVersion": 1, "entries": {"Open": "Inspect"}}
 ```
+
+## 將檔案拖落視窗
+
+將一個 `.json` 檔拖落主視窗任何位置，就即刻套用，唔使重啟。拖放同設定入面嘅控制項行同一套檢查，設定嗰條路照用得。拖模型同 G-code 檔唔受影響：淨係啱啱好一個 `.json` 檔先會當詞彙檔讀。
+
+- 有效嘅檔會響一次 Windows「tada」聲，喺視窗上面放大約三秒嘅慶祝畫面。標題係拖入嚟嘅檔案俾 `private vocabulary` 嘅寫法，套用嗰陣先讀；檔案冇呢個詞條就顯示「個人用語已套用」。檔案其餘內容即刻套用落介面。
+- 唔合格嘅檔會響一次 Windows 錯誤聲，喺視窗底部顯示五秒通知，講明檔案犯咗邊條規。乜都唔會儲存，畫面上嘅字亦唔會變。
+- 慶祝畫面同通知唔會搶焦點，亦唔會攔住輸入：撳落去會穿過去工作區。Windows 動畫效果熄咗嘅話，佢哋會直接出現同消失，冇淡入同上升嘅標題。
+- 兩種結果都會經 UI Automation 讀俾讀屏軟件聽。
+- 聲音跟系統音量同靜音；Windows 報告專注時段、全螢幕程式或者簡報模式時唔會出聲，但通知同讀屏照樣出。
+- 文字跟目前語言模式，雙語模式兩種語言都會顯示。淨係標題嚟自檔案，記錄檔只記低有冇套用同埋犯咗第幾條規。
+
+顯示網頁內容嘅面板（主頁、裝置頁）會自己處理拖放，拖落去嘅檔案未必去到視窗嘅拖放處理。
+
+| 已套用 | 已拒收 |
+| --- | --- |
+| ![拖入示範詞彙檔之後嘅慶祝畫面](../../screenshots/vocabulary-drop/celebration.png) | ![拖入損壞詞彙檔之後嘅通知](../../screenshots/vocabulary-drop/refused.png) |
+
+截圖用嘅係虛構示範檔，唔係真嘅個人詞彙；詳情睇[截圖來源](../../screenshots/vocabulary-drop/README.md)。
 
 ## 檔案格式同限制
 

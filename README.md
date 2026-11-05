@@ -8,7 +8,7 @@ Bambu Studio is a feature-rich slicer for Bambu Lab printers: project-based work
 - **Screenshots:** the public capture gallery is [`docs/screenshots/`](docs/screenshots/), with every image's source in the [screenshot provenance](#screenshot-provenance) table below.
 - **Status history:** the dated status paragraphs that used to open this file are kept verbatim in the [README status archive](docs/integration/readme-status-archive-20261019.md).
 
-**Contents:** [Express print mode](#express-print-mode) · [Melody creator](#melody-creator) · [New features in this line](#new-features-in-this-line) · [Current development work](#current-development-work) · [Native UI modernization](#native-ui-modernization-material-design-3) · [Live application captures](#live-application-captures) · [Interactive design reference](#interactive-design-reference) · [Screenshot provenance](#screenshot-provenance) · [Home Assistant printer handover](#home-assistant-printer-handover) · [Windows installer](#windows-installer) · [Project history](#project-history) · [Main features](#what-are-bambu-studios-main-features) · [How to compile on Windows](#how-to-compile-on-windows) · [Report issue](#report-issue) · [License](#license)
+**Contents:** [Express print mode](#express-print-mode) · [Melody creator](#melody-creator) · [Drop a personal vocabulary file](#drop-a-personal-vocabulary-file) · [New features in this line](#new-features-in-this-line) · [Current development work](#current-development-work) · [Native UI modernization](#native-ui-modernization-material-design-3) · [Live application captures](#live-application-captures) · [Interactive design reference](#interactive-design-reference) · [Screenshot provenance](#screenshot-provenance) · [Home Assistant printer handover](#home-assistant-printer-handover) · [Windows installer](#windows-installer) · [Project history](#project-history) · [Main features](#what-are-bambu-studios-main-features) · [How to compile on Windows](#how-to-compile-on-windows) · [Report issue](#report-issue) · [License](#license)
 
 ## Express print mode
 
@@ -36,6 +36,16 @@ The diagram is a reading aid for the sequence; the exact commands per printer fa
 ## Melody creator
 
 **File ▸ Melody creator…** composes a tune the printer plays through `M1006`: three voices per step, each with a note, a duration in ticks and a volume. It previews the tune on this computer, plays it on the connected printer when the printer is idle, copies the G-code, adds the tune to the printer preset's start or end G-code inside melody markers, and saves or opens it as a JSON file. The stock Bambu Lab X1, A1, A1 mini and H2D tunes are presets. The M1006 parameter meaning and the tick length are inferred from the stock tunes, so the tick length is a preview setting. See [Printer melodies](docs/features/device/printer-melody.md).
+
+## Drop a personal vocabulary file
+
+Drop one `.json` personal vocabulary file anywhere on the main window and it applies at once, without a restart: the Windows "tada" sound plays and a short celebration shows the wording the file gives for `private vocabulary`. A file that breaks a rule plays the error sound, names the rule and changes nothing. The celebration and the notice never take focus or block clicks, follow the language mode, honour reduced motion and are announced to screen readers. Preferences > Appearance > Personal vocabulary remains the other way in. See [Personal vocabulary](docs/features/windows/personal-vocabulary.md#dropping-a-file-on-the-window).
+
+| Applied | Refused | After a restart |
+| --- | --- | --- |
+| ![Celebration after dropping a sample vocabulary file](docs/screenshots/vocabulary-drop/celebration.png) | ![Notice after dropping a broken vocabulary file](docs/screenshots/vocabulary-drop/refused.png) | ![Main window after a restart, still using the sample wording](docs/screenshots/vocabulary-drop/applied-after-restart.png) |
+
+These captures use a made-up sample file; their source is recorded in the [capture notes](docs/screenshots/vocabulary-drop/README.md).
 
 <details>
 <summary><strong>New features in this line</strong>: every feature added by this fork, with its verification state and its article</summary>
@@ -91,8 +101,8 @@ The [Studio Atlas design](design/workflow-refresh.md) covers the whole native ap
 
 The previously preserved responsive-workflow and local-history source has been reconciled into the combined delivery revision. This pass adds bounded draft/history, continuity, import and automation repairs. Release delivery remains pending; see [the current continuation record](CLOSEOUT_PROMPT.md). Import cancellation remains cooperative and cannot interrupt an indivisible reader, hull calculation, object copy or final scene update. Issue #16's separately licensed companion remains a separate decision and is not included in this delivery.
 
-The source branch for the next Windows release reconciles upstream Bambu Studio
-2.8.4.57, with the fixes of upstream 2.8.4.61 merged on 2026-09-29 and the two upstream fixes that followed it on `master` (preset setting-id type routing, `88ec97c2`; build-fix includes, `79df7ae3`) ported on 2026-10-20, with this fork's native UI. Upstream's Windows ARM64 build support (`47a13eeb`) is not ported: this fork ships x64 only and its build workflow differs. It adds remembered dual-nozzle grouping,
+On 4 November 2026 `main` merged upstream Bambu Studio v02.09.01.70 (upstream `master` at `56a57d00a`) into this fork's native UI and shipped it as md3-v257; see the [merge record in the handoff](HANDOFF.md) and the [merge captures](docs/screenshots/upstream-merge-20261104/README.md). Before that, the line reconciled upstream Bambu Studio
+2.8.4.57, with the fixes of upstream 2.8.4.61 merged on 2026-09-29 and the two upstream fixes that followed it on `master` (preset setting-id type routing, `88ec97c2`; build-fix includes, `79df7ae3`) ported on 2026-10-20. Upstream's Windows ARM64 build support (`47a13eeb`) is not ported: this fork ships x64 only and its build workflow differs. It adds remembered dual-nozzle grouping,
 quick swaps and a Slice and print setup action, LAN printer farm routing,
 camera autoplay and fan feedback, a native Model Creator, portable multi-file
 workspaces with checklists and planning, and history embedded in saved 3MF

@@ -8,6 +8,42 @@ original wording without restarting. Invalid input preserves the active mapping.
 {"schemaVersion": 1, "entries": {"Open": "Inspect"}}
 ```
 
+## Dropping a file on the window
+
+Dropping one `.json` file anywhere on the main window applies it at once, with no
+restart. A drop goes through the same validation as the Settings control, which
+stays available as the other route in. Model and G-code drops are unchanged: only
+a drop of exactly one `.json` file is read as a vocabulary file.
+
+- A valid file plays the Windows "tada" sound once and shows a celebration over
+  the window for about three seconds. Its headline is the wording the dropped file
+  gives for `private vocabulary`, read when the file is applied; a file without
+  that entry shows "Personal wording applied". The rest of the file applies to the
+  interface straight away.
+- A rejected file plays the Windows error sound once and shows a notice near the
+  bottom of the window for five seconds, naming the rule the file broke. Nothing is
+  saved and the wording on screen does not change.
+- The celebration and the notice never take focus or input: clicks pass through
+  them to the workspace. With Windows animation effects turned off they appear and
+  disappear without the fade and the rising headline.
+- Both outcomes are announced to screen readers through UI Automation.
+- Sounds follow the system volume and mute, and are skipped while Windows reports
+  quiet hours, a full-screen app or presentation mode. The notice and the
+  announcement still appear.
+- The text follows the current language mode; the bilingual mode shows both
+  languages. Only the headline comes from the file, and the log records only
+  whether a drop was applied and the number of the rule it broke.
+
+Panels that display web content (Home, the device page) handle drops themselves;
+a file dropped on them may not reach the window's drop target.
+
+| Applied | Refused |
+| --- | --- |
+| ![Celebration after dropping a sample vocabulary file](../../screenshots/vocabulary-drop/celebration.png) | ![Notice after dropping a broken vocabulary file](../../screenshots/vocabulary-drop/refused.png) |
+
+The captures use a made-up sample file, not a real personal vocabulary; see
+[their provenance](../../screenshots/vocabulary-drop/README.md).
+
 ## File format and limits
 
 The file is one JSON object with exactly two fields: `schemaVersion`, which must
