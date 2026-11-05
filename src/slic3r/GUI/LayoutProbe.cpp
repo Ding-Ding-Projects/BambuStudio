@@ -21,6 +21,7 @@
 #include "Widgets/MD3ScrolledWindow.hpp"
 #include "Widgets/TextArea.hpp"
 #include "Widgets/TextInput.hpp"
+#include <wx/dnd.h>
 #include <wx/scrolwin.h>
 #include <cwchar>
 #include <cstdlib>
@@ -1029,6 +1030,24 @@ bool handle_command(const std::wstring &payload)
                     << ",\"ok\":" << (ok ? "true" : "false") << "}\n";
             }
             return ok;
+        }
+        //   drop-file <path>     hand <path> to the main window's drop target as if
+        //                        it had been dropped there. OLE drag and drop
+        //                        needs the input desktop, so a headless driver
+        //                        cannot drag a file onto the window; this runs the
+        //                        same OnDropFiles the drop would reach.
+        const std::wstring drop_file = L"drop-file ";
+        if (frame && payload.compare(0, drop_file.size(), drop_file) == 0) {
+            const wxString path(payload.substr(drop_file.size()));
+            frame->CallAfter([frame, path]() {
+                wxArrayString files;
+                files.Add(path);
+                if (auto *target = dynamic_cast<wxFileDropTarget *>(frame->GetDropTarget()))
+                    target->OnDropFiles(0, 0, files);
+                else
+                    BOOST_LOG_TRIVIAL(warning) << "LayoutProbe: drop-file without a file drop target";
+            });
+            return !path.empty();
         }
         //   canvas-png <path>    save the 3D canvas's next frame, ImGui panels
         //                        included, as a PNG at <path>. On the real graphics
