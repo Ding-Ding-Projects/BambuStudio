@@ -468,6 +468,15 @@ protected:
     wxPanel *m_camera_placeholder{ nullptr };
 
     wxBitmap m_bitmap_camera;
+    ScalableBitmap m_bitmap_sdcard_state_normal;
+    ScalableBitmap m_bitmap_sdcard_state_abnormal;
+    ScalableBitmap m_bitmap_sdcard_state_no;
+    ScalableBitmap m_bitmap_recording_on;
+    ScalableBitmap m_bitmap_recording_off;
+    ScalableBitmap m_bitmap_timelapse_on;
+    ScalableBitmap m_bitmap_timelapse_off;
+    ScalableBitmap m_bitmap_vcamera_on;
+    ScalableBitmap m_bitmap_vcamera_off;
 
     ScalableBitmap    m_bitmap_record_on_light;
     ScalableBitmap    m_bitmap_timelapse_on_light;
@@ -499,6 +508,10 @@ protected:
     wxStaticText *m_mqtt_source;
 
     wxStaticBitmap *m_bitmap_camera_img;
+    wxStaticBitmap *m_bitmap_recording_img;
+    wxStaticBitmap *m_bitmap_timelapse_img;
+    wxStaticBitmap *m_bitmap_vcamera_img;
+    wxStaticBitmap *m_bitmap_sdcard_img;
     wxStaticBitmap *m_bitmap_static_use_time;
     wxStaticBitmap *m_bitmap_static_use_weight;
 
@@ -754,6 +767,7 @@ public:
     bool is_camera_fullscreen() const;
     void toggle_camera_fullscreen();
     void close_camera_fullscreen();
+    void on_camera_fullscreen(wxMouseEvent& event);
 
 private:
     void on_ams_rack_switch(wxCommandEvent& event);
@@ -806,7 +820,11 @@ protected:
     wxString     m_request_url;
     bool         m_start_loading_thumbnail = false;
     bool         m_load_sdcard_thumbnail = false;
+    int          m_last_sdcard    = -1;
+    int          m_last_recording = -1;
+    int          m_last_timelapse = -1;
     int          m_last_extrusion = -1;
+    int          m_last_vcamera   = -1;
     int          m_model_mall_request_count = 0;
     bool         m_is_load_with_temp = false;
     json         m_rating_result;

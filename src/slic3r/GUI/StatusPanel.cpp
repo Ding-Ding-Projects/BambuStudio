@@ -2684,6 +2684,14 @@ void StatusBasePanel::close_camera_fullscreen()
     frame->Destroy();
 }
 
+void StatusBasePanel::on_camera_fullscreen(wxMouseEvent &event)
+{
+    if (m_camera_fullscreen_button)
+        m_camera_fullscreen_button->reset_hover();
+    toggle_camera_fullscreen();
+    event.Skip();
+}
+
 void StatusBasePanel::init_bitmaps()
 {
     static Slic3r::GUI::BitmapCache cache;
@@ -4905,7 +4913,6 @@ void StatusPanel::apply_control_area_force_disable()
         if (m_bpButton_e_down_10) m_bpButton_e_down_10->Enable(false);
 
         if (m_switch_speed) m_switch_speed->Enable(false);
-        if (m_switch_fan) m_switch_fan->Enable(false);
 #if BBL_ENABLE_AMS_CONTROL_WEB
         if (m_ams_control_web_switch) m_ams_control_web_switch->Disable();
 #endif
@@ -6754,6 +6761,7 @@ void StatusPanel::dismiss_filament_hint_ui(const std::string& dev_id, const std:
 
 void StatusPanel::dismiss_all_filament_hint_ui()
 {
+    MachineObject *obj = get_current_dev();
     if (!obj) return;
     const std::string dev_id = obj->get_dev_id();
     auto fila_sys = obj->GetFilaSystem();
