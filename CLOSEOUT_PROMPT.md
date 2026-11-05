@@ -1,9 +1,10 @@
 # Closeout prompt
 
 ```text
-Repository: Ding-Ding-Projects/BambuStudio, branch main, tip 36b3728c.
-Done: title bar search field that opens the command palette (hidden below 1180 px), Prepare plate/estimate/Slice/Print controls floating on the Surface ground with the hairline hidden. Strings in English and Hong Kong Cantonese catalogues, contract tests (tests/native_navigation/graphite_title_bar.test.mjs, graphite_action_bar.test.mjs), docs in both languages, design handoff updated.
-Verified: node contract tests green (no new failures), catalogue audit clean, documentation bundle current.
-Not verified: MSVC compile of 36b3728c ("Windows build and release" run 41390631852 was in progress), the running application, captures.
-Next, from design/graphite-shell: Prepare sidebar contents (Inks list, Process tiles, Express print card), scene toolbar beside the gizmo rail, rounded canvas corners, Preview controls, Device screen, Send print and Melody creator dialog layouts.
+Repository: Ding-Ding-Projects/BambuStudio, branch main, tip 8cbef49aa.
+Done: merged upstream bambulab/BambuStudio tag v02.09.01.70 (master 56a57d00a) into the Material Design 3 fork. Conflict resolution kept the fork's interface and adopted upstream engine changes; follow-up commits 28705f9a1 and d2dd1a0cb fixed the compile errors (camera status members, joined include lines, renamed upstream helpers such as show_filament_switcher_tip, nozzle_inventory.count and SetSliceContext). Commit 8cbef49aa fixed the bilingual login button overlapping the network plugin warning on the Home page.
+Verified: local one-click build of d2dd1a0cb compiled, linked and installed; the built application starts to Home and the setup wizard in bilingual mode (captures in docs/screenshots/upstream-merge-20261104/). Release md3-v257 "Golden Coconut Tart" is a normal release (not draft, not prerelease) built from 8cbef49aa with Setup.exe, Setup.exe.sha256, RELEASES, the full nupkg and the SBOM.
+Not verified: the 3D canvas, the device page against a real printer, the SyncAms dialog on screen. tests/embedded_atlas_styles.test.mjs fails on colour tokens; the stylesheets it reads are unchanged from before the merge.
+Open items: 185 upstream-removed catalogue messages kept, a few uncertain Cantonese terms, hard-coded spool colours and approximate glyphs (see HANDOFF.md, upstream merge section).
+Next: exercise the canvas and device page on the merged build, retire or update the stale tests, review the kept catalogue messages.
 ```
