@@ -2178,8 +2178,8 @@ int CLI::run(int argc, char **argv)
                     current_printer_name = config.option<ConfigOptionString>("printer_settings_id", true)->value;
                     current_process_name = config.option<ConfigOptionString>("print_settings_id", true)->value;
                     current_printer_model = config.option<ConfigOptionString>("printer_model", true)->value;
-                    current_filaments_name = config.option<ConfigOptionStrings>("filament_settings_id")->values;
-                    current_extruder_count = config.option<ConfigOptionFloatsNullable>("nozzle_diameter")->values.size();
+                    current_filaments_name = config.option<ConfigOptionStrings>("filament_settings_id", true)->values;
+                    current_extruder_count = config.option<ConfigOptionFloatsNullable>("nozzle_diameter", true)->values.size();
                     current_printer_variant_count = config.option<ConfigOptionStrings>("printer_extruder_variant", true)->values.size();
                     current_print_variant_count = config.option<ConfigOptionStrings>("print_extruder_variant", true)->values.size();
                     current_is_multi_extruder = current_extruder_count > 1;
