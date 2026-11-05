@@ -1,5 +1,6 @@
 #include "ProjectTabBar.hpp"
 #include "Plater.hpp"
+#include "VocabularyDrop.hpp"
 #include "SettingsDraftUndo.hpp"
 #include "Jobs/ImportJob.hpp"
 #include "Widgets/MD3ScrolledWindow.hpp"
@@ -11878,6 +11879,12 @@ bool PlaterDropTarget::OnDropFiles(wxCoord x, wxCoord y, const wxArrayString &fi
 #endif // WIN32
 
     BOOST_LOG_TRIVIAL(info) << boost::format("drag %1% files into app")%filenames.size();
+    // A single .json is a personal vocabulary file; models never use that extension.
+    if (VocabularyDrop::is_vocabulary_file(filenames)) {
+        const wxString file = filenames[0];
+        wxGetApp().CallAfter([file] { VocabularyDrop::apply_dropped(wxGetApp().mainframe, file); });
+        return true;
+    }
     m_filenames = filenames;
     wxGetApp().Bind(wxEVT_IDLE, &PlaterDropTarget::handleOnIdle, this);
     return true;

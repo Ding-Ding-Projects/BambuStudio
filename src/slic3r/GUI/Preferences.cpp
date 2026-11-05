@@ -2,6 +2,7 @@
 #include "Preferences.hpp"
 #include "PreferencesSearchTraversal.hpp"
 #include "PersonalVocabulary.hpp"
+#include "VocabularyDrop.hpp"
 #include "TtsNarrator.hpp"
 #include "LanModelDrop/LanModelDropStation.hpp"
 #include "LanModelDrop/LanModelDropUi.hpp"
@@ -2396,33 +2397,6 @@ private:
     }
 };
 
-// One sentence naming the rule a personal vocabulary file broke. The limits
-// come from the parser constants, so the text cannot drift from the rules.
-static wxString vocabulary_rejection_text(PersonalVocabulary::Rejection reason)
-{
-    using PersonalVocabulary::Rejection;
-    switch (reason) {
-    case Rejection::Unreadable: return _L("The file could not be read.");
-    case Rejection::TooLarge:
-        return wxString::Format(_L("The file is larger than %d KiB."), int(PersonalVocabulary::max_file_bytes / 1024));
-    case Rejection::Malformed: return _L("The file is not valid JSON saved as UTF-8.");
-    case Rejection::TooDeep:
-        return wxString::Format(_L("The file nests objects or lists more than %d levels deep."), int(PersonalVocabulary::max_depth));
-    case Rejection::DuplicateKey: return _L("The file repeats a key inside one object.");
-    case Rejection::UnsupportedVersion: return _L("The file must use schemaVersion 1.");
-    case Rejection::UnexpectedField: return _L("The file must contain only schemaVersion and an entries object.");
-    case Rejection::NonStringValue: return _L("Every entry value must be text.");
-    case Rejection::KeyTooLong:
-        return wxString::Format(_L("An entry key is longer than %d characters."), int(PersonalVocabulary::max_key_code_points));
-    case Rejection::ValueTooLong:
-        return wxString::Format(_L("An entry value is longer than %d characters."), int(PersonalVocabulary::max_value_code_points));
-    case Rejection::UnsafeText: return _L("An entry is blank, contains control or text-direction characters, or uses a reserved name.");
-    case Rejection::CacheUnavailable: return _L("The file is valid, but this device could not save its private copy.");
-    case Rejection::None: break;
-    }
-    return wxString();
-}
-
 wxWindow *PreferencesDialog::create_appearance_tab()
 {
     auto        scrolled = new ScrollPanel(m_book);
@@ -2936,7 +2910,7 @@ wxWindow *PreferencesDialog::create_appearance_tab()
         const auto saved = PersonalVocabulary::cache_rejection();
         if (problem.empty() && !active && saved != PersonalVocabulary::Rejection::None)
             problem = _L("The vocabulary saved on this device did not pass validation, so original wording is shown.") + "\n" +
-                vocabulary_rejection_text(saved);
+                VocabularyDrop::rejection_text(saved);
         const bool failed = !problem.empty();
         wording_status->SetLabel(failed ? PersonalVocabulary::remember(problem)
             : active ? _L("Personal vocabulary is active on this device.") : _L("Original wording is active."));
@@ -2952,7 +2926,7 @@ wxWindow *PreferencesDialog::create_appearance_tab()
         auto reason = PersonalVocabulary::Rejection::None;
         const bool applied = PersonalVocabulary::load(std::filesystem::path(picker.GetPath().ToStdWstring()), &reason);
         refresh_wording(applied ? wxString()
-            : _L("The vocabulary file was not applied, and the wording on screen has not changed.") + "\n" + vocabulary_rejection_text(reason));
+            : _L("The vocabulary file was not applied, and the wording on screen has not changed.") + "\n" + VocabularyDrop::rejection_text(reason));
     });
     wording_clear->Bind(wxEVT_BUTTON, [refresh_wording](wxCommandEvent &) {
         if (PersonalModes::school_presentation_suppressed.load()) return;

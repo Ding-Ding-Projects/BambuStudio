@@ -50371,3 +50371,13 @@ msgstr "墨水機-B"
 msgctxt "NarrowBlock"
 msgid "AMS-B"
 msgstr "墨水機-B"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Personal wording applied"
+msgstr "個人用語已套用"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Personal wording cannot be changed while school presentation is on."
+msgstr "學校展示模式開住嘅時候，唔可以更改個人用語。"

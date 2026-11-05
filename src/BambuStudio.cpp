@@ -2174,8 +2174,9 @@ int CLI::run(int argc, char **argv)
                             const Vec3d &instance_offset = model_instance->get_offset();
                             BOOST_LOG_TRIVIAL(info) << boost::format("instance %1% transform {%2%,%3%,%4%} at %5%:%6%")% model_object->name % instance_offset.x() % instance_offset.y() %instance_offset.z() % __FUNCTION__ % __LINE__<< std::endl;
                         }*/
-                    current_printer_name = config.option<ConfigOptionString>("printer_settings_id")->value;
-                    current_process_name = config.option<ConfigOptionString>("print_settings_id")->value;
+                    // A 3MF exported without named presets has no settings ids; read them as empty.
+                    current_printer_name = config.option<ConfigOptionString>("printer_settings_id", true)->value;
+                    current_process_name = config.option<ConfigOptionString>("print_settings_id", true)->value;
                     current_printer_model = config.option<ConfigOptionString>("printer_model", true)->value;
                     current_filaments_name = config.option<ConfigOptionStrings>("filament_settings_id")->values;
                     current_extruder_count = config.option<ConfigOptionFloatsNullable>("nozzle_diameter")->values.size();

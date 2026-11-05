@@ -32490,3 +32490,11 @@ msgstr "Ink Dispenser 3H"
 
 msgid "Switch camera"
 msgstr ""
+
+#: src/slic3r/GUI/VocabularyDrop.cpp
+msgid "Personal wording applied"
+msgstr "Personal wording applied"
+
+#: src/slic3r/GUI/VocabularyDrop.cpp
+msgid "Personal wording cannot be changed while school presentation is on."
+msgstr "Personal wording cannot be changed while school presentation is on."

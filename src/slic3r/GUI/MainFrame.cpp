@@ -66,6 +66,7 @@
 // BBS
 #include "PartPlate.hpp"
 #include "Preferences.hpp"
+#include "VocabularyDrop.hpp"
 #include "Widgets/ProgressDialog.hpp"
 #include "Widgets/Button.hpp"
 #include "Widgets/MD3Menu.hpp"
@@ -584,6 +585,9 @@ DPIFrame(NULL, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, BORDERLESS_FRAME_
     // initialize layout from config
     update_layout();
     sizer->SetSizeHints(this);
+    // Panels without their own drop target (Home, Device, Settings) pass drops up
+    // to the frame, so a vocabulary file can be dropped anywhere on the window.
+    SetDropTarget(VocabularyDrop::create_drop_target(this));
 
 #ifdef WIN32
     // SetMaximize already position window at left/top corner, even if Windows Task Bar is at left side.
