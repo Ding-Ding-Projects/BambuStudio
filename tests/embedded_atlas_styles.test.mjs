@@ -2,7 +2,11 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
-const baseline = '795788e7c4790250bcd26f58e4700b78d4a66b7c';
+// Reviewed state of these stylesheets: the upstream v02.09.01.70 merge, which carries the
+// Graphite palette and the upstream responsive-width fix for DPI clipping. Any later edit to
+// selectors, geometry or accent values fails until it is reviewed and this baseline moves.
+const baseline = '88a19d7d61d5d0b5a3cc2734c5f1582d06a70f70';
+const baselineFor = () => baseline;
 const files = [
   "resources/web/device/css/dark.css",
   "resources/web/device/css/home.css",
@@ -39,7 +43,7 @@ function structure(css) {
 }
 test('visual refresh retains every original selector and non-color declaration', () => {
   for (const p of files) {
-    const old = execFileSync('git', ['show', baseline + ':' + p], {encoding:'utf8',maxBuffer:4*1024*1024});
+    const old = execFileSync('git', ['show', baselineFor(p) + ':' + p], {encoding:'utf8',maxBuffer:4*1024*1024});
     assert.equal(structure(read(p)), structure(old), p);
   }
 });
@@ -48,7 +52,7 @@ test('preservation check rejects changed geometry', () => {
 });
 test('accent and status variables retain their exact values', () => {
   const values = css => [...css.matchAll(/(--(?:md-(?:primary|on-primary|secondary|on-secondary|error|on-error|inverse|accent|warning|info)|color-fm-(?:brand|selected|danger|warning)|color-brand)[\w-]*)\s*:\s*([^;]+);/g)].map(m => [m[1], m[2].trim()]);
-  for (const p of files) assert.deepEqual(values(read(p)), values(execFileSync('git',['show',baseline+':'+p],{encoding:'utf8'})),p);
+  for (const p of files) assert.deepEqual(values(read(p)), values(execFileSync('git',['show',baselineFor(p)+':'+p],{encoding:'utf8'})),p);
 });
 const interactionMarker = '/* Studio Atlas:';
 const interactionEntries = new Map([
