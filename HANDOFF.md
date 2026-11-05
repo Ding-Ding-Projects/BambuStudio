@@ -10,10 +10,12 @@ Branch `ai/feature/20261104-upstream-v02.09.01.70`, read back on the remote:
 - `9d6186a8b` and `18315e94e`: the device page lockfile repaired with one `postcss` version, and the generated route tree.
 - `15d81ac1d` and `823bc94b2`: Cantonese for 229 new device page keys and 544 new app messages, each marked agent-drafted for review.
 - `28705f9a1`: the camera status members, fullscreen handler and last-state caches that the merged `StatusPanel.hpp` lost, and a duplicate `ProgressBar::GetValue`.
+- `d2dd1a0cb`: the remaining compile errors: include lines joined by a lone carriage return, upstream renames (`show_filament_switcher_tip`, the nozzle inventory, the slice context for nozzle mapping), a retired notification name and old widget-kit calls.
+- The Home login button in bilingual mode is now one bilingual group in a row that can grow, so its Cantonese line no longer runs into the network plugin notice. See [the merge captures](docs/screenshots/upstream-merge-20261104/README.md).
 
 Translation catalogues: `en.po` was merged three ways with nothing removed and 158 ink-wording overrides; the vi, th, ro, id and el catalogues are an order-preserving union; `BambuStudio.pot` was regenerated. Upstream deleted 185 messages whose source strings no longer exist; their translations stay in the catalogues as unused entries.
 
-Verified: the node contract suite fails exactly the same 21 checks as `main` at `a91f49462`, none new; the device page i18n and accessibility checks pass; the Cantonese catalogue check passes in strict mode; the ink-wording check reports no findings; `StatusPanel.cpp` compiles on its own after `28705f9a1`. Not verified at the time of writing: the full local build of `28705f9a1` (running), the running application, the hosted branch build and a release.
+Verified: the node contract suite fails exactly the same 21 checks as `main` at `a91f49462`, none new; the device page i18n and accessibility checks pass; the Cantonese catalogue check passes in strict mode; the ink-wording check reports no findings; the one-click Release build of `d2dd1a0cb` compiled, linked and installed, and the built application starts to the Home page and the setup wizard. Not verified at the time of writing: the hosted build of the merge and its release, the 3D canvas and the device page against a printer.
 
 Open items:
 - `tests/cardTextSource.test.ts` fails, but the merged `ViewModel.cpp` matches upstream byte for byte, so the stale test comes from upstream.

@@ -111,7 +111,7 @@ body
 
 #Login1
 {
-	height:36px;
+	min-height:36px;
 	line-height: 36px;
 	display: flex;
 	justify-content: center;
@@ -130,6 +130,18 @@ body
 	line-height: 1.2;
 	flex-wrap: wrap;
 	white-space: normal;
+}
+
+/* Bilingual mode: the login and register halves render English only and the
+   group gets one Cantonese line, which wraps under the English pair. */
+#LoginBtn.bi-group
+{
+	flex-wrap: wrap;
+}
+
+#LoginBtn .BilingualGroupSecondary
+{
+	flex-basis: 100%;
 }
 
 #Login1:hover #LoginBtn
