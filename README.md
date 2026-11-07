@@ -1,6 +1,35 @@
 # BambuStudio
 
-Mixed-version compatibility: protocol-1 status includes directSend:true and an inert dropCode value of not-required for older receivers. The authenticated legacy renewal endpoint returns 410 retired, never a successful rotation or revocation. An older desktop may briefly show a connection error after trying renewal; the next status poll restores collection. The inert status value is never an upload credential. New receivers keep collecting from older services but hide direct invite links until the service advertises the capability, and show an upgrade instruction. Older desktop versions retain their old code labels until updated.
+## Candidate startup verification, 7 November 2026
+
+The packaged candidate from source `6eb975873`, with DLL SHA-256
+`ffb1ed33c89ce60aa90f12d58c04af31f922bf01cd99a9add67fc584e526ebc1`,
+showed the initial invalid synthetic 3MF dialogs and then the new recovery flow.
+The failed tab remained available and a separate Untitled tab opened. After
+normal close, restart reached the workspace directly without another automatic
+model-load error. Normal closure of 16 owned processes was verified; both
+candidate hidden runs and their desktops were closed normally. This synthetic
+reproduction does not establish the cause of the user's original startup error.
+
+Preferences reopened at 1050 x 720 and 96 DPI. Its black screenshots are not
+layout evidence: a read-only `GetWindowDisplayAffinity` query returned 17
+(`WDA_EXCLUDEFROMCAPTURE`), consistent with credential-control protection.
+That protection remains intact. No complete visual matrix is claimed.
+
+Personal-wording cache isolation at `eb8bd6a52` has a dry independent source
+review and passing neutral persistence/export fixtures. Native verification of
+that newer cache change remains pending; the older packaged candidate does not
+prove it. The reviewed direct-LAN contribution `601003f9b` is integrated here.
+Container 1.0.1 publication run
+[42418444721](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/42418444721)
+was pending at this handoff; no new image digest is asserted.
+
+An older installed desktop can still race a legacy renewal response against its
+status poll even when renewal returns HTTP 410. The updated desktop removes the
+renewal control. This compatibility risk is not claimed fixed for older binaries.
+
+
+Mixed-version compatibility: protocol-1 status includes directSend:true and an inert dropCode value of not-required for older receivers. The authenticated legacy renewal endpoint returns 410 retired, never a successful rotation or revocation. An older desktop may briefly show a connection error after trying renewal; a later status poll may restore collection, but a renewal/poll race remains possible in that older binary. The inert status value is never an upload credential. New receivers keep collecting from older services but hide direct invite links until the service advertises the capability, and show an upgrade instruction. Older desktop versions retain their old code labels until updated.
 
 ## Direct LAN sending, 7 November 2026
 

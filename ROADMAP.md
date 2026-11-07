@@ -1,3 +1,13 @@
+## Candidate recovery acceptance, 7 November 2026
+
+- [x] Verify synthetic invalid-3MF recovery on packaged source `6eb975873`, retaining the failed tab and opening Untitled, then restart without repeated automatic loading.
+- [x] Verify normal closure of 16 owned processes and both candidate hidden runs/desktops.
+- [x] Verify Preferences reopens at 1050 x 720 and 96 DPI; identify capture exclusion through read-only display-affinity value 17 without changing protection.
+- [ ] Complete the Preferences visual matrix; black protected captures are not visual acceptance.
+- [ ] Verify the newer isolated wording-cache implementation in a built candidate using neutral profiles.
+- [ ] Verify container 1.0.1 publication run 42418444721 and its actual digest, then live direct sending.
+- [ ] Establish the user's actual startup cause if further diagnosis is needed; synthetic recovery does not identify it.
+
 ## Local printer status API, 4 November 2026
 
 ## Direct LAN sending, 7 November 2026
