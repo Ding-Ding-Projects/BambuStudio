@@ -1,6 +1,8 @@
 # One-click Windows build and installer
 
 Build readiness requires the selected default MSVC toolset to be **14.51 or newer** (compiler 19.51), matching `ReleaseSourcePaths.cmake`, plus a working x64 MSBuild. An older default is rejected even if a newer compiler exists beside it. Compatibility-only VS 2022 discovery is not readiness proof. If no eligible instance exists, the trusted VS 2026 bootstrap targets `%LOCALAPPDATA%\BambuBuildTools\VS2026`; unrelated installations remain intact. Native elevation consent and actual installation verification remain required.
+If that exact project-owned path already has a VS 2026 Stable Build Tools registration, bootstrap uses `modify --channelId VisualStudio.18.Release --installPath <project-path>` with the same required components, even when registration is incomplete or payload files are missing. An absent registration uses the default install operation. Other paths are never adopted; a different product or channel registered at the target stops recovery. No uninstall, registration reset, component removal, forced application closure, or automatic restart is requested. Recovery remains unverified until the normal compiler/MSBuild/SDK readiness check passes. See [Microsoft command-line parameters](https://learn.microsoft.com/en-us/visualstudio/install/use-command-line-parameters-to-install-visual-studio).
+
 
 `OneClickBuildInstaller.cmd` is the supported local entry point for compiling a Release payload
 and packaging it with Squirrel.Windows. Double-click it in File Explorer or run it from a terminal:
