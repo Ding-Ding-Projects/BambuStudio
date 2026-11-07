@@ -1,5 +1,7 @@
 # Build from source (Windows installer)
 
+Build readiness requires the selected default MSVC toolset to be **14.51 or newer** (compiler 19.51), matching `ReleaseSourcePaths.cmake`, plus a working x64 MSBuild. An older default is rejected even if a newer compiler exists beside it. Compatibility-only VS 2022 discovery is not readiness proof. If no eligible instance exists, the trusted VS 2026 bootstrap targets `%LOCALAPPDATA%\BambuBuildTools\VS2026`; unrelated installations remain intact. Native elevation consent and actual installation verification remain required.
+
 > **Historical note:** the current release path is the unsigned Squirrel.Windows package documented
 > in [Native Windows installer](windows-native-installer.md). The interactive NSIS build-from-source
 > helper described below is retained for audit/history only and is not invoked by the current build
@@ -60,7 +62,7 @@ helpers:
 
 1. **Pre-flight** — session directory writable, at least ~40 GB free on the session drive, and a TCP
    reach test to `github.com:443` (8 s timeout). Any failure exits **30**.
-2. **Toolchain bootstrap** — install Git, Node.js LTS, the Visual Studio 2022 C++ Build Tools, and
+2. **Toolchain bootstrap** — install Git, Node.js LTS, the Visual Studio 2026 C++ Build Tools, and
    CMake if missing (see "Toolchain bootstrap"). Failure exits **10**.
 3. **Clone + checkout** — `git clone <CloneUrl> <session>\src`, `git checkout --detach <commit>`, then
    compare `git rev-parse HEAD` to the requested commit. A branch, shared version tag, abbreviated
@@ -281,7 +283,7 @@ product shortcut directory) run first in both branches, exactly as on the prebui
 ## Security considerations
 
 - **Machine-wide installs.** From-source installs developer tools that are visible system-wide: Git,
-  Node.js LTS, the Visual Studio 2022 C++ Build Tools with a compatible Windows 11 SDK (the fallback
+  Node.js LTS, the Visual Studio 2026 C++ Build Tools with a compatible Windows 11 SDK (the fallback
   requests `10.0.26100`), and CMake.
   These are not confined to the session directory and are not removed on failure or on uninstall of the
   app. The whole path runs at user level (no elevation is requested by the installer), though individual

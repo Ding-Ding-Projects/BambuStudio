@@ -16,6 +16,8 @@ $script:WingetArgs = @('-e', '--silent', '--accept-package-agreements', '--accep
 $script:MinimumCMakeVersion = [version]'3.21.0'
 $script:MaximumCMakeVersionExclusive = [version]'5.0.0'
 $script:MinimumWindowsSdkVersion = [version]'10.0.22000.0'
+# ReleaseSourcePaths.cmake requires MSVC 19.51 or newer.
+$script:MinimumMsvcToolsetVersion = [version]'14.51.0'
 $script:MinimumNodeLtsMajor = 22
 $script:RequiredNodeArchitecture = 'x64'
 $script:NodeFallbackVersion = '22.22.2'
@@ -186,7 +188,8 @@ function Test-VisualStudioMSBuild {
 
 function Get-VisualStudioInstance {
     [CmdletBinding()]
-    param([string] $VsWherePath, [string] $VersionRange = '[17.0,19.0)')
+    param([string] $VsWherePath, [string] $VersionRange = '[17.0,19.0)',
+        [version] $MinimumToolsetVersion = $script:MinimumMsvcToolsetVersion)
 
     $vswhere = $VsWherePath
     if ([string]::IsNullOrWhiteSpace($vswhere)) {
@@ -224,6 +227,10 @@ function Get-VisualStudioInstance {
         if (@($requiredFiles | Where-Object { -not (Test-Path -LiteralPath $_ -PathType Leaf) }).Count) { continue }
         $toolVersion = (Get-Content -LiteralPath $requiredFiles[2] -Raw).Trim()
         if ($toolVersion -notmatch '^\d+\.\d+\.\d+$') { continue }
+        if ([version]$toolVersion -lt $MinimumToolsetVersion) {
+            Write-Warning "Skipping Visual Studio instance '$installPath': default MSVC toolset $toolVersion is below required $MinimumToolsetVersion."
+            continue
+        }
         if (-not (Test-Path -LiteralPath (Join-Path $installPath "VC\Tools\MSVC\$toolVersion\bin\Hostx64\x64\cl.exe") -PathType Leaf)) { continue }
         # CMake's x64 Visual Studio generator invokes this executable. A working
         # cl.exe alone cannot compensate for a broken managed MSBuild runtime.
@@ -240,28 +247,31 @@ function Get-VisualStudioInstance {
 }
 
 function Get-VisualStudioPath {
-    param([string] $VsWherePath, [string] $VersionRange = '[17.0,19.0)')
-    $instance = Get-VisualStudioInstance -VsWherePath $VsWherePath -VersionRange $VersionRange
+    param([string] $VsWherePath, [string] $VersionRange = '[17.0,19.0)',
+        [version] $MinimumToolsetVersion = $script:MinimumMsvcToolsetVersion)
+    $instance = Get-VisualStudioInstance -VsWherePath $VsWherePath -VersionRange $VersionRange -MinimumToolsetVersion $MinimumToolsetVersion
     if ($null -eq $instance) { return $null }
     return [string]$instance.installationPath
 }
 
 function Get-VisualStudioProduct {
-    param([string] $VsWherePath, [string] $VersionRange = '[17.0,19.0)')
-    $instance = Get-VisualStudioInstance -VsWherePath $VsWherePath -VersionRange $VersionRange
+    param([string] $VsWherePath, [string] $VersionRange = '[17.0,19.0)',
+        [version] $MinimumToolsetVersion = $script:MinimumMsvcToolsetVersion)
+    $instance = Get-VisualStudioInstance -VsWherePath $VsWherePath -VersionRange $VersionRange -MinimumToolsetVersion $MinimumToolsetVersion
     if ($null -eq $instance) { return $null }
     return ([string]$instance.productId).Substring('Microsoft.VisualStudio.Product.'.Length)
 }
 
-# Preserve version-specific callers without silently changing their contract.
+# Compatibility discovery only: these helpers do not establish build readiness.
+# Production selection and bootstrap use the generic helpers with the release minimum.
 function Get-VisualStudio2022Path {
     param([string] $VsWherePath)
-    return Get-VisualStudioPath -VsWherePath $VsWherePath -VersionRange '[17.0,18.0)'
+    return Get-VisualStudioPath -VsWherePath $VsWherePath -VersionRange '[17.0,18.0)' -MinimumToolsetVersion ([version]'0.0')
 }
 
 function Get-VisualStudio2022Product {
     param([string] $VsWherePath)
-    return Get-VisualStudioProduct -VsWherePath $VsWherePath -VersionRange '[17.0,18.0)'
+    return Get-VisualStudioProduct -VsWherePath $VsWherePath -VersionRange '[17.0,18.0)' -MinimumToolsetVersion ([version]'0.0')
 }
 
 function Get-SafeRelativePath {
@@ -500,7 +510,7 @@ function Install-VisualCppBuildTools {
         -TrustedPublishers $script:VisualStudioTrustedPublishers
 
     if (-not (Test-VisualCppBuildTools)) {
-        throw 'Visual Studio 2022 or 2026 Build Tools (C++ workload) could not be installed.'
+        throw 'Visual Studio C++ Build Tools with default MSVC toolset 14.51 or newer, working x64 MSBuild, and a supported Windows SDK could not be installed.'
     }
 }
 
