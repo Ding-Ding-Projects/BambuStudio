@@ -1,41 +1,8 @@
 # BambuStudio
 
-## Candidate startup verification, 7 November 2026
-
-The packaged candidate from source `6eb975873`, with DLL SHA-256
-`ffb1ed33c89ce60aa90f12d58c04af31f922bf01cd99a9add67fc584e526ebc1`,
-showed the initial invalid synthetic 3MF dialogs and then the new recovery flow.
-The failed tab remained available and a separate Untitled tab opened. After
-normal close, restart reached the workspace directly without another automatic
-model-load error. Normal closure of 16 owned processes was verified; both
-candidate hidden runs and their desktops were closed normally. This synthetic
-reproduction does not establish the cause of the user's original startup error.
-
-Preferences reopened at 1050 x 720 and 96 DPI. Its black screenshots are not
-layout evidence: a read-only `GetWindowDisplayAffinity` query returned 17
-(`WDA_EXCLUDEFROMCAPTURE`), consistent with credential-control protection.
-That protection remains intact. No complete visual matrix is claimed.
-
-Personal-wording cache isolation at `eb8bd6a52` has a dry independent source
-review and passing neutral persistence/export fixtures. Native verification of
-that newer cache change remains pending; the older packaged candidate does not
-prove it. The reviewed direct-LAN contribution `601003f9b` is integrated here.
-Container 1.0.1 was published successfully by [run 42418444721](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/42418444721) from source `601003f9b97d8945732d5a166f8dbe2b061d040f`. The verified image digest is `sha256:9382599181a32a5d78730c82b315612fcadc51beacea0ad3b831500e122ce51a`; build-context SHA-256 is `4fb31a53d02699892ba4669a012900b13b7549040bba6e9d1f8cbf3a4424a389`. The exact digest was pulled and an isolated Compose project passed `up --wait`, local health and second-host LAN health checks. Sender GUI verification remains pending. The existing user service remains on 1.0.0 until that verification completes; isolated verification is not an applied service update.
-
-An older installed desktop can still race a legacy renewal response against its
-status poll even when renewal returns HTTP 410. The updated desktop removes the
-renewal control. This compatibility risk is not claimed fixed for older binaries.
-
-
-Mixed-version compatibility: protocol-1 status includes directSend:true and an inert dropCode value of not-required for older receivers. The authenticated legacy renewal endpoint returns 410 retired, never a successful rotation or revocation. An older desktop may briefly show a connection error after trying renewal; a later status poll may restore collection, but a renewal/poll race remains possible in that older binary. The inert status value is never an upload credential. New receivers keep collecting from older services but hide direct invite links until the service advertises the capability, and show an upgrade instruction. Older desktop versions retain their old code labels until updated.
-
-## Direct LAN sending, 7 November 2026
-
-Sender drop codes and renewal controls are removed. Open the invite link or scan its QR code, choose models and send directly. Station keys still protect inbox, downloads and management; local pipe pairing and DPAPI storage are unchanged. Model, size, queue and expiry checks remain, with 60 upload attempts per source address per minute and a five-minute cooldown. Existing volumes, keys and waiting models are retained.
-
-Source implementation passed 95 focused API, page-contract and compiled native-helper checks, including mixed-version capability handling and Unicode filename transport. Container version 1.0.1 publication and isolated Compose/LAN health are verified; live sender interaction and native UI acceptance remain pending; historical 1.0.0 evidence does not verify this change. Use only a trusted LAN and never expose the service to the internet.
-
 Bambu Studio is a feature-rich slicer for Bambu Lab printers: project-based workflows, optimized slicing algorithms and a graphic interface built for a smooth printing experience. This fork rebuilds the native Windows interface on Material Design 3, keeps upstream slicing intact, and adds its own features: three language modes (English, Hong Kong Cantonese, bilingual), automatic updates, local project history, a command palette, a regex builder on every search, Home Assistant handover, **Express print mode** and the **Melody creator**.
+
+LAN model sharing now accepts direct uploads without a sender code. Use [the hosting guide](docs/features/application-integration/lan-model-drop-site.md) to start the service. [Current verification and remaining work](HANDOFF.md) cover the published service, startup recovery, resizable Preferences and personal wording.
 
 - **Install (Windows only):** the [latest installer](https://github.com/Ding-Ding-Projects/BambuStudio/releases/latest/download/Setup.exe) is a per-user Squirrel.Windows setup that needs no administrator elevation. It is unsigned; check the [SHA-256 file](https://github.com/Ding-Ding-Projects/BambuStudio/releases/latest/download/Setup.exe.sha256) before running it. macOS and Linux were removed from this tree; cross-platform builds remain upstream at [Bambu Lab](https://github.com/bambulab/BambuStudio/releases/).
 - **Site:** [ding-ding-projects.github.io/BambuStudio](https://ding-ding-projects.github.io/BambuStudio/), a tabbed design reference and changelog viewer.
@@ -664,7 +631,7 @@ By default, after installing Bambu Studio without the networking plugin, you can
 
 ### Local model drop setup work
 
-See the [local hosting guide](docs/features/application-integration/local-drop-hosting.md) for the setup entrypoints. The first published image and real detached/log hosting passed local and second-host LAN health checks. Native pairing and the portable wizard remain pending; sender drop-code removal is in progress.
+See the [local hosting guide](docs/features/application-integration/local-drop-hosting.md) for the setup entrypoints. The first published image and real detached/log hosting passed local and second-host LAN health checks. The published 1.0.1 service accepts direct browser uploads and has been applied while preserving station authentication and queued models. Native pairing and the portable wizard remain pending.
 Startup recovery candidate: [retained project tabs and explicit retry](docs/features/windows/startup-project-recovery.md).
-Focused behavioral checks and the built candidate's first-load retained-tab/file behavior pass. Restart, full native acceptance and release verification remain pending.
+Focused behavioral checks and the built candidate's retained-tab/file recovery and restart behavior pass. Full native acceptance and release verification remain pending.
 The [sound controls candidate](docs/features/windows/action-sounds.md) has passed silent behavioral checks and independent source review; native audio and restart verification are pending.

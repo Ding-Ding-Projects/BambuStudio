@@ -20,7 +20,7 @@ Personal-wording cache isolation at `eb8bd6a52` has a dry independent source
 review and passing neutral persistence/export fixtures. Native verification of
 that newer cache change remains pending; the older packaged candidate does not
 prove it. The reviewed direct-LAN contribution `601003f9b` is integrated here.
-Container 1.0.1 was published successfully by [run 42418444721](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/42418444721) from source `601003f9b97d8945732d5a166f8dbe2b061d040f`. The verified image digest is `sha256:9382599181a32a5d78730c82b315612fcadc51beacea0ad3b831500e122ce51a`; build-context SHA-256 is `4fb31a53d02699892ba4669a012900b13b7549040bba6e9d1f8cbf3a4424a389`. The exact digest was pulled and an isolated Compose project passed `up --wait`, local health and second-host LAN health checks. Sender GUI verification remains pending. The existing user service remains on 1.0.0 until that verification completes; isolated verification is not an applied service update.
+Container 1.0.1 was published successfully by [run 42418444721](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/42418444721) from source `601003f9b97d8945732d5a166f8dbe2b061d040f`. The verified image digest is `sha256:9382599181a32a5d78730c82b315612fcadc51beacea0ad3b831500e122ce51a`; build-context SHA-256 is `4fb31a53d02699892ba4669a012900b13b7549040bba6e9d1f8cbf3a4424a389`. The exact digest was pulled and an isolated Compose project passed `up --wait`, local health and second-host LAN health checks. A real browser sent a synthetic STL with HTTP 201 and no sender-code header. Six desktop/mobile language tuples passed code-field absence, named accessibility controls, keyboard focus and horizontal-overflow checks. Edge reported an ignored Cross-Origin-Opener-Policy header on the HTTP LAN origin, so the zero-console-error criterion remains unmet. The existing service was then updated through host.bat --detached: its original station key still authenticated, its data volume and queued models were preserved, and health passed locally and from a second LAN host. Native desktop acceptance remains separate.
 
 An older installed desktop can still race a legacy renewal response against its
 status poll even when renewal returns HTTP 410. The updated desktop removes the
@@ -33,7 +33,11 @@ Mixed-version compatibility: protocol-1 status includes directSend:true and an i
 
 Sender drop codes and renewal controls are removed. Open the invite link or scan its QR code, choose models and send directly. Station keys still protect inbox, downloads and management; local pipe pairing and DPAPI storage are unchanged. Model, size, queue and expiry checks remain, with 60 upload attempts per source address per minute and a five-minute cooldown. Existing volumes, keys and waiting models are retained.
 
-Source implementation passed 95 focused API, page-contract and compiled native-helper checks, including mixed-version capability handling and Unicode filename transport. Container version 1.0.1 publication and isolated Compose/LAN health are verified; live sender interaction and native UI acceptance remain pending; historical 1.0.0 evidence does not verify this change. Use only a trusted LAN and never expose the service to the internet.
+Source implementation passed 95 focused API, page-contract and compiled native-helper checks, including mixed-version capability handling and Unicode filename transport. Container version 1.0.1 publication, direct browser sending and the existing-service update are verified; native UI acceptance remains pending; historical 1.0.0 evidence does not verify this change. Use only a trusted LAN and never expose the service to the internet.
+
+## Earlier verification records
+
+The following records describe earlier checkpoints. The current verified state and remaining limits are recorded above.
 
 ## Startup and LAN hosting verification, 7 November 2026
 

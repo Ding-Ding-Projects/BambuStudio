@@ -1,3 +1,5 @@
+# Roadmap
+
 ## Candidate recovery acceptance, 7 November 2026
 
 - [x] Verify synthetic invalid-3MF recovery on packaged source `6eb975873`, retaining the failed tab and opening Untitled, then restart without repeated automatic loading.
@@ -6,18 +8,19 @@
 - [ ] Complete the Preferences visual matrix; black protected captures are not visual acceptance.
 - [ ] Verify the newer isolated wording-cache implementation in a built candidate using neutral profiles.
 - [x] Verify container 1.0.1 publication run 42418444721, its exact digest, isolated Compose startup and local/second-host LAN health.
-- [ ] Verify sender GUI interaction before updating the existing 1.0.0 service.
+- [x] Verify direct browser upload in six desktop/mobile language tuples and update the existing service while preserving authentication and queued models.
+- [ ] Resolve the HTTP LAN COOP console warning before claiming a zero-console-error browser audit.
 - [ ] Establish the user's actual startup cause if further diagnosis is needed; synthetic recovery does not identify it.
-
-## Local printer status API, 4 November 2026
 
 ## Direct LAN sending, 7 November 2026
 
 - [x] Remove sender-code authentication, input fields, credential-bearing invites and renewal controls; preserve station authentication and storage.
 - [x] Verify direct uploads, station authorization and model/size/queue/rate limits with focused production-helper tests.
 - [x] Publish container 1.0.1 and pin its verified digest; isolated Compose and LAN health passed.
-- [ ] Verify direct sending through the sender GUI and update the existing service.
+- [x] Verify direct sending through the sender GUI and update the existing service.
 - [ ] Build and verify native invite controls in all supported language modes.
+
+## Local printer status API, 4 November 2026
 
 Branch `ai/feature/20261104-door-status-api`. Details: [`docs/features/device/status-api.md`](docs/features/device/status-api.md).
 

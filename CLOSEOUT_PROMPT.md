@@ -1,93 +1,39 @@
 # Current implementation handoff
 
-## Candidate startup verification, 7 November 2026
+Continue the approved required-feature plan. The latest direction removes sender
+drop codes; no upstream merge is authorized. The complete 117-item feature goal,
+native release, installed update, companions and deployment remain unfinished.
 
-The packaged candidate from source `6eb975873`, with DLL SHA-256
-`ffb1ed33c89ce60aa90f12d58c04af31f922bf01cd99a9add67fc584e526ebc1`,
-showed the initial invalid synthetic 3MF dialogs and then the new recovery flow.
-The failed tab remained available and a separate Untitled tab opened. After
-normal close, restart reached the workspace directly without another automatic
-model-load error. Normal closure of 16 owned processes was verified; both
-candidate hidden runs and their desktops were closed normally. This synthetic
-reproduction does not establish the cause of the user's original startup error.
+## Preserved candidate
 
-Preferences reopened at 1050 x 720 and 96 DPI. Its black screenshots are not
-layout evidence: a read-only `GetWindowDisplayAffinity` query returned 17
-(`WDA_EXCLUDEFROMCAPTURE`), consistent with credential-control protection.
-That protection remains intact. No complete visual matrix is claimed.
+Candidate 8af368cac1240275c2b0dd77f23d2c2e26d24bcc was pushed and read back on
+gap/wording-display-20261107. It contains reviewed direct sending at 601003f9b
+and profile-isolated wording storage at eb8bd6a52. This record adds the actual
+service-update and browser outcomes. Main integration requires separate remote
+readback; no release or installed desktop update is claimed here.
 
-Personal-wording cache isolation at `eb8bd6a52` has a dry independent source
-review and passing neutral persistence/export fixtures. Native verification of
-that newer cache change remains pending; the older packaged candidate does not
-prove it. The reviewed direct-LAN contribution `601003f9b` is integrated here.
-Container 1.0.1 was published successfully by [run 42418444721](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/42418444721) from source `601003f9b97d8945732d5a166f8dbe2b061d040f`. The verified image digest is `sha256:9382599181a32a5d78730c82b315612fcadc51beacea0ad3b831500e122ce51a`; build-context SHA-256 is `4fb31a53d02699892ba4669a012900b13b7549040bba6e9d1f8cbf3a4424a389`. The exact digest was pulled and an isolated Compose project passed `up --wait`, local health and second-host LAN health checks. Sender GUI verification remains pending. The existing user service remains on 1.0.0 until that verification completes; isolated verification is not an applied service update.
+## Verified behavior
 
-An older installed desktop can still race a legacy renewal response against its
-status poll even when renewal returns HTTP 410. The updated desktop removes the
-renewal control. This compatibility risk is not claimed fixed for older binaries.
+- Container 1.0.1 publication run 42418444721 succeeded at source 601003f9b97d8945732d5a166f8dbe2b061d040f.
+- Its exact digest is sha256:9382599181a32a5d78730c82b315612fcadc51beacea0ad3b831500e122ce51a.
+- Real browser direct upload returned 201 without X-Drop-Code. Six desktop/mobile language tuples passed field absence, accessible control names, keyboard focus and horizontal-overflow checks.
+- The existing service was updated through host.bat --detached. The original station key still authenticated, volume and queued items were preserved, and local/second-host LAN health passed.
+- Packaged source 6eb975873 retained a synthetic invalid project tab, opened Untitled, and restarted without repeating automatic model-load dialogs. Preferences reopened at 1050 x 720, 96 DPI. Both candidate runs closed normally.
+- Preferences display affinity 17 explains protected black screenshots. Preserve credential capture protection; those images do not prove layout acceptance.
+- Focused source checks cover direct uploads, station authorization, bounds, compatibility, cache isolation and negative mutations. The catalogue contains 10,252 compiled entries.
 
+## Remaining work and exact limits
 
-Mixed-version compatibility: protocol-1 status includes directSend:true and an inert dropCode value of not-required for older receivers. The authenticated legacy renewal endpoint returns 410 retired, never a successful rotation or revocation. An older desktop may briefly show a connection error after trying renewal; a later status poll may restore collection, but a renewal/poll race remains possible in that older binary. The inert status value is never an upload credential. New receivers keep collecting from older services but hide direct invite links until the service advertises the capability, and show an upgrade instruction. Older desktop versions retain their old code labels until updated.
+- The local native build is still pinned to 4f7039f611477b4f7ba4623309b6dfd594ce8af9. Keep its source/index/branch unchanged until it finishes, then build the newer combined candidate.
+- Verify newer native invite controls, cache isolation, sound controls, local-host pairing and the supported layout/language matrix. The older packaged candidate does not prove these later changes.
+- Edge reports an ignored Cross-Origin-Opener-Policy header on the HTTP LAN origin; the zero-console-error criterion remains unmet, despite successful sending.
+- Old installed desktops retain code-related copy and a renewal/status-poll race. New desktop source removes renewal controls. Service compatibility does not repair historical UI binaries.
+- The user's actual startup cause remains unidentified. Synthetic recovery evidence does not establish it.
+- Preserve separate baseline-process teardown gaps and the sender-browser teardown receipt; do not infer closure from a missing root process.
+- Full publication scanning has baseline technical-name/nested-repository/parser limitations. Scoped scans passed with specific baseline classifications, not a blanket full-scan success.
+- Status Hub SSH delivery remains unverified. The active goal is incomplete and account allowance is unknown.
 
-## Direct LAN sending, 7 November 2026
-
-Sender drop codes and renewal controls are removed. Open the invite link or scan its QR code, choose models and send directly. Station keys still protect inbox, downloads and management; local pipe pairing and DPAPI storage are unchanged. Model, size, queue and expiry checks remain, with 60 upload attempts per source address per minute and a five-minute cooldown. Existing volumes, keys and waiting models are retained.
-
-Source implementation passed 95 focused API, page-contract and compiled native-helper checks, including mixed-version capability handling and Unicode filename transport. Container version 1.0.1 publication and isolated Compose/LAN health are verified; live sender interaction and native UI acceptance remain pending; historical 1.0.0 evidence does not verify this change. Use only a trusted LAN and never expose the service to the internet.
-
-Implementation checkpoint: d5a4eb56fcbb2c10a701aaad155b0d7af4fe32f2. This continuation integrates parent candidate 4f7039f611477b4f7ba4623309b6dfd594ce8af9, removes external code-row callsites, translates the two new invite messages and refreshes the embedded documentation. No release or runtime success is claimed. The isolated branch is gap/preferences-responsive-20261107; remote preservation remains the integration owner's next step.
-
-Objective: complete the approved required-feature plan, including native and
-companion surfaces, with priority repairs for Preferences sizing, personal wording,
-LAN model-drop startup and the recurring startup model-load error.
-Latest direction: remove the sender drop-code requirement throughout the upload
-page, service, invite links and native controls. Keep station management authenticated.
-
-The user confirmed that the model-load message appears on startup before opening
-any project. An owned synthetic invalid saved project reproduces the installed
-message; this is not proof of the user's actual affected file.
-
-Working branch: gap/feature-integration-20261107. Startup source is preserved on
-origin/gap/wording-display-20261107 at 55fe0ccaa6afe628253a4825d8a1990f3d927eb2.
-Preferences and catalogue source is preserved on origin/gap/preferences-responsive-20261107
-at c4a81c2471365fefcad0a50729228924bfebcbfe. Both were verified with remote-ref readback.
-The integration branch contains both contributions plus hosting and build repairs;
-its latest candidate still needs remote readback after this record is committed.
-
-Completed local checks: startup production-transition fixture passes, earlier
-source fails 19 assertions; 12 entrypoint assertions; successful prerequisite
-bootstrap; six container and actual CMake-install checks; 28 API checks; 10,246
-complete Cantonese catalogue entries. These are not native runtime or release proof.
-
-Hosted native compilation and Squirrel packaging of 6eb975873 passed in
-run 42414873193. Its earlier image-publication job failed authentication; the
-separate repaired run 42415338522 succeeded at source 8287f75cb. The published
-image was pulled locally and Compose is pinned to its verified digest. Real
-host.bat detached and log modes passed startup, pause/follow/quit and continued
-health after exit. Health also passed from a second LAN host.
-
-Local bootstrap now correctly rejects MSVC 14.44. After fresh installation and
-modification could not restore an incomplete registration with missing payload,
-the targeted vendor repair succeeded. Root bootstrap verifies the project-owned
-VS2026 registration is complete and the toolchain is ready. Unrelated IDEs remain
-unchanged. Reviewed sound controls at fa3ea7861 are integrated; native sound proof
-is pending. Two new Cantonese strings and the documentation bundle were updated.
-
-Next: build the combined candidate, verify explicit startup retry and the remaining
-Preferences visual matrix through an allowed route, verify personal wording without exposing
-private data, verify installed native hosting/pairing, and complete companion and
-full feature acceptance. Finish the scoped compiler bootstrap recovery separately.
-The accepted installed application has not yet been updated. Main integration,
-release publication, deployed documentation and final cleanup remain unfinished.
-
-Publication scanning remains incomplete because of existing technical-identifier
-findings, nested-repository coverage and a full-workflow Markdown-parser failure.
-Preserve that limitation; do not claim a clean full scan from supplementary checks.
-The two candidate hidden runs and their desktops were closed normally. Retain any
-separate baseline teardown receipt as an independent state, without assuming closure.
-Status Hub delivery through the authenticated host-local SSH client remains pending.
-
-Keep unrelated work and user projects intact. No force pushes, public private-wording
-payloads, host power/login actions or unverified completion claims. The active goal
-remains unfinished; account allowance is unknown. No cleanup authority extends beyond
-proven task-owned, preserved, integrated candidates.
+Keep user projects, settings and unrelated work intact. No force pushes, private
+wording publication, host power/login actions or cleanup of unproven candidates.
+Integrate completed contributions, verify the remote main SHA, and retain every
+unverified release, deployment and runtime obligation explicitly.
