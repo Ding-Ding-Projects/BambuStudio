@@ -16,17 +16,26 @@ function validateEnvelope(value) {
 
 // Keeps process ownership in the backend. This ledger never acts on a PID.
 class OperationLedger {
-  constructor() { this.current = null; }
+  constructor({ capacity = 128 } = {}) {
+    if (!Number.isSafeInteger(capacity) || capacity < 1 || capacity > 128) throw new Error('invalid_capacity');
+    this.current = null;
+    this.capacity = capacity;
+    this.receipts = new Map();
+  }
 
   start(requestId) {
     if (!UUID.test(requestId)) throw new Error('invalid_request');
-    if (this.current?.requestId === requestId) return this.view();
+    if (this.receipts.has(requestId)) return this.view(0, this.receipts.get(requestId));
     if (this.current && !this.current.terminal) throw new Error('operation_unresolved');
+    // Never evict an identifier and accidentally reinterpret its replay as new.
+    // A full session remains inspectable but cannot accept another start.
+    if (this.receipts.size >= this.capacity) throw new Error('session_capacity');
     this.current = {
       id: randomUUID(), requestId, workerActive: true, cancelRequested: false,
       sequence: 0, events: [], terminal: null
     };
     this.event('inspect', 'active');
+    this.receipts.set(requestId, this.current);
     return this.view();
   }
 
@@ -67,10 +76,10 @@ class OperationLedger {
     return this.view();
   }
 
-  view(afterSequence = 0) {
+  view(afterSequence = 0, operation = this.current) {
     if (!Number.isSafeInteger(afterSequence) || afterSequence < 0) throw new Error('invalid_cursor');
-    if (!this.current) return null;
-    const op = this.current;
+    if (!operation) return null;
+    const op = operation;
     return { operationId: op.id, workerActive: op.workerActive, cancelRequested: op.cancelRequested,
       sequence: op.sequence, events: op.events.filter(e => e.sequence > afterSequence).map(e => ({ ...e })),
       terminal: op.terminal ? { ...op.terminal } : null };

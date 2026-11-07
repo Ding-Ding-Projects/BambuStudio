@@ -8,7 +8,7 @@ output, command arguments, a result file, or a transcript.
 #>
 [CmdletBinding()]
 param(
-    [ValidateSet('Choose', 'Detached', 'Logs')][string] $Mode = 'Choose',
+    [ValidateSet('Choose', 'Detached', 'Logs', 'Library')][string] $Mode = 'Choose',
     [string] $PairingPipe = '',
     [Parameter(ValueFromRemainingArguments = $true)][string[]] $Options
 )
@@ -134,6 +134,8 @@ function Show-ServiceLogs([string[]] $Urls) {
         }
     }
 }
+
+if ($Mode -eq 'Library') { return }
 
 try {
     foreach ($option in $Options) {

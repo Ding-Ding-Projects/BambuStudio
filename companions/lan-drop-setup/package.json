@@ -1,0 +1,23 @@
+{
+  "name": "bambustudio-lan-drop-setup",
+  "version": "1.0.1",
+  "private": true,
+  "description": "Portable setup companion for the Bambu Studio LAN model drop service",
+  "author": "Ding Ding Projects",
+  "license": "AGPL-3.0",
+  "main": "main.cjs",
+  "devDependencies": {
+    "electron": "45.2.3",
+    "electron-builder": "26.18.0"
+  },
+  "build": {
+    "appId": "org.dingdingprojects.bambustudio.lan-drop-setup",
+    "productName": "Bambu Studio LAN Drop Setup",
+    "artifactName": "BambuStudio-LAN-Drop-Setup-${version}-${arch}.${ext}",
+    "asar": true,
+    "files": ["*.cjs", "!*.test.cjs", "ui/**", "package.json"],
+    "extraResources": [{ "from": "../../lan-model-drop", "to": "lan-model-drop", "filter": ["host.ps1", "wizard-host.ps1", "compose.yaml"] }],
+    "directories": { "output": "dist" },
+    "win": { "target": [{ "target": "portable", "arch": ["x64"] }], "signAndEditExecutable": false }
+  }
+}

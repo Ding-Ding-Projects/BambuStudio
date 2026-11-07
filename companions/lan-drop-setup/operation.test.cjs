@@ -46,3 +46,20 @@ test('bounded progress snapshots cannot mutate operation ownership', () => {
   assert.equal(ledger.view().events[0].operationId, id);
   assert.throws(() => ledger.view(-1), /invalid_cursor/);
 });
+
+test('completed request replay survives later operations and capacity exhaustion', () => {
+  const ledger = new OperationLedger({ capacity: 2 });
+  const firstRequest = randomUUID(), secondRequest = randomUUID();
+  function complete(request) {
+    const id = ledger.start(request).operationId;
+    ledger.workerExited(id);
+    ledger.reconcile(id, { identityVerified: true, dataPreserved: true, serviceState: 'running', healthy: true });
+    return id;
+  }
+  const first = complete(firstRequest), second = complete(secondRequest);
+  assert.equal(ledger.start(firstRequest).operationId, first);
+  assert.equal(ledger.start(firstRequest).terminal.outcome, 'succeeded');
+  assert.equal(ledger.view().operationId, second);
+  assert.throws(() => ledger.start(randomUUID()), /session_capacity/);
+  assert.equal(ledger.start(secondRequest).operationId, second);
+});

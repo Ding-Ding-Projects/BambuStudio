@@ -13,7 +13,7 @@ $originalArguments = @($args | ForEach-Object { [string]$_ })
 # named-parameter binding when splatted into an advanced PowerShell script.
 $parameterNames = @{
     BuildMode = 'value'; OutputDirectory = 'value'; DependencyCacheDirectory = 'value'
-    ReleaseNumber = 'value'; PreviousPackageVersion = 'value'
+    ReleaseNumber = 'value'; PreviousPackageVersion = 'value'; Companion = 'value'
     Install = 'switch'; BootstrapOnly = 'switch'; Plan = 'switch'; BuildOnly = 'switch'
 }
 $producerParameters = @{}
@@ -44,6 +44,17 @@ for ($index = 0; $index -lt $originalArguments.Count; $index++) {
         }
     }
     $producerParameters[$name] = $value
+}
+if ($producerParameters.ContainsKey('Companion')) {
+    if ($producerParameters['Companion'] -cne 'LanDropSetup') { throw 'Unsupported companion target.' }
+    foreach ($key in $producerParameters.Keys) {
+        if ($key -notin @('Companion', 'Plan')) { throw "Unsupported companion parameter '$key'." }
+    }
+    $companionArguments = @{ BuildOnly = ([IO.Path]::GetFileName($entry) -ieq 'build.bat') }
+    if ($producerParameters.ContainsKey('Plan')) { $companionArguments['Plan'] = $producerParameters['Plan'] }
+    # This portable producer needs no machine-wide installation or elevation.
+    & (Join-Path $PSScriptRoot 'Build-LanDropSetup.ps1') @companionArguments
+    exit $LASTEXITCODE
 }
 $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
 $principal = [Security.Principal.WindowsPrincipal]::new($identity)
