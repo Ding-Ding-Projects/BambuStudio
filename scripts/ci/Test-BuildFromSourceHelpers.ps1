@@ -375,12 +375,41 @@ public static class BootstrapMSBuildFixture {
         foreach ($name in $environmentNames) { [Environment]::SetEnvironmentVariable($name, $oldEnvironment[$name], 'Process') }
     }
 
+    $registrationProbe = Join-Path $testDir 'registration-vswhere.cmd'
+    Set-Content -LiteralPath $registrationProbe -Encoding Ascii -Value @(
+        '@echo off',
+        'echo %* | findstr /C:"-requires" >nul && exit /b 8',
+        ('type "{0}"' -f $fakeInstancesFile))
+    $ownedTarget = Join-Path $testDir 'owned-missing-payload'
+    $ownedRegistration = @{ installationPath = $ownedTarget; productId = 'Microsoft.VisualStudio.Product.BuildTools'; channelId = 'VisualStudio.18.Release'; isComplete = $false }
+    ConvertTo-Json -InputObject @($ownedRegistration) | Set-Content -LiteralPath $fakeInstancesFile -Encoding Ascii
+    Assert-True (Test-ProjectVisualStudioRegistration -InstallPath $ownedTarget -VsWherePath $registrationProbe) `
+        'An exact incomplete registration with missing payload must select recovery.'
+    Assert-True (-not (Test-ProjectVisualStudioRegistration -InstallPath ($ownedTarget + '-other') -VsWherePath $registrationProbe)) `
+        'Another registered path must never be adopted for recovery.'
+    $ownedRegistration.productId = 'Microsoft.VisualStudio.Product.Community'
+    ConvertTo-Json -InputObject @($ownedRegistration) | Set-Content -LiteralPath $fakeInstancesFile -Encoding Ascii
+    $rejected = $false
+    try { Test-ProjectVisualStudioRegistration -InstallPath $ownedTarget -VsWherePath $registrationProbe | Out-Null } catch { $rejected = $true }
+    Assert-True $rejected 'An unexpected product at the exact target must be preserved without installation.'
+    $ownedRegistration.productId = 'Microsoft.VisualStudio.Product.BuildTools'
+    $ownedRegistration.channelId = 'VisualStudio.18.Preview'
+    ConvertTo-Json -InputObject @($ownedRegistration) | Set-Content -LiteralPath $fakeInstancesFile -Encoding Ascii
+    $rejected = $false
+    try { Test-ProjectVisualStudioRegistration -InstallPath $ownedTarget -VsWherePath $registrationProbe | Out-Null } catch { $rejected = $true }
+    Assert-True $rejected 'An unexpected channel at the exact target must not be adopted.'
+    Set-Content -LiteralPath $fakeInstancesFile -Encoding Ascii -Value '[]'
+    Assert-True (-not (Test-ProjectVisualStudioRegistration -InstallPath $ownedTarget -VsWherePath $registrationProbe)) `
+        'Absent registration must select a fresh installation.'
+
     # Intercept the installer boundary. No download, installation, registration
     # mutation, or elevation takes place in this regression fixture.
     & {
         $script:probeCount = 0
         $script:capturedInstallerArguments = @()
         $script:capturedInstallerUrl = ''
+        $script:registeredTarget = $false
+        function Test-ProjectVisualStudioRegistration { param($InstallPath) return $script:registeredTarget }
         function Test-VisualCppBuildTools { $script:probeCount++; return ($script:probeCount -gt 1) }
         function Get-Winget { throw 'Visual Studio bootstrap must not choose an implicit winget instance.' }
         function Write-BuildLog { param($Message) }
@@ -413,6 +442,19 @@ public static class BootstrapMSBuildFixture {
         $nicknameIndex = [array]::IndexOf($arguments, '--nickname')
         Assert-True ($nicknameIndex -ge 0 -and $arguments[$nicknameIndex + 1].Length -le 10) `
             'The Visual Studio nickname must fit the documented ten-character limit.'
+        Assert-True ($arguments -notcontains 'modify') 'Absent registration must retain the default install operation.'
+        $script:registeredTarget = $true
+        $script:probeCount = 0
+        Install-VisualCppBuildTools -WorkDir $testDir
+        $arguments = $script:capturedInstallerArguments
+        Assert-True ($arguments[0] -eq 'modify' -and $arguments -contains '--channelId' -and
+            $arguments -contains 'VisualStudio.18.Release' -and $arguments -notcontains '--nickname') `
+            'Registered recovery must use modify with its exact channel and no install-only nickname.'
+        Assert-True ($arguments -contains '--norestart' -and $arguments -contains '--wait' -and
+            $arguments -contains 'Microsoft.VisualStudio.Component.VC.Tools.x86.x64' -and
+            $arguments -notcontains '--remove' -and $arguments -notcontains '--force') `
+            'Recovery must retain compiler acquisition without removal, forced closure, or restart.'
+
     }
 
     $payloadDir = Join-Path $testDir 'payload'

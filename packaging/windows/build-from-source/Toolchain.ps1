@@ -479,6 +479,36 @@ function Test-VisualCppBuildTools {
         $null -ne (Get-WindowsSdkVersion -Roots $WindowsSdkRoots))
 }
 
+function Test-ProjectVisualStudioRegistration {
+    param([Parameter(Mandatory)][string] $InstallPath, [string] $VsWherePath)
+    if ([string]::IsNullOrWhiteSpace($VsWherePath)) {
+        $VsWherePath = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
+    }
+    if (-not (Test-Path -LiteralPath $VsWherePath -PathType Leaf)) { return $false }
+    # Registration, not readiness: include incomplete instances and do not require
+    # compiler components or an existing payload directory during recovery.
+    $output = & $VsWherePath -all -prerelease -products * -format json -utf8 2>$null
+    if ($LASTEXITCODE -ne 0) { throw 'Visual Studio registration discovery failed; no installer operation was selected.' }
+    try { $instances = @((($output -join "`n") | ConvertFrom-Json -ErrorAction Stop)) }
+    catch { throw 'Visual Studio registration discovery returned invalid JSON.' }
+    $target = [IO.Path]::GetFullPath($InstallPath).TrimEnd('\', '/')
+    foreach ($instance in $instances) {
+        if (-not $instance.PSObject.Properties['installationPath']) { continue }
+        $candidate = [string]$instance.installationPath
+        if ([string]::IsNullOrWhiteSpace($candidate) -or -not [IO.Path]::IsPathRooted($candidate)) { continue }
+        try { $candidate = [IO.Path]::GetFullPath($candidate).TrimEnd('\', '/') } catch { continue }
+        if (-not [string]::Equals($candidate, $target, [StringComparison]::OrdinalIgnoreCase)) { continue }
+        if (-not $instance.PSObject.Properties['productId'] -or
+            -not $instance.PSObject.Properties['channelId'] -or
+            $instance.productId -ne 'Microsoft.VisualStudio.Product.BuildTools' -or
+            $instance.channelId -ne 'VisualStudio.18.Release') {
+            throw 'The project build-tools path is registered to an unexpected product or channel; preserving it unchanged.'
+        }
+        return $true
+    }
+    return $false
+}
+
 function Install-VisualCppBuildTools {
     param([string] $WorkDir)
     if (Test-VisualCppBuildTools) { return }
@@ -500,12 +530,16 @@ function Install-VisualCppBuildTools {
     # Keep the registered compiler outside that directory, even before the first
     # application install. Otherwise Setup attempts to delete protected VS files.
     $installPath = Join-Path $env:LOCALAPPDATA 'BambuBuildTools\VS2026'
-    Write-BuildLog "Installing Visual Studio 2026 Build Tools at '$installPath'. Elevation may be required."
+    $operationArguments = @('--nickname', 'BambuMD3')
+    if (Test-ProjectVisualStudioRegistration -InstallPath $installPath) {
+        $operationArguments = @('modify', '--channelId', 'VisualStudio.18.Release')
+    }
+    Write-BuildLog "Provisioning Visual Studio 2026 Build Tools at '$installPath'. Elevation may be required."
 
     Invoke-SilentInstaller `
         -Url 'https://aka.ms/vs/stable/vs_buildtools.exe' `
         -FileName 'vs_BuildTools.exe' `
-        -Arguments ($addSet + @('--installPath', "`"$installPath`"", '--nickname', 'BambuMD3', '--quiet', '--wait', '--norestart')) `
+        -Arguments ($operationArguments + $addSet + @('--installPath', "`"$installPath`"", '--quiet', '--wait', '--norestart')) `
         -WorkDir $WorkDir `
         -TrustedPublishers $script:VisualStudioTrustedPublishers
 
