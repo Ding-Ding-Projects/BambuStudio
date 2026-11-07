@@ -941,6 +941,8 @@ list(APPEND SLIC3R_GUI_SOURCES
     GUI/ModelCreator/ModelCreatorDialog.cpp
     GUI/ModelCreator/ModelCreatorDialog.hpp
     GUI/LayoutProbe.cpp
+    GUI/PreferencesGeometryProbe.cpp
+    GUI/PreferencesGeometryProbe.hpp
     GUI/LayoutProbe.hpp
     GUI/LanguageMode.cpp
     GUI/PersonalVocabulary.cpp

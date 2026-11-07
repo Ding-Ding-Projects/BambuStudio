@@ -1,4 +1,5 @@
 #include "AutomationBridge.hpp"
+#include "PreferencesGeometryProbe.hpp"
 #include "LocalCapabilities/NativeCapabilityDispatch.hpp"
 #include "GUI_App.hpp"
 #include "Plater.hpp"
@@ -205,6 +206,10 @@ struct AutomationBridge::State : std::enable_shared_from_this<AutomationBridge::
             catch (const LocalCapabilities::Rejected& error) { throw Rejected(error.what(), "Local capability request was rejected"); }
         }
         if (local_capabilities_only) throw Rejected("operation_unavailable", "This listener accepts only local capabilities");
+        if (op == "preferences_geometry") {
+            if (!a.empty()) throw Rejected("invalid_arguments", "Preferences geometry accepts no arguments");
+            return PreferencesGeometryProbe::snapshot();
+        }
 #ifdef _WIN32
         struct LeaseRelease { State* state; ~LeaseRelease() {for(auto h:state->path_leases) CloseHandle(h);state->path_leases.clear();} } leases{this};
 #endif

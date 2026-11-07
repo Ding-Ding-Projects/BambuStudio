@@ -1,6 +1,7 @@
 #include <wx/wrapsizer.h>
 #include "Preferences.hpp"
 #include "PreferencesGeometry.hpp"
+#include "PreferencesGeometryProbe.hpp"
 #include "PreferencesSearchTraversal.hpp"
 #include "PersonalVocabulary.hpp"
 #include "VocabularyDrop.hpp"
@@ -1805,6 +1806,7 @@ void PreferencesDialog::create()
 
     SetSizer(main_sizer);
     Layout();
+    PreferencesGeometryProbe::bind(this, content_card, m_book, m_search, m_tabbar);
 }
 
 // Preferences geometry is independent of page content and stored in DIP.
