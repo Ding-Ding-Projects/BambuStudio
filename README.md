@@ -4,6 +4,8 @@ Bambu Studio is a feature-rich slicer for Bambu Lab printers: project-based work
 
 LAN model sharing now accepts direct uploads without a sender code. Use [the hosting guide](docs/features/application-integration/lan-model-drop-site.md) to start the service. [Current verification and remaining work](HANDOFF.md) cover the published service, startup recovery, resizable Preferences and personal wording.
 
+[Base64 file conversion](docs/features/converter/base64-files.md) now has same-folder queue targets, filename restoration, collision avoidance and SHA-256 round-trip checks in source. Native interface and packaged-worker acceptance remain pending.
+
 - **Install (Windows only):** the [latest installer](https://github.com/Ding-Ding-Projects/BambuStudio/releases/latest/download/Setup.exe) is a per-user Squirrel.Windows setup that needs no administrator elevation. It is unsigned; check the [SHA-256 file](https://github.com/Ding-Ding-Projects/BambuStudio/releases/latest/download/Setup.exe.sha256) before running it. macOS and Linux were removed from this tree; cross-platform builds remain upstream at [Bambu Lab](https://github.com/bambulab/BambuStudio/releases/).
 - **Site:** [ding-ding-projects.github.io/BambuStudio](https://ding-ding-projects.github.io/BambuStudio/), a tabbed design reference and changelog viewer.
 - **Docs:** [feature documentation](docs/README.md) · [wiki](https://github.com/Ding-Ding-Projects/BambuStudio/wiki) · [roadmap](ROADMAP.md) · [handoff](HANDOFF.md) · [continuation prompt](CLOSEOUT_PROMPT.md).

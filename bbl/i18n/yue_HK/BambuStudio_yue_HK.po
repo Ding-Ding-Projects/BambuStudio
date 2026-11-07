@@ -50526,3 +50526,78 @@ msgstr "呢個傳送伺服器要更新先支援直接傳送。請喺佢嘅主機
 #. review-status: agent-drafted
 msgid "Waiting for the drop server connection. %1%"
 msgstr "等緊連接傳送伺服器。%1%"
+
+#. reviewed-category: converter
+#. review-status: agent-drafted
+msgid "Base64 output was verified by SHA-256 round trip and written without replacing existing files."
+msgstr "Base64 輸出已通過 SHA-256 來回轉換驗證，並已寫入，冇取代現有檔案。"
+
+#. reviewed-category: converter
+#. review-status: agent-drafted
+msgid "SHA-256 verification is unavailable. No output was published."
+msgstr "SHA-256 驗證未能使用，未有產生輸出檔案。"
+
+#. reviewed-category: converter
+#. review-status: agent-drafted
+msgid "The data URL must contain a bounded MIME header and canonical Base64 data."
+msgstr "資料網址必須包含長度受限制嘅 MIME 標頭同標準 Base64 資料。"
+
+#. reviewed-category: converter
+#. review-status: agent-drafted
+msgid "Too many numbered output names already exist. No file was replaced."
+msgstr "已有太多帶編號嘅輸出檔名，冇檔案被取代。"
+
+#. reviewed-category: converter
+#. review-status: agent-drafted
+msgid "Adding same-folder Base64 files. Run the queue to write verified outputs."
+msgstr "正加入同一資料夾嘅 Base64 檔案。執行佇列即可寫入經驗證嘅輸出。"
+
+#. reviewed-category: converter
+#. review-status: agent-drafted
+msgid "Base64 text (*.txt;*.b64;*.base64)|*.txt;*.b64;*.base64"
+msgstr "Base64 文字 (*.txt;*.b64;*.base64)|*.txt;*.b64;*.base64"
+
+#. reviewed-category: converter
+#. review-status: agent-drafted
+msgid "Choose Base64 files to decode"
+msgstr "揀要解碼嘅 Base64 檔案"
+
+#. reviewed-category: converter
+#. review-status: agent-drafted
+msgid "Choose files to encode"
+msgstr "揀要編碼嘅檔案"
+
+#. reviewed-category: converter
+#. review-status: agent-drafted
+msgid "Decode files beside originals"
+msgstr "喺原檔案旁邊建立解碼檔案"
+
+#. reviewed-category: converter
+#. review-status: agent-drafted
+msgid "Encode files beside originals"
+msgstr "喺原檔案旁邊建立編碼檔案"
+
+#. reviewed-category: converter
+#. review-status: agent-drafted
+msgid "Select a completed output that still exists."
+msgstr "揀一個已完成而且仍然存在嘅輸出檔案。"
+
+#. reviewed-category: converter
+#. review-status: agent-drafted
+msgid "Select between 1 and 1000 files."
+msgstr "請揀 1 至 1000 個檔案。"
+
+#. reviewed-category: converter
+#. review-status: agent-drafted
+msgid "Show selected output in folder"
+msgstr "喺資料夾顯示所選輸出"
+
+#. reviewed-category: converter
+#. review-status: agent-drafted
+msgid "Written path"
+msgstr "已寫入路徑"
+
+#. reviewed-category: converter
+#. review-status: agent-drafted
+msgid "Same-folder Base64 files: pick or drop files, then run the queue. Canonical padded Base64 only; 16 MiB source or decoded-file limit. Encoded inputs may be larger. Existing files are never replaced."
+msgstr "同一資料夾嘅 Base64 檔案：揀選或拖入檔案，再執行佇列。只接受帶標準補位嘅 Base64；原檔案或解碼後檔案上限係 16 MiB，編碼輸入可以較大。現有檔案唔會被取代。"

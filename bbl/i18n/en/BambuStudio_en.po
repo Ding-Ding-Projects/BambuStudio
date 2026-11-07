@@ -32567,3 +32567,69 @@ msgstr ""
 
 msgid "The previous project could not be restored. Its tab and file have been kept. Select that tab to retry, or use File > Open to choose another project."
 msgstr ""
+
+msgid "Base64 output was verified by SHA-256 round trip and written without replacing existing files."
+msgstr ""
+
+msgid "SHA-256 verification is unavailable. No output was published."
+msgstr ""
+
+msgid "The data URL must contain a bounded MIME header and canonical Base64 data."
+msgstr ""
+
+msgid "Too many numbered output names already exist. No file was replaced."
+msgstr ""
+
+msgid "Adding same-folder Base64 files. Run the queue to write verified outputs."
+msgstr ""
+
+msgid "Base64 text (*.txt;*.b64;*.base64)|*.txt;*.b64;*.base64"
+msgstr ""
+
+msgid "Choose Base64 files to decode"
+msgstr ""
+
+msgid "Choose files to encode"
+msgstr ""
+
+msgid "Decode files beside originals"
+msgstr ""
+
+msgid "Encode files beside originals"
+msgstr ""
+
+msgid "Select a completed output that still exists."
+msgstr ""
+
+msgid "Select between 1 and 1000 files."
+msgstr ""
+
+msgid "Show selected output in folder"
+msgstr ""
+
+msgid "Written path"
+msgstr ""
+
+
+msgid "Same-folder Base64 files: pick or drop files, then run the queue. Canonical padded Base64 only; 16 MiB source or decoded-file limit. Encoded inputs may be larger. Existing files are never replaced."
+msgstr ""
+
+msgid "Sound effects"
+msgstr ""
+
+msgid "Play short sounds after wording changes. Quiet narration, quiet hours and Focus Assist also silence these sounds. System volume and mute still apply."
+msgstr ""
+
+msgid "Send them the link, or let them scan the QR code. It opens the drop page, ready to choose and send models."
+msgstr ""
+
+msgid "This drop server needs an update before it supports direct sending. Run host.bat --detached on its host, then test the connection again. Existing models can still be collected."
+msgstr ""
+
+#, possible-boost-format
+msgid "Waiting for the drop server connection. %1%"
+msgstr ""
+
+#, possible-boost-format
+msgid "Or open %1% to choose and send models directly."
+msgstr ""

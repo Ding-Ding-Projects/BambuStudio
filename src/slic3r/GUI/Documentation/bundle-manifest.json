@@ -253,6 +253,16 @@
       "sha256": "727fb475beff03720efe9172780953955d708ff3e2539ad4ad953333ec601faa"
     },
     {
+      "route": "converter/base64-files.md",
+      "title": "Base64 files beside their originals",
+      "sha256": "2e9bac85a32e4e361dee010b3149ac6065c0446ab9f76aa9b68a2d75401c4e50"
+    },
+    {
+      "route": "converter/base64-files.yue_HK.md",
+      "title": "喺原檔旁邊轉換 Base64",
+      "sha256": "6eb7a6e0d02ee60bf2460e9d076c386a690e509dc4dd8d0beae11f9586c26f40"
+    },
+    {
       "route": "converter/pdf-engine.md",
       "title": "Bundled PDF engine",
       "sha256": "13f17ca7e8c47b78cf4aab27025b85e12aaadf79cc1c6554af89f661cb1cb3aa"
@@ -275,12 +285,12 @@
     {
       "route": "converter/README.md",
       "title": "Local file converter",
-      "sha256": "a9968110ed1cac91c7d307384bb4ee1c86e6cc761b07d40bc9f764915da037a6"
+      "sha256": "729cabcc71c9ac7baf11d5b45892dee0304d42014e33754be82b8b3086f57d53"
     },
     {
       "route": "converter/README.yue_HK.md",
       "title": "本機檔案轉換器",
-      "sha256": "4cc44131b58b5fe25bd60dd3f9f03d9d35305359e42c7a9385154adeece5cd77"
+      "sha256": "5448a7cefe57323a11de42c288da5840a39af185ba2af552c57b4eead5a55a2d"
     },
     {
       "route": "design-system/ams-drying-atlas.md",
@@ -2120,7 +2130,7 @@
       "bytes": 16430
     }
   ],
-  "bundle_sha256": "d57b898e4ec5cbe175f15ec1db8669a5d2b8063fdbfb4bdeb051e3926a33cf17",
+  "bundle_sha256": "06fcc85cb3d43d0e60035ca963dd5036e393e95c239f66b8c0cd58ab55c01479",
   "unavailable_references": [
     {
       "source": "api/README.md",

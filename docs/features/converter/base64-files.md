@@ -3,7 +3,7 @@
 Open the local file converter from navigation or the command palette. Use
 **Encode files beside originals** or **Decode files beside originals** to pick
 up to 1,000 files, or drop them on the corresponding button. Then run the queue.
-These targets use the same verified packaged worker and durable queue as other
+These targets use the same packaged-worker route and durable queue as other
 conversions. They do not use the selected output-folder field.
 
 Encoding `report.pdf` creates `report.pdf.base64.txt` beside the input. Decoding

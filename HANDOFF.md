@@ -1,5 +1,28 @@
 # Bambu Studio handoff
 
+## Base64 file conversion, 7 November 2026
+
+Source candidates `22b63b6c` and `7e5d8657` add explicit picker/drop queue targets,
+original-name restoration, numbered no-overwrite outputs, SHA-256 inverse and
+written-byte verification, actual output paths and native folder selection.
+Independent source review found and closed an encoded-input admission gap and
+a host-specific test-toolchain path. The actual converter core, archive adapter
+and worker compiled with MSVC; 363 assertions passed. Removing inverse hash
+verification and restoring the old encoded-input bound each produced a failing
+regression. Those checks use an in-process executor, not a packaged AppContainer.
+
+The refreshed catalogue compiles 10,267 Cantonese entries, including the 15 new
+labels. The offline article bundle is deterministic and current. Native picker,
+drop, keyboard, layout, folder selection and packaged-worker behavior remain
+unverified. Streaming and additional Base64 variants are unfinished; see the
+[bounded implementation guide](docs/features/converter/base64-files.md).
+
+The earlier priority repairs reached remote main at
+`f1526f80268c67df5a6ff196b865b7b0118412cb`. Its native build/release run
+[42419260043](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/42419260043)
+was still running at 2026-11-07T22:24:03Z. A separate local build remains pinned
+to `4f7039f61`; neither proves this newer Base64 candidate.
+
 ## Candidate startup verification, 7 November 2026
 
 The packaged candidate from source `6eb975873`, with DLL SHA-256

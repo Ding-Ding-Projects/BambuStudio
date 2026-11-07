@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-07 16:11-0500\n"
+"POT-Creation-Date: 2026-11-07 17:22-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -7888,6 +7888,15 @@ msgstr ""
 msgid "PDF title metadata"
 msgstr ""
 
+msgid "Same-folder Base64 files: pick or drop files, then run the queue. Canonical padded Base64 only; 16 MiB source or decoded-file limit. Encoded inputs may be larger. Existing files are never replaced."
+msgstr ""
+
+msgid "Encode files beside originals"
+msgstr ""
+
+msgid "Decode files beside originals"
+msgstr ""
+
 msgid "Output folder (sources keep their names with the chosen extension)"
 msgstr ""
 
@@ -7942,6 +7951,9 @@ msgstr ""
 msgid "Result"
 msgstr ""
 
+msgid "Written path"
+msgstr ""
+
 msgid "Select this page"
 msgstr ""
 
@@ -7953,6 +7965,9 @@ msgstr ""
 
 #, possible-c-format, possible-boost-format
 msgid "Retried: %llu. Not eligible or destination already exists: %llu."
+msgstr ""
+
+msgid "Show selected output in folder"
 msgstr ""
 
 msgid "Export visible results"
@@ -8006,7 +8021,28 @@ msgstr ""
 msgid "Wait for the current operation before adding sources."
 msgstr ""
 
+msgid "Choose files to encode"
+msgstr ""
+
+msgid "Choose Base64 files to decode"
+msgstr ""
+
+msgid "All files (*.*)|*.*"
+msgstr ""
+
+msgid "Base64 text (*.txt;*.b64;*.base64)|*.txt;*.b64;*.base64"
+msgstr ""
+
+msgid "Select between 1 and 1000 files."
+msgstr ""
+
 msgid "Select an enabled adapter first. Unavailable rows explain their missing packaged adapter."
+msgstr ""
+
+msgid "Adding same-folder Base64 files. Run the queue to write verified outputs."
+msgstr ""
+
+msgid "Select a completed output that still exists."
 msgstr ""
 
 msgid "Confirm what this conversion changes before adding files. Its disclosure lists what changes or is left out."
@@ -8022,9 +8058,6 @@ msgid "Choose PDFs to merge, in picker order"
 msgstr ""
 
 msgid "Choose source file"
-msgstr ""
-
-msgid "All files (*.*)|*.*"
 msgstr ""
 
 msgid "Select between 2 and 1000 PDFs within the aggregate 16 MiB limit."
@@ -8415,6 +8448,18 @@ msgid "This conversion changes or leaves out data, and its changes were not conf
 msgstr ""
 
 msgid "What this conversion changes is different from what was confirmed, so the file was skipped. Confirm the changes again and add it."
+msgstr ""
+
+msgid "Base64 output was verified by SHA-256 round trip and written without replacing existing files."
+msgstr ""
+
+msgid "The data URL must contain a bounded MIME header and canonical Base64 data."
+msgstr ""
+
+msgid "SHA-256 verification is unavailable. No output was published."
+msgstr ""
+
+msgid "Too many numbered output names already exist. No file was replaced."
 msgstr ""
 
 msgid "The destination already exists. It was not replaced."
@@ -12843,6 +12888,12 @@ msgid "Narrator"
 msgstr ""
 
 msgid "Local speech is serialized. Voice network capability is unknown."
+msgstr ""
+
+msgid "Sound effects"
+msgstr ""
+
+msgid "Play short sounds after wording changes. Quiet narration, quiet hours and Focus Assist also silence these sounds. System volume and mute still apply."
 msgstr ""
 
 msgid "Enable narrator"
@@ -29084,12 +29135,6 @@ msgstr ""
 msgid "Kept protected with Windows data protection"
 msgstr ""
 
-msgid "Drop code"
-msgstr ""
-
-msgid "New code stops older links"
-msgstr ""
-
 msgid "Local status API, off by default"
 msgstr ""
 
@@ -30108,7 +30153,7 @@ msgstr ""
 msgid "Start the local server to set up reception on this computer. Docker must be installed and running."
 msgstr ""
 
-msgid "Send them the link, or let them scan the QR code. It opens the drop site with the code filled in."
+msgid "Send them the link, or let them scan the QR code. It opens the drop page, ready to choose and send models."
 msgstr ""
 
 msgid "LAN model drop is off. Switch it on to get a link to share."
@@ -30121,9 +30166,6 @@ msgid "Invite link"
 msgstr ""
 
 msgid "Copy link"
-msgstr ""
-
-msgid "New link"
 msgstr ""
 
 msgid "Show larger QR code"
@@ -30177,6 +30219,9 @@ msgstr ""
 msgid "Protected key storage is unavailable, so automatic local pairing cannot be used."
 msgstr ""
 
+msgid "This drop server needs an update before it supports direct sending. Run host.bat --detached on its host, then test the connection again. Existing models can still be collected."
+msgstr ""
+
 msgid "This computer has no private local network address to put in a link. Set the drop site address to an address the others can open."
 msgstr ""
 
@@ -30185,20 +30230,11 @@ msgid "The link appears once Bambu Studio is connected to the drop site. %1%"
 msgstr ""
 
 #, possible-boost-format
-msgid "Waiting for the drop site to send its code. %1%"
-msgstr ""
-
-msgid "The drop site's code is fixed by DROP_CODE, so New link cannot change it. Change DROP_CODE on the drop site to stop older links."
-msgstr ""
-
-msgid "The drop site did not make a new code. Older links still work."
+msgid "Waiting for the drop server connection. %1%"
 msgstr ""
 
 #, possible-boost-format
-msgid "Or open %1% and type the drop code %2%."
-msgstr ""
-
-msgid "New link ready. Older links no longer work."
+msgid "Or open %1% to choose and send models directly."
 msgstr ""
 
 #, possible-boost-format
@@ -30262,18 +30298,6 @@ msgid "Station key removed."
 msgstr ""
 
 msgid "The station key could not be saved."
-msgstr ""
-
-msgid "New code"
-msgstr ""
-
-msgid "Not known yet"
-msgstr ""
-
-msgid "The code is fixed by DROP_CODE on the drop site."
-msgstr ""
-
-msgid "Make a new code; links with the old one stop working."
 msgstr ""
 
 msgid "People on your local network can send 3D models to this computer through the LAN drop site that runs in Docker. Use Start local drop server below to set it up on this computer, or keep an existing remote station. Each model waits for you: nothing is opened, sliced or printed until you choose Open."

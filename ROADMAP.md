@@ -1,5 +1,12 @@
 # Roadmap
 
+## Same-folder Base64 files, 7 November 2026
+
+- [x] Verify native core file naming, no-overwrite publication, inverse/write hashes and queued 16 MiB round trips with 363 assertions and two failing mutations.
+- [x] Translate the 15 new labels, compile the 10,267-entry catalogue and regenerate the offline articles.
+- [ ] Verify the implemented picker/drop targets, actual output selection and folder action in the built native interface and packaged worker.
+- [ ] Implement and verify streaming, additional Base64 variants, previews and the remaining complete-toolkit controls.
+
 ## Candidate recovery acceptance, 7 November 2026
 
 - [x] Verify synthetic invalid-3MF recovery on packaged source `6eb975873`, retaining the failed tab and opening Untitled, then restart without repeated automatic loading.
