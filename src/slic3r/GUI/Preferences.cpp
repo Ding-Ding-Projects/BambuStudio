@@ -4003,8 +4003,8 @@ ResetWarningsDialog::ResetWarningsDialog(wxWindow *parent) : DPIDialog(parent, w
     det_sizer->Add(det_text, 0, wxLEFT | wxRIGHT | wxTOP, FromDIP(12));
     // The two answers that "Don't show again" can remember on the printer prompts. They sit in a
     // label of their own so the list above keeps its catalogue entry and its translations.
-    auto *det_prompts = new Label(m_details_panel, _L("- Sync nozzle and AMS information before slicing") + "\n" +
-                                                   _L("- New filament badge and prompt"));
+    auto *det_prompts = new Label(m_details_panel, PersonalVocabulary::remember_composed(
+        {_L("- Sync nozzle and AMS information before slicing"), _L("- New filament badge and prompt")}, "\n"));
     det_prompts->SetForegroundColour(ThemeColor::TextSecondary);
     det_prompts->SetFont(::Label::Body_13);
     det_sizer->Add(det_prompts, 0, wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(12));

@@ -48,7 +48,11 @@ for ($index = 0; $index -lt $originalArguments.Count; $index++) {
 $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
 $principal = [Security.Principal.WindowsPrincipal]::new($identity)
 $planOnly = $producerParameters.ContainsKey('Plan') -and $producerParameters['Plan']
-if (-not $planOnly -and -not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+$silent = $env:SILENT -eq '1' -or $originalArguments -contains '/s' -or $originalArguments -contains '--silent'
+if ($silent -and -not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+    Write-Host 'Silent build continues without administrator rights; required elevation will remain incomplete.'
+}
+if (-not $planOnly -and -not $silent -and -not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
     # Serialize the complete argument array as data. The elevated host calls
     # the original entry point with an array, never an interpolated cmd /c string.
     $handoff = @{ entry = $entry; arguments = $originalArguments } | ConvertTo-Json -Compress

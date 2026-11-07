@@ -16,16 +16,20 @@ param([switch] $Plan, [switch] $BuildOnly, [string] $OutputDirectory, [int] $Rel
 exit 37
 '@ | Set-Content (Join-Path $scripts 'Invoke-OneClickBuild.ps1')
     foreach ($entry in @('build.bat', 'build-installer.bat')) {
+      foreach ($planning in @($true, $false)) {
         $receipt = Join-Path $fixture ($entry + ' receipt.json')
-        & (Join-Path $fixture $entry) /s -Plan -OutputDirectory $receipt -ReleaseNumber 238 -PreviousPackageVersion '2.8.4814'
+        $arguments = @('/s', '-OutputDirectory', $receipt, '-ReleaseNumber', '238', '-PreviousPackageVersion', '2.8.4814')
+        if ($planning) { $arguments += '-Plan' }
+        & (Join-Path $fixture $entry) @arguments
         Assert-True ($LASTEXITCODE -eq 37) "$entry lost the child exit code."
         $data = Get-Content $receipt -Raw | ConvertFrom-Json
-        Assert-True ($data.Plan -and $data.ReleaseNumber -eq 238 -and $data.PreviousPackageVersion -eq '2.8.4814') "$entry lost named arguments."
+        Assert-True ($data.Plan -eq $planning -and $data.ReleaseNumber -eq 238 -and $data.PreviousPackageVersion -eq '2.8.4814') "$entry lost named arguments."
         Assert-True ($data.BuildOnly -eq ($entry -eq 'build.bat')) "$entry selected the wrong production route."
+      }
     }
 } finally {
     $tempRoot = [IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd('\') + '\'
     if (-not $fixture.StartsWith($tempRoot, [StringComparison]::OrdinalIgnoreCase)) { throw 'Fixture cleanup escaped the temporary directory.' }
     Remove-Item -LiteralPath $fixture -Recurse -Force
 }
-Write-Host 'Build entrypoint forwarding checks passed (6 assertions; stub producer only).'
+Write-Host 'Build entrypoint forwarding checks passed (12 assertions; plan and silent execution with stub producer only).'

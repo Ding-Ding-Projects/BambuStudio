@@ -935,6 +935,8 @@ if (WIN32)
         PATTERN ".gitignore" EXCLUDE
         PATTERN "node_modules" EXCLUDE
         PATTERN "*.test.mjs" EXCLUDE)
+    install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/host.bat" "${CMAKE_CURRENT_SOURCE_DIR}/compose.yaml"
+        DESTINATION "${CMAKE_INSTALL_PREFIX}")
 elseif (SLIC3R_FHS)
     # CMAKE_INSTALL_FULL_DATAROOTDIR: read-only architecture-independent data root (share)
     set(SLIC3R_FHS_RESOURCES "${CMAKE_INSTALL_FULL_DATAROOTDIR}/BambuStudio")
