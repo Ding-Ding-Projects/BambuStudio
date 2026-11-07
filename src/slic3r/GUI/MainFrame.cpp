@@ -24,6 +24,8 @@
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/property_tree/ptree.hpp>
+#include <boost/nowide/fstream.hpp>
+#include <nlohmann/json.hpp>
 
 #include "libslic3r/Print.hpp"
 #include "libslic3r/Polygon.hpp"
@@ -1576,6 +1578,44 @@ bool restore_project_tab_document(Plater* plater, ProjectTabBar* tabbar, const P
     tabbar->SetActiveDirty(tab.dirty);
     return true;
 }
+
+// AppConfig::save() does not report stream/rename failures. Verify the bounded
+// on-disk JSON before allowing an automatic load that could fail or crash.
+bool persist_project_tab_restore_marker(AppConfig* cfg, const std::string& target)
+{
+    if (!cfg)
+        return false;
+    try {
+        cfg->set("project_tab_recovery", "pending_path", target);
+        cfg->save();
+        constexpr std::size_t limit = 16 * 1024 * 1024;
+        boost::nowide::ifstream input(cfg->config_path(), std::ios::binary);
+        if (!input) return false;
+        std::string bytes(limit + 1, '\0');
+        input.read(&bytes[0], static_cast<std::streamsize>(bytes.size()));
+        const auto count = input.gcount();
+        if (input.bad() || count <= 0 || static_cast<std::size_t>(count) > limit)
+            return false;
+        bytes.resize(static_cast<std::size_t>(count));
+        // Windows appends a checksum line after the JSON object.
+        const auto end = bytes.rfind('}');
+        if (end == std::string::npos) return false;
+        const auto saved = nlohmann::json::parse(bytes.begin(), bytes.begin() + end + 1);
+        return saved.at("project_tab_recovery").at("pending_path").get<std::string>() == target;
+    } catch (...) {
+        // Do not log configuration contents or private paths.
+        return false;
+    }
+}
+
+void clear_project_tab_restore_marker(const std::string& restored_path)
+{
+    AppConfig* cfg = wxGetApp().app_config;
+    if (cfg && !restored_path.empty() &&
+        cfg->get("project_tab_recovery", "pending_path") == restored_path &&
+        !persist_project_tab_restore_marker(cfg, ""))
+        BOOST_LOG_TRIVIAL(warning) << "Project recovery marker could not be cleared.";
+}
 } // namespace
 
 void MainFrame::place_project_tabbar()
@@ -1640,9 +1680,18 @@ void MainFrame::switch_project_tab(int target)
     ProjectTab&       tgt                  = m_project_tabbar->TabAt(target);
     const bool        loaded_from_snapshot = !tgt.snapshot_path.empty();
     const std::string load_path            = loaded_from_snapshot ? tgt.snapshot_path : tgt.file_path;
-    const bool loaded = !load_path.empty()
-        ? m_plater->load_snapshot_from(load_path)
-        : m_plater->new_project(/*skip_confirm=*/true, /*silent=*/true) != wxID_CANCEL;
+    bool loaded = false;
+    if (loaded_from_snapshot)
+        loaded = m_plater->load_snapshot_from(load_path);
+    else if (!load_path.empty()) {
+        try {
+            m_plater->load_project(wxString::FromUTF8(load_path), "-", &loaded,
+                                  /*skip_close_confirmation=*/true);
+        } catch (...) {
+            BOOST_LOG_TRIVIAL(error) << __FUNCTION__ << ": selected tab load threw";
+        }
+    } else
+        loaded = m_plater->new_project(/*skip_confirm=*/true, /*silent=*/true) != wxID_CANCEL;
     if (!loaded) {
         const bool restored = restore_project_tab_document(m_plater, m_project_tabbar, outgoing);
         BOOST_LOG_TRIVIAL(error) << __FUNCTION__ << ": incoming tab load failed; outgoing restored=" << restored;
@@ -1668,6 +1717,7 @@ void MainFrame::switch_project_tab(int target)
     m_project_tabbar->SetActiveDirty(tgt.dirty);
     update_title();
     m_project_tabbar->SaveToConfig();
+    clear_project_tab_restore_marker(load_path);
 }
 
 void MainFrame::close_project_tab(int index)
@@ -1968,18 +2018,17 @@ void MainFrame::open_project_in_tab(const wxString& filename)
     m_project_tabbar->AddTab(into_u8(filename), t, /*activate=*/true);
     update_title();
     m_project_tabbar->SaveToConfig();
+    clear_project_tab_restore_marker(into_u8(filename));
 }
 
 void MainFrame::reconcile_initial_project_tab()
 {
     if (!m_plater || !m_project_tabbar)
         return;
-    // From here on the active-tab label/dirty sync in update_title() is live.
-    m_project_tabs_ready = true;
-
     int active = m_project_tabbar->GetActive();
     if (active < 0) {
         if (m_project_tabbar->Count() == 0) {
+            m_project_tabs_ready = true;
             update_title();
             return;
         }
@@ -1989,19 +2038,75 @@ void MainFrame::reconcile_initial_project_tab()
 
     // If the app already established a real document at startup (command-line open,
     // recovery, etc.), keep it — update_title() below relabels the active tab to match.
-    const bool live_has_file = !m_plater->get_project_filename().IsEmpty();
-    if (!live_has_file) {
+    const wxString live_filename = m_plater->get_project_filename(".3mf");
+    const bool live_has_document = !live_filename.IsEmpty() ||
+        !m_plater->model().objects.empty() || m_plater->is_project_dirty();
+    if (live_has_document) {
+        // CLI imports may have geometry but no filename. Give the real live
+        // document its own tab rather than relabeling a different saved target.
+        const std::string live_path = into_u8(live_filename);
+        int matching = -1;
+        if (!live_path.empty()) {
+            for (int i = 0; i < m_project_tabbar->Count(); ++i)
+                if (m_project_tabbar->TabAt(i).file_path == live_path &&
+                    m_project_tabbar->TabAt(i).snapshot_path.empty()) {
+                    matching = i;
+                    break;
+                }
+        }
+        if (matching >= 0)
+            m_project_tabbar->SetActive(matching);
+        else
+            m_project_tabbar->AddTab(live_path,
+                m_plater->get_project_name().IsEmpty() ? _L("Untitled") : m_plater->get_project_name(), true);
+        m_project_tabbar->SetActiveDirty(m_plater->is_project_dirty());
+        m_project_tabbar->SaveToConfig();
+        clear_project_tab_restore_marker(live_path);
+    } else {
         // Fresh Untitled document: lazily restore the tab the user left on last session.
-        ProjectTab&       t         = m_project_tabbar->TabAt(active);
+        const ProjectTab  t         = m_project_tabbar->TabAt(active);
         const std::string load_path = t.snapshot_path.empty() ? t.file_path : t.snapshot_path;
         if (!load_path.empty()) {
+            AppConfig* cfg = wxGetApp().app_config;
+            const bool previously_interrupted = cfg &&
+                cfg->get("project_tab_recovery", "pending_path") == load_path;
+            bool restored = false;
             boost::system::error_code ec;
-            if (boost::filesystem::exists(boost::filesystem::path(load_path), ec)) {
-                TabOpGuard guard(m_project_tab_switching);
-                m_plater->load_snapshot_from(load_path);
+            if (!previously_interrupted &&
+                boost::filesystem::exists(boost::filesystem::path(load_path), ec)) {
+                // Persist before entering the loader: a crash must not create an
+                // automatic retry loop on the next launch. The target stays in
+                // the tab layout and is never deleted or replaced here.
+                if (persist_project_tab_restore_marker(cfg, load_path)) {
+                    TabOpGuard guard(m_project_tab_switching);
+                    restored = restore_project_tab_document(m_plater, m_project_tabbar, t);
+                }
             }
+            if (restored) {
+                if (cfg) cfg->set("project_tab_recovery", "pending_path", "");
+            } else {
+                // Keep the failed tab inactive. This gives the empty Plater its
+                // own identity, so title synchronization and Save cannot overwrite
+                // the retained project's tab or file. Selecting that tab retries
+                // through the normal explicit-switch recovery path.
+                if (m_plater->new_project(/*skip_confirm=*/true, /*silent=*/true) == wxID_CANCEL) {
+                    MessageDialog(this,
+                        _L("An empty recovery project could not be created. The retained project tab has not been changed. Save the current document before trying again."),
+                        _L("Project recovery"), wxOK | wxICON_WARNING).ShowModal();
+                    // Do not synchronize an unestablished document into the
+                    // retained tab after a history-preservation failure.
+                    return;
+                }
+                m_project_tabbar->AddTab("", _L("Untitled"), /*activate=*/true);
+                MessageDialog(this,
+                    _L("The previous project could not be restored. Its tab and file have been kept. Select that tab to retry, or use File > Open to choose another project."),
+                    _L("Project recovery"), wxOK | wxICON_WARNING).ShowModal();
+            }
+            m_project_tabbar->SaveToConfig();
+            if (cfg) cfg->save();
         }
     }
+    m_project_tabs_ready = true;
     update_title();
 }
 
