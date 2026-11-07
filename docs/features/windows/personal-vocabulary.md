@@ -188,3 +188,23 @@ verify `Label::GetLabel()`, `GetLabelText()`, and `GetUnwrappedLabel()` retain t
 original values before and after painting, replacement and clear. Check the
 calibration title log, nozzle-rack action comparisons and layout receipt labels
 against those originals in the hosted application.
+
+## Alternate profile isolation
+
+The normal profile keeps its existing user-local wording cache. An alternate
+`--datadir` or portable profile stores wording in its own `private-display`
+directory. Startup binds that location before loading any wording; an empty,
+invalid or unwritable alternate cache never falls back to the normal profile.
+An explicit path equivalent to the default data directory keeps the existing
+normal-profile cache. No cache is migrated or copied automatically.
+
+Profile exports and snapshots omit the reserved directory even for inactive
+profiles. Profile archive import rejects reserved cache entries, so importing
+settings does not implicitly import personal wording. Use the local wording
+upload or drop control separately.
+
+`node tests/personal_vocabulary/cache_isolation.test.mjs` executes production
+cache-selection, initialization and persistence functions against neutral
+filesystem fixtures with parser and repaint doubles. Its `--mutant=shared-cache`
+variant must fail. This is bounded behavioral evidence, not a built-interface
+or real JSON-parser acceptance result.

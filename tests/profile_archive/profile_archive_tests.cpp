@@ -72,7 +72,7 @@ TEST_CASE("Unsafe and duplicate paths leave no partial imported profile", "[Prof
 {
     Fixture f;
     write(f.root / "victim.txt", "unchanged");
-    for (const auto &name : {"../victim.txt", "../profile-sibling/file", "C:/outside", "item:stream", "NUL", "nested/../file"}) {
+    for (const auto &name : {"../victim.txt", "../profile-sibling/file", "C:/outside", "item:stream", "NUL", "nested/../file", "private-display/vocabulary.json", "PRIVATE-DISPLAY/vocabulary.pending"}) {
         const auto input = f.archive({"first.json", name});
         const auto target = f.root / "profile";
         REQUIRE(PA::import_archive(input, target) == PA::ImportError::UnsafePath);

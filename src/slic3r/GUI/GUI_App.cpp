@@ -3162,20 +3162,21 @@ void GUI_App::init_app_config()
 	// Windows : "C:\Users\username\AppData\Roaming\Slic3r" or "C:\Documents and Settings\username\Application Data\Slic3r"
 	// Mac : "~/Library/Application Support/Slic3r"
 
-    if (data_dir().empty()) {
         #ifndef __linux__
-            std::string data_dir = wxStandardPaths::Get().GetUserDataDir().ToUTF8().data();
+            std::string default_data_dir = wxStandardPaths::Get().GetUserDataDir().ToUTF8().data();
         #else
             // Since version 2.3, config dir on Linux is in ${XDG_CONFIG_HOME}.
             // https://github.com/prusa3d/PrusaSlicer/issues/2911
             wxString dir;
             if (! wxGetEnv(wxS("XDG_CONFIG_HOME"), &dir) || dir.empty() )
                 dir = wxFileName::GetHomeDir() + wxS("/.config");
-            std::string data_dir = (dir + "/" + GetAppName()).ToUTF8().data();
+            std::string default_data_dir = (dir + "/" + GetAppName()).ToUTF8().data();
         #endif
 #if BBL_INTERNAL_TESTING
-            data_dir += BBL_INTERNAL_TESTING == 1 ? "Internal" : "Beta";
+            default_data_dir += BBL_INTERNAL_TESTING == 1 ? "Internal" : "Beta";
 #endif
+    if (data_dir().empty()) {
+            const std::string &data_dir = default_data_dir;
             //BBS create folder if not exists
             boost::filesystem::path data_dir_path(data_dir);
             boost::filesystem::path log_dir_path = data_dir_path / "log";
@@ -3197,6 +3198,10 @@ void GUI_App::init_app_config()
     } else {
         m_datadir_redefined = true;
     }
+
+    PersonalVocabulary::configure_cache_directory(std::filesystem::u8path(data_dir()),
+        std::filesystem::u8path(default_data_dir),
+        std::filesystem::path(wxStandardPaths::Get().GetUserLocalDataDir().ToStdWstring()));
 
     // start log here
     const auto& enc_opts = s_get_log_enc_opts();

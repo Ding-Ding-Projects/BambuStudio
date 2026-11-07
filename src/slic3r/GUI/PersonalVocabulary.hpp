@@ -27,6 +27,12 @@ bool loaded();
 // Why the private copy saved on this device was not used at startup, or
 // Rejection::None when there was no copy or it passed validation.
 Rejection cache_rejection();
+// Bind before initialization. Alternate profiles never read or copy the legacy cache.
+std::filesystem::path select_cache_directory(const std::filesystem::path &active,
+    const std::filesystem::path &default_profile, const std::filesystem::path &legacy_local);
+void configure_cache_directory(const std::filesystem::path &active,
+    const std::filesystem::path &default_profile, const std::filesystem::path &legacy_local);
+bool is_reserved_cache_relative(const std::filesystem::path &relative);
 void initialize();
 void refresh();
 void observe(wxWindow *window, std::function<void()> refresh_display);

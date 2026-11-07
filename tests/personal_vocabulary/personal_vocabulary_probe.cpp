@@ -23,6 +23,7 @@ int main(int argc, char **argv)
     std::error_code error;
     std::filesystem::create_directories(root, error);
     if (error) return 3;
+    PV::configure_cache_directory(root, root, root);
     const auto input = root / ("synthetic-" + phase + ".json");
     // The private copy, written directly only to model a stale or damaged cache.
     const auto cache = root / "private-display" / "vocabulary.json";

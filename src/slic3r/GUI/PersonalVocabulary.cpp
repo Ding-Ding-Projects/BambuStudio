@@ -48,6 +48,7 @@ struct State {
     std::set<std::wstring> sources;
     Entries entries;
     std::map<wxWindow *, Observer> observers;
+    std::filesystem::path cache_directory;
     bool initialized = false;
     bool cache_loaded = false;
     FirstUnitIndex index;
@@ -62,8 +63,7 @@ State &state()
 
 std::filesystem::path cache_path()
 {
-    return std::filesystem::path(wxStandardPaths::Get().GetUserLocalDataDir().ToStdWstring()) /
-        "private-display" / "vocabulary.json";
+    return state().cache_directory / "vocabulary.json";
 }
 
 // Reads at most one byte more than the file limit, so an oversized file is
@@ -201,10 +201,50 @@ bool parse(std::string_view bytes, Entries &result, Rejection *reason)
     return true;
 }
 
+std::filesystem::path select_cache_directory(const std::filesystem::path &active,
+    const std::filesystem::path &default_profile, const std::filesystem::path &legacy_local)
+{
+    std::error_code ec;
+    bool same = std::filesystem::equivalent(active, default_profile, ec);
+    if (!same) {
+        ec.clear();
+        const auto a = std::filesystem::weakly_canonical(active, ec);
+        if (!ec) {
+            const auto b = std::filesystem::weakly_canonical(default_profile, ec);
+            if (!ec) {
+#ifdef _WIN32
+                same = ::CompareStringOrdinal(a.c_str(), -1, b.c_str(), -1, TRUE) == CSTR_EQUAL;
+#else
+                same = a == b;
+#endif
+            }
+        }
+    }
+    return (same ? legacy_local : active) / "private-display";
+}
+
+void configure_cache_directory(const std::filesystem::path &active,
+    const std::filesystem::path &default_profile, const std::filesystem::path &legacy_local)
+{
+    auto &s = state();
+    // Startup binds once. Later translations cannot switch a loaded profile.
+    if (!s.cache_directory.empty() || active.empty() || default_profile.empty() || legacy_local.empty()) return;
+    s.cache_directory = select_cache_directory(active, default_profile, legacy_local);
+}
+
+bool is_reserved_cache_relative(const std::filesystem::path &relative)
+{
+    // Exclude the complete reserved directory, including pending writes.
+    if (relative.empty()) return false;
+    auto first = relative.begin()->wstring();
+    std::transform(first.begin(), first.end(), first.begin(), [](wchar_t c) { return std::towupper(c); });
+    return first == L"PRIVATE-DISPLAY";
+}
+
 void initialize()
 {
     auto &s = state();
-    if (s.initialized || !wxTheApp) return;
+    if (s.initialized || !wxTheApp || s.cache_directory.empty()) return;
     s.initialized = true;
     // The private copy meets exactly the rules a selected file meets before it
     // is used. A copy that is unreadable, oversized, written under other rules
@@ -234,6 +274,7 @@ bool load(const std::filesystem::path &file, Rejection *reason)
         if (reason) *reason = why;
         return false;
     };
+    if (state().cache_directory.empty()) return reject(Rejection::CacheUnavailable);
     std::string bytes;
     Entries next;
     Rejection why = read_bounded(file, bytes);
@@ -243,7 +284,7 @@ bool load(const std::filesystem::path &file, Rejection *reason)
     std::error_code ec;
     std::filesystem::create_directories(cache.parent_path(), ec);
     if (ec) return reject(Rejection::CacheUnavailable);
-    // The private cache is outside the profile configuration and its history.
+    // The private cache is excluded from profile exports and history.
     // Persist no selected source path and expose no payload in diagnostics.
     PendingFile pending;
     static std::atomic<unsigned long long> sequence{0};
@@ -280,6 +321,7 @@ bool load(const std::filesystem::path &file, Rejection *reason)
 bool clear()
 {
     initialize();
+    if (state().cache_directory.empty()) return false;
     std::error_code ec;
     std::filesystem::remove(cache_path(), ec);
     if (ec) return false;
@@ -298,6 +340,7 @@ Rejection cache_rejection() { initialize(); return state().cache_rejection; }
 
 bool is_cache_path(const std::filesystem::path &path)
 {
+    if (state().cache_directory.empty()) return true;
     std::error_code ec;
     const auto canonical = std::filesystem::weakly_canonical(path, ec);
     if (ec) return true;

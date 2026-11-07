@@ -27,6 +27,9 @@ struct CreatedPaths {
 bool safe_relative(const std::filesystem::path &path)
 {
     if (path.empty() || path.is_absolute() || path.has_root_name() || path.has_root_directory()) return false;
+    auto first = path.begin()->wstring();
+    std::transform(first.begin(), first.end(), first.begin(), [](wchar_t c) { return std::towupper(c); });
+    if (first == L"PRIVATE-DISPLAY") return false;
     for (const auto &part : path) {
         const auto text = part.wstring();
         if (text.empty() || text == L"." || text == L".." || text.find(L':') != std::wstring::npos ||
@@ -57,9 +60,10 @@ ImportError import_archive(const std::filesystem::path &archive, const std::file
     wxZipInputStream zip(input);
     while (auto *raw = zip.GetNextEntry()) {
         std::unique_ptr<wxZipEntry> entry(raw);
-        if (entry->IsDir()) continue;
-        const auto relative = std::filesystem::path(entry->GetName().ToStdWstring());
+        auto relative = std::filesystem::path(entry->GetName().ToStdWstring());
+        if (entry->IsDir() && relative.filename().empty()) relative = relative.parent_path();
         if (!safe_relative(relative)) return ImportError::UnsafePath;
+        if (entry->IsDir()) continue;
         const auto output = destination / relative;
         const auto resolved = std::filesystem::weakly_canonical(output, error);
         const auto inside = resolved.lexically_relative(root);

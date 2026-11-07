@@ -87,6 +87,10 @@ wxString zip_directory(const std::filesystem::path &source_dir, const std::files
         if (ec)
             break;
         const std::filesystem::path &p = it->path();
+        if (PersonalVocabulary::is_reserved_cache_relative(p.lexically_relative(source_dir))) {
+            if (it->is_directory(ec)) it.disable_recursion_pending();
+            continue;
+        }
         if (PersonalVocabulary::is_cache_path(p)) continue;
         std::error_code type_ec;
         if (!it->is_regular_file(type_ec) || type_ec)
