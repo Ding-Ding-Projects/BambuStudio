@@ -1,0 +1,76 @@
+name: Publish LAN model drop image
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'lan-model-drop/server/**'
+      - 'lan-model-drop/site/**'
+      - 'lan-model-drop/Dockerfile'
+      - 'lan-model-drop/compose.yaml'
+      - '.github/workflows/lan-model-drop-image.yml'
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: lan-model-drop-image
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+      - name: Verify build prerequisites
+        run: |
+          set -euo pipefail
+          command -v docker
+          docker version
+          docker buildx version
+          docker compose version
+      - name: Authenticate registry
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN || secrets.ORG_TOKEN || secrets.GITHUB_TOKEN }}
+        run: printf '%s' "$GH_TOKEN" | docker login ghcr.io --username "${{ github.actor }}" --password-stdin
+      - name: Build and publish immutable version
+        run: |
+          set -euo pipefail
+          image=$(docker compose -f lan-model-drop/compose.yaml config --images)
+          [[ "$image" =~ ^ghcr.io/ding-ding-projects/bambustudio-lan-model-drop:v[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          mkdir -p artifacts
+          lookup_error=$(mktemp)
+          trap 'rm -f "$lookup_error"' EXIT
+          if docker manifest inspect "$image" >/dev/null 2>"$lookup_error"; then
+            docker pull "$image"
+            source=$(docker inspect --format '{{index .Config.Labels "org.opencontainers.image.revision"}}' "$image")
+            if [[ "$source" != "$GITHUB_SHA" ]]; then
+              echo 'The version already exists for another source. Increment the version in compose.yaml.' >&2
+              exit 1
+            fi
+          else
+            # A registry outage or authentication error does not mean absence.
+            if ! grep -Eq '^(no such manifest: |manifest unknown)' "$lookup_error"; then
+              echo 'Registry lookup did not positively establish an absent version. Publication stopped.' >&2
+              exit 1
+            fi
+            docker build --label "org.opencontainers.image.source=https://github.com/${GITHUB_REPOSITORY}" \
+              --label "org.opencontainers.image.revision=${GITHUB_SHA}" \
+              --label 'org.opencontainers.image.title=Bambu Studio LAN model drop' \
+              --tag "$image" lan-model-drop
+            docker push "$image"
+          fi
+          docker pull "$image"
+          docker inspect --format '{{json .RepoDigests}}' "$image" > artifacts/lan-model-drop-image-digests.json
+          printf '%s\n' "$GITHUB_SHA" > artifacts/source-commit.txt
+      - name: Retain publication receipt
+        if: ${{ always() }}
+        continue-on-error: true
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: lan-model-drop-publication
+          path: artifacts/
+          if-no-files-found: warn
+          retention-days: 14

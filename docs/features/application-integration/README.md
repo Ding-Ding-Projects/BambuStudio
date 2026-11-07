@@ -168,3 +168,5 @@ the firewall, the station key, settings, updates, and privacy and security.
 
 Related: [personal presentation services](../personal-modes/README.md),
 [narration service](../personal-modes/narration.md).
+
+- [Local drop hosting](local-drop-hosting.md) and [???](local-drop-hosting.yue_HK.md): setup entrypoints, recovery and current verification.

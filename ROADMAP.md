@@ -986,3 +986,12 @@ Branch `ai/feature/20261104-narrator`. Native runtime on Windows is not verified
 - [ ] Native `personal_modes` cases for no speech synthesis, empty-then-populated enumeration, rate and pitch bounds, restart persistence and all language modes.
 - [ ] Build the application and observe the narrator, Preferences controls and quiet hours on Windows.
 
+
+## Current required-feature and startup repair delivery
+
+- [ ] Verify resizable Preferences, persisted dimensions and all minimum-size sections in the native build.
+- [ ] Verify shared personal display wording, composition, menus, canvas and embedded pages with local-only imports.
+- [ ] Publish and verify the LAN drop image, native setup, portable wizard and both hosting modes.
+- [ ] Reproduce and repair the reported recurring startup model-load error without discarding projects.
+- [ ] Reconcile the complete current feature inventory with real consumers and per-surface evidence.
+- [ ] Complete documentation/build companions, release verification and the matching installed update.

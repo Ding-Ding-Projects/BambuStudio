@@ -1,0 +1,3 @@
+# The root entry point and the installed companion use the same project and volume.
+include:
+  - path: ./lan-model-drop/compose.yaml

@@ -3541,3 +3541,7 @@ The unchanged md3-v234 Setup (SHA-256 `b7d0a3add92750e13352fdeb03e22b3eb0fd0261d
 ## Repository maintenance, 19 October 2026
 
 The primary checkout was fast-forwarded to ebf4158dd607c7fcdba0dcb7bf1af7977d882528. A verified owner-managed backup preceded removal of ten already-merged delivery remote branches, local branches and linked checkouts. Only the primary checkout and local main remain. Other remote refs and three blocked ignored dependency directories are retained. A cleanup error deleted 6,853 tracked resources; they were restored from HEAD and tracked state was verified clean before the maintenance documentation change. No product code, build, installer, release or runtime verdict is claimed. See CLOSEOUT_PROMPT.md for the exact recovery, retained refs, blockers and next steps.
+
+## 2026-11-07 delivery in progress
+
+Preferences geometry and local LAN setup source are preserved on the task branch; shared personal display matching and canvas/menu adapters are also prepared. Native transport and focused behavior fixtures passed. The full product build and runtime matrix remain pending. The hosting script and publication workflow are source preparation, not published-image or LAN delivery proof. A startup model-load error reported during this work is under investigation. The complete required-feature inventory and companion releases remain unfinished.

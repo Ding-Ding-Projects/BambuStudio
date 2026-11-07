@@ -1,0 +1,6 @@
+# Explicit developer override, never used by the installed hosting entrypoint.
+services:
+  lan-model-drop:
+    build:
+      context: .
+    image: localhost/bambu-studio-md3/lan-model-drop:dev
