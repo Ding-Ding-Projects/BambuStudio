@@ -49,11 +49,21 @@ class Controller {
   constructor(script, invoke = backend) {
     this.script = script; this.invoke = invoke; this.ledger = new OperationLedger();
     this.snapshot = null; this.configuration = null; this.urls = []; this.busy = false;
+    this.verifiedImage = null; this.verifiedUntil = 0;
   }
   call(request) { return this.invoke(this.script, request); }
+  identity(result) {
+    this.verifiedImage = typeof result?.verifiedImage === 'string' && /^ghcr\.io\/ding-ding-projects\/bambustudio-lan-model-drop:[^@\s]+@sha256:[a-f0-9]{64}$/.test(result.verifiedImage) ? result.verifiedImage : null;
+    this.verifiedUntil = this.verifiedImage ? Date.now() + 600000 : 0;
+  }
+  identityView() { return { verifiedImage: this.verifiedUntil > Date.now() ? this.verifiedImage : null, verifiedUntil: this.verifiedUntil }; }
   async inspect(operationId) {
     if (operationId) this.ledger.require(operationId);
+    const reconciling = operationId && !this.ledger.require(operationId).workerActive && !this.ledger.require(operationId).terminal;
+    if (reconciling) this.ledger.beginReconciliation(operationId);
+    try {
     const result = await this.call({ method: 'inspect' });
+    this.identity(result);
     if (!operationId) {
       this.snapshot = { ...result, snapshotId: randomUUID() };
       this.configuration = null;
@@ -62,13 +72,17 @@ class Controller {
       if (result.containerId) {
         if (op.containerId && op.containerId !== result.containerId) throw new Error('service_changed');
         const observation = await this.call({ method: 'health', containerId: result.containerId });
+        this.identity(observation);
         this.urls = observation.urls || [];
         this.ledger.reconcile(operationId, observation);
       } else if (!op.startAttempted && !op.containerId && result.dataPresent === false) {
         this.ledger.reconcile(operationId, { identityVerified: true, dataPreserved: true, serviceState: 'absent', healthy: false });
       }
     }
-    return operationId ? { operation: this.ledger.view(), urls: this.urls } : this.snapshot;
+    if (reconciling) this.ledger.endReconciliation(operationId);
+    return operationId ? { operation: this.ledger.view(), urls: this.urls, ...this.identityView() } : { ...this.snapshot, ...this.identityView() };
+    } catch (error) { this.identity(null); throw error; }
+    finally { if (reconciling) this.ledger.endReconciliation(operationId); }
   }
   async configure(params) {
     if (!this.snapshot || params.snapshotId !== this.snapshot.snapshotId) throw new Error('stale_snapshot');
@@ -112,12 +126,12 @@ class Controller {
     const p = request.params;
     if (request.method === 'cancel') {
       if (Object.keys(p).some(k => k !== 'operationId')) throw new Error('invalid_request');
-      return this.ledger.cancel(p.operationId);
+      return { ...this.ledger.cancel(p.operationId), urls: this.urls, ...this.identityView() };
     }
     if (request.method === 'progress') {
       if (Object.keys(p).some(k => !['operationId', 'afterSequence'].includes(k))) throw new Error('invalid_request');
       const op = this.ledger.require(p.operationId);
-      return { operation: this.ledger.view(p.afterSequence || 0), urls: this.urls, errorCode: op.errorCode || null };
+      return { operation: this.ledger.view(p.afterSequence || 0), urls: this.urls, errorCode: op.errorCode || null, ...this.identityView() };
     }
     if (this.busy) throw new Error('request_in_progress');
     this.busy = true;

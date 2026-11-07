@@ -31,7 +31,7 @@ class OperationLedger {
     // A full session remains inspectable but cannot accept another start.
     if (this.receipts.size >= this.capacity) throw new Error('session_capacity');
     this.current = {
-      id: randomUUID(), requestId, workerActive: true, cancelRequested: false,
+      id: randomUUID(), requestId, workerActive: true, reconciliationActive: false, cancelRequested: false,
       sequence: 0, events: [], terminal: null
     };
     this.event('inspect', 'active');
@@ -60,10 +60,19 @@ class OperationLedger {
       op.cancelRequested = true;
       this.event('reconcile', 'cancelling');
     }
-    return { accepted: true, operationId: id, terminal: op.terminal };
+    return { accepted: !op.terminal, operationId: id, terminal: op.terminal ? { ...op.terminal } : null, operation: this.view() };
   }
 
   workerExited(id) { this.require(id).workerActive = false; }
+
+  beginReconciliation(id) {
+    const op = this.require(id);
+    if (op.workerActive || op.terminal) return;
+    op.reconciliationActive = true;
+    this.event('reconcile', op.cancelRequested ? 'cancelling' : 'active');
+  }
+
+  endReconciliation(id) { this.require(id).reconciliationActive = false; }
 
   reconcile(id, observation) {
     const op = this.require(id);
@@ -73,6 +82,7 @@ class OperationLedger {
     const outcome = op.cancelRequested ? 'cancelled' : observation.healthy === true && observation.serviceState === 'running' ? 'succeeded' : 'failed';
     this.event('reconcile', 'terminal');
     op.terminal = { outcome, reconciled: true, serviceState: observation.serviceState, dataPreserved: true };
+    op.reconciliationActive = false;
     return this.view();
   }
 
@@ -80,7 +90,7 @@ class OperationLedger {
     if (!Number.isSafeInteger(afterSequence) || afterSequence < 0) throw new Error('invalid_cursor');
     if (!operation) return null;
     const op = operation;
-    return { operationId: op.id, workerActive: op.workerActive, cancelRequested: op.cancelRequested,
+    return { operationId: op.id, workerActive: op.workerActive, reconciliationActive: op.reconciliationActive, cancelRequested: op.cancelRequested,
       sequence: op.sequence, events: op.events.filter(e => e.sequence > afterSequence).map(e => ({ ...e })),
       terminal: op.terminal ? { ...op.terminal } : null };
   }

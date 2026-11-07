@@ -2,6 +2,7 @@
 const $ = id => document.getElementById(id);
 let language = localStorage.getItem('setup-language') || 'en', theme = localStorage.getItem('setup-theme') || 'light';
 let step = 0, snapshot = null, configuration = null, operation = null, busy = false, message = '', urls = [];
+let verifiedImage = null, verifiedUntil = 0, identityTimer = null;
 const text = (en, yue) => language === 'yue' ? yue : language === 'both' ? en + ' / ' + yue : en;
 const headings = [['Check hosting requirements', '檢查託管所需工具'], ['Configure hosting', '設定託管'], ['Review changes', '確認更改'], ['Starting and verifying', '啟動同驗證'], ['Setup result', '設定結果']];
 const errors = {
@@ -18,13 +19,20 @@ const errors = {
 function errorText(code) { return errors[code] ? text(...errors[code]) : text('The operation did not complete. Safe result code: ', '操作未完成。安全結果代碼：') + code; }
 async function request(method, params = {}) {
   const reply = await window.setup.request({ schema: 1, requestId: crypto.randomUUID(), method, params });
-  if (!reply.ok) throw new Error(reply.error.code);
+  if (!reply.ok) { updateIdentity(null); throw new Error(reply.error.code); }
   return reply.result;
+}
+function updateIdentity(state) {
+  verifiedImage = state?.verifiedImage || null; verifiedUntil = state?.verifiedUntil || 0;
+  if (identityTimer !== null) clearTimeout(identityTimer);
+  identityTimer = verifiedImage && verifiedUntil > Date.now() ? setTimeout(() => { verifiedImage = null; render(); }, verifiedUntil - Date.now()) : null;
 }
 function render(focus = false) {
   document.documentElement.lang = language === 'yue' ? 'yue-HK' : 'en';
   document.body.classList.toggle('dark', theme === 'dark');
   $('heading').textContent = text(...headings[step]);
+  $('identity').textContent = text('Companion 1.0.1 • Expected service 1.0.1 • ', '設定工具 1.0.1 • 預期服務 1.0.1 • ') +
+    (verifiedImage && verifiedUntil > Date.now() ? text('Actual service: verified published image', '實際服務：已驗證發佈映像') : text('Actual service requires inspection', '實際服務需要檢查'));
   $('description').textContent = text('Keep existing service data and credentials. A fresh setup uses a new dedicated volume and a securely generated station credential.', '保留現有服務資料同憑證。全新設定會使用新嘅專用磁碟區，同安全產生嘅站台憑證。');
   $('status').textContent = message;
   $('fields').hidden = step !== 1; $('review').hidden = step !== 2; $('result').hidden = step !== 4;
@@ -37,7 +45,7 @@ function render(focus = false) {
   $('cancel').textContent = text('Cancel and reconcile', '取消並核實狀態'); $('cancel').hidden = !operation || !!operation.terminal;
   $('cancel').disabled = !!operation?.cancelRequested;
   $('next').textContent = step === 0 ? text('Check requirements', '檢查所需工具') : step === 2 ? text('Start service', '啟動服務') : step === 3 ? text('Recheck actual state', '重新檢查實際狀態') : step === 4 ? text('Inspect again', '再次檢查') : text('Review', '確認');
-  $('next').disabled = busy || step === 3 && !!operation?.workerActive;
+  $('next').disabled = busy || step === 3 && (!!operation?.workerActive || !!operation?.reconciliationActive);
   $('position').textContent = text('Step ', '步驟 ') + (step + 1) + '/5';
   if (configuration) $('review').textContent = text('Port: ', '連接埠：') + configuration.port + '\n' + text('Existing data and credentials are preserved. Only the owned service will be started. No public Internet exposure or host restart.', '會保留現有資料同憑證，只啟動自有服務。唔會公開到互聯網或重新啟動主機。');
   if (step === 4) {
@@ -62,7 +70,7 @@ async function action(fn) {
 $('next').onclick = () => action(async () => {
   message = '';
   if (step === 0 || step === 4) {
-    snapshot = await request('inspect'); operation = null; configuration = null; urls = [];
+    snapshot = await request('inspect'); updateIdentity(snapshot); operation = null; configuration = null; urls = [];
     $('port').value = snapshot.port; step = 1;
   } else if (step === 1) {
     configuration = await request('configure', { snapshotId: snapshot.snapshotId, port: Number($('port').value), stationName: $('name').value,
@@ -72,20 +80,29 @@ $('next').onclick = () => action(async () => {
     operation = await request('start', { configurationId: configuration.configurationId, snapshotId: snapshot.snapshotId }); step = 3; void poll();
   } else if (step === 3) {
     const state = await request('inspect', { operationId: operation.operationId });
-    operation = state.operation; urls = state.urls; if (operation.terminal) step = 4;
+    updateIdentity(state); operation = state.operation; urls = state.urls; if (operation.terminal) step = 4;
   }
 });
 $('back').onclick = () => { if (busy || operation && !operation.terminal) return; step = Math.max(0, step - 1); configuration = null; render(true); };
-$('cancel').onclick = () => action(async () => { await request('cancel', { operationId: operation.operationId }); message = text('Cancellation requested. Waiting for the owned phase to finish, then reconciling service state.', '已要求取消。等自有階段結束後，會核實服務狀態。'); });
+$('cancel').onclick = () => action(async () => {
+  const result = await request('cancel', { operationId: operation.operationId });
+  updateIdentity(result); operation = result.operation; urls = result.urls || [];
+  if (operation.terminal) {
+    step = 4;
+    message = text('Operation already completed: ', '操作已經完成：') + operation.terminal.outcome;
+  } else if (result.accepted) {
+    message = text('Cancellation requested. Waiting for the owned phase to finish, then reconciling service state.', '已要求取消。等自有階段結束後，會核實服務狀態。');
+  }
+});
 async function poll() {
   while (operation && !operation.terminal && step === 3) {
     try {
       const state = await request('progress', { operationId: operation.operationId, afterSequence: 0 });
-      operation = state.operation; urls = state.urls;
+      updateIdentity(state); operation = state.operation; urls = state.urls;
       message = state.errorCode ? errorText(state.errorCode) : text('Current phase: ', '目前階段：') + (operation.events.at(-1)?.phase || 'inspect');
       if (operation.terminal) step = 4;
       render();
-      if (!operation.workerActive && !operation.terminal) break;
+      if (!operation.workerActive && !operation.reconciliationActive && !operation.terminal) break;
     } catch (error) { message = errorText(error.message); render(); break; }
     await new Promise(resolve => setTimeout(resolve, 750));
   }

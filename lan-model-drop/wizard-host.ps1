@@ -58,7 +58,7 @@ try {
     }
     if ($request.method -eq 'inspect') {
         $dataPresent = [bool](Invoke-Docker @('volume', 'ls', '-q', '--filter', 'name=^lan-model-drop_drop-data$')).Trim()
-        $result = @{ ownership = $(if ($existing) { 'existing-owned' } else { 'fresh' }); containerId = $(if ($existing) { $existing.Id } else { '' }); port = $port; storage = $storage; running = [bool]($existing -and $existing.State.Running); ready = $true; dataPresent = $dataPresent }
+        $result = @{ ownership = $(if ($existing) { 'existing-owned' } else { 'fresh' }); containerId = $(if ($existing) { $existing.Id } else { '' }); port = $port; storage = $storage; running = [bool]($existing -and $existing.State.Running); ready = $true; dataPresent = $dataPresent; verifiedImage = $(if ($existing) { $expectedImage } else { '' }) }
     } elseif ($request.method -eq 'health') {
         $code = 'service_absent'
         if (-not $existing -or $existing.Id -ne $request.containerId) { throw 'identity' }
@@ -75,7 +75,7 @@ try {
         $code = 'service_upgrade_required'
         Assert-WizardImage -ImageId $current.imageId -ConfiguredImage $current.configuredImage -ExpectedImage $expectedImage
         if (-not $current.running) { $urls = @() }
-        $result = @{ identityVerified = $true; dataPreserved = $true; serviceState = $(if ($current.running) { 'running' } else { 'stopped' }); healthy = [bool]($healthy -and $current.running -and $urls.Count -gt 0); urls = $urls; verificationScope = 'same-host' }
+        $result = @{ identityVerified = $true; dataPreserved = $true; serviceState = $(if ($current.running) { 'running' } else { 'stopped' }); healthy = [bool]($healthy -and $current.running -and $urls.Count -gt 0); urls = $urls; verificationScope = 'same-host'; verifiedImage = $expectedImage }
     } else {
         # Existing services are started in place, never recreated from bundled defaults.
         if ($request.containerId) {
