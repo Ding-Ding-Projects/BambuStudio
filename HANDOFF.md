@@ -22,6 +22,23 @@ The next bootstrap reaches the trusted VS2026 installer, but installation return
 Do not repeat fresh installation or repair unrelated Visual Studio instances.
 Scoped supported modification of that registered installation is being prepared.
 
+Follow-up: modification returned 8004 because the registered payload directory
+was absent. The targeted vendor repair then succeeded; root bootstrap verified
+the dedicated VS2026 registration complete and its toolchain ready. The hosted
+native/Squirrel job also completed successfully, while that older overall run
+remains failed because of its separate earlier image-authentication job.
+The downloaded native candidate retains the synthetic failed tab and file and
+opens a separate Untitled tab after the recovery notice. Restart verification is
+pending. Native Preferences geometry changes to 1050x720, but black screenshots
+were rejected, so visual layout acceptance remains open.
+
+Reviewed action sounds at `fa3ea7861` add a persistent searchable switch and
+non-blocking wording-change cues with quiet-hours and effective-setting cancellation.
+Silent worker/callback fixtures and native object compilation passed; actual audio
+and rendered restart persistence remain unverified. The user's latest direction
+removes sender drop-code requirements; that implementation is underway separately,
+while station management authentication remains required.
+
 Main integration, the complete required-feature inventory, accepted release,
 installed update, deployed documentation and final runtime acceptance remain open.
 Full publication scanning still has baseline parser and nested-source limitations.

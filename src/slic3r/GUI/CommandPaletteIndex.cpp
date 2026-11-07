@@ -140,6 +140,7 @@ const std::vector<PreferenceEntry> &preference_entries()
         // Other --------------------------------------------------------------
         {"school_mode", L("Presentation mode"), L("Shared local presentation and unlock settings"), PageGeneral},
         {"narrator_enabled", L("Enable narrator"), L("Narrator"), PageOther},
+        {"action_sounds_enabled", L("Sound effects"), L("Play short sounds after wording changes. Quiet narration, quiet hours and Focus Assist also silence these sounds. System volume and mute still apply."), PageOther},
         {"narrator_quiet", L("Quiet narration"), L("Pause local speech without changing saved voice choices"), PageOther},
         {"narrator_track_printer", L("Narrate printer events"), L("Print state, filament runout and printer errors."), PageOther},
         {"narrator_track_app", L("Narrate application events"), L("Slicing, export, update and error summaries. File names and account details are never spoken."), PageOther},

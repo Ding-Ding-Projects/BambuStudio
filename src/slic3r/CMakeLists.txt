@@ -948,6 +948,8 @@ list(APPEND SLIC3R_GUI_SOURCES
     GUI/PersonalVocabularySchema.cpp
     GUI/PersonalVocabularySchema.hpp
     GUI/VocabularyDrop.cpp
+    GUI/ActionSounds.cpp
+    GUI/ActionSounds.hpp
     GUI/VocabularyDrop.hpp
     GUI/LanguageMode.hpp
     GUI/BilingualRegistry.cpp

@@ -1275,12 +1275,12 @@
     {
       "route": "releases/windows-one-click-build.md",
       "title": "One-click Windows build and installer",
-      "sha256": "e98e165b0d6177413ed0f885c2d3325e028d8b3e95d1c4f13d32e95ec05c6292"
+      "sha256": "d1d9360ab8a66377802baed71156010c68bbeff740e3c67f03d7445455dc6717"
     },
     {
       "route": "releases/windows-one-click-build.yue_HK.md",
       "title": "一鍵 Windows 構建和安裝程式",
-      "sha256": "0e2e9f006ea5f3dfbab002853fc4e4ad87f9350ce76e0555ecb638c264f5ec99"
+      "sha256": "b751d6297045ea3088f788fdcd5d5e40468bec44b2c0e8d19d9aa14922d5275b"
     },
     {
       "route": "releases/windows-release-supply-chain.md",
@@ -1311,6 +1311,16 @@
       "route": "status-hub/README.md",
       "title": "Native Status Hub",
       "sha256": "d3edaa3f675776ed33b3177a97293f0b78dbf490686a3a0cb2a29c248cd65d55"
+    },
+    {
+      "route": "windows/action-sounds.md",
+      "title": "Action sounds",
+      "sha256": "da27f6ebb201bcb0d13479040ec605c1bdf84e2e5e52bb2224b5276628af2d42"
+    },
+    {
+      "route": "windows/action-sounds.yue_HK.md",
+      "title": "操作提示音",
+      "sha256": "a319ac8c8f5daf201007d52f363a4deed08089a6eaeadad3c9bf4d43dc678db8"
     },
     {
       "route": "windows/ai-filament-scanner.md",
@@ -1705,7 +1715,7 @@
     {
       "route": "windows/README.md",
       "title": "Windows features",
-      "sha256": "46b9322fb16b7860b8ea230a28a464896f55d34e9c8ac536a605d5b27a0f2a97"
+      "sha256": "c767f218aa46c99c85f6148c0cc40806beeb9470c70c7a378ec108119626b536"
     },
     {
       "route": "windows/README.yue_HK.md",
@@ -2110,7 +2120,7 @@
       "bytes": 16430
     }
   ],
-  "bundle_sha256": "d8fd51b0e6476ab673afc057822243af2963970c78a83b76f60d1f336a8a482f",
+  "bundle_sha256": "3e0e46ae10de269f47661fd0dec40f427246bb21881e71e842dead1a3ca21c98",
   "unavailable_references": [
     {
       "source": "api/README.md",

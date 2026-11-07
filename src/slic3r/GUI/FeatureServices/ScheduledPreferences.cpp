@@ -1,4 +1,5 @@
 #include "ScheduledPreferences.hpp"
+#include "../ActionSounds.hpp"
 #include "PresentationRoutes.hpp"
 #include "SurfaceRegistry.hpp"
 #include "../ScheduledSettings/Panel.hpp"
@@ -93,7 +94,7 @@ ScheduledPreferences::ScheduledPreferences(AppConfig& config)
     m_timer.Start(1000);
     pulse();
 }
-ScheduledPreferences::~ScheduledPreferences() { m_timer.Stop(); m_config.clear_effective_preferences(); }
+ScheduledPreferences::~ScheduledPreferences() { m_timer.Stop(); m_config.clear_effective_preferences(); ActionSounds::cancel(); }
 void ScheduledPreferences::pulse()
 {
     if (m_applying) return;
@@ -116,6 +117,7 @@ void ScheduledPreferences::apply(const ScheduledSettings::Effective& effective)
     }
     if (!m_config.replace_effective_preferences(overrides)) { notify("Scheduled values failed validation; previous settings remain active."); return; }
     if (effective.values == m_last) return;
+    ActionSounds::settings_changed();
     m_last = effective.values;
     m_applying = true;
     struct Reset { bool& flag; ~Reset() { flag = false; } } reset{m_applying};
