@@ -1,5 +1,7 @@
 # One-click Windows build and installer
 
+Build readiness requires the selected default MSVC toolset to be **14.51 or newer** (compiler 19.51), matching `ReleaseSourcePaths.cmake`, plus a working x64 MSBuild. An older default is rejected even if a newer compiler exists beside it. Compatibility-only VS 2022 discovery is not readiness proof. If no eligible instance exists, the trusted VS 2026 bootstrap targets `%LOCALAPPDATA%\BambuBuildTools\VS2026`; unrelated installations remain intact. Native elevation consent and actual installation verification remain required.
+
 `OneClickBuildInstaller.cmd` is the supported local entry point for compiling a Release payload
 and packaging it with Squirrel.Windows. Double-click it in File Explorer or run it from a terminal:
 

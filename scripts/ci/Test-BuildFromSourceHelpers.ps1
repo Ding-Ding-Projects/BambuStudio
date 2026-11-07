@@ -273,6 +273,16 @@ public static class BootstrapMSBuildFixture {
         'The Visual Studio probe rejected a complete VS 2022 Community fixture.'
     Assert-True ((Get-VisualStudio2022Product -VsWherePath $fakeVsWhere) -eq 'Community') `
         'The Visual Studio product probe did not preserve the installed Community SKU.'
+    Assert-True ($null -eq (Get-VisualStudioInstance -VsWherePath $fakeVsWhere)) `
+        'Default MSVC 14.44 must not satisfy the MSVC 19.51 release requirement.'
+    Assert-True (-not (Test-VisualCppBuildTools -VsWherePath $fakeVsWhere -WindowsSdkRoots @($fakeSdkRoot))) `
+        'A complete SDK and old compiler must not suppress the supported bootstrap.'
+    $newCompiler = Join-Path $fakeVisualStudio 'VC\Tools\MSVC\14.51.36231\bin\Hostx64\x64\cl.exe'
+    New-Item -ItemType Directory -Path (Split-Path $newCompiler -Parent) -Force | Out-Null
+    Set-Content -LiteralPath $newCompiler -Value 'fixture' -Encoding Ascii
+    Assert-True ($null -eq (Get-VisualStudioInstance -VsWherePath $fakeVsWhere)) `
+        'An unused side-by-side compiler must not make the selected old default eligible.'
+    Set-Content -LiteralPath (Join-Path $fakeVisualStudio 'VC\Auxiliary\Build\Microsoft.VCToolsVersion.default.txt') -Encoding Ascii -Value '14.51.36231'
     Assert-True (Test-VisualCppBuildTools -VsWherePath $fakeVsWhere -WindowsSdkRoots @($fakeSdkRoot)) `
         'The combined Visual Studio C++ and Windows SDK fixture probe failed.'
     Set-Content -LiteralPath (Join-Path $fakeMsbuildDirectory 'probe-state.txt') -Encoding Ascii -Value 'broken'
