@@ -6,11 +6,11 @@ and incomplete; account allowance is unknown.
 
 ## Preserved source
 
-Remote main 825d8cc5b17a2899019e2383bae18e4017dfc2d8 was read back exactly.
+Remote main fb04737168af654a64a6cb71bf69e8f8e5ae15c9 was read back exactly.
 It includes direct sending, isolated wording storage, Base64 conversion and the
 content-free Preferences probe. Native acceptance remains separate.
 
-Current branch gap/startup-nonmodal-20261107 contains reviewed correction
+The startup branch gap/startup-nonmodal-20261107 contains reviewed correction
 dc254de965dea8b441a3cab8110b66090ea97694. Automatic restoration uses detached
 conservative admission and nonmodal recovery. Manual imports remain interactive.
 Native-project classification preserves negative-Z and zero-volume geometry.
@@ -23,8 +23,13 @@ ed55a003f333ffc01b5879b853f8eedc7d9b6f05. Its portable package ran on a hidden
 desktop against the existing service, preserving identity, storage and settings.
 All five owned processes and its desktop closed normally. Two display defects
 were found. Reviewed correction 9eeafe7dabb4f2b3c5ae7baac66d349f31108862 fixes
-polling, terminal Cancel feedback and verified-image display. A fresh pinned
-portable build and runtime repetition are underway; old evidence remains bound to ed55.
+polling, terminal Cancel feedback and verified-image display. It is now pushed
+and verified, with portable SHA-256
+bc1bd891e8e4ebf91e020eeb211997018fefb0d233d1b3f1e4810f5e2b06cbfa.
+Actual hidden runtime reached the healthy result automatically, displayed verified
+identity and retained keyboard access at 640 x 520. All five held processes and
+the desktop closed normally; selected service state stayed unchanged. The current
+main integration records that bounded result, not fresh-setup or full-matrix proof.
 
 ## Verified behavior and limits
 

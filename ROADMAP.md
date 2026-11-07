@@ -1,5 +1,12 @@
 # Roadmap
 
+## Portable hosting setup, 7 November 2026
+
+- [x] Build the source-bound unsigned portable companion and inspect its embedded manifest and hosting inputs.
+- [x] Verify existing-service inspection/start, automatic healthy result, verified identity and minimum-size keyboard access; preserve service state and close all owned processes normally.
+- [ ] Verify fresh setup, missing prerequisites, cancellation, complete localization, measured layout matrix and remaining required-feature consumers.
+- [ ] Publish the portable companion and verify the downloadable source-bound executable.
+
 ## Nonmodal automatic restoration, 7 November 2026
 
 - [x] Separate automatic and manual loading contexts; verify detached admission, nonmodal orchestration and native-project classification with production-function fixtures and causal mutations.

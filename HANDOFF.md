@@ -1,5 +1,21 @@
 # Bambu Studio handoff
 
+## Portable hosting companion, 7 November 2026
+
+Reviewed source `9eeafe7dabb4f2b3c5ae7baac66d349f31108862` built through
+`build-installer.bat /s -Companion LanDropSetup`. Its unsigned portable executable
+has SHA-256 `bc1bd891e8e4ebf91e020eeb211997018fefb0d233d1b3f1e4810f5e2b06cbfa`.
+The embedded manifest and hosting inputs matched the producer. Actual hidden
+verification reached the healthy result without Recheck, displayed verified
+service identity and retained keyboard access at 640 x 520. All five held
+processes exited normally and the desktop closed; service state was unchanged.
+
+The late-Cancel race has production-consumer fixture proof only. CDP validation
+prevented attachment, so no DOM/CSS measurements are claimed. Fresh setup,
+prerequisite acquisition, full language/theme/scale coverage, publication and
+remaining required features stay unfinished. See the
+[companion article](docs/features/lan-drop-setup/README.md).
+
 ## Nonmodal startup restoration, 7 November 2026
 
 Reviewed source `dc254de9` separates automatic restoration from manual imports.
