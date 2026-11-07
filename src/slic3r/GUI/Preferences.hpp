@@ -152,7 +152,7 @@ public:
                       const wxSize &  size  = wxDefaultSize,
                       // MD3 caption strip instead of the native title bar
                       // (see MD3DialogChrome).
-                      long            style = wxBORDER_NONE);
+                      long            style = wxBORDER_NONE | wxRESIZE_BORDER);
 
     ~PreferencesDialog();
 
@@ -242,7 +242,10 @@ public:
     std::unordered_map<int, ::SwitchButton *> m_checkbox_list;
     std::unordered_map<int, RadioBox *>   m_radiobox_list;
     std::unordered_map<int, ::ComboBox *> m_combobox_list;
-    int                                   m_screen_height;
+
+    void restore_geometry();
+    void constrain_geometry(const wxRect &requested);
+    void save_geometry();
 
 protected:
     void OnSelectRadio(wxMouseEvent &event);

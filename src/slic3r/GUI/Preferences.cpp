@@ -1,5 +1,6 @@
 #include <wx/wrapsizer.h>
 #include "Preferences.hpp"
+#include "PreferencesGeometry.hpp"
 #include "PreferencesSearchTraversal.hpp"
 #include "PersonalVocabulary.hpp"
 #include "VocabularyDrop.hpp"
@@ -1617,12 +1618,10 @@ wxSizer *PreferencesDialog::create_item_radiobox(wxString title, wxWindow *paren
 }
 
 PreferencesDialog::PreferencesDialog(wxWindow *parent, wxWindowID id, const wxString &title, const wxPoint &pos, const wxSize &size, long style)
-    : DPIDialog(parent, id, _L("Preferences"), pos, size, style)
+    : DPIDialog(parent, id, _L("Preferences"), pos, size, style | wxRESIZE_BORDER)
 {
     // Root dialog surface (kit Settings root = Surface); resolves by role in dark.
     SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));
-    SetSize(FromDIP(wxSize(780, 580)));
-    SetMinSize(FromDIP(wxSize(640, 480)));
     m_original_use_12h_time_format = wxGetApp().app_config->get("use_12h_time_format");
     // Sync the MD3 density/accent token state to the persisted Appearance choices
     // before the tabs are built so this dialog and later-constructed surfaces
@@ -1631,6 +1630,7 @@ PreferencesDialog::PreferencesDialog(wxWindow *parent, wxWindowID id, const wxSt
     create();
     wxGetApp().UpdateDlgDarkUI(this);
     MD3DialogCaption::FinishChrome(this);
+    restore_geometry();
     Bind(wxEVT_CLOSE_WINDOW, [this](wxCloseEvent& event) {
         try {
             NetworkAgent* agent = GUI::wxGetApp().getAgent();
@@ -1695,7 +1695,6 @@ void PreferencesDialog::create()
     // set icon for dialog
     std::string icon_path = (boost::format("%1%/images/BambuStudioTitle.ico") % resources_dir()).str();
     SetIcon(wxIcon(encode_path(icon_path.c_str()), wxBITMAP_TYPE_ICO));
-    SetSizeHints(wxDefaultSize, wxDefaultSize);
 
     auto main_sizer = new wxBoxSizer(wxVERTICAL);
     main_sizer->Add(new MD3DialogCaption(this, _L("Preferences")), 0, wxEXPAND);
@@ -1713,6 +1712,9 @@ void PreferencesDialog::create()
     content_card->SetBorderColor(StateColor::semantic(MD3::Role::OutlineVariant));
     content_card->SetDensity(MD3::Metrics::isCompact() ? StaticBox::Density::Compact : StaticBox::Density::Comfortable);
     m_book   = new wxSimplebook(content_card, wxID_ANY);
+    // Pages own their scrolling; their content must not dictate the frame size.
+    m_book->SetMinSize(wxSize(1, 1));
+    content_card->SetMinSize(wxSize(1, 1));
     m_book->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     // Right-hand content pane: a top MD3 SearchField pill over the section book.
@@ -1799,27 +1801,43 @@ void PreferencesDialog::create()
 
     SetSizer(main_sizer);
     Layout();
-    Fit();
+}
 
-    // Fixed dialog size (~780x640). The nav-rail + content-pane layout widens the
-    // dialog vs. the old horizontal tab bar so the 230px rail leaves a comfortable
-    // content column. Tabs are scrollable, so a tab taller than this simply
-    // scrolls; cap the height to the screen so it still fits on small displays.
-    int screen_height = std::numeric_limits<int>::max();
-    int count = wxDisplay::GetCount();
-    for (int i = 0; i < count; ++i) {
-        wxDisplay display(i);
-        wxRect rect = display.GetGeometry();
-        screen_height  = std::min(screen_height, rect.GetHeight());
-    }
-    if (screen_height == std::numeric_limits<int>::max()) screen_height = wxGetDisplaySize().GetY();
-
-    const int max_height = int(screen_height * 0.7); // never exceed most of the screen
-    this->SetSize(FromDIP(780), std::min(FromDIP(640), max_height));
-
+// Preferences geometry is independent of page content and stored in DIP.
+// Only size is restored: opening follows the parent instead of a removed monitor.
+void PreferencesDialog::restore_geometry()
+{
+    const int width = PreferencesGeometry::restored_dimension(app_config->get("preferences_width"), 780);
+    const int height = PreferencesGeometry::restored_dimension(app_config->get("preferences_height"), 640);
+    SetSize(FromDIP(wxSize(width, height)));
     CenterOnParent();
-    wxPoint start_pos = this->GetPosition();
-    if (start_pos.y < 0) { this->SetPosition(wxPoint(start_pos.x, 0)); }
+    constrain_geometry(GetRect());
+}
+
+void PreferencesDialog::constrain_geometry(const wxRect &requested)
+{
+    const wxPoint centre(requested.x + requested.width / 2, requested.y + requested.height / 2);
+    int display_index = wxDisplay::GetFromPoint(centre);
+    if (display_index == wxNOT_FOUND && GetParent()) display_index = wxDisplay::GetFromWindow(GetParent());
+    if (display_index == wxNOT_FOUND) display_index = wxDisplay::GetFromWindow(this);
+    const wxRect work = display_index == wxNOT_FOUND ? wxGetClientDisplayRect() : wxDisplay(display_index).GetClientArea();
+    const wxSize preferred = FromDIP(wxSize(640, 480));
+    const auto low = PreferencesGeometry::minimum({preferred.x, preferred.y}, {work.width, work.height});
+    const auto bounded = PreferencesGeometry::bounded({requested.x, requested.y, requested.width, requested.height},
+        {work.x, work.y, work.width, work.height}, {preferred.x, preferred.y});
+    SetMinSize(wxSize(low.width, low.height));
+    SetSize(bounded.x, bounded.y, bounded.width, bounded.height);
+    Layout();
+}
+
+void PreferencesDialog::save_geometry()
+{
+    if (!app_config || IsIconized() || IsMaximized()) return;
+    const wxSize size = ToDIP(GetSize());
+    if (size.x <= 0 || size.y <= 0) return;
+    app_config->set("preferences_width", std::to_string(size.x));
+    app_config->set("preferences_height", std::to_string(size.y));
+    app_config->save();
 }
 
 // ============================================================================
@@ -2197,6 +2215,8 @@ void PreferencesDialog::reset_search_filter()
 
 PreferencesDialog::~PreferencesDialog()
 {
+    try { save_geometry(); }
+    catch (...) { BOOST_LOG_TRIVIAL(warning) << "Could not save Preferences window size: " << current_exception_message(); }
     m_school_refresh_timer.Stop();
     m_narrator_inventory_timer.Stop();
     wxGetApp().set_preferences_dialog(nullptr);
@@ -2238,18 +2258,11 @@ void PreferencesDialog::on_dpi_changed(const wxRect &suggested_rect) {
     if (m_tabbar) m_tabbar->Rescale();
     this->Refresh();
     Layout();
-    Fit();
-    int displayIndex = wxDisplay::GetFromWindow(this);
-    if (displayIndex != wxNOT_FOUND) {
-        wxDisplay display(displayIndex);
-        wxRect    screenRect = display.GetGeometry();
-        if (m_screen_height != screenRect.GetHeight()) {
-            m_screen_height = screenRect.GetHeight();
-            // Keep the fixed size (capped to the screen) on a DPI/monitor switch
-            // instead of stretching to a fraction of the screen.
-            this->SetSize(FromDIP(780), std::min(FromDIP(640), int(m_screen_height * 0.7)));
-            BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << " The display screen has switched";
-        }
+    // wx supplies the user's existing dimensions scaled for the destination DPI.
+    constrain_geometry(suggested_rect.IsEmpty() ? GetRect() : suggested_rect);
+    if (m_book) {
+        for (size_t i = 0; i < m_book->GetPageCount(); ++i)
+            if (auto *page = dynamic_cast<wxScrolledWindow *>(m_book->GetPage(i))) page->FitInside();
     }
 }
 
