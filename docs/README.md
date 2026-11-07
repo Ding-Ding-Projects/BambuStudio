@@ -5,6 +5,8 @@ surfaces. Upstream Bambu Studio material remains in [`../doc/`](../doc/).
 
 ## Categories
 
+- [Required-feature coverage](features/required-features/README.md): 117 identities, explicit surface scope, evidence limits and remaining acceptance work.
+- [LAN hosting setup](features/lan-drop-setup/README.md): portable setup, existing-service preservation and verified package boundaries.
 - [Design system](features/design-system/README.md) — vendored Material Design 3 token layer, the
   ground-up color/type/metric migration, and the parity audit.
 - [GitHub Pages site](features/pages/README.md) — the published tabbed site: navigation, language

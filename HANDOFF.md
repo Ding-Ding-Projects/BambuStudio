@@ -1,5 +1,15 @@
 # Bambu Studio handoff
 
+## Required-feature inventory, 7 November 2026
+
+The reviewed inventory retains 117 stable identities, nine surface classes,
+28 exact historical individual surfaces and 15 legacy crosswalks. All 1,053
+class records remain explicitly unverified. Independent review checked identity
+preservation, historical anchors, portable exceptions, documentation-drop scope
+and unresolved third-party ownership. Nine negative consistency mutations were
+rejected. Complete individual applicability, nested dialogs, Settings consumers
+and runtime acceptance remain unfinished. Historical records are preserved.
+
 ## Portable hosting companion, 7 November 2026
 
 Reviewed source `9eeafe7dabb4f2b3c5ae7baac66d349f31108862` built through

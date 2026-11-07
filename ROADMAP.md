@@ -1,5 +1,12 @@
 # Roadmap
 
+## Complete required-feature inventory, 7 November 2026
+
+- [x] Preserve 117 identities, nine classes, 28 historical surfaces and 15 legacy crosswalks without inheriting implementation status; independently review format and ownership boundaries.
+- [x] Reject nine deliberate omissions or false claims through the local inventory checker.
+- [ ] Complete every individual-surface applicability record, nested-dialog inventory, Settings/onboarding consumer and actual runtime acceptance.
+- [ ] Complete the 117-item implementation goal; an inventory is not delivered behavior.
+
 ## Portable hosting setup, 7 November 2026
 
 - [x] Build the source-bound unsigned portable companion and inspect its embedded manifest and hosting inputs.

@@ -6,7 +6,7 @@ and incomplete; account allowance is unknown.
 
 ## Preserved source
 
-Remote main fb04737168af654a64a6cb71bf69e8f8e5ae15c9 was read back exactly.
+Remote main 71cacf48f6c23bb02d0d056d701722cc4ec1a551 was read back exactly.
 It includes direct sending, isolated wording storage, Base64 conversion and the
 content-free Preferences probe. Native acceptance remains separate.
 
@@ -59,7 +59,7 @@ No accepted release or installed update is claimed. Runs 42420781736 (d73) and
 
 1. Preserve and integrate reviewed startup source/documentation, verify remote main, then finish native scenarios with exact source/binary binding.
 2. Complete wizard rebuild and terminal-state runtime repetition. Fresh setup, cancellation, publication and the full language/theme/scale matrix remain pending.
-3. Review the private inventory candidate before copying its public-safe files. It retains 117 identities, nine classes and 28 historical individual surfaces; individual applicability and runtime evidence are pending.
+3. The public-safe inventory has passed independent review and is incorporated with 117 identities, nine classes, 28 historical surfaces and 15 legacy crosswalks. Nine negative consistency checks passed. Complete individual applicability, nested dialogs, Settings consumers and runtime evidence next; no implementation completeness is claimed.
 4. Verify normal release, immutable tag/source and assets before updating the matching existing installation through its supported route. Preserve settings, data, rollback and active work.
 5. Complete native invite, cache-isolation, sound and Base64 acceptance. Keep the complete required-feature goal explicitly unfinished.
 
@@ -68,6 +68,13 @@ process trees closed normally but their empty desktops remain retained; sender
 browser teardown has an incomplete process-tree receipt. Full publication scanning
 has baseline technical-name/nested-repository/parser limits; scoped scans are not
 blanket proof. Status Hub SSH delivery lacks a verified host-local update client.
+
+Two f152 candidate launches were normally closed. The first synthetic profile
+omitted its terminal LF and triggered an unchanged settings-parser exception.
+The corrected run's readiness check selected a hidden preconstructed Settings
+window and did not obtain a main-workspace image. It does not establish a product
+regression or visible workspace acceptance. A final bounded method-corrected
+native attempt is pending. The matching installed application remains unchanged.
 
 Preserve source and private evidence. No force pushes, private wording publication,
 host power/login actions, capture-protection changes or cleanup of active,
