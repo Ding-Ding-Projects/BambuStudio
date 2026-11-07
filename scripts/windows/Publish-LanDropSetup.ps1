@@ -14,6 +14,50 @@ function Read-GhJson([string[]] $Arguments) {
     }
     throw 'GitHub readback failed after three bounded attempts.'
 }
+function Format-Duration([TimeSpan] $Duration) {
+    return '{0:00}:{1:00}:{2:00}' -f [math]::Floor($Duration.TotalHours), $Duration.Minutes, $Duration.Seconds
+}
+function Read-AllReleases([string] $Repository) {
+    $all = @()
+    for ($page = 1; $page -le 20; $page++) {
+        $batch = @(Read-GhJson @('api', "repos/$Repository/releases?per_page=100&page=$page"))
+        $all += $batch
+        if ($batch.Count -lt 100) { return $all }
+    }
+    throw 'Release history exceeds the bounded discovery limit.'
+}
+function Resolve-ReleaseDish {
+    # Metadata only, never download or republish photographs. Failure is an explicit optional decoration state.
+    try {
+        $catalogRepository = 'Ding-Ding-Projects/dim-sum-photos'
+        $revision = (Read-GhJson @('api', "repos/$catalogRepository/commits/main")).sha
+        $catalog = Read-GhJson @('api', '-H', 'Accept: application/vnd.github.raw+json', "repos/$catalogRepository/contents/catalog/index.json?ref=$revision")
+        $history = @(Read-AllReleases $env:GITHUB_REPOSITORY)
+        $used = ($history | ForEach-Object { $_.name; $_.body }) -join "`n"
+        $photoReleases = @(Read-AllReleases $catalogRepository | Where-Object { $_.tag_name -like 'catalog-v1*' -and -not $_.draft -and -not $_.prerelease })
+        $assets = @{}
+        foreach ($photoRelease in $photoReleases) {
+            # The release list may truncate assets; enumerate each assets endpoint independently.
+            for ($page = 1; $page -le 50; $page++) {
+                $batch = @(Read-GhJson @('api', "repos/$catalogRepository/releases/$($photoRelease.id)/assets?per_page=100&page=$page"))
+                foreach ($asset in $batch) {
+                    if ($asset.state -eq 'uploaded' -and $asset.size -gt 0 -and $asset.browser_download_url -like "https://github.com/$catalogRepository/releases/download/catalog-v1*/*") { $assets[$asset.name] = $asset }
+                }
+                if ($batch.Count -lt 100) { break }
+                if ($page -eq 50) { throw 'Photo discovery limit reached.' }
+            }
+        }
+        foreach ($dish in $catalog.dishes) {
+            if ($dish.id -notmatch '^hk-dish-\d{4}$' -or -not $dish.name.en -or -not $dish.name.zhHant) { continue }
+            if ($used.Contains($dish.id) -or $used.Contains($dish.name.en) -or $used.Contains($dish.name.zhHant)) { continue }
+            $file = [IO.Path]::GetFileName($dish.image.path)
+            if ($assets.ContainsKey($file)) {
+                return @{ status = 'resolved'; id = $dish.id; name = "$($dish.name.en) · $($dish.name.zhHant)"; photo = $assets[$file].browser_download_url; catalogRevision = $revision }
+            }
+        }
+    } catch { }
+    return @{ status = 'unavailable'; name = ''; reason = 'No unused dish with a verified published photo could be resolved from the public catalog and complete bounded release history.' }
+}
 $source = (& git -C $root rev-parse HEAD).Trim()
 if ($LASTEXITCODE -ne 0 -or $source -cne $env:GITHUB_SHA -or @(& git -C $root status --porcelain --untracked-files=all).Count) { throw 'Publication requires the exact clean producer source.' }
 $manifestPath = Join-Path $dist 'build-manifest.json'
@@ -42,8 +86,15 @@ $tag = "lan-setup-v$($package.version)-$($env:GITHUB_RUN_ID)-$($env:GITHUB_RUN_A
 $out = Join-Path $env:RUNNER_TEMP 'lan-setup-publication'
 $null = New-Item -ItemType Directory -Path $out -Force
 $jobs = Read-GhJson @('api', "repos/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID/attempts/$env:GITHUB_RUN_ATTEMPT/jobs")
-$started = @($jobs.jobs | Where-Object started_at | Sort-Object started_at)[0].started_at
-$start = [DateTimeOffset]::Parse($started).ToUniversalTime()
+$buildSteps = @($jobs.jobs | ForEach-Object { $_.steps } | Where-Object { $_.name -ceq 'Build single portable executable through the root entrypoint' })
+if ($buildSteps.Count -ne 1 -or $buildSteps[0].conclusion -cne 'success' -or -not $buildSteps[0].started_at -or -not $buildSteps[0].completed_at) { throw 'Completed producer step timing is unavailable.' }
+$buildStart = [DateTimeOffset]::Parse($buildSteps[0].started_at).ToUniversalTime()
+$buildEnd = [DateTimeOffset]::Parse($buildSteps[0].completed_at).ToUniversalTime()
+if ($buildEnd -lt $buildStart -or $buildEnd -gt [DateTimeOffset]::UtcNow) { throw 'Invalid producer timing.' }
+$dish = Resolve-ReleaseDish
+$lineCountPath = Join-Path $out 'line-count.md'
+& (Join-Path $root 'scripts/ci/Measure-LineCount.ps1') -Root $root -OutputMarkdown $lineCountPath
+if (-not (Test-Path -LiteralPath $lineCountPath -PathType Leaf)) { throw 'Release line count is unavailable.' }
 $notesPath = Join-Path $out 'notes.md'
 $notes = @("# LAN hosting setup companion $($package.version)", '',
     "Source: $source", "Channel: dedicated portable companion; not the native application update feed.",
@@ -52,18 +103,18 @@ $notes = @("# LAN hosting setup companion $($package.version)", '',
     'Existing service data and credentials are retained. Custom credentials, folder storage, prerequisite installation and complete settings remain unfinished.',
     'This workflow builds and publishes only. It runs no tests, lint or GUI verification; source and package checks establish provenance, not runtime acceptance.',
     '', '區域網絡託管設定工具，獨立可攜版本，唔會取代原生應用程式更新頻道。',
-    '此執行檔未簽署，可能顯示未知發行者提示。現有服務資料同憑證會保留，其他未完成能力請參閱功能文件。')
+    '此執行檔未簽署，可能顯示未知發行者提示。現有服務資料同憑證會保留，其他未完成能力請參閱功能文件。',
+    '', "- Build started: $($buildStart.ToString('yyyy-MM-ddTHH:mm:ssZ'))", "- Build completed: $($buildEnd.ToString('yyyy-MM-ddTHH:mm:ssZ'))",
+    "- Build duration: $(Format-Duration ($buildEnd - $buildStart))", '- Whole-workflow terminal timing: unverified while this workflow is running.')
+if ($dish.status -eq 'resolved') {
+    $notes += @('', "Code name: $($dish.name)", "Catalog dish: $($dish.id)", "Catalog revision: $($dish.catalogRevision)", "[Public dish photo: $($dish.name)]($($dish.photo))")
+} else { $notes += @('', 'Code name and photo unavailable: ' + $dish.reason) }
+$notes += @('', (Get-Content -LiteralPath $lineCountPath -Raw))
 [IO.File]::WriteAllLines($notesPath, $notes, [Text.UTF8Encoding]::new($false))
 $assets = @($exe, $checksum, $manifestPath, $proofPath)
 # Never retry or overwrite publication blindly. A rerun gets a new attempt-specific tag.
-& gh release create $tag @assets --repo $env:GITHUB_REPOSITORY --target $source --title "LAN setup $($package.version) (run $env:GITHUB_RUN_ID.$env:GITHUB_RUN_ATTEMPT)" --notes-file $notesPath --latest=false
+& gh release create $tag @assets --repo $env:GITHUB_REPOSITORY --target $source --title "LAN setup $($package.version) $($dish.name) (run $env:GITHUB_RUN_ID.$env:GITHUB_RUN_ATTEMPT)" --notes-file $notesPath --latest=false
 if ($LASTEXITCODE -ne 0) { throw 'Release creation failed; inspect any partial release before rerunning.' }
-$completed = [DateTimeOffset]::UtcNow
-$duration = $completed - $start
-$notes += @('', "- Workflow started: $($start.ToString('yyyy-MM-ddTHH:mm:ssZ'))", "- Workflow completed: $($completed.ToString('yyyy-MM-ddTHH:mm:ssZ'))", ('- Workflow duration: {0:00}:{1:00}:{2:00}' -f [int]$duration.TotalHours, $duration.Minutes, $duration.Seconds))
-[IO.File]::WriteAllLines($notesPath, $notes, [Text.UTF8Encoding]::new($false))
-& gh release edit $tag --repo $env:GITHUB_REPOSITORY --notes-file $notesPath --latest=false
-if ($LASTEXITCODE -ne 0) { throw 'Published release timing update failed.' }
 $release = Read-GhJson @('release', 'view', $tag, '--repo', $env:GITHUB_REPOSITORY, '--json', 'isDraft,isPrerelease,tagName,assets,url,body')
 $ref = Read-GhJson @('api', "repos/$env:GITHUB_REPOSITORY/git/ref/tags/$tag")
 if ($release.isDraft -or $release.isPrerelease -or $release.tagName -cne $tag -or $ref.object.type -cne 'commit' -or $ref.object.sha -cne $source) { throw 'Normal release or exact tag source readback mismatch.' }
@@ -78,5 +129,7 @@ foreach ($asset in $assets) {
     $name = [IO.Path]::GetFileName($asset)
     if ((Get-FileHash (Join-Path $download $name)).Hash -cne (Get-FileHash $asset).Hash) { throw 'Published asset hash mismatch.' }
 }
-@{ schema = 1; sourceCommit = $source; tag = $tag; url = $release.url; normalRelease = $true; assetsReadBack = $true; latestRequested = $false; packageSha256 = $outputs[0].sha256 } |
+$verifiedAt = [DateTimeOffset]::UtcNow.ToString('o')
+@{ schema = 1; sourceCommit = $source; tag = $tag; url = $release.url; normalRelease = $true; assetsReadBack = $true; latestRequested = $false; packageSha256 = $outputs[0].sha256;
+   publicationVerifiedAt = $verifiedAt; buildStartedAt = $buildStart.ToString('o'); buildCompletedAt = $buildEnd.ToString('o'); wholeWorkflowTiming = 'unverified'; codename = $dish } |
     ConvertTo-Json | Set-Content -LiteralPath (Join-Path $out 'receipt.json') -Encoding utf8

@@ -21,7 +21,7 @@ permissions:
   actions: read
 
 concurrency:
-  group: lan-setup-companion-${{ github.ref }}
+  group: lan-setup-companion-publication
   cancel-in-progress: false
 
 jobs:
@@ -32,8 +32,10 @@ jobs:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           ref: ${{ github.sha }}
+          fetch-depth: 0
           persist-credentials: false
       - name: Build single portable executable through the root entrypoint
+        id: build
         shell: pwsh
         run: |
           & .\build-installer.bat /s -Companion LanDropSetup
@@ -41,10 +43,26 @@ jobs:
       - name: Publish separate companion release and read back its bytes
         shell: pwsh
         env:
-          GH_TOKEN: ${{ secrets.RELEASE_TOKEN || secrets.ORG_TOKEN || github.token }}
+          GH_TOKEN: ${{ secrets.TOKEN_GITHUB || secrets.RELEASE_TOKEN || secrets.ORG_TOKEN || github.token }}
         run: ./scripts/windows/Publish-LanDropSetup.ps1
+      - name: Record bounded run context even when production fails
+        if: always()
+        continue-on-error: true
+        shell: pwsh
+        env:
+          JOB_STATUS: ${{ job.status }}
+          BUILD_OUTCOME: ${{ steps.build.outcome }}
+        run: |
+          $directory = Join-Path $env:RUNNER_TEMP 'lan-setup-publication'
+          $null = New-Item -ItemType Directory -Path $directory -Force
+          @{ schema = 1; sourceCommit = $env:GITHUB_SHA; runId = $env:GITHUB_RUN_ID;
+             runAttempt = $env:GITHUB_RUN_ATTEMPT; job = $env:GITHUB_JOB; observedJobStatus = $env:JOB_STATUS; buildOutcome = $env:BUILD_OUTCOME;
+             runnerOs = $env:RUNNER_OS; runnerArch = $env:RUNNER_ARCH; runnerEnvironment = $env:RUNNER_ENVIRONMENT;
+             observedAtUtc = [DateTimeOffset]::UtcNow.ToString('o'); workflowTerminalStatus = 'not-yet-observed' } |
+            ConvertTo-Json | Set-Content (Join-Path $directory 'run-context.json') -Encoding utf8
       - name: Retain source and publication receipts
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: lan-setup-proof-${{ github.run_id }}-${{ github.run_attempt }}
@@ -53,5 +71,6 @@ jobs:
             companions/lan-drop-setup/dist/package-proof.json
             companions/lan-drop-setup/dist/*.sha256
             ${{ runner.temp }}/lan-setup-publication/receipt.json
+            ${{ runner.temp }}/lan-setup-publication/run-context.json
           if-no-files-found: warn
           retention-days: 14
