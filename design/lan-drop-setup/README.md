@@ -18,6 +18,8 @@ A fresh station credential is generated securely by default. An optional custom 
 
 ## Backend contract proposal
 
+The versioned request, progress, cancellation and confidential-data lifetime proposal is specified in `protocol.md`. It is not an existing backend capability. Active-operation navigation and native window-close behavior are specified in `states.md`.
+
 Extend the tracked hosting backend with typed, versioned progress and protected configuration inputs while retaining `host.bat --detached` and `host.bat --logs`. The interface calls a fixed operation allowlist, not arbitrary commands. Validate every request in the privileged boundary, not only in the renderer. Use bounded, monotonic phase events with operation identity and sequence, safe error codes and explicit terminal states. Do not synthesize percentages for work without measurable totals.
 
 Phases: inspect, acquire prerequisites if needed, validate configuration, pull image, start service, check local health, check LAN URLs, finish. The existing host script bounds service work to 600 seconds; the native pairing deadline is 660 seconds. Any separate prerequisite acquisition needs its own reviewed timeout and cancellation contract, not an unbounded extension of those deadlines.

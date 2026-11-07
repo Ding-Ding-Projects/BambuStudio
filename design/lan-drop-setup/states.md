@@ -38,3 +38,11 @@ Required tuples: each state at 960 × 720 and proposed 640 × 520 DIP; English, 
 8. Resume revalidates stored nonconfidential drafts and does not restore a custom credential.
 
 Independent review and every production check are pending. The design author's source inspection cannot substitute for either.
+
+## Active-operation navigation
+
+Back is disabled during active execution and cancellation reconciliation. Window close or Escape offers Stay active or Cancel and reconcile; neither navigates away immediately. Retain the same operation identifier, worker ownership and event subscription until a terminal reconciled result. A second Start is rejected while any operation is active, cancelling or unresolved. Closing is allowed only after terminal reconciliation, or through an explicit documented recovery handoff that preserves the operation identity for inspection on reopening. A missing response is unresolved, never cancelled successfully.
+
+The demonstration disables Back during its active execution state. Its explicit successful-reconciliation action advances to Ready; its cancellation action represents an already reconciled, retained-service result. Failed and cancelled scenarios are terminal examples. Scenario changes are reference selectors, not production operations. The HTML document does not control a native window or implement cancellation.
+
+Scenario, language and theme changes restore focus to the same select identifier after rerender. Verification must use repeated keyboard changes on each select, including bilingual labels and both themes, and assert the focused identifier remains unchanged. Source-level focus checks do not prove native keyboard behavior.
