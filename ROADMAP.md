@@ -1,5 +1,10 @@
 # Roadmap
 
+## Settings consumer mapping, 7 November 2026
+
+- [x] Independently review and preserve 21 groups, 23 feature mappings, 85 setting candidates and source-bound reset evidence without claiming runtime acceptance.
+- [ ] Complete each actual consumer, persistence/reset/recovery workflow, nested panel and native acceptance tuple.
+
 ## Portable publication and native delivery, 7 November 2026
 
 - [x] Prepare and independently review a dedicated source-bound portable publisher with normal releases, exact asset readback and best-effort diagnostics.

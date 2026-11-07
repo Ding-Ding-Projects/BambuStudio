@@ -1,0 +1,3933 @@
+{
+  "schemaVersion": 1,
+  "sourceCommit": "baf9303d613aa1b2953c675872e89cfe1e40c376",
+  "scope": "PreferencesDialog and directly constructed settings panels only",
+  "completionClaim": false,
+  "limits": [
+    "No native launch, tests, service action, real profile or private vocabulary read.",
+    "Lexical helper calls may include conditional controls or comments; they are discovery candidates, not a completed semantic control inventory.",
+    "Feature IDs without a direct mapping are not declared absent from the product.",
+    "Source consumers do not prove persistence success, complete reset semantics or runtime acceptance.",
+    "Revision 4 corrects two preprocessor-dependent helper argument extractions and adds the external-editor selection consumer. All 85 settings helper candidates were checked for the same conditional-argument extraction defect; downstream consumers remain unverified unless explicitly traced.",
+    "This snapshot remains bound to the stated source commit. Later corrections are recorded separately and do not silently move its anchors."
+  ],
+  "sections": [
+    "appearance",
+    "schedules",
+    "general",
+    "user",
+    "3d",
+    "other",
+    "lan_drop",
+    "status_api"
+  ],
+  "conditionalSections": {
+    "developer": "!BBL_RELEASE_TO_PUBLIC"
+  },
+  "directAdditionalPanels": [
+    "SettingsDraftPanel"
+  ],
+  "groups": [
+    {
+      "id": "theme",
+      "featureIds": [
+        "appearance-editor"
+      ],
+      "control": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 2446,
+        "symbolOrText": "theme->Bind"
+      },
+      "configurationKeys": [
+        "dark_color_mode"
+      ],
+      "consumer": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 1084,
+        "symbolOrText": "void PreferencesDialog::apply_dark_mode"
+      },
+      "consumerStatus": "source-linked",
+      "persistence": "AppConfig set/save callbacks; persisted storage is source evidence, not restart verification.",
+      "reset": "Excluded from dedicated appearance reset; included in general reset list.",
+      "recovery": "No complete reset/recovery proof in this bounded review.",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "density-accent-fonts",
+      "featureIds": [
+        "appearance-editor",
+        "color-picker",
+        "accessibility-sizing"
+      ],
+      "control": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 2478,
+        "symbolOrText": "const std::string density_val"
+      },
+      "configurationKeys": [
+        "ui_density",
+        "ui_accent_seed",
+        "ui_font_family",
+        "ui_font_scale"
+      ],
+      "consumer": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 1124,
+        "symbolOrText": "MD3::Metrics::setDensity"
+      },
+      "consumerStatus": "source-linked",
+      "persistence": "AppConfig set/save callbacks; persisted storage is source evidence, not restart verification.",
+      "reset": "Dedicated reset writes all four defaults and updates controls/runtime. General reset omits both font keys.",
+      "recovery": "Invalid font scale catches conversion failure and uses 1.0; full transaction/rollback unverified.",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "display-name",
+      "featureIds": [
+        "display-name",
+        "settings-explanations"
+      ],
+      "control": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 2739,
+        "symbolOrText": "const std::string stored_name"
+      },
+      "configurationKeys": [
+        "app_display_name"
+      ],
+      "consumer": {
+        "path": "src/slic3r/GUI/GUI_App.cpp",
+        "line": 9691,
+        "symbolOrText": "bool GUI_App::set_app_display_name"
+      },
+      "consumerStatus": "source-linked",
+      "persistence": "AppConfig set/save callbacks; persisted storage is source evidence, not restart verification.",
+      "reset": "Dedicated Reset to shipped name calls setter with empty value.",
+      "recovery": "Validation status and saved/shipped provenance shown; full persistence failure behavior not reassessed.",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "logo",
+      "featureIds": [
+        "logo-customization"
+      ],
+      "control": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 2888,
+        "symbolOrText": "auto *logo_panel"
+      },
+      "configurationKeys": [
+        "AppLogo::config_key"
+      ],
+      "consumer": {
+        "path": "src/slic3r/GUI/GUI_App.cpp",
+        "line": 9725,
+        "symbolOrText": "bool GUI_App::set_app_logo_settings"
+      },
+      "consumerStatus": "source-linked",
+      "persistence": "LogoPanel callback invokes application setter; configuration identifier is AppLogo::config_key.",
+      "reset": "Panel-specific reset not traced.",
+      "recovery": "Panel implementation requires separate per-control review.",
+      "runtimeStatus": "unverified",
+      "completionClaim": false,
+      "keyResolutionStatus": "symbol retained; literal key not re-resolved"
+    },
+    {
+      "id": "wording",
+      "featureIds": [
+        "personal-vocabulary"
+      ],
+      "control": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 2940,
+        "symbolOrText": "wording_load->Bind"
+      },
+      "configurationKeys": [],
+      "consumer": {
+        "path": "src/slic3r/GUI/PersonalVocabulary.cpp",
+        "line": 270,
+        "symbolOrText": "bool load("
+      },
+      "consumerStatus": "source-linked",
+      "persistence": "Dedicated profile-bound private vocabulary.json; configure_cache_directory precedes initialization.",
+      "reset": "Dedicated clear calls PersonalVocabulary::clear; not general preference reset.",
+      "recovery": "Validation rejects before replacing state; saved-cache rejection is displayed. No payload was read for this review.",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "language",
+      "featureIds": [
+        "language"
+      ],
+      "control": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3113,
+        "symbolOrText": "item_language ="
+      },
+      "configurationKeys": [
+        "language"
+      ],
+      "consumer": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 464,
+        "symbolOrText": "wxBoxSizer *PreferencesDialog::create_item_language_mode_combobox"
+      },
+      "consumerStatus": "source-linked",
+      "persistence": "AppConfig set/save callbacks; persisted storage is source evidence, not restart verification.",
+      "reset": "General reset includes language.",
+      "recovery": "Full mode-specific persistence/recovery and runtime localization unverified.",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "voice-copy",
+      "featureIds": [
+        "funny-emoji"
+      ],
+      "control": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3120,
+        "symbolOrText": "item_funny_en  ="
+      },
+      "configurationKeys": [
+        "funny_level_en",
+        "funny_level_yue"
+      ],
+      "consumer": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 1189,
+        "symbolOrText": "wxBoxSizer *PreferencesDialog::create_item_funny_level_slider"
+      },
+      "consumerStatus": "source-linked",
+      "persistence": "AppConfig set/save callbacks; persisted storage is source evidence, not restart verification.",
+      "reset": "Funny-level keys absent from general reset list.",
+      "recovery": "School presentation suppresses these controls; complete level behavior unverified.",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "school",
+      "featureIds": [
+        "school-mode"
+      ],
+      "control": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 2976,
+        "symbolOrText": "if (auto* runtime = wxGetApp().school_runtime())"
+      },
+      "configurationKeys": [],
+      "consumer": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3053,
+        "symbolOrText": "return wxGetApp().school_credentials().disable"
+      },
+      "consumerStatus": "source-linked",
+      "persistence": "Shared mode record and credential-vault service, not an ordinary AppConfig preference.",
+      "reset": "Authenticated Unlock and disable; rename/enroll/replace buttons.",
+      "recovery": "Unavailable vault/shared record shown; restricted presentation retained for unreadable record.",
+      "runtimeStatus": "unverified",
+      "completionClaim": false,
+      "persistenceStatus": "service-call-observed; shared storage implementation not independently re-audited"
+    },
+    {
+      "id": "motion",
+      "featureIds": [
+        "motion"
+      ],
+      "control": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3133,
+        "symbolOrText": "auto item_motion ="
+      },
+      "configurationKeys": [
+        "motion_preference"
+      ],
+      "consumer": {
+        "path": "src/slic3r/GUI/Widgets/MD3MotionPreference.cpp",
+        "line": 20,
+        "symbolOrText": "app->app_config->get"
+      },
+      "consumerStatus": "source-linked",
+      "persistence": "AppConfig set/save callbacks; persisted storage is source evidence, not restart verification.",
+      "reset": "Absent from general reset list.",
+      "recovery": "System/default normalization exists; complete transition coverage not established.",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "external-editor",
+      "featureIds": [
+        "external-editor"
+      ],
+      "control": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3224,
+        "symbolOrText": "auto item_external_editor_path ="
+      },
+      "configurationKeys": [
+        "external_editor",
+        "external_editor_path"
+      ],
+      "consumer": {
+        "path": "src/slic3r/GUI/MainFrame.cpp",
+        "line": 4917,
+        "symbolOrText": "cfg->get(\"external_editor_path\")"
+      },
+      "consumerStatus": "source-linked",
+      "persistence": "AppConfig set/save callbacks; persisted storage is source evidence, not restart verification.",
+      "reset": "Absent from general reset list.",
+      "recovery": "Custom selection uses only external_editor_path; an empty resolved executable shows a warning instead of launching. Browse cancel preserves the previous path. Launch failure behavior is not reassessed.",
+      "runtimeStatus": "unverified",
+      "completionClaim": false,
+      "additionalConsumerAnchors": [
+        {
+          "path": "src/slic3r/GUI/MainFrame.cpp",
+          "line": 4914,
+          "symbolOrText": "cfg->get(\"external_editor\") == \"custom\"",
+          "role": "Selects the custom executable path or detected-editor lookup."
+        },
+        {
+          "path": "src/slic3r/GUI/MainFrame.cpp",
+          "line": 4919,
+          "symbolOrText": "find_editor_or_default(cfg->get(\"external_editor\"))",
+          "role": "Resolves the selected detected editor when Custom is not selected."
+        }
+      ]
+    },
+    {
+      "id": "sound",
+      "featureIds": [
+        "action-sound-effects"
+      ],
+      "control": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3500,
+        "symbolOrText": "_L(\"Sound effects\")"
+      },
+      "configurationKeys": [
+        "action_sounds_enabled"
+      ],
+      "consumer": {
+        "path": "src/slic3r/GUI/ActionSounds.cpp",
+        "line": 30,
+        "symbolOrText": "prefs.enabled ="
+      },
+      "consumerStatus": "source-linked",
+      "persistence": "AppConfig set/save callbacks; persisted storage is source evidence, not restart verification. Checkbox notifies ActionSounds::settings_changed.",
+      "reset": "Absent from general reset list.",
+      "recovery": "Playback service reads quiet settings; native audio not exercised.",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "narration",
+      "featureIds": [
+        "narration"
+      ],
+      "control": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3503,
+        "symbolOrText": "_L(\"Enable narrator\")"
+      },
+      "configurationKeys": [
+        "narrator_enabled",
+        "narrator_quiet",
+        "narrator_language",
+        "narrator_track_printer",
+        "narrator_track_app",
+        "narrator_track_accessibility",
+        "narrator_quiet_hours_enabled",
+        "narrator_quiet_hours_start",
+        "narrator_quiet_hours_end",
+        "narrator_respect_focus_assist",
+        "narrator_voice_en",
+        "narrator_voice_yue"
+      ],
+      "consumer": {
+        "path": "src/slic3r/GUI/TtsNarrator.cpp",
+        "line": 58,
+        "symbolOrText": "narrator_enabled AppConfig read"
+      },
+      "consumerStatus": "source-linked",
+      "persistence": "AppConfig set/save callbacks; persisted storage is source evidence, not restart verification.",
+      "reset": "Narrator keys absent from general reset list.",
+      "recovery": "Missing voice choice retained, effective fallback disclosed; previews invoke TtsNarrator::preview. Rate/pitch and complete event-consumer coverage require further review.",
+      "runtimeStatus": "unverified",
+      "completionClaim": false,
+      "additionalConsumerAnchors": [
+        {
+          "path": "src/slic3r/GUI/TtsNarrator.cpp",
+          "line": 80,
+          "role": "language selection"
+        },
+        {
+          "path": "src/slic3r/GUI/TtsNarrator.cpp",
+          "line": 116,
+          "role": "saved voice selection"
+        },
+        {
+          "path": "src/slic3r/GUI/TtsNarrator.cpp",
+          "line": 179,
+          "role": "queue admission master setting"
+        }
+      ]
+    },
+    {
+      "id": "schedules",
+      "featureIds": [
+        "scheduled-settings"
+      ],
+      "control": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3271,
+        "symbolOrText": "new Schedule::ScheduledSettingsPanel"
+      },
+      "configurationKeys": [
+        "Schedule::kDocumentConfigKey"
+      ],
+      "consumer": {
+        "path": "src/slic3r/GUI/Schedule/ScheduledSettings.cpp",
+        "line": 144,
+        "symbolOrText": "bool Scheduler::save_document"
+      },
+      "consumerStatus": "source-linked",
+      "persistence": "Validated document stored through AppConfig; evaluation saves effective overrides.",
+      "reset": "Panel can delete rules; source copy says deleted rule is not recoverable from this screen.",
+      "recovery": "Rule validation/source errors exposed. This panel uses Schedule::Scheduler; do not conflate with FeatureServices::ScheduledPreferences.",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "drafts",
+      "featureIds": [
+        "blank-editors",
+        "local-history"
+      ],
+      "control": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 1766,
+        "symbolOrText": "auto *draft_panel"
+      },
+      "configurationKeys": [
+        "settings_drafts"
+      ],
+      "consumer": {
+        "path": "src/slic3r/GUI/SettingsDraftPanel.cpp",
+        "line": 224,
+        "symbolOrText": "void SettingsDraftPanel::Apply()"
+      },
+      "consumerStatus": "source-linked",
+      "persistence": "SettingsDraftPanel::Persist serializes drafts into AppConfig and records local history.",
+      "reset": "Explicit Undo Apply, conflict-aware; separate preset Save As.",
+      "recovery": "Apply rechecks target fingerprint; failure restores previous settings; failed Save As retains draft.",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "lan-reception",
+      "featureIds": [
+        "functional-ui",
+        "qr-pairing"
+      ],
+      "control": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3707,
+        "symbolOrText": "wxWindow *PreferencesDialog::create_lan_drop_tab()"
+      },
+      "configurationKeys": [
+        "lan_drop_enabled",
+        "lan_drop_address",
+        "lan_drop_station_key"
+      ],
+      "consumer": {
+        "path": "src/slic3r/GUI/LanModelDrop/LanModelDropUi.cpp",
+        "line": 145,
+        "symbolOrText": "InvitePanel::"
+      },
+      "consumerStatus": "invite UI source-linked; station network consumer not independently re-audited in this pass",
+      "persistence": "Dedicated address/key/status rows and invite panel; key storage is separate from plain setting disclosure.",
+      "reset": "General reset does not erase LAN connection keys.",
+      "recovery": "Capability-gated invite and station collection must be assessed separately; service/native runtime not exercised.",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "local-status-api",
+      "featureIds": [
+        "functional-ui"
+      ],
+      "control": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3745,
+        "symbolOrText": "wxWindow *PreferencesDialog::create_status_api_tab()"
+      },
+      "configurationKeys": [
+        "StatusApi::kEnabledConfigKey",
+        "StatusApi::kPortConfigKey"
+      ],
+      "consumer": {
+        "path": "src/slic3r/GUI/StatusApi/StatusApiServer.cpp",
+        "line": 278,
+        "symbolOrText": "apply_settings"
+      },
+      "consumerStatus": "source-linked",
+      "persistence": "Enabled/port callbacks and dedicated credential/status rows.",
+      "reset": "General reset coverage not established.",
+      "recovery": "Loopback printer-status API is not proof of Status Hub integration.",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "printer-watch",
+      "featureIds": [
+        "ollama-suite"
+      ],
+      "control": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3657,
+        "symbolOrText": "auto title_watch ="
+      },
+      "configurationKeys": [
+        "printer_watch_enabled",
+        "printer_watch_model",
+        "printer_watch_interval"
+      ],
+      "consumer": {
+        "path": "src/slic3r/GUI/PrinterWatch.cpp",
+        "line": 48,
+        "symbolOrText": "get(\"printer_watch_enabled\")"
+      },
+      "consumerStatus": "source-linked",
+      "persistence": "AppConfig set/save callbacks; persisted storage is source evidence, not restart verification.",
+      "reset": "Absent from general reset list.",
+      "recovery": "Only local printer-watch slice is linked, not the complete Ollama suite.",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "settings-search",
+      "featureIds": [
+        "regex-search"
+      ],
+      "control": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 1797,
+        "symbolOrText": "build_search_index();"
+      },
+      "configurationKeys": [],
+      "consumer": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 2078,
+        "symbolOrText": "void PreferencesDialog::apply_search_filter"
+      },
+      "consumerStatus": "source-linked",
+      "persistence": "Search pill callbacks update row filtering; query persistence not established.",
+      "reset": "Empty-query filter reset exists; full regex parity not established.",
+      "recovery": "Exact row index and bounded matching require their own acceptance.",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "settings-tabs",
+      "featureIds": [
+        "tabs"
+      ],
+      "control": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 1775,
+        "symbolOrText": "m_tabbar->LoadLayout();"
+      },
+      "configurationKeys": [
+        "tab_strips"
+      ],
+      "consumer": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 1782,
+        "symbolOrText": "m_tabbar->Bind(EVT_TABSTRIP_ACTIVATE"
+      },
+      "consumerStatus": "source-linked",
+      "persistence": "TabStrip LoadLayout and stable page IDs.",
+      "reset": "Full layout reset not traced.",
+      "recovery": "Missing active page falls back to first page.",
+      "runtimeStatus": "unverified",
+      "completionClaim": false,
+      "configurationKeyStatus": "shared section identifier; full strip serializer not re-audited"
+    },
+    {
+      "id": "preferences-export",
+      "featureIds": [
+        "exports"
+      ],
+      "control": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3956,
+        "symbolOrText": "btn_export_prefs->Bind"
+      },
+      "configurationKeys": [],
+      "consumer": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3958,
+        "symbolOrText": "ExportDialog::run(this, Export::app_config_dataset"
+      },
+      "consumerStatus": "source-linked",
+      "persistence": "Export dataset passed to shared ExportDialog.",
+      "reset": "Export is not a reset route.",
+      "recovery": "Format/security/omitted-field handling needs separate Export subsystem review.",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "geometry",
+      "featureIds": [
+        "accessibility-sizing"
+      ],
+      "control": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 1814,
+        "symbolOrText": "void PreferencesDialog::restore_geometry()"
+      },
+      "configurationKeys": [
+        "preferences_width",
+        "preferences_height"
+      ],
+      "consumer": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 1823,
+        "symbolOrText": "void PreferencesDialog::constrain_geometry"
+      },
+      "consumerStatus": "source-linked",
+      "persistence": "Stored dimensions restored in DIP.",
+      "reset": "Absent from general reset list.",
+      "recovery": "Restored bounds constrain geometry and center relative to parent; no visual matrix proved here.",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    }
+  ],
+  "helperControlCandidates": [
+    {
+      "helper": "create_item_title",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 2424
+      },
+      "literalArguments": [
+        "Appearance",
+        "Appearance"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [],
+      "controlKind": "section-heading",
+      "generalResetMembership": {},
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_title",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 2886
+      },
+      "literalArguments": [
+        "App logo",
+        "App logo"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [],
+      "controlKind": "section-heading",
+      "generalResetMembership": {},
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_title",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 2974
+      },
+      "literalArguments": [
+        "General Settings",
+        "General Settings"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [],
+      "controlKind": "section-heading",
+      "generalResetMembership": {},
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_language_mode_combobox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3115
+      },
+      "literalArguments": [
+        "Language",
+        "Language",
+        "language"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"language\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"language\"": "listed"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_funny_level_slider",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3120
+      },
+      "literalArguments": [],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "I18N::FUNNY_LEVEL_ENGLISH_KEY"
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "I18N::FUNNY_LEVEL_ENGLISH_KEY": "not-listed-or-symbol-unresolved"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_funny_level_slider",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3121
+      },
+      "literalArguments": [],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "I18N::FUNNY_LEVEL_CANTONESE_KEY"
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "I18N::FUNNY_LEVEL_CANTONESE_KEY": "not-listed-or-symbol-unresolved"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_checkbox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3122
+      },
+      "literalArguments": [
+        "Show emojis in dialogs and message boxes",
+        "Adds one decorative emoji to a dialog headline. Buttons, action labels and field labels never carry one."
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "I18N::DIALOG_EMOJIS_KEY"
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "I18N::DIALOG_EMOJIS_KEY": "not-listed-or-symbol-unresolved"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_region_combobox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3129
+      },
+      "literalArguments": [
+        "Login Region",
+        "Login Region"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "region"
+      ],
+      "keySource": "helper-internal",
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "region": "not-listed-or-symbol-unresolved"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_combobox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3132
+      },
+      "literalArguments": [
+        "Units",
+        "Units",
+        "use_inches",
+        "0",
+        "1"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"use_inches\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"use_inches\"": "listed"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_combobox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3133
+      },
+      "literalArguments": [
+        "Interface motion",
+        "Reduce motion settles supported transitions immediately. System follows your operating system preference.",
+        "motion_preference",
+        "System",
+        "Reduce motion",
+        "system",
+        "reduced"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"motion_preference\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"motion_preference\"": "not-listed-or-symbol-unresolved"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_combobox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3146
+      },
+      "literalArguments": [
+        "Auto Calculate Flush Volume",
+        "Auto calculate flush volumes",
+        "auto_calculate_flush"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"auto_calculate_flush\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"auto_calculate_flush\"": "listed"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_combobox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3152
+      },
+      "literalArguments": [
+        "Prepare panel position",
+        "Dock the Prepare panel on the left, right, top, or bottom of the workspace.",
+        "prepare_sidebar_dock"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"prepare_sidebar_dock\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"prepare_sidebar_dock\"": "not-listed-or-symbol-unresolved"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_checkbox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3159
+      },
+      "literalArguments": [
+        "Keep only one Bambu Studio instance",
+        "On OSX there is always only one instance of app running by default. However it is allowed to run multiple instances ",
+        "of same app from the command line. In such case this settings will allow only one instance.",
+        "If this is enabled, when starting Bambu Studio and another instance of the same Bambu Studio is already running, that ",
+        "instance will be reactivated instead.",
+        "single_instance"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"single_instance\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"single_instance\"": "listed"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result.",
+      "configurationExtractionNote": "Explicitly reviewed conditional tooltip arguments; configuration key follows width 50 in both platform branches."
+    },
+    {
+      "helper": "create_item_checkbox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3169
+      },
+      "literalArguments": [
+        "Filament Manager",
+        " (",
+        "Take effect after restarting Studio",
+        ")",
+        "The Filament Manager is turned off by default on macOS because compatibility issues on some systems may cause the application to become unresponsive."
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "FilaManagerEnabledConfigKey"
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "FilaManagerEnabledConfigKey": "listed"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result.",
+      "configurationExtractionNote": "Explicitly reviewed conditional tooltip arguments; configuration key follows width 50 in both platform branches."
+    },
+    {
+      "helper": "create_item_checkbox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3178
+      },
+      "literalArguments": [
+        "Multi-device Management(Take effect after restarting Studio).",
+        "With this option enabled, you can send a task to multiple devices at the same time and manage multiple devices.",
+        "enable_multi_machine"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"enable_multi_machine\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"enable_multi_machine\"": "listed"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_checkbox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3182
+      },
+      "literalArguments": [
+        "Support beta version update.",
+        "With this option enabled, you can receive beta version updates.",
+        "enable_beta_version_update"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"enable_beta_version_update\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"enable_beta_version_update\"": "listed"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_checkbox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3187
+      },
+      "literalArguments": [
+        "Update automatically",
+        "Download new versions in the background and offer to restart when one is ready. Only an installed copy updates itself.",
+        "auto_update"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"auto_update\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"auto_update\"": "listed"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_checkbox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3192
+      },
+      "literalArguments": [
+        "Join the User Experience Improvement Program.",
+        "",
+        "privacyuse"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"privacyuse\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"privacyuse\"": "listed"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_downloads",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3207
+      },
+      "literalArguments": [
+        "download_path"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"download_path\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"download_path\"": "listed"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_combobox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3220
+      },
+      "literalArguments": [
+        "External editor",
+        "Editor used by File > Open in External Editor; \\\"Custom\\\" uses the executable chosen below.",
+        "external_editor"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"external_editor\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"external_editor\"": "not-listed-or-symbol-unresolved"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_external_editor",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3224
+      },
+      "literalArguments": [
+        "external_editor_path"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"external_editor_path\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"external_editor_path\"": "not-listed-or-symbol-unresolved"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_title",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3249
+      },
+      "literalArguments": [
+        "Model import",
+        "Model import"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [],
+      "controlKind": "section-heading",
+      "generalResetMembership": {},
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_checkbox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3250
+      },
+      "literalArguments": [
+        "Automatically simplify large imported models",
+        "Simplify meshes with at least 1,000,000 triangles before adding them to the scene. Source files are unchanged. Saved projects and meshes with painting or protected metadata keep their original geometry.",
+        "auto_simplify_import"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"auto_simplify_import\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"auto_simplify_import\"": "listed"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_combobox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3254
+      },
+      "literalArguments": [
+        "Import simplification detail",
+        "Uses the same detail levels as the manual Simplify tool. Extra high is the default.",
+        "auto_simplify_import_detail",
+        "Extra high",
+        "High",
+        "Medium",
+        "Low",
+        "Extra low",
+        "0.001",
+        "0.01",
+        "0.1",
+        "0.5",
+        "1"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"auto_simplify_import_detail\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"auto_simplify_import_detail\"": "listed"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_title",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3282
+      },
+      "literalArguments": [
+        "User Settings",
+        "User Settings"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [],
+      "controlKind": "section-heading",
+      "generalResetMembership": {},
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_checkbox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3284
+      },
+      "literalArguments": [
+        "Auto plate type",
+        "Studio will remember build plate selected last time for certain printer model.",
+        "user_bed_type"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"user_bed_type\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"user_bed_type\"": "listed"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_combobox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3290
+      },
+      "literalArguments": [
+        "time format for print progress",
+        "Display time in 12-hour format with AM/PM instead of 24-hour format",
+        "use_12h_time_format"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"use_12h_time_format\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"use_12h_time_format\"": "listed"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_checkbox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3294
+      },
+      "literalArguments": [
+        "Keep liveview active",
+        "Keep the camera streaming while idle, on other tabs, or minimized. This does not enable recording.",
+        "auto_stop_liveview"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"auto_stop_liveview\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"auto_stop_liveview\"": "listed"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_checkbox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3298
+      },
+      "literalArguments": [
+        "Automatically transfer modified value when switching process and filament presets",
+        "After closing, a popup will appear to ask each time",
+        "auto_transfer_when_switch_preset"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"auto_transfer_when_switch_preset\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"auto_transfer_when_switch_preset\"": "listed"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_checkbox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3301
+      },
+      "literalArguments": [
+        "Automatically optimize wipe tower placement",
+        "With this option enabled, the wipe tower will be placed at its optimal position.",
+        "auto_optimize_wipe_tower_placement"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"auto_optimize_wipe_tower_placement\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"auto_optimize_wipe_tower_placement\"": "not-listed-or-symbol-unresolved"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_checkbox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3305
+      },
+      "literalArguments": [
+        "Auto sync user presets(Printer/Filament/Process)",
+        "If enabled, auto sync user presets with cloud after Bambu Studio startup or presets modified.",
+        "sync_user_preset"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"sync_user_preset\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"sync_user_preset\"": "listed"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_checkbox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3308
+      },
+      "literalArguments": [
+        "Auto check for system presets updates",
+        "If enabled, auto check whether there are system presets updates after Bambu Studio startup.",
+        "sync_system_preset"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"sync_system_preset\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"sync_system_preset\"": "listed"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_checkbox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3312
+      },
+      "literalArguments": [
+        "Auto-fill previously logged-in accounts.",
+        "",
+        "webview_auto_fill"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"webview_auto_fill\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"webview_auto_fill\"": "listed"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_title",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3340
+      },
+      "literalArguments": [
+        "3D Settings",
+        "3D Settings"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [],
+      "controlKind": "section-heading",
+      "generalResetMembership": {},
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_title",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3341
+      },
+      "literalArguments": [
+        "Mouse Settings",
+        "Mouse Settings"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [],
+      "controlKind": "section-heading",
+      "generalResetMembership": {},
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_title",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3342
+      },
+      "literalArguments": [
+        "Import Settings",
+        "Import Settings"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [],
+      "controlKind": "section-heading",
+      "generalResetMembership": {},
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_checkbox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3344
+      },
+      "literalArguments": [
+        "Zoom to mouse position",
+        "Zoom in towards the mouse pointer's position in the 3D view, rather than the 2D window center.",
+        "zoom_to_mouse"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"zoom_to_mouse\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"zoom_to_mouse\"": "listed"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_checkbox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3346
+      },
+      "literalArguments": [
+        "Reverse direction of zoom with mouse wheel",
+        "If enabled, reverses the direction of zoom with mouse wheel.",
+        "reverse_mouse_wheel_zoom"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"reverse_mouse_wheel_zoom\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"reverse_mouse_wheel_zoom\"": "listed"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_checkbox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3348
+      },
+      "literalArguments": [
+        "Drag with left mouse button to move",
+        "If enabled, the left mouse button can move models by dragging; if disabled, the left button only selects or clicks.",
+        "canvas_drag_to_move"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"canvas_drag_to_move\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"canvas_drag_to_move\"": "listed"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_combobox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3353
+      },
+      "literalArguments": [
+        "Display overview",
+        "Display overview",
+        "enable_assemble_view_preview",
+        "Auto",
+        "Open",
+        "Close",
+        "enable_assemble_view_preview",
+        "Auto",
+        "Open",
+        "Close",
+        "enable_assemble_view_preview",
+        "Auto",
+        "enable_bvh",
+        "enable_assemble_view_preview",
+        "Open",
+        "enable_bvh"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"enable_assemble_view_preview\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"enable_assemble_view_preview\"": "listed"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_range_input",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3364
+      },
+      "literalArguments": [
+        "Grabber scale",
+        "Set grabber size for move,rotate,scale tool.",
+        "Value range",
+        ":[",
+        ",",
+        "]",
+        "grabber_size_factor"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"grabber_size_factor\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"grabber_size_factor\"": "listed"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_range_two_input",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3374
+      },
+      "literalArguments": [
+        "Tooltip offset",
+        "Set tooltip offset for different mouse size.",
+        "Value range",
+        ":[",
+        ",",
+        "]",
+        "3d_middle_tooltip_offset_x",
+        "3d_middle_tooltip_offset_y"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"3d_middle_tooltip_offset_x\"",
+        "\"3d_middle_tooltip_offset_y\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"3d_middle_tooltip_offset_x\"": "listed",
+        "\"3d_middle_tooltip_offset_y\"": "listed"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_combobox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3380
+      },
+      "literalArguments": [
+        "Toolbar Style",
+        "Toolbar Style",
+        "toolbar_style",
+        "0",
+        "1"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"toolbar_style\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"toolbar_style\"": "listed"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_checkbox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3385
+      },
+      "literalArguments": [
+        "Always show shells in preview",
+        "Always show shells or not in preview view tab. If you change this value, you should reslice.",
+        "show_shells_in_preview"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"show_shells_in_preview\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"show_shells_in_preview\"": "listed"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_checkbox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3389
+      },
+      "literalArguments": [
+        "Show bed heat soak area",
+        "Show the heated-bed preconditioning boundaries in the 3D view and preview.",
+        "show_bed_heat_soak_area"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"show_bed_heat_soak_area\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"show_bed_heat_soak_area\"": "not-listed-or-symbol-unresolved"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_checkbox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3394
+      },
+      "literalArguments": [
+        "Show the step mesh parameter setting dialog.",
+        "If enabled,a parameter settings dialog will appear during STEP file import.",
+        "enable_step_mesh_setting"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"enable_step_mesh_setting\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"enable_step_mesh_setting\"": "listed"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_checkbox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3397
+      },
+      "literalArguments": [
+        "Import a single SVG and split it",
+        "Import a single SVG and then split it to several parts.",
+        "import_single_svg_and_split"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"import_single_svg_and_split\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"import_single_svg_and_split\"": "listed"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_checkbox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3400
+      },
+      "literalArguments": [
+        "Enable gamma correction for the imported obj file",
+        "Perform gamma correction on color after importing the obj model.",
+        "gamma_correct_in_import_obj"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"gamma_correct_in_import_obj\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"gamma_correct_in_import_obj\"": "listed"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_checkbox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3404
+      },
+      "literalArguments": [
+        "Remember last used color scheme",
+        "When enabled, the last used color scheme (e.g., Line Type, Speed) will be automatically applied on next startup.",
+        "enable_record_gcodeviewer_option_item"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"enable_record_gcodeviewer_option_item\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"enable_record_gcodeviewer_option_item\"": "not-listed-or-symbol-unresolved"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_checkbox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3408
+      },
+      "literalArguments": [
+        "Improve rendering performance by lod",
+        "Improved rendering performance under the scene of multiple plates and many models.",
+        "enable_lod"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"enable_lod\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"enable_lod\"": "listed"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_checkbox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3411
+      },
+      "literalArguments": [
+        "Enable advanced gcode viewer",
+        "Enable advanced gcode viewer.",
+        "enable_advanced_gcode_viewer_"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"enable_advanced_gcode_viewer_\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"enable_advanced_gcode_viewer_\"": "listed"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_checkbox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3425
+      },
+      "literalArguments": [
+        "Show assembly BVH primary bounds",
+        "Display the BVH primary bounding box wireframe in assembly view.",
+        "show_assembly_bvh_bounds"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"show_assembly_bvh_bounds\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"show_assembly_bvh_bounds\"": "not-listed-or-symbol-unresolved"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_checkbox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3435
+      },
+      "literalArguments": [
+        "Open full screen camera view on active monitor only.",
+        "When enabled, the camera full screen view opens only on the monitor that contains Bambu Studio.",
+        "camera_fullscreen_active_monitor_only"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"camera_fullscreen_active_monitor_only\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"camera_fullscreen_active_monitor_only\"": "listed"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_title",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3466
+      },
+      "literalArguments": [
+        "Project",
+        ""
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [],
+      "controlKind": "section-heading",
+      "generalResetMembership": {},
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_input",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3467
+      },
+      "literalArguments": [
+        "Maximum recent projects",
+        "",
+        "Maximum count of recent projects",
+        "max_recent_count"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"max_recent_count\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"max_recent_count\"": "listed"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_checkbox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3471
+      },
+      "literalArguments": [
+        "No warnings when loading 3MF with modified G-codes",
+        "No warnings when loading 3MF with modified G-codes",
+        "no_warn_when_modified_gcodes"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"no_warn_when_modified_gcodes\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"no_warn_when_modified_gcodes\"": "listed"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_checkbox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3473
+      },
+      "literalArguments": [
+        "Don't check printer information when loading 3MF",
+        "No prompt to migrate the preset when the loaded 3MF does not match the connected printer",
+        "skip_printer_check_on_3mf_load"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"skip_printer_check_on_3mf_load\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"skip_printer_check_on_3mf_load\"": "listed"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_combobox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3479
+      },
+      "literalArguments": [
+        "Auto-Backup",
+        "The peroid of backup in seconds.",
+        "backup_interval",
+        "backup_interval"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"backup_interval\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"backup_interval\"": "listed"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_title",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3498
+      },
+      "literalArguments": [
+        "Narrator",
+        "Local speech is serialized. Voice network capability is unknown."
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [],
+      "controlKind": "section-heading",
+      "generalResetMembership": {},
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_checkbox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3500
+      },
+      "literalArguments": [
+        "Sound effects",
+        "Play short sounds after wording changes. Quiet narration, quiet hours and Focus Assist also silence these sounds. System volume and mute still apply."
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "ActionSounds::enabled_key"
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "ActionSounds::enabled_key": "not-listed-or-symbol-unresolved"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_checkbox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3503
+      },
+      "literalArguments": [
+        "Enable narrator",
+        "Off by default. Speak application events using installed voices.",
+        "narrator_enabled"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"narrator_enabled\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"narrator_enabled\"": "not-listed-or-symbol-unresolved"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_checkbox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3505
+      },
+      "literalArguments": [
+        "Quiet narration",
+        "Pause local speech without changing saved voice choices. An active screen reader also pauses narration.",
+        "narrator_quiet"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"narrator_quiet\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"narrator_quiet\"": "not-listed-or-symbol-unresolved"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_combobox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3513
+      },
+      "literalArguments": [
+        "Narration language",
+        "Independent of the interface language. Both speaks English first.",
+        "narrator_language"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"narrator_language\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"narrator_language\"": "not-listed-or-symbol-unresolved"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_checkbox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3518
+      },
+      "literalArguments": [
+        "Narrate printer events",
+        "Print state, filament runout and printer errors.",
+        "narrator_track_printer"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"narrator_track_printer\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"narrator_track_printer\"": "not-listed-or-symbol-unresolved"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_checkbox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3520
+      },
+      "literalArguments": [
+        "Narrate application events",
+        "Slicing, export, update and error summaries. File names and account details are never spoken.",
+        "narrator_track_app"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"narrator_track_app\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"narrator_track_app\"": "not-listed-or-symbol-unresolved"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_checkbox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3522
+      },
+      "literalArguments": [
+        "Narrate previews and scanner prompts",
+        "Voice previews and the filament scanner.",
+        "narrator_track_accessibility"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"narrator_track_accessibility\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"narrator_track_accessibility\"": "not-listed-or-symbol-unresolved"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_checkbox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3524
+      },
+      "literalArguments": [
+        "Narrator quiet hours",
+        "Stay silent during the hours below. Silence also applies to errors.",
+        "narrator_quiet_hours_enabled"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"narrator_quiet_hours_enabled\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"narrator_quiet_hours_enabled\"": "not-listed-or-symbol-unresolved"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_combobox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3533
+      },
+      "literalArguments": [
+        "Quiet hours start",
+        "Narration is silent from this time.",
+        "narrator_quiet_hours_start"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"narrator_quiet_hours_start\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"narrator_quiet_hours_start\"": "not-listed-or-symbol-unresolved"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_combobox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3535
+      },
+      "literalArguments": [
+        "Quiet hours end",
+        "Narration resumes at this time.",
+        "narrator_quiet_hours_end"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"narrator_quiet_hours_end\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"narrator_quiet_hours_end\"": "not-listed-or-symbol-unresolved"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_checkbox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3538
+      },
+      "literalArguments": [
+        "Respect Focus Assist",
+        "Only speak errors while Windows Focus Assist, a full-screen app or a presentation is active.",
+        "narrator_respect_focus_assist"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"narrator_respect_focus_assist\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"narrator_respect_focus_assist\"": "not-listed-or-symbol-unresolved"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_combobox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3571
+      },
+      "literalArguments": [
+        "Cantonese voice",
+        "English voice",
+        "Choose an installed voice. Missing selections remain saved."
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "voice_key"
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "voice_key": "not-listed-or-symbol-unresolved"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_combobox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3616
+      },
+      "literalArguments": [
+        "Cantonese speech rate",
+        "English speech rate",
+        "Platform range: -10 to 10. Normal delivery: 0.",
+        "narrator_rate_yue",
+        "narrator_rate_en"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "cantonese ? \"narrator_rate_yue\" : \"narrator_rate_en\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "cantonese ? \"narrator_rate_yue\" : \"narrator_rate_en\"": "not-listed-or-symbol-unresolved"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_combobox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3619
+      },
+      "literalArguments": [
+        "Cantonese speech pitch",
+        "English speech pitch",
+        "Platform range: -10 to 10. Normal delivery: 0.",
+        "narrator_pitch_yue",
+        "narrator_pitch_en"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "cantonese ? \"narrator_pitch_yue\" : \"narrator_pitch_en\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "cantonese ? \"narrator_pitch_yue\" : \"narrator_pitch_en\"": "not-listed-or-symbol-unresolved"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_title",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3636
+      },
+      "literalArguments": [
+        "Online Models",
+        "Online Models"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [],
+      "controlKind": "section-heading",
+      "generalResetMembership": {},
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_checkbox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3637
+      },
+      "literalArguments": [
+        "Show online staff-picked models on the home page",
+        "Show online staff-picked models on the home page",
+        "staff_pick_switch"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"staff_pick_switch\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"staff_pick_switch\"": "listed"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_checkbox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3639
+      },
+      "literalArguments": [
+        "Show history on the home page",
+        "Show history on the home page",
+        "show_print_history"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"show_print_history\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"show_print_history\"": "listed"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_title",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3657
+      },
+      "literalArguments": [
+        "AI printer watch",
+        "Summarize the printer's live camera view with a local model. Frames never leave this computer."
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [],
+      "controlKind": "section-heading",
+      "generalResetMembership": {},
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_checkbox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3659
+      },
+      "literalArguments": [
+        "Watch the live view and notify about progress and failures",
+        "Every few minutes a frame of the live view is described by a local Ollama model; suspected failures raise a persistent warning with fix suggestions.",
+        "printer_watch_enabled"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"printer_watch_enabled\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"printer_watch_enabled\"": "not-listed-or-symbol-unresolved"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_input",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3663
+      },
+      "literalArguments": [
+        "Local model tag",
+        "",
+        "Vision-capable Ollama tag, e.g. qwen2.5vl or gemma3. Text-only tags such as gpt-oss cannot read frames.",
+        "printer_watch_model"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"printer_watch_model\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"printer_watch_model\"": "not-listed-or-symbol-unresolved"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_input",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3666
+      },
+      "literalArguments": [
+        "Check interval (minutes)",
+        "",
+        "Minutes between live-view checks (minimum 1).",
+        "printer_watch_interval"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"printer_watch_interval\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"printer_watch_interval\"": "not-listed-or-symbol-unresolved"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_title",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3675
+      },
+      "literalArguments": [
+        "Developer Mode",
+        "Developer Mode"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [],
+      "controlKind": "section-heading",
+      "generalResetMembership": {},
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_checkbox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3676
+      },
+      "literalArguments": [
+        "Develop mode",
+        "Develop mode",
+        "developer_mode"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"developer_mode\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"developer_mode\"": "listed"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_checkbox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3677
+      },
+      "literalArguments": [
+        "Skip AMS blacklist check",
+        "Skip AMS blacklist check",
+        "skip_ams_blacklist_check"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"skip_ams_blacklist_check\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"skip_ams_blacklist_check\"": "listed"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_title",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3684
+      },
+      "literalArguments": [
+        "Associate Files To Bambu Studio",
+        "Associate Files To Bambu Studio"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [],
+      "controlKind": "section-heading",
+      "generalResetMembership": {},
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_checkbox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3685
+      },
+      "literalArguments": [
+        "Associate .3mf files to Bambu Studio",
+        "If enabled, sets Bambu Studio as default application to open .3mf files",
+        "associate_3mf"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"associate_3mf\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"associate_3mf\"": "listed"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_checkbox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3687
+      },
+      "literalArguments": [
+        "Associate .stl files to Bambu Studio",
+        "If enabled, sets Bambu Studio as default application to open .stl files",
+        "associate_stl"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"associate_stl\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"associate_stl\"": "listed"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_checkbox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3689
+      },
+      "literalArguments": [
+        "Associate .step/.stp files to Bambu Studio",
+        "If enabled, sets Bambu Studio as default application to open .step files",
+        "associate_step"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"associate_step\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"associate_step\"": "listed"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_title",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3713
+      },
+      "literalArguments": [
+        "LAN model drop",
+        "LAN model drop"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [],
+      "controlKind": "section-heading",
+      "generalResetMembership": {},
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_checkbox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3715
+      },
+      "literalArguments": [
+        "Receive models from the LAN drop site",
+        "Check the drop site every few seconds and show each received model with Open and Discard.",
+        "lan_drop_enabled"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"lan_drop_enabled\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"lan_drop_enabled\"": "not-listed-or-symbol-unresolved"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_title",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3725
+      },
+      "literalArguments": [
+        "Connection to the drop site",
+        "Connection to the drop site"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [],
+      "controlKind": "section-heading",
+      "generalResetMembership": {},
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_title",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3751
+      },
+      "literalArguments": [
+        "Local status API",
+        "Local status API"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [],
+      "controlKind": "section-heading",
+      "generalResetMembership": {},
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_checkbox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3753
+      },
+      "literalArguments": [
+        "Serve printer status on this computer",
+        "Let programs on this computer read the printer list and the door state. Off by default."
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "StatusApi::kEnabledConfigKey"
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "StatusApi::kEnabledConfigKey": "not-listed-or-symbol-unresolved"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_input",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3757
+      },
+      "literalArguments": [
+        "Port",
+        "The port on 127.0.0.1 that the status API listens on."
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "StatusApi::kPortConfigKey"
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "StatusApi::kPortConfigKey": "not-listed-or-symbol-unresolved"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_title",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3783
+      },
+      "literalArguments": [
+        "Log",
+        "Log"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [],
+      "controlKind": "section-heading",
+      "generalResetMembership": {},
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_loglevel_combobox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3785
+      },
+      "literalArguments": [
+        "Log Level",
+        "Log Level"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "severity_level"
+      ],
+      "keySource": "helper-internal",
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "severity_level": "listed"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_title",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3793
+      },
+      "literalArguments": [
+        "Developer Tools",
+        "Developer Tools"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [],
+      "controlKind": "section-heading",
+      "generalResetMembership": {},
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_checkbox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3794
+      },
+      "literalArguments": [
+        "Internal developer mode",
+        "Internal developer mode",
+        "internal_developer_mode"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"internal_developer_mode\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"internal_developer_mode\"": "not-listed-or-symbol-unresolved"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_checkbox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3795
+      },
+      "literalArguments": [
+        "Enable SSL(MQTT)",
+        "Enable SSL(MQTT)",
+        "enable_ssl_for_mqtt"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"enable_ssl_for_mqtt\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"enable_ssl_for_mqtt\"": "not-listed-or-symbol-unresolved"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_checkbox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3796
+      },
+      "literalArguments": [
+        "Enable SSL(FTP)",
+        "Enable SSL(FTP)",
+        "enable_ssl_for_ftp"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"enable_ssl_for_ftp\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"enable_ssl_for_ftp\"": "not-listed-or-symbol-unresolved"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_title",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3798
+      },
+      "literalArguments": [
+        "Import Texture Model",
+        "Import Texture Model"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [],
+      "controlKind": "section-heading",
+      "generalResetMembership": {},
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_int_slider",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3799
+      },
+      "literalArguments": [
+        "Color Tolerance of Filament Matching",
+        "CIEDE2000 difference used when matching imported texture colors to filaments. Filaments within this band are treated as equally close. This does not merge colors and does not change the match threshold in the texture import dialog.",
+        "texture_import_color_tolerance"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"texture_import_color_tolerance\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"texture_import_color_tolerance\"": "listed"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_title",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3804
+      },
+      "literalArguments": [
+        "Host Setting",
+        "Host Setting"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [],
+      "controlKind": "section-heading",
+      "generalResetMembership": {},
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_radiobox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3805
+      },
+      "literalArguments": [
+        "DEV host: api-dev.bambu-lab.com/v1",
+        "dev_host"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"dev_host\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"dev_host\"": "not-listed-or-symbol-unresolved"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_radiobox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3806
+      },
+      "literalArguments": [
+        "QA  host: api-qa.bambu-lab.com/v1",
+        "qa_host"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"qa_host\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"qa_host\"": "not-listed-or-symbol-unresolved"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_radiobox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3807
+      },
+      "literalArguments": [
+        "PRE host: api-pre.bambu-lab.com/v1",
+        "pre_host"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"pre_host\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"pre_host\"": "not-listed-or-symbol-unresolved"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    },
+    {
+      "helper": "create_item_radiobox",
+      "source": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 3808
+      },
+      "literalArguments": [
+        "Product host",
+        "product_host"
+      ],
+      "consumerStatus": "not-independently-traced-per-control",
+      "runtimeStatus": "unverified",
+      "configurationExpressions": [
+        "\"product_host\""
+      ],
+      "controlKind": "settings-control-candidate",
+      "generalResetMembership": {
+        "\"product_host\"": "not-listed-or-symbol-unresolved"
+      },
+      "persistenceEvidence": "Shared helper callback requires per-control validation; configuration expression is source-derived, not a runtime result."
+    }
+  ],
+  "generalResetLiteralKeys": [
+    "language",
+    "use_inches",
+    "dark_color_mode",
+    "ui_density",
+    "ui_accent_seed",
+    "auto_calculate_flush",
+    "single_instance",
+    "enable_multi_machine",
+    "enable_beta_version_update",
+    "auto_update",
+    "privacyuse",
+    "download_path",
+    "webview_auto_fill",
+    "associate_3mf",
+    "associate_stl",
+    "associate_step",
+    "user_bed_type",
+    "use_12h_time_format",
+    "auto_stop_liveview",
+    "auto_transfer_when_switch_preset",
+    "sync_user_preset",
+    "sync_system_preset",
+    "zoom_to_mouse",
+    "reverse_mouse_wheel_zoom",
+    "canvas_drag_to_move",
+    "enable_assemble_view_preview",
+    "grabber_size_factor",
+    "3d_middle_tooltip_offset_x",
+    "3d_middle_tooltip_offset_y",
+    "toolbar_style",
+    "show_shells_in_preview",
+    "auto_simplify_import",
+    "auto_simplify_import_detail",
+    "enable_step_mesh_setting",
+    "import_single_svg_and_split",
+    "gamma_correct_in_import_obj",
+    "enable_lod",
+    "enable_advanced_gcode_viewer_",
+    "camera_fullscreen_active_monitor_only",
+    "max_recent_count",
+    "no_warn_when_modified_gcodes",
+    "skip_printer_check_on_3mf_load",
+    "backup_switch",
+    "backup_interval",
+    "staff_pick_switch",
+    "show_print_history",
+    "developer_mode",
+    "skip_ams_blacklist_check",
+    "severity_level",
+    "texture_import_color_tolerance"
+  ],
+  "featureCoverage": [
+    {
+      "id": "job-experience-document-label",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "language",
+      "settingsGroups": [
+        "language"
+      ],
+      "status": "bounded-source-evidence",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "funny-emoji",
+      "settingsGroups": [
+        "voice-copy"
+      ],
+      "status": "bounded-source-evidence",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "personal-vocabulary",
+      "settingsGroups": [
+        "wording"
+      ],
+      "status": "bounded-source-evidence",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "vocabulary-drop-apply",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "school-mode",
+      "settingsGroups": [
+        "school"
+      ],
+      "status": "bounded-source-evidence",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "narration",
+      "settingsGroups": [
+        "narration"
+      ],
+      "status": "bounded-source-evidence",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "action-sound-effects",
+      "settingsGroups": [
+        "sound"
+      ],
+      "status": "bounded-source-evidence",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "scheduled-settings",
+      "settingsGroups": [
+        "schedules"
+      ],
+      "status": "bounded-source-evidence",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "display-name",
+      "settingsGroups": [
+        "display-name"
+      ],
+      "status": "bounded-source-evidence",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "adhd-modes",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "dim-sum",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "dim-sum-photo-source",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "material-design",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "workflow-navigation",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "motion",
+      "settingsGroups": [
+        "motion"
+      ],
+      "status": "bounded-source-evidence",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "live-charts",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "appearance-editor",
+      "settingsGroups": [
+        "theme",
+        "density-accent-fonts"
+      ],
+      "status": "bounded-source-evidence",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "color-picker",
+      "settingsGroups": [
+        "density-accent-fonts"
+      ],
+      "status": "bounded-source-evidence",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "logo-customization",
+      "settingsGroups": [
+        "logo"
+      ],
+      "status": "bounded-source-evidence",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "overlay-panels",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "collapse-filters",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "accessibility-sizing",
+      "settingsGroups": [
+        "density-accent-fonts",
+        "geometry"
+      ],
+      "status": "bounded-source-evidence",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "functional-ui",
+      "settingsGroups": [
+        "lan-reception",
+        "local-status-api"
+      ],
+      "status": "bounded-source-evidence",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "onboarding-wizard",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "extension-support",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "tabs",
+      "settingsGroups": [
+        "settings-tabs"
+      ],
+      "status": "bounded-source-evidence",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "regex-search",
+      "settingsGroups": [
+        "settings-search"
+      ],
+      "status": "bounded-source-evidence",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "command-palette",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "context-menus",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "menu-shortcuts",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "rich-controls",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "guided-forms",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "info-icon-guidance",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "settings-explanations",
+      "settingsGroups": [
+        "display-name"
+      ],
+      "status": "bounded-source-evidence",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "blank-editors",
+      "settingsGroups": [
+        "drafts"
+      ],
+      "status": "bounded-source-evidence",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "super-confirmation",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "element-locks",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "support-tickets",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "unlock-ladder",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "authenticator",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "qr-pairing",
+      "settingsGroups": [
+        "lan-reception"
+      ],
+      "status": "bounded-source-evidence",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "honest-monetization",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "local-history",
+      "settingsGroups": [
+        "drafts"
+      ],
+      "status": "bounded-source-evidence",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "exports",
+      "settingsGroups": [
+        "preferences-export"
+      ],
+      "status": "bounded-source-evidence",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "bulk-actions",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "changelog",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "offline-docs",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "rendered-provider-text",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "notifications",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "file-converter",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "base64-tools",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "virtual-disk-manager",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "minecraft-server-manager",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "minecraft-world-generator",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "ollama-suite",
+      "settingsGroups": [
+        "printer-watch"
+      ],
+      "status": "bounded-source-evidence",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "external-editor",
+      "settingsGroups": [
+        "external-editor"
+      ],
+      "status": "bounded-source-evidence",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "download-handoff",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "forge-publishing",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "progress-recovery",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "drawesome-drawing",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "completeness-parity",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "front-provenance",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "product-evidence",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "screen-recording",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "design-reference-parity",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "design-folder",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "responsive-layout-matrix",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "public-screenshot-gallery",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "landing-site",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "mobile-documentation-site",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "installer-download-button",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "feature-articles",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "vendored-fonts",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "shared-link-embed",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "homepage-link",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "vocabulary-unlock-boundary",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "documentation-companion-delivery",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "status-hub",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "discord-status-bridge",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "panic-webhooks",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "tidbyt-displays",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "build-entrypoints",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "fresh-build-run-command",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "dependency-fetcher",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "bundled-dependencies",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "squirrel-installer",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "self-signing",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "auto-updates",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "app-icon",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "release-workflow",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "release-timing",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "release-line-counts",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "release-dim-sum-photo",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "dim-sum-code-names",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "ci-bootstrap",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "runner-selection",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "encrypted-public-builder",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "tabbed-readme",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "human-time-estimate",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "sanitized-instruction-copy",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "agents-md-vocabulary-block",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "vocabulary-hash-lock",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "roadmap-checklist",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "feature-docs",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "postman-collections",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "wiki-documentation-sync",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "handoff-record",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "closeout-prompt",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "discussion-records",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "project-board",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "operational-skill",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "instruction-prompt-banner",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "instruction-single-file-editions",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "project-profile",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "roblox-model-catalogue",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    },
+    {
+      "id": "roblox-visual-realism",
+      "settingsGroups": [],
+      "status": "no-direct-mapping-established",
+      "applicability": "pending-individual-review",
+      "runtimeStatus": "unverified",
+      "completionClaim": false
+    }
+  ],
+  "observations": [
+    {
+      "id": "external-editor-accessible-name",
+      "anchor": {
+        "path": "src/slic3r/GUI/Preferences.cpp",
+        "line": 1565,
+        "symbolOrText": "second SetName in create_item_external_editor"
+      },
+      "description": "External editor helper sets its button name to External editor browse at line 1564 and immediately overwrites it with Download path browse at line 1565. Remove the second call in that helper; the Downloads helper keeps its own name.",
+      "runtimeStatus": "unverified",
+      "sourceCorrectionCommit": "e08cad0a10a816b681162339fa351fd2b8bde4f6",
+      "currentState": "Corrected in source; native assistive-technology acceptance remains unverified."
+    }
+  ],
+  "revision": 4,
+  "generalResetSymbolKeys": [
+    "FilaManagerEnabledConfigKey"
+  ]
+}

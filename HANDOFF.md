@@ -1,5 +1,17 @@
 # Bambu Studio handoff
 
+## Bounded Settings consumer inventory, 7 November 2026
+
+`design/settings-consumer-coverage.json` retains exact source baf9303d anchors,
+21 groups mapped to 23 identities, 85 helper setting candidates, 21 headings,
+50 literal reset keys and one symbolic key. Independent review checked all
+85 calls, corrected two preprocessor-dependent argument extractions and included
+both external-editor selection and path consumers. All 117 feature identities
+remain listed; 94 unmapped identities are pending, not declared absent.
+The historical accessible-name finding links its later e08cad0 source correction.
+Complete consumers, persistence, reset/recovery, nested surfaces and native
+acceptance remain unfinished. No real profile or private wording was read.
+
 ## Portable publication and accepted native release, 7 November 2026
 
 First hosted attempt 42425950237 failed before packaging because the PowerShell 7

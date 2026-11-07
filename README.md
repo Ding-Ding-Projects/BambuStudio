@@ -12,6 +12,10 @@ The [portable LAN hosting setup companion](docs/features/lan-drop-setup/README.m
 
 The [required-feature inventory](docs/features/required-features/README.md) preserves 117 identities, nine surface classes and 28 historical individual surfaces. Its consistency checks do not claim that those requirements are implemented.
 
+The bounded Settings consumer map traces 21 groups to 23 identities and retains
+85 setting candidates with configuration and reset evidence. Complete consumers,
+individual applicability and runtime verification remain pending.
+
 - **Install (Windows only):** the [latest installer](https://github.com/Ding-Ding-Projects/BambuStudio/releases/latest/download/Setup.exe) is a per-user Squirrel.Windows setup that needs no administrator elevation. It is unsigned; check the [SHA-256 file](https://github.com/Ding-Ding-Projects/BambuStudio/releases/latest/download/Setup.exe.sha256) before running it. macOS and Linux were removed from this tree; cross-platform builds remain upstream at [Bambu Lab](https://github.com/bambulab/BambuStudio/releases/).
 - **Site:** [ding-ding-projects.github.io/BambuStudio](https://ding-ding-projects.github.io/BambuStudio/), a tabbed design reference and changelog viewer.
 - **Docs:** [feature documentation](docs/README.md) · [wiki](https://github.com/Ding-Ding-Projects/BambuStudio/wiki) · [roadmap](ROADMAP.md) · [handoff](HANDOFF.md) · [continuation prompt](CLOSEOUT_PROMPT.md).

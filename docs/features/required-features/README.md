@@ -24,6 +24,29 @@ Run `node scripts/ci/check-required-feature-coverage.mjs --self-test`. The check
 
 ## Next bounded work
 
+### Trace Settings controls to behavior
+
+`design/settings-consumer-coverage.json` records a bounded Preferences review at
+source `baf9303d613aa1b2953c675872e89cfe1e40c376`: 21 groups map to 23 required
+feature identities, with 85 helper-created setting candidates and 21 headings.
+All 117 identities remain present; the 94 without established mappings are
+pending individual review, not declared absent from the product.
+
+For each reviewed group, the record separates its visible control, configuration
+keys, actual consumer anchor, persistence mechanism, reset behavior and recovery
+limits. For example, selecting an external editor uses both `external_editor`
+and `external_editor_path`; recording the executable path alone misses the
+selection that decides whether the custom editor is used. General reset has
+50 literal keys and one symbolic key. Membership does not prove that every
+control resets correctly or that every setting belongs in that particular reset.
+
+Independent review checked all 85 helper calls and corrected two conditional
+argument extractions. Source linkage does not prove successful save/restart,
+complete per-control consumers, nested panels, keyboard access or runtime
+acceptance. The historical external-editor accessible-name finding is retained
+with its separate source correction `e08cad0a10a816b681162339fa351fd2b8bde4f6`;
+native assistive-technology verification remains pending.
+
 1. Complete individual-surface applicability and nested-dialog discovery.
 2. Refine each conditional or nonapplicable reason while preserving historical records.
 3. Attach exact current evidence for completed priority units.

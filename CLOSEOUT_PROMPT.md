@@ -6,7 +6,7 @@ and incomplete; account allowance is unknown.
 
 ## Preserved source
 
-Remote main e08cad0a10a816b681162339fa351fd2b8bde4f6 was read back exactly.
+Remote main d1b3d58d1733e9a114cf939b7e09b04548fa85e0 was read back exactly.
 It includes direct sending, isolated wording storage, Base64 conversion and the
 content-free Preferences probe. Native acceptance remains separate.
 
@@ -88,3 +88,5 @@ unrelated or unproven candidates. Verify each intended push by exact remote-ref 
 The primary producer acquired an untracked runtime log, log_iotc.txt. It is retained locally and excluded from publication pending private-content review. Do not alter the live producer or blindly stage diagnostics. Source preservation is not an assertion that private runtime logs were published.
 
 First portable publisher run 42425950237 failed before packaging because Get-FileHash was unavailable in the child shell. No companion release exists from that run. Bounded diagnostics were retained; the exact parent-shell cause was reproduced and correction 5ae1162b41ae8f22f5fcf476c950966814dd01a7 changes only the workflow build shell to cmd. Its owning branch was pushed and read back. Hosted verification is pending.
+
+Reviewed bounded Settings consumer coverage is now preserved in design/settings-consumer-coverage.json, tied to baf9303d. It covers 21 groups and 23 identities, 85 setting candidates, 21 headings and reset-list evidence. All 117 identities remain, with 94 mappings pending and all runtime claims unverified. Two conditional argument extractions and the external-editor selector were corrected by independent review. Continue per-control consumers, persistence/reset/recovery and actual native verification.

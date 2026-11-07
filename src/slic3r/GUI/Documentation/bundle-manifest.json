@@ -1325,12 +1325,12 @@
     {
       "route": "required-features/README.md",
       "title": "Required-feature coverage",
-      "sha256": "e00fbaf1fdb791ccb3c9cb876b0ddd8449182c2674253b29490069ef439026a1"
+      "sha256": "f33027dcc1e8d179cc469bb429ceaa484b0d91e83e5acdb04762dfdfe6be8f1d"
     },
     {
       "route": "required-features/README.yue_HK.md",
       "title": "必備功能覆蓋範圍",
-      "sha256": "34c0a815392d5edd1a50bb009325f31cf627fa007d2e5b3c359993f56caf4617"
+      "sha256": "8cc1043a54e804f6025abd1caf46709c3aea3e5dc8431c150d62d27a9f7b9025"
     },
     {
       "route": "scheduled-settings/README.md",
@@ -2165,7 +2165,7 @@
       "bytes": 16430
     }
   ],
-  "bundle_sha256": "c7e3172e965a2a4ad2ad7b0f697663d3eeb4a89db83b8934e32645e3fb7b4a95",
+  "bundle_sha256": "e40a30d61118cfcbd6bccb177bd8df2af413ecaf9979e22eb3c740c38b220a7d",
   "unavailable_references": [
     {
       "source": "api/README.md",
