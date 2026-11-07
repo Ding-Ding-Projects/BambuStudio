@@ -25,10 +25,15 @@ struct ObjectConfig {std::vector<std::string> entries;const auto& keys()const{re
 struct Volume {ObjectConfig config;};
 struct Object {
     ObjectConfig config;std::vector<Volume*> volumes;
+    double z=-3;bool zero_volume=true;
+    void ensure_on_bed(bool allow_negative_z){if(!allow_negative_z&&z<0)z=0;}
     std::vector<int> instances{1}; Box box{{5,5,5}};
     Box instance_bounding_box(size_t)const{return box;}Box raw_mesh_bounding_box()const{return box;}
 };
-struct Model {std::vector<Object*> objects;bool texture_mesh=false;};
+struct Model {
+    std::vector<Object*> objects;bool texture_mesh=false;
+    int removed_objects_with_zero_volume(){int removed=0;for(auto i=objects.begin();i!=objects.end();)if((*i)->zero_volume){i=objects.erase(i);++removed;}else ++i;return removed;}
+};
 enum class En3mfType {From_BBS,From_Other};
 struct Option {std::string value="same";std::string serialize()const{return value;}};
 struct ConfigBase {};
@@ -57,12 +62,24 @@ struct Fixture {
     Model model;Object object;Bed bed;Filename filename;Substitutions config_substitutions;
     En3mfType en_3mf_file_type=En3mfType::From_BBS;
     int file_version=10,applied=0,released=0;
+    bool is_project_file=false,exercise_downstream=false,load_config=true,load_old_project=false;
+    int import_heuristics=0,modal_notices=0,deleted_objects=0;
+    std::vector<int> load_model_objects(const std::vector<Object*>& objects,bool allow_negative_z,bool,int){
+        for(auto* object:objects){ // ACTUAL_OBJECT_PLACEMENT
+        }
+        return {1};
+    }
     std::vector<int> project_presets;bool has_3mf_textures=false;
     Fixture(){model.objects.push_back(&object);presets.result=0;}
     std::vector<int> restore(ProjectLoadContext context){
         std::vector<int> empty_result;
         struct Pending {std::function<void()> release;~Pending(){if(release)release();}} pending_archive{[&]{++released;}};
         // ACTUAL_DETACHED_ADMISSION
+        if(exercise_downstream){
+            int load_progress_callback=0;
+            // ACTUAL_MANUAL_CLASSIFICATION
+            // ACTUAL_DOWNSTREAM
+        }
         ++applied;
         return {1};
     }
@@ -75,6 +92,16 @@ int main(){
     const auto automatic=ProjectLoadMode::AutomaticStartup;
     {Fixture f;ProjectRestoreResult result=ProjectRestoreResult::Failed;
      assert(!f.restore({automatic,&result}).empty()&&f.applied==1&&f.released==0);}
+    for(auto mode:{automatic,ProjectLoadMode::Interactive})for(bool zero:{false,true}){
+        Fixture f;f.exercise_downstream=true;f.object.zero_volume=zero;
+        assert(!f.restore({mode,nullptr}).empty());
+        assert(f.model.objects.size()==1);
+        assert(f.object.z==-3&&f.import_heuristics==0&&f.modal_notices==0);
+    }
+    {Fixture f;f.exercise_downstream=true;f.load_config=false;f.object.zero_volume=false;
+     assert(!f.restore({}).empty());assert(f.object.z==0&&f.import_heuristics==1);}
+    {Fixture f;f.exercise_downstream=true;f.load_config=false;
+     assert(!f.restore({}).empty());assert(f.model.objects.empty()&&f.modal_notices==1);}
     for(int scenario=0;scenario<11;++scenario){
         Fixture f;ProjectRestoreResult result=ProjectRestoreResult::Failed;
         switch(scenario){
@@ -102,5 +129,5 @@ int main(){
     quiet.Show(true);quiet.Hide();quiet.Raise();assert(created==0);
     ProjectLoadProgress<Progress> interactive({},factory);
     assert(created==1&&!interactive.Update(50)&&interactive.WasCancelled());
-    std::cout<<"PASS: detached admission, no speculative application, default interaction, progress creation and cancellation\n";
+    std::cout<<"PASS: detached admission, project placement and import separation, no speculative application, default interaction, progress creation and cancellation\n";
 }

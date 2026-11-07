@@ -15522,6 +15522,10 @@ std::vector<size_t> Plater::priv::load_files(const std::vector<fs::path>& input_
                             context.defer();
                             return empty_result;
                         }
+                        // Skipping identical preset application must not turn a
+                        // native project into a geometry import. Placement,
+                        // negative Z and zero-volume preservation depend on this.
+                        is_project_file = true;
                         if (context.result) *context.result = ProjectRestoreResult::ApplicationStarted;
                         pending_archive.release = {};
                     }

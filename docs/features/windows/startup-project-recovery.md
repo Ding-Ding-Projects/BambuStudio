@@ -98,6 +98,11 @@ admission block with neutral archive/configuration doubles and the production
 progress wrapper. It checks an admitted case, eleven deferred classes, absence
 of speculative application, released pending resources and interactive progress
 cancellation. `--admission-mutant` removes the deferral branch and must fail.
+The same fixture runs extracted downstream production conditions and placement
+calls with geometry doubles: admitted automatic and manual native projects keep
+negative Z and zero-volume objects, while manual geometry imports retain their
+existing cleanup and placement path. `--classification-mutant` removes the
+automatic project classification and must fail on those downstream effects.
 These fixtures do not parse a real 3MF, exercise the actual preset editor or prove
 that every indirect native path is nonmodal. Native build and scenario evidence
 remain required.
