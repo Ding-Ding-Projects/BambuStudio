@@ -460,3 +460,4 @@ src/slic3r/GUI/ExtruderPanelGroup.cpp
 src/slic3r/GUI/Widgets/MappingRow.cpp
 src/slic3r/GUI/ExtruderHelpers.cpp
 src/slic3r/GUI/SyncAmsDialog.cpp
+src/slic3r/GUI/VocabularyDrop.cpp

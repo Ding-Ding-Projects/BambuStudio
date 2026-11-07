@@ -50381,3 +50381,103 @@ msgstr "個人用語已套用"
 #. review-status: agent-drafted
 msgid "Personal wording cannot be changed while school presentation is on."
 msgstr "學校展示模式開住嘅時候，唔可以更改個人用語。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Start local drop server"
+msgstr "啟動本機接收伺服器"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Open drop page"
+msgstr "開啟傳送頁面"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Start the local server to set up reception on this computer. Docker must be installed and running."
+msgstr "啟動本機伺服器，就可以喺呢部電腦設定接收功能。請先安裝並啟動 Docker。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "An existing remote station is configured. Its address and protected key have not been changed."
+msgstr "目前已設定遠端站台。佢嘅地址同受保護金鑰都冇更改。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Local server setup is already running. Wait for it to finish before trying again."
+msgstr "本機伺服器設定已經進行緊。請等完成之後再試。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Starting the local drop server and checking its network address. This can take several minutes."
+msgstr "啟動緊本機接收伺服器，同時檢查網絡地址。可能需要幾分鐘。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The local hosting files are missing. Repair or update this installation and try again."
+msgstr "搵唔到本機伺服器所需嘅檔案。請修復或更新目前安裝，再試一次。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Local server setup timed out. Check Docker and the network connection, then try again."
+msgstr "本機伺服器設定逾時。請檢查 Docker 同網絡連線，再試一次。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The local server could not be started. Check that Docker is installed and running, then try again."
+msgstr "啟動唔到本機伺服器。請確認 Docker 已安裝並運作緊，再試一次。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The server started, but station settings changed during setup. Your current station was preserved."
+msgstr "伺服器已啟動，但設定期間站台設定有變。已保留你目前嘅站台。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The server started, but its protected pairing could not be saved. Station settings were not changed."
+msgstr "伺服器已啟動，但儲存唔到受保護嘅配對資料。站台設定冇更改。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Local server ready. Open the drop page, or share the invite link when the connection is ready."
+msgstr "本機伺服器準備好。你可以開啟傳送頁面，或者等連線完成後分享邀請連結。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The server started, but pairing settings could not be saved. The previous station settings were restored."
+msgstr "伺服器已啟動，但儲存唔到配對設定。已還原之前嘅站台設定。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Pairing settings could not be saved or fully restored. Reception is paused for this session; review settings before restarting."
+msgstr "配對設定儲存失敗，亦未能完全還原。今次執行已暫停接收；重新啟動前，請先檢查設定。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Protected key storage is unavailable, so automatic local pairing cannot be used."
+msgstr "受保護金鑰儲存功能無法使用，所以未能自動進行本機配對。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The saved station changed while you were editing. Review this address and press Enter to replace it."
+msgstr "編輯期間，已儲存嘅站台有變。請確認呢個地址，再按 Enter 取代已儲存嘅地址。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Local pairing updated. The previous key text was cleared."
+msgstr "本機配對已更新。舊金鑰文字已清除。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Local pairing changed while you were editing. Your key draft was preserved; review it before saving."
+msgstr "編輯期間本機配對有變。已保留你嘅金鑰草稿；儲存前請先確認內容。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Saving this draft will replace the new local pairing. Press Save key again only if that is intended."
+msgstr "儲存呢份草稿會取代新嘅本機配對。只有確定要取代時，先再次按「儲存金鑰」。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "People on your local network can send 3D models to this computer through the LAN drop site that runs in Docker. Use Start local drop server below to set it up on this computer, or keep an existing remote station. Each model waits for you: nothing is opened, sliced or printed until you choose Open."
+msgstr "同一個區域網絡嘅人，可以透過喺 Docker 運作嘅 LAN 傳送網站，將 3D 模型傳到呢部電腦。按下面嘅「啟動本機接收伺服器」喺呢部電腦設定，亦可以保留現有遠端站台。每個模型都會等你決定：你揀「開啟」之前，唔會自動開啟、切片或者打印。"
