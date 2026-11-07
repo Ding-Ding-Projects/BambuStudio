@@ -10,13 +10,15 @@ Transport is a narrow renderer-to-main IPC allowlist plus a separately authentic
 
 | Method | Parameters | Successful result |
 | --- | --- | --- |
-| inspect | none | `snapshotId`, `ownership` (existing-owned/fresh/conflict), prerequisite enum states, safe configuration summary and capabilities |
+| inspect | optional `operationId` belonging to the current main-process session | `snapshotId`, `ownership` (existing-owned/fresh/conflict), prerequisite enum states, safe configuration summary and capabilities; operation-aware inspection additionally returns the same operation's reconciliation result |
 | configure | `snapshotId`, station name, validated integer port, storage enum existing/new-volume/new-empty-folder, optional folder selection handle, credential mode preserve/generate/custom; custom bytes use protected input only | opaque `configurationId`, safe review summary, expiry time; never credential bytes |
 | start | `configurationId`, `snapshotId` | `operationId`, accepted phase; rejects stale snapshots or an existing unresolved operation |
 | progress | `operationId`, `afterSequence` | bounded ordered events and latest terminal result if present; read-only and repeatable |
 | cancel | `operationId` | `accepted: true`, current phase; acceptance is not terminal cancellation |
 
 `snapshotId`, `configurationId` and `operationId` are opaque main-process-generated UUIDs bound to the current application session and exact owned service. They grant no authentication by themselves. Configure expires after 10 minutes and is invalidated by changed settings, successful start consumption or session exit. Start is idempotent for the same request identifier; duplicate requests return the original operation, never start another worker. Different Start requests are rejected while an operation is unresolved.
+
+Operation-aware inspect performs only the fixed owned-service observation. It cannot declare terminal reconciliation while its owned worker is still active. After worker exit, verified service identity, health and data preservation may transition that same operation from unresolved to a reconciled terminal result. Retain the operation identifier and append a terminal event; do not create another operation. If identity or retained-data evidence is unavailable, remain unresolved. Inspect never accepts an executable or arbitrary command.
 
 Events contain `schema`, `operationId`, increasing `sequence`, `phase` (inspect/acquire/validate/pull/start/local-health/lan-health/reconcile), and `state` (active/cancelling/terminal). Optional progress is a validated completed/total pair with declared units, only when measured. Terminal result contains `outcome` (succeeded/failed/cancelled), `reconciled: true`, `serviceState` (running/stopped/absent), `dataPreserved: true`, safe error code if needed, and validated URLs plus verification scope. Unknown service state prevents a terminal reconciled result and permits only inspect/reconcile recovery. Never fabricate `dataPreserved` when inspection cannot establish it.
 
