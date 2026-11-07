@@ -50481,3 +50481,18 @@ msgstr "儲存呢份草稿會取代新嘅本機配對。只有確定要取代時
 #. review-status: agent-drafted
 msgid "People on your local network can send 3D models to this computer through the LAN drop site that runs in Docker. Use Start local drop server below to set it up on this computer, or keep an existing remote station. Each model waits for you: nothing is opened, sliced or printed until you choose Open."
 msgstr "同一個區域網絡嘅人，可以透過喺 Docker 運作嘅 LAN 傳送網站，將 3D 模型傳到呢部電腦。按下面嘅「啟動本機接收伺服器」喺呢部電腦設定，亦可以保留現有遠端站台。每個模型都會等你決定：你揀「開啟」之前，唔會自動開啟、切片或者打印。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "An empty recovery project could not be created. The retained project tab has not been changed. Save the current document before trying again."
+msgstr "無法建立空白復原項目。保留嘅項目分頁未有改動。請先儲存目前文件，再重試。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Project recovery"
+msgstr "項目復原"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The previous project could not be restored. Its tab and file have been kept. Select that tab to retry, or use File > Open to choose another project."
+msgstr "上一個項目無法還原。原有分頁同檔案已保留。選取嗰個分頁可以重試，或者用「檔案 > 開啟」揀另一個項目。"

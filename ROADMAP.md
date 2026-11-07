@@ -995,3 +995,6 @@ Branch `ai/feature/20261104-narrator`. Native runtime on Windows is not verified
 - [ ] Reproduce and repair the reported recurring startup model-load error without discarding projects.
 - [ ] Reconcile the complete current feature inventory with real consumers and per-surface evidence.
 - [ ] Complete documentation/build companions, release verification and the matching installed update.
+- [ ] Verify the startup recovery candidate in a native build: failed saved project,
+  interrupted restore, explicit retry, File > Open, existing imported geometry and
+  cancelled reset. Source and focused behavioral checks are complete; runtime pending.

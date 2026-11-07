@@ -630,3 +630,5 @@ By default, after installing Bambu Studio without the networking plugin, you can
 ### Local model drop setup work
 
 See the [local hosting guide](docs/features/application-integration/local-drop-hosting.md) for the new setup entrypoints and their current verification status. Native and published-image acceptance remain in progress.
+Startup recovery candidate: [retained project tabs and explicit retry](docs/features/windows/startup-project-recovery.md).
+The source repair has focused behavioral checks; native runtime and release verification are pending.

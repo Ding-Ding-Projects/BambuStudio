@@ -3545,3 +3545,33 @@ The primary checkout was fast-forwarded to ebf4158dd607c7fcdba0dcb7bf1af7977d882
 ## 2026-11-07 delivery in progress
 
 Preferences geometry and local LAN setup source are preserved on the task branch; shared personal display matching and canvas/menu adapters are also prepared. Native transport and focused behavior fixtures passed. The full product build and runtime matrix remain pending. The hosting script and publication workflow are source preparation, not published-image or LAN delivery proof. A startup model-load error reported during this work is under investigation. The complete required-feature inventory and companion releases remain unfinished.
+# Startup recovery and hosting candidate, 2026-11-07
+
+The current integration candidate includes resizable Preferences, protected local
+LAN-server setup, broader personal-display wording, and startup project recovery.
+An invalid synthetic saved project reproduced the installed application's
+"Loading of a model file failed." dialog; an empty-profile control did not.
+This does not identify the cause in any user's actual project.
+
+Startup recovery preserves failed files and tabs, requires durable interruption
+markers before automatic restoration, protects already-loaded documents and
+cancelled resets, and clears matching markers after successful explicit opens.
+The production-transition fixture passes; the earlier implementation fails 19
+assertions. Fixed native rendering and restart behavior remain unverified.
+
+Additional local checks: 12 build-entrypoint assertions, a successful prerequisite
+bootstrap, six container/install checks (including actual CMake staging), 28
+service API checks, and complete validation of 10,246 Cantonese catalogue entries.
+The native build has not yet established runtime acceptance. No new accepted release
+or installed update is claimed.
+
+The installed payload now includes root hosting entrypoints. The release workflow
+requires its container publication job; the intended registry image still needs
+publication, immutable digest pinning, pull/start proof and another-device LAN
+verification. The portable hosting wizard and broader required-feature inventory
+remain unfinished.
+
+The full publication scanner remains unresolved: existing technical identifiers
+produce findings, the nested tool repository lacks scan coverage, and the separate
+Markdown scanner cannot process the full release workflow. Changed source has
+received bounded review and supplementary scans; no complete scan verdict is claimed.

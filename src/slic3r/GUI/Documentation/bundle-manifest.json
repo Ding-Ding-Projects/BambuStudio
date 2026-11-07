@@ -1793,6 +1793,11 @@
       "sha256": "3d1c61db77f5a37f609f62bdb1f4168897b520a4bfe5ce8af6d39d4bae98c0b7"
     },
     {
+      "route": "windows/startup-project-recovery.md",
+      "title": "Recover a project that cannot reopen at startup",
+      "sha256": "843bf68d6639a3c0554e178979c9d4505bd921156b6d32057433e99045281339"
+    },
+    {
       "route": "windows/stop-print-interlock.md",
       "title": "Stop-print safety interlock",
       "sha256": "699152c89c7182700799da71941fd71480a249bc38ab6edd6b5b4ad03b067fbe"
@@ -2105,7 +2110,7 @@
       "bytes": 16430
     }
   ],
-  "bundle_sha256": "4540bf312c9deead4bacfc9835bca2cdf506e75b1f233edc5bf2e4fbe7ca60f3",
+  "bundle_sha256": "69357d023a43ab3ea62535fd3e25ff8b70feb7f435294d1f4eac0244f16b2bbd",
   "unavailable_references": [
     {
       "source": "api/README.md",

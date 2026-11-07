@@ -1,13 +1,40 @@
-# Closeout prompt
+# Current implementation handoff
 
-```text
-Repository: Ding-Ding-Projects/BambuStudio, branch main. Releases: md3-v257 from 8cbef49aa (upstream merge), md3-v258 from 0c9734522 (3MF export crash fix), md3-v259 from 4e65e4008 (vocabulary drop, 3MF load crash fix, README), md3-v260 from dac16c242 (remaining CLI 3MF load crashes fixed; a preset-less CLI 3MF now loads back and slices); each verified as a normal release with Setup.exe, its SHA-256 file, RELEASES, the full nupkg and the SBOM.
-Done: merged upstream bambulab/BambuStudio tag v02.09.01.70 (master 56a57d00a) into the Material Design 3 fork. Conflict resolution kept the fork's interface and adopted upstream engine changes; follow-up commits 28705f9a1 and d2dd1a0cb fixed the compile errors (camera status members, joined include lines, renamed upstream helpers such as show_filament_switcher_tip, nozzle_inventory.count and SetSliceContext). Commit 8cbef49aa fixed the bilingual login button overlapping the network plugin warning on the Home page.
-Verified: local one-click build of d2dd1a0cb compiled, linked and installed; the built application starts to Home and the setup wizard in bilingual mode (captures in docs/screenshots/upstream-merge-20261104/). Release md3-v257 "Golden Coconut Tart" is a normal release (not draft, not prerelease) built from 8cbef49aa with Setup.exe, Setup.exe.sha256, RELEASES, the full nupkg and the SBOM.
-Also verified on the merged build: the 3D canvas renders cube.stl under the bundled Mesa renderer, and command-line slicing exits 0 with complete G-code (100 layers). tests/embedded_atlas_styles.test.mjs now uses the merge commit as its baseline and cardTextSource.test.ts follows the upstream resolver move; both pass and both fail on a deliberate change.
-Fixed after md3-v257: command-line --export-3mf crash on empty filament lists (0c9734522) and command-line 3MF load crash on missing preset ids (9fa304bdb). Added: drop one .json personal vocabulary file anywhere on the window to apply it, with tada sound, click-through celebration, bilingual refusal notice and UI Automation announcement (9fa304bdb, a84dcc13b, c5510e983); captures in docs/screenshots/vocabulary-drop/.
-Not verified: GUI slicing on the hidden-desktop route, the device page and SyncAms dialog against a real printer, a real Explorer drag, the heard sound and screen reader output. Resolved: the GUI empty plate for a preset-less CLI 3MF was the customized-preset safety prompt waiting on a hidden desktop; the CLI load of that 3MF crashed until 2f745de20 and dac16c242 and now slices.
-Open items: 185 upstream-removed catalogue messages kept, a few uncertain Cantonese terms, hard-coded spool colours and approximate glyphs (see HANDOFF.md, upstream merge section).
-Stopped at the usage limit: the owner chose to run the real Explorer drag on the visible desktop, but the session closed before it started, so that check was not run.
-Next: test a real Explorer drag of a vocabulary file on an interactive desktop, check the device page with a printer, review the kept catalogue messages.
-```
+Objective: complete the approved required-feature plan, including native and
+companion surfaces, with priority repairs for Preferences sizing, personal wording,
+LAN model-drop startup and the recurring startup model-load error.
+
+The user confirmed that the model-load message appears on startup before opening
+any project. An owned synthetic invalid saved project reproduces the installed
+message; this is not proof of the user's actual affected file.
+
+Working branch: gap/feature-integration-20261107. Startup source is preserved on
+origin/gap/wording-display-20261107 at 55fe0ccaa6afe628253a4825d8a1990f3d927eb2.
+Preferences and catalogue source is preserved on origin/gap/preferences-responsive-20261107
+at efc8b84798ee49b4c87461727142e51bae62f8cd. Both were verified with remote-ref readback.
+The integration branch contains both contributions plus hosting and build repairs;
+its latest candidate still needs remote readback after this record is committed.
+
+Completed local checks: startup production-transition fixture passes, earlier
+source fails 19 assertions; 12 entrypoint assertions; successful prerequisite
+bootstrap; six container and actual CMake-install checks; 28 API checks; 10,246
+complete Cantonese catalogue entries. These are not native runtime or release proof.
+
+Next: build the exact candidate through build.bat, verify startup/retry and resizable
+Preferences on the named hidden desktop, verify personal wording without exposing
+private data, publish and digest-pin the LAN image, verify installed hosting and
+another-device LAN access, and complete companion and full feature acceptance.
+The accepted installed application has not yet been updated. Main integration,
+release publication, deployed documentation and final cleanup remain unfinished.
+
+Publication scanning remains incomplete because of existing technical-identifier
+findings, nested-repository coverage and a full-workflow Markdown-parser failure.
+Preserve that limitation; do not claim a clean full scan from supplementary checks.
+Some task-owned hidden baseline processes remain after normal close attempts;
+retain their private identity receipts and complete identity-bound teardown.
+Status Hub delivery through the authenticated host-local SSH client remains pending.
+
+Keep unrelated work and user projects intact. No force pushes, public private-wording
+payloads, host power/login actions or unverified completion claims. The active goal
+remains unfinished; account allowance is unknown. No cleanup authority extends beyond
+proven task-owned, preserved, integrated candidates.

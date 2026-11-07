@@ -32558,3 +32558,12 @@ msgstr ""
 
 msgid "People on your local network can send 3D models to this computer through the LAN drop site that runs in Docker. Use Start local drop server below to set it up on this computer, or keep an existing remote station. Each model waits for you: nothing is opened, sliced or printed until you choose Open."
 msgstr ""
+
+msgid "An empty recovery project could not be created. The retained project tab has not been changed. Save the current document before trying again."
+msgstr ""
+
+msgid "Project recovery"
+msgstr ""
+
+msgid "The previous project could not be restored. Its tab and file have been kept. Select that tab to retry, or use File > Open to choose another project."
+msgstr ""
