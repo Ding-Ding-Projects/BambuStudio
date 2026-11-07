@@ -16,7 +16,7 @@ WORKDIR /app
 COPY --chown=root:root --chmod=0755 server/ ./server/
 COPY --chown=root:root --chmod=0755 site/ ./site/
 
-# The data folder (station key, drop code, queued models) is the only place
+# The data folder (station key and queued models) is the only place
 # the service writes. A new named volume takes this owner and mode.
 RUN mkdir -p /data && chown node:node /data && chmod 0700 /data
 

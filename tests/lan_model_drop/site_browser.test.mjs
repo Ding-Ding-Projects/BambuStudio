@@ -1,3 +1,4 @@
+import { pathToFileURL } from 'node:url';
 // Drives the sender page in a real headless Chromium against the drop
 // service started in-process: the invite link fills the code and leaves the
 // address bar and the history, a model is sent and lands in the inbox, a
@@ -13,7 +14,7 @@ import path from 'node:path';
 import test from 'node:test';
 import { ASCII_STL, dropRoot, repoRoot, startDrop, station, tempDir } from './harness.mjs';
 
-const { MESSAGES } = await import(path.join(dropRoot, 'site', 'i18n.js'));
+const { MESSAGES } = await import(pathToFileURL(path.join(dropRoot, 'site', 'i18n.js')).href);
 const english = MESSAGES.en;
 
 function findChromium() {
@@ -144,33 +145,11 @@ test('the sender page works end to end in Chromium', { skip, timeout: 90000 }, a
   const model = path.join(files, 'cube.stl');
   fs.writeFileSync(model, ASCII_STL);
 
-  // 1. The invite link fills the code and the fragment disappears.
-  await page.send('Page.navigate', { url: `${base}#code=${service.code}` });
-  await waitFor(() => page.evaluate("document.readyState === 'complete' && document.getElementById('code').value !== ''"),
-    'the page to read the invite');
-  const opened = await page.evaluate(`({
-    code: document.getElementById('code').value,
-    href: location.href,
-    hash: location.hash,
-    help: document.getElementById('code-help').textContent,
-    station: document.getElementById('station-line').textContent,
-    title: document.title,
-    lang: document.documentElement.lang,
-    readOnly: document.getElementById('code').readOnly,
-  })`);
-  assert.deepEqual(opened, {
-    code: service.code,
-    href: base,
-    hash: '',
-    help: english.codeFromLink,
-    station: 'Sending to Workshop PC',
-    title: english.pageTitle,
-    lang: 'en',
-    readOnly: false,
-  });
-  const history = await page.send('Page.getNavigationHistory');
-  assert.ok(history.entries.every((entry) => !entry.url.includes('code=')), JSON.stringify(history.entries.map((e) => e.url)));
-  assert.equal(history.entries.at(-1).url, base);
+  // Direct sender access has no code field; old bookmarks lose credentials.
+  await page.send('Page.navigate', { url: `${base}#code=123456` });
+  await waitFor(() => page.evaluate("document.readyState === 'complete' && location.hash === ''"), 'the direct sender page');
+  assert.equal(await page.evaluate("document.getElementById('code')"), null);
+  assert.equal(await page.evaluate("document.getElementById('station-line').textContent"), 'Sending to Workshop PC');
 
   // 2. Every icon draws as one glyph from the bundled subset, unlike a word
   // the font has no ligature for.
@@ -215,41 +194,9 @@ test('the sender page works end to end in Chromium', { skip, timeout: 90000 }, a
   assert.deepEqual(rows, ['sent Sent', `rejected Not sent: ${english.reasonType}`, `rejected Not sent: ${english.reasonType}`]);
   assert.equal(await page.evaluate("document.getElementById('send').disabled"), true, 'nothing is left to send');
 
-  // 4. A wrong code is explained, with the way to a new link, and the
-  // keyboard goes back to the code.
-  const wrong = service.code === '000000' ? '111111' : '000000';
-  await page.evaluate(`(() => {
-    const input = document.getElementById('code');
-    input.value = '${wrong}';
-    input.dispatchEvent(new Event('input', { bubbles: true }));
-  })()`);
-  assert.equal(await page.evaluate("document.getElementById('code-help').textContent"), english.codeHelp);
-  fs.writeFileSync(path.join(files, 'second.stl'), ASCII_STL);
-  await chooseFiles(page, [path.join(files, 'second.stl')]);
-  await page.evaluate("document.getElementById('send').click()");
-  await waitFor(() => page.evaluate("document.getElementById('live').dataset.tone === 'error'"), 'the wrong code answer');
-  const refused = await page.evaluate(`({
-    live: document.getElementById('live').textContent,
-    error: document.getElementById('code-error').textContent,
-    errorHidden: document.getElementById('code-error').hidden,
-    invalid: document.getElementById('code').getAttribute('aria-invalid'),
-    focus: document.activeElement.id,
-    status: document.querySelectorAll('#file-list .file-row')[3].dataset.status,
-  })`);
-  assert.deepEqual(refused, {
-    live: english.liveWrongCode,
-    error: english.codeWrong,
-    errorHidden: false,
-    invalid: 'true',
-    focus: 'code',
-    status: 'failed',
-  });
-  assert.equal((await station(service.port, service.key, 'GET', '/api/station/inbox')).json.items.length, 1);
-
-  // 5. A link opened while the page is showing is read the same way.
+  // Old links opened in place are scrubbed without adding any sender credential.
   await page.evaluate("location.hash = '#code=246810'");
-  await waitFor(() => page.evaluate("document.getElementById('code').value === '246810' && location.hash === ''"), 'the second invite');
-  assert.equal(await page.evaluate("document.getElementById('code').getAttribute('aria-invalid')"), null);
+  await waitFor(() => page.evaluate("location.hash === ''"), 'obsolete fragment removal');
 
   // 6. Cantonese and both languages switch in place and are remembered.
   await page.evaluate("document.querySelector('button[data-mode=\"yue_HK\"]').click()");
@@ -263,8 +210,8 @@ test('the sender page works end to end in Chromium', { skip, timeout: 90000 }, a
   // 7. Nothing came from anywhere else, and no policy rule was broken.
   assert.ok(requests.length >= 8, requests.join('\n'));
   for (const url of requests) assert.ok(url.startsWith(base), `request to ${url}`);
-  // The browser reports the refused uploads (401 wrong code, 415 not a
+  // The browser reports the refused uploads (415 not a
   // model) as failed loads; anything else is a fault.
-  const unexpected = logs.filter((line) => !/the server responded with a status of (?:401|415)\b/.test(line));
+  const unexpected = logs.filter((line) => !/the server responded with a status of 415\b/.test(line));
   assert.deepEqual(unexpected, []);
 });

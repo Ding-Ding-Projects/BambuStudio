@@ -1,5 +1,15 @@
 # Current implementation handoff
 
+Mixed-version compatibility: protocol-1 status includes directSend:true and an inert dropCode value of not-required for older receivers. The authenticated legacy renewal endpoint returns 410 retired, never a successful rotation or revocation. An older desktop may briefly show a connection error after trying renewal; the next status poll restores collection. The inert status value is never an upload credential. New receivers keep collecting from older services but hide direct invite links until the service advertises the capability, and show an upgrade instruction. Older desktop versions retain their old code labels until updated.
+
+## Direct LAN sending, 7 November 2026
+
+Sender drop codes and renewal controls are removed. Open the invite link or scan its QR code, choose models and send directly. Station keys still protect inbox, downloads and management; local pipe pairing and DPAPI storage are unchanged. Model, size, queue and expiry checks remain, with 60 upload attempts per source address per minute and a five-minute cooldown. Existing volumes, keys and waiting models are retained.
+
+Source implementation passed 95 focused API, page-contract and compiled native-helper checks, including mixed-version capability handling and Unicode filename transport. Container version 1.0.1 publication, live sender interaction and native UI acceptance remain pending; historical 1.0.0 evidence does not verify this change. Use only a trusted LAN and never expose the service to the internet.
+
+Implementation checkpoint: d5a4eb56fcbb2c10a701aaad155b0d7af4fe32f2. This continuation integrates parent candidate 4f7039f611477b4f7ba4623309b6dfd594ce8af9, removes external code-row callsites, translates the two new invite messages and refreshes the embedded documentation. No release or runtime success is claimed. The isolated branch is gap/preferences-responsive-20261107; remote preservation remains the integration owner's next step.
+
 Objective: complete the approved required-feature plan, including native and
 companion surfaces, with priority repairs for Preferences sizing, personal wording,
 LAN model-drop startup and the recurring startup model-load error.

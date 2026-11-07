@@ -86,7 +86,6 @@ struct Shared
     bool                     stop     = false;
     bool                     poll_now = false;
     bool                     test     = false;
-    bool                     new_code = false;
     std::vector<PendingDelete> decided; // items the user opened or discarded: DELETE them at their site
     WorkerConfig             config;
 };
@@ -188,7 +187,7 @@ void recompute_invite()
     const auto address = parse_base_address(v.address);
     const std::string preferred = config() ? config()->get(kInviteIpv4ConfigKey) : std::string();
     v.invite = choose_invite_base(v.public_url, address.value_or(BaseAddress{}), gui().lan_candidates, preferred);
-    v.link   = v.enabled && !v.drop_code.empty() ? invite_link(v.invite.base, v.drop_code) : std::string();
+    v.link   = v.enabled && v.direct_send && v.state == LinkState::Connected ? invite_link(v.invite.base) : std::string();
 }
 
 NotificationManager *notifications()
@@ -372,7 +371,6 @@ Download download(const WorkerConfig &cfg, const InboxItem &item, const CancelWh
 
 void on_link_state(std::uint64_t generation, LinkState state, std::optional<StationStatus> status);
 void on_test_result(std::uint64_t generation, LinkState state, std::optional<StationStatus> status);
-void on_code_result(std::uint64_t generation, std::optional<std::string> code, bool fixed, LinkState failure);
 void on_received(InboxItem item, std::filesystem::path file, std::string base);
 void on_refused(InboxItem item, Refusal refusal);
 void on_given_up(InboxItem item);
@@ -429,12 +427,12 @@ void worker_main()
 
     for (;;) {
         WorkerConfig               cfg;
-        bool                       test = false, new_code = false;
+        bool                       test = false;
         std::vector<PendingDelete> decided;
         {
             std::unique_lock<std::mutex> lock(g_shared.mutex);
             const auto ready = [] {
-                return g_shared.stop || g_shared.poll_now || g_shared.test || g_shared.new_code || !g_shared.decided.empty();
+                return g_shared.stop || g_shared.poll_now || g_shared.test || !g_shared.decided.empty();
             };
             if (g_shared.config.enabled && g_shared.config.usable())
                 g_shared.wake.wait_until(lock, next_poll, ready);
@@ -443,7 +441,6 @@ void worker_main()
             if (g_shared.stop) break;
             cfg      = g_shared.config;
             test     = std::exchange(g_shared.test, false);
-            new_code = std::exchange(g_shared.new_code, false);
             decided.swap(g_shared.decided);
             if (std::exchange(g_shared.poll_now, false)) {
                 next_poll = Clock::now();
@@ -469,10 +466,9 @@ void worker_main()
         for (const PendingDelete &d : decided) tracker.queue_delete(d.id, d.base);
         keep_pending(cfg);
         if (!cfg.usable()) {
-            // Never leave a requested test or new code without an answer.
+            // Never leave a requested test without an answer.
             const LinkState missing = cfg.address ? LinkState::NeedsStationKey : LinkState::InvalidAddress;
             if (test) post([generation = cfg.generation, missing] { on_test_result(generation, missing, std::nullopt); });
-            if (new_code) post([generation = cfg.generation, missing] { on_code_result(generation, std::nullopt, false, missing); });
             continue;
         }
 
@@ -484,12 +480,6 @@ void worker_main()
             post([generation = cfg.generation, state, status] {
                 on_test_result(generation, state, state == LinkState::Connected ? std::optional<StationStatus>(status) : std::nullopt);
             });
-        }
-        if (new_code) {
-            const CancelWhen once{false, 0, 0};
-            const Exchange       e       = exchange(cfg, Method::Post, drop_code_url(*cfg.address), 16 * 1024, 15, once);
-            const NewCodeOutcome outcome = classify_new_code(e);
-            post([generation = cfg.generation, outcome] { on_code_result(generation, outcome.code, outcome.fixed, outcome.failure); });
         }
         const std::string &base = cfg.address->base;
         if (!cfg.enabled) {
@@ -602,8 +592,8 @@ void wake_worker(const std::function<void(Shared &)> &change)
 
 void apply_status(View &v, const StationStatus &status)
 {
+    v.direct_send  = status.direct_send;
     v.station_name = status.station_name;
-    v.drop_code    = status.drop_code;
     v.public_url   = status.public_url;
     v.queued       = status.queued;
 }
@@ -611,7 +601,7 @@ void apply_status(View &v, const StationStatus &status)
 // What a poll can change in the view.
 bool same_poll_view(const View &a, const View &b)
 {
-    return a.state == b.state && a.station_name == b.station_name && a.drop_code == b.drop_code && a.public_url == b.public_url &&
+    return a.direct_send == b.direct_send && a.state == b.state && a.station_name == b.station_name && a.public_url == b.public_url &&
            a.queued == b.queued && a.link == b.link && a.invite.source == b.invite.source && a.invite.base == b.invite.base &&
            a.invite.chosen == b.invite.chosen && a.invite.choices == b.invite.choices;
 }
@@ -638,19 +628,6 @@ void on_test_result(std::uint64_t generation, LinkState state, std::optional<Sta
     v.test_state = state;
     if (status) apply_status(v, *status);
     if (v.enabled && (state == LinkState::Connected || is_error_state(state))) v.state = state;
-    recompute_invite();
-    notify_listeners();
-}
-
-void on_code_result(std::uint64_t generation, std::optional<std::string> code, bool fixed, LinkState failure)
-{
-    if (generation != gui().generation) return;
-    View &v       = gui().view;
-    v.busy_code   = false;
-    v.fixed_code  = fixed;
-    v.code_failed = !code && !fixed;
-    if (code) v.drop_code = *code;
-    if (!code && !fixed && v.enabled && is_error_state(failure)) v.state = failure;
     recompute_invite();
     notify_listeners();
 }
@@ -860,7 +837,6 @@ void apply_settings()
     v.has_key         = stored == KeyStoreResult::Ok;
     v.tested          = false;
     v.busy_test       = false;
-    v.busy_code       = false;
     if (!enabled) v.state = LinkState::Off;
     else if (!address) v.state = LinkState::InvalidAddress;
     else if (stored == KeyStoreResult::Unavailable) v.state = LinkState::KeyStorageUnavailable;
@@ -891,10 +867,9 @@ void apply_settings()
     gui().generation = generation;
     if (identity_changed || !enabled) {
         v.station_name.clear();
-        v.drop_code.clear();
         v.public_url.clear();
+        v.direct_send = false;
         v.queued     = 0;
-        v.fixed_code = false;
     }
     if (enabled && !gui().lan_read) {
         gui().lan_candidates = lan_ipv4_candidates(adapter_addresses());
@@ -956,17 +931,6 @@ void test_connection()
         ensure_worker();
         wake_worker([](Shared &s) { s.test = true; });
     }
-    notify_listeners();
-}
-
-void request_new_code()
-{
-    View &v = gui().view;
-    if (g_stopping.load() || v.busy_code || !v.has_key || !v.address_valid) return;
-    v.busy_code   = true;
-    v.code_failed = false;
-    ensure_worker();
-    wake_worker([](Shared &s) { s.new_code = true; });
     notify_listeners();
 }
 

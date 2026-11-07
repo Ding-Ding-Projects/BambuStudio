@@ -15,7 +15,7 @@ services:
   lan-model-drop:
     # Version tags are published once. The image also carries its full source
     # revision as an OCI label; development builds use compose.build.yaml.
-    image: ghcr.io/ding-ding-projects/bambustudio-lan-model-drop:v1.0.0@sha256:9efc104d444cb2e88499fb311798ef07c9dd4b8144da4b2ca0160e2ba03af43a
+    image: ghcr.io/ding-ding-projects/bambustudio-lan-model-drop:v1.0.1
     restart: unless-stopped
     # Published on every network interface of this computer, so phones and
     # laptops on the same network can open the page.
@@ -28,7 +28,6 @@ services:
       DROP_QUEUE_MAX_FILES: ${DROP_QUEUE_MAX_FILES:-50}
       DROP_QUEUE_MAX_BYTES: ${DROP_QUEUE_MAX_BYTES:-2147483648}
       DROP_STATION_KEY: ${DROP_STATION_KEY:-}
-      DROP_CODE: ${DROP_CODE:-}
       DROP_PUBLIC_URL: ${DROP_PUBLIC_URL:-}
     volumes:
       - drop-data:/data

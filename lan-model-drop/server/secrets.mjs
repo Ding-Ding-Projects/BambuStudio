@@ -1,12 +1,11 @@
-// The station key and the drop code. Both live in the data volume with owner
-// read and write only (mode 0600). Neither value is ever written to the log.
-import { createHash, randomBytes, randomInt, timingSafeEqual } from 'node:crypto';
+// The station key lives in the data volume with owner
+// read and write only (mode 0600). The value is ever written to the log.
+import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-import { validDropCode, validStationKey } from './config.mjs';
+import { validStationKey } from './config.mjs';
 
 export const STATION_KEY_FILE = 'station-key';
-export const DROP_CODE_FILE = 'drop-code';
 const SECRET_MODE = 0o600;
 
 // Write a small secret file through a temporary name and a rename, so a
@@ -49,27 +48,6 @@ export function loadStationKey(dataDir, configuredKey) {
   const key = generateStationKey();
   writeSecretFile(file, key);
   return { key, source: 'generated' };
-}
-
-export function generateDropCode(previous = null) {
-  for (;;) {
-    const code = String(randomInt(0, 1000000)).padStart(6, '0');
-    if (code !== previous) return code;
-  }
-}
-
-export function loadDropCode(dataDir, fixedCode) {
-  if (fixedCode) return { code: fixedCode, fixed: true };
-  const file = path.join(dataDir, DROP_CODE_FILE);
-  const stored = readSecretFile(file);
-  if (stored !== null && validDropCode(stored)) return { code: stored, fixed: false };
-  const code = generateDropCode();
-  writeSecretFile(file, code);
-  return { code, fixed: false };
-}
-
-export function storeDropCode(dataDir, code) {
-  writeSecretFile(path.join(dataDir, DROP_CODE_FILE), code);
 }
 
 // Constant-time comparison. Both sides are hashed first, so the comparison

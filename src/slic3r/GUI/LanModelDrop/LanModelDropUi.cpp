@@ -280,7 +280,7 @@ InvitePanel::InvitePanel(wxWindow *parent, const Options &options) : wxPanel(par
 
     if (m_options.show_heading) {
         outer->Add(body_label(this, _L("Invite someone to send a model"), MD3::Role::OnSurface, ::Label::Head_14), 0, wxBOTTOM, FromDIP(4));
-        outer->Add(body_label(this, _L("Send them the link, or let them scan the QR code. It opens the drop site with the code filled in."),
+        outer->Add(body_label(this, _L("Send them the link, or let them scan the QR code. It opens the drop page, ready to choose and send models."),
                               MD3::Role::OnSurfaceVariant, ::Label::Body_12),
                    0, wxBOTTOM, gap);
     }
@@ -321,17 +321,12 @@ InvitePanel::InvitePanel(wxWindow *parent, const Options &options) : wxPanel(par
     column->Add(m_link, 0, wxEXPAND | wxBOTTOM, gap);
     auto *actions = new wxBoxSizer(wxHORIZONTAL);
     m_copy     = kit_button(m_link_area, _L("Copy link"), Button::Variant::Filled);
-    m_new_link = kit_button(m_link_area, _L("New link"), Button::Variant::Outlined);
     m_larger   = kit_button(m_link_area, _L("Show larger QR code"), Button::Variant::Text);
     m_copy->SetGlyph(MaterialIcon::ContentCopy);
-    m_new_link->SetGlyph(MaterialIcon::Refresh);
     m_larger->SetGlyph(MaterialIcon::OpenInFull);
     actions->Add(m_copy, 0, wxRIGHT, gap);
-    actions->Add(m_new_link, 0, wxRIGHT, gap);
     actions->Add(m_larger, 0);
     column->Add(actions, 0, wxBOTTOM, gap);
-    m_fixed_note = LiveText(body_label(m_link_area, wxEmptyString, MD3::Role::OnSurfaceVariant, ::Label::Body_12));
-    column->Add(m_fixed_note.get(), 0, wxBOTTOM, FromDIP(4));
     auto *lan_row = new wxBoxSizer(wxHORIZONTAL);
     m_lan_label = body_label(m_link_area, _L("Address of this computer"), MD3::Role::OnSurface, ::Label::Body_12);
     m_lan_choice = new ComboBox(m_link_area, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(180), -1), 0, nullptr,
@@ -348,7 +343,7 @@ InvitePanel::InvitePanel(wxWindow *parent, const Options &options) : wxPanel(par
     m_link_area->SetSizer(link_row);
     outer->Add(m_link_area, 0, wxEXPAND | wxBOTTOM, gap);
 
-    // Polite announcements (copied, renewed) for screen readers and for everyone else.
+    // Polite announcements (link copied) for screen readers and for everyone else.
     m_live = LiveText(body_label(this, wxEmptyString, MD3::Role::Primary, ::Label::Body_12));
     outer->Add(m_live.get(), 0, wxBOTTOM, FromDIP(4));
 
@@ -362,11 +357,6 @@ InvitePanel::InvitePanel(wxWindow *parent, const Options &options) : wxPanel(par
     SetSizer(outer);
 
     m_copy->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { copy_link(); });
-    m_new_link->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) {
-        m_waiting_for_code = true;
-        m_code_before      = view().drop_code;
-        request_new_code();
-    });
     m_larger->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { show_larger(); });
     m_qr->Bind(wxEVT_LEFT_UP, [this](wxMouseEvent &) { show_larger(); });
     m_lan_choice->Bind(wxEVT_COMBOBOX, [this](wxCommandEvent &) {
@@ -534,13 +524,15 @@ void InvitePanel::refresh()
     const bool has_link = v.enabled && !v.link.empty();
     wxString   pending;
     if (v.enabled && !has_link) {
-        if (v.invite.source == InviteSource::None)
+        if (v.state == LinkState::Connected && !v.direct_send)
+            pending = _L("This drop server needs an update before it supports direct sending. Run host.bat --detached on its host, then test the connection again. Existing models can still be collected.");
+        else if (v.invite.source == InviteSource::None)
             pending = _L("This computer has no private local network address to put in a link. Set the drop site address to an address the others can open.");
         else if (v.state == LinkState::NeedsStationKey || v.state == LinkState::KeyStorageUnavailable ||
                  v.state == LinkState::InvalidAddress || v.state == LinkState::WrongStationKey)
             pending = format_wxstr(_L("The link appears once Bambu Studio is connected to the drop site. %1%"), status_text(v));
         else
-            pending = format_wxstr(_L("Waiting for the drop site to send its code. %1%"), status_text(v));
+            pending = format_wxstr(_L("Waiting for the drop server connection. %1%"), status_text(v));
     }
     changed |= m_pending_note.set(pending);
     changed |= show(m_pending_note.get(), !pending.empty());
@@ -555,15 +547,6 @@ void InvitePanel::refresh()
         m_qr->SetText(has_link ? v.link : std::string());
         changed = true;
     }
-    m_new_link->Enable(has_link && !v.fixed_code && !v.busy_code);
-    wxString fixed;
-    if (v.fixed_code)
-        fixed = _L("The drop site's code is fixed by DROP_CODE, so New link cannot change it. Change DROP_CODE on the drop site to stop older links.");
-    else if (v.code_failed)
-        fixed = _L("The drop site did not make a new code. Older links still work.");
-    changed |= m_fixed_note.set(fixed);
-    changed |= show(m_fixed_note.get(), !fixed.empty());
-
     const auto &choices = v.invite.choices;
     const bool  several = v.invite.source == InviteSource::LanAddress && choices.size() > 1;
     changed |= show(m_lan_label, several);
@@ -581,14 +564,9 @@ void InvitePanel::refresh()
         const int  index = it == choices.end() ? 0 : static_cast<int>(it - choices.begin());
         if (m_lan_choice->GetSelection() != index) m_lan_choice->SetSelection(index);
     }
-    // For someone who types rather than scans: the address and the code separately.
-    changed |= m_manual.set(has_link ? format_wxstr(_L("Or open %1% and type the drop code %2%."), v.invite.base, v.drop_code) : wxString());
+    // The same direct address is available without scanning.
+    changed |= m_manual.set(has_link ? format_wxstr(_L("Or open %1% to choose and send models directly."), v.invite.base) : wxString());
     changed |= m_source_note.set(has_link ? invite_source_text(v) : wxString());
-
-    if (m_waiting_for_code && !v.busy_code) {
-        m_waiting_for_code = false;
-        if (!v.drop_code.empty() && v.drop_code != m_code_before) announce(_L("New link ready. Older links no longer work."));
-    }
 
     changed |= m_waiting_label.set(v.waiting > 0 ? format_wxstr(_L("%1% received files waiting for Open or Discard."), v.waiting) : wxString());
     changed |= show(m_waiting_label.get(), v.waiting > 0);
@@ -919,46 +897,6 @@ private:
     bool m_draft_conflict = false;
 };
 
-class CodeRow : public ViewRow
-{
-public:
-    explicit CodeRow(wxWindow *parent) : ViewRow(parent)
-    {
-        auto *row   = new wxBoxSizer(wxHORIZONTAL);
-        auto *title = body_label(this, _L("Drop code"));
-        m_code      = LiveText(body_label(this, wxEmptyString, MD3::Role::OnSurface, ::Label::Mono_14));
-        m_code->SetName(_L("Drop code"));
-        m_new = kit_button(this, _L("New code"), Button::Variant::Outlined);
-        row->AddSpacer(FromDIP(kRowLeft));
-        row->Add(title, 1, wxALIGN_CENTER_VERTICAL);
-        row->Add(m_code.get(), 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(12));
-        row->Add(m_new, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(kRowRight));
-        SetSizer(row);
-        m_new->Bind(wxEVT_BUTTON, [](wxCommandEvent &) { request_new_code(); });
-        update_view();
-    }
-
-protected:
-    void update_view() override
-    {
-        const View &v = view();
-        const bool  changed = m_code.set(v.drop_code.empty() ? _L("Not known yet") : wxString::FromUTF8(v.drop_code));
-        m_new->Enable(v.enabled && !v.drop_code.empty() && !v.fixed_code && !v.busy_code);
-        // The decorator adds the Cantonese to the tooltip too: set only when the English changes.
-        const wxString tip = v.fixed_code ? _L("The code is fixed by DROP_CODE on the drop site.") : _L("Make a new code; links with the old one stop working.");
-        if (tip != m_tip) {
-            m_tip = tip;
-            m_new->SetToolTip(tip);
-        }
-        if (changed) relayout(this, false);
-    }
-
-private:
-    LiveText m_code;
-    Button  *m_new = nullptr;
-    wxString m_tip;
-};
-
 } // namespace
 
 wxWindow *create_intro_row(wxWindow *parent)
@@ -979,7 +917,6 @@ wxWindow *create_intro_row(wxWindow *parent)
 wxWindow *create_status_row(wxWindow *parent) { return new StatusRow(parent); }
 wxWindow *create_address_row(wxWindow *parent) { return new AddressRow(parent); }
 wxWindow *create_key_row(wxWindow *parent) { return new KeyRow(parent); }
-wxWindow *create_code_row(wxWindow *parent) { return new CodeRow(parent); }
 
 void open_invite_dialog(wxWindow *parent)
 {

@@ -1,3 +1,4 @@
+import { pathToFileURL } from 'node:url';
 // The station against the real drop service. The application's pure model (parsing, checks and the
 // invite link, through tests/lan_model_drop/lan_model_drop_station_probe.cpp) reads what
 // lan-model-drop/server answers when it is driven the way the station drives it: the station key in
@@ -26,7 +27,7 @@ let serial = 0;
 
 before(async () => {
   if (skip) return;
-  h = await import(harnessPath);
+  h = await import(pathToFileURL(harnessPath).href);
   work = mkdtempSync(path.join(tmpdir(), 'lan-model-drop-station-'));
   process.on('exit', () => rmSync(work, {recursive: true, force: true}));
   exe = path.join(work, process.platform === 'win32' ? 'probe.exe' : 'probe');
@@ -47,7 +48,7 @@ function file(content) {
 }
 
 function probe(...args) {
-  const run = spawnSync(exe, args.map(String), {encoding: 'utf8'});
+  const run = spawnSync(exe, ['--args-file', file(JSON.stringify(args.map(String)))], {encoding: 'utf8'});
   assert.equal(run.status, 0, run.stderr);
   return JSON.parse(run.stdout);
 }
@@ -118,14 +119,14 @@ test('the station reads the real service: status, inbox, each file with its SHA-
 
   const sent = samples();
   for (const s of sent) {
-    const res = await h.drop(d.port, {code: d.code, fileName: s.name, body: s.body, sender: s.sender});
+    const res = await h.drop(d.port, {fileName: s.name, body: s.body, sender: s.sender});
     assert.equal(res.status, 201, `${s.name}: ${res.body}`);
   }
 
   const status = await stationRequest(d.port, d.key, 'GET', '/api/station/status');
   const seen = probe('status', status.status, file(status.body));
   assert.equal(seen.state, 'Connected');
-  assert.equal(seen.dropCode, d.code);
+  assert.equal(Object.hasOwn(seen, 'dropCode'), false);
   assert.equal(seen.queued, sent.length);
   assert.equal(seen.publicUrl, '');
 
@@ -166,7 +167,7 @@ test('the station reads the real service: status, inbox, each file with its SHA-
   assert.deepEqual(probe('inbox', file(empty.body)), {ok: true, items: [], invalid: [], unusable: 0});
 });
 
-// A sender who knows the drop code chooses the file name. Windows opens a device instead of a file
+// A sender on the LAN chooses the file name. Windows opens a device instead of a file
 // whenever the part of a name before its first dot, trailing spaces removed, is a device name: the
 // service lets "COM3 .x.stl" through as it is, so the station has to make the name safe itself
 // before anything is written. The bytes go to a name of the station's own and are then renamed to a
@@ -176,7 +177,7 @@ test('a name Windows takes for a device is never the name a received file is wri
   const devices = ['COM3 .x.stl', 'LPT1 .print.stl', 'CONOUT$.stl', 'conin$ .stl', 'COM\u00b9.stl', 'lpt\u00b3 .x.stl', 'con .stl', 'Aux.stl'];
   for (const name of devices) assert.deepEqual(probe('reserved', name), {reserved: true}, name);
   for (const name of devices) {
-    const res = await h.drop(d.port, {code: d.code, fileName: name, body: h.ASCII_STL});
+    const res = await h.drop(d.port, {fileName: name, body: h.ASCII_STL});
     assert.equal(res.status, 201, `${name}: ${res.body}`);
   }
   const inbox = await stationRequest(d.port, d.key, 'GET', '/api/station/inbox');
@@ -222,7 +223,7 @@ test('every model the service accepts passes the station checks', {skip}, async 
 
   let accepted = 0;
   for (const [type, name, body] of variants) {
-    const res = await h.drop(d.port, {code: d.code, fileName: name, body});
+    const res = await h.drop(d.port, {fileName: name, body});
     if (res.status !== 201) continue;
     ++accepted;
     assert.deepEqual(probe('content', type, file(body)), {matches: true}, `${type}: ${JSON.stringify(body.toString('latin1').slice(0, 40))}`);
@@ -241,45 +242,25 @@ test('a wrong or missing station key reads as Wrong station key', {skip}, async 
   assert.equal(probe('failure', 0).state, 'NotReachable');
 });
 
-test('New code rotates the drop code; a code fixed by DROP_CODE answers 409', {skip}, async (t) => {
-  const d = await h.startDrop(t);
-  const before = d.code;
-  const renewed = await stationRequest(d.port, d.key, 'POST', '/api/station/drop-code');
-  assert.equal(renewed.status, 200);
-  const {code} = probe('code', file(renewed.body));
-  assert.ok(code && code !== before, `${before} -> ${code}`);
-  const status = await stationRequest(d.port, d.key, 'GET', '/api/station/status');
-  assert.equal(probe('status', status.status, file(status.body)).dropCode, code);
-  const old = await h.drop(d.port, {code: before, fileName: 'late.stl', body: h.ASCII_STL});
-  assert.equal(old.status, 401);
-
-  const fixed = await h.startDrop(t, {env: {DROP_CODE: '4321'}});
-  const refused = await stationRequest(fixed.port, fixed.key, 'POST', '/api/station/drop-code');
-  // The station reads 409 as "the code is fixed" and disables New link with that explanation.
-  assert.equal(refused.status, 409);
-  assert.equal(refused.json.error, 'fixed_code');
-  assert.deepEqual(probe('code', file(refused.body)), {code: null});
-});
-
-test('the invite link: DROP_PUBLIC_URL first, else this computer\'s LAN address, with the code in the fragment', {skip}, async (t) => {
+test('the invite link: DROP_PUBLIC_URL first, else this computer\'s LAN address, without credentials', {skip}, async (t) => {
   const d = await h.startDrop(t, {env: {DROP_PUBLIC_URL: 'https://print.example.test/drop/'}});
   const status = await stationRequest(d.port, d.key, 'GET', '/api/station/status');
   const seen = probe('status', status.status, file(status.body));
   assert.equal(seen.publicUrl, 'https://print.example.test/drop');
-  const pub = probe('invite', seen.publicUrl, `http://localhost:${d.port}`, LAN_A, '', seen.dropCode);
+  const pub = probe('invite', seen.publicUrl, `http://localhost:${d.port}`, LAN_A, '');
   assert.equal(pub.source, 'PublicUrl');
-  assert.equal(pub.link, `https://print.example.test/drop/#code=${d.code}`);
+  assert.equal(pub.link, `https://print.example.test/drop/`);
 
   const plain = await h.startDrop(t);
   const plainStatus = probe('status', 200, file((await stationRequest(plain.port, plain.key, 'GET', '/api/station/status')).body));
   assert.equal(plainStatus.publicUrl, '');
-  const lan = probe('invite', plainStatus.publicUrl, `http://localhost:${plain.port}`, `${LAN_A},${LAN_B}`, LAN_B, plainStatus.dropCode);
+  const lan = probe('invite', plainStatus.publicUrl, `http://localhost:${plain.port}`, `${LAN_A},${LAN_B}`, LAN_B);
   assert.equal(lan.source, 'LanAddress');
   assert.deepEqual(lan.choices, [LAN_A, LAN_B]);
-  assert.equal(lan.link, `http://${LAN_B}:${plain.port}/#code=${plain.code}`);
+  assert.equal(lan.link, `http://${LAN_B}:${plain.port}/`);
   // The fragment never reaches the service: the page itself is served for the bare path.
   const page = await h.request(plain.port, {path: '/'});
   assert.equal(page.status, 200);
   assert.match(String(page.headers['content-type']), /text\/html/);
-  assert.equal(probe('invite', '', `http://localhost:${plain.port}`, '', '', plainStatus.dropCode).source, 'None');
+  assert.equal(probe('invite', '', `http://localhost:${plain.port}`, '', '').source, 'None');
 });

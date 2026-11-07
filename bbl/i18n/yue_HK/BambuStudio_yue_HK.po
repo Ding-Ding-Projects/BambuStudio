@@ -50506,3 +50506,23 @@ msgstr "音效"
 #. review-status: agent-drafted
 msgid "Play short sounds after wording changes. Quiet narration, quiet hours and Focus Assist also silence these sounds. System volume and mute still apply."
 msgstr "用語變更後播放短音效。靜音旁白、安靜時段同專注輔助亦會令音效靜音。仍然跟隨系統音量同靜音設定。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Send them the link, or let them scan the QR code. It opens the drop page, ready to choose and send models."
+msgstr "將連結交俾對方，或者畀佢掃描 QR 碼。開啟傳送頁之後，就可以揀模型再傳送。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Or open %1% to choose and send models directly."
+msgstr "或者開啟 %1%，直接揀模型再傳送。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "This drop server needs an update before it supports direct sending. Run host.bat --detached on its host, then test the connection again. Existing models can still be collected."
+msgstr "呢個傳送伺服器要更新先支援直接傳送。請喺佢嘅主機執行 host.bat --detached，再測試連接。現有模型仍然可以收取。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Waiting for the drop server connection. %1%"
+msgstr "等緊連接傳送伺服器。%1%"

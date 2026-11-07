@@ -462,7 +462,6 @@ bool is_utc_stamp(std::string_view stamp)
 }
 
 bool is_station_key(std::string_view key) { return key.size() >= 16 && key.size() <= 512 && visible_ascii(key); }
-bool is_drop_code(std::string_view code) { return !code.empty() && code.size() <= 64 && visible_ascii(code); }
 
 std::string to_hex(const unsigned char *bytes, std::size_t size)
 {
@@ -554,28 +553,21 @@ std::optional<StationStatus> parse_status(std::string_view body)
     const auto object = parse_object(body);
     if (!object || !protocol_is_supported(*object)) return std::nullopt;
     StationStatus status;
-    if (!read_string(*object, "stationName", status.station_name) || !read_string(*object, "dropCode", status.drop_code) ||
+    const auto direct = object->find("directSend");
+    status.direct_send = direct != object->end() && direct->is_boolean() && direct->get<bool>();
+    if (!read_string(*object, "stationName", status.station_name) ||
         !read_count(*object, "queued", status.queued) || !read_count(*object, "queuedBytes", status.queued_bytes) ||
         !read_count(*object, "maxBytes", status.max_bytes))
         return std::nullopt;
     const auto ttl = object->find("ttlHours");
     if (ttl == object->end() || !ttl->is_number() || !(ttl->get<double>() > 0.0)) return std::nullopt;
     status.ttl_hours = ttl->get<double>();
-    if (!is_drop_code(status.drop_code)) return std::nullopt;
     // Optional and never fatal: a value that is not an acceptable link base is ignored, and the
     // invite falls back to the configured or the LAN address.
     std::string public_url;
     if (read_string(*object, "publicUrl", public_url)) status.public_url = normalize_public_url(public_url);
     status.station_name = sanitize_station_name(status.station_name);
     return status;
-}
-
-std::optional<std::string> parse_drop_code(std::string_view body)
-{
-    const auto object = parse_object(body);
-    std::string code;
-    if (!object || !read_string(*object, "dropCode", code) || !is_drop_code(code)) return std::nullopt;
-    return code;
 }
 
 bool parse_health(std::string_view body)
@@ -626,16 +618,6 @@ DownloadVerdict judge_download(const InboxItem &item, const Exchange &exchange, 
 bool delete_settled(const Exchange &exchange)
 {
     return exchange.completed && ((exchange.http_status >= 200 && exchange.http_status < 300) || exchange.http_status == 404);
-}
-
-NewCodeOutcome classify_new_code(const Exchange &exchange)
-{
-    NewCodeOutcome outcome;
-    const bool ok = exchange.completed && exchange.http_status >= 200 && exchange.http_status < 300;
-    if (ok) outcome.code = parse_drop_code(exchange.body);
-    outcome.fixed   = exchange.completed && exchange.http_status == 409;
-    outcome.failure = outcome.code ? LinkState::Connected : (ok ? LinkState::ProtocolNotSupported : classify_failure(exchange));
-    return outcome;
 }
 
 bool is_error_state(LinkState state)
@@ -730,7 +712,6 @@ std::string file_url(const BaseAddress &address, const std::string &id)
     // Only a validated id ever reaches a URL path.
     return is_item_id(id) ? address.base + "/api/station/files/" + id : std::string();
 }
-std::string drop_code_url(const BaseAddress &address) { return address.base + "/api/station/drop-code"; }
 
 bool is_ipv4(std::string_view text) { return ipv4_octets(text).has_value(); }
 
@@ -843,26 +824,13 @@ InviteBase choose_invite_base(const std::string &public_url, const BaseAddress &
     return invite;
 }
 
-std::string invite_link(const std::string &base, const std::string &drop_code)
-{
-    if (base.empty() || !is_drop_code(drop_code)) return {};
-    static const char digits[] = "0123456789ABCDEF";
-    std::string code;
-    for (const char c : drop_code) {
-        const bool unreserved = (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') ||
-                                std::string_view("-_.!~*'()").find(c) != std::string_view::npos;
-        if (unreserved) code.push_back(c);
-        else {
-            const auto u = static_cast<unsigned char>(c);
-            code.push_back('%');
-            code.push_back(digits[u >> 4]);
-            code.push_back(digits[u & 0x0F]);
-        }
-    }
-    return base + "/#code=" + code;
-}
-
 // ---------------------------------------------------------------------------------------------
+
+std::string invite_link(const std::string &base)
+{
+    const std::string normalized = normalize_public_url(base);
+    return normalized.empty() ? std::string() : normalized + "/";
+}
 
 std::string format_size(std::uint64_t bytes)
 {

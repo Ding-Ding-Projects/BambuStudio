@@ -34,7 +34,7 @@ test('every kind of response carries the security headers', async (t) => {
     ['unknown page', await request(service.port, { path: '/nothing-here' })],
     ['unknown API', await request(service.port, { path: '/api/nothing' })],
     ['drop refused', await drop(service.port, { code: 'nope', fileName: 'cube.obj', body: OBJ })],
-    ['drop accepted', await drop(service.port, { code: service.code, fileName: 'cube.obj', body: OBJ })],
+    ['drop accepted', await drop(service.port, { fileName: 'cube.obj', body: OBJ })],
     ['wrong method', await request(service.port, { method: 'PUT', path: '/' })],
     ['station refused', await request(service.port, { path: '/api/station/inbox' })],
     ['station inbox', await station(service.port, service.key, 'GET', '/api/station/inbox')],
@@ -135,8 +135,6 @@ test('invalid settings stop the service with a message instead of being guessed'
     [{ DROP_TTL_HOURS: '-3' }, /DROP_TTL_HOURS/],
     [{ DROP_QUEUE_MAX_FILES: '1.5' }, /DROP_QUEUE_MAX_FILES/],
     [{ DROP_MAX_BYTES: '5000', DROP_QUEUE_MAX_BYTES: '4000' }, /DROP_QUEUE_MAX_BYTES/],
-    [{ DROP_CODE: '12ab' }, /DROP_CODE/],
-    [{ DROP_CODE: '123' }, /DROP_CODE/],
     [{ DROP_STATION_KEY: 'too-short' }, /DROP_STATION_KEY/],
     [{ DROP_STATION_KEY: 'has a space in the middle of it' }, /DROP_STATION_KEY/],
   ];
@@ -155,7 +153,6 @@ test('invalid settings stop the service with a message instead of being guessed'
     queueMaxFiles: 50,
     queueMaxBytes: 2147483648,
     stationKey: null,
-    fixedCode: null,
     publicUrl: null,
   });
   // Empty values, as compose passes unset variables, mean the default.

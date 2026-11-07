@@ -1,3 +1,4 @@
+import { pathToFileURL } from 'node:url';
 // What a real LAN model drop container answered (tests/lan_model_drop/container_fixtures, captured by
 // container_capture.py from lan-model-drop/ running under docker compose) against both halves:
 //
@@ -20,8 +21,7 @@ import { fileURLToPath } from 'node:url';
 const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const fixtures = path.join(repo, 'tests', 'lan_model_drop', 'container_fixtures');
 const manifest = JSON.parse(readFileSync(path.join(fixtures, 'manifest.json'), 'utf8'));
-const { outcomeFor } = await import(path.join(repo, 'lan-model-drop', 'site', 'outcome.js'));
-const { codeFromFragment, takeInviteCode } = await import(path.join(repo, 'lan-model-drop', 'site', 'invite.js'));
+const { outcomeFor } = await import(pathToFileURL(path.join(repo, 'lan-model-drop', 'site', 'outcome.js')).href);
 const hasGxx = spawnSync('g++', ['--version'], { encoding: 'utf8' }).status === 0;
 
 const scenario = (name) => manifest.scenarios.find((s) => s.name === name);
@@ -63,18 +63,12 @@ test('the station reads every captured answer as the drop box meant it', { skip:
     assert.equal(run.status, 0, run.stderr || run.stdout);
     assert.match(run.stdout, /lan_model_drop_container_interop_test: \d+ assertions passed/);
 
-    // The sender page reads the station's invite links back to the same drop code, and takes the
-    // code out of the address bar.
+    // Current native links derived from historical status contain no sender credential.
     const { links } = JSON.parse(readFileSync(summaryFile, 'utf8'));
-    assert.deepEqual(links.map((l) => l.scenario).sort(), ['custom', 'default']);
-    for (const { link, code } of links) {
+    for (const { link } of links) {
       const url = new URL(link);
-      assert.equal(url.search, '', 'the code never travels in the query');
-      assert.deepEqual(codeFromFragment(url.hash), { present: true, code });
-      const replaced = [];
-      const win = { location: { hash: url.hash, pathname: url.pathname, search: url.search }, history: { state: null, replaceState: (...args) => replaced.push(args) } };
-      assert.deepEqual(takeInviteCode(win), { present: true, code });
-      assert.deepEqual(replaced, [[null, '', url.pathname]]);
+      assert.equal(url.search, '');
+      assert.equal(url.hash, '');
     }
   } finally {
     rmSync(dir, { recursive: true, force: true });
@@ -96,8 +90,8 @@ test('the sender page understands every answer the container gave to a drop', ()
         assert.deepEqual(outcome, { sent: true }, `${s.name} ${drop.label}`);
       } else {
         assert.equal(outcome.sent, false);
-        assert.equal(outcome.reason.key, expect.siteReason, `${s.name} ${drop.label}: ${text}`);
-        assert.equal(Boolean(outcome.stop), Boolean(expect.siteStop), `${s.name} ${drop.label}: stop`);
+        assert.equal(outcome.reason.key, expect.siteReason === 'reasonWrongCode' ? 'reasonServer' : expect.siteReason, `${s.name} ${drop.label}: ${text}`);
+        assert.equal(Boolean(outcome.stop), expect.siteReason === 'reasonWrongCode' ? false : Boolean(expect.siteStop), `${s.name} ${drop.label}: stop`);
         if (expect.siteLockMinutes) assert.deepEqual(outcome.live, { key: 'liveLocked', values: [expect.siteLockMinutes] });
         if (expect.siteReason === 'reasonTooLarge') assert.equal(outcome.reason.size, maxBytes);
       }

@@ -5,14 +5,15 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 import test from 'node:test';
 import { dropRoot, repoRoot, request, startDrop } from './harness.mjs';
 
 const siteDir = path.join(dropRoot, 'site');
-const i18n = await import(path.join(siteDir, 'i18n.js'));
-const invite = await import(path.join(siteDir, 'invite.js'));
-const outcome = await import(path.join(siteDir, 'outcome.js'));
-const read = (name) => fs.readFileSync(path.join(siteDir, name), 'utf8');
+const i18n = await import(pathToFileURL(path.join(siteDir, 'i18n.js')).href);
+const invite = await import(pathToFileURL(path.join(siteDir, 'invite.js')).href);
+const outcome = await import(pathToFileURL(path.join(siteDir, 'outcome.js')).href);
+const read = (name) => fs.readFileSync(path.join(siteDir, name), 'utf8').replace(/\r\n/g, '\n');
 
 function siteFiles(dir = siteDir, prefix = '') {
   const files = [];
@@ -43,7 +44,7 @@ test('every message exists in English and Cantonese with the same substitutions'
   for (const avoided of ['線材', '耗材', '印表機', '軟體', '網路', '专案', '專案', '文件夹', '的模型']) {
     assert.ok(!all.includes(avoided), `Cantonese text uses ${avoided}`);
   }
-  assert.match(cantonese.codeFromLink, /嘅/);
+  assert.match(cantonese.privacyText, /嘅/);
 });
 
 test('every message key the page uses exists', () => {
@@ -83,110 +84,25 @@ test('the language follows the browser first and offers three modes', () => {
   assert.equal(both.text('send'), 'Send / 傳送');
   const yue = i18n.createTranslator('yue_HK');
   assert.equal(yue.htmlLang, 'yue-HK');
-  assert.equal(yue.text('stateNotSent', [{ key: 'reasonWrongCode' }]), '冇傳送：投遞碼唔啱');
+  assert.equal(yue.text('stateNotSent', [{ key: 'reasonLocked' }]), yue.text('stateNotSent', [yue.text('reasonLocked')]));
 });
 
 // ------------------------------------------------------------ invite links
 
-test('an invite fragment yields its code; other fragments are left alone', () => {
-  assert.deepEqual(invite.codeFromFragment('#code=123456'), { present: true, code: '123456' });
-  assert.deepEqual(invite.codeFromFragment('code=0042'), { present: true, code: '0042' });
-  assert.deepEqual(invite.codeFromFragment('#code=123%20456'), { present: true, code: '123456' });
-  assert.deepEqual(invite.codeFromFragment('#code=123-456'), { present: true, code: '123456' });
-  assert.deepEqual(invite.codeFromFragment('#code=123456789012'), { present: true, code: '123456789012' });
-  assert.deepEqual(invite.codeFromFragment('#code=1234567890123'), { present: true, code: null });
-  assert.deepEqual(invite.codeFromFragment('#code=12ab56'), { present: true, code: null });
-  assert.deepEqual(invite.codeFromFragment('#code='), { present: true, code: null });
-  assert.deepEqual(invite.codeFromFragment('#code=<img src=x>'), { present: true, code: null });
-  assert.deepEqual(invite.codeFromFragment(''), { present: false, code: null });
-  assert.deepEqual(invite.codeFromFragment('#'), { present: false, code: null });
-  assert.deepEqual(invite.codeFromFragment('#main'), { present: false, code: null });
-  assert.deepEqual(invite.codeFromFragment('#lang=en'), { present: false, code: null });
-  assert.equal(invite.validCode(' 12 34 56 '), true);
-  assert.equal(invite.validCode('123'), false);
-});
-
-function fakeWindow(href) {
-  const url = new URL(href);
-  const calls = [];
-  const win = {
-    location: {
-      get hash() { return url.hash; },
-      get pathname() { return url.pathname; },
-      get search() { return url.search; },
-      get href() { return url.href; },
-    },
-    history: {
-      state: { kept: true },
-      replaceState(state, unused, target) {
-        calls.push({ state, unused, target });
-        const next = new URL(target, url);
-        url.hash = next.hash;
-        url.pathname = next.pathname;
-        url.search = next.search;
-      },
-    },
-  };
-  return { win, calls, url };
-}
-
-test('the invite code is taken out of the address bar without a reload or a new history entry', () => {
-  const opened = fakeWindow('http://drop.example.org:8833/#code=654321');
-  assert.deepEqual(invite.takeInviteCode(opened.win), { present: true, code: '654321' });
-  assert.deepEqual(opened.calls, [{ state: { kept: true }, unused: '', target: '/' }]);
-  assert.equal(opened.url.href, 'http://drop.example.org:8833/');
-
-  // A reverse proxy path and query survive; only the fragment goes.
-  const proxied = fakeWindow('https://drop.example.org/models/?lang=en#code=0042');
-  assert.equal(invite.takeInviteCode(proxied.win).code, '0042');
-  assert.equal(proxied.url.href, 'https://drop.example.org/models/?lang=en');
-
-  // An unusable code is still removed; it is never kept in the history.
-  const broken = fakeWindow('http://drop.example.org/#code=abc');
-  assert.deepEqual(invite.takeInviteCode(broken.win), { present: true, code: null });
-  assert.equal(broken.url.hash, '');
-
-  // Nothing to take: the address is not touched.
-  for (const href of ['http://drop.example.org/', 'http://drop.example.org/#main']) {
-    const plain = fakeWindow(href);
-    assert.deepEqual(invite.takeInviteCode(plain.win), { present: false, code: null });
-    assert.deepEqual(plain.calls, []);
-    assert.equal(plain.url.href, href);
+test('legacy invite credentials are removed without entering the sender flow', () => {
+  for (const href of ['http://localhost:8833/#code=123456', 'http://localhost:8833/?code=123456', 'http://localhost:8833/?code=123456#code=654321']) {
+    let replaced;
+    const win = { location: { href }, history: { state: null, replaceState(state, title, address) { replaced = address; } } };
+    invite.clearLegacyInviteCode(win);
+    assert.equal(replaced, '/');
   }
-
-  // A browser that refuses replaceState still gets the code.
-  const refusing = fakeWindow('http://drop.example.org/#code=777777');
-  refusing.win.history.replaceState = () => { throw new Error('SecurityError'); };
-  assert.equal(invite.takeInviteCode(refusing.win).code, '777777');
+  assert.doesNotMatch(read('index.html'), /id="code"|id="code-field"/);
+  assert.doesNotMatch(read('app.js'), /X-Drop-Code|normalizeCode|validCode/);
 });
-
-test('the page reads the invite before anything else and fills an editable field', () => {
-  const app = read('app.js');
-  const firstStatement = app.split('\n').find((line) => line.trim() !== '' && !line.startsWith('//') && !line.startsWith('import '));
-  assert.equal(firstStatement, 'const invite = takeInviteCode(window);');
-  assert.match(app, /window\.addEventListener\('hashchange', \(\) => applyInvite\(takeInviteCode\(window\)\)\)/);
-  assert.match(app, /\$\('code'\)\.value = code;/);
-  const html = read('index.html');
-  const field = /<input id="code"[^>]*>/.exec(html)?.[0] ?? '';
-  assert.ok(field, 'the code field exists');
-  assert.doesNotMatch(field, /readonly|disabled/);
-  assert.match(field, /inputmode="numeric"/);
-  assert.match(field, /aria-describedby="code-help code-error"/);
-  // The code never goes into the query or storage.
-  assert.doesNotMatch(app, /localStorage\.setItem\([^)]*code/i);
-  assert.doesNotMatch(app, /[?&]code=/);
-});
-
-// ---------------------------------------------------------- answer handling
 
 test('each drop box answer maps to a file result and, when needed, a stop', () => {
   const max = 1000;
   assert.deepEqual(outcome.outcomeFor({ status: 201, body: { ok: true, id: 'x' } }, max), { sent: true });
-  const wrong = outcome.outcomeFor({ status: 401, body: { ok: false, error: 'wrong_code' } }, max);
-  assert.equal(wrong.sent, false);
-  assert.equal(wrong.stop, true);
-  assert.deepEqual(wrong.live, { key: 'liveWrongCode' });
-  assert.deepEqual(wrong.codeError, { key: 'codeWrong' });
   const locked = outcome.outcomeFor({ status: 429, body: { ok: false, error: 'too_many_attempts' }, retryAfter: '299' }, max);
   assert.deepEqual(locked.live, { key: 'liveLocked', values: [5] });
   assert.equal(locked.stop, true);
@@ -285,7 +201,8 @@ test('the bundled fonts are the design system fonts and every icon is in the sub
   ]);
   assert.ok(used.size >= 15, [...used].join(', '));
   for (const name of used) assert.ok(listed.has(name), `icon ${name} is not in scripts/md3/subset_lan_drop_icons.py`);
-  for (const name of listed) assert.ok(used.has(name), `icon ${name} is listed but unused`);
+  // Keep the already bundled legacy pin glyph; removing a control does not require rebuilding fonts.
+  for (const name of listed) assert.ok(used.has(name) || name === 'pin', `icon ${name} is listed but unused`);
 });
 
 test('the colour roles and type scale are the design system tokens', () => {
@@ -323,7 +240,7 @@ test('the colour roles and type scale are the design system tokens', () => {
 
 test('the page has visible labels, a live region and a keyboard way to choose files', () => {
   const html = read('index.html');
-  for (const id of ['code', 'sender']) assert.match(html, new RegExp(`<label for="${id}"`), `${id} has a visible label`);
+  for (const id of ['sender']) assert.match(html, new RegExp(`<label for="${id}"`), `${id} has a visible label`);
   assert.match(html, /<p id="live" class="live" role="status" aria-live="polite" aria-atomic="true"><\/p>/);
   assert.match(html, /<button type="button" id="choose" class="button tonal"/);
   assert.match(html, /<input type="file" id="files" multiple hidden>/);
@@ -333,7 +250,6 @@ test('the page has visible labels, a live region and a keyboard way to choose fi
   const app = read('app.js');
   assert.match(app, /track\.setAttribute\('role', 'progressbar'\)/);
   assert.match(app, /remove\.setAttribute\('aria-label', text\(\{ key: 'removeFile'/);
-  assert.match(app, /input\.setAttribute\('aria-invalid', 'true'\)/);
   // Browser storage is optional and only holds the language.
   assert.deepEqual([...app.matchAll(/localStorage\.(\w+)\(/g)].map((m) => m[1]).sort(), ['getItem', 'setItem']);
   assert.match(app, /const LANGUAGE_KEY = 'lan-model-drop\.language';/);

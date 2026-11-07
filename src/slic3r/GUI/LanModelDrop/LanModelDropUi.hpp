@@ -1,6 +1,6 @@
 #pragma once
 // LAN model drop, the visible surfaces (docs/features/application-integration/lan-model-drop.md):
-// the invite (link, Copy link, the QR code of exactly that link, New link, the LAN address picker),
+// the invite (link, Copy link, the QR code of exactly that link, the LAN address picker),
 // the rows of the Preferences section and the "Invite someone to send a model" dialog. Every control
 // is a kit widget; each window listens to the station view and updates itself on the GUI thread.
 
@@ -82,8 +82,6 @@ private:
     Options     m_options;
     int         m_listener = 0;
     bool        m_focus_copy_when_ready = false;
-    bool        m_waiting_for_code = false;
-    std::string m_code_before;
 
     Label     *m_off_note      = nullptr;
     Button    *m_turn_on       = nullptr;
@@ -92,13 +90,11 @@ private:
     QrView    *m_qr            = nullptr;
     TextInput *m_link          = nullptr;
     Button    *m_copy          = nullptr;
-    Button    *m_new_link      = nullptr;
     Button    *m_larger        = nullptr;
     Label     *m_lan_label     = nullptr;
     ComboBox  *m_lan_choice    = nullptr;
     LiveText   m_manual;
     LiveText   m_source_note;
-    LiveText   m_fixed_note;
     LiveText   m_live;
     LiveText   m_waiting_label;
     Button    *m_show_waiting  = nullptr;
@@ -120,6 +116,5 @@ wxWindow *create_intro_row(wxWindow *parent);
 wxWindow *create_status_row(wxWindow *parent);
 wxWindow *create_address_row(wxWindow *parent);
 wxWindow *create_key_row(wxWindow *parent);
-wxWindow *create_code_row(wxWindow *parent);
 
 }}} // namespace Slic3r::GUI::LanModelDrop

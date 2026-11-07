@@ -6,11 +6,11 @@ import fsp from 'node:fs/promises';
 import http from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { AttemptLimiter, clientAddress, LOCKOUT_MS } from './attempts.mjs';
+import { AttemptLimiter, clientAddress } from './attempts.mjs';
 import { LISTEN_PORT, PROTOCOL, SERVICE } from './config.mjs';
 import { cleanFileName, cleanSender, NameError } from './names.mjs';
 import { DropQueue, ID_PATTERN, newId } from './queue.mjs';
-import { generateDropCode, loadDropCode, loadStationKey, secretsEqual, storeDropCode } from './secrets.mjs';
+import { loadStationKey, secretsEqual } from './secrets.mjs';
 import { ContentProbe, contentMatches, typeForName } from './sniff.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -163,16 +163,14 @@ export function receiveBody(req, temp, limit) {
 
 const MESSAGES = Object.freeze({
   bad_request: 'The request was not understood.',
-  wrong_code: 'The drop code is not right. Check the code shown in Bambu Studio.',
   length_required: 'The upload must state its length.',
   too_large: 'The file is larger than this drop box accepts.',
   unsupported_type: 'Only 3MF, STL, STEP, OBJ and AMF models are accepted.',
-  too_many_attempts: 'Too many wrong drop codes. Try again in a few minutes.',
+  too_many_attempts: 'Too many upload attempts. Try again in a few minutes.',
   queue_full: 'The drop box is full. Ask the person at the computer to open or discard some models.',
   unauthorized: 'A valid station key is required.',
   not_found: 'Not found.',
   method_not_allowed: 'This method is not allowed here.',
-  fixed_code: 'The drop code is fixed by DROP_CODE and cannot be changed here.',
 });
 
 export function createDropService(config, options = {}) {
@@ -182,7 +180,6 @@ export function createDropService(config, options = {}) {
 
   fs.mkdirSync(config.dataDir, { recursive: true, mode: 0o700 });
   const stationKey = loadStationKey(config.dataDir, config.stationKey);
-  const dropCode = loadDropCode(config.dataDir, config.fixedCode);
   const queue = new DropQueue({ dataDir: config.dataDir, maxFiles: config.queueMaxFiles, maxBytes: config.queueMaxBytes, now, log });
   queue.load();
   const site = loadSite(options.siteDir ?? DEFAULT_SITE_DIR, {
@@ -198,7 +195,6 @@ export function createDropService(config, options = {}) {
   if (stationKey.source === 'environment') log('Using the station key from DROP_STATION_KEY.');
   else if (stationKey.source === 'generated') log(`Generated a station key in ${keyFile}. Read it with: ${readKey}`);
   else log(`Using the station key in ${keyFile}. Read it with: ${readKey}`);
-  log(dropCode.fixed ? 'The drop code is fixed by DROP_CODE.' : 'The drop code is shown in Bambu Studio and can be renewed there.');
 
   // Refuses an upload. A small body is read and discarded so the answer
   // arrives cleanly; a large or unread one closes the connection afterwards.
@@ -224,18 +220,9 @@ export function createDropService(config, options = {}) {
     if (!/^\d+$/.test(length) || !Number.isSafeInteger(Number(length))) return refuse(req, res, 400, 'bad_request');
     const declared = Number(length);
 
-    // Only a request that carries X-Drop-Code can count as a wrong code. A page on
-    // another site can send a plain cross-site POST without it (a custom header
-    // needs a CORS preflight, which this service never grants), and browsers mark
-    // cross-site requests with Sec-Fetch-Site. Counting those would let any web
-    // page a sender visits lock that sender out, so they are refused untouched.
-    const code = req.headers['x-drop-code'];
-    if (typeof code !== 'string' || req.headers['sec-fetch-site'] === 'cross-site') return refuse(req, res, 400, 'bad_request');
-    if (!secretsEqual(code.trim(), dropCode.code)) {
-      limiter.recordWrongCode(address);
-      if (limiter.lockedFor(address) > 0) log(`locked out ${address} for ${LOCKOUT_MS / 60000} minutes after repeated wrong drop codes`);
-      return refuse(req, res, 401, 'wrong_code');
-    }
+    // Cross-site browser requests are never accepted. The required filename
+    // header also forces a preflight, for which this service grants no CORS access.
+    if (req.headers['sec-fetch-site'] === 'cross-site') return refuse(req, res, 400, 'bad_request');
 
     let fileName;
     let sender;
@@ -246,6 +233,7 @@ export function createDropService(config, options = {}) {
       if (error instanceof NameError) return refuse(req, res, 400, 'bad_request');
       throw error;
     }
+    limiter.recordAttempt(address);
     const type = typeForName(fileName);
     if (!type) return refuse(req, res, 415, 'unsupported_type');
     if (declared > config.maxBytes) return refuse(req, res, 413, 'too_large');
@@ -294,7 +282,8 @@ export function createDropService(config, options = {}) {
       return sendJson(res, 200, {
         protocol: PROTOCOL,
         stationName: config.stationName,
-        dropCode: dropCode.code,
+        directSend: true,
+        dropCode: 'not-required', // Inert compatibility field for older protocol-1 receivers.
         queued: files,
         queuedBytes: bytes,
         maxBytes: config.maxBytes,
@@ -306,14 +295,10 @@ export function createDropService(config, options = {}) {
       if (method !== 'GET') return fail(res, 405, 'method_not_allowed', MESSAGES.method_not_allowed, { Allow: 'GET' });
       return sendJson(res, 200, { items: queue.list() });
     }
+    // Older receivers must never mistake an upgrade for successful link revocation.
     if (route === 'drop-code') {
       if (method !== 'POST') return fail(res, 405, 'method_not_allowed', MESSAGES.method_not_allowed, { Allow: 'POST' });
-      if (dropCode.fixed) return fail(res, 409, 'fixed_code', MESSAGES.fixed_code);
-      const next = generateDropCode(dropCode.code);
-      storeDropCode(config.dataDir, next);
-      dropCode.code = next;
-      log('renewed the drop code');
-      return sendJson(res, 200, { dropCode: next });
+      return fail(res, 410, 'retired', 'Drop-code renewal is no longer available. Existing links still work.');
     }
     const file = /^files\/([^/]+)$/.exec(route);
     if (file) {
@@ -412,7 +397,6 @@ export function createDropService(config, options = {}) {
     queue,
     handle,
     expire,
-    get dropCode() { return dropCode.code; },
     get stationKeySource() { return stationKey.source; },
     async start() {
       await expire();

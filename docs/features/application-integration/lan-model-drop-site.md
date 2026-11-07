@@ -1,5 +1,13 @@
 # LAN model drop site
 
+## Direct sending update (1.0.1)
+
+Mixed-version compatibility: protocol-1 status includes directSend:true and an inert dropCode value of not-required for older receivers. The authenticated legacy renewal endpoint returns 410 retired, never a successful rotation or revocation. An older desktop may briefly show a connection error after trying renewal; the next status poll restores collection. The inert status value is never an upload credential. New receivers keep collecting from older services but hide direct invite links until the service advertises the capability, and show an upgrade instruction. Older desktop versions retain their old code labels until updated.
+
+Invite links contain only the address, with no credentials or query parameters. Code-renewal controls are removed. Legacy DROP_CODE configuration and the existing drop-code file are ignored without deleting either. Upgrades retain the same volume, station key and waiting models. Model-format, size, queue and expiry limits remain enforced.
+
+Anyone who can reach the service can send; inbox access, downloads and management still require the station key. Each source address allows 60 upload attempts per minute, followed by a five-minute cooldown. Use a trusted local network and never expose the service to the internet. Publication of the new container and actual LAN verification are pending.
+
 The LAN model drop site is a small web page that runs in a Docker container
 on your local network. Other people open it on a phone, tablet or laptop and
 send 3D models to Bambu Studio MD3 on your computer. Bambu Studio collects
@@ -106,14 +114,8 @@ Ethernet), not one that belongs to a virtual adapter such as `vEthernet
 2. In Bambu Studio open **Preferences > LAN model drop**, paste the key into
    **Station key**, keep the site address `http://localhost:8833` and choose
    **Test connection**. The status reads **Connected**.
-3. Switch on **Receive models from the LAN drop site**. Bambu Studio then
-   shows the invite: a link such as `http://<this computer's address>:8833/#code=482915`
-   and a QR code of the same link. Send the link or let the other person scan
-   the code.
 
-The page fills in the drop code from the link, removes it from the address
-bar, and the person only chooses models and sends them. **New link** in Bambu
-Studio makes a new drop code, so older links stop working.
+3. Switch on **Receive models from the LAN drop site**. Share the displayed LAN link or QR code. The sender chooses models and sends directly.
 
 ## Run it on another Docker host on the network
 
@@ -167,7 +169,6 @@ need and run `docker compose up -d` again. Every setting is optional.
 | `DROP_QUEUE_MAX_FILES` | 50 | Most models waiting at once, at most 1000, the most Bambu Studio lists |
 | `DROP_QUEUE_MAX_BYTES` | 2147483648 (2 GB) | Most bytes waiting at once |
 | `DROP_STATION_KEY` | generated | Station key, 16 to 512 visible characters without spaces |
-| `DROP_CODE` | random, 6 digits | A fixed drop code of 4 to 12 digits; it cannot be renewed from Bambu Studio |
 | `DROP_PUBLIC_URL` | none | Address for invite links behind a reverse proxy, such as `https://drop.example.org` |
 
 An invalid value stops the container with a message in
@@ -204,11 +205,7 @@ working. To move to the new version of the page, run in the new version's
 ../host.bat --detached
 ```
 
-The compose project is always named `lan-model-drop`, so this replaces the old
-container and keeps the same data volume: the station key, the drop code and
-any waiting models stay. If you use a `.env` file, copy it into the new
-folder first, or keep it somewhere permanent and add
-`--env-file <path to your .env>` to each `docker compose` command.
+The Compose project remains named lan-model-drop and retains its existing data volume. Copy your private .env into the new folder before starting, or use --env-file with its existing path. Never share that file.
 
 ## Stop it
 
@@ -227,21 +224,12 @@ keeps checking at a slower pace.
 - **What is kept.** Each waiting model is stored with its cleaned file name,
   the optional sender name, its size, its SHA-256 and the time it arrived. It
   is removed when Bambu Studio collects it or after `DROP_TTL_HOURS`. The
-  station key and the drop code are files readable only by the service.
-- **What is logged.** Random item ids, model types and sizes, lockouts and
-  removals. Never file names, sender names, drop codes or the station key.
+  station key is readable only by the service.
+- **What is logged.** Random item ids, model types and sizes, and removals. Never file names, sender names or the station key.
+- **Plain HTTP.** Other people on the network can observe traffic. Use only a trusted LAN, or an authenticated HTTPS reverse proxy within that LAN. Never forward the port to the internet.
 - **Nothing leaves your network.** The page loads nothing from the internet:
   its fonts and icons are bundled, and it has no analytics. The container
   needs no internet access once the image is built.
-- **The drop code.** Senders need the current drop code. Five wrong codes
-  within a minute lock that device out for five minutes. Only a request that
-  carries the drop code can count: one without it, or one the browser marks as
-  coming from another website, is refused and never counts, so a web page a
-  sender happens to visit cannot lock that sender out. In an invite link
-  the code travels after `#`, which browsers never send to a server or pass
-  on to other sites, and the page removes it from the address bar as soon as
-  it opens. Anyone who has a current link can send models until you choose
-  **New link**.
 - **The station key.** Only Bambu Studio needs it. Anyone with the key can
   list, download and remove waiting models, so never put it in an invite or
   share your `.env`. Bambu Studio stores it protected for your Windows user
@@ -254,11 +242,6 @@ keeps checking at a slower pace.
   page. Bambu Studio checks the size,
   the SHA-256 and the type again after downloading, and opens a model only
   when you choose **Open**.
-- **Plain HTTP.** The page uses HTTP on your local network. People on the same
-  network can see what is sent, and anyone there who knows the drop code can
-  send a model. Use it on networks you trust. For anything else, put it behind
-  an HTTPS reverse proxy and set `DROP_PUBLIC_URL`. Never forward the port to
-  the internet from your router.
 - **A locked-down container.** The service runs as an unprivileged user on a
   read-only file system with no Linux capabilities, cannot gain privileges,
   has memory, CPU and process limits, and writes only to its data volume. Its
@@ -269,8 +252,7 @@ keeps checking at a slower pace.
 | What you see | What to check |
 | --- | --- |
 | The page does not open on the phone | The phone is on the same network, not a guest network; the firewall rule exists; `docker compose ps` shows `healthy` |
-| "The drop code was not accepted" | Ask for a new link; the code may have been renewed |
-| "Too many wrong drop codes" | Wait five minutes, then use the link again |
+| Too many upload attempts | Wait five minutes before retrying |
 | "The drop box is full" | Open or discard the waiting models in Bambu Studio |
 | Bambu Studio says **Wrong station key** | Print the key again and paste it |
 | Bambu Studio says **Not reachable** | Docker Desktop is running and the container is started |

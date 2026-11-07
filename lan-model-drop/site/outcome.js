@@ -31,16 +31,12 @@ export function lockMinutes(retryAfter) {
 //   sent       the file is in the drop box
 //   reason     why this file was not sent (message key and substitutions)
 //   stop       the remaining files are not tried, because they would fail
-//              the same way (wrong code, lockout, full box, no connection)
+//              the same way (rate limit, full box, no connection)
 //   live       the message for the whole send, when it stops
-//   codeError  the drop code field shows this message
 export function outcomeFor({ status, body, retryAfter }, maxBytes) {
   const error = body && typeof body === 'object' ? body.error : undefined;
   if (status === 201 && body && body.ok === true) return { sent: true };
   if (status === 0) return { sent: false, reason: { key: 'reasonNetwork' }, stop: true, live: { key: 'liveNetwork' } };
-  if (status === 401 || error === 'wrong_code') {
-    return { sent: false, reason: { key: 'reasonWrongCode' }, stop: true, live: { key: 'liveWrongCode' }, codeError: { key: 'codeWrong' } };
-  }
   if (status === 429 || error === 'too_many_attempts') {
     const minutes = lockMinutes(retryAfter);
     return { sent: false, reason: { key: 'reasonLocked' }, stop: true, live: { key: 'liveLocked', values: [minutes] } };
