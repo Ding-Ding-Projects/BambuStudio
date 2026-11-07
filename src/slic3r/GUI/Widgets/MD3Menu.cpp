@@ -988,6 +988,9 @@ void MD3MenuPopup::build()
     if (m_list)
         return;
     m_rows = MD3::Menu::snapshot(*m_menu, m_secondary);
+    for (const auto &row : m_rows)
+        if (row.source)
+            PersonalVocabulary::remember_menu_label(row.source->GetItemLabel(), row.label);
 
     // Every menu, including one-item and nested menus, owns its query and builder.
     m_search = new SearchField(this, _L("Search menu"));

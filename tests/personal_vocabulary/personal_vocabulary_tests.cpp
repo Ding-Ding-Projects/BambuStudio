@@ -86,3 +86,21 @@ TEST_CASE("Display matching is longest first bounded and nonrecursive", "[Person
     REQUIRE(original == "Open item");
     REQUIRE(PV::display("Unregistered content") == "Unregistered content");
 }
+
+TEST_CASE("Display prefers exact spelling and falls back to unambiguous ASCII case", "[PersonalVocabulary]")
+{
+    PV::Entries mapping;
+    REQUIRE(PV::parse(R"({"schemaVersion":1,"entries":{"open":"Inspect","open item":"Review","Inspect":"Again"}})", mapping));
+    REQUIRE(PV::apply("Open OPEN open", mapping) == "Inspect Inspect Inspect");
+    REQUIRE(PV::apply("OPEN ITEM", mapping) == "Review");
+    REQUIRE(PV::apply("Opened reopen open_item", mapping) == "Opened reopen open_item");
+    REQUIRE(PV::apply("Open/item", mapping) == "Open/item");
+    REQUIRE(PV::apply("Open %s", mapping) == "Open %s");
+    REQUIRE(PV::parse(R"({"schemaVersion":1,"entries":{"open":"Lower","Open":"Title"}})", mapping));
+    REQUIRE(PV::apply("open Open OPEN", mapping) == "Lower Title OPEN");
+    REQUIRE(PV::apply("OPEN then Open", mapping) == "OPEN then Title");
+    REQUIRE(PV::parse(R"({"schemaVersion":1,"entries":{"open":"Same","Open":"Same"}})", mapping));
+    REQUIRE(PV::apply("OPEN", mapping) == "Same");
+    REQUIRE(PV::parse(R"({"schemaVersion":1,"entries":{"Open":"Exact","open item":"Longer"}})", mapping));
+    REQUIRE(PV::apply("Open item", mapping) == "Exact item");
+}
