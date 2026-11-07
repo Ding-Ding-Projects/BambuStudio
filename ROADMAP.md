@@ -1,5 +1,11 @@
 # Roadmap
 
+## Protected Preferences geometry, 7 November 2026
+
+- [x] Add a content-free, fixed-role probe to the opt-in current-user automation pipe; verify production-module behavior, privacy/containment mutations and compilation against actual wx headers.
+- [ ] Build and drive the probe at normal/minimum sizes with source/binary binding and unchanged capture-affinity readback.
+- [ ] Keep typography, colors and full visual-matrix acceptance separate from geometry-only evidence.
+
 ## Same-folder Base64 files, 7 November 2026
 
 - [x] Verify native core file naming, no-overwrite publication, inverse/write hashes and queued 16 MiB round trips with 363 assertions and two failing mutations.

@@ -6,23 +6,31 @@ native release, installed update, companions and deployment remain unfinished.
 
 ## Preserved candidate
 
-Main f1526f80268c67df5a6ff196b865b7b0118412cb was pushed and verified by exact
-remote-ref readback. It contains direct sending at 601003f9b and profile-isolated
-wording storage at eb8bd6a52. Its native build/release run 42419260043 remained
-in progress at 2026-11-07T22:24:03Z. No new installed desktop update is claimed.
+Main d73c8eb378ed94da9a73b29cb176ef2318c90f6c was pushed and verified by exact
+remote-ref readback. It includes direct sending, isolated wording storage and
+the reviewed Base64 unit below. Its native build/release run is 42420781736;
+the earlier f1526f802 build is 42419260043. Both remained in progress at the
+last observation. No new installed desktop update is claimed.
 
-The current Base64 branch is gap/base64-files-20261107, with source candidates
+The preserved Base64 branch is gap/base64-files-20261107, with source candidates
 22b63b6c51b28ae710286d642996148ec6887d02 and
 7e5d86573cbc947bdb024b08bc6e7634d7082897. Independent source review closed the
 encoded-input bound and toolchain-discovery findings. Actual-core checks passed
 363 assertions; inverse-hash and old-bound mutations failed as intended. This
-record adds translations and bundled documentation. Native and packaged-worker
+unit includes translations and bundled documentation. Native and packaged-worker
 acceptance remain pending; these are not complete-toolkit or release claims.
 
-The separate hosting-companion branch gap/lan-setup-wizard-20261107 has design
-source fe9797a2 and operation infrastructure 34c5b312. Only initial design
-2df7f446 was pushed at this record's preparation. Implementation and operation
-request-id replay repair are in progress. Preserve that independent working tree.
+The current branch gap/preferences-geometry-20261107 contains d405fb69, a
+content-free six-role probe under existing opt-in local automation. Its source
+review, production-module fixtures, two negative mutations and actual wx-header
+compilation passed. Linked native/runtime verification is pending.
+
+The separate hosting-companion branch gap/lan-setup-wizard-20261107 was pushed
+at 0e9a7c849. Its later ed55a003f candidate repairs Compose isolation, bounded
+output, readiness, final container-state observation and published-image
+admission, and embeds source/input identities. Independent review and portable
+packaging remain pending. The preceding package failed its proof step and is
+not accepted. Do not launch an unreviewed candidate or mutate its pinned producer.
 
 ## Verified behavior
 
@@ -43,7 +51,9 @@ request-id replay repair are in progress. Preserve that independent working tree
 - Edge reports an ignored Cross-Origin-Opener-Policy header on the HTTP LAN origin; the zero-console-error criterion remains unmet, despite successful sending.
 - Old installed desktops retain code-related copy and a renewal/status-poll race. New desktop source removes renewal controls. Service compatibility does not repair historical UI binaries.
 - The user's actual startup cause remains unidentified. Synthetic recovery evidence does not establish it.
-- Preserve separate baseline-process teardown gaps and the sender-browser teardown receipt; do not infer closure from a missing root process.
+- All four baseline application trees closed normally with held-handle proof. Their empty desktops remain retained because final resource closure is unverified. Preserve the separate sender-browser teardown receipt gap.
+- The geometry probe preserves whole-dialog credential capture exclusion. It cannot establish typography, colors or full visual acceptance.
+- Automatic restore still shows initial loader error dialogs before recovery; no existing silent flag safely suppresses them. An explicit automatic-only presentation context must preserve manual errors and defer safety decisions.
 - Full publication scanning has baseline technical-name/nested-repository/parser limitations. Scoped scans passed with specific baseline classifications, not a blanket full-scan success.
 - Status Hub SSH delivery remains unverified. The active goal is incomplete and account allowance is unknown.
 

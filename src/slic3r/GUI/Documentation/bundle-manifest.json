@@ -585,12 +585,12 @@
     {
       "route": "design-system/preferences-resizing.md",
       "title": "Resizable Preferences",
-      "sha256": "526443aa33a08e9bbfbf7ac3b8bbc79a159570b244d2640c76a88edf895c7efe"
+      "sha256": "b117223c0b8b225f8e4295721c2864f67f246b8ff07d1b4657da47eb5d92ab83"
     },
     {
       "route": "design-system/preferences-resizing.yue_HK.md",
       "title": "可調整大小的偏好設定視窗",
-      "sha256": "59771dce94e5650e4545ec92f5f6b56ea56793bec3484944eba0c34b2f1128a5"
+      "sha256": "bf60548dd4641c4f5582218caea2ab8e79f3ab5780b02b72885d4f9e6752c672"
     },
     {
       "route": "design-system/prepare-inspector-atlas.md",
@@ -2130,7 +2130,7 @@
       "bytes": 16430
     }
   ],
-  "bundle_sha256": "06fcc85cb3d43d0e60035ca963dd5036e393e95c239f66b8c0cd58ab55c01479",
+  "bundle_sha256": "04ff9f0e8c51a5ab0dd32f1eef56921125c4ce91e4a100c55f3c15e3f400948a",
   "unavailable_references": [
     {
       "source": "api/README.md",

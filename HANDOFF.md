@@ -1,5 +1,22 @@
 # Bambu Studio handoff
 
+## Content-free Preferences diagnostics, 7 November 2026
+
+Candidate `d405fb69` adds argument-free `preferences_geometry` to the existing
+explicitly enabled, current-user automation pipe. It reports six fixed roles
+through known object pointers on the UI thread. It reads no labels, names,
+values, accessibility text, paths or pixels, performs no descendant traversal,
+and leaves capture affinity unchanged. Independent source review found no
+remaining issue in that bounded implementation. The production-module fixture
+and compilation against actual wx headers passed; privacy and containment
+mutations failed as intended. Linked native build and runtime remain pending.
+
+The four earlier baseline application roots closed normally on 7 November,
+with every held process handle signaled and zero owned processes/windows.
+Their empty named desktops remain retained: Lowlevel returned `closed:false`,
+and the remaining handle owner is unverified. No force termination or foreground
+interaction occurred. This is separate from the already closed candidate runs.
+
 ## Base64 file conversion, 7 November 2026
 
 Source candidates `22b63b6c` and `7e5d8657` add explicit picker/drop queue targets,

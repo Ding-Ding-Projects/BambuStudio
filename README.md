@@ -2,7 +2,7 @@
 
 Bambu Studio is a feature-rich slicer for Bambu Lab printers: project-based workflows, optimized slicing algorithms and a graphic interface built for a smooth printing experience. This fork rebuilds the native Windows interface on Material Design 3, keeps upstream slicing intact, and adds its own features: three language modes (English, Hong Kong Cantonese, bilingual), automatic updates, local project history, a command palette, a regex builder on every search, Home Assistant handover, **Express print mode** and the **Melody creator**.
 
-LAN model sharing now accepts direct uploads without a sender code. Use [the hosting guide](docs/features/application-integration/lan-model-drop-site.md) to start the service. [Current verification and remaining work](HANDOFF.md) cover the published service, startup recovery, resizable Preferences and personal wording.
+LAN model sharing now accepts direct uploads without a sender code. Use [the hosting guide](docs/features/application-integration/lan-model-drop-site.md) to start the service. [Current verification and remaining work](HANDOFF.md) cover the published service, startup recovery, [resizable Preferences and protected geometry checks](docs/features/design-system/preferences-resizing.md), and personal wording.
 
 [Base64 file conversion](docs/features/converter/base64-files.md) now has same-folder queue targets, filename restoration, collision avoidance and SHA-256 round-trip checks in source. Native interface and packaged-worker acceptance remain pending.
 
