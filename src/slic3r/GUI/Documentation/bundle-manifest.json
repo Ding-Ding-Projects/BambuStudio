@@ -55,22 +55,22 @@
     {
       "route": "application-integration/lan-model-drop-site.md",
       "title": "LAN model drop site",
-      "sha256": "be07f4625974cd0faada579cf70713e398c1b998e5265c2b3e853753c483ff21"
+      "sha256": "472ca0cb91ec5477e275519b8e161eeb3daef2ef065812216684c847c6a9987b"
     },
     {
       "route": "application-integration/lan-model-drop-site.yue_HK.md",
       "title": "LAN 模型投遞網站",
-      "sha256": "5f0c0089f6c5408706d8490266341a8c8d069c3773e0ad5338240b71fb9416c9"
+      "sha256": "e97ce6761c5db6fa8bba111c00b26ca085c6f617295c4c7b480f7e2ff1a72f83"
     },
     {
       "route": "application-integration/lan-model-drop.md",
       "title": "LAN model drop",
-      "sha256": "a6f584ce68d47fd8d2a9e7e2f8802ed2509e0c08bb4b455c94fa7b9e7f81e982"
+      "sha256": "a7ef870e298ebd3886775f518bbcad1237e99a94cce0d66ba219f4bb6dd19221"
     },
     {
       "route": "application-integration/lan-model-drop.yue_HK.md",
       "title": "LAN 模型投遞",
-      "sha256": "c7593c20d04488cc3c7a19ecd77a4f2d0e70bcfc86b05ba0df74ab758edf1297"
+      "sha256": "3d1e08e5535b6943cf0d53d1244cdbf66d974277da41b0c0981d4db264f77ec2"
     },
     {
       "route": "application-integration/local-drop-hosting.md",
@@ -2120,7 +2120,7 @@
       "bytes": 16430
     }
   ],
-  "bundle_sha256": "3e0e46ae10de269f47661fd0dec40f427246bb21881e71e842dead1a3ca21c98",
+  "bundle_sha256": "6368ba2b5fbad655a3b01b39924c1d47946a36b93cfde49dd51875ad367fcbbb",
   "unavailable_references": [
     {
       "source": "api/README.md",

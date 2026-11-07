@@ -114,6 +114,7 @@ InboxListing parse_inbox(std::string_view body);
 
 struct StationStatus
 {
+    bool          direct_send = false; // Explicit capability; absent on older services.
     std::string   station_name;
     std::uint64_t queued       = 0;
     std::uint64_t queued_bytes = 0;

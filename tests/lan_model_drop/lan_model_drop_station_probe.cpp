@@ -164,6 +164,8 @@ int main(int argc, char **argv)
         return 2;
     }
     try {
+        if (argc == 3 && std::string(argv[1]) == "--args-file")
+            return run(json::parse(read_file(argv[2])).get<std::vector<std::string>>());
         return run(std::vector<std::string>(argv + 1, argv + argc));
     } catch (const std::exception &e) {
         std::cerr << e.what() << "\n";

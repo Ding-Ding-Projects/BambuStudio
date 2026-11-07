@@ -31,6 +31,7 @@ constexpr const char *kInviteIpv4ConfigKey = "lan_drop_invite_ipv4";
 struct View
 {
     bool          enabled = false;
+    bool          direct_send = false;
     LinkState     state   = LinkState::Off;
     std::string   address;       // the configured address, normalized when it parses
     bool          address_valid = true;

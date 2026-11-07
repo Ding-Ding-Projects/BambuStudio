@@ -84,6 +84,8 @@ test('status reports the protocol, station and drop box', async (t) => {
   assert.deepEqual(response.json, {
     protocol: 1,
     stationName: 'Workshop PC',
+    directSend: true,
+    dropCode: 'not-required',
     queued: 2,
     queuedBytes: 300 + OBJ.length,
     maxBytes: 5000,
@@ -190,14 +192,21 @@ test('a file downloads with its length and SHA-256, and removing it is idempoten
   }
 });
 
-test('retired code management is unavailable and old configuration does not gate senders', async (t) => {
+test('legacy renewal is inert and old configuration does not gate senders', async (t) => {
   const dataDir = tempDir(t);
   fs.writeFileSync(path.join(dataDir, 'drop-code'), 'legacy-value');
   const service = await startDrop(t, { dataDir, env: { DROP_CODE: 'obsolete' } });
   assert.equal((await drop(service.port, { fileName: 'cube.obj', body: OBJ })).status, 201);
-  assert.equal((await station(service.port, service.key, 'POST', '/api/station/drop-code')).status, 404);
+  for (let attempt = 0; attempt < 2; ++attempt) {
+    const renewed = await station(service.port, service.key, 'POST', '/api/station/drop-code');
+    assert.equal(renewed.status, 200);
+    assert.deepEqual(renewed.json, {dropCode: 'not-required'});
+  }
   assert.equal(fs.readFileSync(path.join(dataDir, 'drop-code'), 'utf8'), 'legacy-value');
-  assert.equal(Object.hasOwn((await station(service.port, service.key, 'GET', '/api/station/status')).json, 'dropCode'), false);
+  const status = (await station(service.port, service.key, 'GET', '/api/station/status')).json;
+  assert.equal(status.dropCode, 'not-required');
+  assert.equal(status.directSend, true);
+  assert.equal((await drop(service.port, {code: 'obsolete', fileName: 'old-client.stl', body: ASCII_STL})).status, 201);
 });
 
 test('items older than DROP_TTL_HOURS are removed, on the timer and at start', async (t) => {

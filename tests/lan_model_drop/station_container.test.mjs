@@ -48,7 +48,7 @@ function file(content) {
 }
 
 function probe(...args) {
-  const run = spawnSync(exe, args.map(String), {encoding: 'utf8'});
+  const run = spawnSync(exe, ['--args-file', file(JSON.stringify(args.map(String)))], {encoding: 'utf8'});
   assert.equal(run.status, 0, run.stderr);
   return JSON.parse(run.stdout);
 }

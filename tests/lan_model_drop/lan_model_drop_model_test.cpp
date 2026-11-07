@@ -269,6 +269,11 @@ static void status_messages()
     CHECK(status && status->station_name == "Bambu Studio" && status->queued == 2 &&
           status->queued_bytes == 4096 && status->max_bytes == 268435456ULL && status->ttl_hours == 24.0 &&
           status->public_url.empty());
+    CHECK(!status->direct_send);
+    for (const std::string value : {"true", "false", "null", "1", "\"true\"", "{}"}) {
+        const auto capability = parse_status(good.substr(0, good.size() - 1) + ",\"directSend\":" + value + "}");
+        CHECK(capability && capability->direct_send == (value == "true"));
+    }
     // DROP_TTL_HOURS accepts fractions; publicUrl is optional, may be null, and is normalized.
     const std::string head = "{\"protocol\":1,\"stationName\":\"Bambu Studio\",\"queued\":0,"
                              "\"queuedBytes\":0,\"maxBytes\":1024,";

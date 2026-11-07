@@ -3731,9 +3731,6 @@ wxWindow *PreferencesDialog::create_lan_drop_tab()
     auto *key = LanModelDrop::create_key_row(scrolled);
     sizer->Add(key, flags);
     register_option_row("lan_drop_station_key", nullptr, key);
-    auto *code = LanModelDrop::create_code_row(scrolled);
-    sizer->Add(code, flags);
-    register_option_row("lan_drop_code", nullptr, code);
 
     sizer->AddSpacer(FromDIP(20));
     scrolled->SetSizer(sizer);

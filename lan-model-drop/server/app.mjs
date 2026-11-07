@@ -282,6 +282,8 @@ export function createDropService(config, options = {}) {
       return sendJson(res, 200, {
         protocol: PROTOCOL,
         stationName: config.stationName,
+        directSend: true,
+        dropCode: 'not-required', // Inert compatibility field for older protocol-1 receivers.
         queued: files,
         queuedBytes: bytes,
         maxBytes: config.maxBytes,
@@ -292,6 +294,11 @@ export function createDropService(config, options = {}) {
     if (route === 'inbox') {
       if (method !== 'GET') return fail(res, 405, 'method_not_allowed', MESSAGES.method_not_allowed, { Allow: 'GET' });
       return sendJson(res, 200, { items: queue.list() });
+    }
+    // Older receivers may request renewal. This compatibility value never authenticates or rotates.
+    if (route === 'drop-code') {
+      if (method !== 'POST') return fail(res, 405, 'method_not_allowed', MESSAGES.method_not_allowed, { Allow: 'POST' });
+      return sendJson(res, 200, { dropCode: 'not-required' });
     }
     const file = /^files\/([^/]+)$/.exec(route);
     if (file) {

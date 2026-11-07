@@ -524,13 +524,15 @@ void InvitePanel::refresh()
     const bool has_link = v.enabled && !v.link.empty();
     wxString   pending;
     if (v.enabled && !has_link) {
-        if (v.invite.source == InviteSource::None)
+        if (v.state == LinkState::Connected && !v.direct_send)
+            pending = _L("This drop server needs an update before it supports direct sending. Run host.bat --detached on its host, then test the connection again. Existing models can still be collected.");
+        else if (v.invite.source == InviteSource::None)
             pending = _L("This computer has no private local network address to put in a link. Set the drop site address to an address the others can open.");
         else if (v.state == LinkState::NeedsStationKey || v.state == LinkState::KeyStorageUnavailable ||
                  v.state == LinkState::InvalidAddress || v.state == LinkState::WrongStationKey)
             pending = format_wxstr(_L("The link appears once Bambu Studio is connected to the drop site. %1%"), status_text(v));
         else
-            pending = format_wxstr(_L("Waiting for the drop site to send its code. %1%"), status_text(v));
+            pending = format_wxstr(_L("Waiting for the drop server connection. %1%"), status_text(v));
     }
     changed |= m_pending_note.set(pending);
     changed |= show(m_pending_note.get(), !pending.empty());

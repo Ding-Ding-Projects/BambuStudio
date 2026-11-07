@@ -1,5 +1,12 @@
 ## Local printer status API, 4 November 2026
 
+## Direct LAN sending, 7 November 2026
+
+- [x] Remove sender-code authentication, input fields, credential-bearing invites and renewal controls; preserve station authentication and storage.
+- [x] Verify direct uploads, station authorization and model/size/queue/rate limits with focused production-helper tests.
+- [ ] Publish container 1.0.1, pin its verified digest, and verify direct sending on the live LAN.
+- [ ] Build and verify native invite controls in all supported language modes.
+
 Branch `ai/feature/20261104-door-status-api`. Details: [`docs/features/device/status-api.md`](docs/features/device/status-api.md).
 
 - [x] Add a local, read-only status API that is off by default: `GET /api/v1/printers`, `GET /api/v1/printers/{dev_id}/door` and `GET /api/v1/health`, bound to 127.0.0.1 only, bearer token required (constant-time comparison), GET only, bounded request size and time, no CORS headers.

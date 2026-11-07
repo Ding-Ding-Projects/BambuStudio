@@ -187,7 +187,7 @@ void recompute_invite()
     const auto address = parse_base_address(v.address);
     const std::string preferred = config() ? config()->get(kInviteIpv4ConfigKey) : std::string();
     v.invite = choose_invite_base(v.public_url, address.value_or(BaseAddress{}), gui().lan_candidates, preferred);
-    v.link   = v.enabled && v.state == LinkState::Connected ? invite_link(v.invite.base) : std::string();
+    v.link   = v.enabled && v.direct_send && v.state == LinkState::Connected ? invite_link(v.invite.base) : std::string();
 }
 
 NotificationManager *notifications()
@@ -592,6 +592,7 @@ void wake_worker(const std::function<void(Shared &)> &change)
 
 void apply_status(View &v, const StationStatus &status)
 {
+    v.direct_send  = status.direct_send;
     v.station_name = status.station_name;
     v.public_url   = status.public_url;
     v.queued       = status.queued;
@@ -600,7 +601,7 @@ void apply_status(View &v, const StationStatus &status)
 // What a poll can change in the view.
 bool same_poll_view(const View &a, const View &b)
 {
-    return a.state == b.state && a.station_name == b.station_name && a.public_url == b.public_url &&
+    return a.direct_send == b.direct_send && a.state == b.state && a.station_name == b.station_name && a.public_url == b.public_url &&
            a.queued == b.queued && a.link == b.link && a.invite.source == b.invite.source && a.invite.base == b.invite.base &&
            a.invite.chosen == b.invite.chosen && a.invite.choices == b.invite.choices;
 }
@@ -867,6 +868,7 @@ void apply_settings()
     if (identity_changed || !enabled) {
         v.station_name.clear();
         v.public_url.clear();
+        v.direct_send = false;
         v.queued     = 0;
     }
     if (enabled && !gui().lan_read) {

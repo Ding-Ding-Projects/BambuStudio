@@ -1,5 +1,13 @@
 # BambuStudio
 
+Mixed-version compatibility: protocol-1 status includes directSend:true and an inert dropCode value of not-required for older receivers. The authenticated legacy renewal endpoint returns that same value without rotation or revocation. It is never an upload credential. New receivers keep collecting from older services but hide direct invite links until the service advertises the capability, and show an upgrade instruction. Older desktop versions retain their old code labels until updated.
+
+## Direct LAN sending, 7 November 2026
+
+Sender drop codes and renewal controls are removed. Open the invite link or scan its QR code, choose models and send directly. Station keys still protect inbox, downloads and management; local pipe pairing and DPAPI storage are unchanged. Model, size, queue and expiry checks remain, with 60 upload attempts per source address per minute and a five-minute cooldown. Existing volumes, keys and waiting models are retained.
+
+Source implementation passed 95 focused API, page-contract and compiled native-helper checks, including mixed-version capability handling and Unicode filename transport. Container version 1.0.1 publication, live sender interaction and native UI acceptance remain pending; historical 1.0.0 evidence does not verify this change. Use only a trusted LAN and never expose the service to the internet.
+
 Bambu Studio is a feature-rich slicer for Bambu Lab printers: project-based workflows, optimized slicing algorithms and a graphic interface built for a smooth printing experience. This fork rebuilds the native Windows interface on Material Design 3, keeps upstream slicing intact, and adds its own features: three language modes (English, Hong Kong Cantonese, bilingual), automatic updates, local project history, a command palette, a regex builder on every search, Home Assistant handover, **Express print mode** and the **Melody creator**.
 
 - **Install (Windows only):** the [latest installer](https://github.com/Ding-Ding-Projects/BambuStudio/releases/latest/download/Setup.exe) is a per-user Squirrel.Windows setup that needs no administrator elevation. It is unsigned; check the [SHA-256 file](https://github.com/Ding-Ding-Projects/BambuStudio/releases/latest/download/Setup.exe.sha256) before running it. macOS and Linux were removed from this tree; cross-platform builds remain upstream at [Bambu Lab](https://github.com/bambulab/BambuStudio/releases/).

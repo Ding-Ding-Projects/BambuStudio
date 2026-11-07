@@ -276,6 +276,8 @@ function invite(ui, station) {
   assert.match(body(ui, 'void InvitePanel::announce(const wxString &text)'), /wxACC_EVENT_OBJECT_NAMECHANGE/);
   assert.match(body(station, 'void recompute_invite()'), /choose_invite_base\(v\.public_url, address\.value_or\(BaseAddress\{\}\), gui\(\)\.lan_candidates, preferred\)/);
   assert.match(body(station, 'void recompute_invite()'), /invite_link\(v\.invite\.base\)/);
+  assert.match(body(station, 'void recompute_invite()'), /v\.enabled && v\.direct_send && v\.state == LinkState::Connected/);
+  assert.match(ui, /This drop server needs an update before it supports direct sending/);
   // Kit widgets only.
   assert.doesNotMatch(code(ui), /new wx(Button|StaticText|TextCtrl|CheckBox|Choice|ComboBox|BitmapButton|HyperlinkCtrl|RadioButton|SpinCtrl|Slider|ListBox)\b/);
 }
@@ -290,6 +292,7 @@ const contracts = [
   ['all HTTP runs on the worker thread and reaches windows through CallAfter', () => workerThreadHttp(src.station), () => workerThreadHttp(src.station.replace('void test_connection()\n{', 'void test_connection()\n{\n    exchange(cfg, Method::Get, std::string(), 0, 0, CancelWhen{});'))],
   ['shutdown cancels, wakes and joins the worker before windows go', () => shutdownStops(src.station, src.app), () => shutdownStops(src.station, src.station.replace('g_thread.join();', ''))],
   ['nothing is opened, sliced or printed automatically', () => nothingAutomatic(src.station), () => nothingAutomatic(src.station.replace('post([item, file = d.file, base] { on_received(item, file, base); });', 'post([item, file = d.file, base] { on_received(item, file, base); open_item(item.id); });'))],
+  ['a direct invite requires an explicit service capability', () => invite(src.ui, src.station), () => invite(src.ui, src.station.replace('v.enabled && v.direct_send && v.state', 'v.enabled && v.state'))],
   ['the invite shows exactly one link as text and as a QR code, with kit widgets only', () => invite(src.ui, src.station), () => invite(src.ui.replace('m_qr->SetText(has_link ? v.link : std::string())', 'm_qr->SetText(v.invite.base)'), src.station)],
   ['an opened or waiting received folder is never written again, and deletes go only to their own site', () => receivedFolders(src.station, src.files), () => receivedFolders(src.station.replace('if (local == ReceivedState::Opened) {', 'if (false) {'), src.files)],
   ['an opened received folder is never written again: the on-disk rule', () => receivedFolders(src.station, src.files), () => receivedFolders(src.station, src.files.replace('case ReceivedState::Waiting:\n    case ReceivedState::Opened: return WriteResult::Exists;', 'case ReceivedState::Waiting:\n    case ReceivedState::Opened: break;'))],

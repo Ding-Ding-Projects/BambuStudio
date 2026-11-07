@@ -553,6 +553,8 @@ std::optional<StationStatus> parse_status(std::string_view body)
     const auto object = parse_object(body);
     if (!object || !protocol_is_supported(*object)) return std::nullopt;
     StationStatus status;
+    const auto direct = object->find("directSend");
+    status.direct_send = direct != object->end() && direct->is_boolean() && direct->get<bool>();
     if (!read_string(*object, "stationName", status.station_name) ||
         !read_count(*object, "queued", status.queued) || !read_count(*object, "queuedBytes", status.queued_bytes) ||
         !read_count(*object, "maxBytes", status.max_bytes))

@@ -176,7 +176,6 @@ const std::vector<PreferenceEntry> &preference_entries()
         {"lan_drop_status", L("Test connection"), L("LAN model drop status"), PageLanDrop},
         {"lan_drop_address", L("Drop site address"), L("Where Bambu Studio reaches the LAN drop site"), PageLanDrop},
         {"lan_drop_station_key", L("Station key"), L("Kept protected with Windows data protection"), PageLanDrop},
-        {"lan_drop_code", L("Drop code"), L("New code stops older links"), PageLanDrop},
         // Local status API ---------------------------------------------------------
         {"status_api_enabled", L("Serve printer status on this computer"), L("Local status API, off by default"), PageStatusApi},
         {"status_api_port", L("Port"), L("The port on 127.0.0.1 that the status API listens on."), PageStatusApi},
