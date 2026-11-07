@@ -40,4 +40,6 @@ Still unfinished: automatic trusted prerequisite acquisition, native license/con
 
 Design state inventory and proposed protocol are under `design/lan-drop-setup/`. Service version 1.0.1 is pinned by the bundled Compose file; companion publication and service publication are separate verdicts. No live service was changed during implementation.
 
+The [dedicated publication route](publication.md) now builds a source-bound portable executable and verifies normal-release metadata and downloaded hashes. Its first hosted execution remains pending; preparation is not release proof.
+
 [Cantonese article](README.yue_HK.md)

@@ -1,0 +1,23 @@
+# Portable companion publication
+
+The dedicated `lan-setup-companion.yml` workflow builds on hosted Windows 2025 through `build-installer.bat /s -Companion LanDropSetup`. The ordinary native producer remains unchanged. The root producer uses its existing verified Node bootstrap, exact runtime and builder versions, npm lockfile integrity and publisher runtime checksums.
+
+Branch pushes affecting the companion producer and manual dispatch select an exact source commit. Tag pushes do not trigger this workflow. Each run attempt receives a unique `lan-setup-v<version>-<run-id>-<attempt>` tag. Publication creates a normal, non-draft, non-prerelease release with `--latest=false`, leaving the native accepted update channel unchanged.
+
+The four downloadable files are the single portable executable, its SHA-256 sidecar, `build-manifest.json` and `package-proof.json`. Publication compares source/index identity, clean source state, input hashes, exact package versions, the unpacked embedded manifest and executable bytes. It then reads back the normal release, exact lightweight tag commit and all downloaded asset hashes. This does not substitute for independently inspecting the embedded manifest inside the final executable or exercising the downloaded package.
+
+Read-only API calls have three bounded attempts. Release creation is never blindly retried or overwritten: inspect any partial result first, then use a new run attempt. Source-bound build failures, missing credentials or unavailable downloads remain failures. Publication uses the repository's `TOKEN_GITHUB` credential first, then the existing release-token, organization-token and run-token fallbacks, without printing values.
+
+Build timing comes from the completed producer step returned by the run-attempt jobs API. Duration formatting floors total hours, including durations longer than a day. The publication receipt records `publicationVerifiedAt` only after release metadata and downloaded asset hashes pass readback. Whole-workflow terminal timing remains explicitly unverified while the workflow is running. A separate `always()` step attempts to retain bounded source/run identity, observed job and build outcome, runner platform and observation time even if the build failed. Both that diagnostic step and receipt upload are best-effort, so a storage outage cannot turn an otherwise successful publication into a failed job.
+
+Release notes reuse `scripts/ci/Measure-LineCount.ps1` against full checkout history. Dish metadata comes from the public `Ding-Ding-Projects/dim-sum-photos` catalog at a resolved revision. The publisher searches complete bounded project release history for prior names and IDs, then selects an unused dish whose photo exists as an uploaded `catalog-v1*` release asset. It records the exact bilingual names, dish ID, catalog revision and public photo link without copying a photo. Companion publications are serialized. Other independent publishers can still race for a dish; this workflow does not claim a repository-wide reservation service.
+
+Catalog, history or published-photo unavailability uses the permitted version-only release with an explicit unavailable note. It never invents a photo or recycles a known name. Discovery is bounded to 20 release-list pages and 50 asset-list pages per catalog release; hitting a bound leaves naming unresolved rather than treating partial history as complete.
+
+This workflow runs no tests or lint. It does not launch the companion, operate Docker, change a service or install an unrelated application. The portable setup companion has an explicit packaging exception; the native application's Squirrel installer requirements remain unchanged. An absent companion installation does not authorize installing another product.
+
+## Remaining delivery evidence
+
+This is a prepared publication route, not a published release. The first hosted run, 42425950237, started from ca9b96968ef3a7116512e68465fae0377348e647. Its completed bootstrap, release readback, downloaded one-file launch and source-bound runtime acceptance remain pending. Automatic hosting prerequisites, custom credentials, folder storage and complete required-feature coverage remain incomplete. Publication naming and line-count generation have not yet run in a hosted release. The companion's About/changelog presentation does not yet consume the selected release dish, and whole-workflow terminal timing needs a later completed-run readback; this publisher alone does not prove the complete release presentation contract.
+
+[Cantonese article](publication.yue_HK.md)

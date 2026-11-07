@@ -853,14 +853,24 @@
       "sha256": "6332021c2ced072fbb2c18c29dd40f4431c2169b15b5295677e96e9cb020e91a"
     },
     {
+      "route": "lan-drop-setup/publication.md",
+      "title": "Portable companion publication",
+      "sha256": "90e972fd3a8769e6c38550a024d0871107ddd5f3f6bb2b15c2702ac052bdb70d"
+    },
+    {
+      "route": "lan-drop-setup/publication.yue_HK.md",
+      "title": "可攜式配套工具發佈",
+      "sha256": "487ce3fd52596a28ca4050c0065787b2a15bcfe74f5c5990338c7630b21bcdf5"
+    },
+    {
       "route": "lan-drop-setup/README.md",
       "title": "Portable LAN hosting setup companion",
-      "sha256": "7f2e19e3a81c65ed71cdfa92bec4b53e6b8ad457e98bcb32d5ec6f666c60e9ef"
+      "sha256": "45e772dcf00467595c55faf6ae5311f157a9b7419a63b68d1119661c9618ad3a"
     },
     {
       "route": "lan-drop-setup/README.yue_HK.md",
       "title": "可攜式區域網絡託管設定工具",
-      "sha256": "66952e871d7408ada79aa88b30355ec5f54f6af8b186b1694053e69a6f50a170"
+      "sha256": "9d56de0e7961822465ad17026478422666e373a9ec8fb9fa074b45cab40c42d2"
     },
     {
       "route": "local-capabilities/README.md",
@@ -2155,7 +2165,7 @@
       "bytes": 16430
     }
   ],
-  "bundle_sha256": "00a7fffde81390f0ff5b086a990117dbf62da77d9d5cf30fe92d02d53de60a21",
+  "bundle_sha256": "1d4e583aa3014f61151dc906a09217db9797e64490ac6fe4955f29651cce2858",
   "unavailable_references": [
     {
       "source": "api/README.md",

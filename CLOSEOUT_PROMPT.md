@@ -6,7 +6,7 @@ and incomplete; account allowance is unknown.
 
 ## Preserved source
 
-Remote main baf9303d613aa1b2953c675872e89cfe1e40c376 was read back exactly.
+Remote main e08cad0a10a816b681162339fa351fd2b8bde4f6 was read back exactly.
 It includes direct sending, isolated wording storage, Base64 conversion and the
 content-free Preferences probe. Native acceptance remains separate.
 
@@ -51,14 +51,14 @@ Run 42419260043 produced downloaded installer 2.9.1936 from f1526f802.
 Setup SHA-256 is 6e9abd326b9580fbfbae51c30788c1814d066df77bee71eef3206efc1faf0777;
 NotSigned. RELEASES matches the 800,258,329-byte full package and SHA-1
 8769869A70D784E2FCFF25DEB19AAD92E8783776. Embedded metadata names exact source
-f1526f80268c67df5a6ff196b865b7b0118412cb. Publication was running at 23:09 UTC.
-No accepted release or installed update is claimed. Runs 42420781736 (d73) and
+f1526f80268c67df5a6ff196b865b7b0118412cb. Normal release md3-v261 was published at 23:34:33 UTC with exact source f1526f802
+and matching published Setup hash. The matching existing installation updated from 2.9.1932 to 2.9.1936 through supported silent Setup. Installed executable/DLL hashes matched and the real hidden workspace was ready. Prior full package/index were retained for rollback. All held verification processes and both desktops closed normally. Complete transient installer audit and updater-banner sequencing remain unverified. Runs 42420781736 (d73) and
 42422172095 (825) are separate newer producers.
 
 ## Next actions
 
-1. Preserve and integrate reviewed startup source/documentation, verify remote main, then finish native scenarios with exact source/binary binding.
-2. Complete wizard rebuild and terminal-state runtime repetition. Fresh setup, cancellation, publication and the full language/theme/scale matrix remain pending.
+1. Startup source/documentation are integrated. Finish the newer native scenarios with exact source/binary binding.
+2. Wizard rebuild and existing-service runtime passed. Reviewed publisher ca9b96968ef3a7116512e68465fae0377348e647 is preserved on gap/lan-setup-publication-20261107 and included in this integration. Its first hosted publication, fresh setup, cancellation and full language/theme/scale matrix remain pending.
 3. The public-safe inventory has passed independent review and is incorporated with 117 identities, nine classes, 28 historical surfaces and 15 legacy crosswalks. Nine negative consistency checks passed. Complete individual applicability, nested dialogs, Settings consumers and runtime evidence next; no implementation completeness is claimed.
 4. Verify normal release, immutable tag/source and assets before updating the matching existing installation through its supported route. Preserve settings, data, rollback and active work.
 5. Complete native invite, cache-isolation, sound and Base64 acceptance. Keep the complete required-feature goal explicitly unfinished.
@@ -77,11 +77,14 @@ regression or visible workspace acceptance. The final method-corrected attempt
 verified the actual main workspace in 27.364 seconds and opened Preferences.
 Its visible Preferences window has display affinity 17; the black image is not
 a rendering defect. All 16 held processes and the desktop closed normally.
-Detailed LAN invite and wording workflows remain unverified; the matching
-installed application remains unchanged. The current small source correction
+Detailed LAN invite and wording workflows remain unverified; the accepted installed update is applied and its ready workspace verified. The current small source correction
 removes the external-editor Browse button's duplicate download-path accessible
 name. Native assistive-technology verification remains pending.
 
 Preserve source and private evidence. No force pushes, private wording publication,
 host power/login actions, capture-protection changes or cleanup of active,
 unrelated or unproven candidates. Verify each intended push by exact remote-ref readback.
+
+The primary producer acquired an untracked runtime log, log_iotc.txt. It is retained locally and excluded from publication pending private-content review. Do not alter the live producer or blindly stage diagnostics. Source preservation is not an assertion that private runtime logs were published.
+
+First portable publisher run 42425950237 failed before packaging because Get-FileHash was unavailable in the child shell. No companion release exists from that run. Bounded diagnostics were retained; the shell-environment repair is being verified separately.

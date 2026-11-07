@@ -1,5 +1,20 @@
 # Bambu Studio handoff
 
+## Portable publication and accepted native release, 7 November 2026
+
+Reviewed companion publisher `ca9b96968ef3a7116512e68465fae0377348e647`
+uses the root portable entrypoint, exact source/input proofs, normal separate
+release tags and downloaded-byte readback. Focused duration mutations, syntax
+checks and independent review passed. Hosted execution and downloaded portable
+runtime proof remain pending. It leaves the native latest-release channel intact.
+
+Native release `md3-v261` is normal and targets `f1526f80268c67df5a6ff196b865b7b0118412cb`.
+Its published Setup hash matches the inspected 2.9.1936 candidate. That candidate
+reached its actual main workspace in 27.364 seconds on a hidden desktop and
+opened protected Preferences; all 16 held processes and its desktop closed
+normally. The matching installation updated from 2.9.1932 to 2.9.1936 through supported silent Setup and reached its actual hidden workspace. Installed executable and DLL hashes matched; 16 held processes and both desktops closed normally. The prior full package and release index were retained for rollback. Complete transient installer audit and updater-banner sequencing remain unverified. Newer
+startup restoration and content-free geometry changes are outside this release.
+
 ## External-editor accessibility correction, 7 November 2026
 
 The Preferences external-editor Browse button no longer overwrites its localized

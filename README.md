@@ -8,7 +8,7 @@ LAN model sharing now accepts direct uploads without a sender code. Use [the hos
 
 [Startup recovery](docs/features/windows/startup-project-recovery.md) now separates automatic restoration from manual import decisions in reviewed source. Files and tabs are retained when review is needed. Native verification of this newer nonmodal path remains pending.
 
-The [portable LAN hosting setup companion](docs/features/lan-drop-setup/README.md) builds through `build-installer.bat /s -Companion LanDropSetup`. Its existing-service workflow has bounded native verification; publication, fresh setup and complete required-feature coverage remain pending.
+The [portable LAN hosting setup companion](docs/features/lan-drop-setup/README.md) builds through `build-installer.bat /s -Companion LanDropSetup`. Its existing-service workflow has bounded native verification. A reviewed [dedicated publication route](docs/features/lan-drop-setup/publication.md) is prepared; hosted publication, fresh setup and complete required-feature coverage remain pending.
 
 The [required-feature inventory](docs/features/required-features/README.md) preserves 117 identities, nine surface classes and 28 historical individual surfaces. Its consistency checks do not claim that those requirements are implemented.
 
