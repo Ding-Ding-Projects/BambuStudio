@@ -999,6 +999,8 @@ list(APPEND SLIC3R_GUI_SOURCES
     GUI/LanModelDrop/LanModelDropStation.hpp
     GUI/LanModelDrop/LanModelDropUi.cpp
     GUI/LanModelDrop/LanModelDropUi.hpp
+    GUI/LanModelDrop/LocalHost.cpp
+    GUI/LanModelDrop/LocalHost.hpp
     GUI/StatusApi/StatusApiCore.hpp
     GUI/StatusApi/StatusApiServer.cpp
     GUI/StatusApi/StatusApiServer.hpp
