@@ -1,5 +1,31 @@
 # Bambu Studio handoff
 
+## Startup and LAN hosting verification, 7 November 2026
+
+The user confirms the model-load message appears during startup, before opening
+a project. An isolated invalid saved-tab fixture reproduces the installed message;
+the user's actual file has not been inspected. Recovery source at `6eb975873`
+passes the production-transition fixture (the earlier source fails 19 assertions)
+and the hosted native compilation. Packaged runtime verification remains pending.
+
+LAN image publication run `42415338522` succeeded for source `8287f75cb`.
+Compose now pins its verified SHA-256 digest. The real root `host.bat --detached`
+pulled and started it successfully. Health protocol 1 passed from this Windows
+computer and a second LAN host. The log TUI accepted pause, follow and quit;
+the container stayed healthy after quit. Native pairing and the portable wizard
+remain unverified and unfinished respectively. No station key was printed.
+
+Local compilation exposed a compiler-selection mismatch: the release requires
+MSVC 19.51 while bootstrap accepted 19.44. Commit `c4a81c247` repairs readiness.
+The next bootstrap reaches the trusted VS2026 installer, but installation returns
+1 because its exact project-owned path already has an incomplete registration.
+Do not repeat fresh installation or repair unrelated Visual Studio instances.
+Scoped supported modification of that registered installation is being prepared.
+
+Main integration, the complete required-feature inventory, accepted release,
+installed update, deployed documentation and final runtime acceptance remain open.
+Full publication scanning still has baseline parser and nested-source limitations.
+
 ## Upstream v02.09.01.70 merge, 4 November 2026
 
 Objective: bring upstream `bambulab/BambuStudio` tag `v02.09.01.70` (the `master` tip `56a57d00a`, 1,200 commits since 28 September 2026) into the fork. The product version moves from 2.8 to `02.09.01.70`.

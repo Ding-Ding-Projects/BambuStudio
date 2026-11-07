@@ -1255,12 +1255,12 @@
     {
       "route": "releases/windows-build-from-source.md",
       "title": "Build from source (Windows installer)",
-      "sha256": "7bbd771a9aa810e98948e8a327a437541f8f33e517c1d14c164a60864eedb269"
+      "sha256": "35044422ef12d02502a0548eab223249e1fc3e87f708a60a7aa49c0b2f3eeff5"
     },
     {
       "route": "releases/windows-build-from-source.yue_HK.md",
       "title": "從源碼構建（Windows 安裝程式）",
-      "sha256": "4f3c3bbf0765eb5627813d53d5f9af10dfd5e346c78098536d2531511e4cd877"
+      "sha256": "3940739cb36a545dc6ee9a5044d92543527a35405f64deb9d4a06edd9d34714a"
     },
     {
       "route": "releases/windows-native-installer.md",
@@ -1275,12 +1275,12 @@
     {
       "route": "releases/windows-one-click-build.md",
       "title": "One-click Windows build and installer",
-      "sha256": "7324d6f78a9022194c6038d9845d315cc326a8eede725d1f2cdc8b9269cc985b"
+      "sha256": "e98e165b0d6177413ed0f885c2d3325e028d8b3e95d1c4f13d32e95ec05c6292"
     },
     {
       "route": "releases/windows-one-click-build.yue_HK.md",
       "title": "一鍵 Windows 構建和安裝程式",
-      "sha256": "830d9b231f4a9805f2d20124a9089aa937d19d6fcec96a2c173620f478b7362f"
+      "sha256": "0e2e9f006ea5f3dfbab002853fc4e4ad87f9350ce76e0555ecb638c264f5ec99"
     },
     {
       "route": "releases/windows-release-supply-chain.md",
@@ -2110,7 +2110,7 @@
       "bytes": 16430
     }
   ],
-  "bundle_sha256": "69357d023a43ab3ea62535fd3e25ff8b70feb7f435294d1f4eac0244f16b2bbd",
+  "bundle_sha256": "d8fd51b0e6476ab673afc057822243af2963970c78a83b76f60d1f336a8a482f",
   "unavailable_references": [
     {
       "source": "api/README.md",

@@ -11,7 +11,7 @@ message; this is not proof of the user's actual affected file.
 Working branch: gap/feature-integration-20261107. Startup source is preserved on
 origin/gap/wording-display-20261107 at 55fe0ccaa6afe628253a4825d8a1990f3d927eb2.
 Preferences and catalogue source is preserved on origin/gap/preferences-responsive-20261107
-at efc8b84798ee49b4c87461727142e51bae62f8cd. Both were verified with remote-ref readback.
+at c4a81c2471365fefcad0a50729228924bfebcbfe. Both were verified with remote-ref readback.
 The integration branch contains both contributions plus hosting and build repairs;
 its latest candidate still needs remote readback after this record is committed.
 
@@ -20,10 +20,22 @@ source fails 19 assertions; 12 entrypoint assertions; successful prerequisite
 bootstrap; six container and actual CMake-install checks; 28 API checks; 10,246
 complete Cantonese catalogue entries. These are not native runtime or release proof.
 
-Next: build the exact candidate through build.bat, verify startup/retry and resizable
+Hosted native compilation of 6eb975873 passed; packaging is still in progress in
+run 42414873193. Its earlier image-publication job failed authentication; the
+separate repaired run 42415338522 succeeded at source 8287f75cb. The published
+image was pulled locally and Compose is pinned to its verified digest. Real
+host.bat detached and log modes passed startup, pause/follow/quit and continued
+health after exit. Health also passed from a second LAN host.
+
+Local bootstrap now correctly rejects MSVC 14.44. The signed VS2026 installer
+returns 1 because its project-owned installation path has an incomplete existing
+registration. A supported scoped modification is being prepared; unrelated IDEs
+must remain unchanged. Action-sound controls are being implemented separately.
+
+Next: obtain the exact packaged candidate, verify startup/retry and resizable
 Preferences on the named hidden desktop, verify personal wording without exposing
-private data, publish and digest-pin the LAN image, verify installed hosting and
-another-device LAN access, and complete companion and full feature acceptance.
+private data, verify installed native hosting/pairing, and complete companion and
+full feature acceptance. Finish the scoped compiler bootstrap recovery separately.
 The accepted installed application has not yet been updated. Main integration,
 release publication, deployed documentation and final cleanup remain unfinished.
 

@@ -12,23 +12,22 @@
 開咗 Docker Desktop 之後，喺呢個資料夾開終端機，執行：
 
 ```powershell
-docker compose up -d
+..\host.bat --detached
 ```
 
-網頁會喺呢部電腦每個網絡介面嘅 8833 埠收連線。用系統管理員身份開 PowerShell，
-為私人網絡喺 Windows 防火牆開放呢個埠一次：
+啟動器會下載已發佈、以摘要鎖定嘅映像，保留資料卷，等候健康檢查通過，
+再顯示完整 LAN 地址。預設埠係 8833。請喺傳送裝置再試開一次地址；
+啟動器唔會更改現有網絡保護。要睇即時服務狀態同記錄，執行：
 
 ```powershell
-New-NetFirewallRule -DisplayName "Bambu Studio LAN model drop" -Direction Inbound -Protocol TCP -LocalPort 8833 -Action Allow -Profile Private
+..\host.bat --logs
 ```
 
 ## 連接 Bambu Studio
 
-顯示接收站金鑰，然後貼入 Bambu Studio 嘅「偏好設定」>「LAN 模型投遞」：
-
-```powershell
-docker compose exec lan-model-drop node server/station-key.mjs
-```
+喺 Bambu Studio 開啟「偏好設定」>「LAN 模型投遞」，揀「啟動本機投遞伺服器」。
+原生操作會經受保護嘅本機管道傳送接收站金鑰，再儲存連線，唔會顯示金鑰。
+設定失敗時會顯示結果，並保留原有設定。
 
 再開啟「由 LAN 投遞網站接收模型」。Bambu Studio 會顯示一條邀請連結同一個
 QR 碼，畀你交俾對方；條連結已經帶住投遞碼，對方只要揀模型再傳送就得。
@@ -44,7 +43,7 @@ QR 碼，畀你交俾對方；條連結已經帶住投遞碼，對方只要揀�
 | 工作 | 指令 |
 | --- | --- |
 | 停止（模型同金鑰會保留） | `docker compose down` |
-| 安裝咗新版 Bambu Studio MD3 之後更新 | `docker compose up -d --build` |
+| 安裝咗新版 Bambu Studio MD3 之後更新 | `..\host.bat --detached` |
 | 全部移除，包括等緊嘅模型同金鑰 | `docker compose down -v` |
 
 ## 會做同唔會做嘅嘢

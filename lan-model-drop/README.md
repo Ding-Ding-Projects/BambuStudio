@@ -13,25 +13,24 @@ in the Bambu Studio MD3 source, also in the application's Help.
 With Docker Desktop running, open a terminal in this folder and run:
 
 ```powershell
-docker compose up -d
+..\host.bat --detached
 ```
 
-The page listens on port 8833 of every network interface of this computer.
-Allow the port through Windows Firewall for private networks once, from an
-administrator PowerShell:
+The launcher pulls the published, digest-pinned image, preserves the data volume,
+waits for health, and prints the complete LAN address. The default port is 8833.
+Check that address from the sending device too. Existing network protections are
+not changed. To view live service status and logs, run:
 
 ```powershell
-New-NetFirewallRule -DisplayName "Bambu Studio LAN model drop" -Direction Inbound -Protocol TCP -LocalPort 8833 -Action Allow -Profile Private
+..\host.bat --logs
 ```
 
 ## Connect Bambu Studio
 
-Print the station key and paste it into Bambu Studio, Preferences, LAN model
-drop:
-
-```powershell
-docker compose exec lan-model-drop node server/station-key.mjs
-```
+In Bambu Studio, open Preferences, LAN model drop, and choose **Start local drop
+server**. The native action transfers the station key through a protected local
+pipe and saves the connection. It never prints the key. A failed setup leaves a
+visible result and preserves existing settings.
 
 Then switch on "Receive models from the LAN drop site". Bambu Studio shows an
 invite link and a QR code to hand to the other person; the link carries the
@@ -49,7 +48,7 @@ station key.
 | Task | Command |
 | --- | --- |
 | Stop (models and key are kept) | `docker compose down` |
-| Update after installing a new Bambu Studio MD3 | `docker compose up -d --build` |
+| Update after installing a new Bambu Studio MD3 | `..\host.bat --detached` |
 | Remove everything, including waiting models and the key | `docker compose down -v` |
 
 ## What it does and does not do
