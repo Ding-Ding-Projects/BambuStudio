@@ -14,6 +14,9 @@ try {
     if ($request.schema -ne 1 -or $request.method -notin @('inspect', 'pull', 'start', 'health')) { throw 'request' }
     $emptyEnvironmentFile = [IO.Path]::GetTempFileName()
     $script:Compose = Initialize-WizardCompose -Directory $PSScriptRoot -EmptyEnvironmentFile $emptyEnvironmentFile
+    $imageLines = @(Get-Content -LiteralPath (Join-Path $PSScriptRoot 'compose.yaml') | Where-Object { $_ -match '^\s+image:\s+\S+\s*$' })
+    if ($imageLines.Count -ne 1) { throw 'image_configuration' }
+    $expectedImage = ($imageLines[0] -replace '^\s+image:\s+', '').Trim()
     $command = Get-Command docker.exe -ErrorAction SilentlyContinue
     if (-not $command) {
         foreach ($candidate in @((Join-Path $env:ProgramFiles 'Docker/Docker/resources/bin/docker.exe'), (Join-Path $env:LOCALAPPDATA 'Programs/DockerDesktop/resources/bin/docker.exe'))) {
@@ -36,9 +39,12 @@ try {
     $existing = $null
     if ($ids.Count -eq 1) {
         if ($ids[0] -notmatch '^[a-f0-9]{12,64}$') { throw 'identity' }
-        $existing = @(ConvertFrom-Json -InputObject (Invoke-Docker @('inspect', $ids[0])))[0]
+        $inspection = ConvertFrom-Json -InputObject (Invoke-Docker @('inspect', $ids[0]))
+        if ($inspection -isnot [array] -or $inspection.Count -ne 1) { throw 'identity' }
+        $existing = $inspection[0]
         if ($existing.Config.Labels.'com.docker.compose.project' -ne 'lan-model-drop' -or $existing.Config.Labels.'com.docker.compose.service' -ne 'lan-model-drop') { throw 'identity' }
-        if ($existing.Config.Image -notmatch '^ghcr\.io/ding-ding-projects/bambustudio-lan-model-drop:') { $code = 'service_conflict'; throw 'image' }
+        $code = 'service_upgrade_required'
+        Assert-WizardImage -ImageId $existing.Image -ConfiguredImage $existing.Config.Image -ExpectedImage $expectedImage
     }
     $port = 8833
     $storage = 'new-volume'
@@ -64,7 +70,12 @@ try {
         } while ([DateTime]::UtcNow -lt $readyDeadline)
         $urls = @()
         if ($healthy) { $urls = @(Get-LanUrls $port) }
-        $result = @{ identityVerified = $true; dataPreserved = $true; serviceState = $(if ($existing.State.Running) { 'running' } else { 'stopped' }); healthy = [bool]($healthy -and $urls.Count -gt 0); urls = $urls; verificationScope = 'same-host' }
+        $code = 'service_changed'
+        $current = Get-WizardCurrentService -ExpectedId $existing.Id -ExpectedStorage ($mounts[0].Type + ':' + $mounts[0].Source)
+        $code = 'service_upgrade_required'
+        Assert-WizardImage -ImageId $current.imageId -ConfiguredImage $current.configuredImage -ExpectedImage $expectedImage
+        if (-not $current.running) { $urls = @() }
+        $result = @{ identityVerified = $true; dataPreserved = $true; serviceState = $(if ($current.running) { 'running' } else { 'stopped' }); healthy = [bool]($healthy -and $current.running -and $urls.Count -gt 0); urls = $urls; verificationScope = 'same-host' }
     } else {
         # Existing services are started in place, never recreated from bundled defaults.
         if ($request.containerId) {

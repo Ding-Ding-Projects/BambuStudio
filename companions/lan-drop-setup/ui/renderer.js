@@ -5,6 +5,7 @@ let step = 0, snapshot = null, configuration = null, operation = null, busy = fa
 const text = (en, yue) => language === 'yue' ? yue : language === 'both' ? en + ' / ' + yue : en;
 const headings = [['Check hosting requirements', '檢查託管所需工具'], ['Configure hosting', '設定託管'], ['Review changes', '確認更改'], ['Starting and verifying', '啟動同驗證'], ['Setup result', '設定結果']];
 const errors = {
+  service_upgrade_required: ['The existing service does not match the supported published image. It was preserved. Upgrade through the supported hosting route before retrying.', '現有服務唔符合支援嘅已發佈映像，已保留原狀。請先透過支援嘅託管流程升級，再重試。'],
   docker_missing: ['Docker is not installed. Automatic prerequisite acquisition is not available in this initial implementation.', '尚未安裝 Docker。呢個初步版本未提供自動安裝所需工具。'],
   engine_unavailable: ['Docker is unavailable. Start the existing engine, then check again.', 'Docker 暫時無法使用。請啟動現有引擎，再檢查一次。'],
   compose_unavailable: ['Docker Compose is unavailable.', 'Docker Compose 暫時無法使用。'],

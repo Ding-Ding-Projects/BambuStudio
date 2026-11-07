@@ -42,7 +42,7 @@ try {
         & node.exe @builderArguments
         if ($LASTEXITCODE -ne 0) { throw 'Companion packaging failed.' }
         if ((& git -C $root rev-parse HEAD).Trim() -ne $source -or @(& git -C $root status --porcelain --untracked-files=all).Count -ne 0) { throw 'Source changed during companion packaging.' }
-        $files = if ($BuildOnly) { @(Get-ChildItem -LiteralPath (Join-Path $output 'win-unpacked') -Filter '*.exe' -File) } else { @(Get-ChildItem -LiteralPath $output -Filter '*.exe' -File) }
+        $files = @(if ($BuildOnly) { Get-ChildItem -LiteralPath (Join-Path $output 'win-unpacked') -Filter '*.exe' -File } else { Get-ChildItem -LiteralPath $output -Filter '*.exe' -File })
         if (-not $BuildOnly -and $files.Count -ne 1) { throw 'Expected exactly one portable executable.' }
         foreach ($file in $files) {
             $hash = (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
