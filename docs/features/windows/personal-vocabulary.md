@@ -208,3 +208,24 @@ cache-selection, initialization and persistence functions against neutral
 filesystem fixtures with parser and repaint doubles. Its `--mutant=shared-cache`
 variant must fail. This is bounded behavioral evidence, not a built-interface
 or real JSON-parser acceptance result.
+
+## Installed interaction evidence, 7 November 2026
+
+Installed version 2.9.1936, source `f1526f80268c67df5a6ff196b865b7b0118412cb`,
+was exercised on named hidden desktops using fresh alternate data directories.
+The actual Settings upload opened the native file picker and accepted a valid
+local JSON. Its isolated cache matched the submitted file. A fresh process
+retained that cache and the Replace JSON state. Invalid JSON was rejected while
+preserving the previous cache; a neutral replacement persisted, and Clear removed
+the isolated cache and restored the original-wording status. Both owned process
+trees exited normally and both desktops closed. The real profile and normal
+wording cache were neither read nor directly edited by this verification.
+
+These results establish the exercised input and storage workflows, not complete
+display coverage. A preliminary hidden-control text comparison was withdrawn:
+substring membership and handle continuity did not prove a complete expected
+mapping or retain the matched control's identity. No visible mapped-label or
+pixel acceptance is claimed. Preferences capture protection remained unchanged.
+Clear followed by another restart, sound outcomes, original wording in exports
+and logs, custom-painted display coverage and the complete layout/language/theme
+matrix remain unverified. Private wording and mapped images were not published.

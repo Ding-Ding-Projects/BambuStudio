@@ -1,5 +1,16 @@
 # Bambu Studio handoff
 
+## Installed wording workflow evidence, 7 November 2026
+
+Installed 2.9.1936/f1526f802 passed actual Settings/native-picker import, isolated
+cache equality, restart retention, invalid-input preservation, neutral replacement
+and Clear/original-status checks. Both held process trees and hidden desktops
+closed normally. The real profile/cache were not read or directly edited.
+An insufficient hidden-label substring comparison was withdrawn through a
+separate correction receipt; no visible mapping or pixel acceptance is claimed.
+Clear-after-restart, sounds, export/log privacy and full display coverage remain
+unverified. See the bilingual personal-vocabulary article for exact limits.
+
 ## Bounded Settings consumer inventory, 7 November 2026
 
 `design/settings-consumer-coverage.json` retains exact source baf9303d anchors,

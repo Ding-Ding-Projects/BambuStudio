@@ -6,7 +6,7 @@ and incomplete; account allowance is unknown.
 
 ## Preserved source
 
-Remote main d1b3d58d1733e9a114cf939b7e09b04548fa85e0 was read back exactly.
+Remote main 2c2c76f8612a6b7cf3643be8b9bae6da82ec54f9 was read back exactly.
 It includes direct sending, isolated wording storage, Base64 conversion and the
 content-free Preferences probe. Native acceptance remains separate.
 
@@ -43,9 +43,7 @@ main integration records that bounded result, not fresh-setup or full-matrix pro
 
 ## Producers and delivery
 
-The primary checkout remains a live producer pinned to
-4f7039f611477b4f7ba4623309b6dfd594ce8af9. Do not alter its source/index/branch
-until completion, then build the newer integrated candidate.
+The primary checkout is a live producer pinned to 2c2c76f8612a6b7cf3643be8b9bae6da82ec54f9. The older 4f7039f6 producer compiled the GUI but failed linking because ignored OpenCASCADE cache metadata referenced an obsolete checkout. Its metadata was backed up, two references were relocated to the existing verified freetype library, and the current root build is running. Do not alter primary source/index/branch until completion.
 
 Run 42419260043 produced downloaded installer 2.9.1936 from f1526f802.
 Setup SHA-256 is 6e9abd326b9580fbfbae51c30788c1814d066df77bee71eef3206efc1faf0777;
@@ -85,8 +83,10 @@ Preserve source and private evidence. No force pushes, private wording publicati
 host power/login actions, capture-protection changes or cleanup of active,
 unrelated or unproven candidates. Verify each intended push by exact remote-ref readback.
 
-The primary producer acquired an untracked runtime log, log_iotc.txt. It is retained locally and excluded from publication pending private-content review. Do not alter the live producer or blindly stage diagnostics. Source preservation is not an assertion that private runtime logs were published.
+The untracked runtime log log_iotc.txt was moved to private verification storage after exclusive-open and hash-preservation checks. It was not published or ignored to conceal source. The primary source tree was clean before the current build.
 
 First portable publisher run 42425950237 failed before packaging because Get-FileHash was unavailable in the child shell. No companion release exists from that run. Bounded diagnostics were retained; the exact parent-shell cause was reproduced and correction 5ae1162b41ae8f22f5fcf476c950966814dd01a7 changes only the workflow build shell to cmd. Its owning branch was pushed and read back. Hosted verification is pending.
 
 Reviewed bounded Settings consumer coverage is now preserved in design/settings-consumer-coverage.json, tied to baf9303d. It covers 21 groups and 23 identities, 85 setting candidates, 21 headings and reset-list evidence. All 117 identities remain, with 94 mappings pending and all runtime claims unverified. Two conditional argument extractions and the external-editor selector were corrected by independent review. Continue per-control consumers, persistence/reset/recovery and actual native verification.
+
+Installed personal wording passed actual picker import, isolated cache equality, restart retention, invalid-input preservation, neutral replacement and Clear/original-status checks. Both process trees/desktops closed normally. A preliminary hidden-label substring inference was withdrawn in a preserved correction receipt; neither hidden nor visible mapping is accepted from that comparison. Clear-after-restart, sound outcomes, export/log privacy and complete display proof remain pending.

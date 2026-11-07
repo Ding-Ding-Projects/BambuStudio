@@ -1,5 +1,10 @@
 # Roadmap
 
+## Installed wording acceptance, 7 November 2026
+
+- [x] Exercise actual native-picker import, isolated cache equality, restart retention, invalid-input preservation, neutral replacement and Clear/original-status behavior in installed 2.9.1936.
+- [ ] Prove visible mapped wording, clear-after-restart, sounds, original export/log text and complete display coverage. A withdrawn hidden-control substring comparison is not acceptance evidence.
+
 ## Settings consumer mapping, 7 November 2026
 
 - [x] Independently review and preserve 21 groups, 23 feature mappings, 85 setting candidates and source-bound reset evidence without claiming runtime acceptance.

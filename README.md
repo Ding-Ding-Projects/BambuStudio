@@ -4,6 +4,9 @@ Bambu Studio is a feature-rich slicer for Bambu Lab printers: project-based work
 
 LAN model sharing now accepts direct uploads without a sender code. Use [the hosting guide](docs/features/application-integration/lan-model-drop-site.md) to start the service. [Current verification and remaining work](HANDOFF.md) cover the published service, startup recovery, [resizable Preferences and protected geometry checks](docs/features/design-system/preferences-resizing.md), and personal wording.
 
+Installed 2.9.1936 has verified personal-wording import, isolated persistence,
+replacement and clearing workflows. [Visible wording coverage remains unverified](docs/features/windows/personal-vocabulary.md#installed-interaction-evidence-7-november-2026).
+
 [Base64 file conversion](docs/features/converter/base64-files.md) now has same-folder queue targets, filename restoration, collision avoidance and SHA-256 round-trip checks in source. Native interface and packaged-worker acceptance remain pending.
 
 [Startup recovery](docs/features/windows/startup-project-recovery.md) now separates automatic restoration from manual import decisions in reviewed source. Files and tabs are retained when review is needed. Native verification of this newer nonmodal path remains pending.
