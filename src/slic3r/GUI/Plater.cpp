@@ -12290,7 +12290,7 @@ public:
     // BBS: backup & restore
     using LoadProgressCallback = std::function<bool(int, const wxString&)>;
     std::vector<size_t> load_files(const std::vector<fs::path>& input_files, LoadStrategy strategy, bool ask_multi = false,
-                                   bool *successful_3mf_loaded = nullptr, PreparedImport* prepared = nullptr);
+                                   bool *successful_3mf_loaded = nullptr, PreparedImport* prepared = nullptr, ProjectLoadContext context = {});
     std::vector<size_t> load_model_objects(const ModelObjectPtrs& model_objects, bool allow_negative_z = false,
                                            bool split_object = false, LoadProgressCallback progress_callback = {});
 
@@ -15221,7 +15221,7 @@ void read_binary_stl(const std::string& filename, std::string& model_id, std::st
 
 // BBS: backup & restore
 std::vector<size_t> Plater::priv::load_files(const std::vector<fs::path>& input_files, LoadStrategy strategy, bool ask_multi,
-                                             bool *successful_3mf_loaded, PreparedImport* prepared)
+                                             bool *successful_3mf_loaded, PreparedImport* prepared, ProjectLoadContext context)
 {
     if (successful_3mf_loaded != nullptr)
         *successful_3mf_loaded = false;
@@ -15235,6 +15235,16 @@ std::vector<size_t> Plater::priv::load_files(const std::vector<fs::path>& input_
 
     if (input_files.empty())
         return std::vector<size_t>();
+
+    // Startup only restores native project archives. Other formats retain
+    // their interactive import options on an explicit retry.
+    if (context.automatic() &&
+        (!(strategy & LoadStrategy::LoadConfig) || ask_multi ||
+         input_files.size() != ((strategy & LoadStrategy::Restore) ? 2u : 1u) ||
+         !boost::algorithm::iends_with(input_files.front().string(), ".3mf"))) {
+        context.defer();
+        return empty_result;
+    }
 
     if (!input_files.empty())
        q->m_3mf_path = input_files[0].string();
@@ -15259,7 +15269,9 @@ std::vector<size_t> Plater::priv::load_files(const std::vector<fs::path>& input_
     BOOST_LOG_TRIVIAL(info) << boost::format("load_model %1%, load_config %2%, input_files size %3%")%load_model %load_config %input_files.size();
 
     const auto loading = _L("Loading") + dots;
-    ProgressDialog dlg(loading, "", 100, find_toplevel_parent(q), wxPD_AUTO_HIDE | wxPD_CAN_ABORT | wxPD_APP_MODAL);
+    ProjectLoadProgress<ProgressDialog> dlg(context, [&] {
+        return std::make_unique<ProgressDialog>(loading, "", 100, find_toplevel_parent(q), wxPD_AUTO_HIDE | wxPD_CAN_ABORT | wxPD_APP_MODAL);
+    });
     wxBusyCursor busy;
 
     auto new_model = (!load_model || one_by_one) ? std::unique_ptr<Slic3r::Model>() : std::make_unique<Slic3r::Model>();
@@ -15410,6 +15422,14 @@ std::vector<size_t> Plater::priv::load_files(const std::vector<fs::path>& input_
                     PlateDataPtrs             plate_data;
                     ConfigSubstitutionContext config_substitutions{ForwardCompatibilitySubstitutionRule::Enable};
                     std::vector<Preset *>     project_presets;
+                    struct PendingArchiveCleanup {
+                        std::function<void()> release;
+                        ~PendingArchiveCleanup() { if (release) release(); }
+                    } pending_archive{context.automatic() ? std::function<void()>([&] {
+                        release_PlateData_list(plate_data);
+                        for (auto* preset : project_presets) delete preset;
+                        q->skip_thumbnail_invalid = false;
+                    }) : std::function<void()>()};
                     // BBS: backup & restore
                     q->skip_thumbnail_invalid = true;
                     // Used to store color group mapping information in standard 3MF files
@@ -15451,6 +15471,60 @@ std::vector<size_t> Plater::priv::load_files(const std::vector<fs::path>& input_
                         }
                     }
                     model = archive_future.get();
+                    if (context.automatic()) {
+                        // Detached admission boundary: nothing below may publish
+                        // plates, presets or settings until all decisions are
+                        // known to be unnecessary. Embedded-preset resolution
+                        // currently has no read-only preview, so retain it for
+                        // explicit retry rather than apply it speculatively.
+                        bool safe = en_3mf_file_type == En3mfType::From_BBS &&
+                            file_version <= *Semver::parse(SLIC3R_VERSION) &&
+                            !config_loaded.empty() && check_project_config(config_loaded) && config_substitutions.empty() &&
+                            project_presets.empty() && !model.texture_mesh && !has_3mf_textures;
+                        DynamicPrintConfig checked;
+                        checked.apply(static_cast<const ConfigBase&>(FullPrintConfig::defaults()));
+                        checked += config_loaded;
+                        Preset::normalize(checked);
+                        safe = safe && checked.validate().empty();
+                        // Tab::load_current_preset() can open adjustment dialogs.
+                        // Automatic restore therefore admits only the already
+                        // active full configuration and does not reapply it.
+                        safe = safe && wxGetApp().preset_bundle->full_config().diff(checked).empty();
+                        std::set<std::string> modified_gcodes;
+                        safe = safe && wxGetApp().preset_bundle->validate_presets(
+                            filename.string(), checked, modified_gcodes) == VALIDATE_PRESETS_SUCCESS;
+                        // Keep the current printer/bed for this conservative
+                        // automatic route; changed printer setup needs review.
+                        for (const char* key : {"printer_settings_id", "printable_area"}) {
+                            const auto* incoming = checked.option(key);
+                            const auto* current = this->config->option(key);
+                            safe = safe && incoming && current && incoming->serialize() == current->serialize();
+                        }
+                        const Vec3d bed_size = Slic3r::to_3d(this->bed.build_volume().bounding_volume2d().size(), 1.0)
+                            - 2.0 * Vec3d::Ones();
+                        safe = safe && bed_size.x() > 0 && bed_size.y() > 0;
+                        for (const auto* object : model.objects) {
+                            // Per-object overrides can trigger parameter repair
+                            // when their editor activates. Filament assignment
+                            // alone has no such adjustment dialog.
+                            for (const auto& key : object->config.keys()) safe = safe && key == "extruder";
+                            for (const auto* volume : object->volumes)
+                                for (const auto& key : volume->config.keys()) safe = safe && key == "extruder";
+                            const size_t count = std::max<size_t>(1, object->instances.size());
+                            for (size_t instance = 0; instance < count; ++instance) {
+                                const Vec3d size = object->instances.empty() ? object->raw_mesh_bounding_box().size()
+                                    : object->instance_bounding_box(instance).size();
+                                safe = safe && size.allFinite() && size.x() <= 10 * bed_size.x()
+                                    && size.y() <= 10 * bed_size.y();
+                            }
+                        }
+                        if (!safe) {
+                            context.defer();
+                            return empty_result;
+                        }
+                        if (context.result) *context.result = ProjectRestoreResult::ApplicationStarted;
+                        pending_archive.release = {};
+                    }
                     if (is_user_cancel) {
                         release_PlateData_list(plate_data);
                         for (auto* preset : project_presets) delete preset;
@@ -15706,7 +15780,7 @@ std::vector<size_t> Plater::priv::load_files(const std::vector<fs::path>& input_
                     }
                 }
 
-                if (load_config) {
+                if (load_config && !context.automatic()) {
                     if (!config.empty()) {
                         Preset::normalize(config);
                         PresetBundle *preset_bundle = wxGetApp().preset_bundle;
@@ -16154,11 +16228,11 @@ std::vector<size_t> Plater::priv::load_files(const std::vector<fs::path>& input_
         } catch (const ConfigurationError &e) {
             if (prepared) throw;
             std::string message = GUI::format(_L("Failed loading file \"%1%\". An invalid configuration was found."), filename.string()) + "\n\n" + e.what();
-            GUI::show_error(q, message);
+            if (!context.automatic()) GUI::show_error(q, message);
             continue;
         } catch (const std::exception &e) {
             if (prepared) throw;
-            if (!is_user_cancel)
+            if (!is_user_cancel && !context.automatic())
                 GUI::show_error(q, e.what());
             continue;
         }
@@ -16782,7 +16856,7 @@ std::vector<size_t> Plater::priv::load_files(const std::vector<fs::path>& input_
 
     if (tolal_model_count <= 0 && !q->m_exported_file) {
         dlg.Hide();
-        if (!is_user_cancel) {
+        if (!is_user_cancel && !context.automatic()) {
             MessageDialog msg(wxGetApp().mainframe, _L("The file does not contain any geometry data."), _L("Warning"), wxYES | wxICON_WARNING);
             if (msg.ShowModal() == wxID_YES) {}
         }
@@ -28019,17 +28093,31 @@ bool Plater::try_sync_preset_with_connected_printer(int& nozzle_diameter)
 int Plater::load_project(wxString const &filename2,
     wxString const& originfile,
     bool *load_succeeded,
-    bool skip_close_confirmation)
+    bool skip_close_confirmation, ProjectLoadContext context)
 {
     if (load_succeeded != nullptr)
         *load_succeeded = false;
+
+    if (context.automatic()) {
+        // Automatic restoration owns only the pristine startup document.
+        // Do not reset existing work or consume pending preset decisions.
+        auto* manager = wxGetApp().getDeviceManager();
+        auto* machine = manager ? manager->get_selected_machine() : nullptr;
+        if (filename2.empty() || !skip_close_confirmation || !model().objects.empty() ||
+            is_project_dirty() || !get_project_filename().empty() || only_gcode_mode() || using_exported_file() ||
+            wxGetApp().has_current_preset_changes() || machine ||
+            wxGetApp().app_config->get("show_wrapping_detect_dialog") == "true") {
+            context.defer();
+            return wxID_CANCEL;
+        }
+    }
 
     // The project path is rendered into the home page recent-file list as raw HTML, so quotes or
     // angle brackets anywhere in it - a parent directory name just as much as the file name - can
     // break out of the surrounding attribute. Refuse such files before anything is loaded or recorded.
     if (!filename2.empty() && has_html_unsafe_path_characters(filename2)) {
         BOOST_LOG_TRIVIAL(warning) << "refused project file with unsafe characters in its path";
-        show_unsafe_path_warning(this);
+        if (!context.automatic()) show_unsafe_path_warning(this);
         return wxID_CANCEL;
     }
 
@@ -28079,10 +28167,10 @@ int Plater::load_project(wxString const &filename2,
 
     //BBS: add only gcode mode
     const bool previous_gcode = m_only_gcode;
-    // reset() is the fail-closed history boundary. Run it before setting the
-    // loading flag (which deliberately defers history exports) and before
-    // mutating any project-owned state.
-    if (!p->reset())
+    // Interactive replacement freezes outgoing history before mutation.
+    // Automatic restore admits only the pristine document and preserves its
+    // preset state until detached admission succeeds.
+    if (!context.automatic() && !p->reset())
         return wxID_CANCEL;
 
     m_loading_project = true;
@@ -28111,7 +28199,7 @@ int Plater::load_project(wxString const &filename2,
     const bool import_as_model = !load_restore && boost::algorithm::iends_with(path.string(), ".3mf") && !is_bbs_project_3mf(path.string());
     if (import_as_model)
         strategy = LoadStrategy::LoadModel;
-    m_syncing_printer_after_load = !import_as_model && !wxGetApp().app_config->get_bool("skip_printer_check_on_3mf_load");
+    m_syncing_printer_after_load = !context.automatic() && !import_as_model && !wxGetApp().app_config->get_bool("skip_printer_check_on_3mf_load");
 
     // Take the Undo / Redo snapshot. The caller decides where the replacement
     // document's recovery marker belongs after load.
@@ -28123,7 +28211,7 @@ int Plater::load_project(wxString const &filename2,
         input_paths.push_back(into_u8(originfile));
 
     bool                explicit_3mf_loaded = false;
-    std::vector<size_t> res = load_files(input_paths, strategy, false, &explicit_3mf_loaded);
+    std::vector<size_t> res = load_files(input_paths, strategy, false, &explicit_3mf_loaded, context);
     const bool loaded_project = explicit_3mf_loaded || !res.empty();
     if (!loaded_project) {
         BOOST_LOG_TRIVIAL(warning) << __FUNCTION__ << ": no project data was loaded";
@@ -28202,7 +28290,7 @@ int Plater::load_project(wxString const &filename2,
     m_loading_project = false;
 
     // only pop up in 3mf
-    if (!import_as_model && !this->m_exported_file && !this->m_only_gcode){
+    if (!context.automatic() && !import_as_model && !this->m_exported_file && !this->m_only_gcode){
         int nozzle_diameter = 1;
         auto ok = try_sync_preset_with_connected_printer(nozzle_diameter);
         if (ok && nozzle_diameter > 1) {
@@ -28215,7 +28303,7 @@ int Plater::load_project(wxString const &filename2,
     }
     statistics_burial_data(filename.utf8_string());
 
-    if (!import_as_model)
+    if (!context.automatic() && !import_as_model)
         show_wrapping_detect_dialog_if_necessary();
     // Publish success only after every load finalizer above has completed. An
     // exception or early return therefore leaves the caller's value false and
@@ -28270,7 +28358,7 @@ bool Plater::save_snapshot_to(const std::string& path)
 // label/title (via SetActiveTitle and is_project_dirty()/get_project_filename()).
 // Undo history and camera reset on switch — acceptable per design. Returns true
 // only when the project actually loaded.
-bool Plater::load_snapshot_from(const std::string& path)
+bool Plater::load_snapshot_from(const std::string& path, ProjectLoadContext context)
 {
     if (path.empty())
         return false;
@@ -28283,7 +28371,7 @@ bool Plater::load_snapshot_from(const std::string& path)
     const wxString file = from_u8(path);
     bool load_succeeded = false;
     try {
-        load_project(file, file, &load_succeeded, /*skip_close_confirmation=*/true);
+        load_project(file, file, &load_succeeded, /*skip_close_confirmation=*/true, context);
     } catch (const std::exception &ex) {
         // load_project() throwing leaves the loading flag latched; clear it so
         // the next switch is not permanently blocked (matches the restore path).
@@ -30040,23 +30128,23 @@ void Plater::restore_import_originals()
 
 // BBS: backup
 std::vector<size_t> Plater::load_files(const std::vector<fs::path>& input_files, LoadStrategy strategy, bool ask_multi,
-                                       bool *successful_3mf_loaded) {
+                                       bool *successful_3mf_loaded, ProjectLoadContext context) {
     //BBS: wish to reset state when load a new file
     p->m_slice_all_only_has_gcode = false;
     //BBS: wish to reset all plates stats item selected state when load a new file
     p->preview->get_canvas3d()->reset_select_plate_toolbar_selection();
-    return p->load_files(input_files, strategy, ask_multi, successful_3mf_loaded);
+    return p->load_files(input_files, strategy, ask_multi, successful_3mf_loaded, nullptr, context);
 }
 
 // To be called when providing a list of files to the GUI slic3r on command line.
 std::vector<size_t> Plater::load_files(const std::vector<std::string>& input_files, LoadStrategy strategy, bool ask_multi,
-                                       bool *successful_3mf_loaded)
+                                       bool *successful_3mf_loaded, ProjectLoadContext context)
 {
     std::vector<fs::path> paths;
     paths.reserve(input_files.size());
     for (const std::string& path : input_files)
         paths.emplace_back(path);
-    return p->load_files(paths, strategy, ask_multi, successful_3mf_loaded);
+    return p->load_files(paths, strategy, ask_multi, successful_3mf_loaded, nullptr, context);
 }
 
 class RadioBox;

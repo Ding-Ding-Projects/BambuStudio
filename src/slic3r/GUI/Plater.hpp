@@ -1,6 +1,8 @@
 #ifndef slic3r_Plater_hpp_
 #define slic3r_Plater_hpp_
 
+#include "ProjectLoadContext.hpp"
+
 #include <memory>
 #include <array>
 #include <cstdint>
@@ -515,14 +517,16 @@ public:
                                          const std::vector<int>& maps);
     // BBS: save & backup
     int load_project(wxString const & filename = "", wxString const & originfile = "-",
-                     bool *load_succeeded = nullptr, bool skip_close_confirmation = false);
+                     bool *load_succeeded = nullptr, bool skip_close_confirmation = false,
+                     ProjectLoadContext context = {});
     // BBS: session file-tabs — silent snapshot round-trip for tab switching.
     // save_snapshot_to() writes the whole live project to a temp .3mf using the
     // shipped Backup autosave archive; load_snapshot_from() restores it (or a
     // real project file) through the crash-recovery Restore path. Both reuse
-    // existing serialization only and never prompt. Return true on success.
+    // existing serialization. Interactive retries retain import diagnostics;
+    // automatic startup defers any required interaction. Return true on success.
     bool save_snapshot_to(const std::string& path);
-    bool load_snapshot_from(const std::string& path);
+    bool load_snapshot_from(const std::string& path, ProjectLoadContext context = {});
     // Writes a history-bearing 3MF for workspace publication without changing
     // the active document's file name or saved/dirty state.
     bool export_workspace_member_with_history(const std::filesystem::path& destination);
@@ -595,11 +599,13 @@ public:
     // BBS: restore
     std::vector<size_t> load_files(const std::vector<boost::filesystem::path>& input_files,
                                    LoadStrategy strategy = LoadStrategy::LoadModel | LoadStrategy::LoadConfig,
-                                   bool ask_multi = false, bool *successful_3mf_loaded = nullptr);
+                                   bool ask_multi = false, bool *successful_3mf_loaded = nullptr,
+                                   ProjectLoadContext context = {});
     // To be called when providing a list of files to the GUI slic3r on command line.
     std::vector<size_t> load_files(const std::vector<std::string>& input_files,
                                    LoadStrategy strategy = LoadStrategy::LoadModel | LoadStrategy::LoadConfig,
-                                   bool ask_multi = false, bool *successful_3mf_loaded = nullptr);
+                                   bool ask_multi = false, bool *successful_3mf_loaded = nullptr,
+                                   ProjectLoadContext context = {});
     // to be called on drag and drop
     bool emboss_svg(const wxString &svg_file, bool from_toolbar_or_file_menu = false);
     bool load_svg(const wxArrayString &filenames, bool from_toolbar_or_file_menu = false);

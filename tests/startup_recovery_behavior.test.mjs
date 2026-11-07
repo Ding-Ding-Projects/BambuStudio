@@ -8,8 +8,10 @@ import {fileURLToPath} from 'node:url';
 // This proves transitions, not archive parsing, disk persistence or rendering.
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const baseline=process.argv.find(a=>a.startsWith('--baseline='))?.slice(11);
-const source=baseline ? execFileSync('git',['show',baseline+':src/slic3r/GUI/MainFrame.cpp'],{cwd:root,encoding:'utf8'})
+let source=baseline ? execFileSync('git',['show',baseline+':src/slic3r/GUI/MainFrame.cpp'],{cwd:root,encoding:'utf8'})
   : readFileSync(path.join(root,'src/slic3r/GUI/MainFrame.cpp'),'utf8');
+if(process.argv.includes('--interactive-startup-mutant'))
+  source=source.replace('{ProjectLoadMode::AutomaticStartup, &restore_result}', '{ProjectLoadMode::Interactive, &restore_result}');
 function method(signature) {
   const start=source.indexOf(signature);
   if(start<0) throw new Error('Missing production method: '+signature);
@@ -32,6 +34,8 @@ const fixture=String.raw`
 #include <fstream>
 #include <filesystem>
 #include <nlohmann/json.hpp>
+#include "slic3r/GUI/ProjectLoadContext.hpp"
+using namespace Slic3r::GUI;
 struct wxString:std::string { using std::string::string; wxString()=default; wxString(const std::string&s):std::string(s){} bool IsEmpty()const{return empty();} static wxString FromUTF8(const std::string&s){return s;} };
 #define _L(s) wxString(s)
 #define BOOST_LOG_TRIVIAL(x) std::cerr
@@ -58,14 +62,24 @@ struct ProjectTabBar {
  void SetActiveTitle(const wxString&s){TabAt(active).title=s;} void SetActiveDirty(bool d){TabAt(active).dirty=d;}
  void SaveToConfig(){saved=tabs;saved_active=active;}
 };
+int notifications=0;
+struct Notifications {void push_notification(const std::string&){++notifications;}} notices;
 struct Plater {
  struct Model {std::vector<int> objects;} content;
  Model&model(){return content;}bool dirty=false,cancel_reset=false;bool is_project_dirty(){return dirty;}
  wxString filename,name; bool succeeds=false,throws=false; int loads=0,snapshot_loads=0,ordinary_loads=0;std::function<void()> on_load;
  wxString get_project_filename(const wxString&extension=""){return filename.empty()?wxString():wxString(filename+extension);} wxString get_project_name(){return name;}
  bool load(const std::string&p){++loads;if(on_load)on_load();filename="";name="";if(throws)throw std::runtime_error("synthetic");if(succeeds){set_project_filename(p);name="Recovered";}return succeeds;}
- bool load_snapshot_from(const std::string&p){++snapshot_loads;try{return load(p);}catch(...){return false;}}
- void load_project(const wxString&p,const char*mode,bool*success,bool){if(std::string(mode)!="-")throw std::runtime_error("wrong mode");++ordinary_loads;*success=load(p);}
+ bool review_required=false; int automatic_loads=0,interactive_loads=0,preset_mutations=0;
+ Notifications*get_notification_manager(){return &notices;}
+ bool contextual_load(const std::string&p,ProjectLoadContext context){
+   if(context.automatic()){++automatic_loads;if(review_required)return context.defer();}
+   else ++interactive_loads;
+   if(context.result)*context.result=ProjectRestoreResult::ApplicationStarted;
+   const bool ok=load(p);if(ok)++preset_mutations;return ok;
+ }
+ bool load_snapshot_from(const std::string&p,ProjectLoadContext context={}){++snapshot_loads;try{return contextual_load(p,context);}catch(...){return false;}}
+ void load_project(const wxString&p,const char*mode,bool*success,bool,ProjectLoadContext context={}){if(std::string(mode)!="-")throw std::runtime_error("wrong mode");++ordinary_loads;*success=contextual_load(p,context);}
  int new_project(bool,bool){if(cancel_reset)return wxID_CANCEL;filename="";name="";return 0;}
  void set_project_filename(const wxString&p){filename=p;const auto dot=filename.rfind('.');if(dot!=std::string::npos)filename.resize(dot);}
 };
@@ -83,10 +97,20 @@ struct MainFrame {
 int failures=0;void check(bool value,const char*name){if(!value){std::cerr<<"FAIL "<<name<<'\n';++failures;}}
 struct Scenario {
  AppConfig cfg;Plater plater;ProjectTabBar tabs;MainFrame frame{&plater,&tabs};
- Scenario(){app.app_config=&cfg;path_exists=true;dialogs=0;tabs.AddTab("model.3mf","Retained",true);}
+ Scenario(){app.app_config=&cfg;path_exists=true;dialogs=0;notifications=0;tabs.AddTab("model.3mf","Retained",true);}
  void pending(){cfg.set("project_tab_recovery","pending_path","model.3mf");cfg.save();}
 };
 int main(){
+ {Scenario s;s.plater.review_required=true;s.plater.succeeds=true;s.frame.reconcile_initial_project_tab();
+  check(s.plater.automatic_loads==1&&s.plater.preset_mutations==0,"decision defers automatic load without applying presets");
+  check(s.tabs.Count()==2&&s.tabs.tabs[0].file_path=="model.3mf","decision retains file and separate recovery tab");
+  check(dialogs==0&&notifications==1,"automatic recovery is nonmodal");
+  s.frame.switch_project_tab(0);check(s.plater.interactive_loads==1&&s.plater.preset_mutations==1,"explicit retry remains interactive");}
+ {Scenario s;s.plater.succeeds=true;s.frame.reconcile_initial_project_tab();
+  check(s.plater.automatic_loads==1&&s.plater.preset_mutations==1&&notifications==0,"decision-free startup loads without recovery notice");}
+ {Scenario s;s.plater.throws=true;s.frame.reconcile_initial_project_tab();
+  check(dialogs==0&&notifications==1&&s.plater.preset_mutations==0,"parse exception has nonmodal recovery only");}
+
  {Scenario s;bool recorded=false;s.plater.on_load=[&]{recorded=s.cfg.persisted["project_tab_recovery:pending_path"]=="model.3mf";s.frame.update_title();};s.frame.reconcile_initial_project_tab();
   check(recorded,"pending marker saved before loader");check(s.tabs.Count()==2&&s.tabs.active==1,"failed restore gets independent empty tab");check(s.tabs.tabs[0].file_path=="model.3mf"&&s.tabs.tabs[0].title=="Retained","failed target identity retained during callbacks");check(s.tabs.saved_active==1,"empty active tab persisted");check(s.plater.filename.empty(),"failed file never owns Save");
   const int before=s.plater.loads;s.frame.reconcile_initial_project_tab();check(s.plater.loads==before,"empty recovery tab does not retry");

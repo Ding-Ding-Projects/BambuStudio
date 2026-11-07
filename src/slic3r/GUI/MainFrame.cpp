@@ -1549,18 +1549,19 @@ std::string make_project_tab_snapshot_path()
 
 // A rejected incoming load may already have reset the single live Plater.
 // Restore the outgoing tab before returning control to the tab strip.
-bool restore_project_tab_document(Plater* plater, ProjectTabBar* tabbar, const ProjectTab& tab)
+bool restore_project_tab_document(Plater* plater, ProjectTabBar* tabbar, const ProjectTab& tab,
+                                  ProjectLoadContext context = ProjectLoadContext())
 {
     bool restored = false;
     if (!tab.snapshot_path.empty()) {
         // A dirty tab needs the private document bytes and Restore semantics.
-        restored = plater->load_snapshot_from(tab.snapshot_path);
+        restored = plater->load_snapshot_from(tab.snapshot_path, context);
     } else if (!tab.file_path.empty()) {
         // A known-clean real file must use the ordinary load path. Restore
         // semantics would mark the Plater dirty while the tab model is clean.
         try {
             plater->load_project(wxString::FromUTF8(tab.file_path), "-", &restored,
-                                 /*skip_close_confirmation=*/true);
+                                 /*skip_close_confirmation=*/true, context);
         } catch (const std::exception& ex) {
             BOOST_LOG_TRIVIAL(error) << __FUNCTION__ << ": clean tab rollback threw: " << ex.what();
         } catch (...) {
@@ -2071,6 +2072,7 @@ void MainFrame::reconcile_initial_project_tab()
             const bool previously_interrupted = cfg &&
                 cfg->get("project_tab_recovery", "pending_path") == load_path;
             bool restored = false;
+            ProjectRestoreResult restore_result = ProjectRestoreResult::Failed;
             boost::system::error_code ec;
             if (!previously_interrupted &&
                 boost::filesystem::exists(boost::filesystem::path(load_path), ec)) {
@@ -2079,7 +2081,8 @@ void MainFrame::reconcile_initial_project_tab()
                 // the tab layout and is never deleted or replaced here.
                 if (persist_project_tab_restore_marker(cfg, load_path)) {
                     TabOpGuard guard(m_project_tab_switching);
-                    restored = restore_project_tab_document(m_plater, m_project_tabbar, t);
+                    restored = restore_project_tab_document(m_plater, m_project_tabbar, t,
+                        {ProjectLoadMode::AutomaticStartup, &restore_result});
                 }
             }
             if (restored) {
@@ -2089,18 +2092,22 @@ void MainFrame::reconcile_initial_project_tab()
                 // own identity, so title synchronization and Save cannot overwrite
                 // the retained project's tab or file. Selecting that tab retries
                 // through the normal explicit-switch recovery path.
-                if (m_plater->new_project(/*skip_confirm=*/true, /*silent=*/true) == wxID_CANCEL) {
-                    MessageDialog(this,
-                        _L("An empty recovery project could not be created. The retained project tab has not been changed. Save the current document before trying again."),
-                        _L("Project recovery"), wxOK | wxICON_WARNING).ShowModal();
+                // A detached failure or deferred decision has not applied any
+                // project state. Keep the pristine document and its presets.
+                // Only a failure after publication needs a recovery reset.
+                if (restore_result == ProjectRestoreResult::ApplicationStarted &&
+                    m_plater->new_project(/*skip_confirm=*/true, /*silent=*/true) == wxID_CANCEL) {
+                    m_plater->get_notification_manager()->push_notification(into_u8(
+                        _L("An empty recovery project could not be created. The retained project tab has not been changed. Save the current document before trying again.")));
                     // Do not synchronize an unestablished document into the
                     // retained tab after a history-preservation failure.
                     return;
                 }
                 m_project_tabbar->AddTab("", _L("Untitled"), /*activate=*/true);
-                MessageDialog(this,
-                    _L("The previous project could not be restored. Its tab and file have been kept. Select that tab to retry, or use File > Open to choose another project."),
-                    _L("Project recovery"), wxOK | wxICON_WARNING).ShowModal();
+                m_plater->get_notification_manager()->push_notification(into_u8(
+                    restore_result == ProjectRestoreResult::InteractionRequired
+                    ? _L("The previous project needs review before it can be restored. Its tab and file have been kept. Select that tab to review the import options, or use File > Open.")
+                    : _L("The previous project could not be restored. Its tab and file have been kept. Select that tab to retry, or use File > Open to choose another project.")));
             }
             m_project_tabbar->SaveToConfig();
             if (cfg) cfg->save();

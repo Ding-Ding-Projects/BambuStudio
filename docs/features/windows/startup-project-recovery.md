@@ -8,6 +8,33 @@ recovery message explains two available actions:
   restoring a missing file or replacing a damaged copy.
 - Use **File > Open** to choose another project.
 
+Automatic startup restoration now uses an explicit context, separate from the
+existing silent-import flag. It creates no loading progress dialog and uses a
+nonmodal notification for failure or deferred review. Manual tab retry, File >
+Open and other callers remain interactive by default, including their original
+import diagnostics and safety decisions. Nothing automatically accepts a version,
+G-code, printer synchronization, texture or scaling decision.
+
+The initial automatic scope is deliberately conservative. The document must be
+pristine, with no pending preset changes, selected device or pending wrapping
+guidance. Detached parsing must identify a native project with a supported
+version, no substitutions or embedded presets, no texture import, validated
+system-derived presets and no modified G-code decision. Its normalized full
+configuration must match the active configuration, including printer and bed.
+Object and volume overrides other than filament assignment, and geometry needing
+large-object scaling, require explicit review. Embedded-preset presence currently
+defers restoration because the existing resolver has no read-only decision
+preview, not because every embedded preset is unsafe.
+
+Admission happens before plate, preset or settings publication. An admitted
+automatic load keeps the already matching configuration rather than invoking the
+preset editor, whose update path can show adjustment dialogs. A deferred or
+pre-application failed load retains the pristine document without resetting its
+presets. Only a failure after application began uses the existing recovery reset.
+The retained target and pending marker remain available for explicit retry.
+This narrower automatic scope is not a claim that every native project can be
+restored without interaction, or that an un-restored project is corrupt.
+
 The empty working tab has no file identity. Saving it therefore cannot overwrite
 the retained project. A failed retry leaves the outgoing document active and keeps
 the failed target available. Existing unsaved-document checks still apply.
@@ -61,6 +88,19 @@ writes. The changed source passes; the same executable check against
 `d17122fa8ec2ae1da871e677aa3dce3beda94c92` reports 19 failed assertions. Matching
 marker clearance is checked for explicit tab retry, File > Open, and already-loaded
 startup documents; failed opens and other paths must retain the marker.
+
+The same production-orchestration fixture also checks automatic versus manual
+context, nonmodal recovery, decision-free restoration, deferred review without
+simulated preset application, and explicit interactive retry. The
+`--interactive-startup-mutant` option deliberately removes automatic admission and
+must fail. `node tests/startup_nonmodal.test.mjs` executes the actual detached
+admission block with neutral archive/configuration doubles and the production
+progress wrapper. It checks an admitted case, eleven deferred classes, absence
+of speculative application, released pending resources and interactive progress
+cancellation. `--admission-mutant` removes the deferral branch and must fail.
+These fixtures do not parse a real 3MF, exercise the actual preset editor or prove
+that every indirect native path is nonmodal. Native build and scenario evidence
+remain required.
 
 The doubles do not prove native archive parsing, production AppConfig persistence, or
 rendered recovery behavior. A native build and the same hidden-desktop scenarios,
