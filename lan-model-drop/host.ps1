@@ -25,6 +25,26 @@ function Quote-NativeArgument([string] $Value) {
 }
 
 function Invoke-Docker([string[]] $Arguments, [int] $TimeoutSeconds = 30) {
+    if (-not ('BambuHostBoundedReader' -as [type])) {
+        Add-Type -TypeDefinition @'
+using System.IO;
+using System.Text;
+using System.Threading.Tasks;
+public static class BambuHostBoundedReader {
+    public sealed class Result { public string Text; public bool Truncated; }
+    public static async Task<Result> Read(StreamReader reader, int limit) {
+        var text = new StringBuilder(); var buffer = new char[4096]; bool truncated = false;
+        int count;
+        while ((count = await reader.ReadAsync(buffer, 0, buffer.Length).ConfigureAwait(false)) != 0) {
+            int keep = System.Math.Min(count, System.Math.Max(0, limit - text.Length));
+            if (keep > 0) text.Append(buffer, 0, keep);
+            if (keep < count) truncated = true;
+        }
+        return new Result { Text = text.ToString(), Truncated = truncated };
+    }
+}
+'@
+    }
     $remaining = [int][Math]::Ceiling(($script:Deadline - [DateTime]::UtcNow).TotalSeconds)
     if ($remaining -le 0) { throw 'deadline' }
     $start = New-Object Diagnostics.ProcessStartInfo
@@ -40,17 +60,19 @@ function Invoke-Docker([string[]] $Arguments, [int] $TimeoutSeconds = 30) {
         if (-not $process.Start()) { throw 'process_start' }
         # Drain both streams concurrently. Never forward Docker output into a
         # pairing result; config and station-key output may contain credentials.
-        $stdout = $process.StandardOutput.ReadToEndAsync()
-        $stderr = $process.StandardError.ReadToEndAsync()
+        $stdout = [BambuHostBoundedReader]::Read($process.StandardOutput, 1048576)
+        $stderr = [BambuHostBoundedReader]::Read($process.StandardError, 65536)
         if (-not $process.WaitForExit(1000 * [Math]::Min($remaining, $TimeoutSeconds))) {
             $process.Kill() # only this owned child, never the daemon or containers
             $process.WaitForExit()
             throw 'process_timeout'
         }
+        if (-not $stdout.Wait(5000) -or -not $stderr.Wait(5000)) { throw 'stream_timeout' }
         $output = $stdout.GetAwaiter().GetResult()
         $null = $stderr.GetAwaiter().GetResult()
         if ($process.ExitCode -ne 0) { throw 'process_failed' }
-        return $output
+        if ($output.Truncated) { throw 'output_limit' }
+        return $output.Text
     } finally { $process.Dispose() }
 }
 

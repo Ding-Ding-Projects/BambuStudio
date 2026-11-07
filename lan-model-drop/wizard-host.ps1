@@ -3,12 +3,17 @@
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 . (Join-Path $PSScriptRoot 'host.ps1') -Mode Library
+. (Join-Path $PSScriptRoot 'wizard-policy.ps1')
 $code = 'invalid_request'
+$mutationAttempted = $false
+$emptyEnvironmentFile = $null
 try {
     $line = [Console]::In.ReadLine()
     if ($null -eq $line -or [Text.Encoding]::UTF8.GetByteCount($line) -gt 8192) { throw 'request' }
     $request = ConvertFrom-Json -InputObject $line
     if ($request.schema -ne 1 -or $request.method -notin @('inspect', 'pull', 'start', 'health')) { throw 'request' }
+    $emptyEnvironmentFile = [IO.Path]::GetTempFileName()
+    $script:Compose = Initialize-WizardCompose -Directory $PSScriptRoot -EmptyEnvironmentFile $emptyEnvironmentFile
     $command = Get-Command docker.exe -ErrorAction SilentlyContinue
     if (-not $command) {
         foreach ($candidate in @((Join-Path $env:ProgramFiles 'Docker/Docker/resources/bin/docker.exe'), (Join-Path $env:LOCALAPPDATA 'Programs/DockerDesktop/resources/bin/docker.exe'))) {
@@ -46,11 +51,17 @@ try {
         $storage = 'existing'
     }
     if ($request.method -eq 'inspect') {
-        $result = @{ ownership = $(if ($existing) { 'existing-owned' } else { 'fresh' }); containerId = $(if ($existing) { $existing.Id } else { '' }); port = $port; storage = $storage; running = [bool]($existing -and $existing.State.Running); ready = $true }
+        $dataPresent = [bool](Invoke-Docker @('volume', 'ls', '-q', '--filter', 'name=^lan-model-drop_drop-data$')).Trim()
+        $result = @{ ownership = $(if ($existing) { 'existing-owned' } else { 'fresh' }); containerId = $(if ($existing) { $existing.Id } else { '' }); port = $port; storage = $storage; running = [bool]($existing -and $existing.State.Running); ready = $true; dataPresent = $dataPresent }
     } elseif ($request.method -eq 'health') {
         $code = 'service_absent'
         if (-not $existing -or $existing.Id -ne $request.containerId) { throw 'identity' }
-        $healthy = Test-ServiceHealth ('http://127.0.0.1:{0}' -f $port)
+        $readyDeadline = [DateTime]::UtcNow.AddSeconds(90)
+        do {
+            $healthy = Test-ServiceHealth ('http://127.0.0.1:{0}' -f $port)
+            if ($healthy -or -not $existing.State.Running) { break }
+            Start-Sleep -Milliseconds 500
+        } while ([DateTime]::UtcNow -lt $readyDeadline)
         $urls = @()
         if ($healthy) { $urls = @(Get-LanUrls $port) }
         $result = @{ identityVerified = $true; dataPreserved = $true; serviceState = $(if ($existing.State.Running) { 'running' } else { 'stopped' }); healthy = [bool]($healthy -and $urls.Count -gt 0); urls = $urls; verificationScope = 'same-host' }
@@ -59,7 +70,7 @@ try {
         if ($request.containerId) {
             $code = 'service_changed'
             if (-not $existing -or $existing.Id -ne $request.containerId) { throw 'identity' }
-            if ($request.method -eq 'start') { $null = Invoke-Docker @('start', $existing.Id) 120 }
+            if ($request.method -eq 'start') { $mutationAttempted = $true; $null = Invoke-Docker @('start', $existing.Id) 120 }
             $result = @{ containerId = $existing.Id }
         } else {
             $code = 'service_changed'
@@ -83,8 +94,13 @@ try {
                 $null = Invoke-Docker ($script:Compose + @('pull', 'lan-model-drop')) 300
                 $result = @{ containerId = '' }
             } else {
+                $code = 'port_unavailable'
+                $listener = New-Object Net.Sockets.TcpListener([Net.IPAddress]::Any, [int]$request.port)
+                $listener.ExclusiveAddressUse = $true
+                try { $listener.Start() } finally { $listener.Stop() }
                 $code = 'service_start_failed'
-                $null = Invoke-Docker ($script:Compose + @('up', '-d', '--no-build', '--wait', '--wait-timeout', '90', 'lan-model-drop')) 120
+                $mutationAttempted = $true
+                $null = Invoke-Docker ($script:Compose + @('up', '-d', '--no-build', '--no-recreate', '--wait', '--wait-timeout', '90', 'lan-model-drop')) 120
                 $id = (Invoke-Docker ($script:Compose + @('ps', '-q', 'lan-model-drop'))).Trim()
                 if ($id -notmatch '^[a-f0-9]{12,64}$') { throw 'identity' }
                 $result = @{ containerId = $id }
@@ -93,10 +109,11 @@ try {
     }
     @{ schema = 1; ok = $true; result = $result } | ConvertTo-Json -Compress -Depth 5
 } catch {
-    @{ schema = 1; ok = $false; error = @{ code = $code } } | ConvertTo-Json -Compress -Depth 3
+    @{ schema = 1; ok = $false; error = @{ code = $code; mutationAttempted = $mutationAttempted } } | ConvertTo-Json -Compress -Depth 3
     exit 1
 } finally {
     $line = $null
     $request = $null
     $existing = $null
+    if ($emptyEnvironmentFile -and [IO.File]::Exists($emptyEnvironmentFile)) { [IO.File]::Delete($emptyEnvironmentFile) }
 }
