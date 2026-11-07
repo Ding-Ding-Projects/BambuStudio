@@ -51,6 +51,7 @@ inline const std::vector<Entry> &entries()
         {"funny_level_yue", "5"},             // kFunnyLevel
         {"dialog_emojis", "false"},
         {"narrator_enabled", "false"},
+        {"action_sounds_enabled", "true"},
         {"narrator_quiet", "false"},
         {"narrator_language", "en"},
         {"narrator_voice_en", ""},            // the system's default voice

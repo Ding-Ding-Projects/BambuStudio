@@ -4,6 +4,7 @@
 #include "PreferencesSearchTraversal.hpp"
 #include "PersonalVocabulary.hpp"
 #include "VocabularyDrop.hpp"
+#include "ActionSounds.hpp"
 #include "TtsNarrator.hpp"
 #include "LanModelDrop/LanModelDropStation.hpp"
 #include "LanModelDrop/LanModelDropUi.hpp"
@@ -1340,6 +1341,9 @@ wxBoxSizer *PreferencesDialog::create_item_checkbox(wxString title, wxWindow *pa
             app_config->set_bool(param, checkbox->GetValue());
             app_config->save();
         }
+
+        if (param == ActionSounds::enabled_key || param.rfind("narrator_", 0) == 0)
+            ActionSounds::settings_changed();
 
         if (param == I18N::DIALOG_EMOJIS_KEY)
             I18N::language_mode_service().set_dialog_emojis(checkbox->GetValue());
@@ -2938,12 +2942,15 @@ wxWindow *PreferencesDialog::create_appearance_tab()
         if (picker.ShowModal() != wxID_OK) return;
         auto reason = PersonalVocabulary::Rejection::None;
         const bool applied = PersonalVocabulary::load(std::filesystem::path(picker.GetPath().ToStdWstring()), &reason);
+        ActionSounds::play(applied ? ActionSounds::Cue::VocabularyApplied : ActionSounds::Cue::Rejected);
         refresh_wording(applied ? wxString()
             : _L("The vocabulary file was not applied, and the wording on screen has not changed.") + "\n" + VocabularyDrop::rejection_text(reason));
     });
     wording_clear->Bind(wxEVT_BUTTON, [refresh_wording](wxCommandEvent &) {
         if (PersonalModes::school_presentation_suppressed.load()) return;
-        refresh_wording(PersonalVocabulary::clear() ? wxString()
+        const bool cleared = PersonalVocabulary::clear();
+        ActionSounds::play(cleared ? ActionSounds::Cue::WordingCleared : ActionSounds::Cue::Rejected);
+        refresh_wording(cleared ? wxString()
             : _L("The saved vocabulary could not be removed from this device, so nothing changed."));
     });
     sizer->Add(wording, 0, wxEXPAND | wxALL, FromDIP(16));
@@ -3488,6 +3495,9 @@ wxWindow *PreferencesDialog::create_other_tab()
     // retained, while the effective fallback is disclosed separately.
     sizer->Add(create_item_title(_L("Narrator"), scrolled,
         _L("Local speech is serialized. Voice network capability is unknown.")), flags);
+    sizer->Add(create_item_checkbox(_L("Sound effects"), scrolled,
+        _L("Play short sounds after wording changes. Quiet narration, quiet hours and Focus Assist also silence these sounds. System volume and mute still apply."),
+        50, ActionSounds::enabled_key), flags);
     sizer->Add(create_item_checkbox(_L("Enable narrator"), scrolled,
         _L("Off by default. Speak application events using installed voices."), 50, "narrator_enabled"), flags);
     sizer->Add(create_item_checkbox(_L("Quiet narration"), scrolled,
@@ -3519,9 +3529,9 @@ wxWindow *PreferencesDialog::create_other_tab()
             clock_labels.push_back(wxString::FromUTF8(clock_values.back()));
         }
         sizer->Add(create_item_combobox(_L("Quiet hours start"), scrolled, _L("Narration is silent from this time."),
-            "narrator_quiet_hours_start", clock_labels, clock_values, {}, [](int) {}), flags);
+            "narrator_quiet_hours_start", clock_labels, clock_values, {}, [](int) { ActionSounds::settings_changed(); }), flags);
         sizer->Add(create_item_combobox(_L("Quiet hours end"), scrolled, _L("Narration resumes at this time."),
-            "narrator_quiet_hours_end", clock_labels, clock_values, {}, [](int) {}), flags);
+            "narrator_quiet_hours_end", clock_labels, clock_values, {}, [](int) { ActionSounds::settings_changed(); }), flags);
     }
     sizer->Add(create_item_checkbox(_L("Respect Focus Assist"), scrolled,
         _L("Only speak errors while Windows Focus Assist, a full-screen app or a presentation is active."), 50, "narrator_respect_focus_assist"), flags);

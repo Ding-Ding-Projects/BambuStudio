@@ -1,5 +1,7 @@
 # Windows features
 
+- [Action sounds and quiet controls](action-sounds.md) · [廣東話](action-sounds.yue_HK.md)
+
 - [Offline documentation browser (F1)](documentation-browser.md)
 
 - [Quiet workflow and manual help](quiet-workflow.md)
