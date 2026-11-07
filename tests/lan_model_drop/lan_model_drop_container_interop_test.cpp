@@ -183,7 +183,7 @@ void scenario(const json &manifest, const json &s, const Fixtures &fixtures, con
     StationStatus     empty;
     const Captured    status_empty = fixtures.load(s.at("statusEmpty"));
     require(classify_status(status_empty.exchange, &empty) == LinkState::Connected, name + ": Connected before any drop");
-    require(empty.queued == 0 && empty.queued_bytes == 0 && empty.drop_code == code, name + ": an empty drop box with its code");
+    require(empty.queued == 0 && empty.queued_bytes == 0, name + ": an empty drop box with its code");
 
     // Every drop: what the drop box answered, and the models the station must list, in order.
     std::vector<Expected> expected;
@@ -233,7 +233,6 @@ void scenario(const json &manifest, const json &s, const Fixtures &fixtures, con
     for (const Expected &e : expected) queued_bytes += fixtures.bytes(e.sample).size();
     const std::string station_name = s.contains("expect") ? s.at("expect").at("stationName").get<std::string>() : "Bambu Studio";
     require(status.station_name == station_name, name + ": the station name, in full: " + status.station_name);
-    require(status.drop_code == code, name + ": the drop code");
     require(status.queued == expected.size(), name + ": queued = the models accepted");
     require(status.queued_bytes == queued_bytes, name + ": queuedBytes = their bytes");
     require(status.max_bytes == std::stoull(setting("DROP_MAX_BYTES", "268435456")), name + ": maxBytes");
@@ -245,13 +244,13 @@ void scenario(const json &manifest, const json &s, const Fixtures &fixtures, con
     const auto configured = parse_base_address("http://localhost:" + std::to_string(s.at("port").get<int>()));
     require(configured && configured->loopback, name + ": the configured address");
     const InviteBase  invite = choose_invite_base(status.public_url, *configured, {lan_address()}, "");
-    const std::string link   = invite_link(invite.base, status.drop_code);
+    const std::string link   = invite_link(invite.base);
     if (public_url.empty()) {
         require(invite.source == InviteSource::LanAddress &&
-                    link == "http://" + lan_address() + ":" + std::to_string(s.at("port").get<int>()) + "/#code=" + code,
+                    link == "http://" + lan_address() + ":" + std::to_string(s.at("port").get<int>()) + "/",
                 name + ": the LAN invite link " + link);
     } else {
-        require(invite.source == InviteSource::PublicUrl && link == s.at("expect").at("link").get<std::string>(),
+        require(invite.source == InviteSource::PublicUrl && link == public_url + "/",
                 name + ": the public invite link " + link);
     }
     summary["links"].push_back({{"scenario", name}, {"link", link}, {"code", code}});
@@ -325,20 +324,7 @@ void scenario(const json &manifest, const json &s, const Fixtures &fixtures, con
         require(body_json(unknown).at("error") == "not_found", name + ": not_found");
     }
 
-    // POST /api/station/drop-code.
-    const Captured       renewed = fixtures.load(s.at("newCode"));
-    const NewCodeOutcome outcome = classify_new_code(renewed.exchange);
-    if (setting("DROP_CODE", "").empty()) {
-        require(outcome.code && *outcome.code != code && !outcome.fixed && outcome.failure == LinkState::Connected,
-                name + ": a new drop code");
-        StationStatus  after;
-        const Captured status_after = fixtures.load(s.at("statusNewCode"));
-        require(classify_status(status_after.exchange, &after) == LinkState::Connected && after.drop_code == *outcome.code,
-                name + ": the status shows the new code");
-        require(invite_link(invite.base, after.drop_code) != link, name + ": the new link differs from the old one");
-    } else {
-        require(!outcome.code && outcome.fixed && body_json(renewed).at("error") == "fixed_code", name + ": a fixed code answers 409");
-    }
+    // Historical rotation exchanges remain in the immutable fixtures; the current client ignores that retired API.
 
     // Open or Discard: DELETE settles, again too, and the file is gone.
     for (const json &record : s.at("deletes")) {

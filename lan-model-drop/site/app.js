@@ -1,12 +1,12 @@
-// The sender page: reads an invite code, lets people choose or drop models,
+// The sender page: lets people choose or drop models,
 // sends them one by one to the drop box on this network and reports each
 // result. Talks only to this site (api/drop); loads nothing else.
 import { createTranslator, modeFromLanguages, normalizeMode, sizeParts } from './i18n.js';
-import { normalizeCode, takeInviteCode, validCode } from './invite.js';
+import { clearLegacyInviteCode } from './invite.js';
 import { outcomeFor, precheck } from './outcome.js';
 
-// The invite code leaves the address bar before anything else runs.
-const invite = takeInviteCode(window);
+// Remove obsolete credentials from old shared URLs without consuming them.
+clearLegacyInviteCode(window);
 
 const LANGUAGE_KEY = 'lan-model-drop.language';
 const $ = (id) => document.getElementById(id);
@@ -51,8 +51,6 @@ const state = {
   sending: false,
   nextId: 1,
   live: null,
-  codeHelp: { key: 'codeHelp' },
-  codeError: null,
 };
 
 // ------------------------------------------------------------- rendering
@@ -220,29 +218,6 @@ function renderLive() {
   render(live, state.live.message);
 }
 
-function setCodeError(message) {
-  state.codeError = message;
-  renderCodeField();
-}
-
-function renderCodeField() {
-  const field = $('code-field');
-  const error = $('code-error');
-  const input = $('code');
-  render($('code-help'), state.codeHelp);
-  if (state.codeError) {
-    render(error, state.codeError);
-    error.hidden = false;
-    field.classList.add('invalid');
-    input.setAttribute('aria-invalid', 'true');
-  } else {
-    error.textContent = '';
-    error.hidden = true;
-    field.classList.remove('invalid');
-    input.removeAttribute('aria-invalid');
-  }
-}
-
 function renderStatic() {
   const { t } = state;
   document.documentElement.lang = t.htmlLang;
@@ -255,7 +230,6 @@ function renderStatic() {
   for (const button of document.querySelectorAll('.segmented button')) {
     button.setAttribute('aria-pressed', String(button.dataset.mode === t.mode));
   }
-  renderCodeField();
   renderList();
   renderLive();
 }
@@ -294,11 +268,10 @@ function removeFile(id) {
 
 // ---------------------------------------------------------------- sending
 
-function sendOne(entry, code, sender, onProgress) {
+function sendOne(entry, sender, onProgress) {
   return new Promise((resolve) => {
     const request = new XMLHttpRequest();
     request.open('POST', 'api/drop');
-    request.setRequestHeader('X-Drop-Code', code);
     request.setRequestHeader('X-Drop-Filename', encodeURIComponent(entry.file.name));
     if (sender) request.setRequestHeader('X-Drop-Sender', encodeURIComponent(sender));
     request.upload.addEventListener('progress', (event) => {
@@ -321,19 +294,6 @@ function sendOne(entry, code, sender, onProgress) {
 async function sendAll(event) {
   event.preventDefault();
   if (state.sending) return;
-  const codeInput = $('code');
-  const code = normalizeCode(codeInput.value);
-  if (code === '') {
-    setCodeError({ key: 'codeMissing' });
-    codeInput.focus();
-    return;
-  }
-  if (!validCode(code)) {
-    setCodeError({ key: 'codeFormat' });
-    codeInput.focus();
-    return;
-  }
-  setCodeError(null);
   const queue = readyFiles();
   if (!queue.length) {
     setLive({ key: 'liveNothing' }, 'error');
@@ -356,7 +316,7 @@ async function sendAll(event) {
     entry.status = 'sending';
     renderList();
     setLive({ key: 'liveSending', values: [index + 1, queue.length, entry.file.name] });
-    const answer = await sendOne(entry, code, sender, (fraction) => {
+    const answer = await sendOne(entry, sender, (fraction) => {
       entry.progress = fraction;
       renderProgress(entry);
     });
@@ -366,13 +326,12 @@ async function sendAll(event) {
       entry.progress = 1;
       sent += 1;
     } else {
-      // A refusal that stops the send (wrong code, lockout, full box, no
+      // A refusal that stops the send (rate limit, full box, no
       // connection) leaves the file ready to try again; a refusal of this
       // file itself (type, size, name) would only repeat.
       entry.status = outcome.stop ? 'failed' : 'rejected';
       entry.reason = outcome.reason;
     }
-    if (outcome.codeError) setCodeError(outcome.codeError);
     if (outcome.stop) {
       stopped = outcome;
       for (const rest of queue.slice(index + 1)) rest.status = 'ready';
@@ -389,7 +348,6 @@ async function sendAll(event) {
   }
   if (stopped?.live) {
     setLive(stopped.live, 'error');
-    if (stopped.codeError) codeInput.focus();
   } else {
     setLive({ key: 'liveDone', values: [sent, queue.length] }, sent === queue.length ? 'success' : 'error');
   }
@@ -397,21 +355,7 @@ async function sendAll(event) {
 
 // --------------------------------------------------------------- wiring
 
-// Fills the code field from an invite link. The field stays editable.
-function applyInvite({ present, code }) {
-  if (!present) return;
-  if (code) {
-    $('code').value = code;
-    state.codeHelp = { key: 'codeFromLink' };
-  } else {
-    state.codeHelp = { key: 'codeFromLinkInvalid' };
-  }
-  state.codeError = null;
-  renderCodeField();
-}
-
 function setUp() {
-  applyInvite(invite);
 
   for (const button of document.querySelectorAll('.segmented button')) {
     button.addEventListener('click', () => {
@@ -440,13 +384,6 @@ function setUp() {
     $('choose').focus();
   });
   $('drop-form').addEventListener('submit', sendAll);
-  $('code').addEventListener('input', () => {
-    // Once the person types, the code is theirs, not the link's.
-    state.codeHelp = { key: 'codeHelp' };
-    state.codeError = null;
-    renderCodeField();
-  });
-
   // The whole page accepts dropped files, so a near miss does not make the
   // browser open the model instead.
   const zone = $('drop-zone');
@@ -476,7 +413,7 @@ function setUp() {
   });
 
   // An invite link opened while the page is already showing.
-  window.addEventListener('hashchange', () => applyInvite(takeInviteCode(window)));
+  window.addEventListener('hashchange', () => clearLegacyInviteCode(window));
 
   renderStatic();
 }

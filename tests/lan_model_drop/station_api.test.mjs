@@ -57,7 +57,7 @@ test('station endpoints need the station key in a Bearer header', async (t) => {
   const lowerCase = await request(service.port, { path: '/api/station/status', headers: { Authorization: `bearer ${service.key}` } });
   assert.equal(lowerCase.status, 200, 'the scheme name is case-insensitive');
   // The drop code is not a station key.
-  assert.equal((await station(service.port, service.code, 'GET', '/api/station/status')).status, 401);
+  assert.equal((await station(service.port, '123456', 'GET', '/api/station/status')).status, 401);
 });
 
 test('the station key is compared in constant time', () => {
@@ -68,31 +68,28 @@ test('the station key is compared in constant time', () => {
   assert.match(compare, /timingSafeEqual\(/);
   // No early-exit comparison of the values themselves.
   assert.doesNotMatch(compare, /candidate\s*[!=]==?\s*secret|secret\s*[!=]==?\s*candidate|\.equals\(|\.length\s*[!=]==?|\ba\s*[!=]==?\s*b\b/);
-  // Station requests and drop codes both go through it, and nothing else
+  // Station requests go through it, and nothing else
   // compares a secret.
   assert.match(app, /secretsEqual\(match \? match\[1\] : '', stationKey\.key\)/);
-  assert.match(app, /secretsEqual\(code\.trim\(\), dropCode\.code\)/);
   assert.doesNotMatch(app, /stationKey\.key\s*[!=]==?|[!=]==?\s*stationKey\.key/);
   assert.doesNotMatch(app, /dropCode\.code\s*[!=]==?|[!=]==?\s*dropCode\.code/);
 });
 
 test('status reports the protocol, station and drop box', async (t) => {
   const service = await startDrop(t, { env: { DROP_STATION_NAME: 'Workshop PC', DROP_MAX_BYTES: '5000', DROP_QUEUE_MAX_BYTES: '50000', DROP_TTL_HOURS: '6' } });
-  assert.equal((await drop(service.port, { code: service.code, fileName: 'a.3mf', body: zipLike(300) })).status, 201);
-  assert.equal((await drop(service.port, { code: service.code, fileName: 'b.obj', body: OBJ })).status, 201);
+  assert.equal((await drop(service.port, { fileName: 'a.3mf', body: zipLike(300) })).status, 201);
+  assert.equal((await drop(service.port, { fileName: 'b.obj', body: OBJ })).status, 201);
   const response = await station(service.port, service.key, 'GET', '/api/station/status');
   assert.equal(response.status, 200);
   assert.deepEqual(response.json, {
     protocol: 1,
     stationName: 'Workshop PC',
-    dropCode: service.code,
     queued: 2,
     queuedBytes: 300 + OBJ.length,
     maxBytes: 5000,
     ttlHours: 6,
     publicUrl: null,
   });
-  assert.match(response.json.dropCode, /^\d{6}$/);
 });
 
 test('status reports DROP_PUBLIC_URL as publicUrl, without a trailing slash', async (t) => {
@@ -109,8 +106,8 @@ test('status reports DROP_PUBLIC_URL as publicUrl, without a trailing slash', as
     assert.equal(response.status, 200);
     assert.equal(response.json.publicUrl, expected, configured);
     // The invite link the station builds from it reaches the sender page.
-    const link = new URL(`${response.json.publicUrl}/#code=${service.code}`);
-    assert.equal(link.hash, `#code=${service.code}`);
+    const link = new URL(`${response.json.publicUrl}/`);
+    assert.equal(link.hash, '');
     assert.ok(link.pathname.endsWith('/'), link.href);
     await service.close();
   }
@@ -130,7 +127,7 @@ test('the inbox lists items oldest first with exactly the protocol fields', asyn
   const ids = [];
   for (const [index, [fileName, body, sender]] of sent.entries()) {
     if (index === 1) clock.advance(1500);
-    const response = await drop(service.port, { code: service.code, fileName, body, sender: sender || undefined });
+    const response = await drop(service.port, { fileName, body, sender: sender || undefined });
     assert.equal(response.status, 201);
     ids.push(response.json.id);
   }
@@ -156,7 +153,7 @@ test('the inbox lists items oldest first with exactly the protocol fields', asyn
 test('a file downloads with its length and SHA-256, and removing it is idempotent', async (t) => {
   const service = await startDrop(t);
   const body = binaryStl(40);
-  const created = await drop(service.port, { code: service.code, fileName: "it's (final) *.stl", body });
+  const created = await drop(service.port, { fileName: "it's (final) *.stl", body });
   assert.equal(created.status, 201);
   const { id } = created.json;
 
@@ -193,38 +190,23 @@ test('a file downloads with its length and SHA-256, and removing it is idempoten
   }
 });
 
-test('the drop code can be renewed, unless DROP_CODE fixes it', async (t) => {
-  const service = await startDrop(t);
-  const old = service.code;
-  const renewed = await station(service.port, service.key, 'POST', '/api/station/drop-code');
-  assert.equal(renewed.status, 200);
-  assert.deepEqual(Object.keys(renewed.json), ['dropCode']);
-  assert.match(renewed.json.dropCode, /^\d{6}$/);
-  assert.notEqual(renewed.json.dropCode, old);
-  assert.equal((await station(service.port, service.key, 'GET', '/api/station/status')).json.dropCode, renewed.json.dropCode);
-  assert.equal(fs.readFileSync(path.join(service.dataDir, 'drop-code'), 'utf8').trim(), renewed.json.dropCode);
-  assert.equal((await drop(service.port, { code: old, fileName: 'cube.obj', body: OBJ })).status, 401);
-  assert.equal((await drop(service.port, { code: renewed.json.dropCode, fileName: 'cube.obj', body: OBJ })).status, 201);
-  assert.equal((await station(service.port, service.key, 'GET', '/api/station/drop-code')).status, 405);
-
-  const fixed = await startDrop(t, { env: { DROP_CODE: '4821' } });
-  assert.equal(fixed.code, '4821');
-  const refused = await station(fixed.port, fixed.key, 'POST', '/api/station/drop-code');
-  assert.equal(refused.status, 409);
-  assert.equal(refused.json.ok, false);
-  assert.equal(refused.json.error, 'fixed_code');
-  assert.equal((await station(fixed.port, fixed.key, 'GET', '/api/station/status')).json.dropCode, '4821');
-  assert.equal(fs.existsSync(path.join(fixed.dataDir, 'drop-code')), false, 'a fixed code is not written to the volume');
-  assert.equal((await drop(fixed.port, { code: '4821', fileName: 'cube.obj', body: OBJ })).status, 201);
+test('retired code management is unavailable and old configuration does not gate senders', async (t) => {
+  const dataDir = tempDir(t);
+  fs.writeFileSync(path.join(dataDir, 'drop-code'), 'legacy-value');
+  const service = await startDrop(t, { dataDir, env: { DROP_CODE: 'obsolete' } });
+  assert.equal((await drop(service.port, { fileName: 'cube.obj', body: OBJ })).status, 201);
+  assert.equal((await station(service.port, service.key, 'POST', '/api/station/drop-code')).status, 404);
+  assert.equal(fs.readFileSync(path.join(dataDir, 'drop-code'), 'utf8'), 'legacy-value');
+  assert.equal(Object.hasOwn((await station(service.port, service.key, 'GET', '/api/station/status')).json, 'dropCode'), false);
 });
 
 test('items older than DROP_TTL_HOURS are removed, on the timer and at start', async (t) => {
   const clock = manualClock();
   const dataDir = tempDir(t);
   const first = await startDrop(t, { clock, dataDir, env: { DROP_TTL_HOURS: '1' } });
-  const old = await drop(first.port, { code: first.code, fileName: 'old.obj', body: OBJ });
+  const old = await drop(first.port, { fileName: 'old.obj', body: OBJ });
   clock.advance(30 * 60 * 1000);
-  const newer = await drop(first.port, { code: first.code, fileName: 'newer.obj', body: OBJ });
+  const newer = await drop(first.port, { fileName: 'newer.obj', body: OBJ });
   assert.equal(old.status, 201);
   assert.equal(newer.status, 201);
 
@@ -252,7 +234,7 @@ test('items older than DROP_TTL_HOURS are removed, on the timer and at start', a
 test('a restart keeps queued items and clears unfinished uploads', async (t) => {
   const dataDir = tempDir(t);
   const first = await startDrop(t, { dataDir });
-  const kept = await drop(first.port, { code: first.code, fileName: 'kept.stl', body: ASCII_STL });
+  const kept = await drop(first.port, { fileName: 'kept.stl', body: ASCII_STL });
   await first.close();
   const queueDir = path.join(dataDir, 'queue');
   fs.writeFileSync(path.join(queueDir, `${'b'.repeat(32)}.bin.tmp`), 'partial');
@@ -265,23 +247,19 @@ test('a restart keeps queued items and clears unfinished uploads', async (t) => 
   assert.deepEqual(fs.readdirSync(queueDir).sort(), [`${kept.json.id}.bin`, `${kept.json.id}.json`]);
 });
 
-test('the generated station key and drop code are stored with mode 0600 and never logged', async (t) => {
+test('the generated station key is stored with mode 0600 and never logged', async (t) => {
   const service = await startDrop(t);
   const keyFile = path.join(service.dataDir, 'station-key');
-  const codeFile = path.join(service.dataDir, 'drop-code');
   assert.match(service.key, /^[A-Za-z0-9_-]{43}$/, '32 random bytes as base64url');
   assert.equal(fs.readFileSync(keyFile, 'utf8'), `${service.key}\n`);
-  assert.equal(fs.readFileSync(codeFile, 'utf8'), `${service.code}\n`);
   if (!isWindows) {
     assert.equal(fs.statSync(keyFile).mode & 0o777, 0o600);
-    assert.equal(fs.statSync(codeFile).mode & 0o777, 0o600);
   }
-  await drop(service.port, { code: service.code, fileName: 'cube.obj', body: OBJ });
+  await drop(service.port, { fileName: 'cube.obj', body: OBJ });
   await station(service.port, service.key, 'POST', '/api/station/drop-code');
   const log = service.logs.join('\n');
   assert.ok(log.includes('docker compose exec lan-model-drop node server/station-key.mjs'), log);
   assert.ok(!log.includes(service.key), 'the station key is never logged');
-  assert.ok(!log.includes(service.code), 'the drop code is never logged');
   assert.ok(!log.includes('cube.obj'), 'file names are not logged');
 
   // A widened file is made private again at the next start.

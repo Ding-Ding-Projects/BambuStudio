@@ -82,8 +82,6 @@ bool is_sha256_hex(std::string_view digest); // exactly 64 lowercase hexadecimal
 bool is_utc_stamp(std::string_view stamp);   // exactly YYYY-MM-DDTHH:MM:SSZ, a real date and time
 // The station key travels in an Authorization header: 16 to 512 visible ASCII characters, no spaces.
 bool is_station_key(std::string_view key);
-// The drop code people type: 1 to 64 visible ASCII characters.
-bool is_drop_code(std::string_view code);
 // Lowercase hexadecimal of raw digest bytes.
 std::string to_hex(const unsigned char *bytes, std::size_t size);
 // The value of the last `name:` field in raw HTTP response header lines, matched without regard to
@@ -117,7 +115,6 @@ InboxListing parse_inbox(std::string_view body);
 struct StationStatus
 {
     std::string   station_name;
-    std::string   drop_code;
     std::uint64_t queued       = 0;
     std::uint64_t queued_bytes = 0;
     std::uint64_t max_bytes    = 0;
@@ -129,8 +126,6 @@ struct StationStatus
 // Only a protocol-1 answer with every required field present and well formed. `publicUrl` is
 // optional so a container from before the invite link still connects.
 std::optional<StationStatus> parse_status(std::string_view body);
-// {"dropCode":"654321"}
-std::optional<std::string> parse_drop_code(std::string_view body);
 // {"ok":true,"service":"lan-model-drop","protocol":1}
 bool parse_health(std::string_view body);
 
@@ -180,16 +175,6 @@ DownloadVerdict judge_download(const InboxItem &item, const Exchange &exchange, 
 // DELETE /api/station/files/<id> is settled by any 2xx (204 also when the file was already gone) and
 // by 404; anything else is tried again later.
 bool delete_settled(const Exchange &exchange);
-// POST /api/station/drop-code: the new code from a 2xx answer; `fixed` for 409 (DROP_CODE fixes the
-// code); otherwise `failure` says what went wrong (Connected when a code arrived).
-struct NewCodeOutcome
-{
-    std::optional<std::string> code;
-    bool                       fixed   = false;
-    LinkState                  failure = LinkState::Connected;
-};
-NewCodeOutcome classify_new_code(const Exchange &exchange);
-
 // Delay before the next poll: 5 s while healthy, doubling after each consecutive failure up to 60 s.
 int next_poll_delay_seconds(int consecutive_failures);
 
@@ -214,7 +199,6 @@ std::string health_url(const BaseAddress &address);
 std::string status_url(const BaseAddress &address);
 std::string inbox_url(const BaseAddress &address);
 std::string file_url(const BaseAddress &address, const std::string &id);
-std::string drop_code_url(const BaseAddress &address);
 
 bool is_ipv4(std::string_view text);
 bool is_private_ipv4(std::string_view text);
@@ -264,9 +248,8 @@ struct InviteBase
 // when it is still one of `lan_candidates`; otherwise the first candidate is used.
 InviteBase choose_invite_base(const std::string &public_url, const BaseAddress &configured,
                               const std::vector<std::string> &lan_candidates, const std::string &preferred_ipv4);
-// <base>/#code=<code>, the code percent-encoded like encodeURIComponent. The code travels in the
-// fragment, so it reaches neither server logs nor a Referer header. Empty when either part is unusable.
-std::string invite_link(const std::string &base, const std::string &drop_code);
+// The validated sender address, with no credentials in the query or fragment.
+std::string invite_link(const std::string &base);
 
 // ---------------------------------------------------------------------------------------------
 // Presentation helpers

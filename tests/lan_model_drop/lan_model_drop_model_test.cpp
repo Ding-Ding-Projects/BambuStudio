@@ -200,9 +200,6 @@ static void names()
     CHECK(!is_station_key("has a space inside it"));
     CHECK(!is_station_key("line\r\nInjected: header"));
     CHECK(!is_station_key(std::string(513, 'k')));
-    CHECK(is_drop_code("123456"));
-    CHECK(!is_drop_code(""));
-    CHECK(!is_drop_code("12 34"));
     const unsigned char raw[] = {0x00, 0x0f, 0xa5, 0xff};
     CHECK(to_hex(raw, sizeof(raw)) == "000fa5ff");
 }
@@ -266,39 +263,37 @@ static void inbox()
 
 static void status_messages()
 {
-    const std::string good = "{\"protocol\":1,\"stationName\":\"Bambu Studio\",\"dropCode\":\"123456\",\"queued\":2,"
+    const std::string good = "{\"protocol\":1,\"stationName\":\"Bambu Studio\",\"queued\":2,"
                              "\"queuedBytes\":4096,\"maxBytes\":268435456,\"ttlHours\":24}";
     const auto status = parse_status(good);
-    CHECK(status && status->drop_code == "123456" && status->station_name == "Bambu Studio" && status->queued == 2 &&
+    CHECK(status && status->station_name == "Bambu Studio" && status->queued == 2 &&
           status->queued_bytes == 4096 && status->max_bytes == 268435456ULL && status->ttl_hours == 24.0 &&
           status->public_url.empty());
     // DROP_TTL_HOURS accepts fractions; publicUrl is optional, may be null, and is normalized.
-    const std::string head = "{\"protocol\":1,\"stationName\":\"Bambu Studio\",\"dropCode\":\"123456\",\"queued\":0,"
+    const std::string head = "{\"protocol\":1,\"stationName\":\"Bambu Studio\",\"queued\":0,"
                              "\"queuedBytes\":0,\"maxBytes\":1024,";
     CHECK(parse_status(head + "\"ttlHours\":0.5}") && parse_status(head + "\"ttlHours\":0.5}")->ttl_hours == 0.5);
     CHECK(!parse_status(head + "\"ttlHours\":0}") && !parse_status(head + "\"ttlHours\":-1}") && !parse_status(head + "\"ttlHours\":\"24\"}"));
     CHECK(parse_status(head + "\"ttlHours\":24,\"publicUrl\":null}")->public_url.empty());
     // A station name of 41 to 60 characters, which the drop site reports in full, is shown in full.
     const std::string long_name = std::string(u8"\u4E01\u4E01\u6253\u5370\u5BA4 ") + std::string(54, 'n');
-    CHECK(parse_status("{\"protocol\":1,\"stationName\":\"" + long_name + "\",\"dropCode\":\"123456\",\"queued\":0,"
+    CHECK(parse_status("{\"protocol\":1,\"stationName\":\"" + long_name + "\",\"queued\":0,"
                        "\"queuedBytes\":0,\"maxBytes\":1024,\"ttlHours\":24}")->station_name == long_name);
     CHECK(parse_status(head + "\"ttlHours\":24,\"publicUrl\":\"https://Drop.Example.org/models/\"}")->public_url ==
           "https://drop.example.org/models");
     CHECK(parse_status(head + "\"ttlHours\":24,\"publicUrl\":\"https://user:pw@drop.example.org\"}")->public_url.empty());
     CHECK(!parse_status("{\"protocol\":2,\"stationName\":\"x\",\"dropCode\":\"1\",\"queued\":0,\"queuedBytes\":0,\"maxBytes\":1,\"ttlHours\":1}"));
     CHECK(!parse_status("{\"stationName\":\"x\",\"dropCode\":\"1\",\"queued\":0,\"queuedBytes\":0,\"maxBytes\":1,\"ttlHours\":1}"));
-    CHECK(!parse_status("{\"protocol\":1,\"stationName\":\"x\",\"dropCode\":\"\",\"queued\":0,\"queuedBytes\":0,\"maxBytes\":1,\"ttlHours\":1}"));
+    CHECK(parse_status("{\"protocol\":1,\"stationName\":\"x\",\"dropCode\":\"\",\"queued\":0,\"queuedBytes\":0,\"maxBytes\":1,\"ttlHours\":1}"));
     CHECK(!parse_status("{\"protocol\":\"1\",\"stationName\":\"x\",\"dropCode\":\"1\",\"queued\":0,\"queuedBytes\":0,\"maxBytes\":1,\"ttlHours\":1}"));
     CHECK(!parse_status("not json"));
 
-    CHECK(parse_drop_code("{\"dropCode\":\"654321\"}") == std::optional<std::string>("654321"));
-    CHECK(!parse_drop_code("{\"ok\":false,\"error\":\"fixed_code\"}"));
     CHECK(parse_health("{\"ok\":true,\"service\":\"lan-model-drop\",\"protocol\":1}"));
     CHECK(!parse_health("{\"ok\":true,\"service\":\"something-else\",\"protocol\":1}"));
     CHECK(!parse_health("{\"ok\":true,\"service\":\"lan-model-drop\",\"protocol\":2}"));
 
     StationStatus filled;
-    CHECK(classify_status({true, 200, good}, &filled) == LinkState::Connected && filled.drop_code == "123456");
+    CHECK(classify_status({true, 200, good}, &filled) == LinkState::Connected);
     CHECK(classify_status({false, 0, ""}) == LinkState::NotReachable);
     CHECK(classify_status({true, 401, "{\"ok\":false}"}) == LinkState::WrongStationKey);
     CHECK(classify_status({true, 403, ""}) == LinkState::WrongStationKey);
@@ -337,7 +332,6 @@ static void addresses()
     CHECK(inbox_url(*local) == "http://localhost:8833/api/station/inbox");
     CHECK(status_url(*local) == "http://localhost:8833/api/station/status");
     CHECK(health_url(*local) == "http://localhost:8833/healthz");
-    CHECK(drop_code_url(*local) == "http://localhost:8833/api/station/drop-code");
     CHECK(file_url(*local, kId1) == "http://localhost:8833/api/station/files/" + kId1);
     CHECK(file_url(*local, "../secret").empty());
 
@@ -422,13 +416,12 @@ static void invites()
     CHECK(choose_invite_base("", *parse_base_address("localhost"), {first}, "").base == "http://" + first);
     CHECK(choose_invite_base("", *parse_base_address("http://0.0.0.0:8833"), {first}, "").source == InviteSource::LanAddress);
 
-    // The code travels in the fragment, encoded like encodeURIComponent.
-    CHECK(invite_link("http://" + first + ":8833", "123456") == "http://" + first + ":8833/#code=123456");
-    CHECK(invite_link("https://drop.example.org/models", "12+4&5") == "https://drop.example.org/models/#code=12%2B4%265");
-    CHECK(invite_link("", "123456").empty());
-    CHECK(invite_link("https://drop.example.org", "").empty());
-    CHECK(invite_link("https://drop.example.org", "12\n34").empty());
-    CHECK(invite_link("https://drop.example.org", "123456").find('?') == std::string::npos);
+    CHECK(invite_link("http://" + first + ":8833") == "http://" + first + ":8833/");
+    CHECK(invite_link("https://drop.example.org/models") == "https://drop.example.org/models/");
+    CHECK(invite_link("").empty());
+    CHECK(invite_link("https://drop.example.org?code=123456").empty());
+    CHECK(invite_link("https://drop.example.org#code=123456").empty());
+
 }
 
 static void presentation_and_tracking()
@@ -560,14 +553,7 @@ static void verdicts()
     CHECK(!delete_settled({true, 401, ""}));
     CHECK(!delete_settled({true, 500, ""}));
 
-    const NewCodeOutcome renewed = classify_new_code({true, 200, "{\"dropCode\":\"654321\"}"});
-    CHECK(renewed.code == std::optional<std::string>("654321") && !renewed.fixed && renewed.failure == LinkState::Connected);
-    const NewCodeOutcome fixed = classify_new_code({true, 409, "{\"ok\":false,\"error\":\"fixed_code\"}"});
-    CHECK(!fixed.code && fixed.fixed);
-    const NewCodeOutcome garbled = classify_new_code({true, 200, "<html>"});
-    CHECK(!garbled.code && !garbled.fixed && garbled.failure == LinkState::ProtocolNotSupported);
-    CHECK(classify_new_code({true, 401, ""}).failure == LinkState::WrongStationKey);
-    CHECK(classify_new_code({false, 0, ""}).failure == LinkState::NotReachable);
+
 }
 
 int main()

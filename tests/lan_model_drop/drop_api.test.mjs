@@ -34,7 +34,7 @@ test('every accepted type is stored when its content matches', async (t) => {
     ['bom.step', Buffer.concat([Buffer.from([0xef, 0xbb, 0xbf]), STEP]), 'step'],
   ];
   for (const [fileName, body] of cases) {
-    const response = await drop(service.port, { code: service.code, fileName, body });
+    const response = await drop(service.port, { fileName, body });
     assert.equal(response.status, 201, `${fileName}: ${response.body}`);
     assert.equal(response.json.ok, true);
     assert.match(response.json.id, /^[0-9a-f]{32}$/);
@@ -58,7 +58,7 @@ test('content that does not match its extension is refused with 415', async (t) 
     ['empty.stl', Buffer.alloc(0)],
   ];
   for (const [fileName, body] of cases) {
-    const response = await drop(service.port, { code: service.code, fileName, body });
+    const response = await drop(service.port, { fileName, body });
     assert.equal(response.status, 415, `${fileName}: ${response.body}`);
     assert.equal(errorOf(response), 'unsupported_type');
   }
@@ -69,90 +69,49 @@ test('content that does not match its extension is refused with 415', async (t) 
 test('other extensions are refused with 415 before any byte is stored', async (t) => {
   const service = await startDrop(t);
   for (const fileName of ['setup.exe', 'notes.txt', 'model', 'archive.zip', 'model.stl.exe', 'page.html']) {
-    const response = await drop(service.port, { code: service.code, fileName, body: zipLike() });
+    const response = await drop(service.port, { fileName, body: zipLike() });
     assert.equal(response.status, 415, fileName);
     assert.equal(errorOf(response), 'unsupported_type');
   }
 });
 
-test('a wrong drop code is 401, and the fifth wrong code in a minute locks the address out for five minutes', async (t) => {
+test('direct uploads need no code and upload attempts are rate limited', async (t) => {
   const clock = manualClock();
-  const service = await startDrop(t, { clock });
-  const wrong = service.code === '000000' ? '111111' : '000000';
-  for (let attempt = 1; attempt <= 5; attempt += 1) {
-    const response = await drop(service.port, { code: wrong, fileName: 'cube.obj', body: OBJ });
-    assert.equal(response.status, 401, `attempt ${attempt}`);
-    assert.equal(errorOf(response), 'wrong_code');
+  const service = await startDrop(t, { clock, env: { DROP_QUEUE_MAX_FILES: '100' } });
+  for (let attempt = 0; attempt < 60; attempt++) {
+    assert.equal((await drop(service.port, { fileName: 'cube.obj', body: OBJ })).status, 201);
   }
-  // Locked: even the right code is refused, with a Retry-After.
-  const locked = await drop(service.port, { code: service.code, fileName: 'cube.obj', body: OBJ });
+  const locked = await drop(service.port, { fileName: 'cube.obj', body: OBJ });
   assert.equal(locked.status, 429);
-  assert.equal(errorOf(locked), 'too_many_attempts');
   assert.equal(locked.headers['retry-after'], '300');
-  const noCode = await drop(service.port, { fileName: 'cube.obj', body: OBJ });
-  assert.equal(noCode.status, 429);
-
-  clock.advance(4 * 60 * 1000 + 59 * 1000);
-  assert.equal((await drop(service.port, { code: service.code, fileName: 'cube.obj', body: OBJ })).status, 429);
-  clock.advance(1000);
-  assert.equal((await drop(service.port, { code: service.code, fileName: 'cube.obj', body: OBJ })).status, 201);
-  assert.ok(service.logs.some((line) => /locked out 127\.0\.0\.1/.test(line)));
-});
-
-test('wrong codes spread over more than a minute do not lock the address', async (t) => {
-  const clock = manualClock();
-  const service = await startDrop(t, { clock });
-  const wrong = service.code === '000000' ? '111111' : '000000';
-  for (let round = 0; round < 3; round += 1) {
-    for (let attempt = 0; attempt < 4; attempt += 1) {
-      assert.equal((await drop(service.port, { code: wrong, fileName: 'cube.obj', body: OBJ })).status, 401);
-    }
-    clock.advance(61 * 1000);
-  }
-  assert.equal((await drop(service.port, { code: service.code, fileName: 'cube.obj', body: OBJ })).status, 201);
-});
-
-// A plain cross-site POST from any web page can reach this service without
-// the X-Drop-Code header (a custom header needs a CORS preflight, which this
-// service never grants). Counting such requests would let any page a sender
-// visits lock that sender out, so they are refused without touching the lockout.
-test('a missing drop code is 400 and never counts toward the lockout', async (t) => {
-  const service = await startDrop(t);
-  for (let attempt = 1; attempt <= 6; attempt += 1) {
-    const response = await drop(service.port, { fileName: 'cube.obj', body: OBJ });
-    assert.equal(response.status, 400, `attempt ${attempt}`);
-    assert.equal(errorOf(response), 'bad_request');
-  }
-  assert.equal((await drop(service.port, { code: service.code, fileName: 'cube.obj', body: OBJ })).status, 201);
-  assert.ok(!service.logs.some((line) => /locked out/.test(line)));
+  clock.advance(300000);
+  assert.equal((await drop(service.port, { fileName: 'cube.obj', body: OBJ })).status, 201);
 });
 
 test('a request a browser marks as cross-site is refused and never counts toward the lockout', async (t) => {
   const service = await startDrop(t);
-  const wrong = service.code === '000000' ? '111111' : '000000';
   for (let attempt = 1; attempt <= 6; attempt += 1) {
-    const response = await drop(service.port, { code: wrong, fileName: 'cube.obj', body: OBJ, headers: { 'Sec-Fetch-Site': 'cross-site' } });
+    const response = await drop(service.port, { fileName: 'cube.obj', body: OBJ, headers: { 'Sec-Fetch-Site': 'cross-site' } });
     assert.equal(response.status, 400, `attempt ${attempt}`);
     assert.equal(errorOf(response), 'bad_request');
   }
-  const crossSiteRight = await drop(service.port, { code: service.code, fileName: 'cube.obj', body: OBJ, headers: { 'Sec-Fetch-Site': 'cross-site' } });
+  const crossSiteRight = await drop(service.port, { fileName: 'cube.obj', body: OBJ, headers: { 'Sec-Fetch-Site': 'cross-site' } });
   assert.equal(crossSiteRight.status, 400);
   // The drop page itself is same-origin, and older browsers send no Sec-Fetch-Site at all.
-  assert.equal((await drop(service.port, { code: service.code, fileName: 'cube.obj', body: OBJ, headers: { 'Sec-Fetch-Site': 'same-origin' } })).status, 201);
-  assert.equal((await drop(service.port, { code: service.code, fileName: 'cube.obj', body: OBJ })).status, 201);
+  assert.equal((await drop(service.port, { fileName: 'cube.obj', body: OBJ, headers: { 'Sec-Fetch-Site': 'same-origin' } })).status, 201);
+  assert.equal((await drop(service.port, { fileName: 'cube.obj', body: OBJ })).status, 201);
   assert.ok(!service.logs.some((line) => /locked out/.test(line)));
 });
 
 test('a lockout belongs to one client address', async (t) => {
-  const service = await startDrop(t);
-  const wrong = service.code === '000000' ? '111111' : '000000';
-  for (let attempt = 0; attempt < 5; attempt += 1) {
-    await drop(service.port, { code: wrong, fileName: 'cube.obj', body: OBJ });
+  const service = await startDrop(t, { env: { DROP_QUEUE_MAX_FILES: '100' } });
+  for (let attempt = 0; attempt < 60; attempt += 1) {
+    await drop(service.port, { fileName: 'cube.obj', body: OBJ });
   }
-  assert.equal((await drop(service.port, { code: service.code, fileName: 'cube.obj', body: OBJ })).status, 429);
+  assert.equal((await drop(service.port, { fileName: 'cube.obj', body: OBJ })).status, 429);
   let other;
   try {
-    other = await drop(service.port, { code: service.code, fileName: 'cube.obj', body: OBJ, localAddress: '127.0.0.2' });
+    other = await drop(service.port, { fileName: 'cube.obj', body: OBJ, localAddress: '127.0.0.2' });
   } catch (error) {
     if (['EADDRNOTAVAIL', 'EINVAL'].includes(error.code)) {
       t.skip('this system cannot send from 127.0.0.2');
@@ -168,7 +127,7 @@ test('an upload without a Content-Length is 411', async (t) => {
   const response = await request(service.port, {
     method: 'POST',
     path: '/api/drop',
-    headers: { 'X-Drop-Code': service.code, 'X-Drop-Filename': 'cube.obj' },
+    headers: { 'X-Drop-Filename': 'cube.obj' },
     body: OBJ,
     chunked: true,
   });
@@ -179,9 +138,9 @@ test('an upload without a Content-Length is 411', async (t) => {
 
 test('a file larger than DROP_MAX_BYTES is 413 before it is stored', async (t) => {
   const service = await startDrop(t, { env: { DROP_MAX_BYTES: '1000', DROP_QUEUE_MAX_BYTES: '100000' } });
-  const atLimit = await drop(service.port, { code: service.code, fileName: 'fits.3mf', body: zipLike(1000) });
+  const atLimit = await drop(service.port, { fileName: 'fits.3mf', body: zipLike(1000) });
   assert.equal(atLimit.status, 201);
-  const over = await drop(service.port, { code: service.code, fileName: 'big.3mf', body: zipLike(1001) });
+  const over = await drop(service.port, { fileName: 'big.3mf', body: zipLike(1001) });
   assert.equal(over.status, 413);
   assert.equal(errorOf(over), 'too_large');
   assert.equal((await inbox(service)).length, 1);
@@ -190,23 +149,23 @@ test('a file larger than DROP_MAX_BYTES is 413 before it is stored', async (t) =
 test('a full drop box is 507, by file count and by bytes', async (t) => {
   const byCount = await startDrop(t, { env: { DROP_QUEUE_MAX_FILES: '2' } });
   for (let i = 0; i < 2; i += 1) {
-    assert.equal((await drop(byCount.port, { code: byCount.code, fileName: `cube${i}.obj`, body: OBJ })).status, 201);
+    assert.equal((await drop(byCount.port, { fileName: `cube${i}.obj`, body: OBJ })).status, 201);
   }
-  const third = await drop(byCount.port, { code: byCount.code, fileName: 'cube2.obj', body: OBJ });
+  const third = await drop(byCount.port, { fileName: 'cube2.obj', body: OBJ });
   assert.equal(third.status, 507);
   assert.equal(errorOf(third), 'queue_full');
 
   // Taking an item out makes room again.
   const [first] = await inbox(byCount);
   assert.equal((await station(byCount.port, byCount.key, 'DELETE', `/api/station/files/${first.id}`)).status, 204);
-  assert.equal((await drop(byCount.port, { code: byCount.code, fileName: 'cube2.obj', body: OBJ })).status, 201);
+  assert.equal((await drop(byCount.port, { fileName: 'cube2.obj', body: OBJ })).status, 201);
 
   const byBytes = await startDrop(t, { env: { DROP_MAX_BYTES: '500', DROP_QUEUE_MAX_BYTES: '800' } });
-  assert.equal((await drop(byBytes.port, { code: byBytes.code, fileName: 'a.3mf', body: zipLike(500) })).status, 201);
-  const full = await drop(byBytes.port, { code: byBytes.code, fileName: 'b.3mf', body: zipLike(400) });
+  assert.equal((await drop(byBytes.port, { fileName: 'a.3mf', body: zipLike(500) })).status, 201);
+  const full = await drop(byBytes.port, { fileName: 'b.3mf', body: zipLike(400) });
   assert.equal(full.status, 507);
   assert.equal(errorOf(full), 'queue_full');
-  assert.equal((await drop(byBytes.port, { code: byBytes.code, fileName: 'c.3mf', body: zipLike(300) })).status, 201);
+  assert.equal((await drop(byBytes.port, { fileName: 'c.3mf', body: zipLike(300) })).status, 201);
 });
 
 test('file names are reduced to a clean base name and never reach the disk', async (t) => {
@@ -225,14 +184,14 @@ test('file names are reduced to a clean base name and never reach the disk', asy
     ['模型 零件.stl', '模型 零件.stl'],
   ];
   for (const [sent] of accepted) {
-    const response = await drop(service.port, { code: service.code, fileName: sent, body: ASCII_STL });
+    const response = await drop(service.port, { fileName: sent, body: ASCII_STL });
     assert.equal(response.status, 201, `${JSON.stringify(sent)}: ${response.body}`);
   }
   const items = await inbox(service);
   assert.deepEqual(items.map((item) => item.fileName), accepted.map(([, stored]) => stored));
 
   const long = `${'x'.repeat(300)}.stl`;
-  const longResponse = await drop(service.port, { code: service.code, fileName: long, body: ASCII_STL });
+  const longResponse = await drop(service.port, { fileName: long, body: ASCII_STL });
   assert.equal(longResponse.status, 201);
   const longName = (await inbox(service)).at(-1).fileName;
   assert.equal([...longName].length, 200);
@@ -249,19 +208,19 @@ test('names that clean down to nothing, malformed encodings and long senders are
   const service = await startDrop(t);
   const badNames = ['..', '../..', '/', '\\', '.stl', '   .stl', '...', ' ', '\u0000', '<>:"|?*'];
   for (const fileName of badNames) {
-    const response = await drop(service.port, { code: service.code, fileName, body: ASCII_STL });
+    const response = await drop(service.port, { fileName, body: ASCII_STL });
     assert.equal(response.status, 400, JSON.stringify(fileName));
     assert.equal(errorOf(response), 'bad_request');
   }
-  const missing = await drop(service.port, { code: service.code, body: ASCII_STL });
+  const missing = await drop(service.port, { body: ASCII_STL });
   assert.equal(missing.status, 400);
-  const malformed = await drop(service.port, { code: service.code, body: ASCII_STL, headers: { 'X-Drop-Filename': 'cube%E0%A4%A.stl' } });
+  const malformed = await drop(service.port, { body: ASCII_STL, headers: { 'X-Drop-Filename': 'cube%E0%A4%A.stl' } });
   assert.equal(malformed.status, 400);
   assert.equal(errorOf(malformed), 'bad_request');
 
-  const longSender = await drop(service.port, { code: service.code, fileName: 'cube.stl', body: ASCII_STL, sender: 'a'.repeat(41) });
+  const longSender = await drop(service.port, { fileName: 'cube.stl', body: ASCII_STL, sender: 'a'.repeat(41) });
   assert.equal(longSender.status, 400);
-  const badSender = await drop(service.port, { code: service.code, fileName: 'cube.stl', body: ASCII_STL, headers: { 'X-Drop-Sender': '%ZZ' } });
+  const badSender = await drop(service.port, { fileName: 'cube.stl', body: ASCII_STL, headers: { 'X-Drop-Sender': '%ZZ' } });
   assert.equal(badSender.status, 400);
   assert.deepEqual(await inbox(service), []);
 });
@@ -275,7 +234,7 @@ test('sender names are optional, cleaned and limited to 40 characters', async (t
     ['陳大文'.repeat(13) + '陳', '陳大文'.repeat(13) + '陳'],
   ];
   for (const [sender] of senders) {
-    assert.equal((await drop(service.port, { code: service.code, fileName: 'cube.obj', body: OBJ, sender })).status, 201);
+    assert.equal((await drop(service.port, { fileName: 'cube.obj', body: OBJ, sender })).status, 201);
   }
   assert.deepEqual((await inbox(service)).map((item) => item.sender), senders.map(([, stored]) => stored));
 });

@@ -1,3 +1,4 @@
+import { pathToFileURL } from 'node:url';
 // The drop site and the station agree. Whatever the drop service accepts and reports, the station
 // takes exactly as it was reported: a model the sender was told arrived is never turned away by the
 // station afterwards, an invite address the owner set is never quietly replaced, and the limits of
@@ -17,7 +18,7 @@ import { ASCII_STL, ConfigError, drop, readConfig, startDrop, station, zipLike }
 const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const hasGxx = spawnSync('g++', ['--version'], { encoding: 'utf8' }).status === 0;
 const skip = hasGxx ? false : 'g++ is not installed';
-const { normalizePublicUrl, cleanStationName } = await import(path.join(repo, 'lan-model-drop', 'server', 'config.mjs'));
+const { normalizePublicUrl, cleanStationName } = await import(pathToFileURL(path.join(repo, 'lan-model-drop', 'server', 'config.mjs')).href);
 
 let work = null;
 let exe = null;
@@ -67,7 +68,7 @@ test('a name the station would refuse is refused by the drop box, where the send
     '\u200b\u202e.step'];
   for (const fileName of refused) {
     const body = fileName.endsWith('.3mf') ? zipLike(64) : fileName.endsWith('.step') ? Buffer.from('ISO-10303-21;\n') : fileName.endsWith('.obj') ? Buffer.from('v 0 0 0\n') : ASCII_STL;
-    const res = await drop(d.port, { code: d.code, fileName, body });
+    const res = await drop(d.port, { fileName, body });
     assert.equal(res.status, 400, `${JSON.stringify(fileName)}: ${res.body}`);
     assert.equal(res.json.error, 'bad_request');
   }
@@ -80,7 +81,7 @@ test('a name the station would refuse is refused by the drop box, where the send
     ['\u6a21\u578b\u200f \u96f6\u4ef6.stl', '\u9673\u5927\u6587\u200e', '\u6a21\u578b \u96f6\u4ef6.stl', '\u9673\u5927\u6587'],
   ];
   for (const [fileName, sender] of kept) {
-    const res = await drop(d.port, { code: d.code, fileName, body: ASCII_STL, sender });
+    const res = await drop(d.port, { fileName, body: ASCII_STL, sender });
     assert.equal(res.status, 201, `${JSON.stringify(fileName)}: ${res.body}`);
   }
   const inbox = await station(d.port, d.key, 'GET', '/api/station/inbox');

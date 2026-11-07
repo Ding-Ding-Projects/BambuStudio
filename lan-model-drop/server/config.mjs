@@ -72,11 +72,6 @@ export function validStationKey(value) {
   return typeof value === 'string' && /^[\x21-\x7e]{16,512}$/.test(value);
 }
 
-// A fixed drop code is typed on a phone's number pad.
-export function validDropCode(value) {
-  return typeof value === 'string' && /^\d{4,12}$/.test(value);
-}
-
 // A host Bambu Studio takes in an invite address (LanModelDropModel.cpp,
 // parse_base_address): a host name of dot-separated labels of letters, digits
 // and hyphens, not starting with a dot or a hyphen nor ending with a hyphen,
@@ -95,7 +90,7 @@ const STATION_PATH = /^(?:\/(?:[A-Za-z0-9\-._~!$&'()*+,;=:@]|%[0-9A-Fa-f]{2})+)*
 
 // DROP_PUBLIC_URL: the address people open when the service sits behind a
 // reverse proxy or has a fixed name. Bambu Studio builds invite links as
-// `<publicUrl>/#code=<drop code>`, so the URL is an http or https address
+// `<publicUrl>/`, so the URL is an http or https address
 // with a host and nothing that could carry a secret or change the page:
 // no user name or password, no query and no fragment. The answer has no
 // trailing slash: https://drop.example.org/ becomes https://drop.example.org.
@@ -148,12 +143,6 @@ export function readConfig(env = process.env) {
     }
   }
 
-  let fixedCode = null;
-  if (present(env.DROP_CODE)) {
-    fixedCode = env.DROP_CODE.trim();
-    if (!validDropCode(fixedCode)) throw new ConfigError('DROP_CODE must be 4 to 12 digits.');
-  }
-
   const publicUrl = present(env.DROP_PUBLIC_URL) ? normalizePublicUrl(env.DROP_PUBLIC_URL) : null;
 
   return Object.freeze({
@@ -164,7 +153,6 @@ export function readConfig(env = process.env) {
     queueMaxFiles,
     queueMaxBytes,
     stationKey,
-    fixedCode,
     publicUrl,
   });
 }

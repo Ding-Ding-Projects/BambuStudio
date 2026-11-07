@@ -54,7 +54,6 @@ export async function startDrop(t, { env = {}, dataDir, clock, serverOptions = {
     logs,
     key,
     close,
-    get code() { return drop.service.dropCode; },
   };
 }
 

@@ -1,5 +1,11 @@
 # LAN model drop
 
+## Direct sending update (1.0.1)
+
+Invite links contain only the address, with no credentials or query parameters. Code-renewal controls are removed. Legacy DROP_CODE configuration and the existing drop-code file are ignored without deleting either. Upgrades retain the same volume, station key and waiting models. Model-format, size, queue and expiry limits remain enforced.
+
+Anyone who can reach the service can send; inbox access, downloads and management still require the station key. Each source address allows 60 upload attempts per minute, followed by a five-minute cooldown. Use a trusted local network and never expose the service to the internet. Publication of the new container and actual LAN verification are pending.
+
 People on your local network can send a 3D model to the Bambu Studio on this computer from a phone
 or a laptop browser. A small site runs in a Docker container (the `lan-model-drop` service in the
 `lan-model-drop/` folder of this repository); Bambu Studio is the station that collects what
@@ -13,9 +19,6 @@ The option is off by default.
   holds the switch **Receive models from the LAN drop site**, the invite, and the connection rows.
 - **File, LAN model drop...** opens that section on the switch.
 - **File, Invite someone to send a model...** opens the invite dialog.
-- **Command palette (Ctrl+Shift+F).** "Invite someone to send a model", "LAN model drop settings"
-  and every row of the section ("Receive models from the LAN drop site", "Invite link and QR code",
-  "Test connection", "Drop site address", "Station key", "Drop code") land on the exact row.
 - **Settings search** in Preferences finds the same rows.
 - **Title bar.** While the option is on, a LAN indicator sits left of the notification bell. It is
   Primary while connected, Error on a problem and neutral while connecting, carries the number of
@@ -45,9 +48,6 @@ section right under the switch, so it is the first thing shown once the option i
 dialog **Invite someone to send a model**, which offers **Turn on LAN model drop** while the option
 is off and then moves focus to **Copy link** as soon as the link exists.
 
-- **The link** is `<base>/#code=<drop code>`, shown as selectable text. The drop code travels in the
-  fragment, so it reaches neither server logs nor a Referer header; the site reads it, fills the
-  code field and removes the fragment from the address bar.
 - **The base**, in this order: the container's public URL when it reports one (`publicUrl` from
   `DROP_PUBLIC_URL`, for a reverse proxy or a fixed name); otherwise the configured address when it
   is not a loopback address; otherwise `http://<this computer's private LAN IPv4>:<port>` with the
@@ -55,21 +55,12 @@ is off and then moves focus to **Copy link** as soon as the link exists.
   172.16/12, 192.168/16), **Address of this computer** lets you pick one; the choice is remembered.
   Loopback, link-local, multicast and public addresses are never offered. A line under the link says
   which base is in use. With no usable base the invite says so instead of showing a link.
-- Under the link, the base and the drop code are also shown on their own ("Or open ... and type the
-  drop code ..."), for someone who types them rather than scans or clicks.
 - **Copy link** puts exactly that link on the clipboard and announces "Link copied to the
   clipboard." to screen readers.
 - **The QR code** encodes exactly the same link with the bundled encoder (the one the local security
   pairing uses), black on white with a four-module quiet zone in both themes. Its accessible name is
   "QR code of the invite link". **Show larger QR code**, or a click on the code, opens a large view
   for a phone held further away.
-- **New link** asks the container for a new drop code (`POST /api/station/drop-code`), so links with
-  the old code stop working. When `DROP_CODE` fixes the code the button is disabled and the invite
-  explains how to change it on the drop site.
-- The link appears once Bambu Studio has the current drop code from the station status; until then
-  the invite explains what it is waiting for.
-
-The **Drop code** row shows the same code with a **New code** button.
 
 ## When a model arrives
 
@@ -172,6 +163,7 @@ lists that was already decided is deleted there as well.
   only to the site that listed the file and are kept on disk, and that a poll which changes nothing
   sets no text and lays nothing out, so the Cantonese of bilingual mode stays on the live rows. Every
   contract also runs against a mutated source to prove it can fail.
+Historical-version verification (not runtime evidence for 1.0.1):
 - `node --test tests/lan_model_drop/station_container.test.mjs` runs the station's pure model,
   through `tests/lan_model_drop/lan_model_drop_station_probe.cpp`, against the real drop service in
   `lan-model-drop/server`: it drops models of every type (including a byte order mark, indentation
@@ -188,6 +180,7 @@ lists that was already decided is deleted there as well.
   (2 GiB per model, 1000 inbox entries, read from `LanModelDropModel.hpp`); every `DROP_PUBLIC_URL`
   the site accepts reaches the invite link exactly as the site reports it; and a station name of up
   to the site's 60 characters is shown in full. Each of these disagreed before.
+Historical-version verification (not runtime evidence for 1.0.1):
 - `node --test tests/lan_model_drop/container_fixtures.test.mjs` replays answers captured from a real
   container. `tests/lan_model_drop/container_capture.py` builds `lan-model-drop` with Docker Compose,
   sends every sample model (3MF, ASCII and binary STL, STEP and STP, OBJ, XML and zipped AMF) through

@@ -1,9 +1,7 @@
-// Wrong drop codes per client address: at most WRONG_CODE_LIMIT within one
-// minute; the attempt that reaches the limit locks the address out for five
-// minutes, during which every drop from it is answered 429.
+// Upload attempts per client: 60 per minute, then a five-minute cooldown.
 
-export const WRONG_CODE_LIMIT = 5;
-export const WRONG_CODE_WINDOW_MS = 60 * 1000;
+export const UPLOAD_LIMIT = 60;
+export const UPLOAD_WINDOW_MS = 60 * 1000;
 export const LOCKOUT_MS = 5 * 60 * 1000;
 const MAX_TRACKED = 10000;
 
@@ -27,15 +25,15 @@ export class AttemptLimiter {
     return left > 0 ? left : 0;
   }
 
-  recordWrongCode(address) {
+  recordAttempt(address) {
     const now = this.now();
     this.prune(now);
-    const entry = this.entries.get(address) ?? { failures: [], lockedUntil: 0 };
-    entry.failures = entry.failures.filter((time) => now - time < WRONG_CODE_WINDOW_MS);
-    entry.failures.push(now);
-    if (entry.failures.length >= WRONG_CODE_LIMIT) {
+    const entry = this.entries.get(address) ?? { attempts: [], lockedUntil: 0 };
+    entry.attempts = entry.attempts.filter((time) => now - time < UPLOAD_WINDOW_MS);
+    entry.attempts.push(now);
+    if (entry.attempts.length >= UPLOAD_LIMIT) {
       entry.lockedUntil = now + LOCKOUT_MS;
-      entry.failures = [];
+      entry.attempts = [];
     }
     this.entries.delete(address);
     this.entries.set(address, entry);
@@ -43,7 +41,7 @@ export class AttemptLimiter {
 
   prune(now) {
     for (const [address, entry] of this.entries) {
-      const recent = entry.failures.some((time) => now - time < WRONG_CODE_WINDOW_MS);
+      const recent = entry.attempts.some((time) => now - time < UPLOAD_WINDOW_MS);
       if (!recent && entry.lockedUntil <= now) this.entries.delete(address);
     }
     // A flood of addresses cannot grow memory without bound: the oldest

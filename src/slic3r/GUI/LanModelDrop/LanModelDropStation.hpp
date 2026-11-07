@@ -35,19 +35,15 @@ struct View
     std::string   address;       // the configured address, normalized when it parses
     bool          address_valid = true;
     std::string   station_name;
-    std::string   drop_code;     // empty until a status answer arrived
     std::string   public_url;    // the container's DROP_PUBLIC_URL, normalized; may be empty
-    bool          fixed_code = false; // the container refused a new code: DROP_CODE is fixed
-    bool          code_failed = false; // the last New code request failed for another reason
     bool          has_key    = false;
     bool          busy_test  = false; // a Test connection is in flight
-    bool          busy_code  = false; // a New code request is in flight
     bool          tested     = false; // a Test connection finished since the view was opened
     LinkState     test_state = LinkState::Off;
     int           waiting    = 0;     // received files waiting for Open or Discard
     std::uint64_t queued     = 0;     // files the container still holds
     InviteBase    invite;             // base of the invite link and the LAN choices
-    std::string   link;               // <base>/#code=<code>, empty while unknown
+    std::string   link;               // sender address, empty until connected
 };
 
 // Starts polling after startup when the switch is on (GUI_App::post_init). Removes received files
@@ -68,8 +64,6 @@ int  add_listener(std::function<void()> listener);
 void remove_listener(int id);
 
 void test_connection();
-// Rotates the drop code through POST /api/station/drop-code, so links with the old code stop working.
-void request_new_code();
 // Shows the notifications of every file still waiting for Open or Discard again.
 void show_waiting_again();
 // Re-reads this computer's network adapters for the invite link.

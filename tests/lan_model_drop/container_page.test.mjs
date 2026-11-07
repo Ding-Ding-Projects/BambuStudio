@@ -6,7 +6,6 @@
 // Runs only when container_capture.py starts it with these settings (skipped otherwise, also in
 // the repository gate set, which has no container):
 //   LAN_DROP_PAGE_BASE    the container's address, for example http://127.0.0.1:18851
-//   LAN_DROP_PAGE_CODE    the drop code the invite link carries
 //   LAN_DROP_PAGE_FILES   a folder holding exactly the models to choose
 //   LAN_DROP_PAGE_SENDER  what is typed into "Your name (optional)"
 //   LAN_DROP_PAGE_OUT     where the record is written (JSON)
@@ -19,7 +18,7 @@ import path from 'node:path';
 import test from 'node:test';
 
 const env = process.env;
-const settings = ['LAN_DROP_PAGE_BASE', 'LAN_DROP_PAGE_CODE', 'LAN_DROP_PAGE_FILES', 'LAN_DROP_PAGE_SENDER', 'LAN_DROP_PAGE_OUT', 'CHROMIUM_PATH'];
+const settings = ['LAN_DROP_PAGE_BASE', 'LAN_DROP_PAGE_FILES', 'LAN_DROP_PAGE_SENDER', 'LAN_DROP_PAGE_OUT', 'CHROMIUM_PATH'];
 const missing = settings.filter((name) => env[name] === undefined);
 const skip = missing.length ? `run by tests/lan_model_drop/container_capture.py against a running container (${missing.join(', ')} not set)` : false;
 
@@ -118,11 +117,11 @@ test('the sender page from the container sends every chosen model, and its reque
   for (const domain of ['Network', 'Page', 'DOM', 'Runtime']) await page(`${domain}.enable`);
   await page('Fetch.enable', { patterns: [{ urlPattern: '*/api/drop', requestStage: 'Response' }] });
 
-  // The invite link fills the code and leaves the address bar.
-  await page('Page.navigate', { url: `${base}/#code=${env.LAN_DROP_PAGE_CODE}` });
-  await waitFor(() => evaluate("document.readyState === 'complete' && document.getElementById('code').value !== ''"), 'the invite');
-  const invite = await evaluate("({ code: document.getElementById('code').value, href: location.href, hash: location.hash })");
-  assert.deepEqual(invite, { code: env.LAN_DROP_PAGE_CODE, href: `${base}/`, hash: '' });
+  // The invite opens direct sending without a credential field.
+  await page('Page.navigate', { url: `${base}/` });
+  await waitFor(() => evaluate("document.readyState === 'complete'"), 'the invite');
+  const invite = await evaluate("({ hasCode: Boolean(document.getElementById('code')), href: location.href, hash: location.hash })");
+  assert.deepEqual(invite, { hasCode: false, href: `${base}/`, hash: '' });
   const history = await page('Page.getNavigationHistory');
   assert.ok(history.entries.every((entry) => !entry.url.includes('code=')));
 

@@ -99,7 +99,6 @@ int run(const std::vector<std::string> &args)
         out["state"] = state_name(state);
         if (state == LinkState::Connected) {
             out["stationName"] = status.station_name;
-            out["dropCode"]    = status.drop_code;
             out["publicUrl"]   = status.public_url;
             out["queued"]      = status.queued;
             out["queuedBytes"] = status.queued_bytes;
@@ -117,9 +116,6 @@ int run(const std::vector<std::string> &args)
         for (const InboxItem &item : listing.items)
             out["items"].push_back({{"id", item.id}, {"fileName", item.file_name}, {"sender", item.sender}, {"bytes", item.bytes},
                                     {"sha256", item.sha256}, {"receivedAt", item.received_at}, {"type", type_name(item.type)}});
-    } else if (command == "code") {
-        const auto code = parse_drop_code(read_file(args.at(1)));
-        out["code"]     = code ? json(*code) : json(nullptr);
     } else if (command == "content") {
         const auto type = type_from_name(args.at(1));
         out["matches"]  = type.has_value() && content_matches(*type, read_file(args.at(2)));
@@ -131,7 +127,7 @@ int run(const std::vector<std::string> &args)
         out["source"]  = source_name(base.source);
         out["base"]    = base.base;
         out["choices"] = base.choices;
-        out["link"]    = invite_link(base.base, args.at(5));
+        out["link"]    = invite_link(base.base);
     } else if (command == "save") {
         const auto type = type_from_name(args.at(4));
         if (!type) throw std::runtime_error("unknown type " + args.at(4));

@@ -12,7 +12,7 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 
 const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-const read = (rel) => readFileSync(path.join(repo, rel), 'utf8');
+const read = (rel) => readFileSync(path.join(repo, rel), 'utf8').replace(/\r\n/g, '\n');
 
 const src = {
   station: read('src/slic3r/GUI/LanModelDrop/LanModelDropStation.cpp'),
@@ -66,7 +66,7 @@ function visibleSection(prefs) {
   // The invite comes right after the switch, before the connection rows.
   assert.ok(tab.indexOf('"lan_drop_enabled"') < tab.indexOf('LanModelDrop::InvitePanel'));
   assert.ok(tab.indexOf('LanModelDrop::InvitePanel') < tab.indexOf('create_status_row'));
-  for (const key of ['lan_drop_invite', 'lan_drop_status', 'lan_drop_address', 'lan_drop_station_key', 'lan_drop_code'])
+  for (const key of ['lan_drop_invite', 'lan_drop_status', 'lan_drop_address', 'lan_drop_station_key'])
     assert.match(tab, new RegExp(`register_option_row\\("${key}", nullptr, \\w+\\);`));
   // Not hidden behind a developer, advanced or release gate.
   assert.doesNotMatch(tab, /developer_mode|BBL_RELEASE_TO_PUBLIC|advanced/i);
@@ -84,7 +84,7 @@ function menuItems(mainFrame) {
 function paletteEntries(index, palette) {
   assert.match(index, /PageLanDrop/);
   assert.match(index, /L\("Developer Tools"\), L\("LAN model drop"\),/);
-  for (const key of ['lan_drop_enabled', 'lan_drop_invite', 'lan_drop_status', 'lan_drop_address', 'lan_drop_station_key', 'lan_drop_code'])
+  for (const key of ['lan_drop_enabled', 'lan_drop_invite', 'lan_drop_status', 'lan_drop_address', 'lan_drop_station_key'])
     assert.match(index, new RegExp(`\\{"${key}", L\\("[^"]+"\\), L\\("[^"]+"\\), PageLanDrop\\}`));
   assert.match(index, /\{"docs\/features\/application-integration\/lan-model-drop\.md", L\("LAN model drop"\)\}/);
   assert.match(palette, /_L\("Invite someone to send a model"\)[\s\S]{0,400}?LanModelDrop::open_invite_dialog\(frame\)/);
@@ -147,7 +147,7 @@ function workerThreadHttp(station) {
   for (const at of callers) {
     const before = plain.slice(0, at);
     const owner = workerOnly.map((sig) => [sig, before.lastIndexOf(sig)]).sort((a, b) => b[1] - a[1])[0];
-    const gui = ['void apply_settings()', 'void test_connection()', 'void request_new_code()', 'void open_item(', 'void discard_item('];
+    const gui = ['void apply_settings()', 'void test_connection()', 'void open_item(', 'void discard_item('];
     const lastGui = Math.max(...gui.map((sig) => before.lastIndexOf(sig)));
     assert.ok(owner[1] > lastGui, `exchange() called outside the worker near offset ${at}`);
   }
@@ -252,7 +252,7 @@ function liveLabels(ui, station) {
   // Only LiveText::set and the QR view's fixed accessible name set label text.
   assert.equal((plain.match(/\bSetLabel\(/g) || []).length, 2);
   assert.doesNotMatch(plain, /\bset_wrapped\(/);
-  for (const name of ['m_pending_note', 'm_manual', 'm_source_note', 'm_fixed_note', 'm_live', 'm_waiting_label'])
+  for (const name of ['m_pending_note', 'm_manual', 'm_source_note', 'm_live', 'm_waiting_label'])
     assert.match(read('src/slic3r/GUI/LanModelDrop/LanModelDropUi.hpp'), new RegExp(`LiveText\\s+${name};`));
   // Each live label holds one catalogue message: the outcome of Save key is not joined to the note.
   const keyRow = body(ui, 'class KeyRow');
@@ -260,7 +260,6 @@ function liveLabels(ui, station) {
   assert.match(keyRow, /m_note\.set\(note\)/);
   assert.doesNotMatch(keyRow, /m_message \+/);
   // A tooltip the decorator extends is set only when its English changes.
-  assert.match(body(ui, 'class CodeRow'), /if \(tip != m_tip\) \{\s*m_tip = tip;\s*m_new->SetToolTip\(tip\);/);
   const link = body(station, 'void on_link_state(std::uint64_t generation');
   assert.match(link, /const View before = v;/);
   assert.match(link, /if \(!same_poll_view\(before, v\)\) notify_listeners\(\);/);
@@ -276,7 +275,7 @@ function invite(ui, station) {
   assert.match(body(ui, 'void InvitePanel::copy_link()'), /wxTheClipboard->SetData\(new wxTextDataObject\(wxString::FromUTF8\(link\)\)\)/);
   assert.match(body(ui, 'void InvitePanel::announce(const wxString &text)'), /wxACC_EVENT_OBJECT_NAMECHANGE/);
   assert.match(body(station, 'void recompute_invite()'), /choose_invite_base\(v\.public_url, address\.value_or\(BaseAddress\{\}\), gui\(\)\.lan_candidates, preferred\)/);
-  assert.match(body(station, 'void recompute_invite()'), /invite_link\(v\.invite\.base, v\.drop_code\)/);
+  assert.match(body(station, 'void recompute_invite()'), /invite_link\(v\.invite\.base\)/);
   // Kit widgets only.
   assert.doesNotMatch(code(ui), /new wx(Button|StaticText|TextCtrl|CheckBox|Choice|ComboBox|BitmapButton|HyperlinkCtrl|RadioButton|SpinCtrl|Slider|ListBox)\b/);
 }
@@ -289,7 +288,7 @@ const contracts = [
   ['the station key is protected with DPAPI and never stored in plain text', () => protectedKey(src.keyStore, src.station, src.cmake, src.ui), () => protectedKey(src.keyStore.replace('CRYPTPROTECT_UI_FORBIDDEN, &output))\n        return KeyStoreResult::Failed;\n    std::vector', 'CRYPTPROTECT_LOCAL_MACHINE, &output))\n        return KeyStoreResult::Failed;\n    std::vector'), src.station, src.cmake, src.ui)],
   ['the station key is never logged', () => keyNeverLogged([src.station, src.keyStore, src.ui, src.model]), () => keyNeverLogged([src.station.replace('BOOST_LOG_TRIVIAL(info) << "LAN model drop: received item "', 'BOOST_LOG_TRIVIAL(info) << cfg.key << "LAN model drop: received item "'), src.keyStore, src.ui, src.model])],
   ['all HTTP runs on the worker thread and reaches windows through CallAfter', () => workerThreadHttp(src.station), () => workerThreadHttp(src.station.replace('void test_connection()\n{', 'void test_connection()\n{\n    exchange(cfg, Method::Get, std::string(), 0, 0, CancelWhen{});'))],
-  ['shutdown cancels, wakes and joins the worker before windows go', () => shutdownStops(src.station, src.app), () => shutdownStops(src.station, src.app.replace('    LanModelDrop::shutdown();\n    Schedule::Scheduler::instance().shutdown();', '    Schedule::Scheduler::instance().shutdown();'))],
+  ['shutdown cancels, wakes and joins the worker before windows go', () => shutdownStops(src.station, src.app), () => shutdownStops(src.station, src.station.replace('g_thread.join();', ''))],
   ['nothing is opened, sliced or printed automatically', () => nothingAutomatic(src.station), () => nothingAutomatic(src.station.replace('post([item, file = d.file, base] { on_received(item, file, base); });', 'post([item, file = d.file, base] { on_received(item, file, base); open_item(item.id); });'))],
   ['the invite shows exactly one link as text and as a QR code, with kit widgets only', () => invite(src.ui, src.station), () => invite(src.ui.replace('m_qr->SetText(has_link ? v.link : std::string())', 'm_qr->SetText(v.invite.base)'), src.station)],
   ['an opened or waiting received folder is never written again, and deletes go only to their own site', () => receivedFolders(src.station, src.files), () => receivedFolders(src.station.replace('if (local == ReceivedState::Opened) {', 'if (false) {'), src.files)],
