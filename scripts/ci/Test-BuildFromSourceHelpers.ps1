@@ -385,6 +385,14 @@ public static class BootstrapMSBuildFixture {
     ConvertTo-Json -InputObject @($ownedRegistration) | Set-Content -LiteralPath $fakeInstancesFile -Encoding Ascii
     Assert-True (Test-ProjectVisualStudioRegistration -InstallPath $ownedTarget -VsWherePath $registrationProbe) `
         'An exact incomplete registration with missing payload must select recovery.'
+    Assert-True ((Get-ProjectVisualStudioOperation -InstallPath $ownedTarget -VsWherePath $registrationProbe) -eq 'repair') `
+        'A registered absent payload must select repair, not a no-op modification.'
+    New-Item -ItemType Directory -Path $ownedTarget | Out-Null
+    Assert-True ((Get-ProjectVisualStudioOperation -InstallPath $ownedTarget -VsWherePath $registrationProbe) -eq 'modify') `
+        'An existing registered directory must use additive modification, preserving its settings.'
+    Assert-True ((Get-ProjectVisualStudioOperation -InstallPath ($ownedTarget + '-other') -VsWherePath $registrationProbe) -eq 'install') `
+        'An unrelated registration must never trigger repair or modification of the target.'
+
     Assert-True (-not (Test-ProjectVisualStudioRegistration -InstallPath ($ownedTarget + '-other') -VsWherePath $registrationProbe)) `
         'Another registered path must never be adopted for recovery.'
     $ownedRegistration.productId = 'Microsoft.VisualStudio.Product.Community'
@@ -408,8 +416,8 @@ public static class BootstrapMSBuildFixture {
         $script:probeCount = 0
         $script:capturedInstallerArguments = @()
         $script:capturedInstallerUrl = ''
-        $script:registeredTarget = $false
-        function Test-ProjectVisualStudioRegistration { param($InstallPath) return $script:registeredTarget }
+        $script:selectedOperation = 'install'
+        function Get-ProjectVisualStudioOperation { param($InstallPath) return $script:selectedOperation }
         function Test-VisualCppBuildTools { $script:probeCount++; return ($script:probeCount -gt 1) }
         function Get-Winget { throw 'Visual Studio bootstrap must not choose an implicit winget instance.' }
         function Write-BuildLog { param($Message) }
@@ -443,7 +451,7 @@ public static class BootstrapMSBuildFixture {
         Assert-True ($nicknameIndex -ge 0 -and $arguments[$nicknameIndex + 1].Length -le 10) `
             'The Visual Studio nickname must fit the documented ten-character limit.'
         Assert-True ($arguments -notcontains 'modify') 'Absent registration must retain the default install operation.'
-        $script:registeredTarget = $true
+        $script:selectedOperation = 'modify'
         $script:probeCount = 0
         Install-VisualCppBuildTools -WorkDir $testDir
         $arguments = $script:capturedInstallerArguments
@@ -454,6 +462,15 @@ public static class BootstrapMSBuildFixture {
             $arguments -contains 'Microsoft.VisualStudio.Component.VC.Tools.x86.x64' -and
             $arguments -notcontains '--remove' -and $arguments -notcontains '--force') `
             'Recovery must retain compiler acquisition without removal, forced closure, or restart.'
+        $script:selectedOperation = 'repair'
+        $script:probeCount = 0
+        Install-VisualCppBuildTools -WorkDir $testDir
+        $arguments = $script:capturedInstallerArguments
+        Assert-True ($arguments[0] -eq 'repair' -and $arguments -notcontains '--add' -and
+            $arguments -notcontains '--nickname' -and $arguments -contains '--installPath' -and
+            $arguments -contains '--norestart' -and $arguments -contains '--wait' -and $arguments -contains '--quiet') `
+            'Missing-payload recovery must use supported repair arguments for the explicit target.'
+
 
     }
 

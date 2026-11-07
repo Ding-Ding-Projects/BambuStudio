@@ -509,6 +509,14 @@ function Test-ProjectVisualStudioRegistration {
     return $false
 }
 
+function Get-ProjectVisualStudioOperation {
+    param([Parameter(Mandatory)][string] $InstallPath, [string] $VsWherePath)
+    if (-not (Test-ProjectVisualStudioRegistration -InstallPath $InstallPath -VsWherePath $VsWherePath)) { return 'install' }
+    if (Test-Path -LiteralPath $InstallPath -PathType Container) { return 'modify' }
+    if (Test-Path -LiteralPath $InstallPath) { throw 'The registered build-tools path is not a directory; preserving it unchanged.' }
+    return 'repair'
+}
+
 function Install-VisualCppBuildTools {
     param([string] $WorkDir)
     if (Test-VisualCppBuildTools) { return }
@@ -531,10 +539,16 @@ function Install-VisualCppBuildTools {
     # application install. Otherwise Setup attempts to delete protected VS files.
     $installPath = Join-Path $env:LOCALAPPDATA 'BambuBuildTools\VS2026'
     $operationArguments = @('--nickname', 'BambuMD3')
-    if (Test-ProjectVisualStudioRegistration -InstallPath $installPath) {
+    $operation = Get-ProjectVisualStudioOperation -InstallPath $installPath
+    if ($operation -eq 'modify') {
         $operationArguments = @('modify', '--channelId', 'VisualStudio.18.Release')
+    } elseif ($operation -eq 'repair') {
+        # Repair reacquires registered payload; --add is only valid for install/modify.
+        # Never repair an existing directory, where settings may need preservation.
+        $operationArguments = @('repair')
+        $addSet = @()
     }
-    Write-BuildLog "Provisioning Visual Studio 2026 Build Tools at '$installPath'. Elevation may be required."
+    Write-BuildLog "Visual Studio 2026 Build Tools operation $operation at '$installPath'. Elevation may be required."
 
     Invoke-SilentInstaller `
         -Url 'https://aka.ms/vs/stable/vs_buildtools.exe' `
