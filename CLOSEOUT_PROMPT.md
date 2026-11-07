@@ -3,6 +3,8 @@
 Objective: complete the approved required-feature plan, including native and
 companion surfaces, with priority repairs for Preferences sizing, personal wording,
 LAN model-drop startup and the recurring startup model-load error.
+Latest direction: remove the sender drop-code requirement throughout the upload
+page, service, invite links and native controls. Keep station management authenticated.
 
 The user confirmed that the model-load message appears on startup before opening
 any project. An owned synthetic invalid saved project reproduces the installed
@@ -20,17 +22,25 @@ source fails 19 assertions; 12 entrypoint assertions; successful prerequisite
 bootstrap; six container and actual CMake-install checks; 28 API checks; 10,246
 complete Cantonese catalogue entries. These are not native runtime or release proof.
 
-Hosted native compilation of 6eb975873 passed; packaging is still in progress in
+Hosted native compilation and Squirrel packaging of 6eb975873 passed in
 run 42414873193. Its earlier image-publication job failed authentication; the
 separate repaired run 42415338522 succeeded at source 8287f75cb. The published
 image was pulled locally and Compose is pinned to its verified digest. Real
 host.bat detached and log modes passed startup, pause/follow/quit and continued
 health after exit. Health also passed from a second LAN host.
 
-Local bootstrap now correctly rejects MSVC 14.44. The signed VS2026 installer
-returns 1 because its project-owned installation path has an incomplete existing
-registration. A supported scoped modification is being prepared; unrelated IDEs
-must remain unchanged. Action-sound controls are being implemented separately.
+Local bootstrap now correctly rejects MSVC 14.44. After fresh installation and
+modification could not restore an incomplete registration with missing payload,
+the targeted vendor repair succeeded. Root bootstrap verifies the project-owned
+VS2026 registration is complete and the toolchain is ready. Unrelated IDEs remain
+unchanged. Reviewed sound controls at fa3ea7861 are integrated; native sound proof
+is pending. Two new Cantonese strings and the documentation bundle were updated.
+
+The packaged 6eb975873 candidate reproduced the synthetic first-load error and
+reached its recovery dialog. The failed tab and original file were preserved,
+with a separate active Untitled tab. Restart proof is pending. Preferences resized
+from 780x640 to 1050x720 through the identity-bound hidden-window route, but its
+images were black and rejected as layout evidence. A bounded diagnosis is active.
 
 Next: obtain the exact packaged candidate, verify startup/retry and resizable
 Preferences on the named hidden desktop, verify personal wording without exposing

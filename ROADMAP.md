@@ -992,9 +992,13 @@ Branch `ai/feature/20261104-narrator`. Native runtime on Windows is not verified
 - [ ] Verify resizable Preferences, persisted dimensions and all minimum-size sections in the native build.
 - [ ] Verify shared personal display wording, composition, menus, canvas and embedded pages with local-only imports.
 - [ ] Publish and verify the LAN drop image, native setup, portable wizard and both hosting modes.
+- [x] Publish the first digest-pinned LAN image and verify real detached/log hosting, keyboard pause/follow/quit, retained service health and second-host LAN access.
+- [ ] Remove sender drop-code requirements and verify direct uploads while preserving station management authentication.
+- [ ] Verify the reviewed sound-controls implementation in the built application, including settings persistence, quiet hours and unavailable playback.
 - [ ] Reproduce and repair the reported recurring startup model-load error without discarding projects.
 - [ ] Reconcile the complete current feature inventory with real consumers and per-surface evidence.
 - [ ] Complete documentation/build companions, release verification and the matching installed update.
 - [ ] Verify the startup recovery candidate in a native build: failed saved project,
   interrupted restore, explicit retry, File > Open, existing imported geometry and
-  cancelled reset. Source and focused behavioral checks are complete; runtime pending.
+  cancelled reset. Source checks and first-load retained-tab/file behavior pass;
+  the rest of runtime acceptance remains pending.

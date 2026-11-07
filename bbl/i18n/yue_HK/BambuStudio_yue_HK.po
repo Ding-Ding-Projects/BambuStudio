@@ -50496,3 +50496,13 @@ msgstr "項目復原"
 #. review-status: agent-drafted
 msgid "The previous project could not be restored. Its tab and file have been kept. Select that tab to retry, or use File > Open to choose another project."
 msgstr "上一個項目無法還原。原有分頁同檔案已保留。選取嗰個分頁可以重試，或者用「檔案 > 開啟」揀另一個項目。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Sound effects"
+msgstr "音效"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Play short sounds after wording changes. Quiet narration, quiet hours and Focus Assist also silence these sounds. System volume and mute still apply."
+msgstr "用語變更後播放短音效。靜音旁白、安靜時段同專注輔助亦會令音效靜音。仍然跟隨系統音量同靜音設定。"
