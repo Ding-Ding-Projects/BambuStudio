@@ -24,6 +24,10 @@
 #include <wx/dataview.h>
 #include <wx/dirdlg.h>
 #include <wx/filedlg.h>
+#include <wx/dnd.h>
+#ifdef _WIN32
+#include <shlobj.h>
+#endif
 #include <wx/simplebook.h>
 #include <wx/sizer.h>
 #include <wx/wrapsizer.h>
@@ -126,6 +130,17 @@ Button *action(wxWindow *parent, wxSizer *row, const wxString &name, std::functi
     auto *button = new Button(parent,name); button->SetName(name); button->SetVariant(variant); button->SetButtonSize(Button::Size::Large);
     button->Bind(wxEVT_BUTTON,[fn = std::move(fn)](wxCommandEvent &){ fn(); }); row->Add(button,0,wxALL,parent->FromDIP(4)); return button;
 }
+class Base64DropTarget final : public wxFileDropTarget {
+public:
+    explicit Base64DropTarget(std::function<void(std::vector<fs::path>)> accept) : m_accept(std::move(accept)) {}
+    bool OnDropFiles(wxCoord, wxCoord, const wxArrayString &files) override {
+        if(files.empty() || files.size()>1000)return false;
+        std::vector<fs::path> paths; for(const auto &file:files)paths.emplace_back(file.ToStdWstring());
+        m_accept(std::move(paths)); return true;
+    }
+private:
+    std::function<void(std::vector<fs::path>)> m_accept;
+};
 Label *text(wxWindow *parent, const wxString &value)
 {
     return new Label(parent,value,LB_AUTO_WRAP);
@@ -236,6 +251,14 @@ LocalConverterPanel::LocalConverterPanel(wxWindow *parent, LC::PackageProof proo
     auto filter_pdf=[this,pdf_search,pdf_settings,pdf_rows]{auto pass=matcher(pdf_search);for(const auto &row:pdf_rows)pdf_settings->Show(row.first,pass.matches(row.second),true);Layout();};
     pdf_search->SetOnQuery([filter_pdf](const wxString&){filter_pdf();});pdf_search->SetOnRegexToggle([filter_pdf](bool){filter_pdf();});
 
+    layout->Add(text(body,_L("Same-folder Base64 files: pick or drop files, then run the queue. Canonical padded Base64 only; 16 MiB per input. Existing files are never replaced.")),0,wxEXPAND|wxALL,gap);
+    auto *base64_actions=new wxWrapSizer(wxHORIZONTAL);
+    auto *encode=action(body,base64_actions,_L("Encode files beside originals"),[this]{choose_base64(true);});
+    auto *decode=action(body,base64_actions,_L("Decode files beside originals"),[this]{choose_base64(false);});
+    encode->SetDropTarget(new Base64DropTarget([this](std::vector<fs::path> paths){admit_base64(std::move(paths),true);}));
+    decode->SetDropTarget(new Base64DropTarget([this](std::vector<fs::path> paths){admit_base64(std::move(paths),false);}));
+    layout->Add(base64_actions,0,wxEXPAND|wxLEFT|wxRIGHT,gap);
+
     // Output folder and source admission.
     layout->Add(text(body,_L("Output folder (sources keep their names with the chosen extension)")),0,wxEXPAND|wxLEFT|wxRIGHT|wxTOP,gap);
     auto *destination_row = new wxBoxSizer(wxHORIZONTAL);
@@ -264,6 +287,7 @@ LocalConverterPanel::LocalConverterPanel(wxWindow *parent, LC::PackageProof proo
     m_jobs->AppendTextColumn(_L("Source name"),wxDATAVIEW_CELL_INERT,FromDIP(190),wxALIGN_LEFT,wxDATAVIEW_COL_RESIZABLE);
     m_jobs->AppendTextColumn(_L("State"),wxDATAVIEW_CELL_INERT,FromDIP(150),wxALIGN_LEFT,wxDATAVIEW_COL_RESIZABLE);
     m_jobs->AppendTextColumn(_L("Result"),wxDATAVIEW_CELL_INERT,FromDIP(280),wxALIGN_LEFT,wxDATAVIEW_COL_RESIZABLE);
+    m_jobs->AppendTextColumn(_L("Written path"),wxDATAVIEW_CELL_INERT,FromDIP(280),wxALIGN_LEFT,wxDATAVIEW_COL_RESIZABLE);
     layout->Add(m_jobs,0,wxEXPAND|wxALL,gap);
     auto *bulk = new wxWrapSizer(wxHORIZONTAL);
     action(body,bulk,_L("Select this page"),[this]{ m_jobs->SelectAll(); });
@@ -279,6 +303,7 @@ LocalConverterPanel::LocalConverterPanel(wxWindow *parent, LC::PackageProof proo
         }
         update_status(format(fact(L("Retried: %llu. Not eligible or destination already exists: %llu.")),static_cast<unsigned long long>(accepted),static_cast<unsigned long long>(rejected))); refresh_queue();
     });
+    action(body,bulk,_L("Show selected output in folder"),[this]{show_output_folder();});
     action(body,bulk,_L("Export visible results"),[this]{ export_page(); });
     layout->Add(bulk,0,wxEXPAND|wxLEFT|wxRIGHT,FromDIP(4));
     auto *paging = new wxBoxSizer(wxHORIZONTAL);
@@ -388,12 +413,56 @@ void LocalConverterPanel::refresh_queue()
             const auto &j=m_page[i]; const auto name=j.source.filename().u8string();
             const Text state=fact(LC::state_name(j.state)), result=result_text(j.code);
             if(!pass.matches(utf(name)+" "+searchable(LC::state_name(j.state),state)+" "+searchable(j.code,result))) continue;
-            add_row(m_jobs,{wxString::Format("%llu",static_cast<unsigned long long>(j.id)),utf(name),cell(state),cell(result)});
+            add_row(m_jobs,{wxString::Format("%llu",static_cast<unsigned long long>(j.id)),utf(name),cell(state),cell(result),j.state==LC::State::Converted?wxString(j.destination.wstring()):wxString{}});
             m_visible_jobs.push_back(i);
             if(std::find(selected.begin(),selected.end(),j.id)!=selected.end()) m_jobs->SelectRow(static_cast<unsigned>(m_visible_jobs.size()-1));
         }
         show(m_page_label,format(fact(L("%llu saved files. Showing %llu matches from at most 100 records.")),static_cast<unsigned long long>(m_queue->count()),static_cast<unsigned long long>(m_visible_jobs.size())));
     } catch (...) { update_status(fact(L("A saved queue record could not be read. Records and outputs have been retained for recovery."))); }
+}
+void LocalConverterPanel::choose_base64(bool encode)
+{
+    if(m_running){update_status(fact(L("Wait for the current operation before adding sources.")));return;}
+    wxFileDialog picker(this,encode?_L("Choose files to encode"):_L("Choose Base64 files to decode"),wxEmptyString,wxEmptyString,
+        encode?_L("All files (*.*)|*.*"):_L("Base64 text (*.txt;*.b64;*.base64)|*.txt;*.b64;*.base64"),wxFD_OPEN|wxFD_FILE_MUST_EXIST|wxFD_MULTIPLE);
+    if(picker.ShowModal()!=wxID_OK)return;
+    wxArrayString files;picker.GetPaths(files);std::vector<fs::path> paths;
+    for(const auto &file:files)paths.emplace_back(file.ToStdWstring());
+    admit_base64(std::move(paths),encode);
+}
+void LocalConverterPanel::admit_base64(std::vector<fs::path> paths,bool encode)
+{
+    if(!m_queue || m_running){update_status(fact(L("Wait for the current operation before adding sources.")));return;}
+    if(paths.empty() || paths.size()>1000){update_status(fact(L("Select between 1 and 1000 files.")));return;}
+    const std::string id=encode?"base64.encode":"base64.decode";
+    const auto found=std::find_if(m_adapters.begin(),m_adapters.end(),[&](const LC::Adapter &a){return a.id==id&&a.enabled;});
+    if(found==m_adapters.end()){update_status(fact(L("Select an enabled adapter first. Unavailable rows explain their missing packaged adapter.")));return;}
+    if(m_work.joinable())m_work.join();m_cancel=false;m_running=true;m_admitted=0;m_rejected=0;
+    update_status(fact(L("Adding same-folder Base64 files. Run the queue to write verified outputs.")));
+    m_work=std::thread([this,paths=std::move(paths),encode,id]{
+        for(const auto &path:paths){
+            if(m_cancel.load())break;
+            const auto target=LC::base64_destination(path,encode);
+            try{m_queue->enqueue(path,target,id,R"({"base64SameFolder":true})");++m_admitted;}
+            catch(...){++m_rejected;try{m_queue->record_rejected(path,target,id,"admission_preflight_failed");}catch(...){}}
+        }
+        m_running=false;
+    });
+}
+void LocalConverterPanel::show_output_folder()
+{
+    for(unsigned row=0;row<m_jobs->GetItemCount();++row){
+        if(!m_jobs->IsRowSelected(row)||row>=m_visible_jobs.size())continue;
+        const auto &job=m_page[m_visible_jobs[row]];if(job.state!=LC::State::Converted)continue;
+        std::error_code ec;if(!fs::is_regular_file(job.destination,ec)||ec)continue;
+#ifdef _WIN32
+        // Native item identifiers avoid command-line parsing of file names.
+        auto *item=ILCreateFromPathW(job.destination.c_str());
+        if(item){auto *folder=ILCloneFull(item);if(folder){ILRemoveLastID(folder);PCUITEMID_CHILD child=ILFindLastID(item);SHOpenFolderAndSelectItems(folder,1,&child,0);ILFree(folder);}ILFree(item);}
+#endif
+        return;
+    }
+    update_status(fact(L("Select a completed output that still exists.")));
 }
 void LocalConverterPanel::choose_source(bool folder)
 {

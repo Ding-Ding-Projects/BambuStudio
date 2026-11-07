@@ -78,14 +78,18 @@ struct Result {
     Outcome outcome = Outcome::Failed;
     std::string code;
     std::uint64_t bytes = 0;
+    std::filesystem::path destination;
 };
 using Executor = std::function<Conversion(const std::string &, const Bytes &, const std::atomic<bool> &)>;
+// Suggested same-folder name, without reserving or overwriting a file.
+std::filesystem::path base64_destination(const std::filesystem::path &source,
+    bool encode, const Bytes &decoded = {}, const Bytes &encoded = {});
 Result convert_file(const std::filesystem::path &source, const std::filesystem::path &destination,
                     const std::string &adapter, const Executor &, const std::atomic<bool> &cancel,
                     const std::string &options = "", const std::vector<std::filesystem::path> &additional_sources = {});
 // Writes through an exclusive sibling file, flushes, validates and publishes
 // without replacing an existing destination. Source and destination may not alias.
-bool atomic_create(const std::filesystem::path &, const Bytes &, std::string &code);
+bool atomic_create(const std::filesystem::path &, const Bytes &, std::string &code, bool verify_sha256 = false);
 
 enum class State { Pending, Running, Converted, Skipped, Cancelled, Failed, RecoveryRequired };
 struct Job {

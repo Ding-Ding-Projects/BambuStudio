@@ -44,6 +44,9 @@ private:
     void refresh_catalog();
     void refresh_queue();
     void choose_source(bool folder);
+    void choose_base64(bool encode);
+    void admit_base64(std::vector<std::filesystem::path> paths, bool encode);
+    void show_output_folder();
     void admit(std::filesystem::path source, bool folder, std::vector<std::filesystem::path> additional = {});
     void run();
     void stop();

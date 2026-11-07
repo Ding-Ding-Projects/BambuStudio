@@ -173,6 +173,54 @@ int main(int argc, char **argv)
             require(convert_file(source,raced,"hex.encode",race,cancel).outcome!=Outcome::Converted,"destination race cannot replace");
             require(get(raced)=="other writer","concurrent destination preserved");
         }
+
+#ifdef _WIN32
+        {
+            const std::string same=R"({"base64SameFolder":true})";
+            const auto original=root/fs::u8path("report.final.pdf");put(original,"%PDF-neutral");
+            Executor core=[](const std::string&id,const Bytes&v,const std::atomic<bool>&){return transform(id,v);};
+            auto encoded=convert_file(original,base64_destination(original,true),"base64.encode",core,cancel,same);
+            require(encoded.outcome==Outcome::Converted,"same-folder encode");
+            require(encoded.destination.filename()=="report.final.pdf.base64.txt","full original extension retained");
+            require(transform("base64.decode",b(get(encoded.destination))).output==b(get(original)),"written bytes roundtrip");
+            auto again=convert_file(original,base64_destination(original,true),"base64.encode",core,cancel,same);
+            require(again.destination.filename()=="report.final.pdf.base64 (1).txt","numbered encode collision");
+            auto decoded=convert_file(again.destination,base64_destination(again.destination,false),"base64.decode",core,cancel,same);
+            require(decoded.outcome==Outcome::Converted&&decoded.destination.filename()=="report.final (1).pdf","restore original name across encoded collision");
+            require(get(decoded.destination)==get(original),"restored bytes verified");
+            require(get(original)=="%PDF-neutral","original preserved");
+            auto arbitrary=root/"unknown.b64";put(arbitrary,"data:image/png;base64,iVBORw0KGgo=");
+            auto typed=convert_file(arbitrary,base64_destination(arbitrary,false),"base64.decode",core,cancel,same);
+            require(typed.outcome==Outcome::Converted&&typed.destination.extension()==".png","data URL filename inference");
+            require(base64_destination(root/"signature.txt",false,Bytes{0x89,'P','N','G',13,10,26,10}).extension()==".png","bounded signature fallback");
+            require(base64_destination(root/"unknown.txt",false,Bytes{0,1,2}).extension()==".bin","binary fallback");
+            auto invalid=root/"invalid.b64";put(invalid,"!!!!");
+            require(convert_file(invalid,base64_destination(invalid,false),"base64.decode",core,cancel,same).outcome==Outcome::Failed,"invalid Base64 rejected");
+            require(!fs::exists(root/"invalid.bin"),"invalid output absent");
+            Executor corrupt=[&](const std::string&id,const Bytes&v,const std::atomic<bool>&){auto r=transform(id,v);if(id=="base64.decode")r.output=b("wrong");return r;};
+            auto corrupt_source=root/"hash.bin";put(corrupt_source,"neutral");
+            require(convert_file(corrupt_source,base64_destination(corrupt_source,true),"base64.encode",corrupt,cancel,same).outcome==Outcome::Failed,"SHA roundtrip detects wrong worker bytes");
+            require(!fs::exists(base64_destination(corrupt_source,true)),"failed verification never publishes");
+            auto race_source=root/"race-name.bin";put(race_source,"neutral");const auto race_dest=base64_destination(race_source,true);
+            Executor collision=[&](const std::string&id,const Bytes&v,const std::atomic<bool>&){put(race_dest,"other writer");return transform(id,v);};
+            auto raced=convert_file(race_source,race_dest,"base64.encode",collision,cancel,same);
+            require(raced.outcome==Outcome::Converted&&raced.destination!=race_dest,"concurrent collision numbered");
+            require(get(race_dest)=="other writer","concurrent output preserved");
+            cancel=true;require(convert_file(original,base64_destination(original,true),"base64.encode",core,cancel,same).outcome==Outcome::Cancelled,"same-folder cancellation");cancel=false;
+            auto empty=root/"empty.bin";put(empty,"");require(convert_file(empty,base64_destination(empty,true),"base64.encode",core,cancel,same).outcome==Outcome::Converted,"empty file roundtrip");
+            auto changed=root/"changed-during-verification.bin";put(changed,"original");
+            Executor change_during_verify=[&](const std::string&id,const Bytes&v,const std::atomic<bool>&){if(id=="base64.decode")put(changed,"replacement");return transform(id,v);};
+            require(convert_file(changed,base64_destination(changed,true),"base64.encode",change_during_verify,cancel,same).outcome==Outcome::Failed,"changed source during reverse verification rejected");
+            require(!fs::exists(base64_destination(changed,true)),"changed source output absent");
+            Executor cancel_verify=[&](const std::string&id,const Bytes&v,const std::atomic<bool>&){if(id=="base64.decode")cancel=true;return transform(id,v);};
+            require(convert_file(changed,base64_destination(changed,true),"base64.encode",cancel_verify,cancel,same).outcome==Outcome::Cancelled,"cancellation during reverse verification");cancel=false;
+            const auto large=Bytes(Limits::input_bytes,0x5a);const auto large_encoded=transform("base64.encode",large);
+            require(large_encoded.outcome==Outcome::Converted&&large_encoded.output.size()>Limits::input_bytes,"maximum bounded input encodes");
+            require(transform("base64.decode",large_encoded.output).output==large,"inverse worker accepts bounded expanded representation");
+            Queue queue(root/"base64-queue");queue.enqueue(original,base64_destination(original,true),"base64.encode",same);queue.pause(false);require(queue.step(core,cancel),"real queue accepts same-folder mode");
+            const auto records=queue.page(0);require(records.size()==1&&records[0].state==State::Converted&&fs::exists(records[0].destination),"queue persists actual numbered output");
+        }
+#endif
         if (argc == 3) {
             const fs::path worker = fs::u8path(argv[1]); const PackageProof proof{worker.parent_path(),worker,argv[2]};
             std::string why; require(verify_package(proof,why),"real package digest verified");

@@ -112,6 +112,34 @@ std::string base64(const Bytes &data)
     }
     return out;
 }
+Bytes base64_payload(const Bytes &source)
+{
+    if (!begins(source, "data:", 5)) return source;
+    const auto comma = std::find(source.begin(), source.end(), ',');
+    check(comma != source.end() && comma - source.begin() <= 1024, "invalid_base64_data_url");
+    const std::string header(source.begin(), comma);
+    check(header.size() >= 7 && header.compare(header.size()-7, 7, ";base64") == 0, "invalid_base64_data_url");
+    return Bytes(comma+1, source.end());
+}
+
+std::array<unsigned char,32> content_sha256(const Bytes &data)
+{
+    std::array<unsigned char,32> digest{};
+#ifdef _WIN32
+    BCRYPT_ALG_HANDLE alg = nullptr; BCRYPT_HASH_HANDLE hash = nullptr;
+    check(BCryptOpenAlgorithmProvider(&alg,BCRYPT_SHA256_ALGORITHM,nullptr,0)>=0,"sha256_unavailable");
+    const bool created = BCryptCreateHash(alg,&hash,nullptr,0,nullptr,0,0)>=0;
+    const bool ok = created && BCryptHashData(hash,const_cast<unsigned char *>(data.data()),static_cast<ULONG>(data.size()),0)>=0 &&
+        BCryptFinishHash(hash,digest.data(),static_cast<ULONG>(digest.size()),0)>=0;
+    if(hash) BCryptDestroyHash(hash);
+    BCryptCloseAlgorithmProvider(alg,0);
+    check(ok,"sha256_unavailable");
+#else
+    reject("sha256_unavailable");
+#endif
+    return digest;
+}
+
 Bytes decode_base64(const Bytes &source)
 {
     check(source.size() % 4 == 0, "invalid_base64_length");
@@ -429,7 +457,7 @@ Conversion transform(const std::string &adapter, const Bytes &source)
 #ifdef LOCAL_CONVERTER_WITH_PDF
         if (adapter.rfind("pdf.",0)==0) return pdf_request_transform(adapter,source);
 #endif
-        check(source.size() <= Limits::input_bytes, "input_limit");
+        check(source.size() <= (adapter == "base64.decode" ? Limits::wire_bytes : Limits::input_bytes), "input_limit");
         if (adapter == "zip.encode" || adapter == "zip.decode") return archive_transform(adapter,source);
         Bytes out;
         if (adapter == "hex.encode") {
@@ -440,7 +468,7 @@ Conversion transform(const std::string &adapter, const Bytes &source)
             check(source.size() % 2 == 0, "invalid_hex_length");
             for (std::size_t i = 0; i < source.size(); i += 2) out.push_back(static_cast<unsigned char>(unhex(source[i]) * 16 + unhex(source[i+1])));
         } else if (adapter == "base64.encode") { out = bytes(base64(source)); check(decode_base64(out) == source, "output_validation"); }
-        else if (adapter == "base64.decode") out = decode_base64(source);
+        else if (adapter == "base64.decode") out = decode_base64(base64_payload(source));
         else if (adapter == "text.lf" || adapter == "text.crlf") {
             check(valid_utf8(source), "invalid_utf8");
             for (std::size_t i = 0; i < source.size(); ++i) {
@@ -473,7 +501,7 @@ Conversion transform(const std::string &adapter, const Bytes &source)
     catch (...) { return {Outcome::Failed,"conversion_failed",{}}; }
 }
 
-bool atomic_create(const fs::path &destination, const Bytes &data, std::string &code)
+bool atomic_create(const fs::path &destination, const Bytes &data, std::string &code, bool verify_sha256)
 {
     fs::path temp;
     try {
@@ -497,7 +525,9 @@ bool atomic_create(const fs::path &destination, const Bytes &data, std::string &
         while (pos < data.size()) { const auto n = ::write(fd, data.data() + pos, data.size() - pos); if (n <= 0) break; pos += n; }
         const bool ok = pos == data.size() && ::fsync(fd) == 0; ::close(fd); check(ok, "temporary_write_failed");
 #endif
-        check(read_file(temp, Limits::output_bytes) == data, "output_validation");
+        const auto written_bytes=read_file(temp, Limits::output_bytes);
+        check(written_bytes == data, "output_validation");
+        if(verify_sha256)check(content_sha256(written_bytes)==content_sha256(data),"output_validation");
 #ifdef _WIN32
         check(MoveFileExW(temp.c_str(), destination.c_str(), MOVEFILE_WRITE_THROUGH), "destination_publish_failed");
 #else
@@ -512,12 +542,45 @@ bool atomic_create(const fs::path &destination, const Bytes &data, std::string &
     if (!temp.empty()) { std::error_code ec; fs::remove(temp, ec); }
     return false;
 }
+fs::path base64_destination(const fs::path &source, bool encode, const Bytes &decoded, const Bytes &encoded)
+{
+    if (encode) return source.parent_path() / fs::u8path(source.filename().u8string()+".base64.txt");
+    auto name = source.filename().u8string();
+    auto lower = name;
+    std::transform(lower.begin(),lower.end(),lower.begin(),[](unsigned char c){return c>='A'&&c<='Z'?c+32:c;});
+    const auto marker=lower.rfind(".base64");
+    if(marker!=std::string::npos && marker>0) {
+        const auto tail=lower.substr(marker+7);
+        bool suffix=tail==".txt";
+        if(tail.size()>7 && tail.rfind(" (",0)==0 && tail.compare(tail.size()-5,5,").txt")==0)
+            suffix=std::all_of(tail.begin()+2,tail.end()-5,[](char c){return c>='0'&&c<='9';});
+        if(suffix && name.substr(0,marker)!="." && name.substr(0,marker)!="..") return source.parent_path()/fs::u8path(name.substr(0,marker));
+    }
+    std::string extension;
+    if(begins(encoded,"data:",5)) {
+        const std::string header(encoded.begin(),encoded.begin()+std::min<std::size_t>(encoded.size(),1024));
+        const auto end=header.find_first_of(";,",5); const auto mime=header.substr(5,end==std::string::npos?0:end-5);
+        const std::pair<const char*,const char*> types[]={{"application/pdf","pdf"},{"image/png","png"},{"image/jpeg","jpg"},{"image/bmp","bmp"},{"application/zip","zip"},{"audio/wav","wav"},{"video/mp4","mp4"},{"text/plain","txt"},{"application/json","json"}};
+        for(const auto &type:types) if(mime==type.first) extension=type.second;
+    }
+    const Bytes signature(decoded.begin(),decoded.begin()+std::min<std::size_t>(decoded.size(),64));
+    if(extension.empty()) switch(detect(signature)) {
+    case Kind::Pdf:extension="pdf";break; case Kind::Png:extension="png";break;
+    case Kind::Jpeg:extension="jpg";break; case Kind::Bmp:extension="bmp";break;
+    case Kind::Zip:extension="zip";break; case Kind::Wave:extension="wav";break;
+    case Kind::Mp4:extension="mp4";break; default:extension="bin";break;
+    }
+    auto stem=source.stem().u8string(); if(stem.empty()||stem=="."||stem=="..")stem="decoded";
+    return source.parent_path()/fs::u8path(stem+"."+extension);
+}
+
 Result convert_file(const fs::path &source, const fs::path &destination, const std::string &adapter, const Executor &execute, const std::atomic<bool> &cancel,
                     const std::string &options, const std::vector<fs::path> &additional_sources)
 {
     try {
         if (cancel.load()) return {Outcome::Cancelled,"cancelled",0};
-        if (fs::exists(destination)) return {Outcome::Skipped,"destination_exists",0};
+        const bool same_folder = options == R"({"base64SameFolder":true})" && (adapter == "base64.encode" || adapter == "base64.decode");
+        if (!same_folder && fs::exists(destination)) return {Outcome::Skipped,"destination_exists",0};
         check(fs::weakly_canonical(source) != fs::weakly_canonical(destination), "source_destination_alias");
         check(fs::space(destination.parent_path()).available >= Limits::output_bytes + 65536, "destination_storage_low");
         const auto stamp = modified(source); const auto input = read_file(source, Limits::input_bytes);
@@ -534,13 +597,35 @@ Result convert_file(const fs::path &source, const fs::path &destination, const s
                 extra_inputs.emplace_back(path,std::move(extra));
             }
             request=bytes(envelope.dump()); check(request.size()<=Limits::wire_bytes,"pdf_request_limit");
-        } else check(options.empty() && additional_sources.empty(),"unsupported_conversion_options");
+        } else check((options.empty() || same_folder) && additional_sources.empty(),"unsupported_conversion_options");
         auto result = execute(adapter,request,cancel);
         if (cancel.load()) return {Outcome::Cancelled,"cancelled",0};
         if (result.outcome != Outcome::Converted) return {result.outcome,result.code,0};
         check(modified(source) == stamp && read_file(source,Limits::input_bytes) == input, "source_changed");
         for(const auto &extra:extra_inputs)check(read_file(extra.first,Limits::input_bytes)==extra.second,"source_changed");
         check(result.output.size() <= Limits::output_bytes, "output_limit");
+        if (same_folder) {
+            const bool encode=adapter=="base64.encode";
+            auto roundtrip=execute(encode?"base64.decode":"base64.encode",result.output,cancel);
+            if(cancel.load())return {Outcome::Cancelled,"cancelled",0};
+            check(roundtrip.outcome==Outcome::Converted,"output_validation");
+            check(content_sha256(roundtrip.output)==content_sha256(encode?input:base64_payload(input)),"output_validation");
+            // atomic_create rereads the flushed temporary bytes before the
+            // no-replace publish, binding this hash check to the written file.
+            check(modified(source)==stamp && read_file(source,Limits::input_bytes)==input,"source_changed");
+            const auto desired=base64_destination(source,encode,result.output,input);
+            for(unsigned n=0;n<10000;++n) {
+                if(cancel.load())return {Outcome::Cancelled,"cancelled",0};
+                auto target=desired;
+                if(n)target=desired.parent_path()/fs::u8path(desired.stem().u8string()+" ("+std::to_string(n)+")"+desired.extension().u8string());
+                if(fs::exists(target))continue;
+                std::string code;
+                if(atomic_create(target,result.output,code,true))return {Outcome::Converted,"base64_verified",result.output.size(),target};
+                if(code=="destination_exists" || (code=="destination_publish_failed" && fs::exists(target)))continue;
+                return {Outcome::Failed,code,0};
+            }
+            return {Outcome::Failed,"destination_collision_limit",0};
+        }
         std::string code;
         if (!atomic_create(destination,result.output,code)) return {Outcome::Failed,code,0};
         return {Outcome::Converted,"converted",result.output.size()};
@@ -567,6 +652,10 @@ const char *result_message(const std::string &code)
         {"capabilities",L("The worker reported what it can convert.")},
         {"disclosure_not_acknowledged",L("This conversion changes or leaves out data, and its changes were not confirmed. Nothing was added.")},
         {"disclosure_changed_since_acknowledgement",L("What this conversion changes is different from what was confirmed, so the file was skipped. Confirm the changes again and add it.")},
+        {"base64_verified",L("Base64 output was verified by SHA-256 round trip and written without replacing existing files.")},
+        {"invalid_base64_data_url",L("The data URL must contain a bounded MIME header and canonical Base64 data.")},
+        {"sha256_unavailable",L("SHA-256 verification is unavailable. No output was published.")},
+        {"destination_collision_limit",L("Too many numbered output names already exist. No file was replaced.")},
         {"destination_exists",L("The destination already exists. It was not replaced.")},
         {"destination_directory_missing",L("The output folder no longer exists.")},
         {"destination_storage_low",L("The output folder does not have enough free space.")},
@@ -904,6 +993,7 @@ bool Queue::step(const Executor &executor, const std::atomic<bool> &cancel)
     case Outcome::Cancelled: job.state = State::Cancelled; break;
     case Outcome::Failed: job.state = State::Failed; break;
     }
+    if(result.outcome==Outcome::Converted && !result.destination.empty())job.destination=result.destination;
     job.code = result.code; write(job); ++m_cursor; save_meta(); return true;
 }
 void Queue::pause(bool value) { std::lock_guard<std::mutex> lock(m_mutex); m_paused = value; save_meta(); }

@@ -2,7 +2,8 @@
 
 The converter consists of a native destination panel, a durable local queue, a
 broker and a separate offline worker. It preserves source files and never
-replaces an existing destination. The output folder is selected explicitly.
+replaces an existing destination. The output folder is selected explicitly for ordinary conversions.
+[Same-folder Base64 targets](base64-files.md) instead keep outputs beside their sources.
 
 ## Available adapters and limits
 
