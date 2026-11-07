@@ -1,0 +1,57 @@
+name: Publish LAN setup companion
+
+on:
+  push:
+    branches: ['**']
+    paths:
+      - '.github/workflows/lan-setup-companion.yml'
+      - 'companions/lan-drop-setup/**'
+      - 'lan-model-drop/host.ps1'
+      - 'lan-model-drop/wizard-*.ps1'
+      - 'lan-model-drop/compose.yaml'
+      - 'scripts/windows/Build-LanDropSetup.ps1'
+      - 'scripts/windows/Publish-LanDropSetup.ps1'
+      - 'scripts/windows/Invoke-BuildEntryPoint.ps1'
+      - 'packaging/windows/build-from-source/Toolchain.ps1'
+      - 'build-installer.bat'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: lan-setup-companion-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  portable:
+    runs-on: windows-2025
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Build single portable executable through the root entrypoint
+        shell: pwsh
+        run: |
+          & .\build-installer.bat /s -Companion LanDropSetup
+          if ($LASTEXITCODE -ne 0) { throw 'Portable producer failed.' }
+      - name: Publish separate companion release and read back its bytes
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN || secrets.ORG_TOKEN || github.token }}
+        run: ./scripts/windows/Publish-LanDropSetup.ps1
+      - name: Retain source and publication receipts
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: lan-setup-proof-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            companions/lan-drop-setup/dist/build-manifest.json
+            companions/lan-drop-setup/dist/package-proof.json
+            companions/lan-drop-setup/dist/*.sha256
+            ${{ runner.temp }}/lan-setup-publication/receipt.json
+          if-no-files-found: warn
+          retention-days: 14
