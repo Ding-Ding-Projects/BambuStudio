@@ -25,7 +25,7 @@ inline const std::vector<Descriptor>& descriptors()
         {"motion_preference", Kind::Choice, 0, 0, {"system", "reduced"}},
         {"app_display_name", Kind::Text, 0, 0, {}, 128},
         {"funny_level_en", Kind::Integer, 1, 5}, {"funny_level_yue", Kind::Integer, 1, 5},
-        {"dialog_emojis", Kind::Boolean}, {"narrator_enabled", Kind::Boolean}, {"narrator_quiet", Kind::Boolean},
+        {"dialog_emojis", Kind::Boolean}, {"action_sounds_enabled", Kind::Boolean}, {"narrator_enabled", Kind::Boolean}, {"narrator_quiet", Kind::Boolean},
         {"narrator_language", Kind::Choice, 0, 0, {"en", "yue_HK", "both"}},
         {"narrator_voice_en", Kind::Text}, {"narrator_voice_yue", Kind::Text},
         {"narrator_rate_en", Kind::Integer, -10, 10}, {"narrator_rate_yue", Kind::Integer, -10, 10},

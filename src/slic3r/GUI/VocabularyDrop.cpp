@@ -1,4 +1,5 @@
 #include "VocabularyDrop.hpp"
+#include "ActionSounds.hpp"
 
 #include "I18N.hpp"
 #include "LanguageMode.hpp"
@@ -26,10 +27,7 @@
 
 #ifdef _WIN32
 #include <windows.h>
-#include <mmsystem.h>
-#include <shellapi.h>
 #include <UIAutomation.h>
-#pragma comment(lib, "winmm.lib")
 #pragma comment(lib, "uiautomationcore.lib")
 #endif
 
@@ -93,24 +91,6 @@ Copy rejection_copy(PersonalVocabulary::Rejection reason)
     return {};
 }
 
-bool os_quiet_mode()
-{
-#ifdef _WIN32
-    QUERY_USER_NOTIFICATION_STATE state {};
-    if (SUCCEEDED(::SHQueryUserNotificationState(&state))) {
-        switch (state) {
-        case QUNS_BUSY:
-        case QUNS_RUNNING_D3D_FULL_SCREEN:
-        case QUNS_PRESENTATION_MODE:
-        case QUNS_QUIET_TIME:
-        case QUNS_APP: return true;
-        default: break;
-        }
-    }
-#endif
-    return false;
-}
-
 bool os_reduced_motion()
 {
 #ifdef _WIN32
@@ -119,25 +99,6 @@ bool os_reduced_motion()
         return animations == FALSE;
 #endif
     return false;
-}
-
-// One cue per outcome; the system volume and mute apply as for any sound.
-void play_outcome_sound(bool applied)
-{
-#ifdef _WIN32
-    if (os_quiet_mode()) return;
-    if (applied) {
-        wchar_t windows_dir[MAX_PATH] {};
-        const UINT length = ::GetWindowsDirectoryW(windows_dir, MAX_PATH);
-        if (length == 0 || length >= MAX_PATH) return;
-        const std::wstring tada = std::wstring(windows_dir, length) + L"\\Media\\tada.wav";
-        ::PlaySoundW(tada.c_str(), nullptr, SND_FILENAME | SND_ASYNC | SND_NODEFAULT);
-    } else {
-        ::PlaySoundW(L"SystemHand", nullptr, SND_ALIAS | SND_ASYNC | SND_NODEFAULT);
-    }
-#else
-    (void) applied;
-#endif
 }
 
 // Polite screen reader announcement through the window's UI Automation provider.
@@ -445,7 +406,6 @@ void show_refusal(wxWindow *frame, const Copy &reason)
     if (!refused.secondary.empty()) blocks.push_back({refused.secondary, Label::Body_14, wxWindow::FromDIP(4, frame)});
     blocks.push_back({reason.primary, Label::Body_14, wxWindow::FromDIP(12, frame)});
     if (!reason.secondary.empty()) blocks.push_back({reason.secondary, Label::Body_14, wxWindow::FromDIP(4, frame)});
-    play_outcome_sound(false);
     show_outcome(frame, false, std::move(blocks), refused.joined(" ") + " " + reason.joined(" "));
 }
 
@@ -463,7 +423,6 @@ void show_celebration(wxWindow *frame)
         blocks.push_back({applied.primary, headline_font, 0});
     }
     if (!applied.secondary.empty()) blocks.push_back({applied.secondary, Label::Head_20, wxWindow::FromDIP(8, frame)});
-    play_outcome_sound(true);
     show_outcome(frame, true, std::move(blocks), from_file.empty() ? applied.joined(" ") : from_file + " " + applied.joined(" "));
 }
 
@@ -501,6 +460,7 @@ void apply_dropped(wxWindow *frame, const wxString &file)
     }
     auto       reason  = PersonalVocabulary::Rejection::None;
     const bool applied = PersonalVocabulary::load(std::filesystem::path(file.ToStdWstring()), &reason);
+    ActionSounds::play(applied ? ActionSounds::Cue::VocabularyApplied : ActionSounds::Cue::Rejected);
     // Diagnostics name the outcome only, never the file, its keys or its values.
     BOOST_LOG_TRIVIAL(info) << "Personal vocabulary drop: " << (applied ? "applied" : "refused") << ", rule " << int(reason);
     if (applied)
