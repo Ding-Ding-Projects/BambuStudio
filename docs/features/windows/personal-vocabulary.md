@@ -92,16 +92,33 @@ the mapping; editable input and source model values are never rewritten. URLs,
 paths and format templates retain their original text. Preferences search reads
 original unwrapped labels. The canvas display adapter uses the same interface.
 
-Matching is case-sensitive, longest source first, at word boundaries, and
-nonrecursive. Display looks only at entries whose source starts with the
-character at each position, so large vocabularies do not slow down every label.
+Matching first prefers exact spelling, longest source first, at word boundaries,
+and is nonrecursive. If no exact source matches, ASCII letters are compared
+without case, still longest first. Replacement spelling stays exactly as supplied.
+If equally long case variants disagree on their replacement, the source stays
+unchanged. Non-ASCII characters remain exact. Display indexes candidates by their
+ASCII-folded first character rather than scanning the entire mapping per position.
+Shared canvas text, titles, buttons, checkboxes, radio buttons and tooltips, plus
+shared bilingual tab and field painting, resolve wording at the display boundary.
+Canvas control identities remain bound to the original text across load and clear.
+Existing explicit `###` identities retain their hash. Plain and `##` labels move
+once to a new original-derived hash when this implementation is installed, then
+remain stable for subsequent load, replacement and clear. Studio disables ImGui
+INI persistence (`IniFilename = nullptr`), so this does not migrate a saved window
+layout. This is not proof of packaged runtime interaction.
+Menu normalization propagates eligibility only from an already registered raw
+label or its exact pre-shortcut portion. Removing mnemonic marks never grants
+eligibility to a dynamic menu name.
+Explicit composition can join registered translated fragments with a short
+structural separator; it never registers unknown fragments or dynamic arguments.
 The registry of eligible interface copy keeps the first 50,000 distinct strings
 translated in a session; copy translated after that keeps its original wording.
 
 ## Saved copy
 
 Persistence uses the operating system's local application-data directory under
-`private-display/vocabulary.json`, outside synchronized preferences. Replacement
+`private-display/vocabulary.json`, outside synchronized preferences. The `--datadir` option does not isolate this
+wxWidgets application-data location; probes use their own application name. Replacement
 uses a unique, exclusively created sibling temporary file for each operation and
 an atomic Windows rename. Concurrent writers cannot rename each other's pending
 contents, and clear never deletes another operation's pending file. The selected input
@@ -146,8 +163,8 @@ On a configured hosted Windows build, build `personal_vocabulary_tests`,
 the tests and the probe phases in order: `load-first`, `restore-first`,
 `invalid`, `replace`, `restore-second`, `clear`, `restore-empty`, `large`,
 `restore-large`, `stale-cache`, `restore-stale`, `corrupt-cache`,
-`restore-corrupt`, `clear`, `restore-empty`. Each probe invocation must be a
-fresh process. The probe uses only synthetic neutral text in an isolated
+`restore-corrupt`, `clear`, `restore-empty`. The additional `composition` phase checks registered fragments, unknown input,
+School-mode suppression and clear. Each probe invocation must be a fresh process. The probe uses only synthetic neutral text in an isolated
 application-data namespace, turns School mode suppression off because it has
 no School mode record, and emits only a pass/fail result. Also run `race-a` and
 `race-b` concurrently as separate processes, wait for both, then run

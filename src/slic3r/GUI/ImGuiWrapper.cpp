@@ -527,53 +527,38 @@ static void split_imgui_id(const std::string &text, std::string &visible, std::s
     }
 }
 
-// Stacked form (Cantonese on its own line below the English): used for body
-// text, wrapped text and tooltips. Outside bilingual mode, or when there is no
-// Cantonese recorded for this exact English text, `text` comes back unchanged.
+// Body text has no interactive ID. Resolve each original language separately
+// before composition, without registering arbitrary caller strings.
 static std::string bilingual_stacked_utf8(const std::string &text)
 {
-    if (!I18N::language_mode_profile().is_bilingual())
-        return text;
-
-    std::string visible, id_suffix;
-    split_imgui_id(text, visible, id_suffix);
-    if (visible.empty())
-        return text;
-
-    const wxString secondary = I18N::bilingual_secondary(wxString::FromUTF8(visible.c_str()));
-    if (secondary.empty())
-        return text;
-
-    return visible + "\n" + secondary.ToUTF8().data() + id_suffix;
+    const wxString original = wxString::FromUTF8(text.c_str());
+    const std::string primary = into_u8(PersonalVocabulary::display(original));
+    if (!I18N::language_mode_profile().is_bilingual()) return primary;
+    const wxString secondary = I18N::bilingual_secondary(original);
+    return secondary.empty() ? primary : primary + "\n" + into_u8(PersonalVocabulary::display(secondary));
 }
 
-// Compact form ("English (middle dot) Cantonese" on one line): used for
-// auto-width buttons and window titles. `max_width_px` is the pixel width the
-// caller already knows is fixed (a button given an explicit size); when the
-// compact text would not fit it, the English alone is kept instead. Leave
-// `max_width_px` <= 0 for an auto-width control, where there is nothing to
-// overflow and the compact form always applies.
+// Use an original-derived identity in every state, including before load and
+// after clear. Existing ### overrides retain their exact hash. Plain and ##
+// labels migrate once to a new hash, so persisted window placement may reset
+// on upgrade; changing vocabulary later never resets the control identity.
 static std::string bilingual_compact_utf8(const std::string &text, float max_width_px = -1.0f)
 {
-    if (!I18N::language_mode_profile().is_bilingual())
-        return text;
-
     std::string visible, id_suffix;
     split_imgui_id(text, visible, id_suffix);
-    if (visible.empty())
-        return text;
-
-    const wxString secondary = I18N::bilingual_secondary(wxString::FromUTF8(visible.c_str()));
-    if (secondary.empty())
-        return text;
-
-    const std::string compact = visible + " \xC2\xB7 " + secondary.ToUTF8().data(); // " (middle dot) "
-    if (max_width_px > 0.0f) {
-        const float needed = ImGui::CalcTextSize(compact.c_str()).x + ImGui::GetStyle().FramePadding.x * 2.0f;
-        if (needed > max_width_px)
-            return text;
+    if (visible.empty()) return text;
+    const wxString original = wxString::FromUTF8(visible.c_str());
+    std::string shown = into_u8(PersonalVocabulary::display(original));
+    if (I18N::language_mode_profile().is_bilingual()) {
+        const wxString secondary = I18N::bilingual_secondary(original);
+        if (!secondary.empty()) {
+            const std::string compact = shown + " \xC2\xB7 " + into_u8(PersonalVocabulary::display(secondary));
+            const float needed = ImGui::CalcTextSize(compact.c_str()).x + ImGui::GetStyle().FramePadding.x * 2.0f;
+            if (max_width_px <= 0.0f || needed <= max_width_px) shown = compact;
+        }
     }
-    return compact + id_suffix;
+    const auto explicit_id = text.find("###");
+    return shown + (explicit_id == std::string::npos ? "###" + text : text.substr(explicit_id));
 }
 
 bool get_data_from_svg(const std::string &filename, unsigned int max_size_px, ThumbnailData &thumbnail_data)
@@ -1371,7 +1356,7 @@ bool ImGuiWrapper::button(const wxString &label, const ImVec2 &size, bool enable
 
 bool ImGuiWrapper::radio_button(const wxString &label, bool active)
 {
-    auto label_utf8 = into_u8(label);
+    auto label_utf8 = bilingual_compact_utf8(into_u8(label));
     return ImGui::RadioButton(label_utf8.c_str(), active);
 }
 
@@ -1506,7 +1491,7 @@ bool ImGuiWrapper::input_vec3(const std::string &label, const Vec3d &value, floa
 
 bool ImGuiWrapper::checkbox(const wxString &label, bool &value)
 {
-    auto label_utf8 = into_u8(label);
+    auto label_utf8 = bilingual_compact_utf8(into_u8(label));
     return ImGui::Checkbox(label_utf8.c_str(), &value);
 }
 
@@ -1526,7 +1511,7 @@ bool ImGuiWrapper::bbl_checkbox(const wxString &label, bool &value, bool enabled
         ImGui::PushStyleColor(ImGuiCol_FrameBg, md3_imgui_color(MD3::Role::SurfaceContainerHigh, factor));
         ImGui::PushStyleColor(ImGuiCol_Text, md3_imgui_color(MD3::Role::Outline, factor));
     }
-    auto label_utf8 = into_u8(label);
+    auto label_utf8 = bilingual_compact_utf8(into_u8(label));
     result          = ImGui::BBLCheckbox(label_utf8.c_str(), &value);
 
     if (!enabled) {
@@ -1546,7 +1531,8 @@ bool ImGuiWrapper::bbl_radio_button(const char *label, bool active)
         ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, md3_imgui_color(MD3::Role::Primary));
         ImGui::PushStyleColor(ImGuiCol_FrameBgActive, md3_imgui_color(MD3::Role::Primary));
     }
-    result = ImGui::BBLRadioButton(label,active);
+    const std::string display = bilingual_compact_utf8(label);
+    result = ImGui::BBLRadioButton(display.c_str(),active);
     if (b_value) { ImGui::PopStyleColor(3); }
     return result;
 }

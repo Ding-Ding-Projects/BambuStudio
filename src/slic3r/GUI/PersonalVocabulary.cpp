@@ -12,6 +12,7 @@
 #include <set>
 #include <unordered_map>
 #include <wx/app.h>
+#include <wx/menu.h>
 #include <wx/stdpaths.h>
 #include <wx/toplevel.h>
 #include <wx/window.h>
@@ -78,11 +79,18 @@ Rejection read_bounded(const std::filesystem::path &path, std::string &bytes)
     return bytes.size() > max_file_bytes ? Rejection::TooLarge : Rejection::None;
 }
 
+// ASCII case folding is locale-independent and leaves all non-ASCII code units
+// exact. Replacement values retain the spelling supplied by the user.
+wchar_t fold_ascii(wchar_t value)
+{
+    return value >= L'A' && value <= L'Z' ? value + (L'a' - L'A') : value;
+}
+
 FirstUnitIndex index_entries(const Entries &mapping)
 {
     FirstUnitIndex index;
     for (std::size_t i = 0; i < mapping.size(); ++i)
-        if (!mapping[i].first.empty()) index[mapping[i].first.front()].push_back(i);
+        if (!mapping[i].first.empty()) index[fold_ascii(mapping[i].first.front())].push_back(i);
     return index;
 }
 
@@ -95,22 +103,44 @@ wxString apply_indexed(const wxString &source, const Entries &mapping, const Fir
     auto word = [](wchar_t c) { return std::iswalnum(c) || c == L'_'; };
     std::wstring output;
     for (std::size_t i = 0; i < value.size();) {
-        bool matched = false;
-        if (const auto candidates = index.find(value[i]); candidates != index.end()) {
-            for (const std::size_t position : candidates->second) {
-                const auto &entry = mapping[position];
-                const auto end = i + entry.first.size();
-                if (value.compare(i, entry.first.size(), entry.first) == 0 &&
-                    (i == 0 || !word(value[i-1]) || !word(entry.first.front())) &&
-                    (end == value.size() || !word(value[end]) || !word(entry.first.back()))) {
-                    output += entry.second;
-                    i = end;
-                    matched = true;
+        const std::pair<std::wstring, std::wstring> *chosen = nullptr;
+        bool preserved_ambiguous = false;
+        if (const auto candidates = index.find(fold_ascii(value[i])); candidates != index.end()) {
+            // Exact spelling wins, including a shorter exact source. Only when
+            // none matches do we consider case-insensitive forms, longest first.
+            for (int pass = 0; pass < 2 && !chosen; ++pass) {
+                bool ambiguous = false;
+                for (const std::size_t position : candidates->second) {
+                    const auto &entry = mapping[position];
+                    const auto end = i + entry.first.size();
+                    if (end > value.size() ||
+                        (i != 0 && word(value[i-1]) && word(entry.first.front())) ||
+                        (end != value.size() && word(value[end]) && word(entry.first.back()))) continue;
+                    const bool equal = pass == 0
+                        ? value.compare(i, entry.first.size(), entry.first) == 0
+                        : std::equal(entry.first.begin(), entry.first.end(), value.begin() + i,
+                            [](wchar_t a, wchar_t b) { return fold_ascii(a) == fold_ascii(b); });
+                    if (!equal) continue;
+                    if (!chosen) chosen = &entry;
+                    else if (chosen->first.size() != entry.first.size()) break;
+                    else if (chosen->second != entry.second) ambiguous = true;
+                    if (pass == 0) break;
+                }
+                // Conflicting variants have no inferred winner. Preserve the
+                // complete source token, rather than matching a suffix inside it.
+                if (ambiguous) {
+                    output.append(value, i, chosen->first.size());
+                    i += chosen->first.size();
+                    chosen = nullptr;
+                    preserved_ambiguous = true;
                     break;
                 }
             }
         }
-        if (!matched) output += value[i++];
+        if (chosen) {
+            output += chosen->second;
+            i += chosen->first.size();
+        } else if (!preserved_ambiguous && i < value.size()) output += value[i++];
         if (output.size() > 65536) return source;
     }
     return wxString(output);
@@ -285,6 +315,44 @@ wxString remember(const wxString &source)
         if (s.sources.size() < 50000) s.sources.insert(source.ToStdWstring());
     }
     return source;
+}
+
+wxString remember_composed(const std::vector<wxString> &parts, const wxString &separator)
+{
+    wxString combined;
+    for (std::size_t i = 0; i < parts.size(); ++i) {
+        if (i) combined += separator;
+        combined += parts[i];
+    }
+    // This API propagates existing translation provenance, never grants it to
+    // dynamic arguments or user content. Keep separators strictly structural.
+    if (parts.empty() || parts.size() > 128 || combined.length() > 32768 || separator.length() > 8)
+        return combined;
+    for (const auto c : separator.ToStdWstring())
+        if (c != L' ' && c != L'\n' && c != L'\t' && c != L':' && c != L',' && c != L';' && c != L'-')
+            return combined;
+    auto &s = state();
+    std::lock_guard<std::mutex> lock(s.source_mutex);
+    for (const auto &part : parts)
+        if (!part.empty() && !s.sources.count(part.ToStdWstring())) return combined;
+    if (s.sources.size() < 50000) s.sources.insert(combined.ToStdWstring());
+    return combined;
+}
+
+void remember_menu_label(const wxString &source, const wxString &normalized)
+{
+    const auto raw = source.ToStdWstring();
+    if (raw.empty() || raw.size() > 32768) return;
+    const auto prefix = raw.substr(0, raw.find(L'\t'));
+    wxString expected = wxMenuItem::GetLabelText(wxString(prefix));
+    expected.Trim(true).Trim(false);
+    if (expected.ToStdWstring() != normalized.ToStdWstring()) return;
+    auto &s = state();
+    std::lock_guard<std::mutex> lock(s.source_mutex);
+    // A shortcut can be appended by the menu builder after translation. Only
+    // the exact original label, or its exact pre-shortcut portion, grants trust.
+    if (!s.sources.count(raw) && !s.sources.count(prefix)) return;
+    if (s.sources.size() < 50000) s.sources.insert(normalized.ToStdWstring());
 }
 
 wxString display(const wxString &source)

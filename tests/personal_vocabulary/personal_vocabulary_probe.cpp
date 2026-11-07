@@ -42,6 +42,27 @@ int main(int argc, char **argv)
     if (phase == "load-first") {
         ok = PV::clear() && write(R"({"schemaVersion":1,"entries":{"Open":"Inspect","Inspect":"Again"}})") &&
              PV::load(input) && PV::loaded() && shown() == "Inspect item";
+    } else if (phase == "composition") {
+        ok = write(R"({"schemaVersion":1,"entries":{"Open":"Inspect","Close":"Finish"}})") && PV::load(input);
+        const auto first = PV::remember("Open panel");
+        const auto second = PV::remember("Close panel");
+        const auto joined = PV::remember_composed({first, second}, "\n");
+        ok = ok && joined == "Open panel\nClose panel" && PV::display(joined) == "Inspect panel\nFinish panel";
+        const auto unknown = PV::remember_composed({first, "Unregistered customer value"}, "\n");
+        ok = ok && PV::display(unknown) == unknown;
+        const auto unsafe_separator = PV::remember_composed({first, second}, " arbitrary ");
+        ok = ok && PV::display(unsafe_separator) == unsafe_separator;
+        PV::remember("&Open menu");
+        PV::remember_menu_label("&Open menu\tCtrl+O", "Open menu");
+        ok = ok && PV::display("Open menu") == "Inspect menu";
+        PV::remember_menu_label("&Open customer", "Open customer");
+        ok = ok && PV::display("Open customer") == "Open customer";
+        PV::remember_menu_label("&Open menu", "Open forged");
+        ok = ok && PV::display("Open forged") == "Open forged";
+        Slic3r::GUI::PersonalModes::school_presentation_suppressed.store(true);
+        ok = ok && PV::display(joined) == joined;
+        Slic3r::GUI::PersonalModes::school_presentation_suppressed.store(false);
+        ok = ok && PV::clear() && PV::display(joined) == joined;
     } else if (phase == "restore-first") {
         ok = PV::loaded() && shown() == "Inspect item";
     } else if (phase == "invalid") {

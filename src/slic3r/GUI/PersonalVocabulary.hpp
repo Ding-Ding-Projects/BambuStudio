@@ -36,6 +36,12 @@ bool is_cache_path(const std::filesystem::path &path);
 // native display adapter uses replacements; exports and translation callers
 // continue receiving their original text.
 wxString remember(const wxString &source);
+// Join only already-registered translated fragments with a structural separator.
+// Unknown fragments keep the returned text unregistered.
+wxString remember_composed(const std::vector<wxString> &parts, const wxString &separator);
+// Propagate registered menu-copy provenance through mnemonic/shortcut removal.
+// A dynamic menu label or a different normalized string grants no provenance.
+void remember_menu_label(const wxString &source, const wxString &normalized);
 wxString display(const wxString &source);
 // Stateless display transform for deterministic validation with synthetic data.
 wxString apply(const wxString &source, const Entries &mapping);

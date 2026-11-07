@@ -1,6 +1,7 @@
 #include "BilingualDecorator.hpp"
 
 #include "BilingualRegistry.hpp"
+#include "PersonalVocabulary.hpp"
 #include "Widgets/Button.hpp"
 #include "Widgets/Label.hpp"
 #include "Widgets/TextInput.hpp"
@@ -758,14 +759,16 @@ wxString fit_bilingual(wxDC &dc, const wxString &english, int width, wxString *t
     if (tooltip_note != nullptr)
         tooltip_note->clear();
     const wxString cantonese = BilingualRegistry::instance().lookup(english);
+    const wxString shown = PersonalVocabulary::display(english);
     if (cantonese.empty())
-        return english;
-    const wxString compact = english + inline_separator() + cantonese;
+        return shown;
+    const wxString shown_secondary = PersonalVocabulary::display(cantonese);
+    const wxString compact = shown + inline_separator() + shown_secondary;
     if (width > 0 && !english.Contains('\n') && dc.GetTextExtent(compact).GetWidth() <= width)
         return compact;
     if (tooltip_note != nullptr)
-        *tooltip_note = tooltip_prefix() + cantonese;
-    return english;
+        *tooltip_note = tooltip_prefix() + shown_secondary;
+    return shown;
 }
 
 wxString bilingual_secondary(const wxString &english)
