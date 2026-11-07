@@ -5,7 +5,8 @@
 - [x] Verify Preferences reopens at 1050 x 720 and 96 DPI; identify capture exclusion through read-only display-affinity value 17 without changing protection.
 - [ ] Complete the Preferences visual matrix; black protected captures are not visual acceptance.
 - [ ] Verify the newer isolated wording-cache implementation in a built candidate using neutral profiles.
-- [ ] Verify container 1.0.1 publication run 42418444721 and its actual digest, then live direct sending.
+- [x] Verify container 1.0.1 publication run 42418444721, its exact digest, isolated Compose startup and local/second-host LAN health.
+- [ ] Verify sender GUI interaction before updating the existing 1.0.0 service.
 - [ ] Establish the user's actual startup cause if further diagnosis is needed; synthetic recovery does not identify it.
 
 ## Local printer status API, 4 November 2026
@@ -14,7 +15,8 @@
 
 - [x] Remove sender-code authentication, input fields, credential-bearing invites and renewal controls; preserve station authentication and storage.
 - [x] Verify direct uploads, station authorization and model/size/queue/rate limits with focused production-helper tests.
-- [ ] Publish container 1.0.1, pin its verified digest, and verify direct sending on the live LAN.
+- [x] Publish container 1.0.1 and pin its verified digest; isolated Compose and LAN health passed.
+- [ ] Verify direct sending through the sender GUI and update the existing service.
 - [ ] Build and verify native invite controls in all supported language modes.
 
 Branch `ai/feature/20261104-door-status-api`. Details: [`docs/features/device/status-api.md`](docs/features/device/status-api.md).

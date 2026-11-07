@@ -55,22 +55,22 @@
     {
       "route": "application-integration/lan-model-drop-site.md",
       "title": "LAN model drop site",
-      "sha256": "51fc2afb0fd50ba0577ef1d6f8117d14088b95fe5eb3ca638bbf25f886fa60e0"
+      "sha256": "31ebe8fe3128b3208fcf12269a16c2c24ec342c52f5a967f4b3bb77c18786001"
     },
     {
       "route": "application-integration/lan-model-drop-site.yue_HK.md",
       "title": "LAN 模型投遞網站",
-      "sha256": "d69da50c2e2e73be071e1b65c246fb212c14f61af12e7aed540e52b7406547aa"
+      "sha256": "29228c2e886839dbae395819514d767117e234bb1ecb32f89c2594ea7e2a67c5"
     },
     {
       "route": "application-integration/lan-model-drop.md",
       "title": "LAN model drop",
-      "sha256": "ebb9d1d288c90af503a5967c3f418860262ffe9b1b01aa4c987962e5469851d1"
+      "sha256": "a14d3903d06785747281eeb00bb02f5cfa7ee64c6e36dac03d14bdc0c390b157"
     },
     {
       "route": "application-integration/lan-model-drop.yue_HK.md",
       "title": "LAN 模型投遞",
-      "sha256": "4a36bc2c9680543c590a507013f0eb0b11db68644a989c8bc7d322a3b3e9aa13"
+      "sha256": "8f5c0ad23c1cf9a53bd4da9c7a77f47f89e6a227d6229664f7309041afe16a17"
     },
     {
       "route": "application-integration/local-drop-hosting.md",
@@ -2120,7 +2120,7 @@
       "bytes": 16430
     }
   ],
-  "bundle_sha256": "c9f31d685f60648186e198dacb2b562ecd3f5ec872f8dfd8406e1c66c8dcc5ea",
+  "bundle_sha256": "b2b3c11a66c948043764759f1ac18990d8f6bc279826d4d77681ffd745241625",
   "unavailable_references": [
     {
       "source": "api/README.md",
@@ -2200,6 +2200,16 @@
     {
       "source": "appearance/motion-editor.yue_HK.md",
       "target": "../../../design/native-appearance/motion-capability-inventory.json",
+      "kind": "link"
+    },
+    {
+      "source": "application-integration/lan-model-drop-site.md",
+      "target": "https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/42418444721",
+      "kind": "link"
+    },
+    {
+      "source": "application-integration/lan-model-drop.md",
+      "target": "https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/42418444721",
       "kind": "link"
     },
     {

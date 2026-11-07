@@ -15,7 +15,7 @@ services:
   lan-model-drop:
     # Version tags are published once. The image also carries its full source
     # revision as an OCI label; development builds use compose.build.yaml.
-    image: ghcr.io/ding-ding-projects/bambustudio-lan-model-drop:v1.0.1
+    image: ghcr.io/ding-ding-projects/bambustudio-lan-model-drop:v1.0.1@sha256:9382599181a32a5d78730c82b315612fcadc51beacea0ad3b831500e122ce51a
     restart: unless-stopped
     # Published on every network interface of this computer, so phones and
     # laptops on the same network can open the page.
