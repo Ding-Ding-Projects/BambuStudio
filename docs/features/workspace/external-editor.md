@@ -54,6 +54,11 @@ an auto-detected editor.
 
 ## Verification
 
+The external-editor picker retains its own localized accessible name. A duplicate
+assignment that replaced it with the download-path button's name was removed on
+7 November 2026. Source inspection verifies the correction; native assistive
+technology verification of this change remains pending.
+
 - Compiled clean into `libslic3r_gui` (0 errors) after adversarial review
   (review findings on silent Custom fallback fixed).
 - UI captured in the screenshot matrix under `docs/screenshots/preferences/`

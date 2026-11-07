@@ -1,5 +1,10 @@
 # Roadmap
 
+## External-editor picker name, 7 November 2026
+
+- [x] Remove the duplicate accessible-name assignment and review the localized source label.
+- [ ] Verify the corrected name with native assistive technology in the built Preferences dialog.
+
 ## Complete required-feature inventory, 7 November 2026
 
 - [x] Preserve 117 identities, nine classes, 28 historical surfaces and 15 legacy crosswalks without inheriting implementation status; independently review format and ownership boundaries.

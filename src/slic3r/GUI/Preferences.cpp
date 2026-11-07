@@ -1562,7 +1562,6 @@ wxWindow* PreferencesDialog::create_item_external_editor(wxWindow* parent, int p
     // MD3 outlined button, matching the Download-path Browse button above.
     auto m_button_browse = new Button(item_panel, _L("Browse"));
     m_button_browse->SetName(_L("External editor browse"));
-    m_button_browse->SetName(_L("Download path browse"));
     m_button_list[m_button_list.size()] = m_button_browse;
     m_button_browse->SetVariant(Button::Variant::Outlined);
     m_button_browse->SetButtonSize(Button::Size::Small);

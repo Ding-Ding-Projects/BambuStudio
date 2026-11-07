@@ -1955,12 +1955,12 @@
     {
       "route": "workspace/external-editor.md",
       "title": "External editor",
-      "sha256": "0b7425c9dfa86270c4238ed215a425579d480b3bc8d79a2946a03b127a163811"
+      "sha256": "4f1cf164a10d57755475081af11bbe8f27c1434a77b3aadf8245edc00ff38dfa"
     },
     {
       "route": "workspace/external-editor.yue_HK.md",
       "title": "外部編輯器",
-      "sha256": "7a97a5221e2a5c4baad4c9c6f9646cbd1f5f8591ef91a4f8d544169afc670960"
+      "sha256": "fc7d3109fcbc5381ff34367fbe92d611388041f6c22410c894dde82604fc68cb"
     },
     {
       "route": "workspace/fan-motion.md",
@@ -2155,7 +2155,7 @@
       "bytes": 16430
     }
   ],
-  "bundle_sha256": "072d6e2f8f98a19d89eb1752ba4a74e1adb237a9dfd418024a4e748f604639f7",
+  "bundle_sha256": "00a7fffde81390f0ff5b086a990117dbf62da77d9d5cf30fe92d02d53de60a21",
   "unavailable_references": [
     {
       "source": "api/README.md",

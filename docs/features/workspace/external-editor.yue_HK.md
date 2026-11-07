@@ -1,6 +1,6 @@
 ---
 translation-of: external-editor.md
-source-sha256: 8e46e044c9cc60783210d559e9bbc4e1a324dca0baded441ad9075bfa5200e06
+source-sha256: df15243f5bdba04858cd80b8a64e91d3786655314b8b916551508aadbc430c23
 review-status: agent-drafted
 ---
 
@@ -8,36 +8,44 @@ review-status: agent-drafted
 
 # 外部編輯器
 
-「喺外部編輯器開啟」開啟目前項目嘅資料夾喺一個使用者選擇碼/文字編輯器，鏡像 GitHub Desktop 嘅外部編輯器整合。
+「喺外部編輯器開啟」會使用你選擇嘅程式碼或文字編輯器，開啟目前專案所在資料夾，提供類似 GitHub Desktop 嘅外部編輯器整合。
 
 ## 行為
 
-- **檔案 ▸ 喺外部編輯器開啟**（喺版本歷史紀錄下方）開啟資料夾，包含目前項目嘅 `.3mf`。禁用，當冇項目檔案存在時。
-- 編輯器檢測（`src/slic3r/Utils/ExternalEditor.{hpp,cpp}`）：探測 Windows 移除登錄檔鍵（HKCU + HKLM，包括 WOW6432Node），對於 VS Code、VS Code Insiders、VSCodium、Sublime Text、Notepad++、Cursor、Windsurf 同 Zed（表轉謄自桌面物料參考實作），然後回到掃描 `PATH` 對於編輯器嘅 CLI 裏面（`.cmd` 裏面解析到佢哋嘅真實執行檔）。macOS 探測 `/Applications` 束加上 PATH；Linux 探測知名路徑加上 PATH。檢測執行一次每處理程序同被快取。
-- 啟動（`open_in_external_editor` 喺 `src/slic3r/Utils/Process.cpp`）：分離非同步生成（Windows 上 `wxExecute(argv, wxEXEC_ASYNC)`、macOS 上 `boost::process::spawn`）、argv 基於，所以帶著空格嘅路徑係安全嘅；編輯器活得比應用程式更久。
+- **檔案 ▸ 喺外部編輯器開啟** 位於版本歷史紀錄下方，開啟目前 `.3mf` 所在資料夾。專案尚未有檔案時，選項會停用。
+- 編輯器偵測位於 `src/slic3r/Utils/ExternalEditor.{hpp,cpp}`。Windows 會讀取 HKCU、HKLM 同 WOW6432Node 嘅移除程式登錄資料，尋找 VS Code、VS Code Insiders、VSCodium、Sublime Text、Notepad++、Cursor、Windsurf 同 Zed。清單參照 desktop-material 嘅實作；找不到時再掃描 `PATH`，並將 `.cmd` 啟動檔解析到真正執行檔。macOS 檢查 `/Applications` 套件及 PATH；Linux 檢查常用位置及 PATH。偵測結果每個程序只建立一次並快取。
+- `src/slic3r/Utils/Process.cpp` 嘅 `open_in_external_editor` 會非同步啟動編輯器。Windows 使用 `wxExecute(argv, wxEXEC_ASYNC)`，macOS 使用 `boost::process::spawn`。參數以陣列傳遞，路徑有空格亦可正常處理；關閉本程式唔會順便關閉編輯器。
 
 ## 設定
 
 偏好設定 ▸ 一般 ▸ **外部編輯器**：
 
-- 偵測編輯器加上**自訂…**嘅下拉 ， 保留作為 AppConfig `external_editor`（編輯器名稱，或 `custom`）。
-- **外部編輯器路徑**列帶著瀏覽（執行檔選擇器）， 保留作為 `external_editor_path`；當下拉設定為自訂時被使用。
+- 下拉選單列出偵測到嘅編輯器及**自訂…**。AppConfig 嘅 `external_editor` 儲存編輯器名稱，或 `custom`。
+- **外部編輯器路徑**提供瀏覽按鈕，開啟執行檔選擇器。路徑儲存為 `external_editor_path`，只喺選擇自訂時使用。
 
-一個明確自訂選擇被嚴格尊重：如果佢嘅路徑係空嘅應用程式顯示一個警告敬酒指向偏好設定，而唔係默默啟動一個自動檢測編輯器。
+明確選擇自訂後，如果路徑留空，程式會顯示通知，提示你前往偏好設定，唔會自行改用另一個偵測到嘅編輯器。
 
-## 失敗模式
+## 失敗情況
 
-- **冇編輯器發現/設定** → 警告角敬酒（「冇外部編輯器係配置…」）、冇崩潰、冇對話。
-- **編輯器喺檢測後卸載** → 生成非同步失敗；檢測係每處理程序快取，所以新（移除）安裝編輯器被撿起喺下一個應用程式開始（記錄限制）。
-- **未儲存/從不儲存項目** → 選單項目禁用（冇資料夾去開啟）。
+- **未找到或未設定編輯器**：顯示「No external editor is configured…」一類角落通知，唔會崩潰或彈出對話框。
+- **偵測後移除了編輯器**：非同步啟動會失敗。由於偵測結果按程序快取，新安裝或移除嘅編輯器要下次啟動本程式先會更新，呢個係已知限制。
+- **專案未儲存過**：冇可開啟嘅專案資料夾，選單會停用。
 
 ## 安全考慮
 
-- 只有發現執行檔，喺登錄安裝位置下、知名安裝路徑或使用者嘅 `PATH` 被提供；自訂路徑係使用者選擇通過檔案對話同儲存本地喺 AppConfig。
-- 項目資料夾路徑作為單一 argv 元素傳遞（冇殼層字串內插），防止參數注入經由工藝項目路徑。
-- 登錄存取係唯讀。
+- 只提供喺登錄安裝位置、常用安裝路徑或使用者 `PATH` 找到嘅執行檔。自訂路徑由使用者透過檔案對話框選擇，並儲存喺本機 AppConfig。
+- 專案資料夾路徑以單一 argv 元素傳遞，唔會拼接成殼層指令字串，避免特製路徑造成參數注入。
+- 登錄資料只會被讀取，唔會修改。
 
 ## 驗證
 
-- 編譯清潔到 `libslic3r_gui`（0 錯誤），喺敵對檢查之後（檢查發現喺默默自訂備用固定）。
-- UI 擷取喺截圖矩陣下 `docs/screenshots/preferences/`（一般分頁列），喺一次構建到執行 exe。
+外部編輯器瀏覽按鈕會保留自己嘅本地化無障礙名稱。2026 年 11 月 7 日已移除將名稱覆蓋成下載路徑按鈕名稱嘅重複指派。原始碼檢視確認修正；新版本嘅原生輔助技術驗證仍待完成。
+
+- 歷史記錄顯示，獨立檢查修正自訂路徑默默改用其他編輯器嘅問題後，`libslic3r_gui` 編譯完成，0 個錯誤。
+- 一般分頁相關介面影像記錄位於 `docs/screenshots/preferences/`。歷史影像唔代表上述新修正已通過實機驗收。
+
+## 專用匯出交接
+
+共用匯出對話框使用 `open_export_in_visual_studio_code(target_utf8)`，唔會改用一般偏好編輯器嘅後備流程。每次會重新偵測 stable 同 Insiders 安裝、檢查使用者及電腦安裝位置，亦支援 PATH 上嘅可攜執行檔。目標必須存在。參數以向量傳遞，並包含選項分隔符；資料夾會以新工作區開啟。
+
+未安裝 Code 時，對話框會明確提供 Download VS Code 操作，開啟官方下載頁面。安裝後可以直接重試，唔使重新啟動本程式。輸出不存在或啟動失敗會喺對話框顯示；使用者選擇嘅一般編輯器設定唔會改變。此新操作仍待原生 GUI 編譯及互動證據，主控台匯出測試唔能夠驗證呢個介面。

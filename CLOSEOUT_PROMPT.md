@@ -6,7 +6,7 @@ and incomplete; account allowance is unknown.
 
 ## Preserved source
 
-Remote main 71cacf48f6c23bb02d0d056d701722cc4ec1a551 was read back exactly.
+Remote main baf9303d613aa1b2953c675872e89cfe1e40c376 was read back exactly.
 It includes direct sending, isolated wording storage, Base64 conversion and the
 content-free Preferences probe. Native acceptance remains separate.
 
@@ -73,8 +73,14 @@ Two f152 candidate launches were normally closed. The first synthetic profile
 omitted its terminal LF and triggered an unchanged settings-parser exception.
 The corrected run's readiness check selected a hidden preconstructed Settings
 window and did not obtain a main-workspace image. It does not establish a product
-regression or visible workspace acceptance. A final bounded method-corrected
-native attempt is pending. The matching installed application remains unchanged.
+regression or visible workspace acceptance. The final method-corrected attempt
+verified the actual main workspace in 27.364 seconds and opened Preferences.
+Its visible Preferences window has display affinity 17; the black image is not
+a rendering defect. All 16 held processes and the desktop closed normally.
+Detailed LAN invite and wording workflows remain unverified; the matching
+installed application remains unchanged. The current small source correction
+removes the external-editor Browse button's duplicate download-path accessible
+name. Native assistive-technology verification remains pending.
 
 Preserve source and private evidence. No force pushes, private wording publication,
 host power/login actions, capture-protection changes or cleanup of active,

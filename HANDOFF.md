@@ -1,5 +1,12 @@
 # Bambu Studio handoff
 
+## External-editor accessibility correction, 7 November 2026
+
+The Preferences external-editor Browse button no longer overwrites its localized
+accessible name with the download-path button's name. The one-line correction
+was checked against its actual helper and documented in both languages. Native
+assistive-technology verification remains pending; no broad layout claim is made.
+
 ## Required-feature inventory, 7 November 2026
 
 The reviewed inventory retains 117 stable identities, nine surface classes,
