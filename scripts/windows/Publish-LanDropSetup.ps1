@@ -107,7 +107,7 @@ $notes = @("# LAN hosting setup companion $($package.version)", '',
     '', "- Build started: $($buildStart.ToString('yyyy-MM-ddTHH:mm:ssZ'))", "- Build completed: $($buildEnd.ToString('yyyy-MM-ddTHH:mm:ssZ'))",
     "- Build duration: $(Format-Duration ($buildEnd - $buildStart))", '- Whole-workflow terminal timing: unverified while this workflow is running.')
 if ($dish.status -eq 'resolved') {
-    $notes += @('', "Code name: $($dish.name)", "Catalog dish: $($dish.id)", "Catalog revision: $($dish.catalogRevision)", "[Public dish photo: $($dish.name)]($($dish.photo))")
+    $notes += @('', "Code name: $($dish.name)", "Catalog dish: $($dish.id)", "Catalog revision: $($dish.catalogRevision)", "[Catalog source at the resolved revision](https://github.com/Ding-Ding-Projects/dim-sum-photos/blob/$($dish.catalogRevision)/catalog/index.json)", "[Public dish photo: $($dish.name)]($($dish.photo))")
 } else { $notes += @('', 'Code name and photo unavailable: ' + $dish.reason) }
 $notes += @('', (Get-Content -LiteralPath $lineCountPath -Raw))
 [IO.File]::WriteAllLines($notesPath, $notes, [Text.UTF8Encoding]::new($false))
