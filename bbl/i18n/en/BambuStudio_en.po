@@ -32498,3 +32498,63 @@ msgstr "Personal wording applied"
 #: src/slic3r/GUI/VocabularyDrop.cpp
 msgid "Personal wording cannot be changed while school presentation is on."
 msgstr "Personal wording cannot be changed while school presentation is on."
+
+msgid "Start local drop server"
+msgstr ""
+
+msgid "Open drop page"
+msgstr ""
+
+msgid "Start the local server to set up reception on this computer. Docker must be installed and running."
+msgstr ""
+
+msgid "An existing remote station is configured. Its address and protected key have not been changed."
+msgstr ""
+
+msgid "Local server setup is already running. Wait for it to finish before trying again."
+msgstr ""
+
+msgid "Starting the local drop server and checking its network address. This can take several minutes."
+msgstr ""
+
+msgid "The local hosting files are missing. Repair or update this installation and try again."
+msgstr ""
+
+msgid "Local server setup timed out. Check Docker and the network connection, then try again."
+msgstr ""
+
+msgid "The local server could not be started. Check that Docker is installed and running, then try again."
+msgstr ""
+
+msgid "The server started, but station settings changed during setup. Your current station was preserved."
+msgstr ""
+
+msgid "The server started, but its protected pairing could not be saved. Station settings were not changed."
+msgstr ""
+
+msgid "Local server ready. Open the drop page, or share the invite link when the connection is ready."
+msgstr ""
+
+msgid "The server started, but pairing settings could not be saved. The previous station settings were restored."
+msgstr ""
+
+msgid "Pairing settings could not be saved or fully restored. Reception is paused for this session; review settings before restarting."
+msgstr ""
+
+msgid "Protected key storage is unavailable, so automatic local pairing cannot be used."
+msgstr ""
+
+msgid "The saved station changed while you were editing. Review this address and press Enter to replace it."
+msgstr ""
+
+msgid "Local pairing updated. The previous key text was cleared."
+msgstr ""
+
+msgid "Local pairing changed while you were editing. Your key draft was preserved; review it before saving."
+msgstr ""
+
+msgid "Saving this draft will replace the new local pairing. Press Save key again only if that is intended."
+msgstr ""
+
+msgid "People on your local network can send 3D models to this computer through the LAN drop site that runs in Docker. Use Start local drop server below to set it up on this computer, or keep an existing remote station. Each model waits for you: nothing is opened, sliced or printed until you choose Open."
+msgstr ""

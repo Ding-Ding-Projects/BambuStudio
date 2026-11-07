@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-04 16:05-0500\n"
+"POT-Creation-Date: 2026-11-07 16:00-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -12282,46 +12282,6 @@ msgid "Appearance preview"
 msgstr ""
 
 msgid "Sample"
-msgstr ""
-
-msgid "The file could not be read."
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "The file is larger than %d KiB."
-msgstr ""
-
-msgid "The file is not valid JSON saved as UTF-8."
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "The file nests objects or lists more than %d levels deep."
-msgstr ""
-
-msgid "The file repeats a key inside one object."
-msgstr ""
-
-msgid "The file must use schemaVersion 1."
-msgstr ""
-
-msgid "The file must contain only schemaVersion and an entries object."
-msgstr ""
-
-msgid "Every entry value must be text."
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "An entry key is longer than %d characters."
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "An entry value is longer than %d characters."
-msgstr ""
-
-msgid "An entry is blank, contains control or text-direction characters, or uses a reserved name."
-msgstr ""
-
-msgid "The file is valid, but this device could not save its private copy."
 msgstr ""
 
 msgid "Light"
@@ -30130,6 +30090,15 @@ msgstr ""
 msgid "QR code of the invite link"
 msgstr ""
 
+msgid "Start local drop server"
+msgstr ""
+
+msgid "Open drop page"
+msgstr ""
+
+msgid "Start the local server to set up reception on this computer. Docker must be installed and running."
+msgstr ""
+
 msgid "Send them the link, or let them scan the QR code. It opens the drop site with the code filled in."
 msgstr ""
 
@@ -30157,10 +30126,46 @@ msgstr ""
 msgid "Show them"
 msgstr ""
 
+msgid "An existing remote station is configured. Its address and protected key have not been changed."
+msgstr ""
+
+msgid "Local server setup is already running. Wait for it to finish before trying again."
+msgstr ""
+
+msgid "Starting the local drop server and checking its network address. This can take several minutes."
+msgstr ""
+
+msgid "The local hosting files are missing. Repair or update this installation and try again."
+msgstr ""
+
+msgid "Local server setup timed out. Check Docker and the network connection, then try again."
+msgstr ""
+
+msgid "The local server could not be started. Check that Docker is installed and running, then try again."
+msgstr ""
+
+msgid "The server started, but station settings changed during setup. Your current station was preserved."
+msgstr ""
+
+msgid "The server started, but its protected pairing could not be saved. Station settings were not changed."
+msgstr ""
+
+msgid "Local server ready. Open the drop page, or share the invite link when the connection is ready."
+msgstr ""
+
+msgid "The server started, but pairing settings could not be saved. The previous station settings were restored."
+msgstr ""
+
+msgid "Pairing settings could not be saved or fully restored. Reception is paused for this session; review settings before restarting."
+msgstr ""
+
 msgid "Link copied to the clipboard."
 msgstr ""
 
 msgid "The clipboard is not available. Select the link and copy it."
+msgstr ""
+
+msgid "Protected key storage is unavailable, so automatic local pairing cannot be used."
 msgstr ""
 
 msgid "This computer has no private local network address to put in a link. Set the drop site address to an address the others can open."
@@ -30198,6 +30203,9 @@ msgstr ""
 msgid "Test result: %1%"
 msgstr ""
 
+msgid "The saved station changed while you were editing. Review this address and press Enter to replace it."
+msgstr ""
+
 msgid "This address is not valid. Use http:// or https://, a host name or IPv4 address, and an optional port, for example http://localhost:8833."
 msgstr ""
 
@@ -30214,6 +30222,12 @@ msgstr ""
 msgid "Read the key on the computer that runs the drop site with: %1%"
 msgstr ""
 
+msgid "Local pairing updated. The previous key text was cleared."
+msgstr ""
+
+msgid "Local pairing changed while you were editing. Your key draft was preserved; review it before saving."
+msgstr ""
+
 msgid "Protected key storage is not available on this system, so the key cannot be saved."
 msgstr ""
 
@@ -30224,6 +30238,9 @@ msgid "No station key is saved."
 msgstr ""
 
 msgid "Hide station key"
+msgstr ""
+
+msgid "Saving this draft will replace the new local pairing. Press Save key again only if that is intended."
 msgstr ""
 
 msgid "The station key must be 16 to 512 visible characters without spaces. Nothing was saved."
@@ -30250,7 +30267,7 @@ msgstr ""
 msgid "Make a new code; links with the old one stop working."
 msgstr ""
 
-msgid "People on your local network can send 3D models to this computer through the LAN drop site that runs in Docker. Each model waits for you: nothing is opened, sliced or printed until you choose Open."
+msgid "People on your local network can send 3D models to this computer through the LAN drop site that runs in Docker. Use Start local drop server below to set it up on this computer, or keep an existing remote station. Each model waits for you: nothing is opened, sliced or printed until you choose Open."
 msgstr ""
 
 msgid "Set nozzle diameter"
@@ -30560,6 +30577,52 @@ msgid "Automatically merge the same colors in the model after mapping."
 msgstr ""
 
 msgid "Synchronize now"
+msgstr ""
+
+msgid "The file could not be read."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The file is larger than %d KiB."
+msgstr ""
+
+msgid "The file is not valid JSON saved as UTF-8."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The file nests objects or lists more than %d levels deep."
+msgstr ""
+
+msgid "The file repeats a key inside one object."
+msgstr ""
+
+msgid "The file must use schemaVersion 1."
+msgstr ""
+
+msgid "The file must contain only schemaVersion and an entries object."
+msgstr ""
+
+msgid "Every entry value must be text."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "An entry key is longer than %d characters."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "An entry value is longer than %d characters."
+msgstr ""
+
+msgid "An entry is blank, contains control or text-direction characters, or uses a reserved name."
+msgstr ""
+
+msgid "The file is valid, but this device could not save its private copy."
+msgstr ""
+
+msgid "Personal wording applied"
+msgstr ""
+
+msgid "Personal wording cannot be changed while school presentation is on."
 msgstr ""
 
 #: resources/data/hints.ini: [hint:How to use keyboard shortcuts]
