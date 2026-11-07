@@ -1,5 +1,6 @@
 #include "LanModelDropUi.hpp"
 #include "LanModelDropStation.hpp"
+#include "LocalHost.hpp"
 
 #include "../BilingualDecorator.hpp"
 #include "../GUI_App.hpp"
@@ -17,17 +18,20 @@
 #include "../Widgets/StateColor.hpp"
 #include "../Widgets/TextInput.hpp"
 #include "libslic3r/AppConfig.hpp"
+#include "libslic3r/Utils.hpp"
 
 #include <wx/clipbrd.h>
 #include <wx/dataobj.h>
 #include <wx/dcbuffer.h>
 #include <wx/sizer.h>
+#include <wx/wrapsizer.h>
 #if wxUSE_ACCESSIBILITY
 #include <wx/access.h>
 #endif
 
 #include <algorithm>
 #include <functional>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -38,6 +42,8 @@ namespace {
 constexpr int kRowLeft  = 24; // Preferences ITEM_LEFT_PADDING
 constexpr int kRowRight = 16; // Preferences ITEM_RIGHT_PADDING
 constexpr int kWrap     = 520;
+// GUI-thread revision: automatic pairing invalidates untouched key editor text.
+std::uint64_t local_pairing_revision = 0;
 
 wxColour role(MD3::Role r) { return StateColor::semantic(r); }
 
@@ -247,11 +253,30 @@ void QrView::render()
 // InvitePanel
 // ---------------------------------------------------------------------------------------------
 
-InvitePanel::InvitePanel(wxWindow *parent, const Options &options) : wxPanel(parent, wxID_ANY), m_options(options)
+InvitePanel::InvitePanel(wxWindow *parent, const Options &options) : wxPanel(parent, wxID_ANY), m_options(options), m_local_timer(this)
 {
     SetBackgroundColour(parent->GetBackgroundColour());
     auto *outer = new wxBoxSizer(wxVERTICAL);
     const int gap = FromDIP(8);
+
+    // Hosting is available before reception is enabled; turning on polling alone
+    // cannot start the separate local service.
+    auto *host_actions = new wxWrapSizer(wxHORIZONTAL);
+    m_start_local = kit_button(this, _L("Start local drop server"), Button::Variant::Filled);
+    m_open_page = kit_button(this, _L("Open drop page"), Button::Variant::Outlined);
+    host_actions->Add(m_start_local, 0, wxRIGHT | wxBOTTOM, gap);
+    host_actions->Add(m_open_page, 0, wxBOTTOM, gap);
+    outer->Add(host_actions, 0, wxEXPAND);
+    m_local_status = LiveText(body_label(this, _L("Start the local server to set up reception on this computer. Docker must be installed and running."),
+        MD3::Role::OnSurfaceVariant, ::Label::Body_12));
+    outer->Add(m_local_status.get(), 0, wxEXPAND | wxBOTTOM, gap);
+    m_start_local->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { start_local(); });
+    m_open_page->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) {
+        const auto &v = view();
+        const std::string url = v.state == LinkState::Connected ? v.link : m_local_lan_url;
+        if (!url.empty()) wxGetApp().open_browser_with_warning_dialog(wxString::FromUTF8(url));
+    });
+    Bind(wxEVT_TIMER, &InvitePanel::on_local_timer, this, m_local_timer.GetId());
 
     if (m_options.show_heading) {
         outer->Add(body_label(this, _L("Invite someone to send a model"), MD3::Role::OnSurface, ::Label::Head_14), 0, wxBOTTOM, FromDIP(4));
@@ -356,7 +381,107 @@ InvitePanel::InvitePanel(wxWindow *parent, const Options &options) : wxPanel(par
     refresh();
 }
 
-InvitePanel::~InvitePanel() { remove_listener(m_listener); }
+InvitePanel::~InvitePanel()
+{
+    m_local_timer.Stop();
+    Unbind(wxEVT_TIMER, &InvitePanel::on_local_timer, this, m_local_timer.GetId());
+    m_local_host.reset();
+    wipe(m_local_key_snapshot);
+    remove_listener(m_listener);
+}
+
+bool InvitePanel::may_pair_local() const
+{
+    const auto *cfg = wxGetApp().app_config;
+    if (!cfg || !key_store_available()) return false;
+    const auto configured = cfg->get(kAddressConfigKey);
+    const auto address = parse_base_address(configured.empty() ? kDefaultAddress : configured);
+    // An existing remote station is never silently replaced by local setup.
+    return address && (address->host == "localhost" || address->host == "127.0.0.1" || address->host == "[::1]");
+}
+
+void InvitePanel::start_local()
+{
+    if (!may_pair_local()) {
+        m_local_status.set(_L("An existing remote station is configured. Its address and protected key have not been changed."));
+        relayout(this, false);
+        return;
+    }
+    if (m_local_host && m_local_host->running()) return;
+    auto *cfg = wxGetApp().app_config;
+    m_local_address_snapshot = cfg->get(kAddressConfigKey);
+    m_local_enabled_snapshot = cfg->get(kEnabledConfigKey);
+    wipe(m_local_key_snapshot);
+    m_local_key_snapshot = stored_station_key();
+    m_local_host = std::make_unique<LocalHost>();
+    if (!m_local_host->start()) {
+        wipe(m_local_key_snapshot);
+        m_local_status.set(_L("Local server setup is already running. Wait for it to finish before trying again."));
+    } else {
+        m_local_status.set(_L("Starting the local drop server and checking its network address. This can take several minutes."));
+        m_start_local->Enable(false);
+        m_local_timer.Start(200);
+    }
+    relayout(this, false);
+}
+
+void InvitePanel::on_local_timer(wxTimerEvent &)
+{
+    if (!m_local_host) return;
+    auto result = m_local_host->take_result();
+    if (!result) return;
+    m_local_timer.Stop();
+    auto *cfg = wxGetApp().app_config;
+    std::string current_key = stored_station_key();
+    const bool unchanged = cfg && may_pair_local() && cfg->get(kAddressConfigKey) == m_local_address_snapshot &&
+        cfg->get(kEnabledConfigKey) == m_local_enabled_snapshot && current_key == m_local_key_snapshot;
+    wipe(current_key);
+    wxString outcome;
+    if (!result->ok) {
+        if (result->code == "payload_missing") outcome = _L("The local hosting files are missing. Repair or update this installation and try again.");
+        else if (result->code == "timeout") outcome = _L("Local server setup timed out. Check Docker and the network connection, then try again.");
+        else outcome = _L("The local server could not be started. Check that Docker is installed and running, then try again.");
+    } else if (!unchanged) {
+        outcome = _L("The server started, but station settings changed during setup. Your current station was preserved.");
+    } else {
+        const auto key_file = station_key_file(std::filesystem::u8path(data_dir()));
+        if (save_station_key(key_file, result->station_key) != KeyStoreResult::Ok) {
+            outcome = _L("The server started, but its protected pairing could not be saved. Station settings were not changed.");
+        } else {
+            try {
+                cfg->set(kAddressConfigKey, result->address);
+                cfg->set_bool(kEnabledConfigKey, true);
+                cfg->save();
+                if (!persisted_station_matches(std::filesystem::u8path(cfg->config_path()), result->address, "true"))
+                    throw std::runtime_error("Pairing persistence was not verified");
+                m_local_lan_url = result->lan_url;
+                m_local_pair_address = result->address;
+                ++local_pairing_revision;
+                apply_settings();
+                outcome = _L("Local server ready. Open the drop page, or share the invite link when the connection is ready.");
+            } catch (...) {
+                // Do not poll with a new key against an old address. Restore both
+                // halves before resuming the original station.
+                cfg->set(kAddressConfigKey, m_local_address_snapshot);
+                cfg->set(kEnabledConfigKey, m_local_enabled_snapshot);
+                const auto rollback = m_local_key_snapshot.empty() ? forget_station_key(key_file) : save_station_key(key_file, m_local_key_snapshot);
+                try { cfg->save(); } catch (...) {}
+                const bool restored = (rollback == KeyStoreResult::Ok || rollback == KeyStoreResult::Missing) &&
+                    persisted_station_matches(std::filesystem::u8path(cfg->config_path()), m_local_address_snapshot, m_local_enabled_snapshot);
+                if (!restored) cfg->set_bool(kEnabledConfigKey, false);
+                apply_settings();
+                outcome = restored
+                    ? _L("The server started, but pairing settings could not be saved. The previous station settings were restored.")
+                    : _L("Pairing settings could not be saved or fully restored. Reception is paused for this session; review settings before restarting.");
+            }
+        }
+    }
+    wipe(m_local_key_snapshot);
+    m_local_status.set(outcome);
+    announce(outcome);
+    refresh();
+    relayout(this, false);
+}
 
 void InvitePanel::announce(const wxString &text)
 {
@@ -393,6 +518,15 @@ void InvitePanel::refresh()
 {
     const View &v       = view();
     bool        changed = false;
+
+    if (!m_local_lan_url.empty() && (!wxGetApp().app_config || wxGetApp().app_config->get(kAddressConfigKey) != m_local_pair_address))
+        m_local_lan_url.clear();
+    if (!m_local_host && !may_pair_local())
+        changed |= m_local_status.set(key_store_available()
+            ? _L("An existing remote station is configured. Its address and protected key have not been changed.")
+            : _L("Protected key storage is unavailable, so automatic local pairing cannot be used."));
+    m_start_local->Enable(may_pair_local() && !(m_local_host && m_local_host->running()));
+    m_open_page->Enable((v.state == LinkState::Connected && !v.link.empty()) || !m_local_lan_url.empty());
 
     changed |= show(m_off_note, !v.enabled);
     if (m_turn_on) changed |= show(m_turn_on, !v.enabled);
@@ -539,6 +673,7 @@ public:
         m_input->GetTextCtrl()->SetFont(::Label::Body_13);
         AppConfig  *cfg  = wxGetApp().app_config;
         std::string text = cfg ? cfg->get(kAddressConfigKey) : std::string();
+        m_loaded_address = text;
         m_input->GetTextCtrl()->ChangeValue(wxString::FromUTF8(text.empty() ? std::string(kDefaultAddress) : text));
         row->AddSpacer(FromDIP(kRowLeft));
         row->Add(title, 1, wxALIGN_CENTER_VERTICAL);
@@ -547,8 +682,9 @@ public:
         m_hint = LiveText(body_label(this, address_hint(), MD3::Role::OnSurfaceVariant, ::Label::Body_12));
         outer->Add(m_hint.get(), 0, wxLEFT | wxTOP, FromDIP(kRowLeft));
         SetSizer(outer);
+        m_input->GetTextCtrl()->Bind(wxEVT_TEXT, [this](wxCommandEvent &e) { m_dirty = true; e.Skip(); });
         m_input->GetTextCtrl()->Bind(wxEVT_TEXT_ENTER, [this](wxCommandEvent &e) {
-            save();
+            save(true);
             e.Skip();
         });
         m_input->GetTextCtrl()->Bind(wxEVT_KILL_FOCUS, [this](wxFocusEvent &e) {
@@ -558,13 +694,27 @@ public:
     }
 
 protected:
-    void update_view() override {}
+    void update_view() override
+    {
+        if (!m_input || m_dirty) return;
+        const auto *cfg = wxGetApp().app_config;
+        if (!cfg) return;
+        m_loaded_address = cfg->get(kAddressConfigKey);
+        const auto value = wxString::FromUTF8(m_loaded_address.empty() ? kDefaultAddress : m_loaded_address);
+        if (m_input->GetTextCtrl()->GetValue() != value) m_input->GetTextCtrl()->ChangeValue(value);
+    }
 
 private:
-    void save()
+    void save(bool explicit_request = false)
     {
         AppConfig *cfg = wxGetApp().app_config;
         if (cfg == nullptr || tearing_down(this)) return;
+        if (!m_dirty) { update_view(); return; }
+        if (!explicit_request && cfg->get(kAddressConfigKey) != m_loaded_address) {
+            m_hint.set(_L("The saved station changed while you were editing. Review this address and press Enter to replace it."));
+            relayout(this, false);
+            return;
+        }
         const std::string text   = m_input->GetTextCtrl()->GetValue().ToUTF8().data();
         const auto        parsed = parse_base_address(text);
         if (!parsed) {
@@ -581,6 +731,8 @@ private:
         }
         const wxString normalized = wxString::FromUTF8(parsed->base);
         if (m_input->GetTextCtrl()->GetValue() != normalized) m_input->GetTextCtrl()->ChangeValue(normalized);
+        m_loaded_address = parsed->base;
+        m_dirty = false;
         if (cfg->get(kAddressConfigKey) == parsed->base) return;
         cfg->set(kAddressConfigKey, parsed->base);
         cfg->save();
@@ -594,6 +746,8 @@ private:
 
     TextInput *m_input = nullptr;
     LiveText   m_hint;
+    std::string m_loaded_address;
+    bool m_dirty = false;
 };
 
 class KeyRow : public ViewRow
@@ -626,6 +780,7 @@ public:
         m_toggle->SetName(_L("Show station key"));
         m_toggle->SetToolTip(_L("Show station key"));
         m_save = kit_button(this, _L("Save key"), Button::Variant::Outlined);
+        m_save->Enable(false);
         row->AddSpacer(FromDIP(kRowLeft));
         row->Add(title, 1, wxALIGN_CENTER_VERTICAL);
         row->Add(m_masked, 0, wxALIGN_CENTER_VERTICAL);
@@ -656,12 +811,31 @@ public:
         m_save->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { save(); });
         for (TextInput *input : {m_masked, m_plain})
             input->GetTextCtrl()->Bind(wxEVT_TEXT_ENTER, [this](wxCommandEvent &) { save(); });
+        for (TextInput *input : {m_masked, m_plain})
+            input->GetTextCtrl()->Bind(wxEVT_TEXT, [this](wxCommandEvent &event) {
+                m_dirty = true;
+                m_save->Enable(true);
+                event.Skip();
+            });
+        m_pairing_revision = local_pairing_revision;
         update_view();
     }
 
 protected:
     void update_view() override
     {
+        if (m_pairing_revision != local_pairing_revision) {
+            m_pairing_revision = local_pairing_revision;
+            if (!m_dirty) {
+                m_masked->GetTextCtrl()->ChangeValue(wxEmptyString);
+                m_plain->GetTextCtrl()->ChangeValue(wxEmptyString);
+                m_save->Enable(false);
+                m_message = _L("Local pairing updated. The previous key text was cleared.");
+            } else {
+                m_draft_conflict = true;
+                m_message = _L("Local pairing changed while you were editing. Your key draft was preserved; review it before saving.");
+            }
+        }
         const View &v = view();
         wxString note;
         if (v.state == LinkState::KeyStorageUnavailable)
@@ -700,7 +874,13 @@ private:
 
     void save()
     {
-        if (tearing_down(this)) return;
+        if (tearing_down(this) || !m_dirty) return;
+        if (m_draft_conflict) {
+            m_draft_conflict = false;
+            m_message = _L("Saving this draft will replace the new local pairing. Press Save key again only if that is intended.");
+            update_view();
+            return;
+        }
         std::string key = shown()->GetTextCtrl()->GetValue().ToUTF8().data();
         // Trim surrounding spaces a copy and paste may bring along.
         while (!key.empty() && (key.back() == ' ' || key.back() == '\t' || key.back() == '\r' || key.back() == '\n')) key.pop_back();
@@ -715,6 +895,10 @@ private:
         }
         const KeyStoreResult result = store_station_key(key);
         wipe(key);
+        if (result == KeyStoreResult::Ok || result == KeyStoreResult::Missing) {
+            m_dirty = false;
+            m_save->Enable(false);
+        }
         if (result == KeyStoreResult::Ok) m_message = _L("Station key saved.");
         else if (result == KeyStoreResult::Missing) m_message = _L("Station key removed.");
         else if (result == KeyStoreResult::Unavailable) m_message.clear();
@@ -730,6 +914,9 @@ private:
     LiveText   m_note;
     bool       m_showing = false;
     wxString   m_message;
+    std::uint64_t m_pairing_revision = 0;
+    bool m_dirty = false;
+    bool m_draft_conflict = false;
 };
 
 class CodeRow : public ViewRow
@@ -781,7 +968,8 @@ wxWindow *create_intro_row(wxWindow *parent)
     auto *sizer = new wxBoxSizer(wxVERTICAL);
     sizer->Add(body_label(panel,
                           _L("People on your local network can send 3D models to this computer through the LAN drop site that runs in "
-                             "Docker. Each model waits for you: nothing is opened, sliced or printed until you choose Open."),
+                             "Docker. Use Start local drop server below to set it up on this computer, or keep an existing remote station. "
+                             "Each model waits for you: nothing is opened, sliced or printed until you choose Open."),
                           MD3::Role::OnSurfaceVariant, ::Label::Body_12),
                0, wxLEFT | wxRIGHT, panel->FromDIP(kRowLeft));
     panel->SetSizer(sizer);

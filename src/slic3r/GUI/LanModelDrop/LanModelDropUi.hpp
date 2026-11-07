@@ -5,9 +5,11 @@
 // is a kit widget; each window listens to the station view and updates itself on the GUI thread.
 
 #include <string>
+#include <memory>
 
 #include <wx/panel.h>
 #include <wx/string.h>
+#include <wx/timer.h>
 
 class Button;
 class ComboBox;
@@ -15,6 +17,7 @@ class Label;
 class TextInput;
 
 namespace Slic3r { namespace GUI { namespace LanModelDrop {
+class LocalHost;
 
 // A label whose English text follows the station view. In bilingual mode the decorator writes the
 // English with the Cantonese into the label itself, so the label is never asked what it shows: the
@@ -72,6 +75,9 @@ private:
     void copy_link();
     void announce(const wxString &text);
     void show_larger();
+    void start_local();
+    void on_local_timer(wxTimerEvent &event);
+    bool may_pair_local() const;
 
     Options     m_options;
     int         m_listener = 0;
@@ -96,6 +102,16 @@ private:
     LiveText   m_live;
     LiveText   m_waiting_label;
     Button    *m_show_waiting  = nullptr;
+    Button    *m_start_local   = nullptr;
+    Button    *m_open_page     = nullptr;
+    LiveText   m_local_status;
+    wxTimer    m_local_timer;
+    std::unique_ptr<LocalHost> m_local_host;
+    std::string m_local_address_snapshot;
+    std::string m_local_enabled_snapshot;
+    std::string m_local_key_snapshot;
+    std::string m_local_lan_url;
+    std::string m_local_pair_address;
 };
 
 // Rows of the Preferences section. Each one is a window, so the settings search can show, hide and
