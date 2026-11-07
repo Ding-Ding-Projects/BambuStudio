@@ -1,12 +1,14 @@
 ---
 translation-of: publication.md
-source-sha256: 90e972fd3a8769e6c38550a024d0871107ddd5f3f6bb2b15c2702ac052bdb70d
+source-sha256: f28007645e4f3b188ceb5a556881395efbb6a2dd14b999807ff5d146cc2dd52b
 review-status: agent-drafted
 ---
 
 > 英文原文：[Portable companion publication](publication.md)
 
 # 可攜式配套工具發佈
+
+首次託管執行在封裝前失敗：PowerShell 7 父程序經批次入口傳遞了不相容的模組搜尋路徑至 Windows PowerShell 5.1，令 `Get-FileHash` 無法使用。同一程序鏈已在本機重現；一般 cmd 父程序可以正確找到 `Microsoft.PowerShell.Utility`。工作流程的編譯步驟現改用 `shell: cmd`，保留相同根目錄入口並傳回其結束代碼。發佈工具繼續在 PowerShell 7 執行，全部雜湊檢查保持啟用。修正後的託管驗證仍然待辦。
 
 專用的 `lan-setup-companion.yml` 工作流程，會在託管的 Windows 2025 上透過 `build-installer.bat /s -Companion LanDropSetup` 編譯。一般原生產生工具保持不變。根目錄產生工具使用現有已驗證的 Node 啟動工具、確切的執行環境及建置工具版本、npm 鎖定檔完整性資料，以及發行者提供的執行環境總和檢查碼。
 

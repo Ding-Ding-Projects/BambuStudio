@@ -87,4 +87,4 @@ unrelated or unproven candidates. Verify each intended push by exact remote-ref 
 
 The primary producer acquired an untracked runtime log, log_iotc.txt. It is retained locally and excluded from publication pending private-content review. Do not alter the live producer or blindly stage diagnostics. Source preservation is not an assertion that private runtime logs were published.
 
-First portable publisher run 42425950237 failed before packaging because Get-FileHash was unavailable in the child shell. No companion release exists from that run. Bounded diagnostics were retained; the shell-environment repair is being verified separately.
+First portable publisher run 42425950237 failed before packaging because Get-FileHash was unavailable in the child shell. No companion release exists from that run. Bounded diagnostics were retained; the exact parent-shell cause was reproduced and correction 5ae1162b41ae8f22f5fcf476c950966814dd01a7 changes only the workflow build shell to cmd. Its owning branch was pushed and read back. Hosted verification is pending.

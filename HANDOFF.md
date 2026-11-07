@@ -2,6 +2,13 @@
 
 ## Portable publication and accepted native release, 7 November 2026
 
+First hosted attempt 42425950237 failed before packaging because the PowerShell 7
+parent propagated an incompatible module search path to Windows PowerShell 5.1.
+The exact shell chain reproduced missing Get-FileHash locally; the normal cmd
+parent passed. Correction 5ae1162b41ae8f22f5fcf476c950966814dd01a7 changes only
+the build step to cmd, retaining the root entrypoint, exit code and hash checks.
+The failed run retained bounded diagnostics. Hosted repair verification is pending.
+
 Reviewed companion publisher `ca9b96968ef3a7116512e68465fae0377348e647`
 uses the root portable entrypoint, exact source/input proofs, normal separate
 release tags and downloaded-byte readback. Focused duration mutations, syntax

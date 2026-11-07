@@ -855,12 +855,12 @@
     {
       "route": "lan-drop-setup/publication.md",
       "title": "Portable companion publication",
-      "sha256": "90e972fd3a8769e6c38550a024d0871107ddd5f3f6bb2b15c2702ac052bdb70d"
+      "sha256": "f28007645e4f3b188ceb5a556881395efbb6a2dd14b999807ff5d146cc2dd52b"
     },
     {
       "route": "lan-drop-setup/publication.yue_HK.md",
       "title": "可攜式配套工具發佈",
-      "sha256": "487ce3fd52596a28ca4050c0065787b2a15bcfe74f5c5990338c7630b21bcdf5"
+      "sha256": "faacb19cedae2907e6ab8166857907c75721661361e214e975562459e9e6b9a9"
     },
     {
       "route": "lan-drop-setup/README.md",
@@ -2165,7 +2165,7 @@
       "bytes": 16430
     }
   ],
-  "bundle_sha256": "1d4e583aa3014f61151dc906a09217db9797e64490ac6fe4955f29651cce2858",
+  "bundle_sha256": "c7e3172e965a2a4ad2ad7b0f697663d3eeb4a89db83b8934e32645e3fb7b4a95",
   "unavailable_references": [
     {
       "source": "api/README.md",

@@ -4,6 +4,8 @@
 
 - [x] Prepare and independently review a dedicated source-bound portable publisher with normal releases, exact asset readback and best-effort diagnostics.
 - [ ] Complete its first hosted publication and downloaded executable verification.
+- [x] Reproduce the PowerShell parent module-path failure and repair the workflow build shell without weakening hash verification.
+- [ ] Verify the repaired shell in the hosted portable producer.
 - [x] Read back normal native release md3-v261, exact source f1526f802 and matching published Setup hash.
 - [x] Update the matching existing installation to 2.9.1936, verify installed hashes and actual ready workspace, and preserve the prior rollback package.
 - [ ] Complete transient installer audit and updater-banner sequencing proof.

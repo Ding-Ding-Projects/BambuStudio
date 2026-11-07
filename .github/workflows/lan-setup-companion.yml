@@ -36,10 +36,10 @@ jobs:
           persist-credentials: false
       - name: Build single portable executable through the root entrypoint
         id: build
-        shell: pwsh
+        shell: cmd
         run: |
-          & .\build-installer.bat /s -Companion LanDropSetup
-          if ($LASTEXITCODE -ne 0) { throw 'Portable producer failed.' }
+          call build-installer.bat /s -Companion LanDropSetup
+          exit /b %errorlevel%
       - name: Publish separate companion release and read back its bytes
         shell: pwsh
         env:
