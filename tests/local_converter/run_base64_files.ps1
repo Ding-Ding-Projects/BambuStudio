@@ -1,16 +1,31 @@
-param([switch]$Mutant)
+param([switch]$Mutant, [switch]$RepresentationMutant)
 $ErrorActionPreference='Stop'
 $sourceRoot=(Resolve-Path (Join-Path $PSScriptRoot '../..')).Path
-$vcvars=Join-Path $env:LOCALAPPDATA 'TrafficMonitorBuildTools/VS2022/VC/Auxiliary/Build/vcvars64.bat'
-if(-not(Test-Path -LiteralPath $vcvars)){throw 'Installed MSVC toolchain unavailable; native core verification is unverified.'}
+$candidates=@()
+if($env:LOCALAPPDATA){$candidates+=Join-Path $env:LOCALAPPDATA 'BambuBuildTools/VS2026'}
+$locator=Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio/Installer/vswhere.exe'
+if(Test-Path -LiteralPath $locator){
+    $candidates+=@(& $locator -products '*' -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath)
+}
+$vcvars=$null
+foreach($candidate in $candidates){
+    $entry=Join-Path $candidate 'VC/Auxiliary/Build/vcvars64.bat'
+    if(Test-Path -LiteralPath $entry -PathType Leaf){$vcvars=$entry;break}
+}
+if(-not $vcvars){throw 'Installed MSVC toolchain unavailable; native core verification is unverified.'}
 $testRoot=Join-Path ([IO.Path]::GetTempPath()) ('bambu-base64-core-'+[guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $testRoot | Out-Null
 $core=Join-Path $sourceRoot 'src/libslic3r/LocalConverter/Converter.cpp'
-if($Mutant){
+if($Mutant -or $RepresentationMutant){
     $text=[IO.File]::ReadAllText($core)
     $needle='check(content_sha256(roundtrip.output)==content_sha256(encode?input:base64_payload(input)),"output_validation");'
     if(-not $text.Contains($needle)){throw 'Mutation target missing.'}
-    $text=$text.Replace($needle,'check(true,"output_validation");')
+    if($Mutant){$text=$text.Replace($needle,'check(true,"output_validation");')}
+    if($RepresentationMutant){
+        $limit='? Limits::base64_representation_bytes : Limits::input_bytes;'
+        if(-not $text.Contains($limit)){throw 'Representation mutation target missing.'}
+        $text=$text.Replace($limit,'? Limits::input_bytes : Limits::input_bytes;')
+    }
     $core=Join-Path $testRoot 'Converter.cpp'
     [IO.File]::WriteAllText($core,$text,[Text.UTF8Encoding]::new($false))
 }

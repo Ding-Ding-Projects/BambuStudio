@@ -20,7 +20,10 @@ item identifiers, without building a shell command from the filename.
 
 ## Verification and boundaries
 
-Each input is limited to 16 MiB. Files are read into bounded memory; this is not
+Encoding sources and decoded outputs are limited to 16 MiB. Same-folder decoding
+accepts at most 22,370,649 encoded bytes: the padded representation of 16 MiB,
+plus a header of at most 1,024 bytes and its comma. Other adapters retain their
+existing input limits. Files are read into bounded memory; this is not
 a streaming implementation. The current option is canonical RFC 4648 Base64
 with padding and no whitespace or wrapping. A bounded `data:` header ending in
 `;base64` is accepted when decoding. URL-safe variants, lenient input, selectable
@@ -39,5 +42,7 @@ records retain source and destination paths and stable result codes locally.
 `tests/local_converter/run_base64_files.ps1` compiles the actual converter core,
 archive adapter and worker with the installed MSVC toolchain, then exercises
 neutral files and the real queue with an in-process transform executor.
-`-Mutant` removes the round-trip hash comparison and must fail. This does not
+`-Mutant` removes the round-trip hash comparison and must fail.
+`-RepresentationMutant` restores the incorrect 16 MiB encoded-input limit and
+must fail the saved-file queue round trip. This does not
 prove a packaged AppContainer launch or rendered picker/drop interaction.

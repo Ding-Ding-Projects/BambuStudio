@@ -16,6 +16,8 @@ enum class Category { Documents, Images, Audio, Video, Archives, Structured, Tex
 enum class Outcome { Converted, Skipped, Cancelled, Failed };
 struct Limits {
     static constexpr std::uint64_t input_bytes = 16 * 1024 * 1024;
+    // Canonical encoding of 16 MiB, plus at most 1024 header bytes and comma.
+    static constexpr std::uint64_t base64_representation_bytes = ((input_bytes + 2) / 3) * 4 + 1025;
     static constexpr std::uint64_t output_bytes = 64 * 1024 * 1024;
     static constexpr std::uint64_t wire_bytes = 24 * 1024 * 1024;
     static constexpr std::uint64_t pixels = 4 * 1024 * 1024;

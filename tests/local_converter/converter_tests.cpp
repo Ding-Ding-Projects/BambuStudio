@@ -217,6 +217,16 @@ int main(int argc, char **argv)
             const auto large=Bytes(Limits::input_bytes,0x5a);const auto large_encoded=transform("base64.encode",large);
             require(large_encoded.outcome==Outcome::Converted&&large_encoded.output.size()>Limits::input_bytes,"maximum bounded input encodes");
             require(transform("base64.decode",large_encoded.output).output==large,"inverse worker accepts bounded expanded representation");
+            const auto full=root/"full-size.bin";{std::ofstream stream(full,std::ios::binary);stream.write(reinterpret_cast<const char*>(large.data()),large.size());}
+            Queue full_queue(root/"full-size-queue");full_queue.enqueue(full,base64_destination(full,true),"base64.encode",same);full_queue.pause(false);require(full_queue.step(core,cancel),"full-size file encode queued");
+            const auto full_encoded=full_queue.page(0).front();require(full_encoded.state==State::Converted&&fs::file_size(full_encoded.destination)==22369624,"saved 16 MiB representation");
+            full_queue.enqueue(full_encoded.destination,base64_destination(full_encoded.destination,false),"base64.decode",same);require(full_queue.step(core,cancel),"saved full-size representation decode queued");
+            const auto full_decoded=full_queue.page(0).back();require(full_decoded.state==State::Converted&&b(get(full_decoded.destination))==large,"saved encode to queue decode roundtrip");
+            rejects([&]{full_queue.enqueue(full_encoded.destination,root/"generic.bin","base64.decode");},"generic decoder retains 16 MiB file admission");
+            auto excessive=root/"excessive.b64";{std::ofstream stream(excessive,std::ios::binary);stream.seekp(Limits::base64_representation_bytes);stream.put('A');}
+            rejects([&]{full_queue.enqueue(excessive,root/"excessive.bin","base64.decode",same);},"representation bound rejects excess byte");
+            Executor oversized=[&](const std::string&,const Bytes&,const std::atomic<bool>&){return Conversion{Outcome::Converted,"converted",Bytes(Limits::input_bytes+1)};};
+            require(convert_file(full_encoded.destination,root/"too-large.bin","base64.decode",oversized,cancel,same).outcome==Outcome::Failed,"decoded bytes capped at 16 MiB");
             Queue queue(root/"base64-queue");queue.enqueue(original,base64_destination(original,true),"base64.encode",same);queue.pause(false);require(queue.step(core,cancel),"real queue accepts same-folder mode");
             const auto records=queue.page(0);require(records.size()==1&&records[0].state==State::Converted&&fs::exists(records[0].destination),"queue persists actual numbered output");
         }

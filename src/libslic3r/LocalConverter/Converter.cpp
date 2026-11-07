@@ -112,6 +112,16 @@ std::string base64(const Bytes &data)
     }
     return out;
 }
+bool same_folder_base64(const std::string &adapter, const std::string &options)
+{
+    return options == R"({"base64SameFolder":true})" && (adapter=="base64.encode" || adapter=="base64.decode");
+}
+std::uint64_t file_input_limit(const std::string &adapter, const std::string &options)
+{
+    return same_folder_base64(adapter,options) && adapter=="base64.decode"
+        ? Limits::base64_representation_bytes : Limits::input_bytes;
+}
+
 Bytes base64_payload(const Bytes &source)
 {
     if (!begins(source, "data:", 5)) return source;
@@ -579,11 +589,12 @@ Result convert_file(const fs::path &source, const fs::path &destination, const s
 {
     try {
         if (cancel.load()) return {Outcome::Cancelled,"cancelled",0};
-        const bool same_folder = options == R"({"base64SameFolder":true})" && (adapter == "base64.encode" || adapter == "base64.decode");
+        const bool same_folder = same_folder_base64(adapter,options);
+        const auto input_limit = file_input_limit(adapter,options);
         if (!same_folder && fs::exists(destination)) return {Outcome::Skipped,"destination_exists",0};
         check(fs::weakly_canonical(source) != fs::weakly_canonical(destination), "source_destination_alias");
         check(fs::space(destination.parent_path()).available >= Limits::output_bytes + 65536, "destination_storage_low");
-        const auto stamp = modified(source); const auto input = read_file(source, Limits::input_bytes);
+        const auto stamp = modified(source); const auto input = read_file(source, input_limit);
         Bytes request=input;
         std::vector<std::pair<fs::path,Bytes>> extra_inputs;
         if(adapter.rfind("pdf.",0)==0) {
@@ -601,18 +612,19 @@ Result convert_file(const fs::path &source, const fs::path &destination, const s
         auto result = execute(adapter,request,cancel);
         if (cancel.load()) return {Outcome::Cancelled,"cancelled",0};
         if (result.outcome != Outcome::Converted) return {result.outcome,result.code,0};
-        check(modified(source) == stamp && read_file(source,Limits::input_bytes) == input, "source_changed");
+        check(modified(source) == stamp && read_file(source,input_limit) == input, "source_changed");
         for(const auto &extra:extra_inputs)check(read_file(extra.first,Limits::input_bytes)==extra.second,"source_changed");
         check(result.output.size() <= Limits::output_bytes, "output_limit");
         if (same_folder) {
             const bool encode=adapter=="base64.encode";
+            if(!encode)check(result.output.size()<=Limits::input_bytes,"output_limit");
             auto roundtrip=execute(encode?"base64.decode":"base64.encode",result.output,cancel);
             if(cancel.load())return {Outcome::Cancelled,"cancelled",0};
             check(roundtrip.outcome==Outcome::Converted,"output_validation");
             check(content_sha256(roundtrip.output)==content_sha256(encode?input:base64_payload(input)),"output_validation");
             // atomic_create rereads the flushed temporary bytes before the
             // no-replace publish, binding this hash check to the written file.
-            check(modified(source)==stamp && read_file(source,Limits::input_bytes)==input,"source_changed");
+            check(modified(source)==stamp && read_file(source,input_limit)==input,"source_changed");
             const auto desired=base64_destination(source,encode,result.output,input);
             for(unsigned n=0;n<10000;++n) {
                 if(cancel.load())return {Outcome::Cancelled,"cancelled",0};
@@ -926,7 +938,7 @@ std::uint64_t Queue::enqueue(const fs::path &source, const fs::path &destination
     check(terms != nullptr && terms->bundled, "adapter_unavailable");
     check(!requires_acknowledgement(*terms) || acknowledgement == acknowledgement_token(*terms), "disclosure_not_acknowledged");
     check(source.u8string().size() <= 16384 && destination.u8string().size() <= 16384, "path_limit");
-    check(fs::is_regular_file(fs::symlink_status(source)) && fs::file_size(source) <= Limits::input_bytes, "input_limit_or_type");
+    check(fs::is_regular_file(fs::symlink_status(source)) && fs::file_size(source) <= file_input_limit(adapter,options), "input_limit_or_type");
     check(fs::is_directory(destination.parent_path()) && fs::space(destination.parent_path()).available >= Limits::output_bytes + 65536, "destination_storage_low");
     check(fs::weakly_canonical(source) != fs::weakly_canonical(destination), "source_destination_alias");
     check(m_count < UINT64_MAX - 1, "queue_identifier_exhausted");
@@ -936,6 +948,7 @@ std::uint64_t Queue::enqueue(const fs::path &source, const fs::path &destination
     j.options=options;
     j.acknowledgement=requires_acknowledgement(*terms) ? acknowledgement : std::string();
     j.cancellation_generation=m_cancellation_generation;
+    check(!same_folder_base64(adapter,options) || additional_sources.empty(),"unsupported_conversion_options");
     std::uint64_t total=j.input_size;
     for(const auto &p:additional_sources) { check(fs::is_regular_file(fs::symlink_status(p)),"source_not_regular");const auto size=fs::file_size(p);check(size<=Limits::input_bytes-total,"input_limit");total+=size;j.additional_sources.push_back(fs::absolute(p));j.additional_sizes.push_back(size);j.additional_modified.push_back(modified(p)); }
     write(j); ++m_count; save_meta(); return j.id;

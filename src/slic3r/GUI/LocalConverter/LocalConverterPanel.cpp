@@ -251,7 +251,7 @@ LocalConverterPanel::LocalConverterPanel(wxWindow *parent, LC::PackageProof proo
     auto filter_pdf=[this,pdf_search,pdf_settings,pdf_rows]{auto pass=matcher(pdf_search);for(const auto &row:pdf_rows)pdf_settings->Show(row.first,pass.matches(row.second),true);Layout();};
     pdf_search->SetOnQuery([filter_pdf](const wxString&){filter_pdf();});pdf_search->SetOnRegexToggle([filter_pdf](bool){filter_pdf();});
 
-    layout->Add(text(body,_L("Same-folder Base64 files: pick or drop files, then run the queue. Canonical padded Base64 only; 16 MiB per input. Existing files are never replaced.")),0,wxEXPAND|wxALL,gap);
+    layout->Add(text(body,_L("Same-folder Base64 files: pick or drop files, then run the queue. Canonical padded Base64 only; 16 MiB source or decoded-file limit. Encoded inputs may be larger. Existing files are never replaced.")),0,wxEXPAND|wxALL,gap);
     auto *base64_actions=new wxWrapSizer(wxHORIZONTAL);
     auto *encode=action(body,base64_actions,_L("Encode files beside originals"),[this]{choose_base64(true);});
     auto *decode=action(body,base64_actions,_L("Decode files beside originals"),[this]{choose_base64(false);});
