@@ -192,15 +192,17 @@ test('a file downloads with its length and SHA-256, and removing it is idempoten
   }
 });
 
-test('legacy renewal is inert and old configuration does not gate senders', async (t) => {
+test('legacy renewal is retired without revocation and old configuration does not gate senders', async (t) => {
   const dataDir = tempDir(t);
   fs.writeFileSync(path.join(dataDir, 'drop-code'), 'legacy-value');
   const service = await startDrop(t, { dataDir, env: { DROP_CODE: 'obsolete' } });
   assert.equal((await drop(service.port, { fileName: 'cube.obj', body: OBJ })).status, 201);
   for (let attempt = 0; attempt < 2; ++attempt) {
     const renewed = await station(service.port, service.key, 'POST', '/api/station/drop-code');
-    assert.equal(renewed.status, 200);
-    assert.deepEqual(renewed.json, {dropCode: 'not-required'});
+    assert.equal(renewed.status, 410);
+    assert.equal(renewed.json.error, 'retired');
+    assert.equal(Object.hasOwn(renewed.json, 'dropCode'), false);
+    assert.match(renewed.json.message, /Existing links still work/);
   }
   assert.equal(fs.readFileSync(path.join(dataDir, 'drop-code'), 'utf8'), 'legacy-value');
   const status = (await station(service.port, service.key, 'GET', '/api/station/status')).json;

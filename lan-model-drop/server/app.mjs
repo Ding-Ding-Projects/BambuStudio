@@ -295,10 +295,10 @@ export function createDropService(config, options = {}) {
       if (method !== 'GET') return fail(res, 405, 'method_not_allowed', MESSAGES.method_not_allowed, { Allow: 'GET' });
       return sendJson(res, 200, { items: queue.list() });
     }
-    // Older receivers may request renewal. This compatibility value never authenticates or rotates.
+    // Older receivers must never mistake an upgrade for successful link revocation.
     if (route === 'drop-code') {
       if (method !== 'POST') return fail(res, 405, 'method_not_allowed', MESSAGES.method_not_allowed, { Allow: 'POST' });
-      return sendJson(res, 200, { dropCode: 'not-required' });
+      return fail(res, 410, 'retired', 'Drop-code renewal is no longer available. Existing links still work.');
     }
     const file = /^files\/([^/]+)$/.exec(route);
     if (file) {
