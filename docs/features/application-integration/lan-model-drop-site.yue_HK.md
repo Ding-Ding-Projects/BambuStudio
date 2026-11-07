@@ -43,10 +43,12 @@ Windows 安裝會喺應用程式旁邊放一個 `lan-model-drop` 資料夾，位
 3. 啟動容器：
 
    ```powershell
-   docker compose up -d
+   ../host.bat --detached
    ```
 
-   第一次啟動會建立映像，要下載一次 Node.js 基礎映像。之後啟動只需要幾秒。
+   啟動器會拉取已發佈版本，毋須重新建置，然後檢查健康狀態同區域網絡位址。
+   今次候選版本仍待映像發佈同已安裝主機驗證；拉取失敗會如實退出，唔會報成功。
+   執行 `../host.bat --logs` 可以開啟互動狀態同日誌畫面。
 4. 檢查佢係咪健康：
 
    ```powershell
@@ -184,7 +186,7 @@ docker compose exec lan-model-drop node server/station-key.mjs
 運作。要轉用新版本嘅網頁，喺新版本嘅 `lan-model-drop` 資料夾執行：
 
 ```powershell
-docker compose up -d --build
+../host.bat --detached
 ```
 
 Compose 項目永遠叫 `lan-model-drop`，所以呢個指令會取代舊容器，並保留同一個資料卷：

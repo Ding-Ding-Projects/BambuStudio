@@ -102,12 +102,21 @@ jobs:
       debug-symbols: ${{ inputs.debug-symbols || false }}
       symbol-public-key: ${{ inputs.symbol-public-key || '' }}
 
+  publish_lan_drop:
+    name: Publish required LAN service
+    if: ${{ github.event_name != 'pull_request' }}
+    uses: ./.github/workflows/lan-model-drop-image.yml
+    permissions:
+      contents: read
+      packages: write
+    secrets: inherit
+
   release_windows:
     name: Publish Windows release
     # ref_type guard is redundant with the branches-only push trigger above but
     # keeps the release loop impossible even if the trigger is later widened.
     if: ${{ github.ref == 'refs/heads/main' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish_release)) }}
-    needs: [build_windows]
+    needs: [build_windows, publish_lan_drop]
     runs-on: windows-latest
     concurrency:
       group: windows-release-${{ github.repository }}

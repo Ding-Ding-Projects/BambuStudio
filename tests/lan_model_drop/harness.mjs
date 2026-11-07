@@ -5,14 +5,14 @@ import fs from 'node:fs';
 import http from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 export const repoRoot = path.resolve(here, '..', '..');
 export const dropRoot = path.join(repoRoot, 'lan-model-drop');
 
-const { createDropServer, receiveBody, SECURITY_HEADERS } = await import(path.join(dropRoot, 'server', 'app.mjs'));
-const config = await import(path.join(dropRoot, 'server', 'config.mjs'));
+const { createDropServer, receiveBody, SECURITY_HEADERS } = await import(pathToFileURL(path.join(dropRoot, 'server', 'app.mjs')).href);
+const config = await import(pathToFileURL(path.join(dropRoot, 'server', 'config.mjs')).href);
 export { createDropServer, receiveBody, SECURITY_HEADERS };
 export const { readConfig, ConfigError } = config;
 

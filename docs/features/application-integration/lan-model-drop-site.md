@@ -39,11 +39,13 @@ application, in `%LOCALAPPDATA%\BambuStudioMD3\app-<version>\lan-model-drop`.
 3. Start the container:
 
    ```powershell
-   docker compose up -d
+   ../host.bat --detached
    ```
 
-   The first start builds the image, which downloads the Node.js base image
-   once. Later starts take a few seconds.
+   The launcher pulls the published version, starts it without rebuilding, and
+   checks health and LAN addresses. Image publication and installed-host acceptance
+   are pending for the current candidate; a failed pull exits without claiming success.
+   Use `../host.bat --logs` for the interactive status and log view.
 4. Check that it is healthy:
 
    ```powershell
@@ -199,7 +201,7 @@ working. To move to the new version of the page, run in the new version's
 `lan-model-drop` folder:
 
 ```powershell
-docker compose up -d --build
+../host.bat --detached
 ```
 
 The compose project is always named `lan-model-drop`, so this replaces the old

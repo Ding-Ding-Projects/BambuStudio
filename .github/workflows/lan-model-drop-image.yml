@@ -2,14 +2,7 @@ name: Publish LAN model drop image
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - 'lan-model-drop/server/**'
-      - 'lan-model-drop/site/**'
-      - 'lan-model-drop/Dockerfile'
-      - 'lan-model-drop/compose.yaml'
-      - '.github/workflows/lan-model-drop-image.yml'
+  workflow_call:
 
 permissions:
   contents: read
@@ -39,18 +32,24 @@ jobs:
         run: |
           set -euo pipefail
           image=$(docker compose -f lan-model-drop/compose.yaml config --images)
-          [[ "$image" =~ ^ghcr.io/ding-ding-projects/bambustudio-lan-model-drop:v[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          [[ "$image" =~ ^ghcr.io/ding-ding-projects/bambustudio-lan-model-drop:v[0-9]+\.[0-9]+\.[0-9]+(@sha256:[0-9a-f]{64})?$ ]]
+          tag=${image%%@*}
+          context=$(git ls-tree HEAD -- lan-model-drop/Dockerfile lan-model-drop/.dockerignore lan-model-drop/server lan-model-drop/site | sha256sum | cut -d' ' -f1)
           mkdir -p artifacts
           lookup_error=$(mktemp)
           trap 'rm -f "$lookup_error"' EXIT
           if docker manifest inspect "$image" >/dev/null 2>"$lookup_error"; then
             docker pull "$image"
-            source=$(docker inspect --format '{{index .Config.Labels "org.opencontainers.image.revision"}}' "$image")
-            if [[ "$source" != "$GITHUB_SHA" ]]; then
-              echo 'The version already exists for another source. Increment the version in compose.yaml.' >&2
+            stored_context=$(docker inspect --format '{{index .Config.Labels "io.bambustudio.build-context"}}' "$image")
+            if [[ "$stored_context" != "$context" ]]; then
+              echo 'The version already exists for other container inputs. Increment the version in compose.yaml.' >&2
               exit 1
             fi
           else
+            if [[ "$image" == *@* ]]; then
+              echo 'A pinned image must already exist. Publication stopped.' >&2
+              exit 1
+            fi
             # A registry outage or authentication error does not mean absence.
             if ! grep -Eq '^(no such manifest: |manifest unknown)' "$lookup_error"; then
               echo 'Registry lookup did not positively establish an absent version. Publication stopped.' >&2
@@ -58,12 +57,15 @@ jobs:
             fi
             docker build --label "org.opencontainers.image.source=https://github.com/${GITHUB_REPOSITORY}" \
               --label "org.opencontainers.image.revision=${GITHUB_SHA}" \
+              --label "io.bambustudio.build-context=${context}" \
               --label 'org.opencontainers.image.title=Bambu Studio LAN model drop' \
-              --tag "$image" lan-model-drop
-            docker push "$image"
+              --tag "$tag" lan-model-drop
+            docker push "$tag"
           fi
           docker pull "$image"
           docker inspect --format '{{json .RepoDigests}}' "$image" > artifacts/lan-model-drop-image-digests.json
+          docker inspect --format '{{index .Config.Labels "org.opencontainers.image.revision"}}' "$image" > artifacts/image-source-commit.txt
+          printf '%s\n' "$context" > artifacts/image-build-context.txt
           printf '%s\n' "$GITHUB_SHA" > artifacts/source-commit.txt
       - name: Retain publication receipt
         if: ${{ always() }}

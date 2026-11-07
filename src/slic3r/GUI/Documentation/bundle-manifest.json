@@ -55,12 +55,12 @@
     {
       "route": "application-integration/lan-model-drop-site.md",
       "title": "LAN model drop site",
-      "sha256": "9df80d7bc6c9a001a800f80d0377b73784202a6a5330fb7acc24f5ed7715df6c"
+      "sha256": "be07f4625974cd0faada579cf70713e398c1b998e5265c2b3e853753c483ff21"
     },
     {
       "route": "application-integration/lan-model-drop-site.yue_HK.md",
       "title": "LAN 模型投遞網站",
-      "sha256": "6c546fd5e94702f1fbcdaa32df2ad4667625ccaa70079888e58e19cd5a471174"
+      "sha256": "5f0c0089f6c5408706d8490266341a8c8d069c3773e0ad5338240b71fb9416c9"
     },
     {
       "route": "application-integration/lan-model-drop.md",
@@ -73,9 +73,19 @@
       "sha256": "c7593c20d04488cc3c7a19ecd77a4f2d0e70bcfc86b05ba0df74ab758edf1297"
     },
     {
+      "route": "application-integration/local-drop-hosting.md",
+      "title": "Start a local model drop server",
+      "sha256": "7e8cc9b8b96fc92189b130533f9c41cf469eeca1fbca61c90e7b0af4992c5acd"
+    },
+    {
+      "route": "application-integration/local-drop-hosting.yue_HK.md",
+      "title": "啟動本機模型投遞伺服器",
+      "sha256": "595bfd3f1ddc356a1e6717d3d7ff04000fe54caa965ed29d937d06251b5c1dcc"
+    },
+    {
       "route": "application-integration/README.md",
       "title": "Native service integration",
-      "sha256": "355ab08db8bb1072353b36c8db55bd202f32842082989bf034e02611f6b06bb7"
+      "sha256": "9df34ae582f612692ee1819748fb1677eb4927929f5b85618e1215dd0a686b1e"
     },
     {
       "route": "application-integration/surface-registry.md",
@@ -561,6 +571,16 @@
       "route": "design-system/overlays-atlas.yue_HK.md",
       "title": "Studio Atlas 閱讀器同覆蓋介面",
       "sha256": "aac6e242804922b975f60671b0b8561bff6f45215e96467a3e5b4b21b403e5e8"
+    },
+    {
+      "route": "design-system/preferences-resizing.md",
+      "title": "Resizable Preferences",
+      "sha256": "526443aa33a08e9bbfbf7ac3b8bbc79a159570b244d2640c76a88edf895c7efe"
+    },
+    {
+      "route": "design-system/preferences-resizing.yue_HK.md",
+      "title": "可調整大小的偏好設定視窗",
+      "sha256": "59771dce94e5650e4545ec92f5f6b56ea56793bec3484944eba0c34b2f1128a5"
     },
     {
       "route": "design-system/prepare-inspector-atlas.md",
@@ -1645,12 +1665,12 @@
     {
       "route": "windows/personal-vocabulary.md",
       "title": "Personal vocabulary",
-      "sha256": "ef49164925414e5bf5906aea98804338cacaa0edab623cafc0eff4fb3556a701"
+      "sha256": "0f79b2c514061c5542bdb4b8793dda42037d5eb9a50c8060317833e3b48268e5"
     },
     {
       "route": "windows/personal-vocabulary.yue_HK.md",
       "title": "個人詞彙",
-      "sha256": "58131589dffc60afe9ad16016754ee8a1d1e93f75dd25283d6019574ec94e8dd"
+      "sha256": "95ada2733c4de16d4fbb9cdead6fd066c2b343faf1d45bd58b5e9165f2feb0fc"
     },
     {
       "route": "windows/print-actions.md",
@@ -2055,6 +2075,11 @@
       "bytes": 7306
     },
     {
+      "name": "8e58cf3e70ce160851289ff57b6440a14daccc7b324c20edd6571e65bcb92bfa.png",
+      "sha256": "8e58cf3e70ce160851289ff57b6440a14daccc7b324c20edd6571e65bcb92bfa",
+      "bytes": 82591
+    },
+    {
       "name": "b40fdba4694fbd54d84816333f366e0461c8bec40a7d81f6c032d2589b3399b1.png",
       "sha256": "b40fdba4694fbd54d84816333f366e0461c8bec40a7d81f6c032d2589b3399b1",
       "bytes": 134184
@@ -2073,9 +2098,14 @@
       "name": "cecb10fb5a84dc1ee6d8a3fc9d9952be22f285402db3bfefd07e3984fe7b41d0.png",
       "sha256": "cecb10fb5a84dc1ee6d8a3fc9d9952be22f285402db3bfefd07e3984fe7b41d0",
       "bytes": 1979
+    },
+    {
+      "name": "d0315665b7fe8b9129c8ddcb447da95a8ff07d33d788ae77edc5c68619172d52.png",
+      "sha256": "d0315665b7fe8b9129c8ddcb447da95a8ff07d33d788ae77edc5c68619172d52",
+      "bytes": 16430
     }
   ],
-  "bundle_sha256": "4538dc614de79b1cf08a37c915e35f5820dd1d3e2d363e7681fe481f303362ea",
+  "bundle_sha256": "4540bf312c9deead4bacfc9835bca2cdf506e75b1f233edc5bf2e4fbe7ca60f3",
   "unavailable_references": [
     {
       "source": "api/README.md",
@@ -3140,6 +3170,16 @@
     {
       "source": "windows/interface-motion.yue_HK.md",
       "target": "../../../design/interface-motion.md",
+      "kind": "link"
+    },
+    {
+      "source": "windows/personal-vocabulary.md",
+      "target": "../../screenshots/vocabulary-drop/README.md",
+      "kind": "link"
+    },
+    {
+      "source": "windows/personal-vocabulary.yue_HK.md",
+      "target": "../../screenshots/vocabulary-drop/README.md",
       "kind": "link"
     },
     {

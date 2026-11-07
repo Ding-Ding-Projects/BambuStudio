@@ -9,7 +9,7 @@ import path from 'node:path';
 import test from 'node:test';
 import { dropRoot, repoRoot, tempDir } from './harness.mjs';
 
-const read = (name) => fs.readFileSync(path.join(dropRoot, name), 'utf8');
+const read = (name) => fs.readFileSync(path.join(dropRoot, name), 'utf8').replace(/\r\n/g, '\n');
 const BASE_IMAGE = 'node:22.23.3-alpine3.24@sha256:0a7108bf6c7bf5de370ffb1a3ed6be93d405b43ff159f681a8d18c0e2bc2e402';
 
 // Dockerfile instructions with comments and line continuations folded away.
@@ -73,8 +73,10 @@ test('compose runs the service locked down, limited and with one data volume', (
   assert.match(service, /^ {4}volumes:\n {6}- drop-data:\/data$/m);
   assert.match(compose, /\nvolumes:\n {2}drop-data:\n?$/);
   assert.match(service, /^ {4}ports:\n {6}- "\$\{DROP_PORT:-8833\}:8080"$/m);
-  assert.match(service, /^ {4}build:\n {6}context: \.$/m);
-  assert.match(service, /^ {4}image: localhost\//m, 'the image name can never be pulled from a public registry');
+  assert.doesNotMatch(service, /^ {4}build:/m, 'installed hosting never rebuilds the service');
+  assert.match(service, /^ {4}image: ghcr\.io\/ding-ding-projects\/bambustudio-lan-model-drop:v\d+\.\d+\.\d+(?:@sha256:[a-f0-9]{64})?$/m);
+  assert.match(serviceBlock(read('compose.build.yaml'), 'lan-model-drop'), /^ {4}build:\n {6}context: \.$/m);
+  assert.match(serviceBlock(read('compose.build.yaml'), 'lan-model-drop'), /^ {4}image: localhost\//m, 'developer builds cannot overwrite the published image');
   assert.match(service, /^ {4}logging:\n {6}driver: json-file\n {6}options:\n {8}max-size: \w+\n {8}max-file: "\d+"$/m);
   assert.doesNotMatch(service, /privileged|network_mode: host|cap_add|docker\.sock|pid: host/);
 });
@@ -119,7 +121,7 @@ test('the service reads the station key with the command its log and documents n
 });
 
 function windowsInstallBlock() {
-  const cmake = fs.readFileSync(path.join(repoRoot, 'CMakeLists.txt'), 'utf8');
+  const cmake = fs.readFileSync(path.join(repoRoot, 'CMakeLists.txt'), 'utf8').replace(/\r\n/g, '\n');
   return /if \(WIN32\)\n([\s\S]*?)\nelseif \(SLIC3R_FHS\)/.exec(cmake)?.[1] ?? '';
 }
 
@@ -140,11 +142,14 @@ test('installing with that rule ships the container files and leaves a local .en
   const work = tempDir(t, 'lan-drop-install-');
   const source = path.join(work, 'source');
   fs.cpSync(dropRoot, path.join(source, 'lan-model-drop'), { recursive: true });
+  for (const name of ['host.bat', 'compose.yaml']) fs.copyFileSync(path.join(repoRoot, name), path.join(source, name));
   fs.writeFileSync(path.join(source, 'lan-model-drop', '.env'), 'DROP_STATION_KEY=never-shipped-0123456789\n');
   fs.mkdirSync(path.join(source, 'lan-model-drop', 'node_modules', 'x'), { recursive: true });
   fs.writeFileSync(path.join(source, 'lan-model-drop', 'node_modules', 'x', 'index.js'), '');
   fs.writeFileSync(path.join(source, 'lan-model-drop', 'server', 'scratch.test.mjs'), '');
   const install = /(install\(DIRECTORY "\$\{CMAKE_CURRENT_SOURCE_DIR\}\/lan-model-drop\/"[\s\S]*?\)(?:\n|$))/.exec(windowsInstallBlock())[1];
+  const launchers = /(install\(FILES "\$\{CMAKE_CURRENT_SOURCE_DIR\}\/host\.bat"[\s\S]*?\))/.exec(windowsInstallBlock());
+  assert.ok(launchers, 'the installed hosting entrypoints are declared');
   const project = path.join(work, 'project');
   fs.mkdirSync(project);
   const cmakePath = (value) => value.replace(/\\/g, '/');
@@ -152,6 +157,7 @@ test('installing with that rule ships the container files and leaves a local .en
     'cmake_minimum_required(VERSION 3.13)',
     'project(lan_drop_install NONE)',
     install.replace('${CMAKE_CURRENT_SOURCE_DIR}', cmakePath(source)),
+    launchers[1].replaceAll('${CMAKE_CURRENT_SOURCE_DIR}', cmakePath(source)),
   ].join('\n'));
   const prefix = path.join(work, 'prefix');
   const build = path.join(work, 'build');
@@ -159,6 +165,9 @@ test('installing with that rule ships the container files and leaves a local .en
   assert.equal(configure.status, 0, configure.stderr);
   const installed = spawnSync('cmake', ['--install', build], { encoding: 'utf8' });
   assert.equal(installed.status, 0, installed.stderr);
+  for (const name of ['host.bat', 'compose.yaml']) {
+    assert.deepEqual(fs.readFileSync(path.join(prefix, name)), fs.readFileSync(path.join(source, name)), `${name} is installed unchanged`);
+  }
 
   const list = (dir, prefixPath = '') => fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
     const relative = prefixPath ? `${prefixPath}/${entry.name}` : entry.name;
