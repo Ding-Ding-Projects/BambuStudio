@@ -1607,6 +1607,15 @@ bool persist_project_tab_restore_marker(AppConfig* cfg, const std::string& targe
         return false;
     }
 }
+
+void clear_project_tab_restore_marker(const std::string& restored_path)
+{
+    AppConfig* cfg = wxGetApp().app_config;
+    if (cfg && !restored_path.empty() &&
+        cfg->get("project_tab_recovery", "pending_path") == restored_path &&
+        !persist_project_tab_restore_marker(cfg, ""))
+        BOOST_LOG_TRIVIAL(warning) << "Project recovery marker could not be cleared.";
+}
 } // namespace
 
 void MainFrame::place_project_tabbar()
@@ -1708,11 +1717,7 @@ void MainFrame::switch_project_tab(int target)
     m_project_tabbar->SetActiveDirty(tgt.dirty);
     update_title();
     m_project_tabbar->SaveToConfig();
-    AppConfig* cfg = wxGetApp().app_config;
-    if (cfg && cfg->get("project_tab_recovery", "pending_path") == load_path) {
-        cfg->set("project_tab_recovery", "pending_path", "");
-        cfg->save();
-    }
+    clear_project_tab_restore_marker(load_path);
 }
 
 void MainFrame::close_project_tab(int index)
@@ -2013,6 +2018,7 @@ void MainFrame::open_project_in_tab(const wxString& filename)
     m_project_tabbar->AddTab(into_u8(filename), t, /*activate=*/true);
     update_title();
     m_project_tabbar->SaveToConfig();
+    clear_project_tab_restore_marker(into_u8(filename));
 }
 
 void MainFrame::reconcile_initial_project_tab()
@@ -2055,6 +2061,7 @@ void MainFrame::reconcile_initial_project_tab()
                 m_plater->get_project_name().IsEmpty() ? _L("Untitled") : m_plater->get_project_name(), true);
         m_project_tabbar->SetActiveDirty(m_plater->is_project_dirty());
         m_project_tabbar->SaveToConfig();
+        clear_project_tab_restore_marker(live_path);
     } else {
         // Fresh Untitled document: lazily restore the tab the user left on last session.
         const ProjectTab  t         = m_project_tabbar->TabAt(active);

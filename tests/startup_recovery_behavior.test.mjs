@@ -30,6 +30,7 @@ const fixture=String.raw`
 #include <iostream>
 #include <functional>
 #include <fstream>
+#include <filesystem>
 #include <nlohmann/json.hpp>
 struct wxString:std::string { using std::string::string; wxString()=default; wxString(const std::string&s):std::string(s){} bool IsEmpty()const{return empty();} static wxString FromUTF8(const std::string&s){return s;} };
 #define _L(s) wxString(s)
@@ -73,7 +74,8 @@ struct MessageDialog {template<class T> MessageDialog(T*,const wxString&,const w
 struct TabOpGuard {bool&flag;explicit TabOpGuard(bool&f):flag(f){flag=true;}~TabOpGuard(){flag=false;}};
 struct MainFrame {
  Plater*m_plater;ProjectTabBar*m_project_tabbar;bool m_project_tabs_ready=false,m_project_tab_switching=false;
- void reconcile_initial_project_tab();void switch_project_tab(int);
+ void reconcile_initial_project_tab();void switch_project_tab(int);void open_project_in_tab(const wxString&);
+ bool open_workspace_file(const wxString&){return false;}
  bool save_active_tab_snapshot_if_dirty(){return true;}
  void update_title(){if(m_project_tabs_ready&&!m_project_tab_switching&&m_project_tabbar->GetActive()>=0)m_project_tabbar->SetActiveTitle(m_plater->name.empty()?_L("Untitled"):m_plater->name);}
 };
@@ -103,14 +105,20 @@ int main(){
  {Scenario s;s.plater.set_project_filename("other.3mf");s.frame.reconcile_initial_project_tab();check(s.tabs.Count()==2&&s.tabs.tabs[0].file_path=="model.3mf"&&s.tabs.tabs[1].file_path=="other.3mf","existing named document has matching tab identity");}
  {Scenario s;s.plater.set_project_filename("model.3mf");s.frame.reconcile_initial_project_tab();check(s.tabs.Count()==1&&s.plater.loads==0,"matching existing document reuses tab");}
  {Scenario s;s.cfg.writes=false;s.frame.reconcile_initial_project_tab();check(s.plater.loads==0&&s.tabs.Count()==2,"unverified marker persistence prevents automatic load");}
+ {Scenario s;s.pending();s.plater.set_project_filename("model.3mf");s.frame.reconcile_initial_project_tab();check(s.cfg.persisted["project_tab_recovery:pending_path"].empty(),"successful CLI project clears matching marker");}
+ {Scenario s;s.pending();s.tabs.AddTab("","Untitled",true);s.plater.succeeds=true;s.frame.open_project_in_tab("model.3mf");check(s.cfg.persisted["project_tab_recovery:pending_path"].empty(),"successful File Open clears matching marker");}
+ {Scenario s;s.pending();s.tabs.AddTab("","Untitled",true);s.frame.open_project_in_tab("model.3mf");check(s.cfg.persisted["project_tab_recovery:pending_path"]=="model.3mf","failed File Open retains marker");}
+ {Scenario s;s.pending();s.plater.set_project_filename("other.3mf");s.frame.reconcile_initial_project_tab();check(s.cfg.persisted["project_tab_recovery:pending_path"]=="model.3mf","different CLI project retains failed target marker");}
  std::cout<<"startup recovery behavioral failures: "<<failures<<'\n';return failures?1:0;
 }
 `;
 const cpp=fixture.replace('// PRODUCTION',[
  ...(source.includes('bool persist_project_tab_restore_marker(')?[method('bool persist_project_tab_restore_marker(')]:[]),
+ ...(source.includes('void clear_project_tab_restore_marker(')?[method('void clear_project_tab_restore_marker(')]:[]),
  method('bool restore_project_tab_document('),
  method('void MainFrame::reconcile_initial_project_tab()'),
  method('void MainFrame::switch_project_tab(int target)'),
+ method('void MainFrame::open_project_in_tab(const wxString& filename)'),
 ].join('\n\n'));
 const out=mkdtempSync(path.join(tmpdir(),'bambu-startup-recovery-'));
 const file=path.join(out,'fixture.cpp'),exe=path.join(out,'fixture.exe');writeFileSync(file,cpp);

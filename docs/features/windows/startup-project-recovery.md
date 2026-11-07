@@ -17,7 +17,9 @@ Before automatic restoration, the application saves
 marker is read back from bounded on-disk JSON before the automatic loader may run;
 an unverified write leaves the target available for explicit recovery. A pending
 path is not automatically attempted again after an interrupted launch. Successful
-restoration or successful explicit tab retry clears that marker. Failed restoration
+restoration, successful explicit tab retry, successful File > Open of the same
+path, or adoption of that already-loaded startup project clears the matching
+marker. Failed opens and successful opens of other paths retain it. Failed restoration
 persists the separate empty active tab, so later normal launches do not repeatedly
 attempt the retained invalid file. No model or snapshot is deleted by this recovery.
 The marker is a local path, subject to the same privacy boundary as existing saved
@@ -44,7 +46,9 @@ Home with an empty Untitled tab and no matching error dialog. Both actual images
 were inspected. This demonstrates a reproducible saved-tab failure route; it does
 not establish the cause of a particular user's startup report. Private run receipts
 and captures remain outside the repository. No real user profile, project, or
-personal vocabulary cache was modified. `--datadir` does not isolate the separate
+personal vocabulary cache was manually edited. The blank control later showed a
+network-plugin installation-completion dialog; no installation command was issued
+by this verification. `--datadir` does not isolate the separate
 personal vocabulary cache, so these runs performed no vocabulary import or reset.
 
 `node tests/startup_recovery_behavior.test.mjs` compiles and executes the production
@@ -54,7 +58,9 @@ restoration, successful restoration, explicit successful and failed retry, title
 callbacks during loading, blank startup, existing startup documents, and private
 snapshot identity, canceled reset, unnamed geometry, and failed configuration
 writes. The changed source passes; the same executable check against
-`d17122fa8ec2ae1da871e677aa3dce3beda94c92` reports 17 failed assertions.
+`d17122fa8ec2ae1da871e677aa3dce3beda94c92` reports 19 failed assertions. Matching
+marker clearance is checked for explicit tab retry, File > Open, and already-loaded
+startup documents; failed opens and other paths must retain the marker.
 
 The doubles do not prove native archive parsing, production AppConfig persistence, or
 rendered recovery behavior. A native build and the same hidden-desktop scenarios,
