@@ -32633,3 +32633,6 @@ msgstr ""
 #, possible-boost-format
 msgid "Or open %1% to choose and send models directly."
 msgstr ""
+
+msgid "The previous project needs review before it can be restored. Its tab and file have been kept. Select that tab to review the import options, or use File > Open."
+msgstr ""

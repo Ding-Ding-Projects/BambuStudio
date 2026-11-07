@@ -1725,12 +1725,12 @@
     {
       "route": "windows/README.md",
       "title": "Windows features",
-      "sha256": "c767f218aa46c99c85f6148c0cc40806beeb9470c70c7a378ec108119626b536"
+      "sha256": "e2a9dca59cd1c915760c5d2ebe4b48a4d42217f994ab5a890f3638ffe086877f"
     },
     {
       "route": "windows/README.yue_HK.md",
       "title": "Windows 功能",
-      "sha256": "3f85cb2846b34fdd5aac1d2c5a56f6721ea24cb58ff42217591bcbdcbef4451d"
+      "sha256": "c4a917b0f504b7d588a220a8eb576d4ab5fba7b3a57a615849f4e0d7f1f4d0a0"
     },
     {
       "route": "windows/regex-builder.md",
@@ -1815,7 +1815,12 @@
     {
       "route": "windows/startup-project-recovery.md",
       "title": "Recover a project that cannot reopen at startup",
-      "sha256": "843bf68d6639a3c0554e178979c9d4505bd921156b6d32057433e99045281339"
+      "sha256": "3bf6d161b91012f5fc1bc7a1398faa79f819af3e5b4d824ed4373630d6e6d805"
+    },
+    {
+      "route": "windows/startup-project-recovery.yue_HK.md",
+      "title": "復原啟動時無法重新開啟的專案",
+      "sha256": "a49b26416b6e30cd1dfedb335495a62943eccc5c1bc3137e9fde2fa34df4e48d"
     },
     {
       "route": "windows/stop-print-interlock.md",
@@ -2130,7 +2135,7 @@
       "bytes": 16430
     }
   ],
-  "bundle_sha256": "04ff9f0e8c51a5ab0dd32f1eef56921125c4ce91e4a100c55f3c15e3f400948a",
+  "bundle_sha256": "32757d7d63b8cfd96558a7e1305e7fbec2877fbbeee1f9fede68bc65718a8f71",
   "unavailable_references": [
     {
       "source": "api/README.md",

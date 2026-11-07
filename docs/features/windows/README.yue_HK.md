@@ -1,6 +1,6 @@
 ---
 translation-of: README.md
-source-sha256: 46b9322fb16b7860b8ea230a28a464896f55d34e9c8ac536a605d5b27a0f2a97
+source-sha256: 330b6222531381e60207ca108c52caad408e30229a7258b97de5518e26f1c157
 review-status: agent-drafted
 ---
 
@@ -40,6 +40,7 @@ review-status: agent-drafted
 - [點心啟動驚喜（十分之一啟動）](dim-sum-surprise.md)
 - [原生視覺煙霧測試](native-visual-smoke.md)
 - [雲網頁故障恢復](cloud-web-recovery.md)
+- [復原啟動時無法重新開啟的專案](startup-project-recovery.yue_HK.md)
 - [軟件 OpenGL 後備（Mesa llvmpipe）](software-gl-fallback.md)
 - [應用更新從呢個分支發佈](app-updates.md)
 

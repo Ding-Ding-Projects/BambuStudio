@@ -1,5 +1,12 @@
 # Roadmap
 
+## Nonmodal automatic restoration, 7 November 2026
+
+- [x] Separate automatic and manual loading contexts; verify detached admission, nonmodal orchestration and native-project classification with production-function fixtures and causal mutations.
+- [x] Independently review the correction and translate the review notice in the 10,268-entry catalogue.
+- [ ] Build and drive actual automatic restoration, deferred review, manual retry and unsaved-document protection with source/binary binding.
+- [ ] Establish the original startup cause. A private copy passing the installed native `--info` reader does not prove the GUI path.
+
 ## Protected Preferences geometry, 7 November 2026
 
 - [x] Add a content-free, fixed-role probe to the opt-in current-user automation pipe; verify production-module behavior, privacy/containment mutations and compilation against actual wx headers.

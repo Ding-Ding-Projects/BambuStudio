@@ -48,6 +48,7 @@
 - [Dim sum startup surprise (one launch in ten)](dim-sum-surprise.md)
 - [Native visual smoke test](native-visual-smoke.md)
 - [Cloud web-page failure recovery](cloud-web-recovery.md)
+- [Recover a project that cannot reopen at startup](startup-project-recovery.md)
 - [Software OpenGL fallback (Mesa llvmpipe)](software-gl-fallback.md)
 - [App updates from this fork's releases](app-updates.md)
 

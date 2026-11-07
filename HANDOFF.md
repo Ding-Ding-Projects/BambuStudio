@@ -1,5 +1,27 @@
 # Bambu Studio handoff
 
+## Nonmodal startup restoration, 7 November 2026
+
+Reviewed source `dc254de9` separates automatic restoration from manual imports.
+Automatic admission parses into detached state, defers decisions before publishing
+presets or plates, and preserves native-project classification. Deferred review
+and loading failures use nonmodal recovery; manual retry retains normal dialogs.
+Production-function fixtures and causal mutations cover admission, presentation,
+negative-Z placement and zero-volume preservation. These are bounded source
+checks, not actual archive/preset-editor or complete native-runtime acceptance.
+
+A byte-identical private copy of the active project passed the installed
+2.9.1932 native `--info` loader with exit 0. The original project and configuration
+remained unchanged. This narrows the investigation but does not prove GUI startup
+restoration or establish the original cause. No project content is published.
+The new review notice is translated; the catalogue compiles 10,268 entries.
+
+The hosting wizard at `ed55a003` was packaged and exercised on a hidden desktop
+against the existing service, preserving its identity, storage and settings.
+Two terminal-display defects were found. Reviewed correction `9eeafe7d` fixes
+polling, terminal Cancel feedback and verified-image display; a new package and
+runtime repetition remain pending. Earlier evidence belongs only to `ed55a003`.
+
 ## Content-free Preferences diagnostics, 7 November 2026
 
 Candidate `d405fb69` adds argument-free `preferences_geometry` to the existing

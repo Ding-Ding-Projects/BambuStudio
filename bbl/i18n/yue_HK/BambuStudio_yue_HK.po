@@ -50601,3 +50601,8 @@ msgstr "已寫入路徑"
 #. review-status: agent-drafted
 msgid "Same-folder Base64 files: pick or drop files, then run the queue. Canonical padded Base64 only; 16 MiB source or decoded-file limit. Encoded inputs may be larger. Existing files are never replaced."
 msgstr "同一資料夾嘅 Base64 檔案：揀選或拖入檔案，再執行佇列。只接受帶標準補位嘅 Base64；原檔案或解碼後檔案上限係 16 MiB，編碼輸入可以較大。現有檔案唔會被取代。"
+
+#. reviewed-category: application
+#. review-status: agent-drafted
+msgid "The previous project needs review before it can be restored. Its tab and file have been kept. Select that tab to review the import options, or use File > Open."
+msgstr "還原上一個專案之前，需要先確認匯入選項。原有分頁同檔案已保留。請揀返嗰個分頁確認選項，或者使用「檔案 > 開啟」。"
