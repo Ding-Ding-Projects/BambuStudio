@@ -4,6 +4,8 @@
 #include "../ConfigWizard.hpp"
 #include "../DeviceManager.hpp"
 #include "../DeviceCore/DevManager.h"
+#include "../Extensions/ExtensionRuntime.hpp"
+#include "../Extensions/ExtensionsPanel.hpp"
 #include "../FeatureServices/PresentationRoutes.hpp"
 #include "../GLCanvas3D.hpp"
 #include "../GUI_App.hpp"
@@ -849,12 +851,96 @@ wxWindow *SetupWizardDialog::build_extensions(wxWindow *parent)
 {
     auto *page = step_page(parent);
     auto *s    = new wxBoxSizer(wxVERTICAL);
-    s->Add(make_label(page, Label::Body_13, _L("Extensions are designed but not built yet, so this step is passed over. It will offer the built-in extensions the day they ship."),
+    s->Add(make_label(page, Label::Body_13,
+                      _L("Bambu Studio comes with a few small extensions. Each one stays off until you allow exactly what it asks for, and none of them sends anything anywhere."),
                       MD3::Role::OnSurfaceVariant, true),
-           0, wxEXPAND);
+           0, wxEXPAND | wxBOTTOM, FromDIP(12));
+    m_extension_list = new wxBoxSizer(wxVERTICAL);
+    s->Add(m_extension_list, 0, wxEXPAND | wxBOTTOM, FromDIP(8));
+    s->Add(make_label(page, Label::Body_12, _L("Your own extensions, their runs and the limits every run gets are in File, Extensions."),
+                      MD3::Role::OnSurfaceVariant, true),
+           0, wxEXPAND | wxBOTTOM, FromDIP(16));
     s->Add(results_box(page, Setup::index_of(Step::Extensions)), 0, wxEXPAND);
     page->SetSizer(s);
+    refresh_extensions(page);
     return page;
+}
+
+void SetupWizardDialog::refresh_extensions(wxWindow *page)
+{
+    if (!m_extension_list || !page) return;
+    m_extension_list->Clear(true);
+    Extensions::Host &host  = Extensions::Runtime::instance().host();
+    int               shown = 0;
+    for (const Extensions::Installed &x : host.extensions()) {
+        if (!x.builtin) continue;
+        ++shown;
+        const Extensions::State state = host.state(x);
+        const bool              on    = state == Extensions::State::On;
+        StaticBox              *row   = card(page, MD3::Role::SurfaceContainerLow);
+        auto                   *rs    = new wxBoxSizer(wxHORIZONTAL);
+        rs->Add(fixed_glyph(row, on ? GlyphDone : 0xE87B /* extension */, on ? MD3::Role::Primary : MD3::Role::OnSurfaceVariant), 0,
+                wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(10));
+        auto *text = new wxBoxSizer(wxVERTICAL);
+        text->Add(make_label(row, Label::Head_14, wxString::FromUTF8(x.manifest.name + " " + x.manifest.version)), 0);
+        if (!x.manifest.description.empty())
+            text->Add(make_label(row, Label::Body_12, wxString::FromUTF8(x.manifest.description), MD3::Role::OnSurfaceVariant, true), 0,
+                      wxEXPAND | wxTOP, FromDIP(2));
+        text->Add(make_label(row, Label::Head_12, Extensions::state_text(state), on ? MD3::Role::Primary : MD3::Role::OnSurfaceVariant), 0,
+                  wxTOP, FromDIP(4));
+        rs->Add(text, 1, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(10));
+        auto *toggle = make_button(row, on ? _L("Turn off") : _L("Review and allow"), on ? 0 : GlyphRule,
+                                   on ? Button::Variant::Outlined : Button::Variant::Tonal);
+        toggle->Enable(state != Extensions::State::ManifestError && state != Extensions::State::AllOff);
+        const std::string id = x.manifest.id;
+        toggle->Bind(wxEVT_BUTTON, [this, page, id](wxCommandEvent &) { toggle_extension(page, id); });
+        rs->Add(toggle, 0, wxALIGN_CENTER_VERTICAL);
+        auto *pad = new wxBoxSizer(wxVERTICAL);
+        pad->Add(rs, 1, wxEXPAND | wxALL, FromDIP(12));
+        row->SetSizer(pad);
+        m_extension_list->Add(row, 0, wxEXPAND | wxBOTTOM, FromDIP(8));
+    }
+    if (!host.master_on())
+        m_extension_list->Add(make_label(page, Label::Body_12, _L("Extensions are off for the whole app. Turn them on in File, Extensions."),
+                                         MD3::Role::Error, true),
+                              0, wxEXPAND | wxBOTTOM, FromDIP(8));
+    if (shown == 0)
+        m_extension_list->Add(make_label(page, Label::Body_13, _L("No built-in extension is installed: they were removed, or this build has none."),
+                                         MD3::Role::OnSurfaceVariant, true),
+                              0, wxEXPAND);
+    page->Layout();
+    if (auto *scrolled = dynamic_cast<wxScrolledWindow *>(page)) scrolled->FitInside();
+}
+
+void SetupWizardDialog::toggle_extension(wxWindow *page, const std::string &id)
+{
+    Extensions::Host            &host = Extensions::Runtime::instance().host();
+    const Extensions::Installed *x    = host.find(id);
+    if (!x) return;
+    const int      step  = Setup::index_of(Step::Extensions);
+    const wxString name  = wxString::FromUTF8(x->manifest.name);
+    const auto     state = host.state(*x);
+    if (state == Extensions::State::On) {
+        host.set_enabled(id, false);
+        add_result(step, GlyphDone, true, wxString::Format(_L("%s is off"), name), _L("Turn it on again here or in File, Extensions."));
+    } else if ((state == Extensions::State::OffByUser || state == Extensions::State::OffAfterFailures) && host.set_enabled(id, true)) {
+        add_result(step, GlyphDone, true, wxString::Format(_L("%s is on"), name), _L("It keeps what you allowed before."));
+    } else {
+        const Extensions::Consent *before = host.consent(id);
+        Extensions::Consent        previous;
+        if (before) previous = *before;
+        const Extensions::ConsentAnswer answer = Extensions::ask_consent(this, *x, before ? &previous : nullptr);
+        if (answer == Extensions::ConsentAnswer::Allow) {
+            host.allow(id);
+            add_result(step, GlyphDone, true, wxString::Format(_L("%s is on"), name), _L("It runs from now on; its runs are listed in File, Extensions."));
+        } else if (answer == Extensions::ConsentAnswer::KeepOff) {
+            host.keep_off(id);
+            add_result(step, GlyphInfo, true, wxString::Format(_L("%s stays off"), name), _L("Nothing was allowed."));
+        }
+    }
+    Extensions::Runtime::instance().notify_changed();
+    // The button that called this lives in the rows being rebuilt.
+    CallAfter([this, page]() { refresh_extensions(page); });
 }
 
 wxWindow *SetupWizardDialog::build_finish(wxWindow *parent)
@@ -974,8 +1060,9 @@ void SetupWizardDialog::show_step(int index)
         break;
     case Step::Extensions:
         m_title->SetLabel(_L("Extensions"));
-        m_lead->SetLabel(_L("Not built yet."));
-        m_why_text->SetLabel(wxString());
+        m_lead->SetLabel(_L("Turn on the built-in extensions you want. This step is optional."));
+        m_why_text->SetLabel(_L("Extensions add notes after slicing and comment lines to exported G-code without changing how anything prints."));
+        refresh_extensions(m_pages[std::size_t(index)]);
         break;
     case Step::Finish:
         refresh_finish();

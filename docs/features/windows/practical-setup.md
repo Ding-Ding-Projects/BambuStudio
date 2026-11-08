@@ -21,7 +21,7 @@ Help whenever they want to change something.
 | Printers | Required | Choose printers (the printer guide), search your network, import a printer profile |
 | Inks and filaments | Required | Sync AMS, pick filaments (the filament guide), and see what is on the plate |
 | Backups | Optional | Auto-backup of the open project (off, 2 or 10 minutes) and a config backup |
-| Extensions | Optional | Not built yet, so it is passed over |
+| Extensions | Optional | The built-in extensions, each with **Review and allow** (the consent prompt) or **Turn off**; see [Extensions](extensions.md) |
 | Finish | | What setup did; Open Prepare, or take the feature tour |
 
 Every action is real and applies at once, through the same settings
@@ -91,5 +91,5 @@ fail.
 
 ## Not done yet
 
-Following the Windows light or dark setting, the Extensions step and undoing a
-printer added here are designed but not built.
+Following the Windows light or dark setting and undoing a printer added here
+are designed but not built.

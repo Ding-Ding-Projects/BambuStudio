@@ -1,0 +1,11 @@
+{
+  "id": "studio.builtin.plate-checklist",
+  "name": "Plate checklist",
+  "version": "1.0.0",
+  "apiVersion": 1,
+  "description": "Points out what is worth a second look after slicing: slicing warnings, long prints, many filament changes and slots that need most of a spool. Says nothing when all is well.",
+  "author": "Bambu Studio",
+  "run": { "windows": "powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File plate-checklist.ps1" },
+  "hooks": ["plate.sliced", "print.before_send"],
+  "permissions": ["slice.read", "notes.show", "send.warn"]
+}

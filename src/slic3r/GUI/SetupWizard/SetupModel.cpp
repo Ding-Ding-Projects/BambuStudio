@@ -18,8 +18,8 @@ const std::array<StepInfo, kStepCount> &steps()
         {Step::Printers, "printers", L("Printers"), true, false, true},
         {Step::Inks, "inks", L("Inks and filaments"), true, false, true},
         {Step::Backups, "backups", L("Backups"), false, true, true},
-        // Designed with the Extensions board; offered here the day extensions ship.
-        {Step::Extensions, "extensions", L("Extensions"), false, true, false},
+        // The built-in extensions, each turned on only through its consent prompt.
+        {Step::Extensions, "extensions", L("Extensions"), false, true, true},
         {Step::Finish, "finish", L("Finish"), false, false, true},
     }};
     return all;

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-08 04:28-0500\n"
+"POT-Creation-Date: 2026-11-08 05:42-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -7413,6 +7413,12 @@ msgid "Base64 toolkit"
 msgstr ""
 
 msgid "Encode and decode text, files beside the originals and data: URLs on this computer"
+msgstr ""
+
+msgid "Extensions"
+msgstr ""
+
+msgid "Steps after slicing, comment lines in exported G-code and commands of your own, each asking first"
 msgstr ""
 
 msgid "Scheduled settings"
@@ -24735,6 +24741,13 @@ msgstr ""
 msgid "Feature"
 msgstr ""
 
+msgid "Extension"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s, runs on this computer"
+msgstr ""
+
 msgid "Search in settings"
 msgstr ""
 
@@ -29686,9 +29699,6 @@ msgstr ""
 msgid "File, Base64 toolkit"
 msgstr ""
 
-msgid "Extensions"
-msgstr ""
-
 msgid "File, Extensions"
 msgstr ""
 
@@ -30700,7 +30710,46 @@ msgstr ""
 msgid "Snapshots you recorded there are listed in its history."
 msgstr ""
 
-msgid "Extensions are designed but not built yet, so this step is passed over. It will offer the built-in extensions the day they ship."
+msgid "Bambu Studio comes with a few small extensions. Each one stays off until you allow exactly what it asks for, and none of them sends anything anywhere."
+msgstr ""
+
+msgid "Your own extensions, their runs and the limits every run gets are in File, Extensions."
+msgstr ""
+
+msgid "Turn off"
+msgstr ""
+
+msgid "Review and allow"
+msgstr ""
+
+msgid "Extensions are off for the whole app. Turn them on in File, Extensions."
+msgstr ""
+
+msgid "No built-in extension is installed: they were removed, or this build has none."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s is off"
+msgstr ""
+
+msgid "Turn it on again here or in File, Extensions."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s is on"
+msgstr ""
+
+msgid "It keeps what you allowed before."
+msgstr ""
+
+msgid "It runs from now on; its runs are listed in File, Extensions."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s stays off"
+msgstr ""
+
+msgid "Nothing was allowed."
 msgstr ""
 
 msgid "Open Prepare"
@@ -30777,7 +30826,10 @@ msgstr ""
 msgid "Auto-backup keeps a recovery copy of the open project; a config snapshot keeps your settings."
 msgstr ""
 
-msgid "Not built yet."
+msgid "Turn on the built-in extensions you want. This step is optional."
+msgstr ""
+
+msgid "Extensions add notes after slicing and comment lines to exported G-code without changing how anything prints."
 msgstr ""
 
 msgid "Here is what setup did. Open Prepare to start, or take the feature tour."
@@ -30826,6 +30878,641 @@ msgid "Saved at %s. Close any time and continue from Help, then Set up Bambu Stu
 msgstr ""
 
 msgid "That language could not be loaded"
+msgstr ""
+
+msgid "After a model is imported"
+msgstr ""
+
+msgid "Name, triangles, size and units"
+msgstr ""
+
+msgid "After slicing"
+msgstr ""
+
+msgid "Time, filament per slot, layers and warnings"
+msgstr ""
+
+msgid "Before sending a print"
+msgstr ""
+
+msgid "Plate, printer model, filaments and options"
+msgstr ""
+
+msgid "Checklist rows, a block with its reason"
+msgstr ""
+
+msgid "After G-code export"
+msgstr ""
+
+msgid "The file name and the slice statistics"
+msgstr ""
+
+msgid "Comment lines to add at the start or end"
+msgstr ""
+
+msgid "After a print finishes"
+msgstr ""
+
+msgid "Result, duration and filament used"
+msgstr ""
+
+msgid "Its own commands"
+msgstr ""
+
+msgid "A summary of the selection"
+msgstr ""
+
+msgid "Notes, a text file to save"
+msgstr ""
+
+msgid "Read slice statistics (time, grams, metres per plate)"
+msgstr ""
+
+msgid "Read model names, sizes and triangle counts"
+msgstr ""
+
+msgid "Read the printer preset, model, nozzle sizes and filament presets"
+msgstr ""
+
+msgid "Show notes in Bambu Studio"
+msgstr ""
+
+msgid "Add checklist rows before a print is sent"
+msgstr ""
+
+msgid "Stop a print from being sent, with a reason"
+msgstr ""
+
+msgid "Add comment lines to exported G-code"
+msgstr ""
+
+msgid "Offer a text file for you to save"
+msgstr ""
+
+#, possible-boost-format
+msgid "Plate %1%"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Save the file from %s"
+msgstr ""
+
+#, possible-boost-format
+msgid "Saved %1%."
+msgstr ""
+
+#, possible-boost-format
+msgid "%1% could not be saved there."
+msgstr ""
+
+msgid "Answered"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Ran past its time limit of %d s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Answer over %d KB"
+msgstr ""
+
+msgid "Answer was not valid JSON"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Answer broke a rule: %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Stopped with exit code %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Failed: %s"
+msgstr ""
+
+msgid "Not started"
+msgstr ""
+
+msgid "Stopped by you"
+msgstr ""
+
+#, possible-boost-format
+msgid "%1% selected of %2% objects"
+msgstr ""
+
+#, possible-boost-format
+msgid "Plate %1%, nothing selected"
+msgstr ""
+
+msgid "Sample request"
+msgstr ""
+
+#, possible-boost-format
+msgid "Sample answer: %1% start and %2% end comment lines, added to no file."
+msgstr ""
+
+#, possible-boost-format
+msgid "Sample answer: a file named %1%, not saved."
+msgstr ""
+
+msgid "Sample answer: valid, with nothing to show."
+msgstr ""
+
+#, possible-boost-format
+msgid "%1% did not answer: %2%."
+msgstr ""
+
+#, possible-boost-format
+msgid "It is off after %1% failed runs in a row."
+msgstr ""
+
+msgid "Open Extensions"
+msgstr ""
+
+#, possible-boost-format
+msgid "Comment lines from %1% extension(s) were added to %2%."
+msgstr ""
+
+#, possible-boost-format
+msgid "Comment lines were not added to %1% (%2%). The exported file is unchanged."
+msgstr ""
+
+msgid "not run by this build yet"
+msgstr ""
+
+msgid "Never"
+msgstr ""
+
+msgid "Yesterday"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%d B"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%.1f KB"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%.1f MB"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Command: %s"
+msgstr ""
+
+msgid "manifest.json is not valid JSON"
+msgstr ""
+
+msgid "manifest.json is larger than 64 KB"
+msgstr ""
+
+msgid "There is no manifest.json in this folder"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "\"%s\" is missing"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "\"%s\" has the wrong type"
+msgstr ""
+
+msgid "The id must be lower-case letters, digits, dots and dashes, like com.example.name"
+msgstr ""
+
+msgid "The version must be MAJOR.MINOR.PATCH, like 1.0.0"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "apiVersion %s is newer than this app supports (%d)"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "apiVersion %s is older than this app supports (%d)"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Unknown hook \"%s\""
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Unknown permission \"%s\""
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Unknown field \"%s\""
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "\"%s\" is too long"
+msgstr ""
+
+msgid "\"run.windows\" is empty"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Another folder already has the id %s"
+msgstr ""
+
+msgid "Off by you"
+msgstr ""
+
+msgid "Waiting for you"
+msgstr ""
+
+msgid "Changed, waiting for you"
+msgstr ""
+
+msgid "Off after failed runs"
+msgstr ""
+
+msgid "Manifest error"
+msgstr ""
+
+msgid "All extensions off"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Allow %s %s?"
+msgstr ""
+
+msgid "It stays off until you allow exactly this list. You can turn it off again at any time."
+msgstr ""
+
+msgid "This version asks for something new. It stays off until you allow exactly this list."
+msgstr ""
+
+msgid "This is a new version. It stays off until you allow it again."
+msgstr ""
+
+msgid "You kept it off before. It stays off until you allow exactly this list."
+msgstr ""
+
+msgid "It asks for nothing: it only runs when you start one of its commands, and its answers are ignored."
+msgstr ""
+
+msgid "Allowed before"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "It runs: %s."
+msgstr ""
+
+msgid "It never receives passwords, access codes or account tokens. An extension is still a program running as you, so Bambu Studio cannot stop it from reading your own files."
+msgstr ""
+
+msgid "Keep off"
+msgstr ""
+
+msgid "Allow exactly this"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Replace the files of %s %s?"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Replace %s %s with %s?"
+msgstr ""
+
+msgid "The folder you picked holds an older version of an extension you already have."
+msgstr ""
+
+msgid "The folder you picked holds the version you already have, perhaps with changed files."
+msgstr ""
+
+msgid "The folder you picked holds a newer version of an extension you already have."
+msgstr ""
+
+msgid "Its runs stay; it asks for your permission again if its list changed."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s · %d permissions"
+msgstr ""
+
+msgid "From the folder"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Keep %s"
+msgstr ""
+
+msgid "Replace"
+msgstr ""
+
+msgid "Add steps after slicing, comment lines in exported G-code and commands of your own. Each extension is a folder with a manifest and a program in any language, run one request at a time outside Bambu Studio."
+msgstr ""
+
+msgid "Extensions on"
+msgstr ""
+
+msgid "Off: no extension runs, whatever its own switch says"
+msgstr ""
+
+msgid "Add from folder"
+msgstr ""
+
+msgid "Open folder"
+msgstr ""
+
+msgid "Read every extension folder again"
+msgstr ""
+
+msgid "Author guide"
+msgstr ""
+
+msgid "Stop the run in progress and drop the queued ones"
+msgstr ""
+
+msgid "Search name, hook, action or permission"
+msgstr ""
+
+msgid "Last run"
+msgstr ""
+
+msgid "Limits for every run"
+msgstr ""
+
+msgid "Time limit"
+msgstr ""
+
+msgid "A run that takes longer is stopped, 1 to 60 seconds"
+msgstr ""
+
+msgid "Largest answer"
+msgstr ""
+
+msgid "KB"
+msgstr ""
+
+msgid "A longer answer is thrown away, 1 to 1024 KB"
+msgstr ""
+
+msgid "Turn off after"
+msgstr ""
+
+msgid "failed runs in a row"
+msgstr ""
+
+msgid "0 never turns an extension off"
+msgstr ""
+
+msgid "The last 7 days"
+msgstr ""
+
+msgid "Pick an extension to see what it asks for and what it did."
+msgstr ""
+
+msgid "Extension on"
+msgstr ""
+
+msgid "Try with a sample"
+msgstr ""
+
+msgid "Run it once with a request made of invented values marked as samples"
+msgstr ""
+
+msgid "Open its folder"
+msgstr ""
+
+msgid "Hook or command"
+msgstr ""
+
+msgid "Answer"
+msgstr ""
+
+msgid "Runs"
+msgstr ""
+
+msgid "Export runs"
+msgstr ""
+
+msgid "Save every run of every extension as JSON: times, hooks, sizes and results, never what was sent"
+msgstr ""
+
+msgid "manifest.json"
+msgstr ""
+
+msgid "One JSON request goes in on standard input, one JSON answer comes back on standard output. A broken extension cannot take Bambu Studio down."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Running %s: %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%d waiting"
+msgstr ""
+
+msgid "Manifest errors"
+msgstr ""
+
+msgid "Built in"
+msgstr ""
+
+msgid "built in"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s · %d folders"
+msgstr ""
+
+msgid "Nothing matches the search and the filter."
+msgstr ""
+
+msgid "No runs yet. Every run is listed under Runs with its hook, time, answer size and result."
+msgstr ""
+
+msgid "answered"
+msgstr ""
+
+msgid "timed out"
+msgstr ""
+
+msgid "too large"
+msgstr ""
+
+msgid "not valid JSON"
+msgstr ""
+
+msgid "broke a rule"
+msgstr ""
+
+msgid "failed"
+msgstr ""
+
+msgid "not started"
+msgstr ""
+
+msgid "stopped by you"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%d runs: %s. Every run is listed under Runs with its hook, time, answer size and result."
+msgstr ""
+
+msgid "Permissions"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Runs %d"
+msgstr ""
+
+msgid "Manifest"
+msgstr ""
+
+msgid "Built in, and changed by you: updates from Bambu Studio are paused so your changes stay."
+msgstr ""
+
+msgid "Built in: Bambu Studio updates it while you have not changed its files."
+msgstr ""
+
+msgid "It stays off until you allow exactly what it asks for."
+msgstr ""
+
+msgid "This version changed. It stays off until you allow it again."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "This version asks for %d new permission(s). It stays off until you allow exactly this list."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "It was turned off after %d failed runs in a row. Turn it on to try again; Runs says what went wrong."
+msgstr ""
+
+msgid "Extensions are off for the whole app. Turn on Extensions on, top right, to run any of them."
+msgstr ""
+
+msgid "Fix manifest.json in its folder, then Reload."
+msgstr ""
+
+msgid "Hooks"
+msgstr ""
+
+msgid "None: it only runs when you start one of its commands."
+msgstr ""
+
+msgid "Commands"
+msgstr ""
+
+msgid "No commands of its own."
+msgstr ""
+
+msgid "Run"
+msgstr ""
+
+msgid "Run it now with the plate and selection you have"
+msgstr ""
+
+msgid "Turn the extension on first"
+msgstr ""
+
+msgid "Its commands are also in the command palette (Ctrl+Shift+F) while it is on."
+msgstr ""
+
+msgid "Program"
+msgstr ""
+
+msgid "Not set"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "API version %d · runs in %s"
+msgstr ""
+
+msgid "What extensions can hook"
+msgstr ""
+
+msgid "Hook"
+msgstr ""
+
+msgid "Receives"
+msgstr ""
+
+msgid "May answer"
+msgstr ""
+
+msgid "not run yet"
+msgstr ""
+
+msgid "What it may receive or do"
+msgstr ""
+
+msgid "Not asked for"
+msgstr ""
+
+msgid "Allowed"
+msgstr ""
+
+msgid "Not allowed: kept off"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Allowed for %s, asking again"
+msgstr ""
+
+msgid "Asking now"
+msgstr ""
+
+msgid "Passwords, access codes, account tokens, the printer's serial number"
+msgstr ""
+
+msgid "Never sent"
+msgstr ""
+
+msgid "Every request is filtered here before it leaves: a section the extension may not receive is left out, and any value whose name looks like a secret is removed at every depth. An answer that uses something not allowed is thrown away and recorded under Runs. An extension is still a program running as you, so Bambu Studio cannot stop it from reading your own files."
+msgstr ""
+
+msgid "An extension with a broken manifest never runs."
+msgstr ""
+
+msgid "No runs yet. Try with a sample to see what it answers."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%d runs, newest first. The last %d runs of all extensions are kept."
+msgstr ""
+
+msgid "(no manifest.json)"
+msgstr ""
+
+msgid "Valid"
+msgstr ""
+
+msgid "Pick an extension folder (it holds manifest.json)"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "This folder cannot be added: %s."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The folder could not be copied: %s."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Remove %s? Its folder is deleted from this computer."
+msgstr ""
+
+msgid "A built-in extension stays removed until you add its folder again."
+msgstr ""
+
+msgid "Remove extension"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s could not be removed: %s."
+msgstr ""
+
+msgid "Turn the extension on first."
+msgstr ""
+
+msgid "The runs could not be saved there."
 msgstr ""
 
 msgid "No key is saved for this provider"

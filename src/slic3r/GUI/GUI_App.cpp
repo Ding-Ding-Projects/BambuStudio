@@ -117,6 +117,7 @@
 #include "PrinterWatch.hpp"
 #include "LanModelDrop/LanModelDropStation.hpp"
 #include "SetupWizard/SetupWizardDialog.hpp"
+#include "Extensions/ExtensionRuntime.hpp"
 #include "StatusApi/StatusApiServer.hpp"
 #include "Melody/MelodyCreatorDialog.hpp"
 #include "VocabularyDrop.hpp"
@@ -2084,6 +2085,7 @@ void GUI_App::shutdown()
     // callbacks it queued for the GUI thread.
     LanModelDrop::shutdown();
     StatusApi::shutdown();
+    Extensions::Runtime::shutdown();
     Schedule::Scheduler::instance().shutdown();
     HomeAssistant::shutdown();
     set_closing(true);
@@ -3519,6 +3521,7 @@ int GUI_App::OnExit()
     // every exit path.
     LanModelDrop::shutdown();
     StatusApi::shutdown();
+    Extensions::Runtime::shutdown();
     if (m_automation_bridge) {
         m_automation_bridge->stop();
         m_automation_bridge.reset();

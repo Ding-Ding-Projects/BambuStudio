@@ -1,6 +1,6 @@
 ---
 translation-of: README.md
-source-sha256: 65d81f279d0e9aaab8bad9d4e01af60d570718bfaf880b3792b2fc3cb7fcd564
+source-sha256: 9d35b7e0fb694445dbbd2ab8aeb7c5b0cc287c2eaba35489abd2fe33c10fab57
 review-status: agent-drafted
 ---
 
@@ -24,6 +24,7 @@ review-status: agent-drafted
 - [全部功能頁](every-feature.md)
 - [偏好設定：每個值由邊度嚟](preferences-provenance.md)
 - [Base64 工具箱](base64-toolkit.md)
+- [擴充功能](extensions.md)
 - [設定 Bambu Studio](practical-setup.md)
 - [應用內變更日誌查看器（幫助 ▸ 有咩新嘢）](changelog-viewer.md)
 - [準備側邊欄搜尋（設定 + 墨水插槽）](sidebar-search.md)

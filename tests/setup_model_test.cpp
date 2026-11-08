@@ -17,10 +17,11 @@ static void the_steps()
     CHECK(steps().size() == 7);
     CHECK(info(index_of(Step::Printers)).required && info(index_of(Step::Inks)).required);
     CHECK(info(index_of(Step::Backups)).optional && !info(index_of(Step::Printers)).optional);
-    // Extensions is designed but not built: navigation passes over it.
-    CHECK(!info(index_of(Step::Extensions)).available);
-    CHECK(next_index(index_of(Step::Backups)) == index_of(Step::Finish));
-    CHECK(previous_index(index_of(Step::Finish)) == index_of(Step::Backups));
+    // Every step is built now, Extensions included, so navigation visits each in turn.
+    for (const StepInfo &s : steps()) CHECK(s.available);
+    CHECK(info(index_of(Step::Extensions)).optional && !info(index_of(Step::Extensions)).required);
+    CHECK(next_index(index_of(Step::Backups)) == index_of(Step::Extensions));
+    CHECK(previous_index(index_of(Step::Finish)) == index_of(Step::Extensions));
     CHECK(next_index(index_of(Step::Finish)) == index_of(Step::Finish));
     CHECK(previous_index(0) == 0);
     for (const StepInfo &s : steps()) CHECK(!(s.required && s.optional));
@@ -50,11 +51,12 @@ static void moving_and_skipping()
     const Progress refused = skip(p, index_of(Step::Printers), 102);
     CHECK(refused.states[std::size_t(index_of(Step::Printers))] == State::Pending);
     CHECK(refused.current == p.current && refused.updated == p.updated);
-    // An optional one can, and the next step skips Extensions.
+    // An optional one can, and the next step is Extensions, which can be skipped too.
     p = skip(go_to(p, index_of(Step::Backups), 103), index_of(Step::Backups), 104);
     CHECK(p.states[std::size_t(index_of(Step::Backups))] == State::Skipped);
-    CHECK(p.current == index_of(Step::Finish));
-    CHECK(go_to(p, index_of(Step::Extensions), 105).current == index_of(Step::Finish));
+    CHECK(p.current == index_of(Step::Extensions));
+    p = skip(p, index_of(Step::Extensions), 105);
+    CHECK(p.states[std::size_t(index_of(Step::Extensions))] == State::Skipped && p.current == index_of(Step::Finish));
     p = finish(p, 106);
     CHECK(p.finished && !has_saved_work(p));
 }
@@ -68,6 +70,8 @@ static void resuming()
     p.current = 0; // pointing at a done step: continue at the first pending one
     CHECK(resume_index(p) == 2);
     p = complete(complete(complete(p, 2, 4), 3, 5), 4, 6);
+    CHECK(resume_index(p) == index_of(Step::Extensions));
+    p = complete(p, index_of(Step::Extensions), 7);
     CHECK(resume_index(p) == index_of(Step::Finish));
 }
 
@@ -81,12 +85,12 @@ static void saving()
     CHECK(back.current == p.current && back.states == p.states && back.updated == p.updated);
     CHECK(back.first_run && !back.finished);
     CHECK(!parse("not json", back) && !parse("[1,2]", back));
-    // A hand-edited file cannot mark a required step skipped or point at a step not built.
+    // A hand-edited file cannot mark a required step skipped; unknown steps are ignored.
     Progress odd;
     CHECK(parse(R"({"current":"extensions","states":{"printers":"skipped","language":"done","nonsense":"done"}})", odd));
     CHECK(odd.states[std::size_t(index_of(Step::Printers))] == State::Pending);
     CHECK(odd.states[0] == State::Done);
-    CHECK(odd.current == index_of(Step::Finish));
+    CHECK(odd.current == index_of(Step::Extensions));
 }
 
 int main()

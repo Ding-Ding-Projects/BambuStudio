@@ -1,0 +1,48 @@
+name: Extensions on Windows
+
+# The extension engine runs real programs, and the built-in extensions are
+# Windows PowerShell scripts, so they are checked on a hosted Windows machine:
+# the engine, host and context suites with MSVC and real Windows processes,
+# then every built-in extension through the app's own request, process and
+# answer code.
+on:
+  push:
+    branches: [main]
+    paths:
+      - src/slic3r/GUI/Extensions/**
+      - resources/extensions/**
+      - tests/extension_*
+      - .github/workflows/extensions-windows.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  extensions:
+    runs-on: windows-2025
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          persist-credentials: false
+      - name: Initialize x64 compiler
+        uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756
+        with:
+          arch: x64
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: '24'
+      - name: Engine, host and context with real Windows processes
+        run: |
+          foreach ($suite in 'extension_core', 'extension_host', 'extension_context') {
+            node "tests/$suite.test.mjs"
+            if ($LASTEXITCODE -ne 0) { throw "$suite failed" }
+          }
+      - name: Built-in extensions under Windows PowerShell
+        run: |
+          node tests/extension_builtins.test.mjs
+          if ($LASTEXITCODE -ne 0) { throw 'The built-in extensions failed' }

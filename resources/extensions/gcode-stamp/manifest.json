@@ -1,0 +1,11 @@
+{
+  "id": "studio.builtin.gcode-stamp",
+  "name": "G-code time stamp",
+  "version": "1.0.0",
+  "apiVersion": 1,
+  "description": "Adds comment lines to exported G-code: when it was exported, and the plate's time, filament and layers. Printers ignore comment lines.",
+  "author": "Bambu Studio",
+  "run": { "windows": "powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File gcode-stamp.ps1" },
+  "hooks": ["gcode.exported"],
+  "permissions": ["slice.read", "gcode.comment"]
+}

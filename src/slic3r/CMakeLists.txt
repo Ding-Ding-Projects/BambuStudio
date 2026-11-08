@@ -1079,12 +1079,18 @@ list(APPEND SLIC3R_GUI_SOURCES
     GUI/Base64Toolkit/Base64ToolkitPanel.hpp
     GUI/Base64Toolkit/Base64Workbench.cpp
     GUI/Base64Toolkit/Base64Workbench.hpp
+    GUI/Extensions/ExtensionContext.cpp
+    GUI/Extensions/ExtensionContext.hpp
     GUI/Extensions/ExtensionCore.cpp
     GUI/Extensions/ExtensionCore.hpp
     GUI/Extensions/ExtensionHost.cpp
     GUI/Extensions/ExtensionHost.hpp
     GUI/Extensions/ExtensionProcess.cpp
     GUI/Extensions/ExtensionProcess.hpp
+    GUI/Extensions/ExtensionRuntime.cpp
+    GUI/Extensions/ExtensionRuntime.hpp
+    GUI/Extensions/ExtensionsPanel.cpp
+    GUI/Extensions/ExtensionsPanel.hpp
     GUI/SetupWizard/SetupModel.cpp
     GUI/SetupWizard/SetupModel.hpp
     GUI/SetupWizard/SetupWizardDialog.cpp

@@ -67,6 +67,9 @@ private:
     void refresh_rail();
     void refresh_header();
     void refresh_finish();
+    // The Extensions step: the built-ins, each turned on only through its consent prompt.
+    void refresh_extensions(wxWindow *page);
+    void toggle_extension(wxWindow *page, const std::string &id);
     void refresh_printers();
     void refresh_inks();
     // Adds a line under Result of each action; an optional button acts on it.
@@ -118,6 +121,7 @@ private:
     Label             *m_printers_list = nullptr;
     Label             *m_inks_list     = nullptr;
     Label             *m_finish_summary = nullptr;
+    wxBoxSizer        *m_extension_list = nullptr;
     Label             *m_finish_title   = nullptr;
     MultiSwitchButton *m_backup_interval = nullptr;
 };

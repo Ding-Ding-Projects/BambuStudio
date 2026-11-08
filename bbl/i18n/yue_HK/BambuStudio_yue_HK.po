@@ -52931,3 +52931,1068 @@ msgstr "%s 已儲存。隨時可以關，之後喺說明 > 設定 Bambu Studio �
 #. review-status: agent-drafted
 msgid "That language could not be loaded"
 msgstr "載入唔到嗰個語言"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Steps after slicing, comment lines in exported G-code and commands of your own, each asking first"
+msgstr "切片之後嘅步驟、匯出 G-code 嘅註解行同你自己嘅指令，每個都會先問你"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Extension"
+msgstr "擴充功能"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "%s, runs on this computer"
+msgstr "%s，喺呢部電腦行"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Bambu Studio comes with a few small extensions. Each one stays off until you allow exactly what it asks for, and none of them sends anything anywhere."
+msgstr "Bambu Studio 附帶幾個細細嘅擴充功能。每個都會保持關閉，直到你完全照佢要求嘅允許為止；冇一個會將任何嘢送去任何地方。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Your own extensions, their runs and the limits every run gets are in File, Extensions."
+msgstr "你自己嘅擴充功能、佢哋嘅執行紀錄同每次執行嘅限制，都喺檔案 > 擴充功能。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Turn off"
+msgstr "關閉"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Review and allow"
+msgstr "檢查並允許"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Extensions are off for the whole app. Turn them on in File, Extensions."
+msgstr "整個應用程式嘅擴充功能都關咗。去檔案 > 擴充功能開返佢哋。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "No built-in extension is installed: they were removed, or this build has none."
+msgstr "冇裝內置擴充功能：佢哋被移除咗，或者呢個版本冇。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "%s is off"
+msgstr "%s 已關閉"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Turn it on again here or in File, Extensions."
+msgstr "可以喺度或者喺檔案 > 擴充功能再開返佢。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "%s is on"
+msgstr "%s 已開啟"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "It keeps what you allowed before."
+msgstr "佢保留你之前允許嘅嘢。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "It runs from now on; its runs are listed in File, Extensions."
+msgstr "由而家開始佢會行；佢嘅執行紀錄列喺檔案 > 擴充功能。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "%s stays off"
+msgstr "%s 保持關閉"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Nothing was allowed."
+msgstr "乜都冇允許。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Turn on the built-in extensions you want. This step is optional."
+msgstr "開你想要嘅內置擴充功能。呢一步可以唔做。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Extensions add notes after slicing and comment lines to exported G-code without changing how anything prints."
+msgstr "擴充功能會喺切片之後加備註，又會喺匯出嘅 G-code 加註解行，唔會改變任何嘢點樣打印。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "After a model is imported"
+msgstr "匯入模型之後"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Name, triangles, size and units"
+msgstr "名稱、三角形、尺寸同單位"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "After slicing"
+msgstr "切片之後"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Time, filament per slot, layers and warnings"
+msgstr "時間、每個槽嘅墨水、層數同警告"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Before sending a print"
+msgstr "發送打印之前"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Plate, printer model, filaments and options"
+msgstr "打印板、打印機型號、墨水同選項"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Checklist rows, a block with its reason"
+msgstr "清單行、連原因嘅阻止"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "After G-code export"
+msgstr "匯出 G-code 之後"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "The file name and the slice statistics"
+msgstr "檔案名同切片統計"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Comment lines to add at the start or end"
+msgstr "加喺開頭或者結尾嘅註解行"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "After a print finishes"
+msgstr "打印完之後"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Result, duration and filament used"
+msgstr "結果、時長同用咗嘅墨水"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Its own commands"
+msgstr "佢自己嘅指令"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "A summary of the selection"
+msgstr "揀咗嘅嘢嘅摘要"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Notes, a text file to save"
+msgstr "備註、一個畀你儲存嘅文字檔"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Read slice statistics (time, grams, metres per plate)"
+msgstr "讀取切片統計（每塊打印板嘅時間、克數、米數）"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Read model names, sizes and triangle counts"
+msgstr "讀取模型名稱、尺寸同三角形數量"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Read the printer preset, model, nozzle sizes and filament presets"
+msgstr "讀取打印機預設、型號、噴嘴尺寸同墨水預設"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Show notes in Bambu Studio"
+msgstr "喺 Bambu Studio 顯示備註"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Add checklist rows before a print is sent"
+msgstr "發送打印之前加清單行"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Stop a print from being sent, with a reason"
+msgstr "阻止打印發送出去，要講原因"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Add comment lines to exported G-code"
+msgstr "喺匯出嘅 G-code 加註解行"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Offer a text file for you to save"
+msgstr "提供一個文字檔畀你儲存"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Plate %1%"
+msgstr "打印板 %1%"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Save the file from %s"
+msgstr "儲存 %s 畀嘅檔案"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Saved %1%."
+msgstr "已儲存 %1%。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "%1% could not be saved there."
+msgstr "無法將 %1% 儲存喺嗰度。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Answered"
+msgstr "已答覆"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Ran past its time limit of %d s"
+msgstr "超過咗 %d 秒嘅時間上限"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Answer over %d KB"
+msgstr "答覆超過 %d KB"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Answer was not valid JSON"
+msgstr "答覆唔係有效嘅 JSON"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Answer broke a rule: %s"
+msgstr "答覆犯咗規則：%s"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Stopped with exit code %s"
+msgstr "以結束代碼 %s 停咗"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Failed: %s"
+msgstr "失敗：%s"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Not started"
+msgstr "未開始"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Stopped by you"
+msgstr "你停咗佢"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "%1% selected of %2% objects"
+msgstr "揀咗 %1% 個，共 %2% 個物件"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Plate %1%, nothing selected"
+msgstr "打印板 %1%，乜都冇揀"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Sample request"
+msgstr "樣本請求"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Sample answer: %1% start and %2% end comment lines, added to no file."
+msgstr "樣本答覆：%1% 行開頭同 %2% 行結尾註解，冇加落任何檔案。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Sample answer: a file named %1%, not saved."
+msgstr "樣本答覆：一個叫 %1% 嘅檔案，冇儲存。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Sample answer: valid, with nothing to show."
+msgstr "樣本答覆：有效，冇嘢要顯示。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "%1% did not answer: %2%."
+msgstr "%1% 冇答覆：%2%。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "It is off after %1% failed runs in a row."
+msgstr "連續 %1% 次執行失敗之後，佢已經關咗。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Open Extensions"
+msgstr "打開擴充功能"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Comment lines from %1% extension(s) were added to %2%."
+msgstr "%1% 個擴充功能嘅註解行已經加咗落 %2%。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Comment lines were not added to %1% (%2%). The exported file is unchanged."
+msgstr "註解行冇加落 %1%（%2%）。匯出嘅檔案冇改過。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "not run by this build yet"
+msgstr "呢個版本未會行"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Never"
+msgstr "從未"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Yesterday"
+msgstr "尋日"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "%d B"
+msgstr "%d B"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "%.1f KB"
+msgstr "%.1f KB"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "%.1f MB"
+msgstr "%.1f MB"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Command: %s"
+msgstr "指令：%s"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "manifest.json is not valid JSON"
+msgstr "manifest.json 唔係有效嘅 JSON"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "manifest.json is larger than 64 KB"
+msgstr "manifest.json 大過 64 KB"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "There is no manifest.json in this folder"
+msgstr "呢個資料夾入面冇 manifest.json"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "\"%s\" is missing"
+msgstr "欠咗「%s」"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "\"%s\" has the wrong type"
+msgstr "「%s」嘅類型唔啱"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The id must be lower-case letters, digits, dots and dashes, like com.example.name"
+msgstr "id 只可以用細楷字母、數字、點同連字號，例如 com.example.name"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The version must be MAJOR.MINOR.PATCH, like 1.0.0"
+msgstr "版本一定要係 MAJOR.MINOR.PATCH，例如 1.0.0"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "apiVersion %s is newer than this app supports (%d)"
+msgstr "apiVersion %s 比呢個應用程式支援嘅（%d）新"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "apiVersion %s is older than this app supports (%d)"
+msgstr "apiVersion %s 比呢個應用程式支援嘅（%d）舊"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Unknown hook \"%s\""
+msgstr "唔識嘅掛鈎「%s」"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Unknown permission \"%s\""
+msgstr "唔識嘅權限「%s」"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Unknown field \"%s\""
+msgstr "唔識嘅欄位「%s」"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "\"%s\" is too long"
+msgstr "「%s」太長"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "\"run.windows\" is empty"
+msgstr "「run.windows」係空嘅"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Another folder already has the id %s"
+msgstr "另一個資料夾已經用咗 id %s"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Off by you"
+msgstr "你關咗"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Waiting for you"
+msgstr "等緊你"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Changed, waiting for you"
+msgstr "改咗，等緊你"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Off after failed runs"
+msgstr "執行失敗之後關咗"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Manifest error"
+msgstr "清單檔錯誤"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "All extensions off"
+msgstr "全部擴充功能已關"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Allow %s %s?"
+msgstr "允許 %s %s？"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "It stays off until you allow exactly this list. You can turn it off again at any time."
+msgstr "佢會保持關閉，直到你完全照呢個清單允許為止。你隨時都可以再關佢。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "This version asks for something new. It stays off until you allow exactly this list."
+msgstr "呢個版本要求新嘅嘢。佢會保持關閉，直到你完全照呢個清單允許為止。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "This is a new version. It stays off until you allow it again."
+msgstr "呢個係新版本。佢會保持關閉，直到你再允許佢為止。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "You kept it off before. It stays off until you allow exactly this list."
+msgstr "你之前揀咗保持關閉。佢會保持關閉，直到你完全照呢個清單允許為止。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "It asks for nothing: it only runs when you start one of its commands, and its answers are ignored."
+msgstr "佢乜都冇要求：只會喺你開始佢其中一個指令嘅時候行，佢嘅答覆會被忽略。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Allowed before"
+msgstr "之前已允許"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "It runs: %s."
+msgstr "佢會行：%s。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "It never receives passwords, access codes or account tokens. An extension is still a program running as you, so Bambu Studio cannot stop it from reading your own files."
+msgstr "佢永遠唔會收到密碼、存取碼或者帳戶 token。不過擴充功能始終係以你身份行嘅程式，所以 Bambu Studio 阻止唔到佢讀你自己嘅檔案。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Keep off"
+msgstr "保持關閉"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Allow exactly this"
+msgstr "完全照呢個清單允許"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Replace the files of %s %s?"
+msgstr "取代 %s %s 嘅檔案？"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Replace %s %s with %s?"
+msgstr "將 %s %s 取代做 %s？"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The folder you picked holds an older version of an extension you already have."
+msgstr "你揀嘅資料夾裝住一個你已經有嘅擴充功能嘅舊版本。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The folder you picked holds the version you already have, perhaps with changed files."
+msgstr "你揀嘅資料夾裝住你已經有嘅版本，可能有啲檔案改過。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The folder you picked holds a newer version of an extension you already have."
+msgstr "你揀嘅資料夾裝住一個你已經有嘅擴充功能嘅新版本。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Its runs stay; it asks for your permission again if its list changed."
+msgstr "佢嘅執行紀錄會保留；如果佢嘅清單改咗，佢會再問你嘅允許。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "%s · %d permissions"
+msgstr "%s · %d 個權限"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "From the folder"
+msgstr "來自資料夾"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Keep %s"
+msgstr "保留 %s"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Replace"
+msgstr "取代"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Add steps after slicing, comment lines in exported G-code and commands of your own. Each extension is a folder with a manifest and a program in any language, run one request at a time outside Bambu Studio."
+msgstr "加入切片之後嘅步驟、匯出 G-code 嘅註解行同你自己嘅指令。每個擴充功能都係一個資料夾，入面有清單檔同一個用任何語言寫嘅程式，喺 Bambu Studio 外面一次處理一個請求。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Extensions on"
+msgstr "擴充功能開"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Off: no extension runs, whatever its own switch says"
+msgstr "關：無論每個擴充功能自己嘅開關點，都唔會有擴充功能行"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Add from folder"
+msgstr "由資料夾加入"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Open folder"
+msgstr "打開資料夾"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Read every extension folder again"
+msgstr "再讀一次每個擴充功能資料夾"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Author guide"
+msgstr "作者指南"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Stop the run in progress and drop the queued ones"
+msgstr "停止行緊嘅執行，並清走排隊嘅"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Search name, hook, action or permission"
+msgstr "搜尋名稱、掛鈎、指令或者權限"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Last run"
+msgstr "上次執行"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Limits for every run"
+msgstr "每次執行嘅限制"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Time limit"
+msgstr "時間上限"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "A run that takes longer is stopped, 1 to 60 seconds"
+msgstr "執行用多過呢個時間就會被停止，1 至 60 秒"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Largest answer"
+msgstr "最大答覆"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "KB"
+msgstr "KB"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "A longer answer is thrown away, 1 to 1024 KB"
+msgstr "更長嘅答覆會被掉咗，1 至 1024 KB"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Turn off after"
+msgstr "自動關閉條件"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "failed runs in a row"
+msgstr "次連續執行失敗"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "0 never turns an extension off"
+msgstr "0 即係永遠唔會自動關閉擴充功能"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The last 7 days"
+msgstr "過去 7 日"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Pick an extension to see what it asks for and what it did."
+msgstr "揀一個擴充功能，睇吓佢要求乜同做過乜。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Extension on"
+msgstr "開啟呢個擴充功能"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Try with a sample"
+msgstr "用樣本試吓"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Run it once with a request made of invented values marked as samples"
+msgstr "用一個由虛構數值組成、標明係樣本嘅請求行佢一次"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Open its folder"
+msgstr "打開佢嘅資料夾"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Hook or command"
+msgstr "掛鈎或者指令"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Answer"
+msgstr "答覆"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Runs"
+msgstr "執行紀錄"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Export runs"
+msgstr "匯出執行紀錄"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Save every run of every extension as JSON: times, hooks, sizes and results, never what was sent"
+msgstr "將每個擴充功能嘅每次執行儲存做 JSON：時間、掛鈎、大細同結果，永遠唔包括送出嘅內容"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "manifest.json"
+msgstr "manifest.json"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "One JSON request goes in on standard input, one JSON answer comes back on standard output. A broken extension cannot take Bambu Studio down."
+msgstr "一個 JSON 請求經標準輸入入去，一個 JSON 答覆經標準輸出返嚟。壞咗嘅擴充功能拖唔低 Bambu Studio。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Running %s: %s"
+msgstr "行緊 %s：%s"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "%d waiting"
+msgstr "%d 個等緊"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Manifest errors"
+msgstr "清單檔錯誤"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Built in"
+msgstr "內置"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "built in"
+msgstr "內置"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "%s · %d folders"
+msgstr "%s · %d 個資料夾"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Nothing matches the search and the filter."
+msgstr "冇嘢符合搜尋同篩選。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "No runs yet. Every run is listed under Runs with its hook, time, answer size and result."
+msgstr "仲未有執行。每次執行都會列喺執行紀錄，連埋掛鈎、時間、答覆大細同結果。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "answered"
+msgstr "已答覆"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "timed out"
+msgstr "超時"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "too large"
+msgstr "太大"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "not valid JSON"
+msgstr "唔係有效 JSON"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "broke a rule"
+msgstr "犯咗規則"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "failed"
+msgstr "失敗"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "not started"
+msgstr "未開始"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "stopped by you"
+msgstr "你停咗"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "%d runs: %s. Every run is listed under Runs with its hook, time, answer size and result."
+msgstr "%d 次執行：%s。每次執行都會列喺執行紀錄，連埋掛鈎、時間、答覆大細同結果。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Permissions"
+msgstr "權限"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Runs %d"
+msgstr "執行紀錄 %d"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Manifest"
+msgstr "清單檔"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Built in, and changed by you: updates from Bambu Studio are paused so your changes stay."
+msgstr "內置，而且你改過：Bambu Studio 暫停更新佢，等你改嘅嘢保留落嚟。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Built in: Bambu Studio updates it while you have not changed its files."
+msgstr "內置：只要你冇改過佢嘅檔案，Bambu Studio 就會更新佢。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "It stays off until you allow exactly what it asks for."
+msgstr "佢會保持關閉，直到你完全照佢要求嘅允許為止。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "This version changed. It stays off until you allow it again."
+msgstr "呢個版本改咗。佢會保持關閉，直到你再允許佢為止。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "This version asks for %d new permission(s). It stays off until you allow exactly this list."
+msgstr "呢個版本要求 %d 個新權限。佢會保持關閉，直到你完全照呢個清單允許為止。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "It was turned off after %d failed runs in a row. Turn it on to try again; Runs says what went wrong."
+msgstr "連續 %d 次執行失敗之後，佢被關咗。開返佢就會再試；執行紀錄會講邊度出錯。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Extensions are off for the whole app. Turn on Extensions on, top right, to run any of them."
+msgstr "整個應用程式嘅擴充功能都關咗。開右上角嘅「擴充功能開」，先可以行任何一個。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Fix manifest.json in its folder, then Reload."
+msgstr "喺佢嘅資料夾修正 manifest.json，然後重新載入。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Hooks"
+msgstr "掛鈎"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "None: it only runs when you start one of its commands."
+msgstr "冇：佢只會喺你開始佢其中一個指令嘅時候行。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Commands"
+msgstr "指令"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "No commands of its own."
+msgstr "佢冇自己嘅指令。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Run"
+msgstr "執行"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Run it now with the plate and selection you have"
+msgstr "用你而家嘅打印板同揀咗嘅嘢即刻行佢"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Turn the extension on first"
+msgstr "先開咗呢個擴充功能"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Its commands are also in the command palette (Ctrl+Shift+F) while it is on."
+msgstr "佢開住嘅時候，佢嘅指令都喺指令面板（Ctrl+Shift+F）入面。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Program"
+msgstr "程式"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Not set"
+msgstr "未設定"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "API version %d · runs in %s"
+msgstr "API 版本 %d · 喺 %s 行"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "What extensions can hook"
+msgstr "擴充功能可以掛鈎嘅地方"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Hook"
+msgstr "掛鈎"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Receives"
+msgstr "收到"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "May answer"
+msgstr "可以答"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "not run yet"
+msgstr "未會行"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "What it may receive or do"
+msgstr "佢可以收到或者做嘅嘢"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Not asked for"
+msgstr "冇要求"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Allowed"
+msgstr "已允許"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Not allowed: kept off"
+msgstr "唔允許：保持關閉"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Allowed for %s, asking again"
+msgstr "%s 已允許，而家再問"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Asking now"
+msgstr "而家問緊"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Passwords, access codes, account tokens, the printer's serial number"
+msgstr "密碼、存取碼、帳戶 token、打印機序號"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Never sent"
+msgstr "永遠唔會送出"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Every request is filtered here before it leaves: a section the extension may not receive is left out, and any value whose name looks like a secret is removed at every depth. An answer that uses something not allowed is thrown away and recorded under Runs. An extension is still a program running as you, so Bambu Studio cannot stop it from reading your own files."
+msgstr "每個請求送出之前都會喺度過濾：擴充功能唔可以收嘅部分會被排除，名稱似秘密嘅值會喺每一層移除。用咗未獲允許嘅嘢嘅答覆會被掉咗，並記錄喺執行紀錄。不過擴充功能始終係以你身份行嘅程式，所以 Bambu Studio 阻止唔到佢讀你自己嘅檔案。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "An extension with a broken manifest never runs."
+msgstr "清單檔壞咗嘅擴充功能永遠唔會行。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "No runs yet. Try with a sample to see what it answers."
+msgstr "仲未有執行。用樣本試吓，睇吓佢點答。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "%d runs, newest first. The last %d runs of all extensions are kept."
+msgstr "%d 次執行，最新嘅喺頭。所有擴充功能會保留最近 %d 次執行。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "(no manifest.json)"
+msgstr "（冇 manifest.json）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Valid"
+msgstr "有效"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Pick an extension folder (it holds manifest.json)"
+msgstr "揀一個擴充功能資料夾（入面有 manifest.json）"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "This folder cannot be added: %s."
+msgstr "呢個資料夾加唔到：%s。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The folder could not be copied: %s."
+msgstr "資料夾複製唔到：%s。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Remove %s? Its folder is deleted from this computer."
+msgstr "移除 %s？佢嘅資料夾會由呢部電腦刪除。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "A built-in extension stays removed until you add its folder again."
+msgstr "內置擴充功能會保持移除，直到你再加返佢嘅資料夾為止。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Remove extension"
+msgstr "移除擴充功能"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "%s could not be removed: %s."
+msgstr "%s 移除唔到：%s。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Turn the extension on first."
+msgstr "先開咗呢個擴充功能。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "The runs could not be saved there."
+msgstr "執行紀錄儲存唔到喺嗰度。"

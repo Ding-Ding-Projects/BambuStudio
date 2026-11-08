@@ -153,7 +153,7 @@ std::map<std::string, std::string> folder_hashes(const fs::path &folder)
     return out;
 }
 
-RunResult execute(const PlannedRun &plan, const json &context, const std::string &subject, std::int64_t now)
+RunResult execute(const PlannedRun &plan, const json &context, const std::string &subject, std::int64_t now, const std::atomic<bool> *cancel)
 {
     RunResult result;
     result.plan = plan;
@@ -165,6 +165,7 @@ RunResult execute(const PlannedRun &plan, const json &context, const std::string
     process.input      = request.dump(-1, ' ', false, json::error_handler_t::replace);
     process.timeout_ms = plan.limits.timeout_ms;
     process.max_output = plan.limits.max_answer;
+    process.cancel     = cancel;
     const ProcessResult ran = run_process(process);
 
     result.record.time         = now;
@@ -177,6 +178,10 @@ RunResult execute(const PlannedRun &plan, const json &context, const std::string
     case ProcessResult::Status::StartFailed:
         result.outcome = Outcome::Failed;
         result.problem = ran.start_error.empty() ? "the program could not be started" : ran.start_error;
+        break;
+    case ProcessResult::Status::Cancelled:
+        result.outcome = Outcome::Stopped;
+        result.problem = "stopped";
         break;
     case ProcessResult::Status::TimedOut: result.outcome = Outcome::TimedOut; break;
     case ProcessResult::Status::TooLarge: result.outcome = Outcome::TooLarge; break;
@@ -452,6 +457,15 @@ std::optional<PlannedRun> Host::plan_action(const std::string &id, const std::st
     const bool known = std::any_of(x->manifest.actions.begin(), x->manifest.actions.end(), [&](const Action &a) { return a.id == action; });
     if (!known) return std::nullopt;
     return PlannedRun{x->manifest.id, x->folder, x->manifest, *consent(id), m_limits, Hook::Command, action};
+}
+
+std::optional<PlannedRun> Host::plan_sample(const std::string &id, Hook hook, const std::string &action) const
+{
+    const Installed *x = find(id);
+    if (!x || state(*x) != State::On) return std::nullopt;
+    if (hook == Hook::Command) return plan_action(id, action);
+    if (std::find(x->manifest.hooks.begin(), x->manifest.hooks.end(), hook) == x->manifest.hooks.end()) return std::nullopt;
+    return PlannedRun{x->manifest.id, x->folder, x->manifest, *consent(id), m_limits, hook, {}};
 }
 
 void Host::record(const RunResult &result)

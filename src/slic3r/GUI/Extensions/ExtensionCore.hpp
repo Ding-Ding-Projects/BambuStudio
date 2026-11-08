@@ -159,7 +159,8 @@ struct Answer
 bool parse_answer(std::string_view json, Hook hook, const Manifest &manifest, const Consent &consent, Answer &out, std::string &problem);
 
 // ---------------------------------------------------------------- runs
-enum class Outcome { Answered, TimedOut, TooLarge, NotJson, Invalid, Failed, NotStarted };
+// Stopped: the person stopped the run, or Bambu Studio closed; it never counts as a failure.
+enum class Outcome { Answered, TimedOut, TooLarge, NotJson, Invalid, Failed, NotStarted, Stopped };
 const char *outcome_id(Outcome outcome);
 
 struct RunRecord

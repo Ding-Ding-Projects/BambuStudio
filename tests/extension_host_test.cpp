@@ -9,9 +9,11 @@
 #include "src/slic3r/GUI/Extensions/ExtensionProcess.cpp"
 #include "src/slic3r/GUI/Extensions/ExtensionHost.cpp"
 
+#include <chrono>
 #include <cstdio>
 #include <fstream>
 #include <random>
+#include <thread>
 
 using namespace Slic3r::GUI::Extensions;
 namespace fs = std::filesystem;
@@ -49,6 +51,8 @@ static const char *kAnswerRun = "cmd.exe /d /c answer.cmd";
 static const char *kFailRun   = "cmd.exe /d /c fail.cmd";
 static const char *kAnswerBody = "echo {\"notes\":[\"sliced\"]}";
 static const char *kFailBody   = "exit /b 4";
+static const char *kSlowRun    = "cmd.exe /d /c slow.cmd";
+static const char *kSlowBody   = ":again\r\ngoto again";
 #else
 static const char *kAnswerRun = "answer.sh";
 static const char *kFailRun   = "fail.sh";
@@ -56,6 +60,9 @@ static const char *kAnswerBody = "while read -r _; do :; done; echo '{\"notes\":
 static const char *kFailBody   = "exit 4";
 static const char *kAnswerName = "answer.sh";
 static const char *kFailName   = "fail.sh";
+static const char *kSlowRun    = "slow.sh";
+static const char *kSlowBody   = "sleep 30";
+static const char *kSlowName   = "slow.sh";
 #endif
 
 int main()
@@ -63,6 +70,7 @@ int main()
 #ifdef _WIN32
     const char *kAnswerName = "answer.cmd";
     const char *kFailName   = "fail.cmd";
+    const char *kSlowName   = "slow.cmd";
 #endif
     const fs::path base    = fs::temp_directory_path() / ("ext-host-" + std::to_string(std::random_device{}()));
     const fs::path root    = base / "extensions";
@@ -110,6 +118,11 @@ int main()
     report = host.find("studio.builtin.report");
     CHECK(report && report->manifest.version == "1.1.0" && report->modified);
     CHECK(fs::exists(root / "studio.builtin.report" / "notes.txt"));
+
+    // A sample run plans one declared hook, even one this build does not run yet; never an undeclared one.
+    CHECK(host.plan_sample("studio.builtin.report", Hook::PlateSliced).has_value());
+    CHECK(!host.plan_sample("studio.builtin.report", Hook::GcodeExported).has_value());
+    CHECK(!host.plan_sample("studio.builtin.report", Hook::Command, "nope").has_value());
 
     // On and off from the list.
     CHECK(host.set_enabled("studio.builtin.report", false));
@@ -166,6 +179,30 @@ int main()
     CHECK(host.set_enabled("com.example.weigh-in", true));
     CHECK(host.state(*host.find("com.example.weigh-in")) == State::On);
 
+    // Stopping a run ends it at once, and never counts as a failure.
+    const fs::path slow = base / "picked" / "slow";
+    write(slow / "manifest.json", manifest("com.example.slow", "1.0.0", kSlowRun));
+    make_script(slow, kSlowName, kSlowBody);
+    CHECK(host.install(slow, error));
+    host.allow("com.example.slow");
+    for (const PlannedRun &p : host.plan(Hook::PlateSliced)) {
+        if (p.id != "com.example.slow") continue;
+        std::atomic<bool> stop{false};
+        std::thread       stopper([&stop]() {
+            std::this_thread::sleep_for(std::chrono::milliseconds(300));
+            stop = true;
+        });
+        const auto      t0 = std::chrono::steady_clock::now();
+        const RunResult r  = execute(p, nlohmann::json::object(), "Plate 1", 1762581170, &stop);
+        stopper.join();
+        const double took = std::chrono::duration<double>(std::chrono::steady_clock::now() - t0).count();
+        CHECK(r.outcome == Outcome::Stopped && r.problem == "stopped");
+        CHECK(took < 5.0);
+        host.record(r);
+        CHECK(host.consent("com.example.slow")->failures_in_row == 0);
+    }
+    CHECK(host.remove("com.example.slow", error));
+
     // A changed permission list needs the prompt before it can be turned on.
     write(incoming / "manifest.json", manifest("com.example.weigh-in", "1.2.0", kFailRun, ",\"printer.read\""));
     CHECK(host.install(incoming, error));
@@ -179,7 +216,7 @@ int main()
     again.load();
     CHECK(again.limits().timeout_ms == 5000 && again.limits().max_answer == 32 * 1024 && again.limits().off_after_failures == 5);
     CHECK(again.find("studio.builtin.report") == nullptr);
-    CHECK(again.runs().records().size() == 4);
+    CHECK(again.runs().records().size() == 5);
 
     std::error_code ec;
     fs::remove_all(base, ec);

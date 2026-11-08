@@ -32,6 +32,7 @@
 - [Every feature page](every-feature.md)
 - [Preferences: where every value comes from](preferences-provenance.md)
 - [Base64 toolkit](base64-toolkit.md)
+- [Extensions](extensions.md)
 - [Set up Bambu Studio](practical-setup.md)
 - [In-app changelog viewer (Help ▸ What's new)](changelog-viewer.md)
 - [Prepare sidebar search (settings + filament slots)](sidebar-search.md)

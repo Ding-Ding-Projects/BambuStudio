@@ -12,6 +12,7 @@
 #include "FeatureServices/PresentationRoutes.hpp"
 #include "FeatureFinder/FeatureCatalogue.hpp"
 #include "FeatureFinder/FeatureFinderPanel.hpp"
+#include "Extensions/ExtensionRuntime.hpp"
 #include "Documentation/OfflineDocumentation.hpp"
 #include "I18N.hpp"
 #include "LanModelDrop/LanModelDropStation.hpp"
@@ -269,6 +270,13 @@ void CommandPalette::collect_entries()
                                  if (!FeatureFinderPanel::open(*feature))
                                      frame->CallAfter([frame]() { frame->open_every_feature(); });
                              }});
+    }
+    // Extensions that are on: each of their own commands, run with the plate and selection you have.
+    for (const Extensions::Runtime::PaletteAction &a : Extensions::Runtime::instance().palette_actions()) {
+        const std::string id = a.id, action = a.action;
+        m_entries.push_back({0xE87B /* extension */, _L("Extension") + " / " + wxString::FromUTF8(a.title),
+                             wxString::Format(_L("%s, runs on this computer"), wxString::FromUTF8(a.extension)),
+                             [id, action]() { Extensions::Runtime::instance().run_action(id, action); }});
     }
     m_entries.push_back({MaterialIcon::Search, _L("Search in settings"),
                          _L("Find any print / filament / printer parameter"),

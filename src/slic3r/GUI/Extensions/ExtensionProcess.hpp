@@ -9,6 +9,7 @@
 // starts belongs to a job object that is closed with the run, so nothing it
 // started outlives it.
 
+#include <atomic>
 #include <cstddef>
 #include <filesystem>
 #include <string>
@@ -23,11 +24,12 @@ struct ProcessRequest
     std::string              input;      // the JSON request
     int                      timeout_ms = 10000;
     std::size_t              max_output = 64 * 1024;
+    const std::atomic<bool> *cancel     = nullptr; // when set, the run is stopped within a tenth of a second
 };
 
 struct ProcessResult
 {
-    enum class Status { Exited, TimedOut, TooLarge, StartFailed };
+    enum class Status { Exited, TimedOut, TooLarge, StartFailed, Cancelled };
     Status      status    = Status::StartFailed;
     int         exit_code = -1;
     std::string output;     // at most max_output bytes

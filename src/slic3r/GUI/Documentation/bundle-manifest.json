@@ -1355,12 +1355,12 @@
     {
       "route": "windows/README.md",
       "title": "Windows features",
-      "sha256": "c56de7f0bed0efa0c66da1bbdee78626678a36706b64b294bd9788bf4fb87c02"
+      "sha256": "9d35b7e0fb694445dbbd2ab8aeb7c5b0cc287c2eaba35489abd2fe33c10fab57"
     },
     {
       "route": "windows/README.yue_HK.md",
       "title": "Windows 功能",
-      "sha256": "819e3cd1ec2b68a16f74947d88e7693dcb2494d4edc52c36b702f27540f207ec"
+      "sha256": "0211709fad09eb26265bbe8d01a7cc3c32ff0c5908f0458a8f854953d7db7d66"
     },
     {
       "route": "windows/action-sounds.md",
@@ -1583,6 +1583,16 @@
       "sha256": "a93af0590b6450f066ff51ec61c96477e2d5eb79ecf61675cb3f80b61831b997"
     },
     {
+      "route": "windows/extensions.md",
+      "title": "Extensions",
+      "sha256": "2bb852fa3a9b41d91976bb2babba534d56215f099d244cb3b725ae55adbf215d"
+    },
+    {
+      "route": "windows/extensions.yue_HK.md",
+      "title": "擴充功能",
+      "sha256": "55903629e30f301521b654f2168901d9cf8671d7307141058169c2951bee2e88"
+    },
+    {
       "route": "windows/first-run-funny-level-disclosure.md",
       "title": "First-run funny-level disclosure",
       "sha256": "3e63a61e74eb0965a04dee5c278cb4f622895dca96e4e3fb914149ae06cfef0e"
@@ -1755,12 +1765,12 @@
     {
       "route": "windows/practical-setup.md",
       "title": "Set up Bambu Studio",
-      "sha256": "949a42a460edba7c877bfe6bc108204e6ba9e3119c23c507bab946483c10f67c"
+      "sha256": "caf080fd114136eb6e92b1f698397d5e7fc7d7fde4320ab9e21ae7e46dbea0b3"
     },
     {
       "route": "windows/practical-setup.yue_HK.md",
       "title": "設定 Bambu Studio",
-      "sha256": "41bf5cee25cbe7bb315cd05a682590bc1a7dfb31d80d3c11e2ecff78e9b342d1"
+      "sha256": "a96a14ea195ddb27b93f6c05d3c28a792a1081b442378ab884c3f4562855a0be"
     },
     {
       "route": "windows/preferences-provenance.md",
@@ -2205,7 +2215,7 @@
       "bytes": 16430
     }
   ],
-  "bundle_sha256": "85caf9063124d33eb68679a8f2a11175a1cadf55fc73a8414b170abcfa645eeb",
+  "bundle_sha256": "a083220abcc9b0b4bd20959a114701b28f96dc43b6a4aa4d554fbead66bfd9c5",
   "unavailable_references": [
     {
       "source": "api/README.md",
@@ -3289,6 +3299,16 @@
     },
     {
       "source": "windows/every-feature.yue_HK.md",
+      "target": "../../../design/local-tools-2026-11/README.md",
+      "kind": "link"
+    },
+    {
+      "source": "windows/extensions.md",
+      "target": "../../../design/local-tools-2026-11/README.md",
+      "kind": "link"
+    },
+    {
+      "source": "windows/extensions.yue_HK.md",
       "target": "../../../design/local-tools-2026-11/README.md",
       "kind": "link"
     },

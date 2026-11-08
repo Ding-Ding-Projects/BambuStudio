@@ -122,6 +122,7 @@
 
 #include "GUI.hpp"
 #include "GUI_App.hpp"
+#include "Extensions/ExtensionRuntime.hpp"
 #include "TtsNarrator.hpp"
 #include "GuiColor.hpp"
 #include "GUI_ObjectList.hpp"
@@ -20477,6 +20478,8 @@ void Plater::priv::on_export_began(wxCommandEvent& evt)
 
 void Plater::priv::on_export_finished(wxCommandEvent& evt)
 {
+    // Extensions run once the slicing job has finished with the file (see on_process_completed).
+    Extensions::Runtime::instance().export_finished(into_u8(evt.GetString()));
 #if 0
     //BBS: also export 3mf to the same directory for debugging
     std::string gcode_path_str(evt.GetString().ToUTF8().data());
@@ -20729,6 +20732,9 @@ void Plater::priv::on_process_completed(SlicingProcessCompletedEvent &evt)
     // mesh stats per plate + GPU/OpenGL info
     if (!has_error && !evt.cancelled() && evt.success()) {
         track_slice_mesh_stat();
+        // Extensions that asked for plate.sliced, once per slice result, on their own worker.
+        if (this->printer_technology == ptFFF && !this->background_process.empty())
+            Extensions::Runtime::instance().plate_sliced(this->background_process.get_current_plate(), this->background_process.m_fff_print);
         // Spoken summary only, once per slice job (the last plate of a slice-all run).
         if (is_finished)
             TtsNarrator::narrate({Narration::EventKind::SliceFinished, 0});
@@ -20756,6 +20762,11 @@ void Plater::priv::on_process_completed(SlicingProcessCompletedEvent &evt)
             }
         }
     }
+
+    // An export of plain G-code in this job: the file is complete now, so extensions may add comment lines.
+    Extensions::Runtime::instance().process_completed(!has_error && !evt.cancelled() && evt.success(),
+        this->background_process.empty() ? nullptr : this->background_process.get_current_plate(),
+        this->printer_technology == ptFFF ? this->background_process.m_fff_print : nullptr);
 
     //BBS: update the action button according to the current plate's status
     bool ready_to_slice = !this->partplate_list.get_curr_plate()->is_slice_result_valid();

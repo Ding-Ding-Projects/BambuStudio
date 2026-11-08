@@ -1,0 +1,12 @@
+{
+  "id": "studio.builtin.slice-report",
+  "name": "Slice report",
+  "version": "1.0.0",
+  "apiVersion": 1,
+  "description": "A one-line summary after every slice: print time, filament per slot and layers. Its command saves a Markdown report of the plate.",
+  "author": "Bambu Studio",
+  "run": { "windows": "powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File slice-report.ps1" },
+  "hooks": ["plate.sliced"],
+  "actions": [{ "id": "save-report", "title": "Save a slice report" }],
+  "permissions": ["slice.read", "printer.read", "notes.show", "file.save"]
+}

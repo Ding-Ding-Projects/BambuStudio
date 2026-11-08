@@ -121,6 +121,9 @@ static void consent_and_state()
     CHECK(c.failures_in_row == 0);
     c = after_run(after_run(after_run(c, Outcome::NotJson, limits), Outcome::TooLarge, limits), Outcome::NotStarted, limits);
     CHECK(c.failures_in_row == 2 && c.enabled);
+    // Stopping a run by hand, or closing the app, is never the extension's failure.
+    c = after_run(after_run(c, Outcome::Stopped, limits), Outcome::Stopped, limits);
+    CHECK(c.failures_in_row == 2 && c.enabled);
     c = after_run(c, Outcome::Failed, limits);
     CHECK(c.off_after_failures && !c.enabled);
     CHECK(state_for(e, m, &c, true) == State::OffAfterFailures);
@@ -209,6 +212,10 @@ static void run_record()
     CHECK(again.for_extension("com.example.a").size() == RunLog::kLimit && again.for_extension("nope").empty());
     RunRecord bad;
     CHECK(!from_line(R"({"t":1,"x":"a.b","o":"exploded"})", bad));
+    RunRecord stopped = r;
+    stopped.outcome   = Outcome::Stopped;
+    RunRecord back;
+    CHECK(from_line(to_line(stopped), back) && back.outcome == Outcome::Stopped);
     CHECK(again.export_json().find("\"answered\"") != std::string::npos);
     std::error_code ec;
     fs::remove_all(dir, ec);

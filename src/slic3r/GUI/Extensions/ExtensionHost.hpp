@@ -11,6 +11,7 @@
 #include "ExtensionCore.hpp"
 #include "ExtensionProcess.hpp"
 
+#include <atomic>
 #include <filesystem>
 #include <map>
 #include <optional>
@@ -49,7 +50,9 @@ struct RunResult
 };
 
 // One run, start to finish: request, process, answer validation, record.
-RunResult execute(const PlannedRun &plan, const nlohmann::json &context, const std::string &subject, std::int64_t now);
+// cancel, when set during the run, stops it with Outcome::Stopped.
+RunResult execute(const PlannedRun &plan, const nlohmann::json &context, const std::string &subject, std::int64_t now,
+                  const std::atomic<bool> *cancel = nullptr);
 
 // SHA-256 of every regular file under folder, by relative path (forward slashes).
 std::map<std::string, std::string> folder_hashes(const std::filesystem::path &folder);
@@ -90,6 +93,9 @@ public:
 
     std::vector<PlannedRun> plan(Hook hook) const;
     std::optional<PlannedRun> plan_action(const std::string &id, const std::string &action) const;
+    // One extension, one hook it declares, whether or not this build runs that
+    // hook yet: for "Try with a sample". Commands take the action to run.
+    std::optional<PlannedRun> plan_sample(const std::string &id, Hook hook, const std::string &action = std::string()) const;
     // Applies a finished run: failures in a row, the run record.
     void record(const RunResult &result);
     RunLog       &runs() { return m_runs; }

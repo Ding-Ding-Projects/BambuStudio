@@ -300,11 +300,23 @@ ProcessResult run_process(const ProcessRequest &request)
             if (errors.size() < kErrorKeep) errors.append(buffer, std::min<std::size_t>(got, kErrorKeep - errors.size()));
     });
 
-    const DWORD waited = ::WaitForSingleObject(process.hProcess, DWORD(std::max(1, request.timeout_ms)));
-    const bool  timed_out = waited == WAIT_TIMEOUT;
+    bool       timed_out = false, cancelled = false;
+    const auto deadline  = started + std::chrono::milliseconds(std::max(1, request.timeout_ms));
+    for (;;) {
+        const auto left = std::chrono::duration_cast<std::chrono::milliseconds>(deadline - std::chrono::steady_clock::now()).count();
+        if (left <= 0) {
+            timed_out = true;
+            break;
+        }
+        if (::WaitForSingleObject(process.hProcess, DWORD(std::min<long long>(left, 100))) != WAIT_TIMEOUT) break;
+        if (request.cancel && request.cancel->load()) {
+            cancelled = true;
+            break;
+        }
+    }
     // Whatever happened, nothing the program started may outlive the run.
-    if (job) ::TerminateJobObject(job, timed_out ? 2 : 0);
-    else if (timed_out) ::TerminateProcess(process.hProcess, 2);
+    if (job) ::TerminateJobObject(job, timed_out || cancelled ? 2 : 0);
+    else if (timed_out || cancelled) ::TerminateProcess(process.hProcess, 2);
     ::WaitForSingleObject(process.hProcess, 5000);
     writer.join();
     reader.join();
@@ -320,7 +332,9 @@ ProcessResult run_process(const ProcessRequest &request)
     result.exit_code = int(code);
     result.output    = std::move(output);
     result.errors    = std::move(errors);
-    result.status    = too_large ? ProcessResult::Status::TooLarge : timed_out ? ProcessResult::Status::TimedOut : ProcessResult::Status::Exited;
+    result.status    = too_large   ? ProcessResult::Status::TooLarge :
+                       cancelled   ? ProcessResult::Status::Cancelled :
+                       timed_out   ? ProcessResult::Status::TimedOut : ProcessResult::Status::Exited;
     return result;
 }
 
@@ -404,7 +418,7 @@ ProcessResult run_process(const ProcessRequest &request)
     });
 
     std::string output, errors;
-    bool        too_large = false, timed_out = false;
+    bool        too_large = false, timed_out = false, cancelled = false;
     const auto  deadline  = started + std::chrono::milliseconds(std::max(1, request.timeout_ms));
     pollfd      fds[2]    = {{out_pipe[0], POLLIN, 0}, {err_pipe[0], POLLIN, 0}};
     int         open_fds  = 2;
@@ -414,7 +428,11 @@ ProcessResult run_process(const ProcessRequest &request)
             timed_out = true;
             break;
         }
-        const int ready = ::poll(fds, 2, int(std::min<long long>(left, 1000)));
+        if (request.cancel && request.cancel->load()) {
+            cancelled = true;
+            break;
+        }
+        const int ready = ::poll(fds, 2, int(std::min<long long>(left, 100)));
         if (ready < 0 && errno != EINTR) break;
         for (pollfd &p : fds) {
             if (p.fd < 0 || !(p.revents & (POLLIN | POLLHUP | POLLERR))) continue;
@@ -451,8 +469,10 @@ ProcessResult run_process(const ProcessRequest &request)
     if (WIFEXITED(status) && WEXITSTATUS(status) == 127 && output.empty()) result.start_error = "the program could not be started";
     result.output = std::move(output);
     result.errors = std::move(errors);
-    result.status = too_large ? ProcessResult::Status::TooLarge : timed_out ? ProcessResult::Status::TimedOut : ProcessResult::Status::Exited;
-    if (!result.start_error.empty()) result.status = ProcessResult::Status::StartFailed;
+    result.status = too_large ? ProcessResult::Status::TooLarge :
+                    cancelled ? ProcessResult::Status::Cancelled :
+                    timed_out ? ProcessResult::Status::TimedOut : ProcessResult::Status::Exited;
+    if (!result.start_error.empty() && !cancelled) result.status = ProcessResult::Status::StartFailed;
     return result;
 }
 

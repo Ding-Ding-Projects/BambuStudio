@@ -160,7 +160,7 @@ const std::vector<HookInfo> &hooks()
         {Hook::ModelImported, "model.imported", L("After a model is imported"), L("Name, triangles, size and units"), L("Notes"), false},
         {Hook::PlateSliced, "plate.sliced", L("After slicing"), L("Time, filament per slot, layers and warnings"), L("Notes"), true},
         {Hook::PrintBeforeSend, "print.before_send", L("Before sending a print"), L("Plate, printer model, filaments and options"),
-         L("Checklist rows, a block with its reason"), true},
+         L("Checklist rows, a block with its reason"), false},
         {Hook::GcodeExported, "gcode.exported", L("After G-code export"), L("The file name and the slice statistics"),
          L("Comment lines to add at the start or end"), true},
         {Hook::PrintFinished, "print.finished", L("After a print finishes"), L("Result, duration and filament used"), L("Notes"), false},
@@ -190,7 +190,7 @@ const std::vector<PermissionInfo> &permissions()
     static const std::vector<PermissionInfo> all = {
         {Permission::SliceRead, "slice.read", L("Read slice statistics (time, grams, metres per plate)")},
         {Permission::ModelRead, "model.read", L("Read model names, sizes and triangle counts")},
-        {Permission::PrinterRead, "printer.read", L("Read the printer model, nozzle and plate type")},
+        {Permission::PrinterRead, "printer.read", L("Read the printer preset, model, nozzle sizes and filament presets")},
         {Permission::NotesShow, "notes.show", L("Show notes in Bambu Studio")},
         {Permission::SendWarn, "send.warn", L("Add checklist rows before a print is sent")},
         {Permission::SendBlock, "send.block", L("Stop a print from being sent, with a reason")},
@@ -717,6 +717,7 @@ const char *outcome_id(Outcome outcome)
     case Outcome::Invalid: return "invalid";
     case Outcome::Failed: return "failed";
     case Outcome::NotStarted: return "not-started";
+    case Outcome::Stopped: return "stopped";
     }
     return "failed";
 }
@@ -743,7 +744,7 @@ bool from_line(std::string_view line, RunRecord &record)
     if (j.contains("b") && j["b"].is_number_unsigned()) r.answer_bytes = j["b"].get<std::size_t>();
     if (j.contains("p") && j["p"].is_string()) r.problem = j["p"].get<std::string>();
     const std::string o = j.contains("o") && j["o"].is_string() ? j["o"].get<std::string>() : "";
-    const Outcome all[] = {Outcome::Answered, Outcome::TimedOut, Outcome::TooLarge, Outcome::NotJson, Outcome::Invalid, Outcome::Failed, Outcome::NotStarted};
+    const Outcome all[] = {Outcome::Answered, Outcome::TimedOut, Outcome::TooLarge, Outcome::NotJson, Outcome::Invalid, Outcome::Failed, Outcome::NotStarted, Outcome::Stopped};
     bool known = false;
     for (Outcome candidate : all)
         if (o == outcome_id(candidate)) {
@@ -812,7 +813,7 @@ void RunLog::save() const
 
 Consent after_run(Consent consent, Outcome outcome, const Limits &limits)
 {
-    if (outcome == Outcome::NotStarted) return consent;
+    if (outcome == Outcome::NotStarted || outcome == Outcome::Stopped) return consent;
     if (outcome == Outcome::Answered) {
         consent.failures_in_row = 0;
         return consent;
