@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-08 05:42-0500\n"
+"POT-Creation-Date: 2026-11-08 06:01-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -7421,6 +7421,12 @@ msgstr ""
 msgid "Steps after slicing, comment lines in exported G-code and commands of your own, each asking first"
 msgstr ""
 
+msgid "Live charts"
+msgstr ""
+
+msgid "Nozzle, bed and chamber temperatures of the selected printer over time"
+msgstr ""
+
 msgid "Scheduled settings"
 msgstr ""
 
@@ -9610,6 +9616,9 @@ msgid "AMS C++"
 msgstr ""
 
 msgid "AMS Web"
+msgstr ""
+
+msgid "Nozzle, bed and chamber temperatures over time, with their targets"
 msgstr ""
 
 msgid "Sport"
@@ -29624,10 +29633,7 @@ msgstr ""
 msgid "Preferences, Interface motion"
 msgstr ""
 
-msgid "Live charts"
-msgstr ""
-
-msgid "Device page, temperatures"
+msgid "Device page, Live charts under the temperatures"
 msgstr ""
 
 msgid "Anywhere"
@@ -31513,6 +31519,138 @@ msgid "Turn the extension on first."
 msgstr ""
 
 msgid "The runs could not be saved there."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Holding near %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Rising, %+.1f °C in %d s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Falling, %+.1f °C in %d s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Flat, %+.1f °C in %d s"
+msgstr ""
+
+msgid "Not enough readings for a trend yet"
+msgstr ""
+
+msgid "Live chart"
+msgstr ""
+
+msgid "now"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Target %.0f"
+msgstr ""
+
+msgid "The printer is off or not connected"
+msgstr ""
+
+msgid "Asking the printer for its first reading"
+msgstr ""
+
+msgid "No readings in this time window"
+msgstr ""
+
+msgid "The temperatures of the printer selected on the Device page, as it sends them. A gap in its reports stays a gap: nothing is drawn that the printer did not send."
+msgstr ""
+
+msgid "1 min"
+msgstr ""
+
+msgid "5 min"
+msgstr ""
+
+msgid "15 min"
+msgstr ""
+
+msgid "1 h"
+msgstr ""
+
+msgid "Candles"
+msgstr ""
+
+msgid "Every reading, joined except across gaps"
+msgstr ""
+
+msgid "One candle per minute: first, highest, lowest and last reading"
+msgstr ""
+
+msgid "Target line"
+msgstr ""
+
+msgid "Freeze the chart; readings keep arriving and are shown when you resume (Space)"
+msgstr ""
+
+msgid "Copy value"
+msgstr ""
+
+msgid "Save CSV"
+msgstr ""
+
+msgid "Save the readings shown as CSV (Ctrl+S)"
+msgstr ""
+
+msgid "Explain this chart"
+msgstr ""
+
+msgid "Arrow keys move the crosshair a reading at a time, Home and End jump to the ends, Space pauses, Ctrl+C copies the value under the crosshair and Ctrl+S saves the shown readings. Right-click the chart for the same choices."
+msgstr ""
+
+msgid "No printer is selected on the Device page."
+msgstr ""
+
+msgid "offline"
+msgstr ""
+
+msgid "no sensor reported"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "of %.0f °C"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%d readings this session, every one from the printer."
+msgstr ""
+
+msgid "No readings yet this session."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Stalled %d s: no reading since %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Paused, %d new readings"
+msgstr ""
+
+msgid "Point at the chart, or focus it and use the arrow keys, to read a value."
+msgstr ""
+
+msgid "Save the shown readings"
+msgstr ""
+
+msgid "The readings could not be saved there."
+msgstr ""
+
+msgid "Resume updates"
+msgstr ""
+
+msgid "Pause updates"
+msgstr ""
+
+msgid "Copy the value under the crosshair"
+msgstr ""
+
+msgid "Save shown readings as CSV"
 msgstr ""
 
 msgid "No key is saved for this provider"

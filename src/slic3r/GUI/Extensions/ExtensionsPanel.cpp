@@ -60,6 +60,9 @@ constexpr const char *kGuide = "docs/features/windows/extensions.md";
 
 wxColour role(MD3::Role r) { return StateColor::semantic(r); }
 
+// " · " built from its code point: a narrow literal would be read in the ANSI code page.
+wxString dot() { return wxString(" ") + wxUniChar(0x00B7) + " "; }
+
 wxWindow *glyph_window(wxWindow *parent, std::uint32_t glyph, MD3::Role colour, int size_dip = 20)
 {
     auto *w = new wxWindow(parent, wxID_ANY, wxDefaultPosition, parent->FromDIP(wxSize(size_dip + 4, size_dip + 4)));
@@ -699,7 +702,7 @@ void ExtensionsPanel::refresh_activity()
         RunRecord        r;
         r.hook = a.hook;
         text   = wxString::Format(_L("Running %s: %s"), name, hook_text(r, x ? &x->manifest : nullptr));
-        if (a.queued > 0) text << " · " << wxString::Format(_L("%d waiting"), a.queued);
+        if (a.queued > 0) text << dot() << wxString::Format(_L("%d waiting"), a.queued);
     }
     m_activity->SetLabel(text);
     m_activity->Show(!text.IsEmpty());
@@ -766,7 +769,7 @@ void ExtensionsPanel::refresh_list()
         if (!in_filter(x, m_filter) || !matches(x)) continue;
         wxString name = display_name(x);
         if (!x.manifest.version.empty()) name << " " << wxString::FromUTF8(x.manifest.version);
-        if (x.builtin) name << " · " << _L("built in");
+        if (x.builtin) name << dot() << _L("built in");
         wxVector<wxVariant> row;
         row.push_back(wxVariant(name));
         const State state = h.state(x);
@@ -1054,7 +1057,7 @@ void ExtensionsPanel::fill_runs(const Installed &x)
         wxVector<wxVariant> row;
         row.push_back(wxVariant(when_text(r.time)));
         wxString hook = hook_text(r, &x.manifest);
-        if (!r.subject.empty()) hook << " · " << wxString::FromUTF8(r.subject);
+        if (!r.subject.empty()) hook << dot() << wxString::FromUTF8(r.subject);
         row.push_back(wxVariant(hook));
         row.push_back(wxVariant(wxString::Format("%.2f s", r.seconds)));
         row.push_back(wxVariant(bytes_text(r.answer_bytes)));

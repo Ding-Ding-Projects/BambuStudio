@@ -53996,3 +53996,223 @@ msgstr "先開咗呢個擴充功能。"
 #. review-status: agent-drafted
 msgid "The runs could not be saved there."
 msgstr "執行紀錄儲存唔到喺嗰度。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Nozzle, bed and chamber temperatures of the selected printer over time"
+msgstr "揀咗嘅打印機嘅噴嘴、熱床同機箱溫度隨時間嘅變化"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Nozzle, bed and chamber temperatures over time, with their targets"
+msgstr "噴嘴、熱床同機箱溫度隨時間嘅變化，連埋佢哋嘅目標"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Device page, Live charts under the temperatures"
+msgstr "設備頁，溫度下面嘅即時圖表"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Holding near %s"
+msgstr "維持喺 %s 附近"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Rising, %+.1f °C in %d s"
+msgstr "上升 %+.1f °C，用咗 %d 秒"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Falling, %+.1f °C in %d s"
+msgstr "下降 %+.1f °C，用咗 %d 秒"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Flat, %+.1f °C in %d s"
+msgstr "平穩，%+.1f °C，用咗 %d 秒"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Not enough readings for a trend yet"
+msgstr "讀數仲未夠睇趨勢"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Live chart"
+msgstr "即時圖表"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "now"
+msgstr "而家"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Target %.0f"
+msgstr "目標 %.0f"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "The printer is off or not connected"
+msgstr "打印機關咗或者冇連接"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Asking the printer for its first reading"
+msgstr "問緊打印機要第一個讀數"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "No readings in this time window"
+msgstr "呢個時間範圍冇讀數"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "The temperatures of the printer selected on the Device page, as it sends them. A gap in its reports stays a gap: nothing is drawn that the printer did not send."
+msgstr "設備頁揀咗嗰部打印機嘅溫度，完全照佢送嚟嘅樣。佢報告之間嘅空隙會保持係空隙：打印機冇送過嘅嘢一樣都唔會畫。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "1 min"
+msgstr "1 分鐘"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "5 min"
+msgstr "5 分鐘"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "15 min"
+msgstr "15 分鐘"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "1 h"
+msgstr "1 個鐘"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Candles"
+msgstr "蠟燭"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Every reading, joined except across gaps"
+msgstr "每個讀數，除咗空隙之外都連埋一齊"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "One candle per minute: first, highest, lowest and last reading"
+msgstr "每分鐘一枝蠟燭：第一個、最高、最低同最後一個讀數"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Target line"
+msgstr "目標線"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Freeze the chart; readings keep arriving and are shown when you resume (Space)"
+msgstr "凍結圖表；讀數照樣入嚟，繼續嘅時候先顯示（Space）"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Copy value"
+msgstr "複製數值"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Save CSV"
+msgstr "儲存 CSV"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Save the readings shown as CSV (Ctrl+S)"
+msgstr "將顯示緊嘅讀數儲存做 CSV（Ctrl+S）"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Explain this chart"
+msgstr "解釋呢個圖表"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Arrow keys move the crosshair a reading at a time, Home and End jump to the ends, Space pauses, Ctrl+C copies the value under the crosshair and Ctrl+S saves the shown readings. Right-click the chart for the same choices."
+msgstr "方向鍵每次將十字線移一個讀數，Home 同 End 跳去兩頭，Space 暫停，Ctrl+C 複製十字線下面嘅數值，Ctrl+S 儲存顯示緊嘅讀數。喺圖表撳右鍵都有同樣嘅選擇。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "No printer is selected on the Device page."
+msgstr "設備頁冇揀打印機。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "offline"
+msgstr "離線"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "no sensor reported"
+msgstr "冇感應器報告"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "of %.0f °C"
+msgstr "目標 %.0f °C"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "%d readings this session, every one from the printer."
+msgstr "今次使用期間有 %d 個讀數，每個都係打印機送嚟。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "No readings yet this session."
+msgstr "今次使用期間仲未有讀數。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Stalled %d s: no reading since %s"
+msgstr "停咗 %d 秒：%s 之後冇讀數"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Paused, %d new readings"
+msgstr "已暫停，有 %d 個新讀數"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Point at the chart, or focus it and use the arrow keys, to read a value."
+msgstr "指住圖表，或者令佢有焦點再用方向鍵，就可以讀數值。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Save the shown readings"
+msgstr "儲存顯示緊嘅讀數"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "The readings could not be saved there."
+msgstr "讀數儲存唔到喺嗰度。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Resume updates"
+msgstr "繼續更新"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Pause updates"
+msgstr "暫停更新"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Copy the value under the crosshair"
+msgstr "複製十字線下面嘅數值"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Save shown readings as CSV"
+msgstr "將顯示緊嘅讀數儲存做 CSV"

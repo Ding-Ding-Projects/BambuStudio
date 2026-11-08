@@ -111,6 +111,7 @@
 #include "LocalConverter/LocalConverterPanel.hpp"
 #include "Base64Toolkit/Base64ToolkitPanel.hpp"
 #include "Extensions/ExtensionRuntime.hpp"
+#include "LiveCharts/LiveChartsPanel.hpp"
 #include "SetupWizard/SetupWizardDialog.hpp"
 #include "FeatureServices/PackageReceipts.hpp"
 #include "FeatureServices/ServiceWorkspace.hpp"
@@ -4898,6 +4899,10 @@ void MainFrame::init_menubar_as_editor()
         append_menu_item(fileMenu, wxID_ANY, _L("Extensions") + dots,
             _L("Steps after slicing, comment lines in exported G-code and commands of your own, each asking first"),
             feature_command("extensions", []() { Extensions::Runtime::open_manager(); }), "", nullptr, []() { return true; }, this);
+
+        append_menu_item(fileMenu, wxID_ANY, _L("Live charts") + dots,
+            _L("Nozzle, bed and chamber temperatures of the selected printer over time"),
+            feature_command("live-charts", []() { LiveCharts::LiveChartsPanel::open(); }), "", nullptr, []() { return true; }, this);
 
         append_menu_item(fileMenu, wxID_ANY, _L("Scheduled settings") + dots,
             _L("Schedule presentation without replacing stored preferences"),

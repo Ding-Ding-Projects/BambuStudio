@@ -1,4 +1,5 @@
 #include "StatusPanel.hpp"
+#include "LiveCharts/LiveChartsPanel.hpp"
 #include "Widgets/MD3ScrolledWindow.hpp"
 
 #include <algorithm>
@@ -3288,6 +3289,15 @@ wxBoxSizer *StatusBasePanel::create_temp_control(wxWindow *parent)
     m_tempCtrl_chamber->SetGlyphColors(device_primary_color(), device_secondary_text_color());
     sizer->Add(m_tempCtrl_chamber, 0, wxEXPAND | wxALL, 1);
 
+    // The same temperatures over time, as the printer sends them.
+    auto *live_charts = new Button(parent, _L("Live charts"));
+    live_charts->SetVariant(Button::Variant::Text);
+    live_charts->SetButtonSize(Button::Size::Small);
+    live_charts->SetGlyph(0xF190 /* monitoring */);
+    live_charts->SetToolTip(_L("Nozzle, bed and chamber temperatures over time, with their targets"));
+    live_charts->Bind(wxEVT_BUTTON, [](wxCommandEvent &) { LiveCharts::LiveChartsPanel::open(); });
+    sizer->Add(live_charts, 0, wxALIGN_CENTER_HORIZONTAL | wxTOP, FromDIP(4));
+
     return sizer;
 }
 
@@ -4589,6 +4599,9 @@ void StatusPanel::update(MachineObject *obj)
 {
     m_devid = obj ? obj->get_dev_id() : std::string();
     update_ctrl_area_masks();
+
+    // Live charts keep a reading only when the printer pushed a new report.
+    if (obj && obj->is_info_ready()) LiveCharts::Recorder::instance().record(obj);
 
     if (!obj || !obj->is_info_ready()) {
         if (m_motion_part_fan) m_motion_part_fan->Reset();

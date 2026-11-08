@@ -1091,6 +1091,10 @@ list(APPEND SLIC3R_GUI_SOURCES
     GUI/Extensions/ExtensionRuntime.hpp
     GUI/Extensions/ExtensionsPanel.cpp
     GUI/Extensions/ExtensionsPanel.hpp
+    GUI/LiveCharts/LiveChartsPanel.cpp
+    GUI/LiveCharts/LiveChartsPanel.hpp
+    GUI/LiveCharts/LiveSeries.cpp
+    GUI/LiveCharts/LiveSeries.hpp
     GUI/SetupWizard/SetupModel.cpp
     GUI/SetupWizard/SetupModel.hpp
     GUI/SetupWizard/SetupWizardDialog.cpp

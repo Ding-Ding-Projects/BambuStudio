@@ -735,12 +735,12 @@
     {
       "route": "device/README.md",
       "title": "Device features",
-      "sha256": "b3a4377cc7272e617c04b0cd590ea73e251dbd7d200bc080ae606351f90208c6"
+      "sha256": "33384b3244e321f67a366b08946d9439c54859befaada0cfb2595aeabe7d89d0"
     },
     {
       "route": "device/README.yue_HK.md",
       "title": "設備功能",
-      "sha256": "141c3a17c691666a763da46f739a0d26a5ad3658dd74bc3a5910b2cb637a545f"
+      "sha256": "8e51a15fbf7bf5771b4b787192fbc3e24b7a6c6e27ab81874f622ad945b9676b"
     },
     {
       "route": "device/farm-lan.md",
@@ -751,6 +751,16 @@
       "route": "device/farm-lan.yue_HK.md",
       "title": "區域網絡打印機群組",
       "sha256": "4b3936c2d9679ba369acdddc91d1268670dfb97e4c1e4348cce87d3387801543"
+    },
+    {
+      "route": "device/live-charts.md",
+      "title": "Live charts",
+      "sha256": "eb046f1bcdfe71d7d31abc00d64d0c734aa8f4a205226c3f077c76948308f41b"
+    },
+    {
+      "route": "device/live-charts.yue_HK.md",
+      "title": "即時圖表",
+      "sha256": "74395a9fa77e4c3f079572a52b1f06c1c138d9432f0a4f0679f62a46c364d86a"
     },
     {
       "route": "device/live-readings.md",
@@ -2215,7 +2225,7 @@
       "bytes": 16430
     }
   ],
-  "bundle_sha256": "a083220abcc9b0b4bd20959a114701b28f96dc43b6a4aa4d554fbead66bfd9c5",
+  "bundle_sha256": "55220504dcab5858017cf5c4aabda13ce551a2bdafff7fd341d4be28107658dc",
   "unavailable_references": [
     {
       "source": "api/README.md",
@@ -2760,6 +2770,16 @@
     {
       "source": "device/README.yue_HK.md",
       "target": "status-api.postman_collection.json",
+      "kind": "link"
+    },
+    {
+      "source": "device/live-charts.md",
+      "target": "../../../design/local-tools-2026-11/README.md",
+      "kind": "link"
+    },
+    {
+      "source": "device/live-charts.yue_HK.md",
+      "target": "../../../design/local-tools-2026-11/README.md",
       "kind": "link"
     },
     {
