@@ -38073,3 +38073,36 @@ msgstr ""
 
 msgid "Removed from the list"
 msgstr ""
+
+msgid "Needs a restart"
+msgstr ""
+
+msgid "Show only the settings whose change waits for the app to start again"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Needs a restart %d"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Waiting for a restart: %s."
+msgstr ""
+
+msgid "Close Bambu Studio and start it again; an unsaved project asks first"
+msgstr ""
+
+msgid "This copy cannot start itself again. Close Bambu Studio and open it."
+msgstr ""
+
+msgid "Preferences exports (*.json;*.yaml;*.yml;*.toml;*.xml)|*.json;*.yaml;*.yml;*.toml;*.xml|All files (*.*)|*.*"
+msgstr ""
+
+msgid "Import reads the JSON, YAML, TOML or XML that Export preferences... writes. CSV, Markdown, HTML and archives are not read."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The file is not the %s that Export preferences... writes."
+msgstr ""
+
+msgid "Read preferences exported as JSON, YAML, TOML or XML and change what differs, each setting through its own control"
+msgstr ""

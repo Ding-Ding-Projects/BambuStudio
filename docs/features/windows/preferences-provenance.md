@@ -67,8 +67,12 @@ layouts and command palette links depend on.
   can take it is listed with the value it goes back to;
 - settings that restart the app, sign you out or answer a consent question
   (language, single instance, level of detail, region, the experience
-  program, the developer modes) are left for their own controls, and so are
-  text fields and sliders;
+  program, the developer modes) are left for their own controls;
+- text fields and sliders are reset too: the value is typed into the field
+  and Enter is pressed in it (a slider moves through the same step as a
+  drag), so the row checks, stores and applies it as when you type it. A
+  value the field would not accept (letters in a number field, a number
+  outside a slider's range) is not typed and the setting is named afterwards;
 - private values (tokens, codes, keys) are never reset from here.
 
 Nothing changes until both keys are turned and the slide is completed (the
@@ -79,8 +83,15 @@ and anything left for its own control, is listed afterwards.
 ## Import
 
 **Import preferences...** reads a file written by **Export preferences...**
-as JSON (with or without the schema header, at most 1 MB) and lists what
-would change, up to 12 settings and how many more. Only settings Preferences
+as JSON, YAML, TOML or XML (with or without the schema header, at most 1 MB)
+and lists what would change, up to 12 settings and how many more. The format
+comes from the file's extension, or from its first characters when the
+extension is something else. YAML, TOML and XML are read as the exporter
+writes them, plus the plain edits people make: comments, unquoted words,
+single quotes, CRLF line ends and a TOML list over several lines. Anything
+else in them (YAML anchors, tags and flow collections, TOML multi-line
+strings, XML CDATA, a key twice) is refused with the format named rather than
+guessed at. CSV, Markdown, HTML and archives are reports, not read back. Only settings Preferences
 shows are considered; private values, settings Preferences does not show and
 values that are not text, true or false, or a whole number are counted and
 skipped, and the settings that are left for their own controls (as above) are
@@ -88,6 +99,25 @@ named. A file from a newer version, or one that is not a preferences export,
 is refused with the reason. After you agree, each setting changes through its
 own control; a control that does not offer the value, or is locked, keeps
 what it had and is named afterwards.
+
+## Needs a restart
+
+Single instance, the Filament Manager and Multi-device Management are read
+only when the app starts. When one of them differs from the value the app
+started with:
+
+- a **Needs a restart** chip appears beside **Changed by you**, with how many
+  settings wait; turning it on shows only those rows, together with the
+  search text;
+- the bottom row says what waits ("Waiting for a restart: Single instance.")
+  and offers **Restart now**.
+
+Restart now closes Preferences, then closes the main window through its
+normal path, so an unsaved project still asks and can cancel. The installed
+copy starts again through `Update.exe`, as after an update; a copy without
+`Update.exe` says it cannot start itself again and the button stays off.
+Changing a setting back to the value in use clears it. Language and level of
+detail are not listed: they restart the window themselves when changed.
 
 ## Changed by you
 
@@ -119,15 +149,27 @@ the section reset plan (reset, left for its own control, unchanged, private,
 a key that appears twice), import (the envelope and the bare data, every
 refusal, values that are not text, private and unknown keys), undo (newest
 only, defaults for an empty earlier value, every reason), related settings
-and section counts. Its negative build also resets the settings that must be
-changed by hand, and must fail.
+section counts and the settings that wait for a restart. Its negative build
+also resets the settings that must be changed by hand and reports a setting
+changed back as still waiting, and must fail.
+
+`tests/preference_formats.test.mjs` builds `tests/preference_formats_test.cpp`
+with the exporter's real YAML, TOML and XML output for a small preferences
+set, with and without the schema header, and imports each through the same
+plan as JSON; it also checks hand edits, escapes, every refused shape and
+format detection. A negative build that passes on a file it could not read
+must fail, and the runner checks that the exporter still writes these formats
+as the fixtures record.
 
 `tests/preferences_tools_wiring.test.mjs` checks the dialog source: Reset this
 section changes nothing before the two-key confirmation and only what the plan
 lists, import changes nothing before you agree to the preview, every change
 goes through the row's own control and never a disabled one, the consent row
-has no setter, and the panel's Reset and Related chips act after their click
-returns; each checker must fail on a broken copy.
+has no setter, the panel's Reset and Related chips act after their click
+returns, text fields and sliders change through their own Enter or step and
+only with a value they accept, YAML, TOML and XML become JSON before the plan,
+and Restart now ends Preferences before the main window closes through its
+normal path; each checker must fail on a broken copy.
 
 `tests/preference_history.test.mjs` builds `tests/preference_history_test.cpp`
 (redaction, the record format, bad and CRLF lines, compaction, every
@@ -139,6 +181,4 @@ index and the timer stops with the dialog.
 ## Not done yet
 
 The board's twelve regrouped sections are not adopted (the sections keep the
-ids saved layouts and palette links use). There is no Needs a restart chip or
-Restart now, text fields and sliders have no reset of their own, and import
-reads JSON only.
+ids saved layouts and palette links use).

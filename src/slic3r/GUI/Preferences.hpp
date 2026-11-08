@@ -201,6 +201,24 @@ protected:
     void add_related(const std::string &key);
     void add_playground(const std::string &key);
 
+    // ---- Needs a restart -----------------------------------------------------
+    // Settings the app reads only when it starts (PreferencePlans::restart_keys)
+    // wait for a restart once their value differs from the one in use: a chip
+    // filters to them, and the bottom row names them with Restart now.
+    ::Button *m_restart_chip = nullptr;
+    bool      m_restart_only = false;
+    ::Label  *m_restart_note = nullptr;
+    ::Button *m_restart_now  = nullptr;
+    std::vector<std::string> waiting_for_restart() const;
+    bool                     row_needs_restart(const SearchRow &row) const;
+    void                     refresh_restart_state();
+    void                     restart_now();
+
+public:
+    // The restart-scoped settings as the app started with them; GUI_App calls
+    // this once at startup (Preferences opening first takes them then).
+    static void remember_values_in_use();
+
 public:
     // Teleport to the row bound to `key`: returns false when no row registered
     // that key (the caller then falls back to the page from the palette index).

@@ -75,8 +75,9 @@ constexpr std::size_t kImportLimit = 1024 * 1024;
 
 // Reads a preferences file written by Export preferences... as JSON: the
 // envelope {"schema": "bambustudio.app-config", "schemaVersion": 1, ...,
-// "data": {"app": {...}}}, or the bare {"app": {...}} written without the
-// schema header. Only settings Preferences shows are considered.
+// "data": {"app": {...}}}, or the bare {"app": {...}} or {"data": {"app":
+// {...}}} written without the schema header (PreferenceFormats turns YAML,
+// TOML and XML into this). Only settings Preferences shows are considered.
 ImportPlan plan_import(std::string_view text, const std::vector<Setting> &settings);
 
 // ---------------------------------------------------------------- undo
@@ -91,6 +92,24 @@ struct UndoPlan
 
 // The newest change only: undoing an older one past a newer one would surprise.
 UndoPlan plan_undo(const std::vector<PreferenceHistory::Change> &newest_first, const std::vector<Setting> &settings);
+
+// ---------------------------------------------------------------- needs a restart
+// Settings the running app reads only when it starts, so a change waits for
+// the next start. Language and level of detail restart the window themselves
+// when they change, so they never wait here.
+const std::vector<std::string> &restart_keys();
+bool                            needs_restart(std::string_view key);
+
+struct InUse
+{
+    std::string key;
+    std::string started; // the value when this app started
+    std::string now;     // the value written down now
+};
+
+// The settings whose value differs from the one the app started with, in
+// restart_keys() order. Changing one back clears it.
+std::vector<std::string> pending_restart(const std::vector<InUse> &values);
 
 // ---------------------------------------------------------------- related settings and counts
 struct Row

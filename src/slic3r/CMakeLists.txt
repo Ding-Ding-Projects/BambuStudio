@@ -989,6 +989,8 @@ list(APPEND SLIC3R_GUI_SOURCES
     GUI/FeatureFinder/FeatureCommands.hpp
     GUI/FeatureFinder/FeatureFinderPanel.cpp
     GUI/FeatureFinder/FeatureFinderPanel.hpp
+    GUI/PreferencesRemake/PreferenceFormats.cpp
+    GUI/PreferencesRemake/PreferenceFormats.hpp
     GUI/PreferencesRemake/PreferenceHistory.cpp
     GUI/PreferencesRemake/PreferenceHistory.hpp
     GUI/PreferencesRemake/PreferencePlans.cpp

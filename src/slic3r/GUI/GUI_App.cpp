@@ -1681,6 +1681,8 @@ void GUI_App::post_init()
 
     // Extensions on print.finished: looks at the selected printer only while one is on.
     Extensions::Runtime::instance().start_watching_prints();
+    // What the settings read only at startup were when this app started (Needs a restart).
+    PreferencesDialog::remember_values_in_use();
     m_narrator_environment = std::make_unique<FeatureServices::NarratorEnvironment>([this] {
         return app_config && app_config->get("narrator_quiet") == "true";
     }, [this](const char* key) { return app_config ? app_config->get(key) : std::string(); });
@@ -7270,6 +7272,27 @@ void GUI_App::restart_after_update()
     // The close goes through the normal path, so the unsaved project prompt still applies and
     // can cancel it. The main frame's close handler takes this request back at its start and
     // hands it on again only when the close is accepted, so a cancelled close restarts nothing.
+    m_restart_after_update = true;
+    mainframe->Close();
+}
+
+bool GUI_App::can_restart_itself() const
+{
+#ifdef _WIN32
+    boost::filesystem::path update_exe;
+    return squirrel_update_exe(update_exe);
+#else
+    return false;
+#endif
+}
+
+void GUI_App::restart_app()
+{
+    if (mainframe == nullptr || !can_restart_itself())
+        return;
+    BOOST_LOG_TRIVIAL(info) << "Preferences: restart requested for settings read at startup, closing the main window";
+    // The same request as an update restart: the close handler takes it back and hands it on
+    // only when the close is accepted, and Update.exe starts this version once the app exits.
     m_restart_after_update = true;
     mainframe->Close();
 }

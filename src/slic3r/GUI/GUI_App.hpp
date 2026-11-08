@@ -666,6 +666,10 @@ public:
     // project prompt still applies and can cancel). Squirrel starts the newest version once the
     // application has really exited.
     void            restart_after_update();
+    // Preferences > Restart now, for settings the app reads only at startup: the same close
+    // path and the same Update.exe hand-over, so only an installed copy can start itself again.
+    bool            can_restart_itself() const;
+    void            restart_app();
     // Starts the six-hourly re-check for an installed copy with "Update automatically" on;
     // does nothing for any other copy. Called once, after the startup check.
     void            start_periodic_update_check();

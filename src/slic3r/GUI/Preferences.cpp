@@ -1,5 +1,6 @@
 #include <wx/wrapsizer.h>
 #include "Preferences.hpp"
+#include "PreferencesRemake/PreferenceFormats.hpp"
 #include "AttentionModes/AttentionModel.hpp"
 #include "PreferencesGeometry.hpp"
 #include "PreferencesGeometryProbe.hpp"
@@ -204,6 +205,35 @@ bool drive_combo(::ComboBox *combo, const std::vector<std::string> &values, cons
     picked.SetInt(index);
     combo->GetDropDown().GetEventHandler()->ProcessEvent(picked);
     return true;
+}
+
+// Puts a value in a text row and presses Enter in it, so the row's own handler
+// checks, stores and applies it exactly as when someone types it. A value the
+// row would not accept (accepts() false) is never typed.
+bool drive_text(::TextInput *input, const std::string &value, const std::function<bool(const std::string &)> &accepts)
+{
+    if (input == nullptr || input->GetTextCtrl() == nullptr || (accepts && !accepts(value))) return false;
+    wxTextCtrl *text = input->GetTextCtrl();
+    text->SetValue(wxString::FromUTF8(value));
+    wxCommandEvent enter(wxEVT_TEXT_ENTER, text->GetId());
+    enter.SetEventObject(text);
+    enter.SetString(text->GetValue());
+    text->GetEventHandler()->ProcessEvent(enter);
+    return true;
+}
+
+// The values the numeric rows accept, by the same rules as their validators.
+bool whole_number(const std::string &value)
+{
+    return !value.empty() && std::all_of(value.begin(), value.end(), [](char c) { return c >= '0' && c <= '9'; });
+}
+
+bool number_between(const std::string &value, double low, double high)
+{
+    if (value.empty()) return false;
+    char        *end    = nullptr;
+    const double number = std::strtod(value.c_str(), &end);
+    return end != nullptr && *end == '\0' && number >= low && number <= high;
 }
 
 } // namespace
@@ -850,6 +880,7 @@ wxBoxSizer *PreferencesDialog::create_item_input(wxString title, wxString title2
         onchange(value);
         e.Skip();
     });
+    register_setter(param, input, [input](const std::string &value) { return drive_text(input, value, whole_number); });
 
     register_option_row(param, sizer_input);
     return sizer_input;
@@ -909,6 +940,13 @@ wxBoxSizer *PreferencesDialog::create_item_int_slider(
     };
 
     slider->SetOnChange([commit](int next) { commit(next); });
+    // Reset and import move the slider through the same commit as a drag.
+    register_setter(param, slider, [commit, range_min, range_max](const std::string &value) {
+        long next = 0;
+        if (!wxString::FromUTF8(value).ToLong(&next) || next < range_min || next > range_max) return false;
+        commit(int(next));
+        return true;
+    });
     input->GetTextCtrl()->Bind(wxEVT_TEXT_ENTER, [commit, input, slider](wxCommandEvent &e) {
         long entered = 0;
         if (!input->GetTextCtrl()->GetValue().ToLong(&entered))
@@ -984,6 +1022,9 @@ wxBoxSizer *PreferencesDialog::create_item_range_input(
         auto value = std::atof(input->GetTextCtrl()->GetValue().c_str());
         set_value_to_app(value, true);
         e.Skip();
+    });
+    register_setter(param, input, [input, range_min, range_max](const std::string &value) {
+        return drive_text(input, value, [range_min, range_max](const std::string &v) { return number_between(v, range_min, range_max); });
     });
 
     register_option_row(param, sizer_input);
@@ -1088,6 +1129,13 @@ wxBoxSizer *PreferencesDialog::create_item_range_two_input(wxString             
         auto value = std::atof(input1->GetTextCtrl()->GetValue().c_str());
         set_value1_to_app(value, true);
         e.Skip();
+    });
+
+    register_setter(param, input, [input, range_min, range_max](const std::string &value) {
+        return drive_text(input, value, [range_min, range_max](const std::string &v) { return number_between(v, range_min, range_max); });
+    });
+    register_setter(param1, input1, [input1, range_min, range_max](const std::string &value) {
+        return drive_text(input1, value, [range_min, range_max](const std::string &v) { return number_between(v, range_min, range_max); });
     });
 
     register_option_row(param, sizer_input);
@@ -1681,6 +1729,8 @@ PreferencesDialog::PreferencesDialog(wxWindow *parent, wxWindowID id, const wxSt
     // Root dialog surface (kit Settings root = Surface); resolves by role in dark.
     SetBackgroundColour(StateColor::semantic(MD3::Role::Surface));
     m_original_use_12h_time_format = wxGetApp().app_config->get("use_12h_time_format");
+    // Normally taken at startup; when Preferences opens first, the values now are the ones in use.
+    remember_values_in_use();
     // Sync the MD3 density/accent token state to the persisted Appearance choices
     // before the tabs are built so this dialog and later-constructed surfaces
     // resolve the saved density metrics and accent roles.
@@ -1795,6 +1845,19 @@ void PreferencesDialog::create()
         apply_search_filter(m_search->GetValue());
     });
     search_row->Add(m_changed_chip, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(8));
+    // Shown only while a setting read at startup waits for a restart.
+    m_restart_chip = new ::Button(content_card, _L("Needs a restart"));
+    m_restart_chip->SetVariant(::Button::Variant::Outlined);
+    m_restart_chip->SetButtonSize(::Button::Size::Small);
+    m_restart_chip->SetGlyph(MaterialIcon::Refresh);
+    m_restart_chip->SetToolTip(_L("Show only the settings whose change waits for the app to start again"));
+    m_restart_chip->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) {
+        m_restart_only = !m_restart_only;
+        refresh_restart_state();
+        apply_search_filter(m_search->GetValue());
+    });
+    m_restart_chip->Hide();
+    search_row->Add(m_restart_chip, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(8));
     // Every setting of the section shown goes back to its built-in default,
     // behind the two-key confirmation (reset_section).
     m_reset_section = new ::Button(content_card, _L("Reset this section"));
@@ -2060,12 +2123,14 @@ wxString format_clock(std::int64_t time) { return wxDateTime(time_t(time)).Forma
 
 wxString takes_effect_text(const std::string &key)
 {
-    static const std::set<std::string> restart = {"language", "enable_lod", "single_instance"};
+    // Language and level of detail restart the window when they change; the
+    // rest wait for the next start (Needs a restart).
+    static const std::set<std::string> restart = {"language", "enable_lod"};
     static const std::set<std::string> live    = {"dark_color_mode", "ui_density", "ui_accent_seed", "ui_font_family", "ui_font_scale",
                                                   "motion_preference", "action_sounds_enabled", "dialog_emojis", "funny_level_en",
                                                   "funny_level_yue", "app_display_name", "app_logo", "lan_drop_enabled",
                                                   "status_api_enabled", "staff_pick_switch", "show_print_history", "sync_user_preset"};
-    if (restart.count(key)) return _L("After a restart.");
+    if (restart.count(key) || PreferencePlans::needs_restart(key)) return _L("After a restart.");
     if (live.count(key) || key.rfind("narrator_", 0) == 0) return _L("Right away, in every window.");
     return _L("The next time the feature that uses it runs.");
 }
@@ -2211,6 +2276,83 @@ void PreferencesDialog::refresh_provenance()
         info.provenance->Wrap(FromDIP(320));
     }
     refresh_changed_chip();
+    refresh_restart_state();
+}
+
+// ---------------------------------------------------------------------------
+// Needs a restart
+// ---------------------------------------------------------------------------
+
+namespace {
+// The settings read only at startup, as the running app started with them.
+std::map<std::string, std::string> &values_in_use()
+{
+    static std::map<std::string, std::string> values;
+    return values;
+}
+} // namespace
+
+void PreferencesDialog::remember_values_in_use()
+{
+    AppConfig *cfg = wxGetApp().app_config;
+    if (cfg == nullptr || !values_in_use().empty()) return;
+    for (const std::string &key : PreferencePlans::restart_keys()) values_in_use()[key] = cfg->get(key);
+}
+
+std::vector<std::string> PreferencesDialog::waiting_for_restart() const
+{
+    std::vector<PreferencePlans::InUse> values;
+    if (app_config == nullptr) return {};
+    for (const auto &[key, started] : values_in_use()) values.push_back({key, started, app_config->get(key)});
+    return PreferencePlans::pending_restart(values);
+}
+
+bool PreferencesDialog::row_needs_restart(const SearchRow &row) const
+{
+    const std::vector<std::string> waiting = waiting_for_restart();
+    for (const std::string &key : row.keys)
+        if (std::find(waiting.begin(), waiting.end(), key) != waiting.end()) return true;
+    return false;
+}
+
+void PreferencesDialog::refresh_restart_state()
+{
+    const std::vector<std::string> waiting = waiting_for_restart();
+    if (waiting.empty() && m_restart_only) {
+        // Nothing waits any more: the filter would show nothing.
+        m_restart_only = false;
+        if (m_search) CallAfter([this]() { apply_search_filter(m_search->GetValue()); });
+    }
+    if (m_restart_chip != nullptr) {
+        m_restart_chip->SetLabel(wxString::Format(_L("Needs a restart %d"), int(waiting.size())));
+        m_restart_chip->SetVariant(m_restart_only ? ::Button::Variant::Tonal : ::Button::Variant::Outlined);
+        m_restart_chip->Show(!waiting.empty());
+        m_restart_chip->Refresh();
+    }
+    if (m_restart_note != nullptr && m_restart_now != nullptr) {
+        wxString names;
+        for (const std::string &key : waiting) {
+            if (!names.IsEmpty()) names << ", ";
+            names << setting_title(key);
+        }
+        m_restart_note->SetLabel(waiting.empty() ? wxString() : wxString::Format(_L("Waiting for a restart: %s."), names));
+        m_restart_note->Show(!waiting.empty());
+        const bool can = wxGetApp().can_restart_itself();
+        m_restart_now->Show(!waiting.empty());
+        m_restart_now->Enable(can);
+        m_restart_now->SetToolTip(can ? _L("Close Bambu Studio and start it again; an unsaved project asks first") :
+                                        _L("This copy cannot start itself again. Close Bambu Studio and open it."));
+    }
+    Layout();
+}
+
+void PreferencesDialog::restart_now()
+{
+    if (waiting_for_restart().empty() || !wxGetApp().can_restart_itself()) return;
+    EndModal(wxID_OK);
+    // Once Preferences is gone: the main window closes through its normal
+    // path, so an unsaved project still asks and can cancel the restart.
+    wxGetApp().CallAfter([]() { wxGetApp().restart_app(); });
 }
 
 void PreferencesDialog::refresh_changed_chip()
@@ -2572,7 +2714,8 @@ void PreferencesDialog::reset_section()
 
 void PreferencesDialog::import_preferences()
 {
-    wxFileDialog picker(this, _L("Import preferences"), wxEmptyString, wxEmptyString, _L("Preferences exported as JSON (*.json)|*.json"),
+    wxFileDialog picker(this, _L("Import preferences"), wxEmptyString, wxEmptyString,
+                        _L("Preferences exports (*.json;*.yaml;*.yml;*.toml;*.xml)|*.json;*.yaml;*.yml;*.toml;*.xml|All files (*.*)|*.*"),
                         wxFD_OPEN | wxFD_FILE_MUST_EXIST);
     if (picker.ShowModal() != wxID_OK) return;
     const std::filesystem::path path = std::filesystem::u8path(into_u8(picker.GetPath()));
@@ -2597,6 +2740,21 @@ void PreferencesDialog::import_preferences()
         return;
     }
     if (text.size() >= 3 && text.compare(0, 3, "\xEF\xBB\xBF") == 0) text.erase(0, 3); // a UTF-8 byte order mark
+    // YAML, TOML and XML exports become the JSON the plan reads.
+    {
+        const PreferenceFormats::Format format = PreferenceFormats::detect(path.filename().u8string(), text);
+        std::string                     json, problem;
+        if (!PreferenceFormats::to_json(format, text, json, problem)) {
+            const wxString kind = wxString::FromUTF8(PreferenceFormats::name(format));
+            const wxString why  = problem == "unknown-format" ?
+                                      _L("Import reads the JSON, YAML, TOML or XML that Export preferences... writes. CSV, Markdown, HTML and archives are not read.") :
+                                      wxString::Format(_L("The file is not the %s that Export preferences... writes."), kind);
+            MessageDialog(this, wxString::Format(_L("%s was not imported."), name) + "\n\n" + why, _L("Import preferences"), wxOK | wxICON_WARNING)
+                .ShowModal();
+            return;
+        }
+        text = std::move(json);
+    }
     const PreferencePlans::ImportPlan plan = PreferencePlans::plan_import(text, settings_on_page(-1));
     if (!plan.problem.empty()) {
         wxString why;
@@ -2804,6 +2962,10 @@ bool PreferencesDialog::teleport_to_setting(const std::string &key)
         m_changed_only = false;
         refresh_changed_chip();
     }
+    if (m_restart_only) {
+        m_restart_only = false;
+        refresh_restart_state();
+    }
     if (m_search) m_search->SetValue(wxEmptyString);
     reset_search_filter();
 
@@ -2883,7 +3045,7 @@ void PreferencesDialog::apply_search_filter(const wxString &raw_query)
 {
     wxString query = raw_query;
     query.Trim(true).Trim(false);
-    if (query.empty() && !m_changed_only) {
+    if (query.empty() && !m_changed_only && !m_restart_only) {
         reset_search_filter();
         return;
     }
@@ -2911,7 +3073,8 @@ void PreferencesDialog::apply_search_filter(const wxString &raw_query)
     for (size_t i = 0; i < count; ++i) {
         const SearchRow &row = m_search_rows[i];
         if (!row.baseline_shown || row.haystack.empty()) continue;
-        matched[i] = (!match_pass || match_pass->matches(row.haystack)) && (!m_changed_only || row_changed(row));
+        matched[i] = (!match_pass || match_pass->matches(row.haystack)) && (!m_changed_only || row_changed(row)) &&
+                     (!m_restart_only || row_needs_restart(row));
     }
 
     // Pass 2: group visibility. A group is a Head_16 title row plus the rows
@@ -4844,6 +5007,19 @@ wxBoxSizer *PreferencesDialog::create_bottom_buttons()
 {
     auto *row = new wxWrapSizer(wxHORIZONTAL);
 
+    // Needs a restart: what waits, and Restart now (refresh_restart_state).
+    m_restart_note = new ::Label(this, wxString());
+    m_restart_note->SetFont(::Label::Body_13);
+    m_restart_note->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+    m_restart_now = new Button(this, _L("Restart now"));
+    m_restart_now->SetVariant(Button::Variant::Filled);
+    m_restart_now->SetButtonSize(Button::Size::Small);
+    m_restart_now->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { restart_now(); });
+    m_restart_note->Hide();
+    m_restart_now->Hide();
+    row->Add(m_restart_note, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(8));
+    row->Add(m_restart_now, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(16));
+
     auto *btn_reset_warnings            = new Button(this, _L("Reset all warning dialogs"));
     auto *btn_reset_prefs               = new Button(this, _L("Reset preferences"));
     // TRN: Opens the shared Export dialog with every preference section.
@@ -4852,7 +5028,7 @@ wxBoxSizer *PreferencesDialog::create_bottom_buttons()
     auto *btn_import_prefs              = new Button(this, _L("Import preferences..."));
     btn_import_prefs->SetVariant(Button::Variant::Outlined);
     btn_import_prefs->SetButtonSize(Button::Size::Small);
-    btn_import_prefs->SetToolTip(_L("Read preferences exported as JSON and change what differs, each setting through its own control"));
+    btn_import_prefs->SetToolTip(_L("Read preferences exported as JSON, YAML, TOML or XML and change what differs, each setting through its own control"));
     btn_import_prefs->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { import_preferences(); });
     btn_history->SetVariant(Button::Variant::Outlined);
     btn_history->SetButtonSize(Button::Size::Small);

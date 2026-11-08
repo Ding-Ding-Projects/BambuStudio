@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-08 12:06-0500\n"
+"POT-Creation-Date: 2026-11-08 12:25-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -12463,6 +12463,12 @@ msgstr ""
 msgid "Show only the settings whose value differs from the built-in default"
 msgstr ""
 
+msgid "Needs a restart"
+msgstr ""
+
+msgid "Show only the settings whose change waits for the app to start again"
+msgstr ""
+
 msgid "Reset this section"
 msgstr ""
 
@@ -12559,6 +12565,20 @@ msgid "Not stored yet; the app uses its built-in behaviour."
 msgstr ""
 
 #, possible-c-format, possible-boost-format
+msgid "Needs a restart %d"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Waiting for a restart: %s."
+msgstr ""
+
+msgid "Close Bambu Studio and start it again; an unsaved project asks first"
+msgstr ""
+
+msgid "This copy cannot start itself again. Close Bambu Studio and open it."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
 msgid "Changed by you %d"
 msgstr ""
 
@@ -12651,7 +12671,7 @@ msgstr ""
 msgid "Import preferences"
 msgstr ""
 
-msgid "Preferences exported as JSON (*.json)|*.json"
+msgid "Preferences exports (*.json;*.yaml;*.yml;*.toml;*.xml)|*.json;*.yaml;*.yml;*.toml;*.xml|All files (*.*)|*.*"
 msgstr ""
 
 #, possible-c-format, possible-boost-format
@@ -12663,6 +12683,13 @@ msgstr ""
 
 #, possible-c-format, possible-boost-format
 msgid "%s could not be read."
+msgstr ""
+
+msgid "Import reads the JSON, YAML, TOML or XML that Export preferences... writes. CSV, Markdown, HTML and archives are not read."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The file is not the %s that Export preferences... writes."
 msgstr ""
 
 msgid "The file is not valid JSON. Import reads the JSON that Export preferences... writes."
@@ -13665,6 +13692,9 @@ msgstr ""
 msgid "Switch cloud environment, Please login again!"
 msgstr ""
 
+msgid "Restart now"
+msgstr ""
+
 msgid "Reset all warning dialogs"
 msgstr ""
 
@@ -13678,7 +13708,7 @@ msgstr ""
 msgid "Import preferences..."
 msgstr ""
 
-msgid "Read preferences exported as JSON and change what differs, each setting through its own control"
+msgid "Read preferences exported as JSON, YAML, TOML or XML and change what differs, each setting through its own control"
 msgstr ""
 
 msgid "Every change made in Preferences, with its time"

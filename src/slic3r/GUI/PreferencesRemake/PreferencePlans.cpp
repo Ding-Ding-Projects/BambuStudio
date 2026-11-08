@@ -59,6 +59,35 @@ ResetPlan plan_section_reset(const std::vector<Setting> &section)
     return plan;
 }
 
+const std::vector<std::string> &restart_keys()
+{
+    static const std::vector<std::string> keys = {"single_instance", "studio_enable_fila_manager", "enable_multi_machine"};
+    return keys;
+}
+
+bool needs_restart(std::string_view key)
+{
+    const std::vector<std::string> &keys = restart_keys();
+    return std::find(keys.begin(), keys.end(), key) != keys.end();
+}
+
+std::vector<std::string> pending_restart(const std::vector<InUse> &values)
+{
+    std::vector<std::string> pending;
+    for (const std::string &key : restart_keys())
+        for (const InUse &v : values) {
+            if (v.key != key) continue;
+#ifdef SLIC3R_PREFERENCE_PLANS_NEGATIVE_FIXTURE
+            // Test-only mutation: a setting changed back still waits for a restart.
+            pending.push_back(key);
+#else
+            if (v.started != v.now) pending.push_back(key);
+#endif
+            break;
+        }
+    return pending;
+}
+
 ImportPlan plan_import(std::string_view text, const std::vector<Setting> &settings)
 {
     using json = nlohmann::json;
@@ -92,6 +121,10 @@ ImportPlan plan_import(std::string_view text, const std::vector<Setting> &settin
                 return plan;
             }
         }
+        data = &root["data"];
+    } else if (root.contains("data") && root["data"].is_object() && root["data"].contains("app")) {
+        // TOML and XML written without the schema header still wrap the
+        // settings in a data table.
         data = &root["data"];
     }
     if (!data->is_object() || !data->contains("app") || !(*data)["app"].is_object()) {

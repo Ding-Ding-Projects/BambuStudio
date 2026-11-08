@@ -1,8 +1,8 @@
 // Standalone assertions for src/slic3r/GUI/PreferencesRemake/PreferencePlans.cpp:
 // what Reset this section changes and leaves alone, what an imported
 // preferences file would change, when the newest change can be undone, the
-// related settings under the same heading, and how many settings each section
-// holds. Built and run by tests/preference_plans.test.mjs, which also builds it
+// related settings under the same heading, how many settings each section
+// holds, and which changed settings wait for a restart. Built and run by tests/preference_plans.test.mjs, which also builds it
 // with SLIC3R_PREFERENCE_PLANS_NEGATIVE_FIXTURE: in that build a section reset
 // also changes settings that restart the app or answer a consent question, and
 // the checks below must fail.
@@ -171,12 +171,32 @@ static void related_and_counts()
     CHECK(settings_per_page({{0, false, {"a"}}, {0, false, {"a"}}}).at(0) == 1);
 }
 
+static void needs_a_restart()
+{
+    CHECK(needs_restart("single_instance") && needs_restart("enable_multi_machine") && needs_restart("studio_enable_fila_manager"));
+    // Language and level of detail restart the window themselves.
+    CHECK(!needs_restart("language") && !needs_restart("enable_lod") && !needs_restart("dark_color_mode"));
+    for (const std::string &key : restart_keys()) CHECK(needs_restart(key));
+
+    // Nothing changed since start: nothing waits.
+    CHECK(pending_restart({{"single_instance", "false", "false"}, {"enable_multi_machine", "true", "true"}}).empty());
+    // Changed: waits, in restart_keys() order whatever the input order.
+    CHECK(pending_restart({{"enable_multi_machine", "false", "true"}, {"single_instance", "false", "true"}}) ==
+          std::vector<std::string>({"single_instance", "enable_multi_machine"}));
+    // Changed back: nothing waits any more.
+    CHECK(pending_restart({{"single_instance", "true", "true"}, {"enable_multi_machine", "false", "true"}}) ==
+          std::vector<std::string>({"enable_multi_machine"}));
+    // Keys that do not need a restart are never reported.
+    CHECK(pending_restart({{"dark_color_mode", "0", "1"}}).empty());
+}
+
 int main()
 {
     section_reset();
     import();
     undo();
     related_and_counts();
+    needs_a_restart();
     if (g_failures) {
         std::fprintf(stderr, "%d failure(s)\n", g_failures);
         return 1;

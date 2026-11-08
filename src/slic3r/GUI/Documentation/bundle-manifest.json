@@ -1845,12 +1845,12 @@
     {
       "route": "windows/preferences-provenance.md",
       "title": "Preferences: where every value comes from",
-      "sha256": "ed12bfe65b1704c47731b32dfc3fa31d26cc8e8c32f5971b45fd543b312c8ed9"
+      "sha256": "5e74eac91e8baaa8f1c270af647330770f9483e8cd2ad2518ca2593707b797da"
     },
     {
       "route": "windows/preferences-provenance.yue_HK.md",
       "title": "偏好設定：每個值由邊度嚟",
-      "sha256": "aea44181725dfb0fc1bb481afbfca671cdf092a4f02a0ea1f20bc504df261d62"
+      "sha256": "a5004e1e980ad6da27dc3f69adf937ddcd0d9cabf4aecd7d9483a77c6d1973b6"
     },
     {
       "route": "windows/print-actions.md",
@@ -2295,7 +2295,7 @@
       "bytes": 16430
     }
   ],
-  "bundle_sha256": "8e46b879829a145eee793df2e021bfd0fd974d3d17adfe4c39adc56794411000",
+  "bundle_sha256": "108d93a20220ea3212af6c7ad59aca034730e955b5c5783c1255725fb6dfa5b7",
   "unavailable_references": [
     {
       "source": "api/README.md",
