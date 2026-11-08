@@ -109,6 +109,7 @@
 #include "Widgets/WebView.hpp"
 #include "OllamaSuite/OllamaSuiteDialog.hpp"
 #include "LocalConverter/LocalConverterPanel.hpp"
+#include "Base64Toolkit/Base64ToolkitPanel.hpp"
 #include "FeatureServices/PackageReceipts.hpp"
 #include "FeatureServices/ServiceWorkspace.hpp"
 #include "FeatureServices/SurfaceRegistry.hpp"
@@ -4878,6 +4879,12 @@ void MainFrame::init_menubar_as_editor()
                         root, root / "BambuStudio_converter_worker.exe", FeatureServices::converter_worker_hash(root)},
                         std::filesystem::u8path(data_dir()) / "local-converter");
                 });
+            }), "", nullptr, []() { return true; }, this);
+
+        append_menu_item(fileMenu, wxID_ANY, _L("Base64 toolkit") + dots,
+            _L("Encode and decode text, files beside the originals and data: URLs on this computer"),
+            feature_command("base64", [this]() {
+                open_service("base64", _L("Base64 toolkit"), [](wxWindow* parent) { return new Base64ToolkitPanel(parent); });
             }), "", nullptr, []() { return true; }, this);
 
         append_menu_item(fileMenu, wxID_ANY, _L("Scheduled settings") + dots,

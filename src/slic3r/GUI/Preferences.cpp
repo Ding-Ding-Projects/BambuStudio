@@ -1728,8 +1728,8 @@ void PreferencesDialog::create()
     content_card->SetDensity(MD3::Metrics::isCompact() ? StaticBox::Density::Compact : StaticBox::Density::Comfortable);
     m_book   = new wxSimplebook(content_card, wxID_ANY);
     // Pages own their scrolling; their content must not dictate the frame size.
-    m_book->SetMinSize(wxSize(1, 1));
-    content_card->SetMinSize(wxSize(1, 1));
+    m_book->SetMinSize(FromDIP(wxSize(1, 1)));
+    content_card->SetMinSize(FromDIP(wxSize(1, 1)));
     m_book->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
 
     // Right-hand content pane: a top MD3 SearchField pill over the section book.

@@ -617,7 +617,9 @@ test('no window is sized by an unscaled pixel literal', async () => {
   for (const [file, count] of await sitesOf(/\bSet(?:Min|Max)?Size\(wxSize\((?!0, *(?:0|-1)\))\d+, *-?\d+\)\)/g)) hits.set(file, count);
   assertOnlyAllowed(hits, new Set(), 'unscaled wxSize literal');
   const prefs = stripComments(await read('Preferences.cpp'));
-  assert.match(prefs, /SetSize\(FromDIP\(wxSize\(780, 580\)\)\);/, 'Preferences must scale its 780x580 default size');
+  // The default is now the remembered size (780 wide by default), still scaled.
+  assert.match(prefs, /restored_dimension\(app_config->get\("preferences_width"\), 780\)/, 'Preferences must default to 780 px wide');
+  assert.match(prefs, /SetSize\(FromDIP\(wxSize\(width, height\)\)\);/, 'Preferences must scale its default size');
   const app = stripComments(await read('GUI_App.cpp'));
   assert.doesNotMatch(app, /SetSize\(wxSize\(270, 158\)\)/, 'the plugin download dialog must be sized through FromDIP on every path');
 });

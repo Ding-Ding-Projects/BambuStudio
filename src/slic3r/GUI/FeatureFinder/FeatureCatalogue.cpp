@@ -66,7 +66,7 @@ const std::vector<Feature> &features()
         {"external-editor", "records", 0xE745 /* edit_note */, L("Open in your editor"), L("File, Open in External Editor"), "", "VS Code editor folder open", Badge::None, State::Ready, "command:external-editor"},
         {"status-hub", "records", 0xE9F4 /* hub */, L("Status Hub"), L("Help, Status Hub"), "", "status delivery enrollment", Badge::None, State::Ready, "command:status-hub"},
         // Tools
-        {"base64", "tools", 0xEAD3 /* data_object */, L("Base64 toolkit"), L("File, Base64 toolkit"), "", "encode decode data URL", Badge::New, State::NotBuilt, ""},
+        {"base64", "tools", 0xEAD3 /* data_object */, L("Base64 toolkit"), L("File, Base64 toolkit"), "", "encode decode data URL sha256 b64", Badge::New, State::Ready, "command:base64"},
         {"extensions", "tools", 0xE87B /* extension */, L("Extensions"), L("File, Extensions"), "", "plugins add-ons scripts hooks", Badge::New, State::NotBuilt, ""},
         {"converter", "tools", 0xE428 /* transform */, L("Local file converter"), L("File, Local file converter"), "", "convert file formats", Badge::None, State::Ready, "command:converter"},
         {"model-suite", "tools", 0xE322 /* memory */, L("Local model suite"), L("File, Local model suite"), "", "Ollama local AI models", Badge::None, State::Ready, "command:model-suite"},

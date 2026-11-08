@@ -51336,3 +51336,1038 @@ msgstr "你嘅用字去到打印機"
 #. review-status: agent-drafted
 msgid "Preferences, Use my wording in job names sent to printers"
 msgstr "偏好設定，喺傳去打印機嘅工作名用我嘅用字"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Encode and decode text, files beside the originals and data: URLs on this computer"
+msgstr "喺呢部電腦度編碼同解碼文字、原檔旁邊嘅檔案同 data: URL"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "1 byte"
+msgstr "1 位元組"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "%s bytes"
+msgstr "%s 位元組"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "1 character"
+msgstr "1 個字元"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "%s characters"
+msgstr "%s 個字元"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Invalid character"
+msgstr "無效字元"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Wrong padding"
+msgstr "補位錯誤"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Data after padding"
+msgstr "補位後面仲有資料"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Cut short"
+msgstr "斷咗尾"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Nothing to decode"
+msgstr "冇嘢可以解碼"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Not in the chosen alphabet; the offset counts characters, not bytes."
+msgstr "唔喺所揀嘅字母表入面；位置以字元計，唔係位元組。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "'=' in the wrong place, missing in strict mode, or non-zero leftover bits."
+msgstr "「=」擺錯位、嚴格模式下唔見咗，或者剩低嘅位元唔係零。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Something follows the closing '='; strict and lenient both stop."
+msgstr "收尾嘅「=」後面仲有嘢；嚴格同寬鬆都會停。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "One lone character in the last group can never decode."
+msgstr "最後一組淨係得一個字元，點都解唔到。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "There is no Base64 here, only spaces or line breaks."
+msgstr "呢度冇 Base64，得空格或者換行。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Bad character %s at %s"
+msgstr "壞字元 %s，位置 %s"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Wrong padding at %s"
+msgstr "補位錯誤，位置 %s"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Data after padding at %s"
+msgstr "補位後面仲有資料，位置 %s"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Cut short at the end"
+msgstr "喺尾斷咗"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Could not read the file"
+msgstr "讀唔到個檔案"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The file is empty"
+msgstr "個檔案係空嘅"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "No free name in that folder"
+msgstr "嗰個資料夾冇空閒嘅名可以用"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Could not write in that folder"
+msgstr "寫唔到入嗰個資料夾"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Writing failed; is the disk full?"
+msgstr "寫入失敗；係咪磁碟滿咗？"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Verification failed, so nothing was kept"
+msgstr "驗證失敗，所以乜都冇保留"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Could not name the finished file"
+msgstr "完成咗嘅檔案改唔到名"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Not a valid data: URL"
+msgstr "唔係有效嘅 data: URL"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "This data: URL is not Base64"
+msgstr "呢條 data: URL 唔係 Base64"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Cancelled, nothing written"
+msgstr "已取消，乜都冇寫"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Encode and decode text and files on this computer only. Nothing is uploaded and nothing decoded is ever run or opened by itself."
+msgstr "只係喺呢部電腦度編碼同解碼文字同檔案。乜都唔會上載，解碼出嚟嘅嘢亦都永遠唔會自己執行或者打開。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Files %s"
+msgstr "檔案 %s"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "History %s"
+msgstr "歷史記錄 %s"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "data: URL"
+msgstr "data: URL"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Direction"
+msgstr "方向"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Encode"
+msgstr "編碼"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Decode"
+msgstr "解碼"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Alphabet"
+msgstr "字母表"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Standard §4"
+msgstr "標準 §4"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "URL-safe §5"
+msgstr "URL-safe §5"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Lines"
+msgstr "換行"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "One line"
+msgstr "一行"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "MIME 76, CRLF"
+msgstr "MIME 76，CRLF"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Custom width"
+msgstr "自訂闊度"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Characters per line, 4 to 1000"
+msgstr "每行字元數，4 至 1000"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Characters per line"
+msgstr "每行字元數"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Padding"
+msgstr "補位"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Decoder"
+msgstr "解碼器"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Strict"
+msgstr "嚴格"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Lenient"
+msgstr "寬鬆"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Text as"
+msgstr "文字當做"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Swap sides"
+msgstr "左右對調"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Open a text file"
+msgstr "打開文字檔"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Save as a file"
+msgstr "存做檔案"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Base64 toolkit input"
+msgstr "Base64 工具箱輸入"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Base64 toolkit result"
+msgstr "Base64 工具箱結果"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Copy as data: URL"
+msgstr "複製做 data: URL"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Export record (JSON)"
+msgstr "匯出紀錄（JSON）"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Use in a data: URL"
+msgstr "用喺 data: URL"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Save bytes as a file"
+msgstr "將位元組存做檔案"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Try lenient"
+msgstr "試吓寬鬆"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Remove the bad character"
+msgstr "刪咗個壞字元"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Use UTF-8"
+msgstr "用 UTF-8"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Nothing partial is ever shown as complete."
+msgstr "半截嘅結果永遠唔會當做完成咁顯示。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "%s · %s"
+msgstr "%s · %s"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Showing the first 1 MB of the result. Copy and Save use all of it."
+msgstr "顯示緊結果嘅頭 1 MB。複製同儲存會用全部。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "This is more than 16 MB of text. Use the Files tab, which streams files of any size."
+msgstr "呢度超過 16 MB 文字。請用檔案分頁，佢可以串流處理任何大小嘅檔案。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Bytes as %s"
+msgstr "位元組（%s）"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Decodes back to the same %s"
+msgstr "解返出嚟係同樣嘅 %s"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Did not decode back to the same bytes"
+msgstr "解返出嚟唔係同樣嘅位元組"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Decoded %s; re-encodes to exactly this text"
+msgstr "已解碼 %s；再編碼會得返完全一樣嘅文字"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Decoded %s; the exact form for these options differs"
+msgstr "已解碼 %s；呢啲選項嘅標準寫法唔同"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Type or paste text to encode."
+msgstr "打字或者貼上文字嚟編碼。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Paste Base64 to decode."
+msgstr "貼上 Base64 嚟解碼。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Strict decode stops at the first problem"
+msgstr "嚴格解碼喺第一個問題停低"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Lenient decode stops at this problem"
+msgstr "寬鬆解碼喺呢個問題停低"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "'%s' at offset %s"
+msgstr "「%s」喺位置 %s"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "At the end, offset %s"
+msgstr "喺最尾，位置 %s"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "This text cannot be written as %s"
+msgstr "呢段文字冇辦法寫成 %s"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Character outside the text encoding"
+msgstr "字元超出文字編碼範圍"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Choose UTF-8 or UTF-16 under Text as, or remove the character."
+msgstr "喺「文字當做」揀 UTF-8 或者 UTF-16，或者刪咗嗰個字元。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "The decoded bytes are not %s text"
+msgstr "解碼出嚟嘅位元組唔係 %s 文字"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "First problem at byte %s"
+msgstr "第一個問題喺第 %s 位元組"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Bytes, not text"
+msgstr "係位元組，唔係文字"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "The bytes are kept: the hex above shows them, and Save bytes as a file writes them exactly. Try another Text as choice if this is text."
+msgstr "位元組會保留：上面嘅十六進制會顯示佢哋，「將位元組存做檔案」會一模一樣咁寫出嚟。如果呢啲係文字，試吓「文字當做」另一個選擇。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Swap sides needs a result first."
+msgstr "要先有結果先可以左右對調。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Cleared. Undo on the History tab brings it back."
+msgstr "已清除。喺歷史記錄分頁按復原就會返嚟。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "The clipboard has no text."
+msgstr "剪貼簿冇文字。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Open a text file to encode"
+msgstr "打開要編碼嘅文字檔"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Open a Base64 file to decode"
+msgstr "打開要解碼嘅 Base64 檔案"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Base64 text (*.txt;*.b64;*.base64)|*.txt;*.b64;*.base64|All files (*.*)|*.*"
+msgstr "Base64 文字 (*.txt;*.b64;*.base64)|*.txt;*.b64;*.base64|所有檔案 (*.*)|*.*"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "That file is over 16 MB. The Files tab encodes and decodes files of any size beside the originals."
+msgstr "嗰個檔案超過 16 MB。檔案分頁可以喺原檔旁邊編碼同解碼任何大小嘅檔案。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Could not read that file."
+msgstr "讀唔到嗰個檔案。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "That file is not %s text (byte %s). The Files tab encodes any file exactly."
+msgstr "嗰個檔案唔係 %s 文字（第 %s 位元組）。檔案分頁可以一模一樣咁編碼任何檔案。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "The clipboard is busy. Try again."
+msgstr "剪貼簿忙緊，請再試。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Copied %s."
+msgstr "已複製 %s。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Copied"
+msgstr "已複製"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Save the result"
+msgstr "儲存結果"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Text files (*.txt)|*.txt|All files (*.*)|*.*"
+msgstr "文字檔 (*.txt)|*.txt|所有檔案 (*.*)|*.*"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Could not save there."
+msgstr "存唔到喺嗰度。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Save the decoded bytes"
+msgstr "儲存解碼出嚟嘅位元組"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Saved %s, %s. It was not opened."
+msgstr "已儲存 %s，%s。冇打開佢。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Copied a data: URL, %s."
+msgstr "已複製一條 data: URL，%s。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Exported the record with the text, because Keep payloads is on."
+msgstr "已匯出紀錄，連埋文字，因為「保留內容」開咗。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Exported the record: options, sizes and hashes. The text itself is not in it while Keep payloads is off."
+msgstr "已匯出紀錄：選項、大小同雜湊。「保留內容」熄咗嘅時候，文字本身唔會喺入面。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Nothing to undo on the Text tab."
+msgstr "文字分頁冇嘢可以復原。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Nothing to redo on the Text tab."
+msgstr "文字分頁冇嘢可以重做。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Files, beside the originals"
+msgstr "檔案，喺原檔旁邊"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Pause all"
+msgstr "全部暫停"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Cancel all"
+msgstr "全部取消"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Encode files"
+msgstr "編碼檔案"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Decode files"
+msgstr "解碼檔案"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "report.pdf becomes report.pdf.base64.txt in the same folder. Or drop files here."
+msgstr "report.pdf 會喺同一個資料夾變成 report.pdf.base64.txt。亦可以將檔案拖落呢度。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "report.pdf.base64.txt or .b64 restores report.pdf beside it. Or drop files here."
+msgstr "report.pdf.base64.txt 或者 .b64 會喺旁邊還原 report.pdf。亦可以將檔案拖落呢度。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Source"
+msgstr "來源"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Writes"
+msgstr "寫出"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Base64 file jobs"
+msgstr "Base64 檔案工作"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "No files yet. Pick or drop files above; each one is written beside its original."
+msgstr "未有檔案。喺上面揀或者拖檔案落嚟；每個都會寫喺佢原檔旁邊。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Show in folder"
+msgstr "喺資料夾顯示"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Clear finished"
+msgstr "清除已完成"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Large files stream in 1 MB chunks with pause, resume and cancel. Each written file is checked before it counts as done: an encoded file is decoded again and its SHA-256 compared with the source. A clash gets a numbered name, so nothing is ever overwritten, and a failed or cancelled file leaves nothing behind."
+msgstr "大檔案會以 1 MB 一段串流處理，可以暫停、繼續同取消。每個寫出嚟嘅檔案都要檢查過先算完成：編碼咗嘅檔案會再解碼一次，用 SHA-256 同來源比較。撞名就用編號名，所以永遠唔會覆寫任何嘢；失敗或者取消咗嘅檔案乜都唔會留低。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Added %s files. %s were folders or missing and were skipped."
+msgstr "已加入 %s 個檔案。%s 個係資料夾或者唔存在，已略過。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Encoding %s files beside the originals."
+msgstr "喺原檔旁邊編碼緊 %s 個檔案。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Decoding %s files beside the originals."
+msgstr "喺原檔旁邊解碼緊 %s 個檔案。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Named when done"
+msgstr "完成先改名"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Waiting"
+msgstr "等緊"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Paused at %d %%"
+msgstr "喺 %d %% 暫停咗"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "%d %% · %s s left"
+msgstr "%d %% · 仲有 %s 秒"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Encoding now"
+msgstr "編碼緊"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Decoding now"
+msgstr "解碼緊"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Verified, renamed"
+msgstr "已驗證，已改名"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Verified"
+msgstr "已驗證"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Resume all"
+msgstr "全部繼續"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Files use the Text tab's alphabet (%s), lines (%s) and padding (%s). Files are always decoded leniently: line breaks and missing padding are accepted, any other character stops that file."
+msgstr "檔案會用文字分頁嘅字母表（%s）、換行（%s）同補位（%s）。檔案一律用寬鬆方式解碼：換行同欠補位都接受，其他任何字元就會停低嗰個檔案。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "URL-safe"
+msgstr "URL-safe"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "%d per line"
+msgstr "每行 %d 個"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Paused. The current file stops at the next 1 MB chunk."
+msgstr "已暫停。而家嗰個檔案會喺下一段 1 MB 停低。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Resumed."
+msgstr "已繼續。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Cancelled. Partly written files are removed."
+msgstr "已取消。寫咗一半嘅檔案已刪除。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Select a file in the list first."
+msgstr "請先喺清單揀一個檔案。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Build a URL"
+msgstr "建立 URL"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Read a URL"
+msgstr "讀取 URL"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "From a file"
+msgstr "由檔案"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "From the Text tab"
+msgstr "由文字分頁"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Nothing chosen yet."
+msgstr "未揀任何嘢。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "MIME type"
+msgstr "MIME 類型"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Charset"
+msgstr "字元集"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Charset (text only)"
+msgstr "字元集（只限文字）"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Built data: URL"
+msgstr "建立咗嘅 data: URL"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Save as text"
+msgstr "存做文字"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "A data: URL is built from 16 MB at most."
+msgstr "data: URL 最多由 16 MB 建立。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Paste a data: URL to read it. Nothing in it is opened or run."
+msgstr "貼上一條 data: URL 嚟讀取。入面嘅嘢唔會打開或者執行。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "data: URL to read"
+msgstr "要讀取嘅 data: URL"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Image"
+msgstr "圖片"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Hex"
+msgstr "十六進制"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Previews never run anything: images are drawn from their pixels and text is shown as plain text. Text over 2 MB and images over 64 MB show a size notice instead of a partial preview. Audio and video are not played here; save the bytes to play them in your own player."
+msgstr "預覽永遠唔會執行任何嘢：圖片由像素畫出嚟，文字以純文字顯示。超過 2 MB 嘅文字同超過 64 MB 嘅圖片會顯示大小提示，唔會顯示半截預覽。呢度唔會播放聲音同影片；將位元組存起，再用你自己嘅播放器播。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Choose a file for the data: URL"
+msgstr "揀一個檔案嚟建立 data: URL"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "The Text tab has no result to use yet."
+msgstr "文字分頁仲未有結果可以用。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Text tab"
+msgstr "文字分頁"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Choose a file or use the Text tab. The MIME type is detected from the bytes and can be changed."
+msgstr "揀一個檔案或者用文字分頁。MIME 類型由位元組偵測，可以改。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "%s, %s, detected as %s"
+msgstr "%s，%s，偵測到係 %s"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "%s. Copy and Save use the whole URL."
+msgstr "%s。複製同儲存會用成條 URL。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Save the data: URL"
+msgstr "儲存 data: URL"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Text files (*.txt)|*.txt"
+msgstr "文字檔 (*.txt)|*.txt"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Saved the data: URL."
+msgstr "已儲存 data: URL。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Type, size, parameters and a preview appear here."
+msgstr "類型、大小、參數同預覽會喺呢度出現。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Not a data: URL the toolkit can read: %s"
+msgstr "唔係工具箱讀到嘅 data: URL：%s"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Type %s · MIME %s · %s · Parameters: %s · %s"
+msgstr "類型 %s · MIME %s · %s · 參數：%s · %s"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Base64"
+msgstr "Base64"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "percent-encoded"
+msgstr "百分比編碼"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Signature: %s, matches the type."
+msgstr "特徵：%s，同類型夾。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Signature: no known signature in the bytes, so the type cannot be confirmed."
+msgstr "特徵：位元組入面冇已知特徵，所以確認唔到類型。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Signature: the bytes look like %s, not %s. Treat it with care."
+msgstr "特徵：啲位元組似 %s，唔係 %s。請小心處理。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "This image is %s, over the 64 MB preview limit. Save it to view it."
+msgstr "呢張圖片有 %s，超過 64 MB 預覽上限。請存起再睇。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Size %d × %d px · Colour %s · File %s bytes"
+msgstr "大小 %d × %d 像素 · 色彩 %s · 檔案 %s 位元組"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "RGBA, 8 bits"
+msgstr "RGBA，8 位元"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "RGB, 8 bits"
+msgstr "RGB，8 位元"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "This image format cannot be drawn here. Save the bytes to open it in your own viewer."
+msgstr "呢種圖片格式喺度畫唔到。將位元組存起，再用你自己嘅檢視器打開。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "This text is %s, over the 2 MB preview limit. Save it to read it."
+msgstr "呢段文字有 %s，超過 2 MB 預覽上限。請存起再讀。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "These bytes are not %s text (byte %s). The hex view shows them."
+msgstr "呢啲位元組唔係 %s 文字（第 %s 位元組）。十六進制檢視會顯示佢哋。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Showing the first 4 KB of %s."
+msgstr "顯示緊 %s 嘅頭 4 KB。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Save the bytes"
+msgstr "儲存位元組"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Undo the last change on the Text tab"
+msgstr "復原文字分頁最後一個改動"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Redo on the Text tab"
+msgstr "喺文字分頁重做"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Export history"
+msgstr "匯出歷史記錄"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Clear history"
+msgstr "清除歷史記錄"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "When"
+msgstr "時間"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Sizes"
+msgstr "大小"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Base64 history"
+msgstr "Base64 歷史記錄"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Double-click a text row to open it on the Text tab again: its options always, its text when it was kept."
+msgstr "雙擊一行文字紀錄，就會喺文字分頁再打開佢：選項一定會返嚟，文字就要當時有保留先有。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "History keeps names, sizes and hashes only. Turn on Keep payloads to store the text itself, on this computer only."
+msgstr "歷史記錄只係保留名、大小同雜湊。開咗「保留內容」就會連文字本身都儲存，只係喺呢部電腦度。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Keep payloads"
+msgstr "保留內容"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Encoded text, %s"
+msgstr "已編碼文字，%s"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Decoded text, %s"
+msgstr "已解碼文字，%s"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Encoded %s"
+msgstr "已編碼 %s"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Decoded %s"
+msgstr "已解碼 %s"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Built a data: URL, %s"
+msgstr "建立咗 data: URL，%s"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Read a data: URL, %s"
+msgstr "讀取咗 data: URL，%s"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "text kept"
+msgstr "有保留文字"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "The history is empty."
+msgstr "歷史記錄係空嘅。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Exported %s history rows."
+msgstr "已匯出 %s 行歷史記錄。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Clear every history row? Kept text is deleted too. This cannot be undone."
+msgstr "清除所有歷史記錄？保留咗嘅文字都會一齊刪走。呢個動作冇得復原。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "History cleared."
+msgstr "已清除歷史記錄。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Keep payloads is off. Text kept earlier was deleted from the history."
+msgstr "「保留內容」已熄。之前保留嘅文字已經喺歷史記錄刪走。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Keep payloads is on. From now on, text you copy, save or export is kept in the history, on this computer only."
+msgstr "「保留內容」已開。由而家起，你複製、儲存或者匯出嘅文字會保留喺歷史記錄，只係喺呢部電腦度。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Only text rows can be opened again; files stay where they were written."
+msgstr "只有文字紀錄可以再打開；檔案會留喺寫出嘅地方。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Opened the kept text and its options on the Text tab."
+msgstr "已喺文字分頁打開保留咗嘅文字同佢嘅選項。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Opened the options on the Text tab. The text was not kept, so your current text stays."
+msgstr "已喺文字分頁打開選項。文字當時冇保留，所以而家嘅文字照留。"

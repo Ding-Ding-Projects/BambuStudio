@@ -589,6 +589,12 @@ std::filesystem::path encoded_path_for(const std::filesystem::path &source)
 std::filesystem::path restored_path_for(const std::filesystem::path &encoded, const std::string &data_url_mime,
                                         const DetectedType &detected)
 {
+    return non_clashing(restored_name_for(encoded, data_url_mime, detected));
+}
+
+std::filesystem::path restored_name_for(const std::filesystem::path &encoded, const std::string &data_url_mime,
+                                        const DetectedType &detected)
+{
     std::string name = encoded.filename().u8string();
     std::string original;
     if (ends_with_nocase(name, ".base64.txt")) original = name.substr(0, name.size() - 11);
@@ -604,7 +610,7 @@ std::filesystem::path restored_path_for(const std::filesystem::path &encoded, co
         if (ext.empty()) ext = detected.extension.empty() ? std::string(".bin") : detected.extension;
         original += ext;
     }
-    return non_clashing(encoded.parent_path() / std::filesystem::u8path(original));
+    return encoded.parent_path() / std::filesystem::u8path(original);
 }
 
 // ---------------------------------------------------------------------------

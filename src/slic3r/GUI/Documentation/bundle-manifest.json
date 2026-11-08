@@ -265,12 +265,12 @@
     {
       "route": "converter/base64-files.md",
       "title": "Base64 files beside their originals",
-      "sha256": "2e9bac85a32e4e361dee010b3149ac6065c0446ab9f76aa9b68a2d75401c4e50"
+      "sha256": "bcdf4e5f8f1f641fccc8a902a7afdf08fb7dfe196e9f40850cc0ba63f2d8dd7a"
     },
     {
       "route": "converter/base64-files.yue_HK.md",
       "title": "喺原檔旁邊轉換 Base64",
-      "sha256": "6eb7a6e0d02ee60bf2460e9d076c386a690e509dc4dd8d0beae11f9586c26f40"
+      "sha256": "ba6d93997843314b4df34dd1136647612d3612d14daa831925f1e71a40441438"
     },
     {
       "route": "converter/pdf-engine.md",
@@ -1355,12 +1355,12 @@
     {
       "route": "windows/README.md",
       "title": "Windows features",
-      "sha256": "65d81f279d0e9aaab8bad9d4e01af60d570718bfaf880b3792b2fc3cb7fcd564"
+      "sha256": "9b9185ff5d6770173671a493d095910c7fa89d490d69172305eafe4300bc4989"
     },
     {
       "route": "windows/README.yue_HK.md",
       "title": "Windows 功能",
-      "sha256": "3d06117dc3ed6d42edab6d585c9cfc479765e0100c4f070dbda3b721fc47693f"
+      "sha256": "766104086fafd8f2f034c8d13266d69f4a964ac0c352501fa70ab13c5956d2e4"
     },
     {
       "route": "windows/action-sounds.md",
@@ -1451,6 +1451,16 @@
       "route": "windows/async-stl-replacement-proposal.yue_HK.md",
       "title": "非同步 STL 替換提案",
       "sha256": "691876876265da3ee9e7dcb31c2472e1cff063ca05cf5b5a15c68136b3448883"
+    },
+    {
+      "route": "windows/base64-toolkit.md",
+      "title": "Base64 toolkit",
+      "sha256": "42ca9eadb5186e965b9f83972dacdab7abf563a70ce6bb93423fac74cc916e6b"
+    },
+    {
+      "route": "windows/base64-toolkit.yue_HK.md",
+      "title": "Base64 工具箱",
+      "sha256": "50d2dcad78a3d9ca6b169cc32a6a0b93b32b18a0bf94d0b85a8c34151ea58b50"
     },
     {
       "route": "windows/bulk-filament-actions.md",
@@ -2185,7 +2195,7 @@
       "bytes": 16430
     }
   ],
-  "bundle_sha256": "dfeed56c291fbc32ccfd721a7dbd2edf9ca32361326512cd82d9ce00fc00ab99",
+  "bundle_sha256": "b7b27eb556f24544bd32109be641bc5fe720b8b10e374a136c3a8799d41dc8d0",
   "unavailable_references": [
     {
       "source": "api/README.md",
@@ -3190,6 +3200,16 @@
     {
       "source": "windows/app-updates.yue_HK.md",
       "target": "https://github.com/Ding-Ding-Projects/BambuStudio/issues/52",
+      "kind": "link"
+    },
+    {
+      "source": "windows/base64-toolkit.md",
+      "target": "../../../design/local-tools-2026-11/README.md",
+      "kind": "link"
+    },
+    {
+      "source": "windows/base64-toolkit.yue_HK.md",
+      "target": "../../../design/local-tools-2026-11/README.md",
       "kind": "link"
     },
     {

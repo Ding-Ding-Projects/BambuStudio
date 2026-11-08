@@ -26,9 +26,10 @@ plus a header of at most 1,024 bytes and its comma. Other adapters retain their
 existing input limits. Files are read into bounded memory; this is not
 a streaming implementation. The current option is canonical RFC 4648 Base64
 with padding and no whitespace or wrapping. A bounded `data:` header ending in
-`;base64` is accepted when decoding. URL-safe variants, lenient input, selectable
-text encodings, streaming pause/resume, preview and full toolkit export/history
-remain separate unfinished work.
+`;base64` is accepted when decoding. URL-safe variants, lenient input,
+selectable text encodings, streaming with pause and resume, previews, records
+and history are in the separate [Base64 toolkit](../windows/base64-toolkit.md)
+(File > Base64 toolkit), which streams files of any size.
 
 The broker compares a SHA-256 round trip through the worker, rechecks the source,
 and publishes through an exclusive temporary file only after rereading and

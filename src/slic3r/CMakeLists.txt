@@ -1073,6 +1073,12 @@ list(APPEND SLIC3R_GUI_SOURCES
     GUI/SmartHomeDialog.hpp
     GUI/Base64Toolkit/Base64Codec.cpp
     GUI/Base64Toolkit/Base64Codec.hpp
+    GUI/Base64Toolkit/Base64Files.cpp
+    GUI/Base64Toolkit/Base64Files.hpp
+    GUI/Base64Toolkit/Base64ToolkitPanel.cpp
+    GUI/Base64Toolkit/Base64ToolkitPanel.hpp
+    GUI/Base64Toolkit/Base64Workbench.cpp
+    GUI/Base64Toolkit/Base64Workbench.hpp
     GUI/PrinterFaultReference.cpp
     GUI/PrinterFaultReference.hpp
     GUI/Melody/MelodyModel.hpp

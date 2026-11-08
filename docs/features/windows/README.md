@@ -31,6 +31,7 @@
 - [Command palette (Ctrl+Shift+F)](command-palette.md)
 - [Every feature page](every-feature.md)
 - [Preferences: where every value comes from](preferences-provenance.md)
+- [Base64 toolkit](base64-toolkit.md)
 - [In-app changelog viewer (Help ▸ What's new)](changelog-viewer.md)
 - [Prepare sidebar search (settings + filament slots)](sidebar-search.md)
 - [Material color picker & color translator](md3-color-picker.md)

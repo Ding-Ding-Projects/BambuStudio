@@ -162,6 +162,9 @@ std::filesystem::path encoded_path_for(const std::filesystem::path &source);
 // then the data: MIME type (when known), then the detected type, then ".bin".
 std::filesystem::path restored_path_for(const std::filesystem::path &encoded, const std::string &data_url_mime,
                                         const DetectedType &detected);
+// The name restored_path_for starts from, before any numbering. It may exist.
+std::filesystem::path restored_name_for(const std::filesystem::path &encoded, const std::string &data_url_mime,
+                                        const DetectedType &detected);
 std::filesystem::path non_clashing(const std::filesystem::path &wanted);
 bool                  looks_like_base64_file(const std::filesystem::path &path);
 

@@ -33089,3 +33089,670 @@ msgstr ""
 
 msgid "Preferences, Use my wording in job names sent to printers"
 msgstr ""
+
+msgid "Encode and decode text, files beside the originals and data: URLs on this computer"
+msgstr ""
+
+msgid "1 byte"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s bytes"
+msgstr ""
+
+msgid "1 character"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s characters"
+msgstr ""
+
+msgid "Invalid character"
+msgstr ""
+
+msgid "Wrong padding"
+msgstr ""
+
+msgid "Data after padding"
+msgstr ""
+
+msgid "Cut short"
+msgstr ""
+
+msgid "Nothing to decode"
+msgstr ""
+
+msgid "Not in the chosen alphabet; the offset counts characters, not bytes."
+msgstr ""
+
+msgid "'=' in the wrong place, missing in strict mode, or non-zero leftover bits."
+msgstr ""
+
+msgid "Something follows the closing '='; strict and lenient both stop."
+msgstr ""
+
+msgid "One lone character in the last group can never decode."
+msgstr ""
+
+msgid "There is no Base64 here, only spaces or line breaks."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Bad character %s at %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Wrong padding at %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Data after padding at %s"
+msgstr ""
+
+msgid "Cut short at the end"
+msgstr ""
+
+msgid "Could not read the file"
+msgstr ""
+
+msgid "The file is empty"
+msgstr ""
+
+msgid "No free name in that folder"
+msgstr ""
+
+msgid "Could not write in that folder"
+msgstr ""
+
+msgid "Writing failed; is the disk full?"
+msgstr ""
+
+msgid "Verification failed, so nothing was kept"
+msgstr ""
+
+msgid "Could not name the finished file"
+msgstr ""
+
+msgid "Not a valid data: URL"
+msgstr ""
+
+msgid "This data: URL is not Base64"
+msgstr ""
+
+msgid "Cancelled, nothing written"
+msgstr ""
+
+msgid "Encode and decode text and files on this computer only. Nothing is uploaded and nothing decoded is ever run or opened by itself."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Files %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "History %s"
+msgstr ""
+
+msgid "data: URL"
+msgstr ""
+
+msgid "Direction"
+msgstr ""
+
+msgid "Encode"
+msgstr ""
+
+msgid "Decode"
+msgstr ""
+
+msgid "Alphabet"
+msgstr ""
+
+msgid "Standard §4"
+msgstr ""
+
+msgid "URL-safe §5"
+msgstr ""
+
+msgid "Lines"
+msgstr ""
+
+msgid "One line"
+msgstr ""
+
+msgid "MIME 76, CRLF"
+msgstr ""
+
+msgid "Custom width"
+msgstr ""
+
+msgid "Characters per line, 4 to 1000"
+msgstr ""
+
+msgid "Characters per line"
+msgstr ""
+
+msgid "Padding"
+msgstr ""
+
+msgid "Decoder"
+msgstr ""
+
+msgid "Strict"
+msgstr ""
+
+msgid "Lenient"
+msgstr ""
+
+msgid "Text as"
+msgstr ""
+
+msgid "Swap sides"
+msgstr ""
+
+msgid "Open a text file"
+msgstr ""
+
+msgid "Save as a file"
+msgstr ""
+
+msgid "Base64 toolkit input"
+msgstr ""
+
+msgid "Base64 toolkit result"
+msgstr ""
+
+msgid "Copy as data: URL"
+msgstr ""
+
+msgid "Export record (JSON)"
+msgstr ""
+
+msgid "Use in a data: URL"
+msgstr ""
+
+msgid "Save bytes as a file"
+msgstr ""
+
+msgid "Try lenient"
+msgstr ""
+
+msgid "Remove the bad character"
+msgstr ""
+
+msgid "Use UTF-8"
+msgstr ""
+
+msgid "Nothing partial is ever shown as complete."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s · %s"
+msgstr ""
+
+msgid "Showing the first 1 MB of the result. Copy and Save use all of it."
+msgstr ""
+
+msgid "This is more than 16 MB of text. Use the Files tab, which streams files of any size."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Bytes as %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Decodes back to the same %s"
+msgstr ""
+
+msgid "Did not decode back to the same bytes"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Decoded %s; re-encodes to exactly this text"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Decoded %s; the exact form for these options differs"
+msgstr ""
+
+msgid "Type or paste text to encode."
+msgstr ""
+
+msgid "Paste Base64 to decode."
+msgstr ""
+
+msgid "Strict decode stops at the first problem"
+msgstr ""
+
+msgid "Lenient decode stops at this problem"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "'%s' at offset %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "At the end, offset %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "This text cannot be written as %s"
+msgstr ""
+
+msgid "Character outside the text encoding"
+msgstr ""
+
+msgid "Choose UTF-8 or UTF-16 under Text as, or remove the character."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The decoded bytes are not %s text"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "First problem at byte %s"
+msgstr ""
+
+msgid "Bytes, not text"
+msgstr ""
+
+msgid "The bytes are kept: the hex above shows them, and Save bytes as a file writes them exactly. Try another Text as choice if this is text."
+msgstr ""
+
+msgid "Swap sides needs a result first."
+msgstr ""
+
+msgid "Cleared. Undo on the History tab brings it back."
+msgstr ""
+
+msgid "The clipboard has no text."
+msgstr ""
+
+msgid "Open a text file to encode"
+msgstr ""
+
+msgid "Open a Base64 file to decode"
+msgstr ""
+
+msgid "Base64 text (*.txt;*.b64;*.base64)|*.txt;*.b64;*.base64|All files (*.*)|*.*"
+msgstr ""
+
+msgid "That file is over 16 MB. The Files tab encodes and decodes files of any size beside the originals."
+msgstr ""
+
+msgid "Could not read that file."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "That file is not %s text (byte %s). The Files tab encodes any file exactly."
+msgstr ""
+
+msgid "The clipboard is busy. Try again."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Copied %s."
+msgstr ""
+
+msgid "Copied"
+msgstr ""
+
+msgid "Save the result"
+msgstr ""
+
+msgid "Text files (*.txt)|*.txt|All files (*.*)|*.*"
+msgstr ""
+
+msgid "Could not save there."
+msgstr ""
+
+msgid "Save the decoded bytes"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Saved %s, %s. It was not opened."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Copied a data: URL, %s."
+msgstr ""
+
+msgid "Exported the record with the text, because Keep payloads is on."
+msgstr ""
+
+msgid "Exported the record: options, sizes and hashes. The text itself is not in it while Keep payloads is off."
+msgstr ""
+
+msgid "Nothing to undo on the Text tab."
+msgstr ""
+
+msgid "Nothing to redo on the Text tab."
+msgstr ""
+
+msgid "Files, beside the originals"
+msgstr ""
+
+msgid "Pause all"
+msgstr ""
+
+msgid "Cancel all"
+msgstr ""
+
+msgid "Encode files"
+msgstr ""
+
+msgid "Decode files"
+msgstr ""
+
+msgid "report.pdf becomes report.pdf.base64.txt in the same folder. Or drop files here."
+msgstr ""
+
+msgid "report.pdf.base64.txt or .b64 restores report.pdf beside it. Or drop files here."
+msgstr ""
+
+msgid "Source"
+msgstr ""
+
+msgid "Writes"
+msgstr ""
+
+msgid "Base64 file jobs"
+msgstr ""
+
+msgid "No files yet. Pick or drop files above; each one is written beside its original."
+msgstr ""
+
+msgid "Show in folder"
+msgstr ""
+
+msgid "Clear finished"
+msgstr ""
+
+msgid "Large files stream in 1 MB chunks with pause, resume and cancel. Each written file is checked before it counts as done: an encoded file is decoded again and its SHA-256 compared with the source. A clash gets a numbered name, so nothing is ever overwritten, and a failed or cancelled file leaves nothing behind."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Added %s files. %s were folders or missing and were skipped."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Encoding %s files beside the originals."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Decoding %s files beside the originals."
+msgstr ""
+
+msgid "Named when done"
+msgstr ""
+
+msgid "Waiting"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Paused at %d %%"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%d %% · %s s left"
+msgstr ""
+
+msgid "Encoding now"
+msgstr ""
+
+msgid "Decoding now"
+msgstr ""
+
+msgid "Verified, renamed"
+msgstr ""
+
+msgid "Verified"
+msgstr ""
+
+msgid "Resume all"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Files use the Text tab's alphabet (%s), lines (%s) and padding (%s). Files are always decoded leniently: line breaks and missing padding are accepted, any other character stops that file."
+msgstr ""
+
+msgid "URL-safe"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%d per line"
+msgstr ""
+
+msgid "Paused. The current file stops at the next 1 MB chunk."
+msgstr ""
+
+msgid "Resumed."
+msgstr ""
+
+msgid "Cancelled. Partly written files are removed."
+msgstr ""
+
+msgid "Select a file in the list first."
+msgstr ""
+
+msgid "Build a URL"
+msgstr ""
+
+msgid "Read a URL"
+msgstr ""
+
+msgid "From a file"
+msgstr ""
+
+msgid "From the Text tab"
+msgstr ""
+
+msgid "Nothing chosen yet."
+msgstr ""
+
+msgid "MIME type"
+msgstr ""
+
+msgid "Charset"
+msgstr ""
+
+msgid "Charset (text only)"
+msgstr ""
+
+msgid "Built data: URL"
+msgstr ""
+
+msgid "Save as text"
+msgstr ""
+
+msgid "A data: URL is built from 16 MB at most."
+msgstr ""
+
+msgid "Paste a data: URL to read it. Nothing in it is opened or run."
+msgstr ""
+
+msgid "data: URL to read"
+msgstr ""
+
+msgid "Image"
+msgstr ""
+
+msgid "Hex"
+msgstr ""
+
+msgid "Previews never run anything: images are drawn from their pixels and text is shown as plain text. Text over 2 MB and images over 64 MB show a size notice instead of a partial preview. Audio and video are not played here; save the bytes to play them in your own player."
+msgstr ""
+
+msgid "Choose a file for the data: URL"
+msgstr ""
+
+msgid "The Text tab has no result to use yet."
+msgstr ""
+
+msgid "Text tab"
+msgstr ""
+
+msgid "Choose a file or use the Text tab. The MIME type is detected from the bytes and can be changed."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s, %s, detected as %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s. Copy and Save use the whole URL."
+msgstr ""
+
+msgid "Save the data: URL"
+msgstr ""
+
+msgid "Text files (*.txt)|*.txt"
+msgstr ""
+
+msgid "Saved the data: URL."
+msgstr ""
+
+msgid "Type, size, parameters and a preview appear here."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Not a data: URL the toolkit can read: %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Type %s · MIME %s · %s · Parameters: %s · %s"
+msgstr ""
+
+msgid "Base64"
+msgstr ""
+
+msgid "percent-encoded"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Signature: %s, matches the type."
+msgstr ""
+
+msgid "Signature: no known signature in the bytes, so the type cannot be confirmed."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Signature: the bytes look like %s, not %s. Treat it with care."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "This image is %s, over the 64 MB preview limit. Save it to view it."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Size %d × %d px · Colour %s · File %s bytes"
+msgstr ""
+
+msgid "RGBA, 8 bits"
+msgstr ""
+
+msgid "RGB, 8 bits"
+msgstr ""
+
+msgid "This image format cannot be drawn here. Save the bytes to open it in your own viewer."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "This text is %s, over the 2 MB preview limit. Save it to read it."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "These bytes are not %s text (byte %s). The hex view shows them."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Showing the first 4 KB of %s."
+msgstr ""
+
+msgid "Save the bytes"
+msgstr ""
+
+msgid "Undo the last change on the Text tab"
+msgstr ""
+
+msgid "Redo on the Text tab"
+msgstr ""
+
+msgid "Export history"
+msgstr ""
+
+msgid "Clear history"
+msgstr ""
+
+msgid "When"
+msgstr ""
+
+msgid "Sizes"
+msgstr ""
+
+msgid "Base64 history"
+msgstr ""
+
+msgid "Double-click a text row to open it on the Text tab again: its options always, its text when it was kept."
+msgstr ""
+
+msgid "History keeps names, sizes and hashes only. Turn on Keep payloads to store the text itself, on this computer only."
+msgstr ""
+
+msgid "Keep payloads"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Encoded text, %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Decoded text, %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Encoded %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Decoded %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Built a data: URL, %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Read a data: URL, %s"
+msgstr ""
+
+msgid "text kept"
+msgstr ""
+
+msgid "The history is empty."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Exported %s history rows."
+msgstr ""
+
+msgid "Clear every history row? Kept text is deleted too. This cannot be undone."
+msgstr ""
+
+msgid "History cleared."
+msgstr ""
+
+msgid "Keep payloads is off. Text kept earlier was deleted from the history."
+msgstr ""
+
+msgid "Keep payloads is on. From now on, text you copy, save or export is kept in the history, on this computer only."
+msgstr ""
+
+msgid "Only text rows can be opened again; files stay where they were written."
+msgstr ""
+
+msgid "Opened the kept text and its options on the Text tab."
+msgstr ""
+
+msgid "Opened the options on the Text tab. The text was not kept, so your current text stays."
+msgstr ""

@@ -437,6 +437,7 @@ src/slic3r/GUI/wxMediaCtrl2.cpp
 src/slic3r/GUI/CommandPaletteIndex.cpp
 src/slic3r/GUI/FeatureFinder/FeatureCatalogue.cpp
 src/slic3r/GUI/FeatureFinder/FeatureFinderPanel.cpp
+src/slic3r/GUI/Base64Toolkit/Base64ToolkitPanel.cpp
 src/slic3r/GUI/ModelCreator/ModelCreatorBackend.cpp
 src/slic3r/GUI/OllamaSuite/OllamaSuiteText.cpp
 src/slic3r/GUI/MonitorBasePanel.cpp
