@@ -40,6 +40,7 @@ struct CreateRequest
     char        drive_letter = 0;         // 0 picks the next free letter
     bool        attach       = true;
     bool        quick_format = true;
+    bool        dev_drive    = false; // ReFS formatted as a Dev Drive (Windows 11 build 22621.2338 and later)
 };
 
 struct Validation
@@ -97,6 +98,10 @@ struct PackRequest
 std::uint64_t pack_size(std::uint64_t source_bytes, std::uint64_t source_files); // fitted tightly, whole MB
 std::string   unique_target(const std::string &folder, const std::string &name, const std::vector<std::string> &taken); // "Photos (1).vhdx"
 Script        pack_script(const PackRequest &r);
+
+// The steps as a person runs them by hand (Copy as PowerShell): the helpers
+// the steps use are defined first.
+std::string clean_script(const Script &s);
 
 // Wraps a script for running: results and progress go to files the app reads,
 // and the script stops at the next step once the cancel file appears.

@@ -38,6 +38,17 @@ static bool run(const Script &s, std::string *extra = nullptr)
     return o.status == RunOutcome::Status::Done;
 }
 
+// What Windows reported, so a failure says what it saw.
+static void print_attached(const std::map<std::string, Attachment> &m, bool available)
+{
+    std::printf("   attached disks (%s):\n", available ? "asked" : "not available");
+    for (const auto &e : m) {
+        std::printf("     %s%s", e.first.c_str(), e.second.attached ? "" : " (not attached)");
+        for (const std::string &p : e.second.mount_points) std::printf(" at %s", p.c_str());
+        std::printf("\n");
+    }
+}
+
 static std::string strip(std::string g)
 {
     std::string out;
@@ -69,6 +80,7 @@ int main()
 
     bool available = false;
     auto attached  = attached_disks(available);
+    print_attached(attached, available);
     CHECK(available && attached[path_key(base)].attached && !attached[path_key(base)].mount_points.empty());
     std::string mount = attached[path_key(base)].mount_points.empty() ? std::string() : attached[path_key(base)].mount_points.front();
     std::printf("   mounted at %s\n", mount.c_str());
@@ -90,6 +102,7 @@ int main()
     CHECK(test_chain({read_disk(base), kid}, 1).result == ChainResult::Passed);
     CHECK(run(attach_script(child, false)));
     attached = attached_disks(available);
+    print_attached(attached, available);
     mount    = attached[path_key(child)].mount_points.empty() ? std::string() : attached[path_key(child)].mount_points.front();
     CHECK(!mount.empty());
     if (!mount.empty()) std::ofstream(fs::u8path(mount) / "from-the-child.txt") << "written through the child\n";

@@ -305,6 +305,13 @@ int main()
     CHECK(create.diskpart.find("create vdisk file=\"D:\\Disks\\Prints.vhdx\" maximum=262144 type=expandable") != std::string::npos);
     CHECK(create.diskpart.find("convert gpt") != std::string::npos && create.diskpart.find("assign letter=P") != std::string::npos);
     CHECK(ps_quote("D:\\Bob's\\x.vhdx") == "'D:\\Bob''s\\x.vhdx'");
+    CreateRequest dev = r;
+    dev.dev_drive = true, dev.file_system = "ReFS", dev.size = 50 * kGB;
+    CHECK(validate(dev, kTB, false).ok() && create_script(dev).powershell.find("-FileSystem ReFS -NewFileSystemLabel 'Prints' -DevDrive") != std::string::npos);
+    dev.file_system = "NTFS";
+    CHECK(!validate(dev, kTB, false).ok());
+    dev.file_system = "ReFS", dev.size = 40 * kGB;
+    CHECK(!validate(dev, kTB, false).ok());
     CHECK(attach_script("D:\\a.iso", true).powershell.find("Mount-DiskImage -ImagePath 'D:\\a.iso' -Access ReadOnly") != std::string::npos);
     CHECK(detach_script("D:\\a.vhdx").diskpart == "select vdisk file=\"D:\\a.vhdx\"\ndetach vdisk\n");
     const Script grow = grow_script("D:\\a.vhdx", 384 * kGB, true);
@@ -313,7 +320,7 @@ int main()
     CHECK(compact_script("D:\\a.vhdx", CompactMode::Full, true).powershell.find("-Access ReadOnly") != std::string::npos);
     CHECK(compact_script("D:\\a.vhdx", CompactMode::Quick, false).powershell.find("[BambuVirtDisk]::Compact('D:\\a.vhdx', $true)") != std::string::npos);
     const Script merge = merge_script("D:\\c.avhdx", "D:\\b.vhdx", "D:\\b (copy).vhdx");
-    CHECK(merge.powershell.find("Get-FileHash") < merge.powershell.find("[BambuVirtDisk]::Merge('D:\\c.avhdx')"));
+    CHECK(merge.powershell.find("(Sha256 'D:\\b.vhdx') -ne (Sha256 'D:\\b (copy).vhdx')") < merge.powershell.find("[BambuVirtDisk]::Merge('D:\\c.avhdx')"));
     CHECK(merge_script("D:\\c.avhdx", "D:\\b.vhdx", "").powershell.find("Copy-Item") == std::string::npos);
     CHECK(child_script("D:\\b.vhdx", "D:\\c.avhdx").powershell.find("[BambuVirtDisk]::Create('D:\\c.avhdx', 3, 0, 0, 0, 0, 'D:\\b.vhdx', $false)") != std::string::npos);
     CHECK(reconnect_parent_script("D:\\c.avhdx", "E:\\b.vhdx").diskpart.empty());
@@ -326,12 +333,17 @@ int main()
     PackRequest pack;
     pack.source = "D:\\Archive\\Photos", pack.target = "D:\\Archive\\Photos (1).vhdx", pack.source_bytes = 17 * kGB, pack.source_files = 3310, pack.label = "Photos";
     const Script packed = pack_script(pack);
-    CHECK(packed.powershell.find("/COPY:DAT") != std::string::npos && packed.powershell.find("SHA256") != std::string::npos);
+    CHECK(packed.powershell.find("/COPY:DAT") != std::string::npos && packed.powershell.find("(Sha256 $f.FullName) -ne (Sha256 $copy)") != std::string::npos);
     CHECK(packed.powershell.find("Remove-Item -LiteralPath $target") != std::string::npos && packed.powershell.find("Remove-Item -LiteralPath $source") == std::string::npos);
     CHECK(packed.powershell.find("Dismount-DiskImage -ImagePath $target | Out-Null") != std::string::npos);
     const std::string run = runner_script(packed, "C:\\t\\r.json", "C:\\t\\p.txt", "C:\\t\\c");
     CHECK(run.find("$ResultPath = 'C:\\t\\r.json'") != std::string::npos && run.find("Finish $true 'Done'") != std::string::npos);
     CHECK(run.find("Add-Type -TypeDefinition @'") != std::string::npos && run.find("\n'@\n") != std::string::npos);
+
+    // A copied script defines what its steps use.
+    const std::string copied = clean_script(packed);
+    CHECK(copied.find("function Step") < copied.find("Step 'Creating") && copied.find("function Sha256") < copied.find("(Sha256 $f.FullName)"));
+    CHECK(clean_script(reconnect_parent_script("D:\\c.avhdx", "E:\\b.vhdx")).find("[BambuVirtDisk]::SetParentPath") != std::string::npos);
 
     // The library file.
     Library lib;

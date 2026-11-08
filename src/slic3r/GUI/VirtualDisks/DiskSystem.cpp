@@ -84,6 +84,9 @@ std::string path_key(const std::string &path)
 {
     std::string p = path;
     std::replace(p.begin(), p.end(), '/', '\\');
+    // Windows may answer with a device-style prefix: \\?\D:\x.vhdx or \??\D:\x.vhdx.
+    for (const char *prefix : {"\\\\?\\", "\\??\\"})
+        if (p.rfind(prefix, 0) == 0) p = p.substr(std::string(prefix).size());
     return lower_text(p);
 }
 
@@ -145,6 +148,8 @@ std::map<std::string, Attachment> attached_disks(bool &available)
                 std::wstring device = volume;
                 if (!device.empty() && device.back() == L'\\') device.pop_back();
                 HANDLE h = CreateFileW(device.c_str(), 0, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, 0, nullptr);
+                if (h == INVALID_HANDLE_VALUE)
+                    h = CreateFileW(device.c_str(), GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, 0, nullptr);
                 if (h == INVALID_HANDLE_VALUE) continue;
                 std::vector<std::uint8_t> info(64 * 1024);
                 auto *dep    = reinterpret_cast<PSTORAGE_DEPENDENCY_INFO>(info.data());
@@ -153,7 +158,8 @@ std::map<std::string, Attachment> attached_disks(bool &available)
                 if (depend(h, GET_STORAGE_DEPENDENCY_FLAG_HOST_VOLUMES, ULONG(info.size()), dep, &used) == ERROR_SUCCESS) {
                     for (ULONG i = 0; i < dep->NumberEntries; ++i) {
                         const STORAGE_DEPENDENCY_INFO_TYPE_2 &e = dep->Version2Entries[i];
-                        if (e.AncestorLevel != 1 || !e.HostVolumeName || !e.DependentVolumeRelativePath) continue;
+                        // The nearest host is the file this volume lives in; deeper levels are its parents.
+                        if (e.AncestorLevel > 1 || !e.HostVolumeName || !e.DependentVolumeRelativePath) continue;
                         const std::vector<std::string> hosts = mount_points_of(e.HostVolumeName);
                         if (hosts.empty()) continue;
                         std::wstring relative = e.DependentVolumeRelativePath;
@@ -168,6 +174,58 @@ std::map<std::string, Attachment> attached_disks(bool &available)
             } while (FindNextVolumeW(find, volume, MAX_PATH));
             FindVolumeClose(find);
         }
+    }
+    // Attached disks still without a mount point: their disk number, and the
+    // volumes whose extents lie on that disk (needs the disk to open for its info).
+    using Open     = DWORD(WINAPI *)(PVIRTUAL_STORAGE_TYPE, PCWSTR, VIRTUAL_DISK_ACCESS_MASK, OPEN_VIRTUAL_DISK_FLAG, POPEN_VIRTUAL_DISK_PARAMETERS, PHANDLE);
+    using Physical = DWORD(WINAPI *)(HANDLE, PULONG, PWSTR);
+    auto open_disk = reinterpret_cast<Open>(reinterpret_cast<void *>(GetProcAddress(virtdisk, "OpenVirtualDisk")));
+    auto physical  = reinterpret_cast<Physical>(reinterpret_cast<void *>(GetProcAddress(virtdisk, "GetVirtualDiskPhysicalPath")));
+    std::map<DWORD, std::vector<std::string>> by_disk;
+    bool volumes_read = false;
+    for (auto &entry : out) {
+        if (!entry.second.mount_points.empty() || !open_disk || !physical) continue;
+        if (!volumes_read) {
+            volumes_read            = true;
+            wchar_t volume[MAX_PATH] = {};
+            HANDLE  find             = FindFirstVolumeW(volume, MAX_PATH);
+            if (find != INVALID_HANDLE_VALUE) {
+                do {
+                    std::wstring device = volume;
+                    if (!device.empty() && device.back() == L'\\') device.pop_back();
+                    HANDLE h = CreateFileW(device.c_str(), 0, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, 0, nullptr);
+                    if (h == INVALID_HANDLE_VALUE) continue;
+                    std::vector<std::uint8_t> extents(4096);
+                    DWORD                     got = 0;
+                    if (DeviceIoControl(h, IOCTL_VOLUME_GET_VOLUME_DISK_EXTENTS, nullptr, 0, extents.data(), DWORD(extents.size()), &got, nullptr)) {
+                        const auto *e = reinterpret_cast<const VOLUME_DISK_EXTENTS *>(extents.data());
+                        for (DWORD k = 0; k < e->NumberOfDiskExtents; ++k)
+                            for (const std::string &m : mount_points_of(volume)) by_disk[e->Extents[k].DiskNumber].push_back(m);
+                    }
+                    CloseHandle(h);
+                } while (FindNextVolumeW(find, volume, MAX_PATH));
+                FindVolumeClose(find);
+            }
+        }
+        // The map holds lower-case keys; Windows matches file names without regard to case.
+        const std::string key  = entry.first;
+        const int         n    = MultiByteToWideChar(CP_UTF8, 0, key.data(), int(key.size()), nullptr, 0);
+        std::wstring      wkey(std::size_t(n), L'\0');
+        MultiByteToWideChar(CP_UTF8, 0, key.data(), int(key.size()), wkey.data(), n);
+        VIRTUAL_STORAGE_TYPE type{};
+        HANDLE               h = nullptr;
+        if (open_disk(&type, wkey.c_str(), VIRTUAL_DISK_ACCESS_GET_INFO, OPEN_VIRTUAL_DISK_FLAG_NONE, nullptr, &h) != ERROR_SUCCESS) continue;
+        wchar_t path[MAX_PATH] = {};
+        ULONG   size           = sizeof(path);
+        if (physical(h, &size, path) == ERROR_SUCCESS) {
+            const wchar_t *digits = path + wcslen(path);
+            while (digits > path && iswdigit(digits[-1])) --digits;
+            if (*digits) {
+                const DWORD number = DWORD(wcstoul(digits, nullptr, 10));
+                for (const std::string &m : by_disk[number]) entry.second.mount_points.push_back(m);
+            }
+        }
+        CloseHandle(h);
     }
     FreeLibrary(virtdisk);
 #endif

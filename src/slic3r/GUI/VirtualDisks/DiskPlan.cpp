@@ -153,7 +153,7 @@ std::string virtdisk_block()
 std::string device_id(Format f) { return f == Format::Vhd ? "2" : "3"; }
 
 // The partition and file system steps after a disk is attached as $disk.
-std::string prepare_volume_ps(const std::string &style, const std::string &fs, const std::string &label, char letter, bool quick)
+std::string prepare_volume_ps(const std::string &style, const std::string &fs, const std::string &label, char letter, bool quick, bool dev_drive = false)
 {
     std::ostringstream ps;
     if (style.empty()) return std::string();
@@ -162,6 +162,7 @@ std::string prepare_volume_ps(const std::string &style, const std::string &fs, c
     ps << "Format-Volume -Partition $part -FileSystem " << fs;
     if (!label.empty()) ps << " -NewFileSystemLabel " << ps_quote(label);
     if (!quick) ps << " -Full";
+    if (dev_drive) ps << " -DevDrive";
     ps << " -Confirm:$false | Out-Null\n";
     return ps.str();
 }
@@ -265,6 +266,11 @@ Validation validate(const CreateRequest &r, std::uint64_t free_bytes, bool targe
         if (r.label.size() > limit) v.errors.push_back("A " + fs + " label has at most " + std::to_string(limit) + " characters.");
         if (r.drive_letter && !(r.drive_letter >= 'D' && r.drive_letter <= 'Z')) v.errors.push_back("The drive letter is D to Z.");
         if (!r.attach) v.errors.push_back("The disk is attached to make its partition and file system; choose to attach it, or leave it raw.");
+        if (r.dev_drive) {
+            if (fs != "ReFS") v.errors.push_back("A Dev Drive is formatted ReFS.");
+            if (r.size < 50 * kGB) v.errors.push_back("A Dev Drive is at least 50 GB.");
+            v.notes.push_back("A Dev Drive needs Windows 11 build 22621.2338 or later; Windows marks it trusted, and antivirus stays on for it.");
+        }
     }
     return v;
 }
@@ -287,7 +293,7 @@ Script create_script(const CreateRequest &r)
         if (!child && !r.partition_style.empty()) {
             ps << "$disk = $image | Get-Disk\n";
             ps << "Step 'Making the partition and the file system'\n";
-            ps << prepare_volume_ps(r.partition_style, r.file_system, r.label, r.drive_letter, r.quick_format);
+            ps << prepare_volume_ps(r.partition_style, r.file_system, r.label, r.drive_letter, r.quick_format, r.dev_drive);
         }
     }
     s.powershell = ps.str();
@@ -414,8 +420,7 @@ Script merge_script(const std::string &child, const std::string &parent, const s
         ps << "Step 'Copying " << leaf_name(parent) << " first'\n";
         ps << "Copy-Item -LiteralPath " << ps_quote(parent) << " -Destination " << ps_quote(backup) << "\n";
         ps << "Step 'Checking the copy'\n";
-        ps << "if ((Get-FileHash -LiteralPath " << ps_quote(parent) << " -Algorithm SHA256).Hash -ne (Get-FileHash -LiteralPath " << ps_quote(backup)
-           << " -Algorithm SHA256).Hash) { throw 'The copy of the parent does not match it, so nothing was merged.' }\n";
+        ps << "if ((Sha256 " << ps_quote(parent) << ") -ne (Sha256 " << ps_quote(backup) << ")) { throw 'The copy of the parent does not match it, so nothing was merged.' }\n";
     }
     ps << "Step 'Merging'\n";
     ps << "[BambuVirtDisk]::Merge(" << ps_quote(child) << ")\n";
@@ -527,7 +532,7 @@ Script pack_script(const PackRequest &r)
     ps << "    Cancelled\n";
     ps << "    $rel = $f.FullName.Substring($source.TrimEnd('\\').Length)\n";
     ps << "    $copy = $dest + $rel\n";
-    ps << "    if (-not (Test-Path -LiteralPath $copy) -or (Get-FileHash -LiteralPath $f.FullName -Algorithm SHA256).Hash -ne (Get-FileHash -LiteralPath $copy -Algorithm SHA256).Hash) { $bad += $rel }\n";
+    ps << "    if (-not (Test-Path -LiteralPath $copy) -or (Sha256 $f.FullName) -ne (Sha256 $copy)) { $bad += $rel }\n";
     ps << "    $checked++; if ($checked % 25 -eq 0) { Step \"Checked $checked of $($files.Count) files\" }\n";
     ps << "  }\n";
     ps << "  if ($bad.Count -gt 0) { throw (\"$($bad.Count) files do not match their source: \" + ($bad | Select-Object -First 5) -join ', ') }\n";
@@ -544,10 +549,26 @@ Script pack_script(const PackRequest &r)
     return s; // DiskPart cannot copy files
 }
 
+std::string clean_script(const Script &s)
+{
+    if (s.powershell.empty()) return std::string();
+    std::ostringstream ps;
+    ps << "# " << s.summary << "\n# Run in Windows PowerShell as administrator.\n";
+    ps << "$ErrorActionPreference = 'Stop'\n$CancelPath = ''\n";
+    ps << "function Step([string]$text) { Write-Host $text }\nfunction Cancelled { }\n";
+    ps << "function Sha256([string]$path) { $s = [IO.File]::OpenRead($path); try { [BitConverter]::ToString([Security.Cryptography.SHA256]::Create().ComputeHash($s)) } finally { $s.Dispose() } }\n";
+    ps << s.powershell;
+    return ps.str();
+}
+
 std::string runner_script(const Script &s, const std::string &result_path, const std::string &progress_path, const std::string &cancel_path)
 {
     std::ostringstream ps;
     ps << "$ErrorActionPreference = 'Stop'\n";
+    // Windows PowerShell started from PowerShell 7 inherits its module path; take the machine's own.
+    ps << "$env:PSModulePath = [Environment]::GetEnvironmentVariable('PSModulePath', 'Machine')\n";
+    ps << "function Sha256([string]$path) { if ($path.Length -gt 250 -and -not $path.StartsWith('\\\\?\\')) { $path = '\\\\?\\' + $path }\n";
+    ps << "  $s = [IO.File]::OpenRead($path); try { [BitConverter]::ToString([Security.Cryptography.SHA256]::Create().ComputeHash($s)) } finally { $s.Dispose() } }\n";
     ps << "$ResultPath = " << ps_quote(result_path) << "\n$ProgressPath = " << ps_quote(progress_path) << "\n$CancelPath = " << ps_quote(cancel_path) << "\n";
     ps << "$Extra = $null\n";
     ps << "function Step([string]$text) { Add-Content -LiteralPath $ProgressPath -Value $text -Encoding UTF8 }\n";
