@@ -30,7 +30,7 @@
    "x": 0,
    "y": 1490,
    "w": 1440,
-   "h": 1790,
+   "h": 1880,
    "title": "Extension manager: permissions, runs, manifest and consent",
    "expand": "fill"
   },
@@ -44,7 +44,7 @@
   },
   "Base64.dc.html": {
    "x": 0,
-   "y": 3400,
+   "y": 3490,
    "w": 1440,
    "h": 2000,
    "title": "Base64 toolkit: every option, batch files, data: URLs, preview and history",
@@ -52,7 +52,7 @@
   },
   "InfoIcons.dc.html": {
    "x": 1520,
-   "y": 3400,
+   "y": 3490,
    "w": 1440,
    "h": 1570,
    "title": "Preferences remake: info icons and where every value comes from",
@@ -60,7 +60,7 @@
   },
   "ContextMenu.dc.html": {
    "x": 0,
-   "y": 5520,
+   "y": 5610,
    "w": 1440,
    "h": 1120,
    "title": "Context menus with live controls and real shortcuts",
@@ -68,7 +68,7 @@
   },
   "Liveline.dc.html": {
    "x": 1520,
-   "y": 5520,
+   "y": 5610,
    "w": 1440,
    "h": 1460,
    "title": "Live charts on Device: every honest state",
@@ -76,7 +76,7 @@
   },
   "Drawesome.dc.html": {
    "x": 0,
-   "y": 7100,
+   "y": 7190,
    "w": 1440,
    "h": 1810,
    "title": "Drawing board: seven pens, eraser, exports and records",
@@ -84,14 +84,14 @@
   },
   "DrawesomeShapes.dc.html": {
    "x": 1520,
-   "y": 7100,
+   "y": 7190,
    "w": 1440,
    "h": 420,
    "title": "Drawing toolbar shapes"
   },
   "VirtualDisks.dc.html": {
    "x": 0,
-   "y": 9030,
+   "y": 9120,
    "w": 1440,
    "h": 2970,
    "title": "Windows virtual disk manager: every operation",
@@ -99,7 +99,7 @@
   },
   "Servers.dc.html": {
    "x": 1520,
-   "y": 9030,
+   "y": 9120,
    "w": 1440,
    "h": 3330,
    "title": "Minecraft servers: properties, console, backups and world generator",
