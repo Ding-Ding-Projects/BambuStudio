@@ -1585,12 +1585,12 @@
     {
       "route": "windows/drawing-board.md",
       "title": "Drawing board",
-      "sha256": "fe43aadd57c156dbcf352f8752a1170511f1d77ab94223eebd4321c8e84ba183"
+      "sha256": "48d496fba9adcb065479bfbcc53120d8f20b14cd95d0f415731b8b54d8954c91"
     },
     {
       "route": "windows/drawing-board.yue_HK.md",
       "title": "畫板",
-      "sha256": "b5545d56f28d7d58fe80cd7f7b21f052f5294fdaa2453799fd8a9cf63518a6db"
+      "sha256": "e5af31f2d7918c9f5a1f37e43cd97f9b08f2380a8e9b6e3807d6818a813aca44"
     },
     {
       "route": "windows/element-locks.md",
@@ -2255,7 +2255,7 @@
       "bytes": 16430
     }
   ],
-  "bundle_sha256": "01ab9538316ffcd5703725cb6c5333df54568197f7be396df4b90cc2cb1296dc",
+  "bundle_sha256": "b8e6a673e821d9ceb6ab7f69cff56ff16effd97df6b1a6521b0c6b982aa97ba3",
   "unavailable_references": [
     {
       "source": "api/README.md",

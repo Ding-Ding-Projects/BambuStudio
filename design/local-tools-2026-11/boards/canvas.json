@@ -78,7 +78,7 @@
    "x": 0,
    "y": 7190,
    "w": 1440,
-   "h": 1810,
+   "h": 1940,
    "title": "Drawing board: seven pens, eraser, exports and records",
    "expand": "fill"
   },
@@ -91,7 +91,7 @@
   },
   "VirtualDisks.dc.html": {
    "x": 0,
-   "y": 9120,
+   "y": 9250,
    "w": 1440,
    "h": 2970,
    "title": "Windows virtual disk manager: every operation",
@@ -99,7 +99,7 @@
   },
   "Servers.dc.html": {
    "x": 1520,
-   "y": 9120,
+   "y": 9250,
    "w": 1440,
    "h": 3330,
    "title": "Minecraft servers: properties, console, backups and world generator",
@@ -107,7 +107,7 @@
   },
   "Attention.dc.html": {
    "x": 0,
-   "y": 12570,
+   "y": 12700,
    "w": 1440,
    "h": 900,
    "title": "Attention modes · five accommodations, each on its own switch",

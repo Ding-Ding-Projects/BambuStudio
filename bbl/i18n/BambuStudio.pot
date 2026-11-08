@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-08 06:49-0500\n"
+"POT-Creation-Date: 2026-11-08 06:53-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -31925,6 +31925,21 @@ msgstr ""
 msgid "Eraser"
 msgstr ""
 
+msgid "Colour..."
+msgstr ""
+
+msgid "Width (px)"
+msgstr ""
+
+msgid "Keep this version"
+msgstr ""
+
+msgid "Clear..."
+msgstr ""
+
+msgid "Kept by you"
+msgstr ""
+
 msgid "Another plate..."
 msgstr ""
 
@@ -31935,12 +31950,6 @@ msgid "How it works"
 msgstr ""
 
 msgid "Versions kept on this computer"
-msgstr ""
-
-msgid "Keep this version"
-msgstr ""
-
-msgid "Kept by you"
 msgstr ""
 
 msgid "Saved"
@@ -31958,20 +31967,14 @@ msgstr ""
 msgid "Bringing a version back replaces the drawing and can be undone. The last 20 versions are kept; clearing keeps one first."
 msgstr ""
 
-msgid "1 to 7 pick a pen and E the eraser. Hold Shift to keep a stroke on one of eight directions. Ctrl+Z and Ctrl+Y undo and redo. With the board focused, the arrow keys move the keyboard pen (Shift for small steps), Space puts it down and lifts it, and Esc lifts it."
+msgid "1 to 7 pick a pen and E the eraser, C a colour and S the width. Hold Shift to keep a stroke on one of eight directions. Ctrl+Z and Ctrl+Y undo and redo, Ctrl+Shift+E exports. With the board focused, the arrow keys move the keyboard pen (Shift for small steps), Space puts it down and lifts it, and Esc lifts it. Right-click or Shift+F10 lists every pen with its key."
 msgstr ""
 
 #, possible-c-format, possible-boost-format
 msgid "%s (key %c)"
 msgstr ""
 
-msgid "Colour..."
-msgstr ""
-
 msgid "Pick any colour; the last eight stay beside this project's filament colours"
-msgstr ""
-
-msgid "Width (px)"
 msgstr ""
 
 msgid "Opacity (%)"
@@ -31993,9 +31996,6 @@ msgid "Take a new picture of the plate to draw on; your strokes stay where they 
 msgstr ""
 
 msgid "Save the drawing as PNG at 1x, 2x or 3x, on a transparent background, or as SVG"
-msgstr ""
-
-msgid "Clear..."
 msgstr ""
 
 msgid "Remove every stroke, behind the two-key confirmation; a version is kept first"

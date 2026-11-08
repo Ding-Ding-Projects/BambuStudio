@@ -35356,3 +35356,6 @@ msgstr ""
 
 msgid "never uploaded"
 msgstr ""
+
+msgid "1 to 7 pick a pen and E the eraser, C a colour and S the width. Hold Shift to keep a stroke on one of eight directions. Ctrl+Z and Ctrl+Y undo and redo, Ctrl+Shift+E exports. With the board focused, the arrow keys move the keyboard pen (Shift for small steps), Space puts it down and lifts it, and Esc lifts it. Right-click or Shift+F10 lists every pen with its key."
+msgstr ""

@@ -165,6 +165,8 @@ public:
         });
         Bind(wxEVT_MOUSE_CAPTURE_LOST, [this](wxMouseCaptureLostEvent &) { end(); });
         Bind(wxEVT_KEY_DOWN, &BoardCanvas::on_key, this);
+        // Right-click, Shift+F10 or the Menu key: every pen with its key, from the same table as the keys.
+        Bind(wxEVT_CONTEXT_MENU, &BoardCanvas::on_menu, this);
         Bind(wxEVT_SET_FOCUS, [this](wxFocusEvent &e) {
             Refresh();
             e.Skip();
@@ -240,11 +242,15 @@ private:
     void on_key(wxKeyEvent &e)
     {
         const int key = e.GetKeyCode();
+        if (e.ControlDown() && e.ShiftDown() && key == 'E') return m_owner->export_drawing();
         if (e.ControlDown() && key == 'Z') return m_owner->undo();
         if (e.ControlDown() && key == 'Y') return m_owner->redo();
-        if (!e.ControlDown() && !e.AltDown())
+        if (!e.ControlDown() && !e.AltDown()) {
+            if (key == 'C') return m_owner->pick_custom_color();
+            if (key == 'S') return focus_width();
             for (const PenInfo &p : pens())
                 if (key == p.key || key == std::tolower(static_cast<unsigned char>(p.key))) return m_owner->set_pen(p.pen);
+        }
         // The keyboard pen: the arrow keys move it, Space puts it down and lifts it.
         if (!m_keyboard_pen) {
             m_keyboard     = m_inside ? m_hover : wxPoint2DDouble(m_owner->m_doc.width / 2.0, m_owner->m_doc.height / 2.0);
@@ -278,6 +284,48 @@ private:
         m_keyboard = next;
         if (m_pen_down) extend(next, false);
         Refresh();
+    }
+
+    void focus_width()
+    {
+        if (wxTextCtrl *text = m_owner->m_width_input->GetTextCtrl()) {
+            text->SetFocus();
+            text->SelectAll();
+        }
+    }
+
+    void on_menu(wxContextMenuEvent &e)
+    {
+        enum : int { First = wxID_HIGHEST + 100, Colour = First + 20, Width, Undo, Redo, Keep, Export, Clear };
+        wxMenu menu;
+        for (const PenInfo &p : pens()) {
+            wxMenuItem *item = menu.AppendRadioItem(First + int(p.pen), wxString::Format("%s\t%c", pen_title(p.pen), p.key));
+            item->Check(p.pen == m_owner->m_pen);
+        }
+        menu.AppendSeparator();
+        menu.Append(Colour, _L("Colour...") + "\tC");
+        menu.Append(Width, _L("Width (px)") + "\tS");
+        menu.AppendSeparator();
+        menu.Append(Undo, _L("Undo") + "\tCtrl+Z")->Enable(m_owner->m_history.can_undo());
+        menu.Append(Redo, _L("Redo") + "\tCtrl+Y")->Enable(m_owner->m_history.can_redo());
+        menu.Append(Keep, _L("Keep this version"));
+        menu.Append(Export, _L("Export...") + "\tCtrl+Shift+E");
+        menu.AppendSeparator();
+        menu.Append(Clear, _L("Clear..."))->Enable(!m_owner->m_doc.strokes.empty());
+        wxPoint at = e.GetPosition();
+        if (at == wxDefaultPosition) at = ClientToScreen(wxPoint(GetClientSize().x / 2, GetClientSize().y / 2));
+        const int chosen = MD3::PopupMenuSelection(this, menu, at);
+        if (chosen >= First && chosen < First + int(Pen::Count)) return m_owner->set_pen(Pen(chosen - First));
+        switch (chosen) {
+        case Colour: m_owner->pick_custom_color(); break;
+        case Width: focus_width(); break;
+        case Undo: m_owner->undo(); break;
+        case Redo: m_owner->redo(); break;
+        case Keep: m_owner->keep_version(into_u8(_L("Kept by you"))); break;
+        case Export: m_owner->export_drawing(); break;
+        case Clear: m_owner->clear_all(); break;
+        default: break;
+        }
     }
 
     void on_paint(wxPaintEvent &)
@@ -387,9 +435,9 @@ DrawingPanel::DrawingPanel(wxWindow *parent) : wxPanel(parent, wxID_ANY)
     body->Add(side, 0, wxEXPAND);
     root->Add(body, 1, wxEXPAND | wxALL, pad);
     auto *keys = text_label(this, Label::Body_12,
-                            _L("1 to 7 pick a pen and E the eraser. Hold Shift to keep a stroke on one of eight directions. Ctrl+Z and Ctrl+Y undo and "
-                               "redo. With the board focused, the arrow keys move the keyboard pen (Shift for small steps), Space puts it down and lifts "
-                               "it, and Esc lifts it."),
+                            _L("1 to 7 pick a pen and E the eraser, C a colour and S the width. Hold Shift to keep a stroke on one of eight directions. "
+                               "Ctrl+Z and Ctrl+Y undo and redo, Ctrl+Shift+E exports. With the board focused, the arrow keys move the keyboard pen (Shift "
+                               "for small steps), Space puts it down and lifts it, and Esc lifts it. Right-click or Shift+F10 lists every pen with its key."),
                             true, true);
     root->Add(keys, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, pad);
     SetSizer(root);
@@ -450,7 +498,7 @@ void DrawingPanel::build_toolbar(wxSizer *root)
     capture->SetToolTip(_L("Take a new picture of the plate to draw on; your strokes stay where they are"));
     capture->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { capture_plate(true); });
     auto *exporter = tool_button(this, _L("Export..."), GlyphExport, Button::Variant::Tonal);
-    exporter->SetToolTip(_L("Save the drawing as PNG at 1x, 2x or 3x, on a transparent background, or as SVG"));
+    exporter->SetToolTip(_L("Save the drawing as PNG at 1x, 2x or 3x, on a transparent background, or as SVG") + " (Ctrl+Shift+E)");
     exporter->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { export_drawing(); });
     auto *clear = tool_button(this, _L("Clear..."), GlyphClear);
     clear->SetToolTip(_L("Remove every stroke, behind the two-key confirmation; a version is kept first"));

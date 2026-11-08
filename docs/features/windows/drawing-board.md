@@ -70,10 +70,24 @@ Exports show exactly what the board shows, erasing included.
 
 ## Keyboard
 
-With the board focused (click it or move to it with `Tab`): `1` to `7` pick a
-pen and `E` the eraser. The arrow keys move the keyboard pen, 12 pixels a step
-or 2 with `Shift`; `Space` puts it down and lifts it, so the arrows draw while
-it is down; `Esc` lifts it. A focus ring shows when the board has the keyboard.
+With the board focused (click it or move to it with `Tab`):
+
+| Key | Does |
+| --- | --- |
+| `1` to `7`, `E` | Pick a pen or the eraser |
+| `C` | Open the colour picker |
+| `S` | Move to the width of the pen in hand |
+| `Shift` while drawing | Keep the stroke on one of eight directions |
+| `Ctrl+Z`, `Ctrl+Y` | Undo and redo |
+| `Ctrl+Shift+E` | Export |
+| Arrow keys | Move the keyboard pen, 12 pixels a step or 2 with `Shift` |
+| `Space` | Put the keyboard pen down or lift it; the arrows draw while it is down |
+| `Esc` | Lift the keyboard pen |
+| Right-click, `Shift+F10` or the Menu key | A menu with every pen and its key, colour, width, undo, redo, keeping a version, export and Clear |
+
+The keys, the tooltips and the menu come from the same table, so a key shown
+anywhere is a key that works. A focus ring shows when the board has the
+keyboard.
 
 ## Where drawings are kept
 

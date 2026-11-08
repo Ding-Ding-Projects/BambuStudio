@@ -19,6 +19,7 @@
     <button class="btn"><span class="ms" aria-hidden="true">undo</span>Undo<span class="kbd">Ctrl+Z</span></button>
     <button class="btn" aria-disabled="true" style="color:#7c8a81"><span class="ms" aria-hidden="true">redo</span>Redo<span class="kbd">Ctrl+Y</span></button>
     <button class="btn t"><span class="ms" aria-hidden="true">ios_share</span>Export<span class="kbd" style="background:#1a2a21">Ctrl+Shift+E</span></button>
+    <button class="btn"><span class="ms" aria-hidden="true">photo_camera</span>Capture the plate again</button>
     <button class="btn d"><span class="ms" aria-hidden="true">delete_sweep</span>Clear</button>
   </div>
   <div style="display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:12px">
@@ -41,7 +42,7 @@
         <path d="M790 520 L 850 520" fill="none" stroke="#f2ead8" stroke-width="3" stroke-linecap="round"></path>
         <circle cx="766" cy="520" r="22" fill="none" stroke="#e3ebe5" stroke-width="1.5" stroke-dasharray="4 3"></circle>
       </svg>
-      <div class="row" style="position:absolute;left:16px;top:16px;gap:8px"><span class="tag g"><span class="ms" aria-hidden="true" style="font-size:14px;vertical-align:-3px">lock</span> Local only</span><span class="tag">Prepare · Plate 1</span></div>
+      <div class="row" style="position:absolute;left:16px;top:16px;gap:8px"><span class="tag g"><span class="ms" aria-hidden="true" style="font-size:14px;vertical-align:-3px">lock</span> Local only</span><span class="tag">Prepare · Plate 1</span><span class="tag">Another plate...</span></div>
       <div class="tag" style="position:absolute;left:250px;top:478px;background:#28322c;color:#e3ebe5">Shift held · locked to 0°</div>
       <div class="tag" style="position:absolute;left:700px;top:560px;background:#28322c;color:#e3ebe5">Eraser removed the middle only</div>
       <div class="note" style="position:absolute;left:640px;top:150px;color:#ffb4ab">thin wall, 0.38 mm</div>
@@ -83,18 +84,19 @@
       </div>
       <div class="lbl">From the inks in this project</div>
       <div class="row" style="gap:8px"><span class="sw2" style="background:#00ae42"></span><span class="sw2" style="background:#f2ead8"></span><span class="sw2" style="background:#3a3a3a"></span><span class="sw2" style="background:#ff7a1a"></span><span class="note grow">Bambu Green, Ivory, Charcoal, Signal Orange</span></div>
-      <div class="row"><span class="note grow">Any colour, with hex and eyedropper</span><span class="mono note">#FF5A4F</span><button class="btn">Custom</button></div>
+      <div class="row"><span class="note grow">Any colour from the Windows colour picker <span class="note">(hex field and eyedropper not built yet)</span></span><span class="mono note">#FF5A4F</span><button class="btn">Custom</button></div>
     </section>
     <section class="card" aria-label="Size">
       <div class="row"><span class="h3 grow">Size</span><span class="tag">Toolbar becomes sliders</span></div>
       <div class="row"><span style="width:82px;font-size:13px">Width</span><div class="sl"><i style="width:30%"></i><b style="left:30%"></b></div><span class="mono" style="font-size:12px;width:46px;text-align:right">6 px</span></div>
       <div class="row"><span style="width:82px;font-size:13px">Opacity</span><div class="sl"><i style="width:100%"></i><b style="left:100%"></b></div><span class="mono" style="font-size:12px;width:46px;text-align:right">100 %</span></div>
       <div class="row"><span style="width:82px;font-size:13px">Smoothing</span><div class="sl"><i style="width:40%"></i><b style="left:40%"></b></div><span class="mono" style="font-size:12px;width:46px;text-align:right">40 %</span></div>
-      <div class="row"><span class="grow" style="font-size:13px">Use pen pressure</span><button class="sw" role="switch" aria-checked="true" aria-label="Use pen pressure"></button></div>
+      <div class="row"><span class="grow" style="font-size:13px">Use pen pressure <span class="note">(not built yet)</span></span><button class="sw" role="switch" aria-checked="true" aria-label="Use pen pressure"></button></div>
       <div class="note">Each pen remembers its own width and opacity.</div>
     </section>
     <section class="card" aria-label="Toolbar placement">
       <div class="row"><span class="h3 grow">Toolbar</span><span class="tag">Saved per window</span></div>
+      <div class="note">The board as built keeps its pens, colours and sizes in rows above the drawing. The floating toolbar below, its dock positions, theme and minimised disc are <b>not built yet</b>.</div>
       <div class="row"><div style="width:64px;height:64px;border-radius:32px;background:#1f2823;display:grid;place-items:center;box-shadow:0 6px 18px rgba(0,0,0,.4);position:relative"><span class="ms" aria-hidden="true" style="color:#9ff7bf;font-size:26px">ink_marker</span><span style="position:absolute;right:6px;bottom:6px;width:14px;height:14px;border-radius:7px;background:#ff5a4f;border:2px solid #1f2823"></span></div><div class="note grow">Minimised, it stays a disc that still shows the pen and colour. Click or press M to open it again.</div></div>
       <div class="row"><span class="grow" style="font-size:13px">Dock</span><div class="seg"><button>Top</button><button class="on">Bottom</button><button>Left</button><button>Right</button><button>Free</button></div></div>
       <div class="row"><span class="grow" style="font-size:13px">Theme</span><div class="seg"><button class="on">Follow app</button><button>Light</button><button>Dark</button></div></div>
@@ -108,7 +110,7 @@
       <div class="tr sel" style="grid-template-columns:120px minmax(0,1fr) 90px 90px"><span class="mono">23:58:12</span><span>Arrow to the brim, partial erase</span><span>14</span><span class="mut">Current</span></div>
       <div class="tr" style="grid-template-columns:120px minmax(0,1fr) 90px 90px"><span class="mono">23:41:05</span><span>Highlight on the overhang</span><span>9</span><button class="btn q" style="height:30px;padding:0 6px">Restore</button></div>
       <div class="tr" style="grid-template-columns:120px minmax(0,1fr) 90px 90px"><span class="mono">23:30:47</span><span>First circle on the thin wall</span><span>4</span><button class="btn q" style="height:30px;padding:0 6px">Restore</button></div>
-      <div class="well" style="flex-direction:row;align-items:center"><span class="ms ok" aria-hidden="true">history</span><span class="note grow">After a restart the drawing comes back as you left it, with undo and redo intact.</span></div>
+      <div class="well" style="flex-direction:row;align-items:center"><span class="ms ok" aria-hidden="true">history</span><span class="note grow">After a restart the drawing and its versions come back as you left them. <span class="note">(Undo and redo across a restart: not built yet)</span></span></div>
     </section>
     <section class="card" aria-label="Export">
       <div class="row"><span class="h3 grow">Export</span><span class="note">Exactly what is on screen, erasing included</span></div>
@@ -121,7 +123,7 @@
         </div>
       </div>
       <div class="row"><input class="in grow" value="Plate 1 capture notes.png" aria-label="File name"><button class="btn p">Save</button></div>
-      <div class="row"><span class="grow" style="font-size:13px">Add to the export catalogue</span><button class="sw" role="switch" aria-checked="true" aria-label="Add to the export catalogue"></button></div>
+      <div class="row"><span class="grow" style="font-size:13px">Add to the export catalogue <span class="note">(not built yet)</span></span><button class="sw" role="switch" aria-checked="true" aria-label="Add to the export catalogue"></button></div>
     </section>
   </div>
   <div style="display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:12px">
@@ -134,22 +136,23 @@
       <div class="h3">Keyboard and right-click</div>
       <div class="tr h" style="grid-template-columns:130px minmax(0,1fr)"><span>Key</span><span>Does</span></div>
       <div class="tr" style="grid-template-columns:130px minmax(0,1fr);padding:7px 12px"><span class="kbd" style="justify-self:start">1 to 7, E</span><span>Pick a pen or the eraser</span></div>
-      <div class="tr" style="grid-template-columns:130px minmax(0,1fr);padding:7px 12px"><span class="kbd" style="justify-self:start">C, S, M</span><span>Colour, size, minimise</span></div>
+      <div class="tr" style="grid-template-columns:130px minmax(0,1fr);padding:7px 12px"><span class="kbd" style="justify-self:start">C, S, M</span><span>Colour, size, minimise <span class="note">(M not built yet)</span></span></div>
       <div class="tr" style="grid-template-columns:130px minmax(0,1fr);padding:7px 12px"><span class="kbd" style="justify-self:start">Shift</span><span>Lock the stroke to eight directions</span></div>
       <div class="tr" style="grid-template-columns:130px minmax(0,1fr);padding:7px 12px"><span class="kbd" style="justify-self:start">Arrow keys</span><span>Move the keyboard pen; Space draws</span></div>
-      <div class="tr" style="grid-template-columns:130px minmax(0,1fr);padding:7px 12px"><span class="kbd" style="justify-self:start">Shift+F10</span><span>Menu with every pen and its key</span></div>
+      <div class="tr" style="grid-template-columns:130px minmax(0,1fr);padding:7px 12px"><span class="kbd" style="justify-self:start">Ctrl+Shift+E</span><span>Export</span></div>
+      <div class="tr" style="grid-template-columns:130px minmax(0,1fr);padding:7px 12px"><span class="kbd" style="justify-self:start">Shift+F10</span><span>Menu with every pen and its key, also on right-click</span></div>
       <div class="note">The same table binds the keys, the tooltips and the menu, so a shown key always works.</div>
     </section>
   </div>
   <div class="g4">
     <section class="card"><div class="row"><span class="ms ok" aria-hidden="true">motion_photos_off</span><span class="h3 grow">Reduced motion</span></div><div class="note">The toolbar changes shape instantly. Every pen, slider and export still works.</div></section>
-    <section class="card"><div class="row"><span class="ms ok" aria-hidden="true">touch_app</span><span class="h3 grow">Touch, pen, mouse</span></div><div class="note">Pen pressure where the device has it. A resting palm does not draw.</div></section>
+    <section class="card"><div class="row"><span class="ms ok" aria-hidden="true">touch_app</span><span class="h3 grow">Touch, pen, mouse</span></div><div class="note">Mouse and touch draw today. Pen pressure and ignoring a resting palm are <b>not built yet</b>.</div></section>
     <section class="card"><div class="row"><span class="ms ok" aria-hidden="true">format_paint</span><span class="h3 grow">Appearance</span></div><div class="note">The toolbar takes your theme and seed colour. Stroke colours are your data and never change with the theme.</div></section>
-    <section class="card"><div class="row"><span class="ms warn" aria-hidden="true">lock</span><span class="h3 grow">Locked</span></div><div class="note">A locked toolbar stays put and says who locked it. Drawing still works.</div></section>
+    <section class="card"><div class="row"><span class="ms warn" aria-hidden="true">lock</span><span class="h3 grow">Locked</span></div><div class="note">A locked toolbar stays put and says who locked it. Drawing still works. <span class="note">(not built yet)</span></div></section>
   </div>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1810}}'>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1940}}'>
 class Component extends DCLogic {
   renderVals() {
     return {};

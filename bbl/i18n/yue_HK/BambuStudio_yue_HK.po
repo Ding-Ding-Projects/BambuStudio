@@ -54866,3 +54866,8 @@ msgstr "保留咗 %d 個版本"
 #. review-status: agent-drafted
 msgid "never uploaded"
 msgstr "永遠唔會上載"
+
+#. reviewed-category: application
+#. review-status: agent-drafted
+msgid "1 to 7 pick a pen and E the eraser, C a colour and S the width. Hold Shift to keep a stroke on one of eight directions. Ctrl+Z and Ctrl+Y undo and redo, Ctrl+Shift+E exports. With the board focused, the arrow keys move the keyboard pen (Shift for small steps), Space puts it down and lifts it, and Esc lifts it. Right-click or Shift+F10 lists every pen with its key."
+msgstr "1 至 7 揀筆，E 揀擦膠，C 揀顏色，S 跳去闊度。撳住 Shift 會將筆畫保持喺八個方向之一。Ctrl+Z 同 Ctrl+Y 復原同重做，Ctrl+Shift+E 匯出。畫板有焦點嘅時候，方向鍵會郁鍵盤筆（撳住 Shift 行細步），Space 落筆同提筆，Esc 提筆。撳右掣或者 Shift+F10 會列出每支筆同佢嘅鍵。"
