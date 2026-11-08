@@ -112,6 +112,7 @@
 #include "Base64Toolkit/Base64ToolkitPanel.hpp"
 #include "Extensions/ExtensionRuntime.hpp"
 #include "LiveCharts/LiveChartsPanel.hpp"
+#include "Drawing/DrawingPanel.hpp"
 #include "ElementLocks/LockService.hpp"
 #include "AttentionModes/AttentionService.hpp"
 #include "SetupWizard/SetupWizardDialog.hpp"
@@ -4908,6 +4909,10 @@ void MainFrame::init_menubar_as_editor()
         append_menu_item(fileMenu, wxID_ANY, _L("Live charts") + dots,
             _L("Nozzle, bed and chamber temperatures of the selected printer over time"),
             feature_command("live-charts", []() { LiveCharts::LiveChartsPanel::open(); }), "", nullptr, []() { return true; }, this);
+
+        append_menu_item(fileMenu, wxID_ANY, _L("Drawing board") + dots,
+            _L("Draw on a capture of the plate with seven pens, versions and export, saved on this computer"),
+            feature_command("drawing", []() { Drawing::DrawingPanel::open(); }), "", nullptr, []() { return true; }, this);
 
         append_menu_item(fileMenu, wxID_ANY, _L("Element locks") + dots,
             _L("Every element you locked, with Unlock beside each"),

@@ -1095,6 +1095,10 @@ list(APPEND SLIC3R_GUI_SOURCES
     GUI/AttentionModes/AttentionModel.hpp
     GUI/AttentionModes/AttentionService.cpp
     GUI/AttentionModes/AttentionService.hpp
+    GUI/Drawing/DrawingModel.cpp
+    GUI/Drawing/DrawingModel.hpp
+    GUI/Drawing/DrawingPanel.cpp
+    GUI/Drawing/DrawingPanel.hpp
     GUI/ElementLocks/LockModel.cpp
     GUI/ElementLocks/LockModel.hpp
     GUI/ElementLocks/LockService.cpp

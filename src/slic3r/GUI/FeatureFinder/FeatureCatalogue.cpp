@@ -72,7 +72,7 @@ const std::vector<Feature> &features()
         {"model-suite", "tools", 0xE322 /* memory */, L("Local model suite"), L("File, Local model suite"), "", "Ollama local AI models", Badge::None, State::Ready, "command:model-suite"},
         {"virtual-disks", "tools", 0xF80E /* hard_drive */, L("Virtual disks"), L("File, Virtual disks"), "", "VHD VHDX ISO disk Windows", Badge::New, State::NotBuilt, ""},
         {"minecraft", "tools", 0xE875 /* dns */, L("Minecraft servers and worlds"), L("File, Minecraft servers"), "", "server world game", Badge::New, State::NotBuilt, ""},
-        {"drawing", "tools", 0xE746 /* draw */, L("Drawing board"), L("File, Drawing board"), "", "draw pen annotate sketch", Badge::New, State::NotBuilt, ""},
+        {"drawing", "tools", 0xE746 /* draw */, L("Drawing board"), L("File, Drawing board"), "", "draw pen annotate sketch plate highlighter eraser svg png", Badge::New, State::Ready, "command:drawing"},
         {"melody", "tools", 0xE3A1 /* music_note */, L("Melody creator"), L("File, Melody creator"), "", "music tune song M1006 beep", Badge::None, State::Ready, "command:melody"},
         {"lan-drop", "tools", 0xE1E2 /* wifi_tethering */, L("LAN model drop"), L("File, LAN model drop"), "", "network share receive models", Badge::None, State::Ready, "command:lan-drop"},
         {"smart-home", "tools", 0xE283 /* home_iot_device */, L("Smart home"), L("File, Smart home"), "", "Home Assistant speakers lights", Badge::None, State::Ready, "command:smart-home"},

@@ -1365,12 +1365,12 @@
     {
       "route": "windows/README.md",
       "title": "Windows features",
-      "sha256": "4398698e59660911259503c0b481a110f227cb7337f700e7fd64d31f2b11f053"
+      "sha256": "324473988a5c1e94ee352d2941bfd0697cd805865c1aa1b4f3acb29bcdeda41e"
     },
     {
       "route": "windows/README.yue_HK.md",
       "title": "Windows 功能",
-      "sha256": "c0d122321ecd8ff6656fecf17bf78cad7b027cf2f61078d4f901b6c88f6839be"
+      "sha256": "0bb09c580be651c1c9e8c87309a3a43e6ee1eb1e9d1a4d95170c7a13e0ceacec"
     },
     {
       "route": "windows/action-sounds.md",
@@ -1581,6 +1581,16 @@
       "route": "windows/documentation-browser.yue_HK.md",
       "title": "離線文件瀏覽器（F1）",
       "sha256": "42a0b4e312e70a6020aa13804c805b0aa353c6df39cd6dff324908fce5d6437a"
+    },
+    {
+      "route": "windows/drawing-board.md",
+      "title": "Drawing board",
+      "sha256": "fe43aadd57c156dbcf352f8752a1170511f1d77ab94223eebd4321c8e84ba183"
+    },
+    {
+      "route": "windows/drawing-board.yue_HK.md",
+      "title": "畫板",
+      "sha256": "b5545d56f28d7d58fe80cd7f7b21f052f5294fdaa2453799fd8a9cf63518a6db"
     },
     {
       "route": "windows/element-locks.md",
@@ -2245,7 +2255,7 @@
       "bytes": 16430
     }
   ],
-  "bundle_sha256": "69cc255807f7480accbbf6f3cf6b277683a6f023f164af6cc8db46a746550832",
+  "bundle_sha256": "01ab9538316ffcd5703725cb6c5333df54568197f7be396df4b90cc2cb1296dc",
   "unavailable_references": [
     {
       "source": "api/README.md",

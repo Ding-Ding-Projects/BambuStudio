@@ -54611,3 +54611,258 @@ msgstr "由 Bambu Studio 開咗到而家都冇改動，已經 %s。"
 #. review-status: agent-drafted
 msgid "Not now (%s)"
 msgstr "唔係而家（%s）"
+
+#. reviewed-category: application
+#. review-status: agent-drafted
+msgid "Draw on a capture of the plate with seven pens, versions and export, saved on this computer"
+msgstr "喺打印板嘅相上面用七支筆畫嘢，有版本同匯出，儲喺呢部電腦"
+
+#. reviewed-category: application
+#. review-status: agent-drafted
+msgid "Pencil"
+msgstr "鉛筆"
+
+#. reviewed-category: application
+#. review-status: agent-drafted
+msgid "Fineliner"
+msgstr "針筆"
+
+#. reviewed-category: application
+#. review-status: agent-drafted
+msgid "Marker"
+msgstr "箱頭筆"
+
+#. reviewed-category: application
+#. review-status: agent-drafted
+msgid "Highlighter"
+msgstr "螢光筆"
+
+#. reviewed-category: application
+#. review-status: agent-drafted
+msgid "Fountain pen"
+msgstr "鋼筆"
+
+#. reviewed-category: application
+#. review-status: agent-drafted
+msgid "Eraser"
+msgstr "擦膠"
+
+#. reviewed-category: application
+#. review-status: agent-drafted
+msgid "Another plate..."
+msgstr "另一塊打印板..."
+
+#. reviewed-category: application
+#. review-status: agent-drafted
+msgid "Draw on a different plate of this project; each plate keeps its own drawing"
+msgstr "喺呢個專案另一塊打印板度畫；每塊打印板都有自己嘅畫"
+
+#. reviewed-category: application
+#. review-status: agent-drafted
+msgid "How it works"
+msgstr "點樣運作"
+
+#. reviewed-category: application
+#. review-status: agent-drafted
+msgid "Versions kept on this computer"
+msgstr "儲喺呢部電腦嘅版本"
+
+#. reviewed-category: application
+#. review-status: agent-drafted
+msgid "Keep this version"
+msgstr "保留呢個版本"
+
+#. reviewed-category: application
+#. review-status: agent-drafted
+msgid "Kept by you"
+msgstr "你保留嘅"
+
+#. reviewed-category: application
+#. review-status: agent-drafted
+msgid "Saved"
+msgstr "儲存時間"
+
+#. reviewed-category: application
+#. review-status: agent-drafted
+msgid "What"
+msgstr "係乜"
+
+#. reviewed-category: application
+#. review-status: agent-drafted
+msgid "Strokes"
+msgstr "筆畫"
+
+#. reviewed-category: application
+#. review-status: agent-drafted
+msgid "Bring this version back"
+msgstr "攞返呢個版本"
+
+#. reviewed-category: application
+#. review-status: agent-drafted
+msgid "Bringing a version back replaces the drawing and can be undone. The last 20 versions are kept; clearing keeps one first."
+msgstr "攞返一個版本會取代而家嘅畫，而且可以復原。會保留最近 20 個版本；清除之前會先保留一個。"
+
+#. reviewed-category: application
+#. review-status: agent-drafted
+msgid "1 to 7 pick a pen and E the eraser. Hold Shift to keep a stroke on one of eight directions. Ctrl+Z and Ctrl+Y undo and redo. With the board focused, the arrow keys move the keyboard pen (Shift for small steps), Space puts it down and lifts it, and Esc lifts it."
+msgstr "1 至 7 揀筆，E 揀擦膠。撳住 Shift 會將筆畫保持喺八個方向之一。Ctrl+Z 同 Ctrl+Y 復原同重做。畫板有焦點嘅時候，方向鍵會郁鍵盤筆（撳住 Shift 行細步），Space 落筆同提筆，Esc 提筆。"
+
+#. reviewed-category: application
+#. review-status: agent-drafted
+msgid "%s (key %c)"
+msgstr "%s（鍵 %c）"
+
+#. reviewed-category: application
+#. review-status: agent-drafted
+msgid "Colour..."
+msgstr "顏色..."
+
+#. reviewed-category: application
+#. review-status: agent-drafted
+msgid "Pick any colour; the last eight stay beside this project's filament colours"
+msgstr "揀任何顏色；最近八隻會留喺呢個專案嘅線材顏色旁邊"
+
+#. reviewed-category: application
+#. review-status: agent-drafted
+msgid "Width (px)"
+msgstr "闊度（像素）"
+
+#. reviewed-category: application
+#. review-status: agent-drafted
+msgid "Opacity (%)"
+msgstr "不透明度（%）"
+
+#. reviewed-category: application
+#. review-status: agent-drafted
+msgid "Smoothing (%)"
+msgstr "平滑（%）"
+
+#. reviewed-category: application
+#. review-status: agent-drafted
+msgid "Undo (Ctrl+Z)"
+msgstr "復原（Ctrl+Z）"
+
+#. reviewed-category: application
+#. review-status: agent-drafted
+msgid "Redo (Ctrl+Y)"
+msgstr "重做（Ctrl+Y）"
+
+#. reviewed-category: application
+#. review-status: agent-drafted
+msgid "Capture the plate again"
+msgstr "再影一次打印板"
+
+#. reviewed-category: application
+#. review-status: agent-drafted
+msgid "Take a new picture of the plate to draw on; your strokes stay where they are"
+msgstr "影一張新嘅打印板相嚟畫；你嘅筆畫留喺原位"
+
+#. reviewed-category: application
+#. review-status: agent-drafted
+msgid "Save the drawing as PNG at 1x, 2x or 3x, on a transparent background, or as SVG"
+msgstr "將畫儲成 1 倍、2 倍或者 3 倍嘅 PNG、透明背景，或者 SVG"
+
+#. reviewed-category: application
+#. review-status: agent-drafted
+msgid "Clear..."
+msgstr "清除..."
+
+#. reviewed-category: application
+#. review-status: agent-drafted
+msgid "Remove every stroke, behind the two-key confirmation; a version is kept first"
+msgstr "經過兩匙確認之後移除所有筆畫；會先保留一個版本"
+
+#. reviewed-category: application
+#. review-status: agent-drafted
+msgid "%s (drawing with it)"
+msgstr "%s（用緊佢畫）"
+
+#. reviewed-category: application
+#. review-status: agent-drafted
+msgid "The plate could not be captured. Open Prepare once so the 3D view is ready, then try again."
+msgstr "影唔到打印板。開一次準備等 3D 視圖準備好，然後再試。"
+
+#. reviewed-category: application
+#. review-status: agent-drafted
+msgid "Drawing on Plate %d"
+msgstr "喺打印板 %d 畫嘢"
+
+#. reviewed-category: application
+#. review-status: agent-drafted
+msgid "Clear the drawing"
+msgstr "清除個畫"
+
+#. reviewed-category: application
+#. review-status: agent-drafted
+msgid "All %d strokes on Plate %d are removed. The drawing is kept as a version first, so it can be brought back."
+msgstr "會移除 %d 筆筆畫，即係打印板 %d 上面嘅全部筆畫。個畫會先保留做一個版本，所以可以攞返。"
+
+#. reviewed-category: application
+#. review-status: agent-drafted
+msgid "Before clearing"
+msgstr "清除之前"
+
+#. reviewed-category: application
+#. review-status: agent-drafted
+msgid "PNG image"
+msgstr "PNG 圖片"
+
+#. reviewed-category: application
+#. review-status: agent-drafted
+msgid "PNG at twice the size"
+msgstr "兩倍大嘅 PNG"
+
+#. reviewed-category: application
+#. review-status: agent-drafted
+msgid "PNG at three times the size"
+msgstr "三倍大嘅 PNG"
+
+#. reviewed-category: application
+#. review-status: agent-drafted
+msgid "PNG on a transparent background"
+msgstr "透明背景嘅 PNG"
+
+#. reviewed-category: application
+#. review-status: agent-drafted
+msgid "SVG with the plate capture"
+msgstr "連打印板相嘅 SVG"
+
+#. reviewed-category: application
+#. review-status: agent-drafted
+msgid "SVG of the strokes only"
+msgstr "淨係筆畫嘅 SVG"
+
+#. reviewed-category: application
+#. review-status: agent-drafted
+msgid "Export the drawing"
+msgstr "匯出個畫"
+
+#. reviewed-category: application
+#. review-status: agent-drafted
+msgid "The drawing could not be saved there."
+msgstr "個畫儲唔到喺嗰度。"
+
+#. reviewed-category: application
+#. review-status: agent-drafted
+msgid "Saved on this computer at %s"
+msgstr "%s 儲咗喺呢部電腦"
+
+#. reviewed-category: application
+#. review-status: agent-drafted
+msgid "Saved on this computer as you draw"
+msgstr "你一路畫，一路儲喺呢部電腦"
+
+#. reviewed-category: application
+#. review-status: agent-drafted
+msgid "%d strokes"
+msgstr "%d 筆"
+
+#. reviewed-category: application
+#. review-status: agent-drafted
+msgid "%d versions kept"
+msgstr "保留咗 %d 個版本"
+
+#. reviewed-category: application
+#. review-status: agent-drafted
+msgid "never uploaded"
+msgstr "永遠唔會上載"

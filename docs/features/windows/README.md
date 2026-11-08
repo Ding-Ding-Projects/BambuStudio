@@ -35,6 +35,7 @@
 - [Extensions](extensions.md)
 - [Element locks and the unlock ladder](element-locks.md)
 - [Attention modes](attention-modes.md)
+- [Drawing board](drawing-board.md)
 - [Set up Bambu Studio](practical-setup.md)
 - [In-app changelog viewer (Help ▸ What's new)](changelog-viewer.md)
 - [Prepare sidebar search (settings + filament slots)](sidebar-search.md)

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-08 06:28-0500\n"
+"POT-Creation-Date: 2026-11-08 06:49-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -7425,6 +7425,12 @@ msgid "Live charts"
 msgstr ""
 
 msgid "Nozzle, bed and chamber temperatures of the selected printer over time"
+msgstr ""
+
+msgid "Drawing board"
+msgstr ""
+
+msgid "Draw on a capture of the plate with seven pens, versions and export, saved on this computer"
 msgstr ""
 
 msgid "Element locks"
@@ -29822,9 +29828,6 @@ msgstr ""
 msgid "File, Minecraft servers"
 msgstr ""
 
-msgid "Drawing board"
-msgstr ""
-
 msgid "File, Drawing board"
 msgstr ""
 
@@ -31902,6 +31905,163 @@ msgstr ""
 
 #, possible-c-format, possible-boost-format
 msgid "Not now (%s)"
+msgstr ""
+
+msgid "Pencil"
+msgstr ""
+
+msgid "Fineliner"
+msgstr ""
+
+msgid "Marker"
+msgstr ""
+
+msgid "Highlighter"
+msgstr ""
+
+msgid "Fountain pen"
+msgstr ""
+
+msgid "Eraser"
+msgstr ""
+
+msgid "Another plate..."
+msgstr ""
+
+msgid "Draw on a different plate of this project; each plate keeps its own drawing"
+msgstr ""
+
+msgid "How it works"
+msgstr ""
+
+msgid "Versions kept on this computer"
+msgstr ""
+
+msgid "Keep this version"
+msgstr ""
+
+msgid "Kept by you"
+msgstr ""
+
+msgid "Saved"
+msgstr ""
+
+msgid "What"
+msgstr ""
+
+msgid "Strokes"
+msgstr ""
+
+msgid "Bring this version back"
+msgstr ""
+
+msgid "Bringing a version back replaces the drawing and can be undone. The last 20 versions are kept; clearing keeps one first."
+msgstr ""
+
+msgid "1 to 7 pick a pen and E the eraser. Hold Shift to keep a stroke on one of eight directions. Ctrl+Z and Ctrl+Y undo and redo. With the board focused, the arrow keys move the keyboard pen (Shift for small steps), Space puts it down and lifts it, and Esc lifts it."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s (key %c)"
+msgstr ""
+
+msgid "Colour..."
+msgstr ""
+
+msgid "Pick any colour; the last eight stay beside this project's filament colours"
+msgstr ""
+
+msgid "Width (px)"
+msgstr ""
+
+msgid "Opacity (%)"
+msgstr ""
+
+msgid "Smoothing (%)"
+msgstr ""
+
+msgid "Undo (Ctrl+Z)"
+msgstr ""
+
+msgid "Redo (Ctrl+Y)"
+msgstr ""
+
+msgid "Capture the plate again"
+msgstr ""
+
+msgid "Take a new picture of the plate to draw on; your strokes stay where they are"
+msgstr ""
+
+msgid "Save the drawing as PNG at 1x, 2x or 3x, on a transparent background, or as SVG"
+msgstr ""
+
+msgid "Clear..."
+msgstr ""
+
+msgid "Remove every stroke, behind the two-key confirmation; a version is kept first"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s (drawing with it)"
+msgstr ""
+
+msgid "The plate could not be captured. Open Prepare once so the 3D view is ready, then try again."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Drawing on Plate %d"
+msgstr ""
+
+msgid "Clear the drawing"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "All %d strokes on Plate %d are removed. The drawing is kept as a version first, so it can be brought back."
+msgstr ""
+
+msgid "Before clearing"
+msgstr ""
+
+msgid "PNG image"
+msgstr ""
+
+msgid "PNG at twice the size"
+msgstr ""
+
+msgid "PNG at three times the size"
+msgstr ""
+
+msgid "PNG on a transparent background"
+msgstr ""
+
+msgid "SVG with the plate capture"
+msgstr ""
+
+msgid "SVG of the strokes only"
+msgstr ""
+
+msgid "Export the drawing"
+msgstr ""
+
+msgid "The drawing could not be saved there."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Saved on this computer at %s"
+msgstr ""
+
+msgid "Saved on this computer as you draw"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%d strokes"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%d versions kept"
+msgstr ""
+
+msgid "never uploaded"
 msgstr ""
 
 msgid "No key is saved for this provider"
