@@ -1,0 +1,45 @@
+name: Virtual disks on Windows
+
+# The virtual disk manager plans every operation as a script and runs it with
+# administrator permission. A hosted Windows machine has that permission, so
+# the reading and planning suite runs with MSVC, then real disks go through
+# create, attach, merge, grow, compact, a new disk ID, reconnecting a moved
+# parent and Quick pack, with every result read back by the app's own reader.
+on:
+  push:
+    branches: [main]
+    paths:
+      - src/slic3r/GUI/VirtualDisks/**
+      - tests/virtual_disks*
+      - .github/workflows/virtual-disks-windows.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  disks:
+    runs-on: windows-2025
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          persist-credentials: false
+      - name: Initialize x64 compiler
+        uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756
+        with:
+          arch: x64
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: '24'
+      - name: Reading images, chains and plans with MSVC
+        run: |
+          node tests/virtual_disks.test.mjs
+          if ($LASTEXITCODE -ne 0) { throw 'The virtual disk suite failed' }
+      - name: Real disks through the app's own code
+        run: |
+          node tests/virtual_disks_windows.test.mjs
+          if ($LASTEXITCODE -ne 0) { throw 'Real virtual disks failed' }
