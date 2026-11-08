@@ -221,8 +221,11 @@ std::map<std::string, Attachment> attached_disks(bool &available, std::string *d
                     DWORD                     got = 0;
                     if (DeviceIoControl(h, IOCTL_VOLUME_GET_VOLUME_DISK_EXTENTS, nullptr, 0, extents.data(), DWORD(extents.size()), &got, nullptr)) {
                         const auto *e = reinterpret_cast<const VOLUME_DISK_EXTENTS *>(extents.data());
-                        for (DWORD k = 0; k < e->NumberOfDiskExtents; ++k)
-                            for (const std::string &m : mount_points_of(volume)) by_disk[e->Extents[k].DiskNumber].push_back(m);
+                        for (DWORD k = 0; k < e->NumberOfDiskExtents; ++k) {
+                            const std::vector<std::string> mounts = mount_points_of(volume);
+                            for (const std::string &m : mounts) by_disk[e->Extents[k].DiskNumber].push_back(m);
+                            if (diagnostic) note("disk " + std::to_string(e->Extents[k].DiskNumber) + (mounts.empty() ? std::string(" unmounted") : " at " + mounts.front()));
+                        }
                     }
                     CloseHandle(h);
                 } while (FindNextVolumeW(find, volume, MAX_PATH));
@@ -236,10 +239,16 @@ std::map<std::string, Attachment> attached_disks(bool &available, std::string *d
         MultiByteToWideChar(CP_UTF8, 0, key.data(), int(key.size()), wkey.data(), n);
         VIRTUAL_STORAGE_TYPE type{};
         HANDLE               h = nullptr;
-        if (open_disk(&type, wkey.c_str(), VIRTUAL_DISK_ACCESS_GET_INFO, OPEN_VIRTUAL_DISK_FLAG_NONE, nullptr, &h) != ERROR_SUCCESS) continue;
-        wchar_t path[MAX_PATH] = {};
-        ULONG   size           = sizeof(path);
-        if (physical(h, &size, path) == ERROR_SUCCESS) {
+        const DWORD opened = open_disk(&type, wkey.c_str(), VIRTUAL_DISK_ACCESS_GET_INFO, OPEN_VIRTUAL_DISK_FLAG_NONE, nullptr, &h);
+        if (opened != ERROR_SUCCESS) {
+            note("open " + key + " " + std::to_string(opened));
+            continue;
+        }
+        wchar_t     path[MAX_PATH] = {};
+        ULONG       size           = sizeof(path);
+        const DWORD named          = physical(h, &size, path);
+        note(key + " is " + (named == ERROR_SUCCESS ? narrow(path) : "error " + std::to_string(named)));
+        if (named == ERROR_SUCCESS) {
             const wchar_t *digits = path + wcslen(path);
             while (digits > path && iswdigit(digits[-1])) --digits;
             if (*digits) {

@@ -16,8 +16,10 @@
 #pragma comment(lib, "advapi32.lib")
 #endif
 
+#include <chrono>
 #include <cstdio>
 #include <cstdlib>
+#include <thread>
 
 using namespace Slic3r::GUI::VirtualDisks;
 
@@ -52,6 +54,25 @@ static void print_attached(const std::map<std::string, Attachment> &m, bool avai
     }
 }
 
+// Windows mounts a volume a moment after the disk arrives: ask until it has a
+// mount point, for up to ten seconds.
+static std::string mounted_at(const std::string &path)
+{
+    for (int i = 0; i < 40; ++i) {
+        bool       available = false;
+        const auto m         = attached_disks(available);
+        const auto at        = m.find(path_key(path));
+        if (at != m.end() && !at->second.mount_points.empty()) {
+            std::printf("   mounted at %s after %d ms\n", at->second.mount_points.front().c_str(), i * 250);
+            return at->second.mount_points.front();
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(250));
+    }
+    bool available = false;
+    print_attached(attached_disks(available), available);
+    return std::string();
+}
+
 static std::string strip(std::string g)
 {
     std::string out;
@@ -83,10 +104,9 @@ int main()
 
     bool available = false;
     auto attached  = attached_disks(available);
-    print_attached(attached, available);
-    CHECK(available && attached[path_key(base)].attached && !attached[path_key(base)].mount_points.empty());
-    std::string mount = attached[path_key(base)].mount_points.empty() ? std::string() : attached[path_key(base)].mount_points.front();
-    std::printf("   mounted at %s\n", mount.c_str());
+    CHECK(available && attached[path_key(base)].attached);
+    std::string mount = mounted_at(base);
+    CHECK(!mount.empty());
     CHECK(run(detach_script(base)));
     attached = attached_disks(available);
     CHECK(!attached[path_key(base)].attached);
@@ -104,17 +124,14 @@ int main()
     CHECK(kid.readable && kid.kind == Kind::Differencing && strip(kid.parent_linkage) == strip(read_disk(base).data_write_guid));
     CHECK(test_chain({read_disk(base), kid}, 1).result == ChainResult::Passed);
     CHECK(run(attach_script(child, false)));
-    attached = attached_disks(available);
-    print_attached(attached, available);
-    mount    = attached[path_key(child)].mount_points.empty() ? std::string() : attached[path_key(child)].mount_points.front();
+    mount = mounted_at(child);
     CHECK(!mount.empty());
     if (!mount.empty()) std::ofstream(fs::u8path(mount) / "from-the-child.txt") << "written through the child\n";
     CHECK(run(detach_script(child)));
     CHECK(run(merge_script(child, base, (dir / "Base (copy).vhdx").u8string())));
     CHECK(fs::exists(dir / "Base (copy).vhdx"));
     CHECK(run(attach_script(base, true)));
-    attached = attached_disks(available);
-    mount    = attached[path_key(base)].mount_points.empty() ? std::string() : attached[path_key(base)].mount_points.front();
+    mount = mounted_at(base);
     CHECK(!mount.empty() && fs::exists(fs::u8path(mount) / "from-the-child.txt"));
     CHECK(run(detach_script(base)));
 
@@ -123,8 +140,7 @@ int main()
     CHECK(read_disk(base).virtual_size == 384 * kMB);
     CHECK(run(attach_script(base, false)));
     CHECK(run(grow_script(base, 512 * kMB, true)));
-    attached = attached_disks(available);
-    mount    = attached[path_key(base)].mount_points.empty() ? std::string() : attached[path_key(base)].mount_points.front();
+    mount = mounted_at(base);
     if (!mount.empty()) {
         const fs::space_info s = fs::space(fs::u8path(mount), ec);
         std::printf("   volume now %llu MB\n", static_cast<unsigned long long>(s.capacity / kMB));
@@ -176,8 +192,7 @@ int main()
     CHECK(fs::exists(fs::u8path(pack.target)) && read_disk(pack.target).readable);
     // The copy keeps the web mark (an alternate data stream).
     CHECK(run(attach_script(pack.target, true)));
-    attached = attached_disks(available);
-    mount    = attached[path_key(pack.target)].mount_points.empty() ? std::string() : attached[path_key(pack.target)].mount_points.front();
+    mount = mounted_at(pack.target);
     CHECK(!mount.empty() && fs::exists(fs::path(fs::u8path(mount) / "Pack" / "nested" / "deeper" / "plate.png").concat(":Zone.Identifier"), ec));
     CHECK(run(detach_script(pack.target)));
 
