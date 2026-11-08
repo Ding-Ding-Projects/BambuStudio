@@ -3294,7 +3294,7 @@ wxBoxSizer *StatusBasePanel::create_temp_control(wxWindow *parent)
     live_charts->SetVariant(Button::Variant::Text);
     live_charts->SetButtonSize(Button::Size::Small);
     live_charts->SetGlyph(0xF190 /* monitoring */);
-    live_charts->SetToolTip(_L("Nozzle, bed and chamber temperatures over time, with their targets"));
+    live_charts->SetToolTip(_L("Temperatures with their targets, AMS humidity and the part cooling fan over time"));
     live_charts->Bind(wxEVT_BUTTON, [](wxCommandEvent &) { LiveCharts::LiveChartsPanel::open(); });
     sizer->Add(live_charts, 0, wxALIGN_CENTER_HORIZONTAL | wxTOP, FromDIP(4));
 

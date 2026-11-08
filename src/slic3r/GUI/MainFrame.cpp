@@ -4925,8 +4925,11 @@ void MainFrame::init_menubar_as_editor()
             feature_command("extensions", []() { Extensions::Runtime::open_manager(); }), "", nullptr, []() { return true; }, this);
 
         append_menu_item(fileMenu, wxID_ANY, _L("Live charts") + dots,
-            _L("Nozzle, bed and chamber temperatures of the selected printer over time"),
+            _L("Temperatures, AMS humidity and the part cooling fan of the selected printer over time"),
             feature_command("live-charts", []() { LiveCharts::LiveChartsPanel::open(); }), "", nullptr, []() { return true; }, this);
+        // Every feature and the palette open the charts straight on one series.
+        FeatureFinder::Commands::instance().add("live-charts-humidity", []() { LiveCharts::LiveChartsPanel::open(int(LiveCharts::Kind::Humidity)); });
+        FeatureFinder::Commands::instance().add("live-charts-fan", []() { LiveCharts::LiveChartsPanel::open(int(LiveCharts::Kind::Fan)); });
 
         append_menu_item(fileMenu, wxID_ANY, _L("Drawing board") + dots,
             _L("Draw on a capture of the plate with seven pens, versions and export, saved on this computer"),

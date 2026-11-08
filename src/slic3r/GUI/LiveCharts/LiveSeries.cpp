@@ -134,6 +134,198 @@ Range value_range(const std::vector<std::vector<Reading>> &series, const std::ve
     return Range{low - pad, high + pad};
 }
 
+Range bounded(Range range, double floor, double ceiling)
+{
+    if (!(ceiling > floor)) return range;
+    if (range.high - range.low >= ceiling - floor) return Range{floor, ceiling};
+    if (range.low < floor) {
+        range.high += floor - range.low;
+        range.low = floor;
+    }
+    if (range.high > ceiling) {
+        range.low -= range.high - ceiling;
+        range.high = ceiling;
+    }
+    return range;
+}
+
+MomentumInfo momentum(const std::vector<Reading> &readings, double span, double threshold)
+{
+    MomentumInfo info;
+    if (readings.size() < 2) return info;
+    const double newest = readings.back().t;
+    std::size_t  first  = readings.size() - 1;
+    while (first > 0 && newest - readings[first - 1].t <= span) --first;
+    const std::size_t count   = readings.size() - first;
+    const double      covered = newest - readings[first].t;
+    if (count < 2 || covered < 2.0) return info;
+    double mean_t = 0, mean_v = 0;
+    for (std::size_t i = first; i < readings.size(); ++i) {
+        mean_t += readings[i].t - newest;
+        mean_v += readings[i].value;
+    }
+    mean_t /= double(count);
+    mean_v /= double(count);
+    double num = 0, den = 0;
+    for (std::size_t i = first; i < readings.size(); ++i) {
+        const double dt = (readings[i].t - newest) - mean_t;
+        num += dt * (readings[i].value - mean_v);
+        den += dt * dt;
+    }
+    if (den <= 0) return info;
+    info.rate           = num / den;
+    info.span           = covered;
+    const double moved  = info.rate * covered;
+    info.direction      = moved > threshold ? Momentum::Up : moved < -threshold ? Momentum::Down : Momentum::Steady;
+    return info;
+}
+
+double arrow_angle(double rate, double pixels_per_second, double pixels_per_unit, double max_degrees)
+{
+    constexpr double pi = 3.14159265358979323846;
+    if (!(pixels_per_second > 0) || !std::isfinite(rate) || !std::isfinite(pixels_per_unit)) return 0;
+    const double limit = std::clamp(max_degrees, 0.0, 89.0) * pi / 180.0;
+    return std::clamp(std::atan2(-rate * pixels_per_unit, pixels_per_second), -limit, limit);
+}
+
+void HighWatch::prime(const std::vector<Reading> &readings)
+{
+    for (const Reading &r : readings)
+        if (!m_high || r.value > *m_high) m_high = r.value;
+    if (m_high && (!m_mark || *m_mark < *m_high)) m_mark = m_high;
+}
+
+bool HighWatch::see(const Reading &reading)
+{
+    if (!std::isfinite(reading.value)) return false;
+    if (!m_high) {
+        m_high = reading.value;
+        m_mark = reading.value;
+        return false;
+    }
+    if (!(reading.value > *m_high)) return false;
+    m_high = reading.value;
+    if (m_mark && reading.value < *m_mark + m_margin) return false;
+#ifndef SLIC3R_LIVE_SERIES_HIGHS_NEGATIVE_FIXTURE
+    if (m_burst_yet && reading.t - m_last_burst < m_cooldown) return false;
+#endif
+    m_mark       = reading.value;
+    m_last_burst = reading.t;
+    m_burst_yet  = true;
+    return true;
+}
+
+void HighWatch::reset()
+{
+    m_high.reset();
+    m_mark.reset();
+    m_last_burst = 0;
+    m_burst_yet  = false;
+}
+
+namespace {
+// A small linear congruential generator, the same on every system, so the
+// same seed always gives the same burst.
+struct Lcg
+{
+    std::uint32_t state;
+    double        next()
+    {
+        state = state * 1664525u + 1013904223u;
+        return double(state >> 8) / double(1u << 24);
+    }
+};
+} // namespace
+
+void Particles::burst(double x, double y, int count, std::uint32_t seed, double scale)
+{
+    constexpr double pi = 3.14159265358979323846;
+    m_scale             = scale > 0 ? scale : 1;
+    Lcg rng{seed ? seed : 1u};
+    for (int i = 0; i < count; ++i) {
+        // Within 60 degrees either side of straight up.
+        const double angle = -pi / 2 + (rng.next() - 0.5) * (pi * 2 / 3);
+        const double speed = (70 + rng.next() * 110) * m_scale;
+        Particle     p;
+        p.x    = x;
+        p.y    = y;
+        p.vx   = std::cos(angle) * speed;
+        p.vy   = std::sin(angle) * speed;
+        p.life = 0.6 + rng.next() * 0.5;
+        p.size = (1.5 + rng.next() * 1.5) * m_scale;
+        m_particles.push_back(p);
+    }
+    if (m_particles.size() > kParticleLimit)
+        m_particles.erase(m_particles.begin(), m_particles.begin() + std::ptrdiff_t(m_particles.size() - kParticleLimit));
+}
+
+void Particles::step(double dt)
+{
+    if (!(dt > 0)) return;
+    const double keep    = std::exp(-2.2 * dt);
+    const double gravity = 260 * m_scale;
+    for (Particle &p : m_particles) {
+        p.age += dt;
+        p.vx *= keep;
+        p.vy = p.vy * keep + gravity * dt;
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+    }
+    m_particles.erase(std::remove_if(m_particles.begin(), m_particles.end(), [](const Particle &p) { return p.age >= p.life; }), m_particles.end());
+}
+
+double Particles::fade(const Particle &particle) { return std::clamp(1.0 - particle.age / std::max(1e-9, particle.life), 0.0, 1.0); }
+
+ClockFace clock_face(int hour, int minute, int second, bool twelve_hour, bool with_seconds)
+{
+    ClockFace face;
+    face.twelve_hour = twelve_hour;
+    hour             = ((hour % 24) + 24) % 24;
+    char text[32];
+    if (twelve_hour) {
+        face.pm = hour >= 12;
+#ifdef SLIC3R_LIVE_SERIES_CLOCK_NEGATIVE_FIXTURE
+        const int shown = hour % 12; // Test-only mutation: midnight and noon read 0.
+#else
+        const int shown = hour % 12 == 0 ? 12 : hour % 12;
+#endif
+        if (with_seconds) std::snprintf(text, sizeof(text), "%d:%02d:%02d", shown, minute, second);
+        else std::snprintf(text, sizeof(text), "%d:%02d", shown, minute);
+    } else {
+        if (with_seconds) std::snprintf(text, sizeof(text), "%02d:%02d:%02d", hour, minute, second);
+        else std::snprintf(text, sizeof(text), "%02d:%02d", hour, minute);
+    }
+    face.digits = text;
+    return face;
+}
+
+bool twelve_hour_format(std::string_view windows_format)
+{
+    bool quoted = false;
+    for (const char c : windows_format) {
+        if (c == '\'') {
+            quoted = !quoted;
+            continue;
+        }
+        if (quoted) continue;
+        if (c == 'h') return true;
+        if (c == 'H') return false;
+    }
+    return false;
+}
+
+ChartOptions options_from(std::string_view saved_reference, std::string_view saved_momentum, std::string_view saved_particles, std::string_view saved_clock,
+                          bool windows_twelve_hour)
+{
+    ChartOptions options;
+    options.reference    = saved_reference != "0";
+    options.momentum     = saved_momentum != "0";
+    options.particles    = saved_particles == "1";
+    options.clock_chosen = saved_clock == "12" || saved_clock == "24";
+    options.twelve_hour  = options.clock_chosen ? saved_clock == "12" : windows_twelve_hour;
+    return options;
+}
+
 std::string to_csv(const std::map<std::string, std::vector<Reading>> &series)
 {
     std::vector<std::tuple<double, std::string, double>> rows;

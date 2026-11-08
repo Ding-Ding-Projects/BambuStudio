@@ -38196,3 +38196,169 @@ msgstr ""
 
 msgid "Quieter colours that keep text as readable, less motion on top of the Windows setting, no action sounds, and no dim sum surprise at start-up."
 msgstr ""
+
+msgid "Temperatures, AMS humidity and the part cooling fan of the selected printer over time"
+msgstr ""
+
+msgid "Temperatures with their targets, AMS humidity and the part cooling fan over time"
+msgstr ""
+
+msgid "AMS humidity chart"
+msgstr ""
+
+msgid "Live charts, AMS humidity"
+msgstr ""
+
+msgid "Part cooling fan chart"
+msgstr ""
+
+msgid "Live charts, Part cooling fan"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Readings this session: %d"
+msgstr ""
+
+msgid "AMS humidity"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Level %.0f of 5"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "level %+.0f"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "level %+.2f"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Rising, %s in %d s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Falling, %s in %d s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Flat, %s in %d s"
+msgstr ""
+
+msgid "Holding"
+msgstr ""
+
+msgid "Rising"
+msgstr ""
+
+msgid "Falling"
+msgstr ""
+
+msgid "Not enough readings yet"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Going up, %s a second"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Going down, %s a second"
+msgstr ""
+
+msgid "Steady for now"
+msgstr ""
+
+msgid "drying off"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "drying on, %s left"
+msgstr ""
+
+msgid "drying on"
+msgstr ""
+
+msgid "New high"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Show %s in the large chart"
+msgstr ""
+
+msgid "The temperatures, the AMS humidity and the part cooling fan of the printer selected on the Device page, as it sends them. A gap in its reports stays a gap: nothing is drawn that the printer did not send."
+msgstr ""
+
+msgid "The humidity inside each AMS that reports it: a percentage, or a level from 1 (wet) to 5 (dry)"
+msgstr ""
+
+msgid "The part cooling fan speed, as the Device page shows it"
+msgstr ""
+
+msgid "AMS unit"
+msgstr ""
+
+msgid "The target temperature as a dashed reference line"
+msgstr ""
+
+msgid "Momentum arrow"
+msgstr ""
+
+msgid "An arrow beside the newest point shows which way the last ten seconds went: up, down or steady"
+msgstr ""
+
+msgid "Particles on new highs"
+msgstr ""
+
+msgid "A short burst of particles when a reading beats every earlier one this session. With reduced motion a still New high note shows instead."
+msgstr ""
+
+msgid "Clock"
+msgstr ""
+
+msgid "24 h"
+msgstr ""
+
+msgid "12 h"
+msgstr ""
+
+msgid "Times such as 13:05"
+msgstr ""
+
+msgid "Times such as 1:05 PM"
+msgstr ""
+
+msgid "Preview reduced motion"
+msgstr ""
+
+msgid "See this page as it is with reduced motion: the line snaps to each reading, the dot stops pulsing and no particles fly. Every value, trend and state stays the same."
+msgstr ""
+
+msgid "Animations here follow Preferences, Interface motion, or the Windows setting Show animations"
+msgstr ""
+
+msgid "Arrow keys move the crosshair a reading at a time, Home and End jump to the ends, Space pauses, Ctrl+C copies the value under the crosshair and Ctrl+S saves the shown readings. Right-click the chart for the same choices. Click a small chart, or focus it and press Enter, to show it in the large one."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s PM"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s AM"
+msgstr ""
+
+msgid "level 1 to 5"
+msgstr ""
+
+msgid "No AMS on this printer reports humidity"
+msgstr ""
+
+msgid "This printer has not reported a chamber temperature"
+msgstr ""
+
+msgid "Nothing to chart"
+msgstr ""
+
+msgid "Edit appearance, including Animation and transition"
+msgstr ""

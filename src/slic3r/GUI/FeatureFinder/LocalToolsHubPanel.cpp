@@ -7,7 +7,10 @@
 #include "../ElementLocks/LockService.hpp"
 #include "../Extensions/ExtensionRuntime.hpp"
 #include "../GameServers/ServersPanel.hpp"
+#include "../DeviceCore/DevManager.h"
+#include "../DeviceManager.hpp"
 #include "../GUI_App.hpp"
+#include "../LiveCharts/LiveChartsPanel.hpp"
 #include "../I18N.hpp"
 #include "../MainFrame.hpp"
 #include "../MsgDialog.hpp"
@@ -174,6 +177,12 @@ wxString LocalToolsHubPanel::status_of(const std::string &feature)
         VirtualDisks::Library library;
         VirtualDisks::from_json(read_text(data / "virtual-disks.json"), library);
         return library.disks.empty() ? wxString() : wxString::Format(_L("In the library: %d"), int(library.disks.size()));
+    }
+    if (feature == "live-charts") {
+        DeviceManager                  *dm  = wxGetApp().getDeviceManager();
+        MachineObject                  *obj = dm ? dm->get_selected_machine() : nullptr;
+        const LiveCharts::DeviceRecord *rec = obj ? LiveCharts::Recorder::instance().find(obj->get_dev_id()) : nullptr;
+        return rec && rec->total > 0 ? wxString::Format(_L("Readings this session: %d"), int(rec->total)) : wxString();
     }
     if (feature == "minecraft") {
         const GameServers::Summary s = GameServers::summary();

@@ -59351,3 +59351,258 @@ msgstr "喺準備揀咗嘢嘅時候，打印板上其他嘢同物件清單其他
 #. review-status: agent-drafted
 msgid "Quieter colours that keep text as readable, less motion on top of the Windows setting, no action sounds, and no dim sum surprise at start-up."
 msgstr "較安靜嘅顏色而文字一樣易讀、喺 Windows 設定之上再少啲動態、冇動作音效，開機亦冇點心驚喜。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Temperatures, AMS humidity and the part cooling fan of the selected printer over time"
+msgstr "所揀打印機嘅溫度、墨水機濕度同部件冷卻風扇隨住時間點變"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Temperatures with their targets, AMS humidity and the part cooling fan over time"
+msgstr "溫度連目標、墨水機濕度同部件冷卻風扇隨住時間點變"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "AMS humidity chart"
+msgstr "墨水機濕度圖表"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Live charts, AMS humidity"
+msgstr "即時圖表，墨水機濕度"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Part cooling fan chart"
+msgstr "部件冷卻風扇圖表"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Live charts, Part cooling fan"
+msgstr "即時圖表，部件冷卻風扇"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Readings this session: %d"
+msgstr "今次使用期間嘅讀數：%d"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "AMS humidity"
+msgstr "墨水機濕度"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Level %.0f of 5"
+msgstr "第 %.0f 級（共 5 級）"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "level %+.0f"
+msgstr "等級 %+.0f"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "level %+.2f"
+msgstr "等級 %+.2f"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Rising, %s in %d s"
+msgstr "上升 %s，用咗 %d 秒"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Falling, %s in %d s"
+msgstr "下降 %s，用咗 %d 秒"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Flat, %s in %d s"
+msgstr "平穩，%s，用咗 %d 秒"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Holding"
+msgstr "維持緊"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Rising"
+msgstr "上升緊"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Falling"
+msgstr "下降緊"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Not enough readings yet"
+msgstr "讀數仲未夠"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Going up, %s a second"
+msgstr "上緊，每秒 %s"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Going down, %s a second"
+msgstr "落緊，每秒 %s"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Steady for now"
+msgstr "暫時穩定"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "drying off"
+msgstr "冇烘乾緊"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "drying on, %s left"
+msgstr "烘乾緊，仲有 %s"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "drying on"
+msgstr "烘乾緊"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "New high"
+msgstr "新高"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Show %s in the large chart"
+msgstr "喺大圖表顯示%s"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "The temperatures, the AMS humidity and the part cooling fan of the printer selected on the Device page, as it sends them. A gap in its reports stays a gap: nothing is drawn that the printer did not send."
+msgstr "設備頁揀咗嗰部打印機嘅溫度、墨水機濕度同部件冷卻風扇，完全照佢送嚟嘅樣。佢報告之間嘅空隙會保持係空隙：打印機冇送過嘅嘢一樣都唔會畫。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "The humidity inside each AMS that reports it: a percentage, or a level from 1 (wet) to 5 (dry)"
+msgstr "每部有報濕度嘅墨水機入面嘅濕度：百分比，或者由 1（濕）到 5（乾）嘅等級"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "The part cooling fan speed, as the Device page shows it"
+msgstr "部件冷卻風扇嘅速度，同設備頁顯示嘅一樣"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "AMS unit"
+msgstr "墨水機"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The target temperature as a dashed reference line"
+msgstr "用虛線做參考線顯示目標溫度"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Momentum arrow"
+msgstr "走勢箭咀"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "An arrow beside the newest point shows which way the last ten seconds went: up, down or steady"
+msgstr "最新嗰點旁邊有個箭咀，話你知過去十秒點行：上、落定係穩定"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Particles on new highs"
+msgstr "創新高時噴粒子"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "A short burst of particles when a reading beats every earlier one this session. With reduced motion a still New high note shows instead."
+msgstr "讀數高過今次使用期間之前所有讀數嗰陣，會噴一陣粒子。減少動畫時就改為顯示一個靜止嘅「新高」標示。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Clock"
+msgstr "時鐘"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "24 h"
+msgstr "24 小時制"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "12 h"
+msgstr "12 小時制"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Times such as 13:05"
+msgstr "例如 13:05 咁嘅時間"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Times such as 1:05 PM"
+msgstr "例如下午 1:05 咁嘅時間"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Preview reduced motion"
+msgstr "預覽減少動畫"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "See this page as it is with reduced motion: the line snaps to each reading, the dot stops pulsing and no particles fly. Every value, trend and state stays the same."
+msgstr "睇吓減少動畫時呢頁係點：條線直接跳去每個讀數、個點唔再閃、亦唔會噴粒子。每個數值、趨勢同狀態都保持一樣。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Animations here follow Preferences, Interface motion, or the Windows setting Show animations"
+msgstr "呢度嘅動畫跟偏好設定嘅「介面動畫」，或者 Windows 嘅「顯示動畫」設定"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Arrow keys move the crosshair a reading at a time, Home and End jump to the ends, Space pauses, Ctrl+C copies the value under the crosshair and Ctrl+S saves the shown readings. Right-click the chart for the same choices. Click a small chart, or focus it and press Enter, to show it in the large one."
+msgstr "方向鍵每次將十字線移一個讀數，Home 同 End 跳去兩頭，Space 暫停，Ctrl+C 複製十字線下面嘅數值，Ctrl+S 儲存顯示緊嘅讀數。喺圖表撳右鍵都有同樣嘅選擇。撳一個細圖表，或者揀中佢再撳 Enter，就會喺大圖表顯示。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "%s PM"
+msgstr "下午 %s"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "%s AM"
+msgstr "上午 %s"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "level 1 to 5"
+msgstr "等級 1 至 5"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "No AMS on this printer reports humidity"
+msgstr "呢部打印機冇墨水機報濕度"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "This printer has not reported a chamber temperature"
+msgstr "呢部打印機未報過機艙溫度"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Nothing to chart"
+msgstr "冇嘢可以畫"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Edit appearance, including Animation and transition"
+msgstr "編輯外觀，包括動畫同過渡"

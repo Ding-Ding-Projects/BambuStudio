@@ -39,7 +39,7 @@ const std::vector<Tool> &tools()
         {"converter", "files", L("Convert local files with verified bundled adapters")},
         {"model-suite", "files", L("Inspect local Ollama models, catalog availability and guided tools")},
         {"lan-drop", "files", L("Receive 3D models that people on your local network send through the drop site")},
-        {"live-charts", "printer", L("Nozzle, bed and chamber temperatures of the selected printer over time")},
+        {"live-charts", "printer", L("Temperatures, AMS humidity and the part cooling fan of the selected printer over time")},
         {"melody", "printer", L("Compose a tune the printer plays, preview it, send it to the printer or add it to the start or end G-code")},
         {"filament-scanner", "printer", L("Snap a spool photo on your phone; a local model identifies it and loads an AMS slot")},
         {"smart-home", "printer", L("Home Assistant speakers, media controls, TTS narrator and alert lights")},

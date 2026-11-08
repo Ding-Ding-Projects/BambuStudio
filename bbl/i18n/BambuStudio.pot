@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-08 13:09-0500\n"
+"POT-Creation-Date: 2026-11-08 13:39-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -7472,7 +7472,7 @@ msgstr ""
 msgid "Live charts"
 msgstr ""
 
-msgid "Nozzle, bed and chamber temperatures of the selected printer over time"
+msgid "Temperatures, AMS humidity and the part cooling fan of the selected printer over time"
 msgstr ""
 
 msgid "Drawing board"
@@ -9678,7 +9678,7 @@ msgstr ""
 msgid "AMS Web"
 msgstr ""
 
-msgid "Nozzle, bed and chamber temperatures over time, with their targets"
+msgid "Temperatures with their targets, AMS humidity and the part cooling fan over time"
 msgstr ""
 
 msgid "Sport"
@@ -30024,6 +30024,18 @@ msgstr ""
 msgid "Device page, Live charts under the temperatures"
 msgstr ""
 
+msgid "AMS humidity chart"
+msgstr ""
+
+msgid "Live charts, AMS humidity"
+msgstr ""
+
+msgid "Part cooling fan chart"
+msgstr ""
+
+msgid "Live charts, Part cooling fan"
+msgstr ""
+
 msgid "Anywhere"
 msgstr ""
 
@@ -30201,6 +30213,10 @@ msgstr ""
 
 #, possible-c-format, possible-boost-format
 msgid "In the library: %d"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Readings this session: %d"
 msgstr ""
 
 #, possible-c-format, possible-boost-format
@@ -32301,23 +32317,82 @@ msgstr ""
 msgid "The runs could not be saved there."
 msgstr ""
 
+msgid "AMS humidity"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Level %.0f of 5"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "level %+.0f"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "level %+.2f"
+msgstr ""
+
 #, possible-c-format, possible-boost-format
 msgid "Holding near %s"
 msgstr ""
 
 #, possible-c-format, possible-boost-format
-msgid "Rising, %+.1f °C in %d s"
+msgid "Rising, %s in %d s"
 msgstr ""
 
 #, possible-c-format, possible-boost-format
-msgid "Falling, %+.1f °C in %d s"
+msgid "Falling, %s in %d s"
 msgstr ""
 
 #, possible-c-format, possible-boost-format
-msgid "Flat, %+.1f °C in %d s"
+msgid "Flat, %s in %d s"
 msgstr ""
 
 msgid "Not enough readings for a trend yet"
+msgstr ""
+
+msgid "Holding"
+msgstr ""
+
+msgid "Rising"
+msgstr ""
+
+msgid "Falling"
+msgstr ""
+
+msgid "Flat"
+msgstr ""
+
+msgid "Not enough readings yet"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Going up, %s a second"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Going down, %s a second"
+msgstr ""
+
+msgid "Steady for now"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%d h %d min"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%d min"
+msgstr ""
+
+msgid "drying off"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "drying on, %s left"
+msgstr ""
+
+msgid "drying on"
 msgstr ""
 
 msgid "Live chart"
@@ -32330,6 +32405,9 @@ msgstr ""
 msgid "Target %.0f"
 msgstr ""
 
+msgid "New high"
+msgstr ""
+
 msgid "The printer is off or not connected"
 msgstr ""
 
@@ -32339,7 +32417,17 @@ msgstr ""
 msgid "No readings in this time window"
 msgstr ""
 
-msgid "The temperatures of the printer selected on the Device page, as it sends them. A gap in its reports stays a gap: nothing is drawn that the printer did not send."
+#, possible-c-format, possible-boost-format
+msgid "Show %s in the large chart"
+msgstr ""
+
+msgid "The temperatures, the AMS humidity and the part cooling fan of the printer selected on the Device page, as it sends them. A gap in its reports stays a gap: nothing is drawn that the printer did not send."
+msgstr ""
+
+msgid "The humidity inside each AMS that reports it: a percentage, or a level from 1 (wet) to 5 (dry)"
+msgstr ""
+
+msgid "The part cooling fan speed, as the Device page shows it"
 msgstr ""
 
 msgid "1 min"
@@ -32357,10 +32445,52 @@ msgstr ""
 msgid "One candle per minute: first, highest, lowest and last reading"
 msgstr ""
 
+msgid "Freeze the chart; readings keep arriving and are shown when you resume (Space)"
+msgstr ""
+
+msgid "AMS unit"
+msgstr ""
+
 msgid "Target line"
 msgstr ""
 
-msgid "Freeze the chart; readings keep arriving and are shown when you resume (Space)"
+msgid "The target temperature as a dashed reference line"
+msgstr ""
+
+msgid "Momentum arrow"
+msgstr ""
+
+msgid "An arrow beside the newest point shows which way the last ten seconds went: up, down or steady"
+msgstr ""
+
+msgid "Particles on new highs"
+msgstr ""
+
+msgid "A short burst of particles when a reading beats every earlier one this session. With reduced motion a still New high note shows instead."
+msgstr ""
+
+msgid "Clock"
+msgstr ""
+
+msgid "24 h"
+msgstr ""
+
+msgid "12 h"
+msgstr ""
+
+msgid "Times such as 13:05"
+msgstr ""
+
+msgid "Times such as 1:05 PM"
+msgstr ""
+
+msgid "Preview reduced motion"
+msgstr ""
+
+msgid "See this page as it is with reduced motion: the line snaps to each reading, the dot stops pulsing and no particles fly. Every value, trend and state stays the same."
+msgstr ""
+
+msgid "Animations here follow Preferences, Interface motion, or the Windows setting Show animations"
 msgstr ""
 
 msgid "Copy value"
@@ -32375,7 +32505,18 @@ msgstr ""
 msgid "Explain this chart"
 msgstr ""
 
-msgid "Arrow keys move the crosshair a reading at a time, Home and End jump to the ends, Space pauses, Ctrl+C copies the value under the crosshair and Ctrl+S saves the shown readings. Right-click the chart for the same choices."
+msgid "Arrow keys move the crosshair a reading at a time, Home and End jump to the ends, Space pauses, Ctrl+C copies the value under the crosshair and Ctrl+S saves the shown readings. Right-click the chart for the same choices. Click a small chart, or focus it and press Enter, to show it in the large one."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s PM"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s AM"
+msgstr ""
+
+msgid "level 1 to 5"
 msgstr ""
 
 msgid "No printer is selected on the Device page."
@@ -32398,8 +32539,17 @@ msgstr ""
 msgid "No readings yet this session."
 msgstr ""
 
+msgid "No AMS on this printer reports humidity"
+msgstr ""
+
+msgid "This printer has not reported a chamber temperature"
+msgstr ""
+
 #, possible-c-format, possible-boost-format
 msgid "Stalled %d s: no reading since %s"
+msgstr ""
+
+msgid "Nothing to chart"
 msgstr ""
 
 #, possible-c-format, possible-boost-format
@@ -32427,8 +32577,7 @@ msgstr ""
 msgid "Save shown readings as CSV"
 msgstr ""
 
-#, possible-c-format, possible-boost-format
-msgid "%d min"
+msgid "Edit appearance, including Animation and transition"
 msgstr ""
 
 #, possible-c-format, possible-boost-format
@@ -32539,10 +32688,6 @@ msgid "Nothing is locked. Right-click an element and choose Lock this element."
 msgstr ""
 
 msgid "Unlock..."
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "%d h %d min"
 msgstr ""
 
 msgid "under a minute"
@@ -34689,9 +34834,6 @@ msgid "Empty picks one at random"
 msgstr ""
 
 msgid "A new random seed"
-msgstr ""
-
-msgid "Flat"
 msgstr ""
 
 msgid "Large biomes"

@@ -159,6 +159,7 @@
 #include "slic3r/Config/Snapshot.hpp"
 #include "Preferences.hpp"
 #include "Appearance/ThemeFollowWatcher.hpp"
+#include "LiveCharts/LiveChartsPanel.hpp"
 #include "CommandPaletteIndex.hpp"
 #include "Tab.hpp"
 #include "SysInfoDialog.hpp"
@@ -1686,6 +1687,8 @@ void GUI_App::post_init()
     PreferencesDialog::remember_values_in_use();
     // Follow Windows: switches the look when Windows switches, while following is on.
     ThemeFollow::start_watching();
+    // Live charts: the selected printer's readings fill the charts whichever page is open.
+    LiveCharts::Recorder::instance().start_sampling();
     m_narrator_environment = std::make_unique<FeatureServices::NarratorEnvironment>([this] {
         return app_config && app_config->get("narrator_quiet") == "true";
     }, [this](const char* key) { return app_config ? app_config->get(key) : std::string(); });
@@ -3547,6 +3550,7 @@ int GUI_App::OnExit()
     // object once it is gone.
     m_update_check_timer.Stop();
     ThemeFollow::stop_watching();
+    LiveCharts::Recorder::instance().stop_sampling();
     m_auto_update_cancel = true;
     if (m_auto_update_thread.joinable())
         m_auto_update_thread.join();

@@ -755,12 +755,12 @@
     {
       "route": "device/live-charts.md",
       "title": "Live charts",
-      "sha256": "eb046f1bcdfe71d7d31abc00d64d0c734aa8f4a205226c3f077c76948308f41b"
+      "sha256": "71529aac25016822091ee1c48449091bf633721a24b21eaca7d7dd2954b96f85"
     },
     {
       "route": "device/live-charts.yue_HK.md",
       "title": "即時圖表",
-      "sha256": "74395a9fa77e4c3f079572a52b1f06c1c138d9432f0a4f0679f62a46c364d86a"
+      "sha256": "d75e094791f7ca4d5e40f403fa24234d2a2068f99f2d885187f64a439fd963b0"
     },
     {
       "route": "device/live-readings.md",
@@ -2295,7 +2295,7 @@
       "bytes": 16430
     }
   ],
-  "bundle_sha256": "2834fabbed6c8f095486a29a32ac85913ba04ff002317b6c3274acb5d3a26a12",
+  "bundle_sha256": "121472fbb1c67c0339f7f0c5b6252d5db84c9608c1700f5ef6d0cfe881a03ab9",
   "unavailable_references": [
     {
       "source": "api/README.md",

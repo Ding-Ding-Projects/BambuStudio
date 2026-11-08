@@ -48,7 +48,9 @@ const std::vector<Feature> &features()
         {"theme", "look", 0xE3B7 /* palette */, L("Theme, density and accent"), L("Preferences, Appearance"), "", "dark light density compact accent colour color", Badge::None, State::Ready, "prefs:dark_color_mode"},
         {"app-logo", "look", 0xE251 /* image */, L("App logo"), L("Preferences, App logo"), "", "icon image picture brand", Badge::None, State::Ready, "prefs:app_logo"},
         {"motion", "look", 0xE71C /* animation */, L("Motion and reduced motion"), L("Preferences, Interface motion"), "", "animation reduced motion transitions", Badge::None, State::Ready, "prefs:motion_preference"},
-        {"live-charts", "look", 0xF190 /* monitoring */, L("Live charts"), L("Device page, Live charts under the temperatures"), "", "graph temperature chart realtime candles csv", Badge::New, State::Ready, "command:live-charts"},
+        {"live-charts", "look", 0xF190 /* monitoring */, L("Live charts"), L("Device page, Live charts under the temperatures"), "", "graph temperature chart realtime candles csv momentum arrow particles 12-hour clock", Badge::New, State::Ready, "command:live-charts"},
+        {"live-humidity", "look", 0xF87E /* humidity_percentage */, L("AMS humidity chart"), L("Live charts, AMS humidity"), "", "AMS humidity dry drying moisture percent level chart", Badge::New, State::Ready, "command:live-charts-humidity"},
+        {"live-fan", "look", 0xF168 /* mode_fan */, L("Part cooling fan chart"), L("Live charts, Part cooling fan"), "", "fan cooling part speed percent chart", Badge::New, State::Ready, "command:live-charts-fan"},
         // Find and navigate
         {"command-palette", "find", 0xEAE7 /* keyboard_command_key */, L("Command palette"), L("Anywhere"), "Ctrl+Shift+F", "search commands run anything", Badge::None, State::Ready, "palette"},
         {"regex-builder", "find", 0xF750 /* regular_expression */, L("Regex builder"), L("The .* button in any search"), "", "regular expression pattern search", Badge::None, State::Ready, "docs:windows/regex-builder.md"},
