@@ -1365,12 +1365,12 @@
     {
       "route": "windows/README.md",
       "title": "Windows features",
-      "sha256": "a1a728f8fad4fd068ecf11e80f30c5da6ab5707c73b4aeb2fbd0ca73e3f36fcc"
+      "sha256": "ff4383e61e5e361fcb8878621e781b717d38bb4a4c65e345625b2c0bb5fe321e"
     },
     {
       "route": "windows/README.yue_HK.md",
       "title": "Windows 功能",
-      "sha256": "d3ee14e4ef67d6cb1d425a20e65802aca38ea208132623828f90fd836d7a199f"
+      "sha256": "0d446f762a457f28037251f727ceea075ea43909d575239e81fbb5619ff20dff"
     },
     {
       "route": "windows/action-sounds.md",
@@ -1993,6 +1993,16 @@
       "sha256": "ec36de8e84beba9c7d5a36bd7ed65fb9067c7159878b72d5175abcf61cb5ab72"
     },
     {
+      "route": "windows/virtual-disks.md",
+      "title": "Virtual disks",
+      "sha256": "c26f08a6a8fc5cc6af5805bd8e52a7eed8ecfb5dbc8a25d32ade50fb9a44d99a"
+    },
+    {
+      "route": "windows/virtual-disks.yue_HK.md",
+      "title": "虛擬磁碟",
+      "sha256": "3835ffcd24c34983331c1232ce1e338b7ef4b3d53592573c37b3c6493c62479c"
+    },
+    {
       "route": "windows/windows-only-platform.md",
       "title": "Windows-only platform policy",
       "sha256": "53142ddf38e30eb0aa122a92b426eb59abeb1a7023f162d4acec53e64af480d3"
@@ -2265,7 +2275,7 @@
       "bytes": 16430
     }
   ],
-  "bundle_sha256": "53c982e9cb7a3849faa47fce161c7a4223ed4df2d7b3b4fc3fce9fdf3ff2c467",
+  "bundle_sha256": "b325a6366734253d199cf22cddc49e13ef3ec7aeeb2fef157abc14eb859e659f",
   "unavailable_references": [
     {
       "source": "api/README.md",

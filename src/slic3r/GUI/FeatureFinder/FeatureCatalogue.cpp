@@ -70,7 +70,7 @@ const std::vector<Feature> &features()
         {"extensions", "tools", 0xE87B /* extension */, L("Extensions"), L("File, Extensions"), "", "plugins add-ons scripts hooks post-processing", Badge::New, State::Ready, "command:extensions"},
         {"converter", "tools", 0xE428 /* transform */, L("Local file converter"), L("File, Local file converter"), "", "convert file formats", Badge::None, State::Ready, "command:converter"},
         {"model-suite", "tools", 0xE322 /* memory */, L("Local model suite"), L("File, Local model suite"), "", "Ollama local AI models", Badge::None, State::Ready, "command:model-suite"},
-        {"virtual-disks", "tools", 0xF80E /* hard_drive */, L("Virtual disks"), L("File, Virtual disks"), "", "VHD VHDX ISO disk Windows", Badge::New, State::NotBuilt, ""},
+        {"virtual-disks", "tools", 0xF80E /* hard_drive */, L("Virtual disks"), L("File, Virtual disks"), "", "VHD VHDX AVHDX ISO disk attach mount chain merge compact Quick pack Windows", Badge::New, State::Ready, "command:virtual-disks"},
         {"minecraft", "tools", 0xE875 /* dns */, L("Minecraft servers and worlds"), L("File, Minecraft servers"), "", "server world game", Badge::New, State::NotBuilt, ""},
         {"drawing", "tools", 0xE746 /* draw */, L("Drawing board"), L("File, Drawing board"), "", "draw pen annotate sketch plate highlighter eraser svg png", Badge::New, State::Ready, "command:drawing"},
         {"melody", "tools", 0xE3A1 /* music_note */, L("Melody creator"), L("File, Melody creator"), "", "music tune song M1006 beep", Badge::None, State::Ready, "command:melody"},

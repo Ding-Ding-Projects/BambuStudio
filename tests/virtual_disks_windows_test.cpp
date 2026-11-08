@@ -68,8 +68,9 @@ static std::string mounted_at(const std::string &path)
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(250));
     }
-    bool available = false;
-    print_attached(attached_disks(available), available);
+    bool       available = false;
+    const auto last      = attached_disks(available);
+    print_attached(last, available);
     return std::string();
 }
 

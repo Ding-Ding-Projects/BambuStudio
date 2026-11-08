@@ -94,7 +94,7 @@ static void test_parse_action()
 static void test_filters()
 {
     const Feature *ready     = find("version-history");
-    const Feature *not_built = find("virtual-disks");
+    const Feature *not_built = find("minecraft");
     CHECK(ready != nullptr && not_built != nullptr);
     if (!ready || !not_built) return;
     CHECK(passes_filter(*ready, ""));
@@ -162,7 +162,7 @@ static void test_recent()
     CHECK(parse_recent("").empty());
     // Unknown ids, duplicates and not-built features are dropped; order kept.
     const std::vector<std::string> parsed =
-        parse_recent("melody,unknown,melody,virtual-disks,converter");
+        parse_recent("melody,unknown,melody,minecraft,converter");
     CHECK(parsed.size() == 2);
     CHECK(parsed.size() == 2 && parsed[0] == "melody" && parsed[1] == "converter");
     CHECK(serialize_recent(parsed) == "melody,converter");
@@ -186,7 +186,7 @@ static void test_recent()
     CHECK(r.size() == 2 && r[0] == "converter" && r[1] == "melody");
     r = touch(r, "authenticator");
     CHECK(r.size() == 3 && r[0] == "authenticator");
-    r = touch(r, "virtual-disks"); // not built: unchanged
+    r = touch(r, "minecraft"); // not built: unchanged
     CHECK(r.size() == 3 && r[0] == "authenticator");
     r = touch(r, "unknown"); // unknown: unchanged
     CHECK(r.size() == 3);

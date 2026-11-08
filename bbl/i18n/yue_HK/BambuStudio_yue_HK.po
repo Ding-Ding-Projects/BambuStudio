@@ -55031,3 +55031,633 @@ msgstr "喺設定、3D 視圖或者物件上面撳右掣"
 #. review-status: agent-drafted
 msgid "Drawing colour"
 msgstr "畫筆顏色"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Every VHD, VHDX and ISO you add: attach, create, grow, compact, chains, merge and Quick pack"
+msgstr "你加入嘅每個 VHD、VHDX 同 ISO：掛載、建立、放大、壓縮、鏈、合併同快速打包"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "fixed"
+msgstr "固定"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "dynamic"
+msgstr "動態"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "differencing"
+msgstr "差異"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "read-only"
+msgstr "唯讀"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "unknown"
+msgstr "未知"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Protected"
+msgstr "受保護"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Passed"
+msgstr "通過"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Parent missing"
+msgstr "搵唔到父碟"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Parent changed"
+msgstr "父碟改過"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Loops"
+msgstr "兜圈"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Unreadable"
+msgstr "讀唔到"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Not a chain"
+msgstr "唔係鏈"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Make a child disk"
+msgstr "整子碟"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Create a virtual disk"
+msgstr "建立虛擬磁碟"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "A child starts empty and reads everything else from its parent, which must not change while the child exists."
+msgstr "子碟一開始係空嘅，其他嘢全部由父碟讀；子碟存在嘅時候，父碟唔可以改。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Checks every limit before anything is written. Windows asks for administrator permission once, at the end."
+msgstr "寫入任何嘢之前會檢查晒每個限制。Windows 最後只會問一次管理員權限。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Portable data disk"
+msgstr "便攜資料碟"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Dev Drive"
+msgstr "Dev Drive"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Disk of my own"
+msgstr "我自己嘅磁碟"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Dynamic"
+msgstr "動態"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Block"
+msgstr "區塊"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Sectors (logical / physical)"
+msgstr "磁區（邏輯 / 實體）"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Leave raw"
+msgstr "保持原始"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Initialize"
+msgstr "初始化"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "File system"
+msgstr "檔案系統"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Next free letter"
+msgstr "下一個空嘅盤符"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Drive letter"
+msgstr "盤符"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Quick format"
+msgstr "快速格式化"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Where the disk goes"
+msgstr "磁碟放喺邊"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Where it goes"
+msgstr "放喺邊"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Attach after creating"
+msgstr "建立之後掛載"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Same steps as a script"
+msgstr "同樣步驟寫成腳本"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Make the child"
+msgstr "整子碟"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Every VHD, VHDX, VHD Set and ISO you add, with every operation Windows offers. Nothing here touches a disk you did not choose."
+msgstr "你加入嘅每個 VHD、VHDX、VHD Set 同 ISO，連埋 Windows 提供嘅每個操作。呢度唔會掂你冇揀嘅磁碟。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Add a disk file..."
+msgstr "加入磁碟檔案..."
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Add a folder..."
+msgstr "加入資料夾..."
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Quick pack..."
+msgstr "快速打包..."
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Create..."
+msgstr "建立..."
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Search name, path, label or ID"
+msgstr "搜尋名稱、路徑、標籤或者 ID"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Read again"
+msgstr "再讀一次"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Folder"
+msgstr "資料夾"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Format and type"
+msgstr "格式同類型"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "On disk"
+msgstr "佔用空間"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Attached"
+msgstr "已掛載"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Chain test"
+msgstr "鏈測試"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Choose a disk"
+msgstr "揀一個磁碟"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Attach"
+msgstr "掛載"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Attach read-only"
+msgstr "唯讀掛載"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Detach"
+msgstr "卸載"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Grow..."
+msgstr "放大..."
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Compact..."
+msgstr "壓縮..."
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Make child..."
+msgstr "整子碟..."
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Merge into parent..."
+msgstr "合併入父碟..."
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Reconnect parent..."
+msgstr "重新連接父碟..."
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "New disk ID..."
+msgstr "新磁碟 ID..."
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Copy the steps..."
+msgstr "複製步驟..."
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Remove from the list"
+msgstr "由清單移除"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Drop .vhd, .vhdx, .avhdx, .vhds or .iso files anywhere on this page to add them."
+msgstr "將 .vhd、.vhdx、.avhdx、.vhds 或 .iso 檔案拖放到呢頁任何地方就可以加入。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Stopping at the next step..."
+msgstr "會喺下一步停..."
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Routes found:"
+msgstr "搵到嘅途徑："
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Storage module"
+msgstr "Storage 模組"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Hyper-V module installed, not needed"
+msgstr "有 Hyper-V 模組，唔需要"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Hyper-V module not installed, not needed"
+msgstr "冇 Hyper-V 模組，唔需要"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Virtual disks need Windows. Disk files can still be read and checked here; nothing can be attached or changed."
+msgstr "虛擬磁碟需要 Windows。呢度仍然可以讀同檢查磁碟檔案；但係乜都唔可以掛載或者改。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "%s: every operation here works without Hyper-V."
+msgstr "%s：呢度每個操作都唔使 Hyper-V。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "In chains"
+msgstr "喺鏈入面"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Problems"
+msgstr "問題"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Same disk ID"
+msgstr "磁碟 ID 相同"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "No disks yet"
+msgstr "仲未有磁碟"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Add a disk file or a folder, drop files here, or create a disk."
+msgstr "加入磁碟檔案或者資料夾、將檔案拖放到呢度，或者建立一個磁碟。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Windows could not say whether it is attached."
+msgstr "Windows 講唔到佢有冇掛載。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Attached, without a drive letter"
+msgstr "已掛載，冇盤符"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Attached at %s"
+msgstr "掛載喺 %s"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Not attached"
+msgstr "未掛載"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "%s has the same disk ID as %s, so Windows keeps one of them offline while the other is attached. New disk ID ends that."
+msgstr "%s 同 %s 嘅磁碟 ID 一樣，所以其中一個掛載咗嘅時候，Windows 會將另一個保持離線。用新磁碟 ID 就可以解決。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "None of these are disk files: .vhd, .vhdx, .avhdx, .vhds or .iso."
+msgstr "呢啲都唔係磁碟檔案：.vhd、.vhdx、.avhdx、.vhds 或 .iso。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Add disk files"
+msgstr "加入磁碟檔案"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Disk files"
+msgstr "磁碟檔案"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Add every disk file in a folder"
+msgstr "加入一個資料夾入面嘅每個磁碟檔案"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Every operation, the route that did it, and how it ended. An incomplete step left everything as it was."
+msgstr "每個操作、做嗰個操作嘅途徑，同點樣完結。未完成嘅步驟會保持所有嘢原狀。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Route"
+msgstr "途徑"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Detail"
+msgstr "詳情"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Incomplete"
+msgstr "未完成"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Pack a folder into a new VHDX beside it"
+msgstr "將資料夾打包入旁邊一個新 VHDX"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Packing %s (%d files, %s) into %s, a dynamic VHDX of %s fitted to it."
+msgstr "將 %s（%d 個檔案，%s）打包入 %s，一個啱啱好 %s 嘅動態 VHDX。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "%s already exists, so the new disk is %s. Nothing is overwritten."
+msgstr "%s 已經存在，所以新磁碟係 %s。乜都唔會被蓋過。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "The folder tree, times, attributes and streams (web marks included) are kept, and every file is checked by SHA-256. Your files are never moved or changed; Cancel removes only the new disk."
+msgstr "資料夾結構、時間、屬性同資料流（包括網絡下載標記）都會保留，每個檔案都會用 SHA-256 檢查。你嘅檔案永遠唔會被搬或者改；取消只會刪除新磁碟。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Some folders could not be read and are left out."
+msgstr "有啲資料夾讀唔到，會被略過。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "The drive has %s free; the packed disk needs up to %s."
+msgstr "個磁碟機有 %s 空位；打包嘅磁碟最多需要 %s。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Quick pack"
+msgstr "快速打包"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Pack it"
+msgstr "打包"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Grow by half"
+msgstr "放大一半"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Merge into parent"
+msgstr "合併入父碟"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Copy as PowerShell"
+msgstr "複製成 PowerShell"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Copy as DiskPart"
+msgstr "複製成 DiskPart"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Detach %s? Programs using its drive lose it; close their files first."
+msgstr "卸載 %s？用緊佢個磁碟機嘅程式會冇咗佢；請先閂咗佢哋啲檔案。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Grow %s"
+msgstr "放大 %s"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Now %s. Up to %s for a %s. Grows the file and, while it is attached, extends its last volume into the new space in the same step."
+msgstr "而家係 %s。最大可以去到 %s，呢個係 %s 嘅上限。會放大個檔案，掛載緊嘅話仲會喺同一步將最後一個卷延伸到新空間。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "New size"
+msgstr "新大小"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Shrinking is not built yet: it needs a verified copy first and the two-key confirmation."
+msgstr "縮細仲未做：佢需要先整驗證過嘅副本同兩匙確認。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Grow"
+msgstr "放大"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "The new size must be larger than the disk is now."
+msgstr "新大小一定要大過磁碟而家嘅大小。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "A %s holds at most %s."
+msgstr "%s 最多可以係 %s。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "A fixed disk takes the new space at once, and the drive does not have it."
+msgstr "固定磁碟會即刻佔用新空間，而個磁碟機冇咁多位。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Grows to %s."
+msgstr "會放大到 %s。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Compact %s"
+msgstr "壓縮 %s"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "%s on its drive now. Compacting gives back blocks the disk no longer uses."
+msgstr "而家喺磁碟機度佔 %s。壓縮會交還磁碟唔再用嘅區塊。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Full: scans for zero blocks and gives back unused ones"
+msgstr "完整：掃描零區塊同交還冇用嘅區塊"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Quick: gives back unused blocks without scanning for zeros"
+msgstr "快速：交還冇用嘅區塊，唔掃描零區塊"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "It is reattached read-only for the run, then put back as it was."
+msgstr "執行期間會改為唯讀掛載，之後還原。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Retrim, Pretrimmed and Prezeroed are not built yet."
+msgstr "Retrim、Pretrimmed 同 Prezeroed 仲未做。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Merge into the parent"
+msgstr "合併入父碟"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "%s changes for good with the changes in %s."
+msgstr "%s 會永久加入 %s 入面嘅改動。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "%s are built on it too and stop working after the merge."
+msgstr "%s 都係建立喺佢上面，合併之後會停止運作。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "A verified copy, %s, is made first."
+msgstr "會先整一份驗證過嘅副本 %s。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Merging"
+msgstr "合併緊"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "The drive has no room for the verified copy of the parent, so nothing was merged."
+msgstr "個磁碟機冇位放父碟嘅驗證副本，所以冇合併任何嘢。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Where is the parent of %s now?"
+msgstr "%s 嘅父碟而家喺邊？"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "%s is not the parent %s was made from (or it changed since), so they were not connected."
+msgstr "%s 唔係整 %s 時用嘅父碟（或者之後改過），所以冇連接佢哋。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Reconnect parent"
+msgstr "重新連接父碟"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Give %s a new %s disk ID? It is attached without a drive letter for the change and detached after. Its files do not change."
+msgstr "俾 %s 一個新嘅 %s 磁碟 ID？改嘅時候會掛載而唔俾盤符，改完就卸載。佢入面嘅檔案唔會變。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "New disk ID"
+msgstr "新磁碟 ID"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Waiting for administrator permission..."
+msgstr "等緊管理員權限..."
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "%s did not finish: %s"
+msgstr "%s 冇完成：%s"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Permission cancelled: nothing changed, and the step shows as incomplete."
+msgstr "權限已取消：乜都冇改，呢步會顯示做未完成。"

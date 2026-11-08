@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-08 07:19-0500\n"
+"POT-Creation-Date: 2026-11-08 07:51-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -7473,6 +7473,12 @@ msgid "Drawing board"
 msgstr ""
 
 msgid "Draw on a capture of the plate with seven pens, versions and export, saved on this computer"
+msgstr ""
+
+msgid "Virtual disks"
+msgstr ""
+
+msgid "Every VHD, VHDX and ISO you add: attach, create, grow, compact, chains, merge and Quick pack"
 msgstr ""
 
 msgid "Element locks"
@@ -29916,9 +29922,6 @@ msgstr ""
 msgid "File, Local model suite"
 msgstr ""
 
-msgid "Virtual disks"
-msgstr ""
-
 msgid "File, Virtual disks"
 msgstr ""
 
@@ -32165,6 +32168,401 @@ msgid "%d versions kept"
 msgstr ""
 
 msgid "never uploaded"
+msgstr ""
+
+msgid "fixed"
+msgstr ""
+
+msgid "dynamic"
+msgstr ""
+
+msgid "differencing"
+msgstr ""
+
+msgid "read-only"
+msgstr ""
+
+msgid "unknown"
+msgstr ""
+
+msgid "Protected"
+msgstr ""
+
+msgid "Passed"
+msgstr ""
+
+msgid "Parent missing"
+msgstr ""
+
+msgid "Parent changed"
+msgstr ""
+
+msgid "Loops"
+msgstr ""
+
+msgid "Unreadable"
+msgstr ""
+
+msgid "Not a chain"
+msgstr ""
+
+msgid "Make a child disk"
+msgstr ""
+
+msgid "Create a virtual disk"
+msgstr ""
+
+msgid "A child starts empty and reads everything else from its parent, which must not change while the child exists."
+msgstr ""
+
+msgid "Checks every limit before anything is written. Windows asks for administrator permission once, at the end."
+msgstr ""
+
+msgid "Portable data disk"
+msgstr ""
+
+msgid "Dev Drive"
+msgstr ""
+
+msgid "Disk of my own"
+msgstr ""
+
+msgid "Dynamic"
+msgstr ""
+
+msgid "Block"
+msgstr ""
+
+msgid "Sectors (logical / physical)"
+msgstr ""
+
+msgid "Leave raw"
+msgstr ""
+
+msgid "Initialize"
+msgstr ""
+
+msgid "File system"
+msgstr ""
+
+msgid "Next free letter"
+msgstr ""
+
+msgid "Drive letter"
+msgstr ""
+
+msgid "Quick format"
+msgstr ""
+
+msgid "Where the disk goes"
+msgstr ""
+
+msgid "Where it goes"
+msgstr ""
+
+msgid "Attach after creating"
+msgstr ""
+
+msgid "Same steps as a script"
+msgstr ""
+
+msgid "Make the child"
+msgstr ""
+
+msgid "Every VHD, VHDX, VHD Set and ISO you add, with every operation Windows offers. Nothing here touches a disk you did not choose."
+msgstr ""
+
+msgid "Add a disk file..."
+msgstr ""
+
+msgid "Add a folder..."
+msgstr ""
+
+msgid "Quick pack..."
+msgstr ""
+
+msgid "Create..."
+msgstr ""
+
+msgid "Search name, path, label or ID"
+msgstr ""
+
+msgid "Read again"
+msgstr ""
+
+msgid "Folder"
+msgstr ""
+
+msgid "Format and type"
+msgstr ""
+
+msgid "On disk"
+msgstr ""
+
+msgid "Attached"
+msgstr ""
+
+msgid "Chain test"
+msgstr ""
+
+msgid "Choose a disk"
+msgstr ""
+
+msgid "Attach"
+msgstr ""
+
+msgid "Attach read-only"
+msgstr ""
+
+msgid "Detach"
+msgstr ""
+
+msgid "Grow..."
+msgstr ""
+
+msgid "Compact..."
+msgstr ""
+
+msgid "Make child..."
+msgstr ""
+
+msgid "Merge into parent..."
+msgstr ""
+
+msgid "Reconnect parent..."
+msgstr ""
+
+msgid "New disk ID..."
+msgstr ""
+
+msgid "Copy the steps..."
+msgstr ""
+
+msgid "Remove from the list"
+msgstr ""
+
+msgid "Drop .vhd, .vhdx, .avhdx, .vhds or .iso files anywhere on this page to add them."
+msgstr ""
+
+msgid "Stopping at the next step..."
+msgstr ""
+
+msgid "Routes found:"
+msgstr ""
+
+msgid "Storage module"
+msgstr ""
+
+msgid "Hyper-V module installed, not needed"
+msgstr ""
+
+msgid "Hyper-V module not installed, not needed"
+msgstr ""
+
+msgid "Virtual disks need Windows. Disk files can still be read and checked here; nothing can be attached or changed."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s: every operation here works without Hyper-V."
+msgstr ""
+
+msgid "In chains"
+msgstr ""
+
+msgid "Problems"
+msgstr ""
+
+msgid "Same disk ID"
+msgstr ""
+
+msgid "No disks yet"
+msgstr ""
+
+msgid "Add a disk file or a folder, drop files here, or create a disk."
+msgstr ""
+
+msgid "Windows could not say whether it is attached."
+msgstr ""
+
+msgid "Attached, without a drive letter"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Attached at %s"
+msgstr ""
+
+msgid "Not attached"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s has the same disk ID as %s, so Windows keeps one of them offline while the other is attached. New disk ID ends that."
+msgstr ""
+
+msgid "None of these are disk files: .vhd, .vhdx, .avhdx, .vhds or .iso."
+msgstr ""
+
+msgid "Add disk files"
+msgstr ""
+
+msgid "Disk files"
+msgstr ""
+
+msgid "Add every disk file in a folder"
+msgstr ""
+
+msgid "Every operation, the route that did it, and how it ended. An incomplete step left everything as it was."
+msgstr ""
+
+msgid "Route"
+msgstr ""
+
+msgid "Detail"
+msgstr ""
+
+msgid "Incomplete"
+msgstr ""
+
+msgid "Pack a folder into a new VHDX beside it"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Packing %s (%d files, %s) into %s, a dynamic VHDX of %s fitted to it."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s already exists, so the new disk is %s. Nothing is overwritten."
+msgstr ""
+
+msgid "The folder tree, times, attributes and streams (web marks included) are kept, and every file is checked by SHA-256. Your files are never moved or changed; Cancel removes only the new disk."
+msgstr ""
+
+msgid "Some folders could not be read and are left out."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The drive has %s free; the packed disk needs up to %s."
+msgstr ""
+
+msgid "Quick pack"
+msgstr ""
+
+msgid "Pack it"
+msgstr ""
+
+msgid "Grow by half"
+msgstr ""
+
+msgid "Merge into parent"
+msgstr ""
+
+msgid "Copy as PowerShell"
+msgstr ""
+
+msgid "Copy as DiskPart"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Detach %s? Programs using its drive lose it; close their files first."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Grow %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Now %s. Up to %s for a %s. Grows the file and, while it is attached, extends its last volume into the new space in the same step."
+msgstr ""
+
+msgid "New size"
+msgstr ""
+
+msgid "Shrinking is not built yet: it needs a verified copy first and the two-key confirmation."
+msgstr ""
+
+msgid "Grow"
+msgstr ""
+
+msgid "The new size must be larger than the disk is now."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "A %s holds at most %s."
+msgstr ""
+
+msgid "A fixed disk takes the new space at once, and the drive does not have it."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Grows to %s."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Compact %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s on its drive now. Compacting gives back blocks the disk no longer uses."
+msgstr ""
+
+msgid "Full: scans for zero blocks and gives back unused ones"
+msgstr ""
+
+msgid "Quick: gives back unused blocks without scanning for zeros"
+msgstr ""
+
+msgid "It is reattached read-only for the run, then put back as it was."
+msgstr ""
+
+msgid "Retrim, Pretrimmed and Prezeroed are not built yet."
+msgstr ""
+
+msgid "Merge into the parent"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s changes for good with the changes in %s."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s are built on it too and stop working after the merge."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "A verified copy, %s, is made first."
+msgstr ""
+
+msgid "Merging"
+msgstr ""
+
+msgid "The drive has no room for the verified copy of the parent, so nothing was merged."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Where is the parent of %s now?"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s is not the parent %s was made from (or it changed since), so they were not connected."
+msgstr ""
+
+msgid "Reconnect parent"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Give %s a new %s disk ID? It is attached without a drive letter for the change and detached after. Its files do not change."
+msgstr ""
+
+msgid "New disk ID"
+msgstr ""
+
+msgid "Waiting for administrator permission..."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s did not finish: %s"
+msgstr ""
+
+msgid "Permission cancelled: nothing changed, and the step shows as incomplete."
 msgstr ""
 
 msgid "No key is saved for this provider"

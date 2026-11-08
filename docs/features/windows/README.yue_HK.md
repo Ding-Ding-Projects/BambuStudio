@@ -1,6 +1,6 @@
 ---
 translation-of: README.md
-source-sha256: a1a728f8fad4fd068ecf11e80f30c5da6ab5707c73b4aeb2fbd0ca73e3f36fcc
+source-sha256: ff4383e61e5e361fcb8878621e781b717d38bb4a4c65e345625b2c0bb5fe321e
 review-status: agent-drafted
 ---
 
@@ -29,6 +29,7 @@ review-status: agent-drafted
 - [元素鎖同解鎖階梯](element-locks.md)
 - [專注模式](attention-modes.md)
 - [畫板](drawing-board.md)
+- [虛擬磁碟](virtual-disks.md)
 - [設定 Bambu Studio](practical-setup.md)
 - [應用內變更日誌查看器（幫助 ▸ 有咩新嘢）](changelog-viewer.md)
 - [準備側邊欄搜尋（設定 + 墨水插槽）](sidebar-search.md)

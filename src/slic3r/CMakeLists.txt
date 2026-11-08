@@ -1102,6 +1102,14 @@ list(APPEND SLIC3R_GUI_SOURCES
     GUI/Drawing/DrawingModel.hpp
     GUI/Drawing/DrawingPanel.cpp
     GUI/Drawing/DrawingPanel.hpp
+    GUI/VirtualDisks/DiskImage.cpp
+    GUI/VirtualDisks/DiskImage.hpp
+    GUI/VirtualDisks/DiskPlan.cpp
+    GUI/VirtualDisks/DiskPlan.hpp
+    GUI/VirtualDisks/DiskSystem.cpp
+    GUI/VirtualDisks/DiskSystem.hpp
+    GUI/VirtualDisks/VirtualDisksPanel.cpp
+    GUI/VirtualDisks/VirtualDisksPanel.hpp
     GUI/ElementLocks/LockModel.cpp
     GUI/ElementLocks/LockModel.hpp
     GUI/ElementLocks/LockService.cpp

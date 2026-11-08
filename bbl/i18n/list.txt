@@ -448,6 +448,7 @@ src/slic3r/GUI/LiveCharts/LiveChartsPanel.cpp
 src/slic3r/GUI/ElementLocks/LockService.cpp
 src/slic3r/GUI/AttentionModes/AttentionService.cpp
 src/slic3r/GUI/Drawing/DrawingPanel.cpp
+src/slic3r/GUI/VirtualDisks/VirtualDisksPanel.cpp
 src/slic3r/GUI/ModelCreator/ModelCreatorBackend.cpp
 src/slic3r/GUI/OllamaSuite/OllamaSuiteText.cpp
 src/slic3r/GUI/MonitorBasePanel.cpp

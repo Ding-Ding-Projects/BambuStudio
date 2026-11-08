@@ -205,6 +205,49 @@ std::map<std::string, Attachment> attached_disks(bool &available, std::string *d
     auto physical  = reinterpret_cast<Physical>(reinterpret_cast<void *>(GetProcAddress(virtdisk, "GetVirtualDiskPhysicalPath")));
     std::map<DWORD, std::vector<std::string>> by_disk;
     bool volumes_read = false;
+    // Each disk, asked which file it lives in: a VHD-backed disk names its file.
+    std::map<std::string, DWORD> disk_of_file;
+    if (auto depend = reinterpret_cast<Dependency>(reinterpret_cast<void *>(GetProcAddress(virtdisk, "GetStorageDependencyInformation")))) {
+        for (DWORD n = 0; n < 64; ++n) {
+            const std::wstring device = L"\\\\.\\PhysicalDrive" + std::to_wstring(n);
+            std::vector<std::uint8_t> info(64 * 1024);
+            auto *dep  = reinterpret_cast<PSTORAGE_DEPENDENCY_INFO>(info.data());
+            ULONG used = 0;
+            DWORD got  = ERROR_INVALID_HANDLE;
+            bool  seen = false;
+            for (DWORD access : {DWORD(0), DWORD(GENERIC_READ)}) {
+                HANDLE h = CreateFileW(device.c_str(), access, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, 0, nullptr);
+                if (h == INVALID_HANDLE_VALUE) continue;
+                seen = true;
+                std::fill(info.begin(), info.end(), std::uint8_t(0));
+                dep->Version = STORAGE_DEPENDENCY_INFO_VERSION_2;
+                got          = depend(h, GET_STORAGE_DEPENDENCY_FLAG(GET_STORAGE_DEPENDENCY_FLAG_HOST_VOLUMES | GET_STORAGE_DEPENDENCY_FLAG_DISK_HANDLE),
+                                      ULONG(info.size()), dep, &used);
+                CloseHandle(h);
+                if (got == ERROR_SUCCESS) break;
+            }
+            if (!seen) continue;
+            if (got != ERROR_SUCCESS) {
+                if (diagnostic) note("drive " + std::to_string(n) + " " + std::to_string(got));
+                continue;
+            }
+            for (ULONG i = 0; i < dep->NumberEntries; ++i) {
+                const STORAGE_DEPENDENCY_INFO_TYPE_2 &e = dep->Version2Entries[i];
+                if (diagnostic)
+                    note("drive " + std::to_string(n) + " level " + std::to_string(e.AncestorLevel) + " host " + (e.HostVolumeName ? narrow(e.HostVolumeName) : "-") +
+                         " file " + (e.DependentVolumeRelativePath ? narrow(e.DependentVolumeRelativePath) : "-"));
+                if (e.AncestorLevel > 1 || !e.HostVolumeName || !e.DependentVolumeRelativePath) continue;
+                const std::vector<std::string> hosts = mount_points_of(e.HostVolumeName);
+                if (hosts.empty()) continue;
+                std::wstring relative = e.DependentVolumeRelativePath;
+                while (!relative.empty() && relative.front() == L'\\') relative.erase(relative.begin());
+                const std::string file = path_key(hosts.front() + narrow(relative));
+                disk_of_file[file]     = n;
+                out[file].attached     = true;
+                available              = true;
+            }
+        }
+    }
     for (auto &entry : out) {
         if (!entry.second.mount_points.empty() || !open_disk || !physical) continue;
         if (!volumes_read) {
@@ -231,6 +274,10 @@ std::map<std::string, Attachment> attached_disks(bool &available, std::string *d
                 } while (FindNextVolumeW(find, volume, MAX_PATH));
                 FindVolumeClose(find);
             }
+        }
+        if (const auto known = disk_of_file.find(entry.first); known != disk_of_file.end()) {
+            for (const std::string &m : by_disk[known->second]) entry.second.mount_points.push_back(m);
+            if (!entry.second.mount_points.empty()) continue;
         }
         // The map holds lower-case keys; Windows matches file names without regard to case.
         const std::string key  = entry.first;

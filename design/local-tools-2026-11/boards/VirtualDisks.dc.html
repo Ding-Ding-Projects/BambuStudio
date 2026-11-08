@@ -15,7 +15,7 @@
 </helmet>
 <div class="pg" style="">
   <div class="row wrap">
-    <div class="grow"><div class="h1">Virtual disks</div><div class="sub">Every VHD, VHDX, VHD Set and ISO on this computer, with every operation Windows offers. Nothing here touches a disk you did not choose.</div></div>
+    <div class="grow"><div class="h1">Virtual disks</div><div class="sub">Every VHD, VHDX, VHD Set and ISO on this computer, with every operation Windows offers. Nothing here touches a disk you did not choose.</div><div class="note" style="margin-top:4px">As built: the list, reading every file, attach and detach, create, grow, compact (Full, Quick), make child, merge, reconnect a moved parent, a new disk ID, Quick pack, Copy as PowerShell or DiskPart, and history. Parts marked not built yet are still to come.</div></div>
     <button class="btn"><span class="ms" aria-hidden="true">history</span>History</button>
     <button class="btn"><span class="ms" aria-hidden="true">attach_file</span>Attach a file</button>
     <button class="btn t"><span class="ms" aria-hidden="true">inventory_2</span>Quick pack</button>
@@ -58,7 +58,7 @@
         <span>Free space</span><span class="mono">217.3 GB of 255.9 GB</span>
         <span>Change tracking</span><span>Off</span>
       </div>
-      <div class="row wrap" style="gap:8px"><button class="btn t">Detach</button><button class="btn">Resize</button><button class="btn">Compact</button><button class="btn">Convert</button><button class="btn">Make child</button><button class="btn">Metadata</button><button class="btn">Mirror</button></div>
+      <div class="row wrap" style="gap:8px"><button class="btn t">Detach</button><button class="btn">Resize</button><button class="btn">Compact</button><button class="btn">Make child</button><span class="note">Convert, Metadata and Mirror: not built yet</span></div>
       <div class="row" style="gap:8px"><button class="btn q"><span class="ms" aria-hidden="true">content_copy</span>Copy as PowerShell</button><button class="btn q"><span class="ms" aria-hidden="true">content_copy</span>Copy as DiskPart</button></div>
     </aside>
   </div>
@@ -73,7 +73,7 @@
         <div class="note">VHDX holds 3 MB to 64 TB. A dynamic VHD stops at 2,040 GB.</div>
         <div class="row"><span style="width:76px;flex:none;font-size:13px">Block</span><div class="seg"><button>1</button><button>8</button><button class="on">32</button><button>256 MB</button></div></div>
         <div class="row"><span style="width:76px;flex:none;font-size:13px">Sectors</span><div class="seg"><button class="on">512 · 4096</button><button>4096 · 4096</button></div></div>
-        <div class="row"><span style="width:76px;flex:none;font-size:13px">Access</span><span class="note grow">No SDDL filter</span><button class="btn q" style="height:30px">Add</button></div>
+        <div class="row"><span style="width:76px;flex:none;font-size:13px">Access</span><span class="note grow">No SDDL filter (not built yet)</span><button class="btn q" style="height:30px">Add</button></div>
       </div>
       <div class="well">
         <div class="lbl">Inside the disk</div>
@@ -89,8 +89,8 @@
       <div class="well">
         <div class="lbl">Where it goes</div>
         <div class="row"><input class="in grow mono" value="D:\Disks\Prints.vhdx" aria-label="File"><button class="btn">Browse</button></div>
-        <div class="row"><span style="width:76px;flex:none;font-size:13px">Mount</span><div class="seg"><button class="on">Letter P:</button><button>Folder</button><button>None</button></div></div>
-        <div class="row"><span style="width:76px;flex:none;font-size:13px">Attach</span><div class="seg"><button class="on">Until detached</button><button>Every sign-in</button></div></div>
+        <div class="row"><span style="width:76px;flex:none;font-size:13px">Mount</span><div class="seg"><button class="on">Letter P:</button><button>Folder</button><button>None</button></div><span class="note">Folder: not built yet</span></div>
+        <div class="row"><span style="width:76px;flex:none;font-size:13px">Attach</span><div class="seg"><button class="on">Until detached</button><button>Every sign-in</button></div><span class="note">Every sign-in: not built yet</span></div>
         <div class="well" style="background:#0f2a1c;flex-direction:row;align-items:flex-start"><span class="ms ok" aria-hidden="true">task_alt</span><div class="note" style="color:#cde9d6">Drive D: has 612 GB free. A dynamic disk only takes what it holds and does not reserve 64 GB.</div></div>
         <div class="well" style="background:#3d2a12;flex-direction:row;align-items:flex-start"><span class="ms warn" aria-hidden="true">info</span><div class="note" style="color:#ffd8b0">Block size 32 MB runs through the VirtDisk API. DiskPart would use its default.</div></div>
       </div>
@@ -113,7 +113,7 @@ New-Partition -DiskNumber $d.Number `
   </section>
   <div class="g2">
     <section class="card" aria-label="Resize">
-      <div class="row"><span class="h3 grow">Resize Projects.vhdx</span><div class="seg"><button class="on">Grow</button><button>Shrink</button></div></div>
+      <div class="row"><span class="h3 grow">Resize Projects.vhdx</span><div class="seg"><button class="on">Grow</button><button>Shrink</button></div><span class="note">Shrink: not built yet</span></div>
       <div style="position:relative;height:64px">
         <div style="position:absolute;left:0;right:0;top:26px;height:8px;border-radius:4px;background:#28322c"></div>
         <div style="position:absolute;left:0;width:50%;top:26px;height:8px;border-radius:4px 0 0 4px;background:#34413a"></div>
@@ -134,15 +134,15 @@ New-Partition -DiskNumber $d.Number `
       <div class="row"><span class="h3 grow">Compact Projects.vhdx</span><span class="mono note">41.2 GB now · about 38.9 GB after</span></div>
       <div class="mode on"><span class="ms ok" aria-hidden="true">radio_button_checked</span><b style="font-weight:500">Quick</b><span>Gives back unused blocks without scanning for zeros</span><span class="note">Attached read-only</span></div>
       <div class="mode"><span class="ms mut" aria-hidden="true">radio_button_unchecked</span><span>Full</span><span>Scans for zero blocks and gives back unused ones</span><span class="note">Attached read-only</span></div>
-      <div class="mode"><span class="ms mut" aria-hidden="true">radio_button_unchecked</span><span>Retrim</span><span>Sends trims only, no scan, no reclaim</span><span class="note">Attached read-only</span></div>
-      <div class="mode"><span class="ms mut" aria-hidden="true">radio_button_unchecked</span><span>Pretrimmed</span><span>Like Quick for disks already trimmed; less thorough</span><span class="note">Detached is fine</span></div>
-      <div class="mode"><span class="ms mut" aria-hidden="true">radio_button_unchecked</span><span>Prezeroed</span><span>Like Quick after a tool zeroed the free space</span><span class="note">Any state</span></div>
+      <div class="mode"><span class="ms mut" aria-hidden="true">radio_button_unchecked</span><span>Retrim</span><span>Sends trims only, no scan, no reclaim (not built yet)</span><span class="note">Attached read-only</span></div>
+      <div class="mode"><span class="ms mut" aria-hidden="true">radio_button_unchecked</span><span>Pretrimmed</span><span>Like Quick for disks already trimmed; less thorough (not built yet)</span><span class="note">Detached is fine</span></div>
+      <div class="mode"><span class="ms mut" aria-hidden="true">radio_button_unchecked</span><span>Prezeroed</span><span>Like Quick after a tool zeroed the free space (not built yet)</span><span class="note">Any state</span></div>
       <div class="row"><span class="note grow">Reattaches E: read-only for the run, then puts it back as it was and reports the mode that ran.</span><button class="btn p">Compact</button></div>
     </section>
   </div>
   <div class="g2">
     <section class="card" aria-label="Differencing chain">
-      <div class="row"><span class="h3 grow">Chain from Base.vhdx</span><button class="btn">Test chain</button></div>
+      <div class="row"><span class="h3 grow">Chain from Base.vhdx</span><span class="note">tested on every read</span></div>
       <div class="tree">
         <div class="nd"><span class="ms" aria-hidden="true">lock</span><b style="font-weight:500" class="grow">Base.vhdx</b><span class="note">2026-10-30 18:02 · protected, has 2 children</span></div>
         <div class="nd" style="margin-left:28px;background:#24342b;color:#cde9d6"><span class="ms" aria-hidden="true" style="color:#9ff7bf">subdirectory_arrow_right</span><span class="grow">Scratch.avhdx</span><span class="note">2026-11-07 22:40</span></div>
@@ -151,7 +151,7 @@ New-Partition -DiskNumber $d.Number `
       <div class="well" style="background:#3a1512"><div class="row"><span class="ms err" aria-hidden="true">warning</span><span class="h3 grow" style="color:#ffdad6">Merging Scratch.avhdx changes Base.vhdx</span></div><div class="note" style="color:#ffdad6">Experiment.avhdx is built on Base.vhdx, so it stops working after the merge. A verified copy of Base.vhdx is made first unless you turn that off.</div></div>
       <div class="row wrap" style="gap:8px"><button class="btn">Reconnect a moved parent</button><button class="btn">Make child</button><button class="btn d">Merge into parent</button></div>
     </section>
-    <section class="card" aria-label="VHD Set checkpoints">
+    <section class="card" aria-label="VHD Set checkpoints"><div class="note">VHD Set checkpoints: not built yet</div>
       <div class="row"><span class="h3 grow">Archive.vhds checkpoints</span><button class="btn t"><span class="ms" aria-hidden="true">add_a_photo</span>Take checkpoint</button></div>
       <div class="tr h" style="grid-template-columns:minmax(0,1fr) 150px 80px 120px"><span>Checkpoint</span><span>Taken</span><span>Files</span><span>Action</span></div>
       <div class="tr sel" style="grid-template-columns:minmax(0,1fr) 150px 80px 120px"><span>Active leaf</span><span class="mono">now</span><span>1</span><span class="mut" style="line-height:30px">Writing here</span></div>
@@ -172,7 +172,7 @@ New-Partition -DiskNumber $d.Number `
         <span>Disk grew</span><span style="white-space:normal">From 19.2 GB to 20.4 GB at file 1,204, because a video grew while it was copied. That file was copied again and checked.</span>
         <span>Checked</span><span>2,480 files match their SHA-256</span>
       </div>
-      <div class="row" style="gap:8px;justify-content:flex-end"><button class="btn">Pause</button><button class="btn d">Cancel</button></div>
+      <div class="row" style="gap:8px;justify-content:flex-end"><span class="note">Pause: not built yet</span><button class="btn d">Cancel</button></div>
       <div class="note">Cancel detaches the new disk and removes only Photos (1).vhdx. Your files are never moved or changed.</div>
     </section>
     <section class="card" aria-label="Quick pack result">
@@ -196,9 +196,9 @@ New-Partition -DiskNumber $d.Number `
       <div class="ck"><span class="ms ok" aria-hidden="true">check_circle</span>At least 50 GB, formatted ReFS</div>
       <div class="ck"><span class="ms ok" aria-hidden="true">check_circle</span>Trusted · 2 filters allowed</div>
       <div class="well" style="background:#3a1512"><div class="note" style="color:#ffdad6">Turning antivirus off for Dev Drives changes every Dev Drive on this computer, and Microsoft calls it a security risk. It is never on by default and needs the two-key confirmation.</div></div>
-      <button class="btn" style="align-self:flex-start">Edit filters</button>
+      <button class="btn" style="align-self:flex-start">Edit filters</button><span class="note">Filters and antivirus: not built yet; the Dev Drive start in Create is built</span>
     </section>
-    <section class="card" aria-label="Native boot">
+    <section class="card" aria-label="Native boot"><div class="note">Native boot: not built yet</div>
       <div class="row"><span class="ms ok" aria-hidden="true">restart_alt</span><span class="h3 grow">Native boot</span></div>
       <div class="ck"><span class="ms ok" aria-hidden="true">check_circle</span>VHDX on a basic disk</div>
       <div class="ck"><span class="ms ok" aria-hidden="true">check_circle</span>Room for full size plus page file</div>
@@ -211,7 +211,7 @@ New-Partition -DiskNumber $d.Number `
       <div class="well" style="background:#3d2a12;flex-direction:row;align-items:center"><span class="note grow" style="color:#ffd8b0">Legacy.vhd has the same disk ID as Projects.vhdx, so Windows keeps one offline.</span><button class="btn" style="color:#ffd8b0;border-color:#6b4a22">New ID</button></div>
       <div class="tr" style="grid-template-columns:110px minmax(0,1fr) 40px;padding:6px 8px"><span>Owner</span><span>Print farm</span><span class="ms mut" aria-hidden="true" style="font-size:18px">edit</span></div>
       <div class="tr" style="grid-template-columns:110px minmax(0,1fr) 40px;padding:6px 8px"><span>Purpose</span><span>Slicer projects</span><span class="ms mut" aria-hidden="true" style="font-size:18px">edit</span></div>
-      <div class="row wrap" style="gap:8px"><button class="btn">Start live mirror</button><button class="btn">Change tracking</button></div>
+      <div class="row wrap" style="gap:8px"><span class="note">Owner and purpose, live mirror and change tracking: not built yet. New ID is built.</span></div>
     </section>
   </div>
   <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:12px">
@@ -238,7 +238,7 @@ New-Partition -DiskNumber $d.Number `
   </div>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":2970}}'>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":3140}}'>
 class Component extends DCLogic {
   renderVals() {
     return {};
