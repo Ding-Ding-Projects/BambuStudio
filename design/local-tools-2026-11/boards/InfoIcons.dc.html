@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Preferences</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./kit.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&amp;family=Roboto+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..500,0..1,0&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#0e1311}.nv{height:40px;display:flex;align-items:center;gap:12px;padding:0 12px;border-radius:12px;color:#a9b6ad;text-decoration:none;font-size:14px}.nv b{margin-left:auto;font-weight:400;font-size:12px}.nv.on{background:#24342b;color:#cde9d6;font-weight:500}.pr{display:grid;grid-template-columns:minmax(0,1fr) auto 44px 44px;gap:10px;align-items:center;padding:10px 8px 10px 16px;border-radius:16px;background:#141a17}.pr.sel{background:#24342b}.pr .t{font-size:14px}.pr .p{font-size:12px;color:#a9b6ad;line-height:1.35}.pr.sel .t,.pr.sel .p{color:#cde9d6}.ii{width:44px;height:44px;border-radius:22px;border:0;background:transparent;color:#a9b6ad;display:grid;place-items:center}.ii.on{background:#0f5130;color:#9ff7bf}</style>
+</helmet>
+<div class="pg" style="background: #0a0e0c">
+  <section class="dlg" role="dialog" aria-label="Preferences" style="padding: 0; gap: 0; overflow: hidden; background: #18201c">
+    <div class="row" style="padding: 16px 20px; border-bottom: 1px solid #28322c">
+      <span class="ms ok" aria-hidden="true">tune</span><div class="h2">Preferences</div><span class="grow"></span>
+      <div class="row in" style="width: 420px; border-radius: 20px"><span class="ms mut" aria-hidden="true">search</span><span class="grow mut">Search 104 settings and 58 shortcuts</span><span class="kbd">.*</span></div>
+      <button class="chip">Changed only 9</button><button class="chip">Needs restart 1</button>
+      <button class="ib" aria-label="Close"><span class="ms" aria-hidden="true">close</span></button>
+    </div>
+    <div style="display: grid; grid-template-columns: 250px minmax(0, 1fr) 380px; min-height: 980px">
+      <nav aria-label="Sections" style="display: flex; flex-direction: column; gap: 2px; padding: 14px 10px; background: #141a17">
+        <a href="#" class="nv"><span class="ms" aria-hidden="true">tune</span>General<b>14</b></a>
+        <a href="#" class="nv"><span class="ms" aria-hidden="true">translate</span>Language and voice<b>12</b></a>
+        <a href="#" class="nv on"><span class="ms" aria-hidden="true">palette</span>Appearance<b>18</b></a>
+        <a href="#" class="nv"><span class="ms" aria-hidden="true">folder_managed</span>Projects<b>9</b></a>
+        <a href="#" class="nv"><span class="ms" aria-hidden="true">view_in_ar</span>Camera and mouse<b>11</b></a>
+        <a href="#" class="nv"><span class="ms" aria-hidden="true">print</span>Printing<b>8</b></a>
+        <a href="#" class="nv"><span class="ms" aria-hidden="true">lan</span>Network and devices<b>10</b></a>
+        <a href="#" class="nv"><span class="ms" aria-hidden="true">volume_up</span>Sound<b>6</b></a>
+        <a href="#" class="nv"><span class="ms" aria-hidden="true">shield</span>Privacy<b>5</b></a>
+        <a href="#" class="nv"><span class="ms" aria-hidden="true">update</span>Updates<b>4</b></a>
+        <a href="#" class="nv"><span class="ms" aria-hidden="true">keyboard</span>Shortcuts<b>58</b></a>
+        <a href="#" class="nv"><span class="ms" aria-hidden="true">code</span>Developer<b>7</b></a>
+        <div style="height:1px;background:#28322c;margin:10px 8px"></div>
+        <a href="#" class="nv"><span class="ms" aria-hidden="true">edit_note</span>Changed by you<b>9</b></a>
+        <a href="#" class="nv"><span class="ms" aria-hidden="true">restart_alt</span>Needs a restart<b>1</b></a>
+        <a href="#" class="nv"><span class="ms" aria-hidden="true">history</span>Preferences history<b>3</b></a>
+        <a href="#" class="nv"><span class="ms" aria-hidden="true">ios_share</span>Export or import</a>
+        <span class="grow"></span>
+        <div class="well" style="margin: 8px 4px 0"><div class="note">Every value says where it came from. Built-in defaults are named, never hidden.</div></div>
+      </nav>
+      <div style="display: flex; flex-direction: column; gap: 8px; padding: 16px 18px; min-width: 0">
+        <div class="row"><div class="h2 grow">Appearance</div><button class="btn">Reset this section</button></div>
+        <div class="lbl" style="padding-top: 4px">Theme</div>
+        <div class="pr"><div><div class="t">Theme</div><div class="p">You set Dark on 2026-11-02 at 18:40:11.</div></div><div class="seg"><button>Light</button><button class="on">Dark</button><button>Follow Windows</button></div><button class="ii" aria-label="About Theme"><span class="ms" aria-hidden="true">info</span></button><button class="ii" aria-label="Reset Theme to Follow Windows"><span class="ms" aria-hidden="true">restart_alt</span></button></div>
+        <div class="pr sel"><div><div class="t">Accent colour</div><div class="p">Built-in default: Mint #6FDC98. You have not changed it.</div></div><div class="row" style="gap:6px"><span style="width:26px;height:26px;border-radius:13px;background:#6fdc98;border:2px solid #e3ebe5"></span><span style="width:26px;height:26px;border-radius:13px;background:#8ab4ff"></span><span style="width:26px;height:26px;border-radius:13px;background:#ffb870"></span><span style="width:26px;height:26px;border-radius:13px;background:#f28cb1"></span><button class="ib" aria-label="More colours" style="width:32px;height:32px"><span class="ms" aria-hidden="true">colorize</span></button></div><button class="ii on" aria-label="About Accent colour" aria-expanded="true"><span class="ms" aria-hidden="true">info</span></button><span></span></div>
+        <div class="pr"><div><div class="t">Density</div><div class="p">Built-in default: Comfortable.</div></div><div class="seg"><button class="on">Comfortable</button><button>Compact</button></div><button class="ii" aria-label="About Density"><span class="ms" aria-hidden="true">info</span></button><span></span></div>
+        <div class="pr"><div><div class="t">Text size</div><div class="p">You set 110 % on 2026-10-29 at 09:12:44.</div></div><div class="row" style="width:240px"><div class="sl"><i style="width:55%"></i><b style="left:55%"></b></div><span class="mono" style="font-size:13px">110 %</span></div><button class="ii" aria-label="About Text size"><span class="ms" aria-hidden="true">info</span></button><button class="ii" aria-label="Reset Text size to 100 %"><span class="ms" aria-hidden="true">restart_alt</span></button></div>
+        <div class="lbl" style="padding-top: 8px">Motion</div>
+        <div class="pr"><div><div class="t">Animations</div><div class="p">Built-in default: Follow Windows (now: full motion).</div></div><div class="seg"><button>Full</button><button>Reduced</button><button class="on">Follow Windows</button></div><button class="ii" aria-label="About Animations"><span class="ms" aria-hidden="true">info</span></button><span></span></div>
+        <div class="pr"><div><div class="t">Transition speed</div><div class="p">Built-in default: 1.0x.</div></div><div class="row" style="width:240px"><div class="sl"><i style="width:40%"></i><b style="left:40%"></b></div><span class="mono" style="font-size:13px">1.0x</span></div><button class="ii" aria-label="About Transition speed"><span class="ms" aria-hidden="true">info</span></button><span></span></div>
+        <div class="lbl" style="padding-top: 8px">Identity</div>
+        <div class="pr"><div><div class="t">App name</div><div class="p">Built-in default: Bambu Studio.</div></div><input class="in" value="Bambu Studio" aria-label="App name" style="width:240px"><button class="ii" aria-label="About App name"><span class="ms" aria-hidden="true">info</span></button><span></span></div>
+        <div class="pr"><div><div class="t">App logo</div><div class="p">You chose logo-mint.png on 2026-11-01 at 20:15:49.</div></div><div class="row"><span style="width:36px;height:36px;border-radius:10px;background:#28322c;display:grid;place-items:center"><span class="ms ok" aria-hidden="true">deployed_code</span></span><button class="btn">Change</button></div><button class="ii" aria-label="About App logo"><span class="ms" aria-hidden="true">info</span></button><button class="ii" aria-label="Reset App logo"><span class="ms" aria-hidden="true">restart_alt</span></button></div>
+        <div class="pr"><div><div class="t">Show the dim sum surprise</div><div class="p">Built-in default: On.</div></div><button class="sw" role="switch" aria-checked="true" aria-label="Show the dim sum surprise"></button><button class="ii" aria-label="About Show the dim sum surprise"><span class="ms" aria-hidden="true">info</span></button><span></span></div>
+        <div class="lbl" style="padding-top: 8px">States</div>
+        <div class="pr" style="opacity: .9"><div><div class="t">Cantonese funny level</div><div class="p warn">Locked by School mode. Unlock it in General.</div></div><span class="row" style="gap:6px;color:#ffb870"><span class="ms" aria-hidden="true">school</span>Locked</span><button class="ii" aria-label="About Cantonese funny level"><span class="ms" aria-hidden="true">info</span></button><span></span></div>
+        <div class="pr"><div><div class="t">Element style overrides</div><div class="p warn">You locked this row. Unlock with your code or the unlock ladder.</div></div><button class="btn"><span class="ms" aria-hidden="true">lock_open</span>Unlock</button><button class="ii" aria-label="About Element style overrides"><span class="ms" aria-hidden="true">info</span></button><span></span></div>
+      </div>
+      <aside aria-label="About Accent colour" style="display: flex; flex-direction: column; gap: 12px; padding: 18px; background: #1f2823">
+        <div class="row"><span class="ms ok" aria-hidden="true">info</span><div class="h3 grow">Accent colour</div><button class="ib" aria-label="Close explanation"><span class="ms" aria-hidden="true">close</span></button></div>
+        <div style="font-size: 14px; line-height: 1.5">The accent colours buttons, switches, selections and progress across the app. The rest of the palette is derived from it, so text stays readable in light and dark.</div>
+        <div class="well"><div class="lbl">Where the value comes from</div><div style="font-size:13px">Nothing has been written for this setting, so the app uses its built-in Mint, #6FDC98.</div></div>
+        <div class="well"><div class="lbl">Changes</div><div style="font-size:13px">Every window, immediately. No restart.</div></div>
+        <div class="lbl">Try it</div>
+        <div class="row" style="align-items:flex-start"><span class="tag g">1</span><span style="font-size:13px;line-height:1.45">Pick Blue and watch the Slice button and this panel change.</span></div>
+        <div class="row" style="align-items:flex-start"><span class="tag g">2</span><span style="font-size:13px;line-height:1.45">Use More colours for any hex, RGB or HSL value; low-contrast picks are refused with the ratio shown.</span></div>
+        <div class="well"><div class="lbl">Playground</div><div class="row"><button class="btn p">Slice plate</button><button class="sw" role="switch" aria-checked="true" aria-label="Sample switch"></button><div class="bar grow"><i style="width:60%"></i></div></div><div class="note">A sample only. Nothing here changes your project.</div></div>
+        <div class="g2"><div class="well"><div class="lbl">Stored in</div><div class="mono" style="font-size:12px">BambuStudio.conf</div></div><div class="well"><div class="lbl">Key</div><div class="mono" style="font-size:12px">md3_accent_seed</div></div></div>
+        <div class="well"><div class="lbl">Changes to this setting</div><div style="font-size:13px">None yet. Every change you make shows here with its time, and Undo puts it back.</div></div>
+        <div class="well"><div class="lbl">Related</div><div class="row wrap" style="gap:6px"><button class="chip">Theme</button><button class="chip">Density</button><button class="chip">Edit appearance of one element</button></div></div>
+        <span class="grow"></span>
+        <button class="btn" aria-disabled="true" style="color:#7c8a81;border-color:#28322c">Already the built-in Mint</button>
+      </aside>
+    </div>
+    <div class="row" style="padding: 12px 20px; border-top: 1px solid #28322c"><span class="ms mut" aria-hidden="true">bolt</span><span class="sub grow">Changes apply immediately. Language needs a restart.</span><button class="btn">Restart now</button><button class="btn p">Done</button></div>
+  </section>
+  <div class="g3">
+    <section class="card" aria-label="Search results across sections">
+      <div class="h3">Search across sections</div>
+      <div class="row in" style="border-radius:20px"><span class="ms mut" aria-hidden="true">search</span><span class="grow mono" style="font-size:13px">^(auto|backup)</span><span class="kbd">.*</span></div>
+      <div class="note">5 settings in 3 sections</div>
+      <div class="well"><div class="lbl">Projects</div><div style="font-size:13px">Back up the open project every</div><div style="font-size:13px">Auto-arrange after import</div></div>
+      <div class="well"><div class="lbl">Printing</div><div style="font-size:13px">Auto-calculate flush volumes</div></div>
+      <div class="well"><div class="lbl">Updates</div><div style="font-size:13px">Automatically download updates</div><div style="font-size:13px">Back up before applying an update</div></div>
+    </section>
+    <section class="dlg" role="dialog" aria-label="Reset Appearance">
+      <div class="row"><span class="ms err" aria-hidden="true" style="font-size:24px">gpp_maybe</span><div class="h3">Reset Appearance to built-in defaults?</div></div>
+      <div class="sub">3 settings go back: Theme to Follow Windows, Text size to 100 % and App logo to the original. The other 15 already match their defaults. You can undo this from Preferences history.</div>
+      <div class="well"><div class="row" style="gap:10px"><button class="btn" aria-pressed="true" style="height:56px;border-color:#ffb4ab;background:#3a1512;color:#ffdad6;flex-direction:column;gap:2px;font-size:12px"><span class="ms" aria-hidden="true">key</span>Key A held</button><button class="btn" aria-pressed="false" style="height:56px;flex-direction:column;gap:2px;font-size:12px"><span class="ms" aria-hidden="true">key</span>Hold key B</button><div class="grow" style="display:flex;flex-direction:column;gap:6px"><div class="note">Both keys unlock the slider</div><div class="sl" style="flex:none;width:100%;opacity:.45"><i style="width:0%"></i><b style="left:0%"></b></div></div></div></div>
+      <div class="row" style="justify-content:flex-end"><button class="btn q">Keep my settings</button><button class="btn d">Reset 3 settings</button></div>
+    </section>
+    <section class="card" aria-label="Preferences history">
+      <div class="h3">Preferences history</div>
+      <div class="tr" style="grid-template-columns: minmax(0,1fr) 110px"><span>Text size 100 % to 110 %</span><span class="mut">Oct 29 09:12</span></div>
+      <div class="tr" style="grid-template-columns: minmax(0,1fr) 110px"><span>App logo to logo-mint.png</span><span class="mut">Nov 1 20:15</span></div>
+      <div class="tr" style="grid-template-columns: minmax(0,1fr) 110px"><span>Theme Follow Windows to Dark</span><span class="mut">Nov 2 18:40</span></div>
+      <div class="row"><button class="btn">Undo last change</button><button class="btn">Export settings</button></div>
+    </section>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1570}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

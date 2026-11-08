@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Virtual disks</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./kit.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&amp;family=Roboto+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..500,0..1,0&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#0e1311}.kv{display:grid;grid-template-columns:150px minmax(0,1fr);gap:6px 12px;font-size:13px}.kv>span:nth-child(odd){color:#a9b6ad}.kv>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ck{display:flex;align-items:center;gap:8px;font-size:13px}.ck .ms{font-size:18px}.tree{display:flex;flex-direction:column;gap:6px;font-size:13px}.tree .nd{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:12px;background:#141a17}.tree .ms{font-size:18px;color:#a9b6ad}.key{width:88px;height:64px;border-radius:14px;border:2px solid #34413a;background:#141a17;color:#e3ebe5;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font:inherit;font-size:12px}.key.dn{border-color:#ffb4ab;background:#3a1512;color:#ffdad6}.mode{display:grid;grid-template-columns:22px 104px minmax(0,1fr) 150px;gap:10px;align-items:center;padding:8px 10px;border-radius:12px;font-size:13px}.mode.on{background:#24342b}</style>
+</helmet>
+<div class="pg" style="">
+  <div class="row wrap">
+    <div class="grow"><div class="h1">Virtual disks</div><div class="sub">Every VHD, VHDX, VHD Set and ISO on this computer, with every operation Windows offers. Nothing here touches a disk you did not choose.</div></div>
+    <button class="btn"><span class="ms" aria-hidden="true">history</span>History</button>
+    <button class="btn"><span class="ms" aria-hidden="true">attach_file</span>Attach a file</button>
+    <button class="btn t"><span class="ms" aria-hidden="true">inventory_2</span>Quick pack</button>
+    <button class="btn p"><span class="ms" aria-hidden="true">add</span>Create</button>
+  </div>
+  <div class="row wrap" role="list" aria-label="Routes on this computer">
+    <span class="lbl">Routes found</span>
+    <span class="tag g" role="listitem">VirtDisk API</span><span class="tag g" role="listitem">Storage module</span><span class="tag g" role="listitem">DiskPart</span><span class="tag" role="listitem">Hyper-V module not installed · not needed</span>
+    <span class="grow"></span><span class="note">Windows 11 Home · build 26100 · every operation works without Hyper-V</span>
+  </div>
+  <div style="display:grid;grid-template-columns:minmax(0,1fr) 440px;gap:12px;align-items:start">
+    <section class="card" aria-label="Library">
+      <div class="row"><div class="in grow" style="display:flex;align-items:center;gap:8px"><span class="ms mut" aria-hidden="true" style="font-size:18px">search</span><span class="mut grow">Search name, path, label or ID</span><span class="kbd">.*</span></div><div class="seg"><button class="on">All 8</button><button>Attached 3</button><button>In chains 3</button><button>Problems 1</button></div></div>
+      <div class="tr h" style="grid-template-columns:minmax(0,1.5fr) 140px 90px 90px 92px 110px"><span>Name ▾</span><span>Format · type</span><span>Size</span><span>On disk</span><span>Attached</span><span>Chain test</span></div>
+      <div class="tr sel" style="grid-template-columns:minmax(0,1.5fr) 140px 90px 90px 92px 110px"><span><b style="font-weight:500">Projects.vhdx</b> <span class="mut">D:\Disks</span></span><span>VHDX · dynamic</span><span class="mono">256 GB</span><span class="mono">41.2 GB</span><span>E:</span><span class="ok">Passed 23:51</span></div>
+      <div class="tr" style="grid-template-columns:minmax(0,1.5fr) 140px 90px 90px 92px 110px"><span>DevDrive.vhdx <span class="mut">D:\Disks</span></span><span>VHDX · Dev Drive</span><span class="mono">100 GB</span><span class="mono">12.7 GB</span><span>Q:</span><span class="ok">Passed</span></div>
+      <div class="tr" style="grid-template-columns:minmax(0,1.5fr) 140px 90px 90px 92px 110px"><span>Base.vhdx <span class="mut">D:\Disks\Chain</span></span><span>VHDX · parent</span><span class="mono">64 GB</span><span class="mono">22.1 GB</span><span class="mut">No</span><span class="ok">Protected</span></div>
+      <div class="tr" style="grid-template-columns:minmax(0,1.5fr) 140px 90px 90px 92px 110px"><span style="padding-left:16px">↳ Scratch.avhdx</span><span>differencing</span><span class="mono">64 GB</span><span class="mono">3.4 GB</span><span class="mut">No</span><span class="ok">Passed</span></div>
+      <div class="tr" style="grid-template-columns:minmax(0,1.5fr) 140px 90px 90px 92px 110px"><span style="padding-left:16px">↳ Experiment.avhdx</span><span>differencing</span><span class="mono">64 GB</span><span class="mono">0.9 GB</span><span class="mut">No</span><span class="ok">Passed</span></div>
+      <div class="tr" style="grid-template-columns:minmax(0,1.5fr) 140px 90px 90px 92px 110px"><span>Archive.vhds <span class="mut">E:\Sets</span></span><span>VHD Set · 3 points</span><span class="mono">500 GB</span><span class="mono">96.0 GB</span><span class="mut">No</span><span class="ok">Passed</span></div>
+      <div class="tr" style="grid-template-columns:minmax(0,1.5fr) 140px 90px 90px 92px 110px"><span>Legacy.vhd <span class="mut">D:\Old</span></span><span>VHD · fixed</span><span class="mono">20 GB</span><span class="mono">20.0 GB</span><span class="mut">No</span><span class="warn">Same disk ID</span></div>
+      <div class="tr" style="grid-template-columns:minmax(0,1.5fr) 140px 90px 90px 92px 110px"><span>Windows11.iso <span class="mut">D:\Images</span></span><span>ISO · read-only</span><span class="mono">5.8 GB</span><span class="mono">5.8 GB</span><span>F:</span><span class="mut">Not a chain</span></div>
+      <div class="row" style="justify-content:center;padding:14px;border:2px dashed #34413a;border-radius:14px;color:#a9b6ad;font-size:13px"><span class="ms" aria-hidden="true">download</span>Drop .vhd, .vhdx, .vhds, .avhdx or .iso here, or anywhere on the window</div>
+    </section>
+    <aside class="card" aria-label="Projects.vhdx details">
+      <div class="row"><span class="ms ok" aria-hidden="true" style="font-size:28px">hard_drive_2</span><div class="grow"><div class="h2">Projects.vhdx</div><div class="note">Attached read-write as disk 3 until detached</div></div></div>
+      <div class="kv">
+        <span>Format, type</span><span>VHDX, dynamically expanding</span>
+        <span>Virtual size</span><span class="mono">256 GB</span>
+        <span>Used on drive D:</span><span class="mono">41.2 GB</span>
+        <span>Smallest safe size</span><span class="mono">44.8 GB</span>
+        <span>Block size</span><span class="mono">32 MB</span>
+        <span>Sectors</span><span class="mono">512 logical · 4096 physical</span>
+        <span>4K aligned</span><span>Yes</span>
+        <span>Fragmentation</span><span class="mono">3 %</span>
+        <span>Disk ID</span><span class="mono">7d1c…a42e</span>
+        <span>Virtual disk ID</span><span class="mono">3f90…0b1d</span>
+        <span>Partitions</span><span>GPT · 1 NTFS volume, Projects</span>
+        <span>Mounted at</span><span>E:\ and D:\Mounts\Projects</span>
+        <span>Free space</span><span class="mono">217.3 GB of 255.9 GB</span>
+        <span>Change tracking</span><span>Off</span>
+      </div>
+      <div class="row wrap" style="gap:8px"><button class="btn t">Detach</button><button class="btn">Resize</button><button class="btn">Compact</button><button class="btn">Convert</button><button class="btn">Make child</button><button class="btn">Metadata</button><button class="btn">Mirror</button></div>
+      <div class="row" style="gap:8px"><button class="btn q"><span class="ms" aria-hidden="true">content_copy</span>Copy as PowerShell</button><button class="btn q"><span class="ms" aria-hidden="true">content_copy</span>Copy as DiskPart</button></div>
+    </aside>
+  </div>
+  <section class="dlg" role="dialog" aria-label="Create a virtual disk" style="background:#18201c">
+    <div class="row"><div class="grow"><div class="h2">Create a virtual disk</div><div class="note">Checks every limit before anything is written. Windows asks for administrator permission once, at the end.</div></div><div class="row" style="gap:8px"><span class="lbl">Start from</span><button class="chip on">Portable data disk</button><button class="chip">Dev Drive</button><button class="chip">Native boot disk</button><button class="chip">Scratch copy</button></div></div>
+    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) 380px;gap:14px;align-items:start">
+      <div class="well">
+        <div class="lbl">Disk</div>
+        <div class="row"><span style="width:76px;flex:none;font-size:13px">Format</span><div class="seg"><button>VHD</button><button class="on">VHDX</button><button>VHD Set</button></div></div>
+        <div class="row"><span style="width:76px;flex:none;font-size:13px">Type</span><div class="seg"><button>Fixed</button><button class="on">Dynamic</button><button>Child</button><button>Copy</button></div></div>
+        <div class="row"><span style="width:76px;flex:none;font-size:13px">Size</span><input class="in mono" value="64" style="width:80px" aria-label="Size"><div class="seg"><button>MB</button><button class="on">GB</button><button>TB</button></div></div>
+        <div class="note">VHDX holds 3 MB to 64 TB. A dynamic VHD stops at 2,040 GB.</div>
+        <div class="row"><span style="width:76px;flex:none;font-size:13px">Block</span><div class="seg"><button>1</button><button>8</button><button class="on">32</button><button>256 MB</button></div></div>
+        <div class="row"><span style="width:76px;flex:none;font-size:13px">Sectors</span><div class="seg"><button class="on">512 · 4096</button><button>4096 · 4096</button></div></div>
+        <div class="row"><span style="width:76px;flex:none;font-size:13px">Access</span><span class="note grow">No SDDL filter</span><button class="btn q" style="height:30px">Add</button></div>
+      </div>
+      <div class="well">
+        <div class="lbl">Inside the disk</div>
+        <div class="row"><span style="width:96px;flex:none;font-size:13px">Initialize</span><div class="seg"><button class="on">GPT</button><button>MBR</button><button>Leave raw</button></div></div>
+        <div class="row"><span style="width:96px;flex:none;font-size:13px">File system</span><div class="seg"><button class="on">NTFS</button><button>ReFS</button><button>exFAT</button><button>FAT32</button></div></div>
+        <div class="row"><span style="width:96px;flex:none;font-size:13px">Label</span><input class="in grow" value="Prints" aria-label="Volume label"></div>
+        <div class="row"><span style="width:96px;flex:none;font-size:13px">Cluster</span><div class="seg"><button class="on">Default</button><button>4 KB</button><button>64 KB</button></div></div>
+        <div class="row"><span class="grow" style="font-size:13px">Quick format</span><button class="sw" role="switch" aria-checked="true" aria-label="Quick format"></button></div>
+        <div class="row"><span class="grow" style="font-size:13px">Compression</span><button class="sw off" role="switch" aria-checked="false" aria-label="Compression"></button></div>
+        <div class="row"><span class="grow" style="font-size:13px">Large file records</span><button class="sw off" role="switch" aria-checked="false" aria-label="Large file records"></button></div>
+        <div class="row"><span class="grow" style="font-size:13px">Short 8.3 names</span><button class="sw off" role="switch" aria-checked="false" aria-label="Short names"></button></div>
+      </div>
+      <div class="well">
+        <div class="lbl">Where it goes</div>
+        <div class="row"><input class="in grow mono" value="D:\Disks\Prints.vhdx" aria-label="File"><button class="btn">Browse</button></div>
+        <div class="row"><span style="width:76px;flex:none;font-size:13px">Mount</span><div class="seg"><button class="on">Letter P:</button><button>Folder</button><button>None</button></div></div>
+        <div class="row"><span style="width:76px;flex:none;font-size:13px">Attach</span><div class="seg"><button class="on">Until detached</button><button>Every sign-in</button></div></div>
+        <div class="well" style="background:#0f2a1c;flex-direction:row;align-items:flex-start"><span class="ms ok" aria-hidden="true">task_alt</span><div class="note" style="color:#cde9d6">Drive D: has 612 GB free. A dynamic disk only takes what it holds and does not reserve 64 GB.</div></div>
+        <div class="well" style="background:#3d2a12;flex-direction:row;align-items:flex-start"><span class="ms warn" aria-hidden="true">info</span><div class="note" style="color:#ffd8b0">Block size 32 MB runs through the VirtDisk API. DiskPart would use its default.</div></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div class="row"><span class="lbl grow">Same steps as a script</span><div class="seg"><button class="on">PowerShell</button><button>DiskPart</button></div></div>
+        <div class="code">Mount-DiskImage -ImagePath `
+  'D:\Disks\Prints.vhdx'
+$d = Get-DiskImage 'D:\Disks\Prints.vhdx' |
+  Get-Disk
+Initialize-Disk -Number $d.Number `
+  -PartitionStyle GPT
+New-Partition -DiskNumber $d.Number `
+  -UseMaximumSize -DriveLetter P |
+  Format-Volume -FileSystem NTFS `
+  -NewFileSystemLabel 'Prints'</div>
+        <div class="note">The file itself is created through the VirtDisk API first. Copy gives the full script with that step.</div>
+        <div class="row" style="justify-content:flex-end;gap:8px"><button class="btn q">Cancel</button><button class="btn p">Create and attach</button></div>
+      </div>
+    </div>
+  </section>
+  <div class="g2">
+    <section class="card" aria-label="Resize">
+      <div class="row"><span class="h3 grow">Resize Projects.vhdx</span><div class="seg"><button class="on">Grow</button><button>Shrink</button></div></div>
+      <div style="position:relative;height:64px">
+        <div style="position:absolute;left:0;right:0;top:26px;height:8px;border-radius:4px;background:#28322c"></div>
+        <div style="position:absolute;left:0;width:50%;top:26px;height:8px;border-radius:4px 0 0 4px;background:#34413a"></div>
+        <div style="position:absolute;left:50%;width:25%;top:26px;height:8px;background:#6fdc98;opacity:.55"></div>
+        <div style="position:absolute;left:8.75%;top:20px;width:2px;height:20px;background:#ffb870"></div>
+        <div style="position:absolute;left:50%;top:20px;width:2px;height:20px;background:#e3ebe5"></div>
+        <div style="position:absolute;left:75%;top:19px;width:22px;height:22px;margin-left:-11px;border-radius:11px;background:#6fdc98"></div>
+        <div style="position:absolute;left:8.75%;top:0;font-size:11px;color:#ffb870;transform:translateX(-50%)">44.8 GB smallest</div>
+        <div style="position:absolute;left:50%;top:0;font-size:11px;color:#e3ebe5;transform:translateX(-50%)">256 GB now</div>
+        <div style="position:absolute;left:75%;top:46px;font-size:11px;color:#cde9d6;transform:translateX(-50%)">384 GB new size</div>
+        <div style="position:absolute;right:0;top:46px;font-size:11px;color:#a9b6ad">512 GB</div>
+      </div>
+      <div class="row"><span style="font-size:13px">New size</span><input class="in mono" value="384" style="width:80px" aria-label="New size"><div class="seg"><button>MB</button><button class="on">GB</button><button>TB</button></div><span class="note grow">Up to 64 TB for a VHDX. Type any size; the slider shows up to twice the current one.</span></div>
+      <div class="row"><span class="note grow">Grows the file to 384 GB and extends the Projects volume into the new space in the same step. Works while attached.</span><button class="btn p">Grow</button></div>
+      <div class="well" style="flex-direction:row;align-items:center"><span class="ms warn" aria-hidden="true">gpp_maybe</span><span class="note grow">The resize that skips the partition check needs a verified copy first, then the two-key confirmation.</span><button class="btn">Make a copy</button></div>
+    </section>
+    <section class="card" aria-label="Compact">
+      <div class="row"><span class="h3 grow">Compact Projects.vhdx</span><span class="mono note">41.2 GB now · about 38.9 GB after</span></div>
+      <div class="mode on"><span class="ms ok" aria-hidden="true">radio_button_checked</span><b style="font-weight:500">Quick</b><span>Gives back unused blocks without scanning for zeros</span><span class="note">Attached read-only</span></div>
+      <div class="mode"><span class="ms mut" aria-hidden="true">radio_button_unchecked</span><span>Full</span><span>Scans for zero blocks and gives back unused ones</span><span class="note">Attached read-only</span></div>
+      <div class="mode"><span class="ms mut" aria-hidden="true">radio_button_unchecked</span><span>Retrim</span><span>Sends trims only, no scan, no reclaim</span><span class="note">Attached read-only</span></div>
+      <div class="mode"><span class="ms mut" aria-hidden="true">radio_button_unchecked</span><span>Pretrimmed</span><span>Like Quick for disks already trimmed; less thorough</span><span class="note">Detached is fine</span></div>
+      <div class="mode"><span class="ms mut" aria-hidden="true">radio_button_unchecked</span><span>Prezeroed</span><span>Like Quick after a tool zeroed the free space</span><span class="note">Any state</span></div>
+      <div class="row"><span class="note grow">Reattaches E: read-only for the run, then puts it back as it was and reports the mode that ran.</span><button class="btn p">Compact</button></div>
+    </section>
+  </div>
+  <div class="g2">
+    <section class="card" aria-label="Differencing chain">
+      <div class="row"><span class="h3 grow">Chain from Base.vhdx</span><button class="btn">Test chain</button></div>
+      <div class="tree">
+        <div class="nd"><span class="ms" aria-hidden="true">lock</span><b style="font-weight:500" class="grow">Base.vhdx</b><span class="note">2026-10-30 18:02 · protected, has 2 children</span></div>
+        <div class="nd" style="margin-left:28px;background:#24342b;color:#cde9d6"><span class="ms" aria-hidden="true" style="color:#9ff7bf">subdirectory_arrow_right</span><span class="grow">Scratch.avhdx</span><span class="note">2026-11-07 22:40</span></div>
+        <div class="nd" style="margin-left:28px"><span class="ms" aria-hidden="true">subdirectory_arrow_right</span><span class="grow">Experiment.avhdx</span><span class="note">2026-11-08 00:12</span></div>
+      </div>
+      <div class="well" style="background:#3a1512"><div class="row"><span class="ms err" aria-hidden="true">warning</span><span class="h3 grow" style="color:#ffdad6">Merging Scratch.avhdx changes Base.vhdx</span></div><div class="note" style="color:#ffdad6">Experiment.avhdx is built on Base.vhdx, so it stops working after the merge. A verified copy of Base.vhdx is made first unless you turn that off.</div></div>
+      <div class="row wrap" style="gap:8px"><button class="btn">Reconnect a moved parent</button><button class="btn">Make child</button><button class="btn d">Merge into parent</button></div>
+    </section>
+    <section class="card" aria-label="VHD Set checkpoints">
+      <div class="row"><span class="h3 grow">Archive.vhds checkpoints</span><button class="btn t"><span class="ms" aria-hidden="true">add_a_photo</span>Take checkpoint</button></div>
+      <div class="tr h" style="grid-template-columns:minmax(0,1fr) 150px 80px 120px"><span>Checkpoint</span><span>Taken</span><span>Files</span><span>Action</span></div>
+      <div class="tr sel" style="grid-template-columns:minmax(0,1fr) 150px 80px 120px"><span>Active leaf</span><span class="mono">now</span><span>1</span><span class="mut" style="line-height:30px">Writing here</span></div>
+      <div class="tr" style="grid-template-columns:minmax(0,1fr) 150px 80px 120px"><span>Weekly</span><span class="mono">2026-11-07 09:00</span><span>2</span><button class="btn q" style="height:30px;padding:0 6px">Apply</button></div>
+      <div class="tr" style="grid-template-columns:minmax(0,1fr) 150px 80px 120px"><span>Before slicer update</span><span class="mono">2026-11-01 21:04</span><span>2</span><button class="btn q" style="height:30px;padding:0 6px">Apply</button></div>
+      <div class="note">Every file the set depends on is listed under Files. Attach any checkpoint read-only to look inside it.</div>
+    </section>
+  </div>
+  <div class="g2">
+    <section class="card" aria-label="Quick pack in progress">
+      <div class="row"><span class="ms ok" aria-hidden="true">inventory_2</span><span class="h3 grow">Quick pack · Photos</span><span class="tag a">Grew once</span></div>
+      <div class="note">Packing D:\Archive\Photos into D:\Archive\Photos (1).vhdx, because Photos.vhdx already exists. Nothing is overwritten.</div>
+      <div class="bar" role="progressbar" aria-valuenow="74" aria-valuemin="0" aria-valuemax="100" aria-label="Pack progress"><i style="width:74%"></i></div>
+      <div class="kv" style="grid-template-columns:120px minmax(0,1fr)">
+        <span>Copied</span><span class="mono">12.9 GB of 17.4 GB · 2,481 of 3,310 files</span>
+        <span>Now</span><span class="mono">Photos\2026\Trip\IMG_4417.HEIC</span>
+        <span>Speed</span><span class="mono">186 MB/s · about 25 s left</span>
+        <span>Disk grew</span><span style="white-space:normal">From 19.2 GB to 20.4 GB at file 1,204, because a video grew while it was copied. That file was copied again and checked.</span>
+        <span>Checked</span><span>2,480 files match their SHA-256</span>
+      </div>
+      <div class="row" style="gap:8px;justify-content:flex-end"><button class="btn">Pause</button><button class="btn d">Cancel</button></div>
+      <div class="note">Cancel detaches the new disk and removes only Photos (1).vhdx. Your files are never moved or changed.</div>
+    </section>
+    <section class="card" aria-label="Quick pack result">
+      <div class="row"><span class="ms ok" aria-hidden="true" style="font-size:28px">verified</span><div class="grow"><div class="h3">Packed and verified</div><div class="note">Last run, 23:20</div></div></div>
+      <div class="kv">
+        <span>File</span><span class="mono">D:\Archive\Models.vhdx</span>
+        <span>Virtual size</span><span class="mono">8.4 GB, fitted tightly</span>
+        <span>Used on drive D:</span><span class="mono">7.9 GB</span>
+        <span>Files</span><span>1,142 files in 87 folders, all SHA-256 verified</span>
+        <span>Kept</span><span>Folder tree, long paths, times, attributes, streams, web marks</span>
+        <span>Skipped</span><span>None</span>
+      </div>
+      <div class="row wrap" style="gap:8px"><button class="btn">Show in folder</button><button class="btn">Attach now</button><button class="btn t">Open</button></div>
+      <div class="row" style="justify-content:center;padding:16px;border:2px dashed #34413a;border-radius:14px;color:#a9b6ad;font-size:13px;gap:8px"><span class="ms" aria-hidden="true">move_to_inbox</span>Drop files and folders here to pack them into a new VHDX beside them</div>
+    </section>
+  </div>
+  <div class="g3">
+    <section class="card" aria-label="Dev Drive">
+      <div class="row"><span class="ms ok" aria-hidden="true">code_blocks</span><span class="h3 grow">Dev Drive</span></div>
+      <div class="ck"><span class="ms ok" aria-hidden="true">check_circle</span>Windows 11 build 22621.2338 or later</div>
+      <div class="ck"><span class="ms ok" aria-hidden="true">check_circle</span>At least 50 GB, formatted ReFS</div>
+      <div class="ck"><span class="ms ok" aria-hidden="true">check_circle</span>Trusted · 2 filters allowed</div>
+      <div class="well" style="background:#3a1512"><div class="note" style="color:#ffdad6">Turning antivirus off for Dev Drives changes every Dev Drive on this computer, and Microsoft calls it a security risk. It is never on by default and needs the two-key confirmation.</div></div>
+      <button class="btn" style="align-self:flex-start">Edit filters</button>
+    </section>
+    <section class="card" aria-label="Native boot">
+      <div class="row"><span class="ms ok" aria-hidden="true">restart_alt</span><span class="h3 grow">Native boot</span></div>
+      <div class="ck"><span class="ms ok" aria-hidden="true">check_circle</span>VHDX on a basic disk</div>
+      <div class="ck"><span class="ms ok" aria-hidden="true">check_circle</span>Room for full size plus page file</div>
+      <div class="ck"><span class="ms warn" aria-hidden="true">error</span>Downloaded mark on the image file<button class="btn q" style="height:28px;margin-left:auto">Remove</button></div>
+      <div class="ck"><span class="ms ok" aria-hidden="true">check_circle</span>Not on a network share</div>
+      <div class="note">The boot menu is exported before any change and can be restored here. Nothing restarts the computer; you restart when ready.</div>
+    </section>
+    <section class="card" aria-label="Identity and metadata">
+      <div class="row"><span class="ms ok" aria-hidden="true">fingerprint</span><span class="h3 grow">Identity and metadata</span></div>
+      <div class="well" style="background:#3d2a12;flex-direction:row;align-items:center"><span class="note grow" style="color:#ffd8b0">Legacy.vhd has the same disk ID as Projects.vhdx, so Windows keeps one offline.</span><button class="btn" style="color:#ffd8b0;border-color:#6b4a22">New ID</button></div>
+      <div class="tr" style="grid-template-columns:110px minmax(0,1fr) 40px;padding:6px 8px"><span>Owner</span><span>Print farm</span><span class="ms mut" aria-hidden="true" style="font-size:18px">edit</span></div>
+      <div class="tr" style="grid-template-columns:110px minmax(0,1fr) 40px;padding:6px 8px"><span>Purpose</span><span>Slicer projects</span><span class="ms mut" aria-hidden="true" style="font-size:18px">edit</span></div>
+      <div class="row wrap" style="gap:8px"><button class="btn">Start live mirror</button><button class="btn">Change tracking</button></div>
+    </section>
+  </div>
+  <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:12px">
+    <section class="dlg" role="dialog" aria-label="Confirm merge" style="background:#1f2823">
+      <div class="row"><span class="ms err" aria-hidden="true" style="font-size:28px">merge</span><div class="grow"><div class="h2">Merge Scratch.avhdx into Base.vhdx?</div><div class="note">Base.vhdx changes for good. Experiment.avhdx stops working. A verified copy, Base (copy).vhdx, was made at 23:55.</div></div></div>
+      <div class="row" style="gap:12px"><button class="key dn" aria-pressed="true"><span class="ms" aria-hidden="true">key</span>Key A held</button><button class="key dn" aria-pressed="true"><span class="ms" aria-hidden="true">key</span>Key B held</button><div class="grow" style="display:flex;flex-direction:column;gap:6px"><div class="note">Slide all the way to merge</div><div class="sl" style="flex:none;width:100%"><i style="width:58%;background:#ffb4ab"></i><b style="left:58%;background:#ffb4ab"></b></div><div class="note">58 %</div></div></div>
+      <div class="row"><span class="note grow">Esc or Emergency exit stops here and changes nothing.</span><button class="btn">Emergency exit</button></div>
+    </section>
+    <section class="card" aria-label="History">
+      <div class="row"><span class="h3 grow">History</span><span class="note">Every operation, the route that did it, and how it ended</span></div>
+      <div class="tr h" style="grid-template-columns:62px minmax(0,1fr) 150px 96px"><span>Time</span><span>Operation</span><span>Route</span><span>Result</span></div>
+      <div class="tr" style="grid-template-columns:62px minmax(0,1fr) 150px 96px"><span class="mono">23:51</span><span>Test chain · Projects.vhdx</span><span>VirtDisk API</span><span class="ok">Done</span></div>
+      <div class="tr" style="grid-template-columns:62px minmax(0,1fr) 150px 96px"><span class="mono">23:44</span><span>Compact Quick · 43.5 to 41.2 GB</span><span>VirtDisk API</span><span class="ok">Done</span></div>
+      <div class="tr" style="grid-template-columns:62px minmax(0,1fr) 150px 96px"><span class="mono">23:20</span><span>Quick pack · Models.vhdx</span><span>VirtDisk + Storage</span><span class="ok">Done</span></div>
+      <div class="tr" style="grid-template-columns:62px minmax(0,1fr) 150px 96px"><span class="mono">23:12</span><span>Attach read-only · Windows11.iso</span><span>Storage module</span><span class="ok">Done</span></div>
+      <div class="tr" style="grid-template-columns:62px minmax(0,1fr) 150px 96px"><span class="mono">22:58</span><span>Shrink · Legacy.vhd, permission cancelled</span><span>DiskPart</span><span class="warn">Incomplete</span></div>
+      <div class="note">An incomplete step left everything as it was.</div>
+    </section>
+  </div>
+  <div class="g3">
+    <section class="card"><div class="row"><span class="ms warn" aria-hidden="true">shield_lock</span><span class="h3 grow">Your system disk</span></div><div class="note">C: and the disk Windows starts from never appear in format, shrink, merge or delete lists.</div></section>
+    <section class="card"><div class="row"><span class="ms warn" aria-hidden="true">admin_panel_settings</span><span class="h3 grow">Permission cancelled</span></div><div class="note">If you cancel the administrator prompt, nothing changes and the step shows as incomplete, never done.</div></section>
+    <section class="card"><div class="row"><span class="ms mut" aria-hidden="true">desktop_windows</span><span class="h3 grow">On macOS or Linux</span></div><div class="note">The page says plainly that virtual disks need Windows, with a link to the guide.</div></section>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":2970}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

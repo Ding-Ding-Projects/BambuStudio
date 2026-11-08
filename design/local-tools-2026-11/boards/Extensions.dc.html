@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Extensions</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./kit.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&amp;family=Roboto+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..500,0..1,0&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#0e1311}</style>
+</helmet>
+<div class="pg" style="">
+  <div class="row wrap">
+    <div class="grow"><div class="h1">Extensions</div><div class="sub">Add steps after slicing, checks before a print is sent, G-code post-processing, palette commands and context-menu actions. Each extension is a folder with a manifest and a program in any language, run one request at a time outside Bambu Studio.</div></div>
+    <span class="sub">All extensions</span><button class="sw" role="switch" aria-checked="true" aria-label="All extensions"></button>
+    <button class="btn t"><span class="ms" aria-hidden="true">create_new_folder</span>Add from folder</button>
+    <button class="btn"><span class="ms" aria-hidden="true">folder_open</span>Open folder</button>
+    <button class="btn"><span class="ms" aria-hidden="true">refresh</span>Reload</button>
+    <button class="btn"><span class="ms" aria-hidden="true">menu_book</span>Author guide</button>
+  </div>
+  <div class="row wrap">
+    <div class="row in" style="width: 420px"><span class="ms mut" aria-hidden="true">search</span><span class="grow mut">Search name, hook, action or permission</span><span class="kbd">.*</span></div>
+    <button class="chip on">All 6</button><button class="chip">On 3</button><button class="chip">Off 1</button><button class="chip"><span class="ms warn" aria-hidden="true" style="font-size:16px">shield_question</span>Waiting for you 1</button><button class="chip"><span class="ms err" aria-hidden="true" style="font-size:16px">error</span>Manifest errors 1</button><button class="chip">Built in 3</button>
+  </div>
+  <div style="display: grid; grid-template-columns: 560px minmax(0, 1fr); gap: 12px">
+    <section class="card" aria-label="Installed extensions">
+      <div class="tr h" style="grid-template-columns: 28px minmax(0,1fr) 90px 52px"><span></span><span>Extension</span><span>Last run</span><span>On</span></div>
+      <div class="tr" style="grid-template-columns: 28px minmax(0,1fr) 90px 52px"><span class="ms ok" aria-hidden="true">checklist</span><span>Plate checklist<br><span class="note">Built in 1.0.0 · before sending</span></span><span class="mut">00:41:07</span><button class="sw" role="switch" aria-checked="true" aria-label="Plate checklist"></button></div>
+      <div class="tr" style="grid-template-columns: 28px minmax(0,1fr) 90px 52px"><span class="ms ok" aria-hidden="true">schedule</span><span>G-code time stamp<br><span class="note">Built in 1.0.0 · after G-code export</span></span><span class="mut">00:41:09</span><button class="sw" role="switch" aria-checked="true" aria-label="G-code time stamp"></button></div>
+      <div class="tr" style="grid-template-columns: 28px minmax(0,1fr) 90px 52px"><span class="ms ok" aria-hidden="true">summarize</span><span>Slice report<br><span class="note">Built in 1.0.0 · after slicing</span></span><span class="mut">00:41:07</span><button class="sw" role="switch" aria-checked="true" aria-label="Slice report"></button></div>
+      <div class="tr sel" style="grid-template-columns: 28px minmax(0,1fr) 90px 52px"><span class="ms warn" aria-hidden="true">scale</span><span>Spool weigh-in<br><span class="note" style="color:#cde9d6">1.2.0 · permissions changed, waiting for you</span></span><span>Yesterday</span><button class="sw off" role="switch" aria-checked="false" aria-label="Spool weigh-in"></button></div>
+      <div class="tr" style="grid-template-columns: 28px minmax(0,1fr) 90px 52px"><span class="ms mut" aria-hidden="true">photo_camera</span><span>Timelapse renamer<br><span class="note">0.4.1 · off by you</span></span><span class="mut">Never</span><button class="sw off" role="switch" aria-checked="false" aria-label="Timelapse renamer"></button></div>
+      <div class="tr" style="grid-template-columns: 28px minmax(0,1fr) 90px 52px"><span class="ms err" aria-hidden="true">error</span><span>nozzle-wear-log<br><span class="note err">apiVersion 3 is newer than this app supports (1)</span></span><span class="mut">Never</span><span></span></div>
+      <div class="well"><div class="row"><span class="ms mut" aria-hidden="true">folder</span><span class="grow mono" style="font-size:12px">%APPDATA%\BambuStudio\extensions</span><span class="tag">6 folders</span></div></div>
+      <div class="well">
+        <div class="lbl">Limits for every run</div>
+        <div class="row"><span style="width:150px;font-size:13px">Time limit</span><div class="sl"><i style="width:30%"></i><b style="left:30%"></b></div><span class="mono" style="width:56px;text-align:right;font-size:13px">10 s</span></div>
+        <div class="row"><span style="width:150px;font-size:13px">Largest answer</span><div class="sl"><i style="width:22%"></i><b style="left:22%"></b></div><span class="mono" style="width:56px;text-align:right;font-size:13px">64 KB</span></div>
+        <div class="row"><span style="width:150px;font-size:13px">Turn off after</span><div class="step"><button aria-label="Fewer"><span class="ms" aria-hidden="true">remove</span></button><span>3</span><button aria-label="More"><span class="ms" aria-hidden="true">add</span></button></div><span class="note">failed runs in a row</span></div>
+      </div>
+      <div class="well"><div class="lbl">This week</div><div class="row" style="align-items:flex-end;gap:6px;height:44px"><span style="width:18px;height:20px;border-radius:4px;background:#24342b"></span><span style="width:18px;height:32px;border-radius:4px;background:#24342b"></span><span style="width:18px;height:14px;border-radius:4px;background:#24342b"></span><span style="width:18px;height:40px;border-radius:4px;background:#24342b"></span><span style="width:18px;height:26px;border-radius:4px;background:#24342b"></span><span style="width:18px;height:36px;border-radius:4px;background:#6fdc98"></span><span style="width:18px;height:10px;border-radius:4px;background:#24342b"></span><span class="note grow" style="text-align:right">Mon to Sun</span></div><div class="note">41 runs: 37 answered, 2 timed out, 1 too large, 1 not valid JSON. Every run is in Runs with its request and answer sizes.</div></div>
+      <div class="well" style="flex-direction:row;align-items:center"><span class="ms warn" aria-hidden="true">update</span><span class="note grow">Timelapse renamer 0.5.0 was found in a folder you picked. It replaces 0.4.1 only when you say so.</span><button class="btn" style="height:32px">Review</button></div>
+    </section>
+    <section class="card" aria-label="Spool weigh-in">
+      <div class="row"><span style="width:52px;height:52px;border-radius:16px;background:#28322c;display:grid;place-items:center"><span class="ms warn" aria-hidden="true" style="font-size:28px">scale</span></span><div class="grow"><div class="h2">Spool weigh-in 1.2.0</div><div class="sub">Subtracts the filament each print used from your spool weights and warns before a spool runs out.</div></div><span class="mono mut" style="font-size:12px">com.example.spool-weigh-in</span></div>
+      <div class="seg" role="tablist" style="align-self:flex-start"><button class="on" role="tab">Overview</button><button role="tab">Permissions</button><button role="tab">Runs 24</button><button role="tab">Manifest</button><button role="tab">Settings</button></div>
+      <div class="g3">
+        <div class="well"><div class="lbl">Hooks</div><div style="font-size:13px">After slicing</div><div style="font-size:13px">Before sending a print</div><div style="font-size:13px">After a print finishes</div></div>
+        <div class="well"><div class="lbl">Adds</div><div style="font-size:13px">Palette: Show spool weights</div><div style="font-size:13px">Menu on a filament: Reset spool</div><div style="font-size:13px">Send dialog: a warning row</div></div>
+        <div class="well"><div class="lbl">Program</div><div style="font-size:13px">PowerShell script</div><div class="mono" style="font-size:12px">weigh-in.ps1</div><div style="font-size:13px">API version 1</div></div>
+      </div>
+      <div class="well">
+        <div class="lbl">Permission matrix</div>
+        <div class="tr h" style="grid-template-columns: minmax(0,1fr) 140px 120px"><span>What it may receive or do</span><span>State</span><span>Since</span></div>
+        <div class="tr" style="grid-template-columns: minmax(0,1fr) 140px 120px"><span>Read slice statistics (time, grams, metres per plate)</span><span class="ok">Allowed</span><span class="mut">1.0.0</span></div>
+        <div class="tr" style="grid-template-columns: minmax(0,1fr) 140px 120px"><span>Read printer status (state, progress, temperatures)</span><span class="warn">Asking now</span><span class="mut">New in 1.2.0</span></div>
+        <div class="tr" style="grid-template-columns: minmax(0,1fr) 140px 120px"><span>Add a warning to the Send print dialog</span><span class="ok">Allowed</span><span class="mut">1.1.0</span></div>
+        <div class="tr" style="grid-template-columns: minmax(0,1fr) 140px 120px"><span>Change exported G-code</span><span class="mut">Not asked for</span><span></span></div>
+        <div class="tr" style="grid-template-columns: minmax(0,1fr) 140px 120px"><span>Passwords, access codes, account tokens, your files</span><span class="mut">Never sent</span><span></span></div>
+      </div>
+      <div class="well">
+        <div class="lbl">Recent runs</div>
+        <div class="tr h" style="grid-template-columns: 150px minmax(0,1fr) 70px 80px 100px"><span>When</span><span>Hook or action</span><span>Time</span><span>Answer</span><span>Result</span></div>
+        <div class="tr" style="grid-template-columns: 150px minmax(0,1fr) 70px 80px 100px"><span class="mut">Yesterday 23:02:14</span><span>After slicing · bracket_v2 plate 1</span><span class="mono">0.38 s</span><span class="mono">412 B</span><span class="ok">Answered</span></div>
+        <div class="tr" style="grid-template-columns: 150px minmax(0,1fr) 70px 80px 100px"><span class="mut">Yesterday 22:10:55</span><span>Palette: Show spool weights</span><span class="mono">10.00 s</span><span class="mono">0 B</span><span class="err">Timed out</span></div>
+        <div class="tr" style="grid-template-columns: 150px minmax(0,1fr) 70px 80px 100px"><span class="mut">Yesterday 21:58:31</span><span>Before sending · Plate 2</span><span class="mono">0.12 s</span><span class="mono">91 KB</span><span class="err">Over 64 KB</span></div>
+        <div class="tr" style="grid-template-columns: 150px minmax(0,1fr) 70px 80px 100px"><span class="mut">Yesterday 21:40:02</span><span>After a print finishes</span><span class="mono">0.20 s</span><span class="mono">1.1 KB</span><span class="err">Not valid JSON</span></div>
+      </div>
+      <div class="row" style="justify-content:flex-end"><button class="btn">Run now with a sample</button><button class="btn">Export runs</button><button class="btn d">Remove</button></div>
+    </section>
+  </div>
+  <div class="g2">
+    <section class="card" aria-label="Extension points">
+      <div class="h2">What extensions can hook</div>
+      <div class="tr h" style="grid-template-columns: 210px minmax(0,1fr) 150px"><span>Hook</span><span>Receives</span><span>May answer</span></div>
+      <div class="tr" style="grid-template-columns: 210px minmax(0,1fr) 150px"><span class="mono">model.imported</span><span>Name, triangles, size, units</span><span>Notes, warnings</span></div>
+      <div class="tr" style="grid-template-columns: 210px minmax(0,1fr) 150px"><span class="mono">plate.sliced</span><span>Time, filament per slot, layers, warnings</span><span>Notes, warnings</span></div>
+      <div class="tr" style="grid-template-columns: 210px minmax(0,1fr) 150px"><span class="mono">print.before_send</span><span>Plate, printer model, filaments, options</span><span>Checklist rows, block</span></div>
+      <div class="tr" style="grid-template-columns: 210px minmax(0,1fr) 150px"><span class="mono">gcode.exported</span><span>The exported G-code text</span><span>Replacement G-code</span></div>
+      <div class="tr" style="grid-template-columns: 210px minmax(0,1fr) 150px"><span class="mono">print.finished</span><span>Result, duration, filament used</span><span>Notes</span></div>
+      <div class="tr" style="grid-template-columns: 210px minmax(0,1fr) 150px"><span class="mono">command</span><span>Selection summary</span><span>Notes, a file to save</span></div>
+    </section>
+    <section class="card" aria-label="Manifest">
+      <div class="row"><div class="h2 grow">manifest.json</div><span class="tag g">Valid</span></div>
+      <div class="code">{
+  "id": "com.example.spool-weigh-in",
+  "name": "Spool weigh-in",
+  "version": "1.2.0",
+  "apiVersion": 1,
+  "description": "Tracks spool weights.",
+  "run": { "windows": "powershell.exe -NoProfile -File weigh-in.ps1" },
+  "hooks": ["plate.sliced", "print.before_send", "print.finished"],
+  "actions": [{ "id": "show", "title": "Show spool weights" }],
+  "permissions": ["slice.read", "printer.status.read", "send.warn"]
+}</div>
+      <div class="note">One JSON request goes in on standard input, one JSON answer comes back on standard output. A broken extension cannot take Bambu Studio down.</div>
+    </section>
+  </div>
+  <div class="g2">
+    <section class="dlg" role="dialog" aria-label="Allow Spool weigh-in 1.2.0">
+      <div class="row"><span class="ms warn" aria-hidden="true" style="font-size:26px">shield_question</span><div class="h2">Allow Spool weigh-in 1.2.0?</div></div>
+      <div class="sub">This version asks for something new. It stays off until you allow exactly this list.</div>
+      <div class="well"><div class="row"><span class="ms mut" aria-hidden="true">bar_chart</span><span class="grow" style="font-size:14px">Read slice statistics</span><span class="note">Allowed before</span></div></div>
+      <div class="well" style="background:#24342b;color:#cde9d6"><div class="row"><span class="ms" aria-hidden="true">print</span><span class="grow" style="font-size:14px">Read printer status</span><span style="font-size:12px;font-weight:500">New</span></div></div>
+      <div class="note">It never receives passwords, access codes or account tokens. An extension is still a program running as you, so Bambu Studio cannot stop it from reading your own files.</div>
+      <div class="row" style="justify-content:flex-end"><button class="btn q">Keep off</button><button class="btn p">Allow exactly this</button></div>
+    </section>
+    <section class="dlg" role="dialog" aria-label="Replace extension">
+      <div class="row"><span class="ms warn" aria-hidden="true" style="font-size:26px">swap_horiz</span><div class="h2">Replace Timelapse renamer 0.4.1 with 0.5.0?</div></div>
+      <div class="sub">The folder you picked holds a different version of an extension you already have. Its settings stay; it asks for your permission again if its list changed.</div>
+      <div class="g2"><div class="well"><div class="lbl">Installed</div><div style="font-size:13px">0.4.1 · 2 permissions</div></div><div class="well"><div class="lbl">From the folder</div><div style="font-size:13px">0.5.0 · 3 permissions</div></div></div>
+      <div class="row" style="justify-content:flex-end"><button class="btn q">Keep 0.4.1</button><button class="btn p">Replace</button></div>
+    </section>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1790}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

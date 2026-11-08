@@ -1,0 +1,133 @@
+{
+ "v": 3,
+ "createdOnFiles": {
+  "v": 1,
+  "at": "2026-11-08T06:40:00Z"
+ },
+ "title": "Bambu Studio: every required feature",
+ "launch": {
+  "view": "canvas"
+ },
+ "pages": [],
+ "boards": {
+  "Main.dc.html": {
+   "x": 0,
+   "y": 0,
+   "w": 1440,
+   "h": 900,
+   "title": "Local tools hub: every required feature in the app",
+   "expand": "fill"
+  },
+  "FeatureFinder.dc.html": {
+   "x": 1520,
+   "y": 0,
+   "w": 1440,
+   "h": 1330,
+   "title": "Every feature: where each required feature lives, one click to open",
+   "expand": "fill"
+  },
+  "Extensions.dc.html": {
+   "x": 0,
+   "y": 1450,
+   "w": 1440,
+   "h": 1790,
+   "title": "Extension manager: permissions, runs, manifest and consent",
+   "expand": "fill"
+  },
+  "Setup.dc.html": {
+   "x": 1520,
+   "y": 1450,
+   "w": 1440,
+   "h": 1370,
+   "title": "Practical setup wizard: every step and state",
+   "expand": "fill"
+  },
+  "Base64.dc.html": {
+   "x": 0,
+   "y": 3360,
+   "w": 1440,
+   "h": 2000,
+   "title": "Base64 toolkit: every option, batch files, data: URLs, preview and history",
+   "expand": "fill"
+  },
+  "InfoIcons.dc.html": {
+   "x": 1520,
+   "y": 3360,
+   "w": 1440,
+   "h": 1570,
+   "title": "Preferences remake: info icons and where every value comes from",
+   "expand": "fill"
+  },
+  "ContextMenu.dc.html": {
+   "x": 0,
+   "y": 5480,
+   "w": 1440,
+   "h": 1120,
+   "title": "Context menus with live controls and real shortcuts",
+   "expand": "fill"
+  },
+  "Liveline.dc.html": {
+   "x": 1520,
+   "y": 5480,
+   "w": 1440,
+   "h": 1460,
+   "title": "Live charts on Device: every honest state",
+   "expand": "fill"
+  },
+  "Drawesome.dc.html": {
+   "x": 0,
+   "y": 7060,
+   "w": 1440,
+   "h": 1810,
+   "title": "Drawing board: seven pens, eraser, exports and records",
+   "expand": "fill"
+  },
+  "DrawesomeShapes.dc.html": {
+   "x": 1520,
+   "y": 7060,
+   "w": 1440,
+   "h": 420,
+   "title": "Drawing toolbar shapes"
+  },
+  "VirtualDisks.dc.html": {
+   "x": 0,
+   "y": 8990,
+   "w": 1440,
+   "h": 2970,
+   "title": "Windows virtual disk manager: every operation",
+   "expand": "fill"
+  },
+  "Servers.dc.html": {
+   "x": 1520,
+   "y": 8990,
+   "w": 1440,
+   "h": 3330,
+   "title": "Minecraft servers: properties, console, backups and world generator",
+   "expand": "fill"
+  }
+ },
+ "order": [
+  "Main.dc.html",
+  "FeatureFinder.dc.html",
+  "Extensions.dc.html",
+  "Setup.dc.html",
+  "Base64.dc.html",
+  "InfoIcons.dc.html",
+  "ContextMenu.dc.html",
+  "Liveline.dc.html",
+  "Drawesome.dc.html",
+  "DrawesomeShapes.dc.html",
+  "VirtualDisks.dc.html",
+  "Servers.dc.html"
+ ],
+ "notes": {
+  "title": {
+   "kind": "title1",
+   "x": 0,
+   "y": -300,
+   "maxW": 2960,
+   "text": "Bambu Studio Material Design 3: every missing required feature, Graphite look"
+  }
+ },
+ "designSystems": []
+}

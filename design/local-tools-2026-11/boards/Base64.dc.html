@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Base64 toolkit</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./kit.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&amp;family=Roboto+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..500,0..1,0&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#0e1311}.ta{border-radius:14px;border:1px solid #34413a;background:#141a17;color:#e3ebe5;padding:14px;font-family:'Roboto Mono',monospace;font-size:13px;line-height:1.55;min-height:150px;word-break:break-all}</style>
+</helmet>
+<div class="pg" style="">
+  <div class="row wrap">
+    <div class="grow"><div class="h1">Base64 toolkit</div><div class="sub">Encode and decode text and files on this computer only. Nothing is uploaded and nothing decoded is ever run or opened by itself.</div></div>
+    <div class="seg" role="tablist"><button class="on" role="tab">Text</button><button role="tab">Files 12</button><button role="tab">data: URL</button><button role="tab">History 31</button></div>
+  </div>
+  <section class="card" aria-label="Options">
+    <div class="row wrap" style="gap:12px 28px">
+      <div class="seg" role="group" aria-label="Direction"><button class="on">Encode</button><button>Decode</button></div>
+      <div class="row" style="gap:8px"><span class="sub">Alphabet</span><div class="seg"><button class="on">Standard §4</button><button>URL-safe §5</button></div></div>
+      <div class="row" style="gap:8px"><span class="sub">Lines</span><div class="seg"><button class="on">One line</button><button>MIME 76, CRLF</button><button>Custom width…</button></div></div>
+    </div>
+    <div class="row wrap" style="gap:12px 28px">
+      <div class="row" style="gap:8px"><span class="sub">Padding</span><button class="sw" role="switch" aria-checked="true" aria-label="Padding"></button></div>
+      <div class="row" style="gap:8px"><span class="sub">Decoder</span><div class="seg"><button class="on">Strict</button><button>Lenient</button></div></div>
+      <div class="row" style="gap:8px"><span class="sub">Text as</span><div class="seg"><button class="on">UTF-8</button><button>UTF-16 LE</button><button>UTF-16 BE</button><button>Latin-1</button></div></div>
+      <span class="grow"></span><div class="row" style="gap:8px"><button class="btn">Swap sides</button><button class="btn">Clear</button></div>
+    </div>
+  </section>
+  <div class="g2">
+    <section class="card" aria-label="Text input">
+      <div class="row"><span class="lbl grow">Text</span><span class="mono mut" style="font-size:12px">28 characters · 31 bytes</span><button class="ib" aria-label="Paste"><span class="ms" aria-hidden="true">content_paste</span></button><button class="ib" aria-label="Open file"><span class="ms" aria-hidden="true">file_open</span></button></div>
+      <div class="ta">bracket_v3 · plate 1 · 220°C</div>
+      <div class="well"><div class="lbl">Bytes as UTF-8</div><div class="mono" style="font-size:12px;color:#cde9d6;line-height:1.6">62 72 61 63 6b 65 74 5f 76 33 20 c2 b7 20 70 6c 61 74 65 20 31 20 c2 b7 20 32 32 30 c2 b0 43</div></div>
+    </section>
+    <section class="card" aria-label="Base64 output">
+      <div class="row"><span class="lbl grow">Base64</span><span class="mono mut" style="font-size:12px">44 characters</span><button class="ib" aria-label="Copy"><span class="ms" aria-hidden="true">content_copy</span></button><button class="ib" aria-label="Save as file"><span class="ms" aria-hidden="true">save</span></button></div>
+      <div class="ta" style="color:#9ff7bf">YnJhY2tldF92MyDCtyBwbGF0ZSAxIMK3IDIyMMKwQw==</div>
+      <div class="well"><div class="row"><span class="ms ok" aria-hidden="true">check_circle</span><span class="grow" style="font-size:13px">Decodes back to the same 31 bytes</span><span class="mono mut" style="font-size:12px">sha256 3f1c…a20e</span></div></div>
+      <div class="row wrap"><button class="btn">Copy as data: URL</button><button class="btn">Export record (JSON)</button><button class="btn">Send to a new tab</button></div>
+    </section>
+  </div>
+  <section class="card" aria-label="Decode with a problem">
+    <div class="row"><div class="h3 grow">Strict decode stops at the first problem</div><span class="tag r">'!' at offset 16</span></div>
+    <div class="ta" style="min-height:0">YnJhY2tldF92MyDC<span style="background:#93000a;color:#ffdad6;border-radius:4px;padding:0 2px">!</span>yBwbGF0ZQ==</div>
+    <div class="g4">
+      <div class="well"><div class="lbl">Invalid character</div><div class="note">Not in the chosen alphabet; the offset counts characters, not bytes.</div></div>
+      <div class="well"><div class="lbl">Wrong padding</div><div class="note">'=' in the wrong place, missing in strict mode, or non-zero leftover bits.</div></div>
+      <div class="well"><div class="lbl">Data after padding</div><div class="note">Something follows the closing '='; strict and lenient both stop.</div></div>
+      <div class="well"><div class="lbl">Cut short</div><div class="note">One lone character in the last group can never decode.</div></div>
+    </div>
+    <div class="row"><button class="btn t">Try lenient</button><button class="btn">Remove the bad character</button><span class="note">Nothing partial is ever shown as complete.</span></div>
+  </section>
+  <section class="card" aria-label="Files">
+    <div class="row"><div class="h2 grow">Files, beside the originals</div><button class="btn">Pause all</button><button class="btn d">Cancel all</button></div>
+    <div class="g2">
+      <button class="btn" style="height: 96px; border: 2px dashed #34413a; border-radius: 18px; justify-content: flex-start; padding: 0 20px"><span class="ms ok" aria-hidden="true" style="font-size:30px">upload_file</span><span style="display:flex;flex-direction:column;gap:4px;text-align:left"><b style="font-weight:500;font-size:15px">Encode files</b><span class="note">report.pdf becomes report.pdf.base64.txt in the same folder</span></span></button>
+      <button class="btn" style="height: 96px; border: 2px dashed #34413a; border-radius: 18px; justify-content: flex-start; padding: 0 20px"><span class="ms" aria-hidden="true" style="font-size:30px;color:#8ab4ff">file_open</span><span style="display:flex;flex-direction:column;gap:4px;text-align:left"><b style="font-weight:500;font-size:15px">Decode files</b><span class="note">report.pdf.base64.txt or .b64 restores report.pdf beside it</span></span></button>
+    </div>
+    <div class="tr h" style="grid-template-columns: minmax(0,1.4fr) minmax(0,1.4fr) 110px 190px 120px"><span>Source</span><span>Writes</span><span>Size</span><span>Progress</span><span>State</span></div>
+    <div class="tr" style="grid-template-columns: minmax(0,1.4fr) minmax(0,1.4fr) 110px 190px 120px"><span class="mono">D:\Prints\report.pdf</span><span class="mono">report.pdf.base64.txt</span><span class="mono">1.38 MB</span><div class="bar"><i style="width:100%"></i></div><span class="ok">Verified</span></div>
+    <div class="tr sel" style="grid-template-columns: minmax(0,1.4fr) minmax(0,1.4fr) 110px 190px 120px"><span class="mono">D:\Captures\timelapse.mp4</span><span class="mono">timelapse.mp4.base64.txt</span><span class="mono">2.41 GB</span><div class="bar"><i style="width:63%"></i></div><span>63 % · 41 s left</span></div>
+    <div class="tr" style="grid-template-columns: minmax(0,1.4fr) minmax(0,1.4fr) 110px 190px 120px"><span class="mono">D:\Logos\logo.png.base64.txt</span><span class="mono">logo (1).png</span><span class="mono">88 KB</span><div class="bar"><i style="width:100%"></i></div><span class="ok">Verified, renamed</span></div>
+    <div class="tr" style="grid-template-columns: minmax(0,1.4fr) minmax(0,1.4fr) 110px 190px 120px"><span class="mono">D:\Inbox\blob.txt</span><span class="mono">blob.pdf</span><span class="mono">412 KB</span><div class="bar"><i style="width:38%;background:#ffb870"></i></div><span class="warn">Paused</span></div>
+    <div class="tr" style="grid-template-columns: minmax(0,1.4fr) minmax(0,1.4fr) 110px 190px 120px"><span class="mono">D:\Inbox\notes.b64</span><span class="mono">notes.bin</span><span class="mono">3 KB</span><div class="bar"><i style="width:12%;background:#ffb4ab"></i></div><span class="err">Bad character</span></div>
+    <div class="note">Large files stream in 1 MB chunks with pause, resume and cancel. Each written file is decoded again and its SHA-256 compared with the source before it counts as done. A clash gets a numbered name, so nothing is ever overwritten.</div>
+  </section>
+  <div class="g2">
+    <section class="card" aria-label="data: URL">
+      <div class="row"><div class="h2 grow">data: URL</div><div class="seg"><button class="on">Build</button><button>Read</button></div></div>
+      <div class="row"><span class="sub" style="width:90px">MIME type</span><input class="in grow" value="image/png" aria-label="MIME type"><span class="tag g">Detected</span></div>
+      <div class="row"><span class="sub" style="width:90px">Charset</span><input class="in grow" value="" placeholder="none for binary" aria-label="Charset"></div>
+      <div class="ta" style="min-height:0;color:#9ff7bf">data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAYAAABccqhmAAAg…</div>
+      <div class="g3"><div class="well"><div class="lbl">Type</div><div style="font-size:13px">PNG image</div></div><div class="well"><div class="lbl">Bytes</div><div class="mono" style="font-size:13px">88,214</div></div><div class="well"><div class="lbl">Parameters</div><div style="font-size:13px">none</div></div></div>
+    </section>
+    <section class="card" aria-label="Preview">
+      <div class="row"><div class="h2 grow">Preview</div><div class="seg"><button class="on">Image</button><button>Text</button><button>Hex</button><button>Audio</button></div></div>
+      <div class="row" style="align-items:stretch"><div style="width:180px;height:180px;flex:none;border-radius:14px;background:repeating-conic-gradient(#28322c 0% 25%, #1f2823 0% 50%) 50% / 20px 20px;display:grid;place-items:center"><svg width="128" height="128" viewBox="0 0 128 128" role="img" aria-label="Decoded logo.png: a green rounded square with a white cube outline"><rect x="8" y="8" width="112" height="112" rx="28" fill="#00ae42"></rect><path d="M64 30 L 94 46 L 94 82 L 64 98 L 34 82 L 34 46 Z M 34 46 L 64 62 L 94 46 M 64 62 L 64 98" fill="none" stroke="#ffffff" stroke-width="7" stroke-linejoin="round"></path></svg></div>
+        <div class="grow" style="display:flex;flex-direction:column;gap:8px"><div class="g2"><div class="well"><div class="lbl">Size</div><div class="mono" style="font-size:13px">256 × 256 px</div></div><div class="well"><div class="lbl">Colour</div><div style="font-size:13px">RGBA, 8 bits</div></div></div><div class="g2"><div class="well"><div class="lbl">File</div><div class="mono" style="font-size:13px">88,214 bytes</div></div><div class="well"><div class="lbl">Signature</div><div style="font-size:13px">PNG, matches the type</div></div></div></div></div>
+      <div class="note">Previews run sandboxed with no scripts. Text over 2 MB and media over 64 MB show a size notice instead of a partial preview.</div>
+    </section>
+  </div>
+  <section class="card" aria-label="History">
+    <div class="row"><div class="h2 grow">History</div><button class="ib" aria-label="Undo"><span class="ms" aria-hidden="true">undo</span></button><button class="ib" aria-label="Redo"><span class="ms" aria-hidden="true">redo</span></button><button class="btn">Export history</button><button class="btn d">Clear history</button></div>
+    <div class="tr h" style="grid-template-columns: 150px minmax(0,1fr) 220px 140px"><span>When</span><span>Action</span><span>Sizes</span><span>SHA-256</span></div>
+    <div class="tr" style="grid-template-columns: 150px minmax(0,1fr) 220px 140px"><span class="mut">00:52:41</span><span>Encoded report.pdf</span><span class="mono">1.38 MB to 1.84 MB</span><span class="mono">9a41…07cc</span></div>
+    <div class="tr" style="grid-template-columns: 150px minmax(0,1fr) 220px 140px"><span class="mut">00:50:02</span><span>Decoded logo.png.base64.txt</span><span class="mono">117 KB to 88 KB</span><span class="mono">e2d0…5b19</span></div>
+    <div class="tr" style="grid-template-columns: 150px minmax(0,1fr) 220px 140px"><span class="mut">00:47:30</span><span>Read a data: URL, image/svg+xml</span><span class="mono">2.8 KB to 2.1 KB</span><span class="mono">71c3…aa02</span></div>
+    <div class="row"><span class="ms mut" aria-hidden="true">shield</span><span class="note grow">History keeps names, sizes and hashes only. Turn on Keep payloads to store the text itself, on this computer only.</span><span class="sub">Keep payloads</span><button class="sw off" role="switch" aria-checked="false" aria-label="Keep payloads"></button></div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":2000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

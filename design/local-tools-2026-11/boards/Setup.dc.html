@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Setup wizard</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./kit.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&amp;family=Roboto+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..500,0..1,0&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#0a0e0c}.st{height:46px;display:flex;align-items:center;gap:12px;padding:0 12px;border-radius:14px;color:#a9b6ad;text-decoration:none;font-size:14px}.st b{margin-left:auto;font-weight:400;font-size:12px}.st.done{color:#e3ebe5}.st.on{background:#24342b;color:#cde9d6;font-weight:500}.mini{background:#18201c;border-radius:20px;padding:16px;display:flex;flex-direction:column;gap:10px}</style>
+</helmet>
+<div class="pg" style="background: #0a0e0c">
+  <div class="well" style="background:#0f5130;color:#9ff7bf;flex-direction:row;align-items:center;gap:12px"><span class="ms" aria-hidden="true">bookmark</span><span class="grow" style="font-size:13px">Welcome back. Setup stopped at step 3 of 7 on 2026-11-07 at 23:58:12; your first two steps are kept.</span><button class="btn q" style="color:#9ff7bf">Start over</button><button class="btn t">Continue</button></div>
+  <section class="dlg" role="dialog" aria-label="Set up Bambu Studio" style="padding:0;gap:0;overflow:hidden;background:#18201c;flex-direction:row">
+    <nav aria-label="Setup steps" style="width:300px;flex:none;display:flex;flex-direction:column;gap:4px;padding:26px 18px;background:#141a17">
+      <div class="h2" style="padding:0 8px 4px">Set up Bambu Studio</div>
+      <div class="sub" style="padding:0 8px 12px">About five minutes. Every step saves as you go.</div>
+      <a href="#" class="st done"><span class="ms ok" aria-hidden="true">check_circle</span>Language and humour<b>Done</b></a>
+      <a href="#" class="st done"><span class="ms ok" aria-hidden="true">check_circle</span>Look and motion<b>Done</b></a>
+      <a href="#" class="st on" aria-current="step"><span class="ms" aria-hidden="true">radio_button_checked</span>Printers<b>Required</b></a>
+      <a href="#" class="st"><span class="ms" aria-hidden="true">radio_button_unchecked</span>Inks and filaments<b>Required</b></a>
+      <a href="#" class="st"><span class="ms" aria-hidden="true">radio_button_unchecked</span>Backups<b>Optional</b></a>
+      <a href="#" class="st"><span class="ms" aria-hidden="true">radio_button_unchecked</span>Extensions<b>Optional</b></a>
+      <a href="#" class="st"><span class="ms" aria-hidden="true">radio_button_unchecked</span>Finish</a>
+      <span class="grow"></span>
+      <div class="note" style="padding:0 8px">Keyboard: Alt+N next, Alt+B back, Alt+S skip an optional step, Esc saves and closes.</div>
+    </nav>
+    <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:18px;padding:26px 30px">
+      <div class="row"><span class="sub grow">Step 3 of 7</span><span class="sub">2 required steps left</span></div>
+      <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="7" aria-valuenow="3" aria-label="Setup progress"><i style="width:38%"></i></div>
+      <div><div class="h1">Add your printers</div><div class="sub">Pick the printers and nozzles you own. Slicing presets, plates and process profiles come from these choices.</div></div>
+      <div class="row wrap"><button class="btn t"><span class="ms" aria-hidden="true">add</span>Choose printers</button><button class="btn"><span class="ms" aria-hidden="true">travel_explore</span>Search my network</button><button class="btn"><span class="ms" aria-hidden="true">upload</span>Import a printer profile</button></div>
+      <div class="lbl">Result of each action</div>
+      <div class="well" style="flex-direction:row;align-items:center"><span class="ms ok" aria-hidden="true">check_circle</span><div class="grow"><div style="font-size:14px;font-weight:500">Bambu Lab X1 Carbon · 0.4 mm nozzle</div><div class="note">Added with 3 process presets and the Textured PEI plate</div></div><button class="btn q">Undo</button></div>
+      <div class="well" style="flex-direction:row;align-items:center"><span class="ms" aria-hidden="true" style="color:#8ab4ff">lan</span><div class="grow"><div style="font-size:14px;font-weight:500">Found on your network: one printer</div><div class="note">Connecting needs its access code, which goes to the Windows credential vault</div></div><button class="btn">Connect</button></div>
+      <div class="well" style="flex-direction:row;align-items:center;background:#3a1512"><span class="ms err" aria-hidden="true">error</span><div class="grow"><div style="font-size:14px;font-weight:500;color:#ffdad6">Import refused: printer-old.json is not a printer profile</div><div class="note" style="color:#ffdad6">It holds filament settings. Use it in the Inks step instead.</div></div><button class="btn">Choose another file</button></div>
+      <div class="g2">
+        <div class="well"><div class="row"><span class="ms ok" aria-hidden="true">lightbulb</span><span class="h3">Why this step matters</span></div><div class="note">Printers decide which plates, nozzles and process presets Prepare offers. Add more later from Prepare, then Printer.</div></div>
+        <div class="well"><div class="row"><span class="ms ok" aria-hidden="true">verified</span><span class="h3">Required to finish</span></div><div class="note">At least one printer. Next stays available; it explains what is missing instead of greying out.</div></div>
+      </div>
+      <span class="grow"></span>
+      <div class="row"><span class="ms mut" aria-hidden="true">save</span><span class="sub grow">Saved. Close any time and continue from Help, then Setup wizard.</span><button class="btn q">Back</button><button class="btn p">Next</button></div>
+    </div>
+  </section>
+  <div class="g3">
+    <section class="mini" aria-label="Step 1"><div class="lbl">1 · Language and humour</div><div class="seg"><button class="on">English</button><button>廣東話</button><button>Both</button></div><div class="row"><span style="width:120px;font-size:13px">English funny</span><div class="sl"><i style="width:80%"></i><b style="left:80%"></b></div><span class="mono" style="font-size:12px">4</span></div><div class="row"><span style="width:120px;font-size:13px">Cantonese funny</span><div class="sl"><i style="width:100%"></i><b style="left:100%"></b></div><span class="mono" style="font-size:12px">5</span></div><div class="row"><span class="grow" style="font-size:13px">Emoji in dialogs</span><button class="sw" role="switch" aria-checked="true" aria-label="Emoji in dialogs"></button></div><div class="row"><span class="grow" style="font-size:13px">Personal wording file</span><button class="btn">Choose .json</button></div></section>
+    <section class="mini" aria-label="Step 2"><div class="lbl">2 · Look and motion</div><div class="seg"><button>Light</button><button class="on">Dark</button><button>Follow Windows</button></div><div class="row" style="gap:8px"><span style="width:28px;height:28px;border-radius:14px;background:#6fdc98;border:2px solid #e3ebe5"></span><span style="width:28px;height:28px;border-radius:14px;background:#8ab4ff"></span><span style="width:28px;height:28px;border-radius:14px;background:#ffb870"></span><span style="width:28px;height:28px;border-radius:14px;background:#f28cb1"></span></div><div class="seg"><button class="on">Comfortable</button><button>Compact</button></div><div class="row"><span class="grow" style="font-size:13px">Reduce motion</span><button class="sw off" role="switch" aria-checked="false" aria-label="Reduce motion"></button></div></section>
+    <section class="mini" aria-label="Step 4"><div class="lbl">4 · Inks and filaments</div><div class="row"><span class="grow" style="font-size:13px">Read the AMS now</span><button class="btn t">Sync AMS</button></div><div class="tr" style="grid-template-columns:24px minmax(0,1fr) 70px;padding:6px"><span style="width:18px;height:18px;border-radius:6px;background:#00ae42"></span><span>PLA Basic · Bambu Green</span><span class="mut">Slot 1</span></div><div class="tr" style="grid-template-columns:24px minmax(0,1fr) 70px;padding:6px"><span style="width:18px;height:18px;border-radius:6px;background:#f2ead8"></span><span>PLA Matte · Ivory</span><span class="mut">Slot 2</span></div><div class="tr" style="grid-template-columns:24px minmax(0,1fr) 70px;padding:6px"><span style="width:18px;height:18px;border-radius:6px;background:#3a3a3a;border:1px solid #7c8a81;box-sizing:border-box"></span><span>PLA Basic · Charcoal</span><span class="mut">Slot 3</span></div><div class="tr" style="grid-template-columns:24px minmax(0,1fr) 70px;padding:6px"><span style="width:18px;height:18px;border-radius:6px;background:#ff7a1a"></span><span>PETG HF · Signal Orange</span><span class="mut">Slot 4</span></div><div class="note">Or pick filaments by brand, type and colour.</div></section>
+    <section class="mini" aria-label="Step 5"><div class="lbl">5 · Backups · optional</div><div class="row"><span class="grow" style="font-size:13px">Back up the open project every</span><div class="seg"><button>Off</button><button>2 min</button><button class="on">10 min</button></div></div><div class="row"><span class="grow" style="font-size:13px">Make a config backup now</span><button class="btn">Back up</button></div><div class="well" style="flex-direction:row;align-items:center"><span class="ms ok" aria-hidden="true">check_circle</span><span class="note grow">Saved BambuStudio-config-2026-11-08.zip, 2.3 MB</span></div><button class="btn q" style="align-self:flex-start">Skip this step</button></section>
+    <section class="mini" aria-label="Step 6"><div class="lbl">6 · Extensions · optional</div><div class="row"><span class="grow" style="font-size:13px">Plate checklist</span><button class="sw" role="switch" aria-checked="true" aria-label="Plate checklist"></button></div><div class="row"><span class="grow" style="font-size:13px">G-code time stamp</span><button class="sw" role="switch" aria-checked="true" aria-label="G-code time stamp"></button></div><div class="row"><span class="grow" style="font-size:13px">Slice report</span><button class="sw" role="switch" aria-checked="true" aria-label="Slice report"></button></div><div class="note">Built-in extensions run only after you allow what each one asks for.</div></section>
+    <section class="mini" aria-label="Step 7"><div class="lbl">7 · Finish</div><div class="row"><span class="ms ok" aria-hidden="true" style="font-size:36px">task_alt</span><div class="grow"><div class="h3">Ready to print</div><div class="note">1 printer, 4 inks, backups every 10 minutes, 3 extensions on.</div></div></div><div class="row wrap"><button class="btn p">Open Prepare</button><button class="btn">Take the feature tour</button></div><div class="note">Setup stays in Help for later changes.</div></section>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1370}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

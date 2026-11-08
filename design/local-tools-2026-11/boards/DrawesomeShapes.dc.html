@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Drawing toolbar shapes</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&amp;family=Roboto+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..500,0..1,0&amp;display=swap" rel="stylesheet">
+<style>
+.ms{font-family:"Material Symbols Outlined";font-weight:400;font-style:normal;font-size:22px;line-height:1;letter-spacing:normal;text-transform:none;white-space:nowrap;direction:ltr;font-feature-settings:"liga";-webkit-font-smoothing:antialiased}
+body{margin:0;background:#141a17}
+</style>
+</helmet>
+<div style="width: 100%; height: 420px; overflow: hidden; box-sizing: border-box; padding: 40px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px 40px; background: #141a17; color: #e3ebe5; font-family: Roboto, system-ui, sans-serif">
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <div style="font-size: 13px; color: #a9b6ad">Colour: the pens turn into a palette</div>
+    <div role="toolbar" aria-label="Colour" style="align-self: flex-start; display: flex; align-items: center; gap: 6px; padding: 8px; border-radius: 28px; background: #1f2823">
+      <button aria-label="Back to pens" style="width: 44px; height: 44px; border-radius: 22px; border: 0; background: transparent; color: #a9b6ad; display: grid; place-items: center"><span class="ms" aria-hidden="true" style="font-size: 20px">arrow_back</span></button>
+      <button aria-label="Red, selected" style="width: 40px; height: 44px; border-radius: 22px; border: 0; background: transparent; display: grid; place-items: center"><span style="width: 26px; height: 26px; border-radius: 13px; background: #ff5a4f; border: 2px solid #e3ebe5; box-sizing: border-box;"></span></button><button aria-label="Orange" style="width: 40px; height: 44px; border-radius: 22px; border: 0; background: transparent; display: grid; place-items: center"><span style="width: 26px; height: 26px; border-radius: 13px; background: #ffb870;"></span></button><button aria-label="Yellow" style="width: 40px; height: 44px; border-radius: 22px; border: 0; background: transparent; display: grid; place-items: center"><span style="width: 26px; height: 26px; border-radius: 13px; background: #ffe066;"></span></button><button aria-label="Mint" style="width: 40px; height: 44px; border-radius: 22px; border: 0; background: transparent; display: grid; place-items: center"><span style="width: 26px; height: 26px; border-radius: 13px; background: #6fdc98;"></span></button><button aria-label="Blue" style="width: 40px; height: 44px; border-radius: 22px; border: 0; background: transparent; display: grid; place-items: center"><span style="width: 26px; height: 26px; border-radius: 13px; background: #8ab4ff;"></span></button><button aria-label="Purple" style="width: 40px; height: 44px; border-radius: 22px; border: 0; background: transparent; display: grid; place-items: center"><span style="width: 26px; height: 26px; border-radius: 13px; background: #c58af9;"></span></button><button aria-label="Pink" style="width: 40px; height: 44px; border-radius: 22px; border: 0; background: transparent; display: grid; place-items: center"><span style="width: 26px; height: 26px; border-radius: 13px; background: #f28cb1;"></span></button><button aria-label="White" style="width: 40px; height: 44px; border-radius: 22px; border: 0; background: transparent; display: grid; place-items: center"><span style="width: 26px; height: 26px; border-radius: 13px; background: #e3ebe5;"></span></button><button aria-label="Charcoal" style="width: 40px; height: 44px; border-radius: 22px; border: 0; background: transparent; display: grid; place-items: center"><span style="width: 26px; height: 26px; border-radius: 13px; background: #3a3a3a; border: 1px solid #7c8a81; box-sizing: border-box;"></span></button>
+      <button aria-label="More colours" style="width: 44px; height: 44px; border-radius: 22px; border: 0; background: transparent; color: #e3ebe5; display: grid; place-items: center"><span class="ms" aria-hidden="true" style="font-size: 20px">colorize</span></button>
+    </div>
+  </div>
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <div style="font-size: 13px; color: #a9b6ad">Size: the pens turn into sliders</div>
+    <div role="toolbar" aria-label="Size" style="align-self: flex-start; display: flex; align-items: center; gap: 14px; padding: 8px 18px 8px 8px; border-radius: 28px; background: #1f2823">
+      <button aria-label="Back to pens" style="width: 44px; height: 44px; border-radius: 22px; border: 0; background: transparent; color: #a9b6ad; display: grid; place-items: center"><span class="ms" aria-hidden="true" style="font-size: 20px">arrow_back</span></button>
+      <span style="font-size: 13px; width: 48px">Width</span>
+      <div role="slider" aria-label="Stroke width" aria-valuemin="1" aria-valuemax="40" aria-valuenow="6" tabindex="0" style="width: 150px; height: 24px; position: relative"><span style="position: absolute; left: 0; right: 0; top: 10px; height: 4px; border-radius: 2px; background: #34413a"></span><span style="position: absolute; left: 0; width: 14%; top: 10px; height: 4px; border-radius: 2px; background: #6fdc98"></span><span style="position: absolute; left: calc(14% - 8px); top: 4px; width: 16px; height: 16px; border-radius: 8px; background: #6fdc98"></span></div>
+      <span style="font-family: 'Roboto Mono', monospace; font-size: 13px; width: 44px; margin-right: 12px">6 px</span>
+      <span style="font-size: 13px; width: 56px">Opacity</span>
+      <div role="slider" aria-label="Stroke opacity" aria-valuemin="10" aria-valuemax="100" aria-valuenow="100" tabindex="0" style="width: 110px; height: 24px; position: relative"><span style="position: absolute; left: 0; right: 0; top: 10px; height: 4px; border-radius: 2px; background: #6fdc98"></span><span style="position: absolute; right: -8px; top: 4px; width: 16px; height: 16px; border-radius: 8px; background: #6fdc98"></span></div><span style="font-family: 'Roboto Mono', monospace; font-size: 13px; width: 48px">100 %</span>
+    </div>
+  </div>
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <div style="font-size: 13px; color: #a9b6ad">Minimised: a disc that still shows the active pen</div>
+    <button aria-label="Show drawing tools, Marker active" style="width: 56px; height: 56px; border-radius: 28px; border: 0; background: #1f2823; color: #9ff7bf; display: grid; place-items: center"><span class="ms" aria-hidden="true" style="font-size: 24px">ink_marker</span></button>
+  </div>
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <div style="font-size: 13px; color: #a9b6ad">Shortcuts shown in every pen tooltip and menu</div>
+    <div style="display: flex; gap: 8px; flex-wrap: wrap; font-size: 13px">
+      <span style="padding: 6px 10px; border-radius: 10px; background: #1f2823">Pencil <kbd style="font-family: 'Roboto Mono', monospace; color: #a9b6ad">1</kbd></span>
+      <span style="padding: 6px 10px; border-radius: 10px; background: #1f2823">Pen <kbd style="font-family: 'Roboto Mono', monospace; color: #a9b6ad">2</kbd></span>
+      <span style="padding: 6px 10px; border-radius: 10px; background: #1f2823">Fineliner <kbd style="font-family: 'Roboto Mono', monospace; color: #a9b6ad">3</kbd></span>
+      <span style="padding: 6px 10px; border-radius: 10px; background: #1f2823">Marker <kbd style="font-family: 'Roboto Mono', monospace; color: #a9b6ad">4</kbd></span>
+      <span style="padding: 6px 10px; border-radius: 10px; background: #1f2823">Highlighter <kbd style="font-family: 'Roboto Mono', monospace; color: #a9b6ad">5</kbd></span>
+      <span style="padding: 6px 10px; border-radius: 10px; background: #1f2823">Brush <kbd style="font-family: 'Roboto Mono', monospace; color: #a9b6ad">6</kbd></span>
+      <span style="padding: 6px 10px; border-radius: 10px; background: #1f2823">Fountain pen <kbd style="font-family: 'Roboto Mono', monospace; color: #a9b6ad">7</kbd></span>
+      <span style="padding: 6px 10px; border-radius: 10px; background: #1f2823">Eraser <kbd style="font-family: 'Roboto Mono', monospace; color: #a9b6ad">E</kbd></span>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":420}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

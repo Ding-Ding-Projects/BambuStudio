@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Live charts</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./kit.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&amp;family=Roboto+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..500,0..1,0&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#0e1311}.cv{position:relative;border-radius:16px;background:#141a17;overflow:hidden}</style>
+</helmet>
+<div class="pg" style="">
+  <div class="row wrap"><div class="grow"><div class="h1">Live charts on Device</div><div class="sub">Every chart that updates on screen eases toward each reading, names its trend in words, and never draws a point the printer did not send.</div></div><span class="sub">Animations follow Preferences, Appearance</span></div>
+  <div style="display:grid;grid-template-columns:330px minmax(0,1fr);gap:12px">
+    <aside style="display:flex;flex-direction:column;gap:12px">
+      <section class="card"><div class="row"><span style="width:48px;height:48px;border-radius:14px;background:#28322c;display:grid;place-items:center"><span class="ms ok" aria-hidden="true" style="font-size:26px">print</span></span><div class="grow"><div class="h3">X1 Carbon · Studio</div><div class="note">Printing bracket_v3 · layer 47 of 212</div></div></div><div class="bar"><i style="width:22%"></i></div><div class="row"><span class="note grow">22 %</span><span class="mono note">1 h 19 m left</span></div></section>
+      <section class="card"><div class="lbl">Now</div>
+        <div class="well" style="flex-direction:row;align-items:center"><span style="width:10px;height:10px;border-radius:5px;background:#ffb870"></span><span class="grow">Nozzle</span><span class="num" style="font-size:16px;font-weight:500">218.6</span><span class="note">of 220 °C</span></div>
+        <div class="well" style="flex-direction:row;align-items:center"><span style="width:10px;height:10px;border-radius:5px;background:#8ab4ff"></span><span class="grow">Bed</span><span class="num" style="font-size:16px;font-weight:500">65.0</span><span class="note">of 65 °C</span></div>
+        <div class="well" style="flex-direction:row;align-items:center"><span style="width:10px;height:10px;border-radius:5px;border:2px solid #a9b6ad;box-sizing:border-box"></span><span class="grow">Chamber</span><span class="num" style="font-size:16px;font-weight:500">34.2</span><span class="note">°C</span></div>
+        <div class="note">2,614 readings this session, every one from the printer. Gaps stay gaps.</div></section>
+      <section class="card"><div class="lbl">Chart options</div>
+        <div class="row"><span class="grow" style="font-size:13px">Reference line at the target</span><button class="sw" role="switch" aria-checked="true" aria-label="Reference line"></button></div>
+        <div class="row"><span class="grow" style="font-size:13px">Show momentum arrow</span><button class="sw" role="switch" aria-checked="true" aria-label="Momentum arrow"></button></div>
+        <div class="row"><span class="grow" style="font-size:13px">Particles on new highs</span><button class="sw off" role="switch" aria-checked="false" aria-label="Particles"></button></div>
+        <div class="row"><span class="grow" style="font-size:13px">View</span><div class="seg"><button class="on">Line</button><button>Candles</button></div></div>
+        <div class="row"><span class="grow" style="font-size:13px">Clock</span><div class="seg"><button class="on">24 h</button><button>12 h</button></div></div></section>
+    </aside>
+    <main class="card" aria-label="Nozzle temperature" style="gap:14px">
+      <div class="row wrap"><div class="grow"><div class="sub">Nozzle temperature</div><div class="row" style="align-items:baseline"><span class="num" style="font-size:48px;font-weight:500">218.6</span><span class="mut" style="font-size:18px">°C</span><span class="row ok" style="gap:4px;font-size:13px"><span class="ms" aria-hidden="true">trending_flat</span>Holding near 220 °C · +0.7 °C in 42 s</span></div></div>
+        <div class="row" role="group" aria-label="Series"><button class="chip on" style="background:#3d2a12;color:#ffd8b0;border-color:#3d2a12"><span style="width:10px;height:10px;border-radius:5px;background:#ffb870"></span>Nozzle</button><button class="chip on" style="background:#122544;color:#cfe0ff;border-color:#122544"><span style="width:10px;height:10px;border-radius:5px;background:#8ab4ff"></span>Bed</button><button class="chip">Chamber</button></div>
+        <div class="seg"><button>1 min</button><button class="on">5 min</button><button>15 min</button><button>1 h</button></div></div>
+      <div class="cv" style="height:430px">
+        <svg width="100%" height="100%" viewBox="0 0 900 430" preserveAspectRatio="none" role="img" aria-label="Nozzle 218.6 degrees, holding near its 220 degree target, bed steady at 65 degrees, over the last five minutes" style="position:absolute;inset:0"><defs><linearGradient id="heat" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffb870" stop-opacity="0.28"></stop><stop offset="1" stop-color="#ffb870" stop-opacity="0"></stop></linearGradient></defs><g stroke="#1f2823" stroke-width="1"><line x1="0" y1="80" x2="900" y2="80"></line><line x1="0" y1="170" x2="900" y2="170"></line><line x1="0" y1="260" x2="900" y2="260"></line><line x1="0" y1="350" x2="900" y2="350"></line></g><line x1="0" y1="72" x2="900" y2="72" stroke="#ffb870" stroke-width="1" stroke-dasharray="6 6" opacity="0.6"></line><path d="M0 360 C 80 352, 150 320, 220 255 S 360 115, 460 92 S 640 88, 740 84 S 795 82, 810 80 L 810 430 L 0 430 Z" fill="url(#heat)"></path><path d="M0 360 C 80 352, 150 320, 220 255 S 360 115, 460 92 S 640 88, 740 84 S 795 82, 810 80" fill="none" stroke="#ffb870" stroke-width="3" stroke-linecap="round"></path><path d="M0 305 C 120 303, 300 302, 460 301 S 740 300, 810 300" fill="none" stroke="#8ab4ff" stroke-width="2.5" stroke-linecap="round"></path><line x1="697" y1="0" x2="697" y2="430" stroke="#a9b6ad" stroke-width="1" opacity="0.6"></line><circle cx="697" cy="85.5" r="5" fill="#ffb870" stroke="#141a17" stroke-width="2"></circle><circle cx="810" cy="80" r="11" fill="#ffb870" opacity="0.25"></circle><circle cx="810" cy="80" r="5" fill="#ffb870"></circle><circle cx="810" cy="300" r="4" fill="#8ab4ff"></circle><path d="M822 112 L 842 112 M 836 106 L 842 112 L 836 118" fill="none" stroke="#ffb870" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+        <div style="position:absolute;right:12px;top:62px;padding:4px 10px;border-radius:12px;background:#ffb870;color:#3d2400" class="mono">218.6</div>
+        <div style="position:absolute;left:8px;top:52px;font-size:11px;color:#ffb870">Target 220</div>
+        <div role="tooltip" style="position:absolute;left:calc(77.4% - 172px);top:100px;padding:10px 12px;border-radius:12px;background:#28322c;display:flex;flex-direction:column;gap:4px;font-size:12px"><span class="mut">00:43:18</span><span class="mono">Nozzle 217.9 °C</span><span class="mono">Bed 65.0 °C</span></div>
+        <div style="position:absolute;left:0;right:0;bottom:8px;height:14px;font-size:11px;color:#a9b6ad"><span style="position:absolute;left:8px">00:39</span><span style="position:absolute;left:18%;transform:translateX(-50%)">00:40</span><span style="position:absolute;left:36%;transform:translateX(-50%)">00:41</span><span style="position:absolute;left:54%;transform:translateX(-50%)">00:42</span><span style="position:absolute;left:72%;transform:translateX(-50%)">00:43</span><span style="position:absolute;left:90%;transform:translateX(-50%)">now</span></div>
+      </div>
+      <div class="note">Arrow keys move the crosshair a reading at a time, Home and End jump to the ends, and a screen reader hears the latest value and its trend every 10 seconds.</div>
+    </main>
+  </div>
+  <div class="g4">
+    <section class="card"><div class="row"><span class="h3 grow">Loading</span><span class="tag">Waiting</span></div><div class="cv" style="height:120px;display:grid;place-items:center"><div class="note">Asking the printer for its first reading</div></div></section>
+    <section class="card"><div class="row"><span class="h3 grow">Paused</span><span class="tag a">+38 readings</span></div><div class="cv" style="height:120px"><svg width="100%" height="100%" viewBox="0 0 300 120" preserveAspectRatio="none" aria-hidden="true" style="position:absolute;inset:0"><path d="M0 90 C 60 80, 120 40, 180 36 S 260 34, 300 34" fill="none" stroke="#ffb870" stroke-width="2.5"></path></svg></div><div class="note">Resume catches up in one smooth move.</div></section>
+    <section class="card"><div class="row"><span class="h3 grow">Stalled</span><span class="tag r">14 s</span></div><div class="cv" style="height:120px"><svg width="100%" height="100%" viewBox="0 0 300 120" preserveAspectRatio="none" aria-hidden="true" style="position:absolute;inset:0"><path d="M0 70 C 60 66, 120 60, 200 58" fill="none" stroke="#ffb870" stroke-width="2.5"></path><line x1="200" y1="10" x2="200" y2="110" stroke="#ffb4ab" stroke-dasharray="4 4"></line></svg></div><div class="note">No reading since 00:43:04. Nothing is drawn for the gap.</div></section>
+    <section class="card"><div class="row"><span class="h3 grow">Empty</span><span class="tag">Offline</span></div><div class="cv" style="height:120px;display:grid;place-items:center"><div class="note">The printer is off or not connected</div></div></section>
+  </div>
+  <div class="g3">
+    <section class="card"><div class="lbl">AMS humidity</div><div class="row" style="align-items:baseline"><span class="num" style="font-size:28px">18 %</span><span class="note ok">Falling, drying on</span></div><div class="cv" style="height:90px"><svg width="100%" height="100%" viewBox="0 0 300 90" preserveAspectRatio="none" aria-hidden="true" style="position:absolute;inset:0"><path d="M0 20 C 80 26, 160 50, 300 66" fill="none" stroke="#6fdc98" stroke-width="2.5"></path></svg></div></section>
+    <section class="card"><div class="lbl">Part cooling fan</div><div class="row" style="align-items:baseline"><span class="num" style="font-size:28px">70 %</span><span class="note">Flat</span></div><div class="cv" style="height:90px"><svg width="100%" height="100%" viewBox="0 0 300 90" preserveAspectRatio="none" aria-hidden="true" style="position:absolute;inset:0"><path d="M0 40 L 300 40" fill="none" stroke="#8ab4ff" stroke-width="2.5"></path></svg></div></section>
+    <section class="card"><div class="lbl">Reduced motion</div><div class="note">The line snaps to each reading, the dot stops pulsing, badges and ranges change without animation. Every value, trend and state stays readable.</div><div class="note">Until you choose, it follows the Windows setting Show animations.</div><div class="row"><span class="grow" style="font-size:13px">Preview reduced motion</span><button class="sw off" role="switch" aria-checked="false" aria-label="Preview reduced motion"></button></div></section>
+  </div>
+  <div style="display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:12px;align-items:start">
+    <section class="card" aria-label="Candles view"><div class="row"><span class="h3 grow">Candles view</span><span class="note">Chamber, one candle per minute: first, highest, lowest, last</span></div>
+      <div class="cv" style="height:170px"><svg width="100%" height="100%" viewBox="0 0 600 170" preserveAspectRatio="none" role="img" aria-label="Chamber temperature candles, warming from 31 to 34 degrees over ten minutes" style="position:absolute;inset:0"><g stroke-width="2"><line x1="40" y1="118" x2="40" y2="150" stroke="#6fdc98"></line><rect x="30" y="124" width="20" height="20" fill="#6fdc98"></rect><line x1="95" y1="104" x2="95" y2="140" stroke="#6fdc98"></line><rect x="85" y="112" width="20" height="20" fill="#6fdc98"></rect><line x1="150" y1="100" x2="150" y2="128" stroke="#ffb4ab"></line><rect x="140" y="108" width="20" height="12" fill="#ffb4ab"></rect><line x1="205" y1="86" x2="205" y2="124" stroke="#6fdc98"></line><rect x="195" y="94" width="20" height="22" fill="#6fdc98"></rect><line x1="260" y1="74" x2="260" y2="104" stroke="#6fdc98"></line><rect x="250" y="80" width="20" height="16" fill="#6fdc98"></rect><line x1="315" y1="66" x2="315" y2="92" stroke="#6fdc98"></line><rect x="305" y="70" width="20" height="14" fill="#6fdc98"></rect><line x1="370" y1="60" x2="370" y2="86" stroke="#ffb4ab"></line><rect x="360" y="66" width="20" height="10" fill="#ffb4ab"></rect><line x1="425" y1="48" x2="425" y2="80" stroke="#6fdc98"></line><rect x="415" y="56" width="20" height="18" fill="#6fdc98"></rect><line x1="480" y1="40" x2="480" y2="66" stroke="#6fdc98"></line><rect x="470" y="46" width="20" height="12" fill="#6fdc98"></rect><line x1="535" y1="34" x2="535" y2="58" stroke="#6fdc98" stroke-dasharray="3 3"></line><rect x="525" y="40" width="20" height="10" fill="none" stroke="#6fdc98"></rect></g></svg></div>
+      <div class="note">The last candle is still forming and is drawn hollow. Up candles are green, down candles red, and each also says up or down to a screen reader.</div></section>
+    <section class="card" aria-label="Right-click on a chart"><div class="row"><span class="h3 grow">Right-click on any chart</span><span class="kbd">Shift+F10</span></div>
+      <div class="tr" style="grid-template-columns:minmax(0,1fr) auto;padding:7px 10px"><span>Pause updates</span><span class="kbd">Space</span></div>
+      <div class="tr" style="grid-template-columns:minmax(0,1fr) auto;padding:7px 10px"><span>Copy the value under the crosshair</span><span class="kbd">Ctrl+C</span></div>
+      <div class="tr" style="grid-template-columns:minmax(0,1fr) auto;padding:7px 10px"><span>Save shown readings as CSV</span><span class="kbd">Ctrl+S</span></div>
+      <div class="tr" style="grid-template-columns:minmax(0,1fr) auto;padding:7px 10px"><span>Edit appearance, including Animation and transition</span><span></span></div>
+      <div class="tr" style="grid-template-columns:minmax(0,1fr) auto;padding:7px 10px"><span>Explain this chart</span><span class="kbd">F1</span></div></section>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1460}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Context menus</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./kit.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&amp;family=Roboto+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..500,0..1,0&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#0e1311}.mn{width:360px;padding:8px;border-radius:20px;background:#1f2823;box-shadow:0 12px 32px rgba(0,0,0,.45);display:flex;flex-direction:column;gap:2px}.mi{height:40px;display:flex;align-items:center;gap:12px;padding:0 12px;border-radius:12px;border:0;background:transparent;color:#e3ebe5;font:inherit;font-size:14px;text-align:left}.mi .ms{color:#a9b6ad;font-size:18px}.mi kbd{margin-left:auto;font-family:'Roboto Mono',monospace;font-size:12px;color:#a9b6ad}.mi.f{background:#28322c;outline:2px solid #6fdc98;outline-offset:-2px}.mi.x{color:#7c8a81}.sep{height:1px;margin:4px 8px;background:#34413a}.mf{display:flex;align-items:center;gap:8px;height:38px;padding:0 10px;margin-bottom:4px;border-radius:12px;background:#141a17;color:#a9b6ad;font-size:13px}</style>
+</helmet>
+<div class="pg" style="">
+  <div><div class="h1">Context menus everywhere</div><div class="sub">Every element answers a right-click or Shift+F10. Values show their live control right in the row, the shortcut that really works shows on the right, and the filter finds any row.</div></div>
+  <div style="position:relative;height:640px;border-radius:24px;background:#141a17;overflow:hidden">
+    <svg width="100%" height="100%" viewBox="0 0 1000 640" preserveAspectRatio="xMidYMid slice" aria-hidden="true" style="position:absolute;inset:0"><defs><pattern id="g" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" stroke="#1f2823" stroke-width="1"></path></pattern></defs><rect width="1000" height="640" fill="url(#g)"></rect><polygon points="120,430 620,430 700,580 40,580" fill="#18201c" stroke="#34413a"></polygon><polygon points="250,250 370,250 395,460 225,460" fill="#2a8a52" stroke="#9ff7bf" stroke-width="2"></polygon><polygon points="250,250 285,225 405,225 370,250" fill="#3ca866"></polygon><polygon points="370,250 405,225 430,440 395,460" fill="#1d6b3f"></polygon></svg>
+    <div class="row" style="position:absolute;left:16px;top:16px;padding:8px 14px;border-radius:14px;background:#1f2823;font-size:13px"><span class="ms ok" aria-hidden="true">select</span>bracket_v3.stl selected</div>
+    <div role="menu" aria-label="bracket_v3.stl" class="mn" style="position:absolute;left:470px;top:40px">
+      <div class="mf"><span class="ms" aria-hidden="true" style="font-size:16px">filter_list</span><span class="grow">Filter this menu</span><span class="kbd">.*</span></div>
+      <button role="menuitem" class="mi f"><span class="ms" aria-hidden="true">content_copy</span>Copy<kbd>Ctrl+C</kbd></button>
+      <button role="menuitem" class="mi"><span class="ms" aria-hidden="true">auto_awesome_motion</span>Clone<kbd>Ctrl+K</kbd></button>
+      <button role="menuitem" class="mi"><span class="ms" aria-hidden="true">screen_rotation_alt</span>Auto orient<kbd>Q</kbd></button>
+      <button role="menuitem" aria-haspopup="menu" aria-expanded="true" class="mi" style="background:#24342b;color:#cde9d6"><span class="ms" aria-hidden="true">palette</span>Ink<span style="margin-left:auto" class="ms" aria-hidden="true">chevron_right</span></button>
+      <div class="sep"></div>
+      <div class="mi"><span class="ms" aria-hidden="true">grid_4x4</span><span class="grow">Snap to grid</span><button role="menuitemcheckbox" aria-checked="true" class="sw" aria-label="Snap to grid"></button></div>
+      <div class="mi"><span class="ms" aria-hidden="true">view_in_ar</span><span class="grow">View</span><div class="seg" role="radiogroup" aria-label="View"><button class="on" role="menuitemradio" aria-checked="true">Solid</button><button role="menuitemradio" aria-checked="false">Wire</button></div></div>
+      <div class="mi"><span class="ms" aria-hidden="true">opacity</span><span style="width:78px">Opacity</span><div class="sl"><i style="width:78%"></i><b style="left:78%"></b></div><span class="mono mut" style="font-size:12px;width:38px;text-align:right">80 %</span></div>
+      <div class="sep"></div>
+      <button role="menuitem" class="mi"><span class="ms" aria-hidden="true">info</span>Explain this<kbd>F1</kbd></button>
+      <button role="menuitem" class="mi"><span class="ms" aria-hidden="true">format_paint</span>Edit appearance</button>
+      <button role="menuitem" class="mi"><span class="ms" aria-hidden="true">lock</span>Lock this element</button>
+      <button role="menuitem" class="mi" style="color:#ffb4ab"><span class="ms" aria-hidden="true" style="color:#ffb4ab">delete</span>Delete<kbd>Del</kbd></button>
+    </div>
+    <div role="menu" aria-label="Ink" class="mn" style="position:absolute;left:836px;top:208px;width:260px">
+      <button role="menuitemradio" aria-checked="true" class="mi" style="background:#24342b;color:#cde9d6"><span style="width:20px;height:20px;border-radius:6px;background:#00ae42"></span>1 · Bambu Green<kbd>1</kbd></button>
+      <button role="menuitemradio" aria-checked="false" class="mi"><span style="width:20px;height:20px;border-radius:6px;background:#f2ead8"></span>2 · Ivory<kbd>2</kbd></button>
+      <button role="menuitemradio" aria-checked="false" class="mi"><span style="width:20px;height:20px;border-radius:6px;background:#3a3a3a"></span>3 · Charcoal<kbd>3</kbd></button>
+      <button role="menuitemradio" aria-checked="false" class="mi"><span style="width:20px;height:20px;border-radius:6px;background:#ff7a1a"></span>4 · Signal Orange<kbd>4</kbd></button>
+    </div>
+  </div>
+  <div class="g2" style="align-items:start">
+    <section class="card" aria-label="Menu on a setting">
+      <div class="h3">On a setting in Process settings</div>
+      <div class="row" style="align-items:flex-start;gap:16px">
+        <div style="display:flex;flex-direction:column"><div class="well" style="width:280px"><div class="row"><span class="grow" style="font-size:14px">Wall loops</span><div class="step"><button aria-label="Fewer"><span class="ms" aria-hidden="true">remove</span></button><span>3</span><button aria-label="More"><span class="ms" aria-hidden="true">add</span></button></div></div><div class="note warn">Changed from the preset (2)</div></div>
+        <div class="well" style="width:280px;margin-top:10px"><div class="row"><span class="grow" style="font-size:14px">Top shell layers</span><span class="row" style="gap:4px;color:#ffb870;font-size:12px"><span class="ms" aria-hidden="true" style="font-size:16px">school</span>Locked</span></div><div class="note">Its menu still opens: Explain this works, and Lock shows who locked it and why.</div></div>
+        <div class="note" style="width:280px;margin-top:10px">Right-click the name, the value or the empty space of a row. Shift+F10 opens the same menu for whatever has focus.</div></div>
+        <div role="menu" aria-label="Wall loops" class="mn" style="width:330px">
+          <div class="mi"><span class="ms" aria-hidden="true">tag</span><span class="grow">Wall loops</span><div class="step"><button aria-label="Fewer"><span class="ms" aria-hidden="true">remove</span></button><span>3</span><button aria-label="More"><span class="ms" aria-hidden="true">add</span></button></div></div>
+          <button role="menuitem" class="mi"><span class="ms" aria-hidden="true">restart_alt</span>Back to the preset value, 2<kbd>Ctrl+Z</kbd></button>
+          <button role="menuitem" class="mi"><span class="ms" aria-hidden="true">key</span>Copy the setting key</button>
+          <button role="menuitem" class="mi"><span class="ms" aria-hidden="true">compare_arrows</span>Compare with other presets</button>
+          <button role="menuitem" class="mi"><span class="ms" aria-hidden="true">info</span>Explain this<kbd>F1</kbd></button>
+          <button role="menuitem" class="mi x" aria-disabled="true"><span class="ms" aria-hidden="true">lock</span>Lock this element<span class="note" style="margin-left:auto">School mode</span></button>
+        </div>
+      </div>
+    </section>
+    <section class="card" aria-label="Keyboard and rules" style="gap:6px">
+      <div class="h3">Keyboard and screen readers</div>
+      <div class="tr h" style="grid-template-columns:150px minmax(0,1fr)"><span>Key</span><span>Does</span></div>
+      <div class="tr" style="grid-template-columns:150px minmax(0,1fr);padding:7px 12px"><span class="kbd" style="justify-self:start">Shift+F10</span><span>Opens the menu for the focused element</span></div>
+      <div class="tr" style="grid-template-columns:150px minmax(0,1fr);padding:7px 12px"><span class="kbd" style="justify-self:start">Up, Down</span><span>Move between rows, controls included</span></div>
+      <div class="tr" style="grid-template-columns:150px minmax(0,1fr);padding:7px 12px"><span class="kbd" style="justify-self:start">Space</span><span>Toggles a switch and keeps the menu open</span></div>
+      <div class="tr" style="grid-template-columns:150px minmax(0,1fr);padding:7px 12px"><span class="kbd" style="justify-self:start">Left, Right</span><span>Change a choice, slider or stepper</span></div>
+      <div class="tr" style="grid-template-columns:150px minmax(0,1fr);padding:7px 12px"><span class="kbd" style="justify-self:start">Enter</span><span>Runs a plain command</span></div>
+      <div class="tr" style="grid-template-columns:150px minmax(0,1fr);padding:7px 12px"><span class="kbd" style="justify-self:start">Esc</span><span>Closes and returns focus to the element</span></div>
+      <div class="note">Screen readers hear "Snap to grid, switch, on". Shortcuts come from the same table that binds the keys, so a shown shortcut always works in that place.</div>
+    </section>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1120}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>
