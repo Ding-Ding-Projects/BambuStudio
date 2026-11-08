@@ -200,6 +200,8 @@ static void answers_and_their_limits()
 static void before_send()
 {
     CHECK(info(Hook::PrintBeforeSend).built);
+    CHECK(info(Hook::ModelImported).built);
+    CHECK(!info(Hook::PrintFinished).built); // declared, not run by this build yet
     CHECK(std::string(info(Hook::PrintBeforeSend).id) == "print.before_send");
 
     // The send section needs printer.read, like the printer section, and loses secrets at every depth.

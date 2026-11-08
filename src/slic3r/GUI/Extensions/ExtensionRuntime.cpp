@@ -207,6 +207,39 @@ void Runtime::reload()
 
 // ---------------------------------------------------------------- hooks
 
+void Runtime::models_imported(const std::vector<std::string> &files, const std::vector<std::size_t> &objects)
+{
+    if (m_shut_down || objects.empty()) return;
+    std::vector<PlannedRun> runs = host().plan(Hook::ModelImported);
+    if (runs.empty()) return;
+    Plater *plater = wxGetApp().plater();
+    if (!plater) return;
+    const Model                  &model = plater->model();
+    std::vector<ModelObjectFacts> arrived;
+    for (std::size_t i : objects) {
+        if (i >= model.objects.size() || arrived.size() >= 500) continue;
+        const ModelObject *o = model.objects[i];
+        ModelObjectFacts   f;
+        f.name      = o->name;
+        f.instances = int(o->instances.size());
+        f.triangles = o->facets_count();
+        if (!o->instances.empty()) {
+            const Vec3d size = o->instance_bounding_box(0).size();
+            f.size           = {{size.x(), size.y(), size.z()}};
+        }
+        arrived.push_back(std::move(f));
+    }
+    if (arrived.empty()) return;
+    const int plate = plater->get_partplate_list().get_curr_plate_index() + 1;
+    Job       job;
+    job.hook    = Hook::ModelImported;
+    job.runs    = std::move(runs);
+    job.context = json{{"model", imported_section(arrived, plate, files)}};
+    const std::string first = files.empty() ? arrived.front().name : fs::u8path(files.front()).filename().u8string();
+    job.subject = files.size() > 1 ? (boost::format(_u8L("%1% and %2% more")) % first % (files.size() - 1)).str() : first;
+    submit(std::move(job));
+}
+
 void Runtime::plate_sliced(PartPlate *plate, const Print *print)
 {
     if (m_shut_down || !plate || !print) return;

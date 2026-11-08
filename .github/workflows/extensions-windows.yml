@@ -11,6 +11,7 @@ on:
     paths:
       - src/slic3r/GUI/Extensions/**
       - src/slic3r/GUI/SelectMachine.cpp
+      - src/slic3r/GUI/Plater.cpp
       - resources/extensions/**
       - tests/extension_*
       - .github/workflows/extensions-windows.yml
@@ -47,7 +48,7 @@ jobs:
         run: |
           node tests/extension_builtins.test.mjs
           if ($LASTEXITCODE -ne 0) { throw 'The built-in extensions failed' }
-      - name: The check before a print is sent, wired into the print dialog
+      - name: The check before a print is sent and the import hook, wired into the app
         run: |
-          node --test tests/extension_before_send_wiring.test.mjs
-          if ($LASTEXITCODE -ne 0) { throw 'The before-send wiring checks failed' }
+          node --test tests/extension_before_send_wiring.test.mjs tests/extension_import_wiring.test.mjs
+          if ($LASTEXITCODE -ne 0) { throw 'The extension wiring checks failed' }

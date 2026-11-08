@@ -37802,3 +37802,11 @@ msgstr ""
 
 msgid "Read preferences exported as JSON and change what differs, each setting through its own control"
 msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s has no settings to reset."
+msgstr ""
+
+#, possible-boost-format
+msgid "%1% and %2% more"
+msgstr ""

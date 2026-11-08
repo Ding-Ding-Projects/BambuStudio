@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-08 10:03-0500\n"
+"POT-Creation-Date: 2026-11-08 10:24-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -12612,6 +12612,10 @@ msgstr ""
 
 #, possible-c-format, possible-boost-format
 msgid "%s (%d)"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s has no settings to reset."
 msgstr ""
 
 #, possible-c-format, possible-boost-format
@@ -31337,6 +31341,10 @@ msgid "Not started"
 msgstr ""
 
 msgid "Stopped by you"
+msgstr ""
+
+#, possible-boost-format
+msgid "%1% and %2% more"
 msgstr ""
 
 #, possible-boost-format

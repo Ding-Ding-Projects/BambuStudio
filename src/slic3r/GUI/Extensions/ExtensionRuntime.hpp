@@ -49,6 +49,9 @@ public:
     std::filesystem::path folder() const;
 
     // ---- hooks the app calls
+    // After files were loaded and objects arrived (indexes into the model):
+    // runs model.imported with only those objects and the files' names.
+    void models_imported(const std::vector<std::string> &files, const std::vector<std::size_t> &objects);
     // After a plate sliced. Runs once per slice result: exporting a plate that
     // is already sliced does not count as slicing it again.
     void plate_sliced(PartPlate *plate, const Print *print);

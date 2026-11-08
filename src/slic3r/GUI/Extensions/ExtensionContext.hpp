@@ -78,6 +78,10 @@ double meters(const FilamentUse &use);
 nlohmann::json slice_section(const SliceFacts &facts);
 nlohmann::json printer_section(const PrinterFacts &facts);
 nlohmann::json model_section(const std::vector<ModelObjectFacts> &objects, int plate);
+// model.imported: the model section of only the objects that arrived, with
+// "imported": true, the names of the files they came from (never a folder;
+// at most 50) and "units": "mm", the unit every size is in.
+nlohmann::json imported_section(const std::vector<ModelObjectFacts> &objects, int plate, const std::vector<std::string> &files);
 
 // A request context made of invented values, marked "sample": true in every
 // section, for trying an extension without slicing anything.

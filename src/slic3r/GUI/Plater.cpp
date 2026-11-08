@@ -12299,8 +12299,11 @@ public:
 
     // BBS: backup & restore
     using LoadProgressCallback = std::function<bool(int, const wxString&)>;
+    // Loads, then tells extensions on model.imported what arrived (load_files_now does the work).
     std::vector<size_t> load_files(const std::vector<fs::path>& input_files, LoadStrategy strategy, bool ask_multi = false,
                                    bool *successful_3mf_loaded = nullptr, PreparedImport* prepared = nullptr, ProjectLoadContext context = {});
+    std::vector<size_t> load_files_now(const std::vector<fs::path>& input_files, LoadStrategy strategy, bool ask_multi,
+                                       bool *successful_3mf_loaded, PreparedImport* prepared, ProjectLoadContext context);
     std::vector<size_t> load_model_objects(const ModelObjectPtrs& model_objects, bool allow_negative_z = false,
                                            bool split_object = false, LoadProgressCallback progress_callback = {});
 
@@ -15232,6 +15235,19 @@ void read_binary_stl(const std::string& filename, std::string& model_id, std::st
 // BBS: backup & restore
 std::vector<size_t> Plater::priv::load_files(const std::vector<fs::path>& input_files, LoadStrategy strategy, bool ask_multi,
                                              bool *successful_3mf_loaded, PreparedImport* prepared, ProjectLoadContext context)
+{
+    std::vector<size_t> loaded = load_files_now(input_files, strategy, ask_multi, successful_3mf_loaded, prepared, context);
+    // model.imported runs once the whole load is done, with only the objects that arrived.
+    if (!loaded.empty()) {
+        std::vector<std::string> files;
+        for (const fs::path &file : input_files) files.push_back(file.string()); // UTF-8: the app imbues boost paths with it
+        Extensions::Runtime::instance().models_imported(files, loaded);
+    }
+    return loaded;
+}
+
+std::vector<size_t> Plater::priv::load_files_now(const std::vector<fs::path>& input_files, LoadStrategy strategy, bool ask_multi,
+                                                 bool *successful_3mf_loaded, PreparedImport* prepared, ProjectLoadContext context)
 {
     if (successful_3mf_loaded != nullptr)
         *successful_3mf_loaded = false;

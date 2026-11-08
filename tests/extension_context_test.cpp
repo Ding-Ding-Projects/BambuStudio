@@ -63,13 +63,22 @@ static void sections()
     const nlohmann::json m = model_section(objects, 1);
     CHECK(m["objects"].size() == 200 && m["objectCount"] == 205 && m["selectedCount"] == 2 && m["triangles"] == 2000);
 
+    // model.imported: only the objects that arrived, the files' names (never a folder), millimetres.
+    std::vector<std::string> files;
+    for (int i = 0; i < 55; ++i) files.push_back("C:/Users/someone/private folder/part" + std::to_string(i) + ".stl");
+    const nlohmann::json imported = imported_section({{"part 0", 1, 120, {{10, 20, 30}}, false}}, 2, files);
+    CHECK(imported["imported"] == true && imported["units"] == "mm" && imported["plate"] == 2 && imported["objectCount"] == 1);
+    CHECK(imported["files"].size() == 50 && imported["files"][0] == "part0.stl");
+    CHECK(imported.dump().find("someone") == std::string::npos);
+
     // Samples are marked in every section, so an extension can tell.
-    for (Hook h : {Hook::PlateSliced, Hook::GcodeExported, Hook::Command, Hook::PrintBeforeSend}) {
+    for (Hook h : {Hook::PlateSliced, Hook::GcodeExported, Hook::Command, Hook::PrintBeforeSend, Hook::ModelImported}) {
         const nlohmann::json c = sample_context(h);
         CHECK(c["slice"]["sample"] == true && c["printer"]["sample"] == true && c["model"]["sample"] == true);
         CHECK((h == Hook::GcodeExported) == c["slice"].contains("file"));
         CHECK((h == Hook::PrintBeforeSend) == c.contains("send"));
         if (c.contains("send")) CHECK(c["send"]["sample"] == true && c["send"]["filaments"].size() == 2);
+        CHECK((h == Hook::ModelImported) == c["model"].contains("imported"));
     }
 }
 

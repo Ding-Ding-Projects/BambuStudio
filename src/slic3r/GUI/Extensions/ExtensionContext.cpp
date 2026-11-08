@@ -127,6 +127,21 @@ json model_section(const std::vector<ModelObjectFacts> &objects, int plate)
     return json{{"plate", plate}, {"objects", list}, {"objectCount", objects.size()}, {"selectedCount", selected}, {"triangles", triangles}};
 }
 
+json imported_section(const std::vector<ModelObjectFacts> &objects, int plate, const std::vector<std::string> &files)
+{
+    json section        = model_section(objects, plate);
+    json names          = json::array();
+    for (const std::string &file : files) {
+        if (names.size() >= 50) break;
+        const std::string name = fs::u8path(file).filename().u8string();
+        if (!name.empty()) names.push_back(name);
+    }
+    section["imported"] = true;
+    section["files"]    = names;
+    section["units"]    = "mm";
+    return section;
+}
+
 json sample_context(Hook hook)
 {
     SliceFacts slice;
@@ -144,7 +159,9 @@ json sample_context(Hook hook)
     context["slice"]["sample"] = true;
     context["printer"]         = printer_section(PrinterFacts{"Sample printer 0.4 nozzle", "Sample printer", {0.4}, {"Sample PLA", "Sample PETG"}});
     context["printer"]["sample"] = true;
-    context["model"] = model_section({{"Sample bracket", 2, 12480, {{42.0, 18.5, 9.0}}, true}, {"Sample hook", 1, 3302, {{20.0, 20.0, 35.0}}, false}}, 1);
+    context["model"] = hook == Hook::ModelImported ?
+                           imported_section({{"Sample bracket", 2, 12480, {{42.0, 18.5, 9.0}}, false}}, 1, {"Sample bracket.stl"}) :
+                           model_section({{"Sample bracket", 2, 12480, {{42.0, 18.5, 9.0}}, true}, {"Sample hook", 1, 3302, {{20.0, 20.0, 35.0}}, false}}, 1);
     context["model"]["sample"] = true;
     if (hook == Hook::PrintBeforeSend) {
         SendFacts send;

@@ -96,7 +96,7 @@ fail, and the page shows the exit code.
 | `gcode.exported` | After plain G-code (`.gcode`) is exported, once the slicing job has finished with the file | `slice` (with the file's name, never its folder), `printer` | Comment lines for the start and the end | Runs |
 | `command` | When you start one of its commands: from the page or the command palette | `model` (the selection), `slice` (when the plate is sliced), `printer` | Notes, a text file for you to save | Runs |
 | `print.before_send` | When **Send** is pressed in the print dialog for a plate sliced in this project, before the app's own pre-print check | `slice` (every plate added up when all plates are sent), `printer`, `send` | Checklist rows, a block with its reason, notes | Runs |
-| `model.imported` | After a model is imported | | Notes | Not yet |
+| `model.imported` | After files are loaded and objects arrive (an import, a drop, a project), once the whole load is done | `model` (only the objects that arrived, with the files' names) | Notes | Runs |
 | `print.finished` | After a print finishes | | Notes | Not yet |
 
 A manifest may declare a hook this build does not run yet; it is listed as such
@@ -267,7 +267,9 @@ invalid, and the page shows which. A manifest is at most 64 KB.
   never part of it.
 - `model` holds `plate`, `objects` (up to 200: `name`, `instances`,
   `triangles`, `size` in millimetres, `selected`), `objectCount`,
-  `selectedCount` and `triangles`.
+  `selectedCount` and `triangles`. For `model.imported` it holds only the
+  objects that arrived, with `"imported": true`, `files` (the names of the
+  files loaded, never their folders, at most 50) and `"units": "mm"`.
 - Grams and cost need the filament preset's density and price; without them
   they are 0 and the cost is left out.
 
@@ -357,6 +359,10 @@ turning it on again starts the count over.
   section and every plate added up among them), the samples and comment lines
   in G-code (after the header, line endings kept, refusals, large files). Its
   negative build puts the lines above the header and must fail.
+- `tests/extension_import_wiring.test.mjs`: loading files runs
+  `model.imported` once the load has returned and objects arrived, nothing
+  else calls the inner loader, and the request holds only what arrived; each
+  checker must fail on a broken copy.
 - `tests/extension_before_send_wiring.test.mjs`: the print dialog asks the
   extensions before its own check and only for a sliced plate, the send facts
   never read the printer's serial number, name, address or access code, the
@@ -365,13 +371,12 @@ turning it on again starts the count over.
 - `tests/extension_builtins.test.mjs`: the built-in manifests and scripts; on
   Windows every built-in really runs under Windows PowerShell through the
   app's own code, and a broken copy must be caught.
-- `.github/workflows/extensions-windows.yml` runs all five on a hosted Windows
+- `.github/workflows/extensions-windows.yml` runs all six on a hosted Windows
   machine with MSVC.
 
 ## Not done yet
 
-The `model.imported` and `print.finished` hooks are declared but not run by
-this build. `print.before_send` does not run when a job already in the print
+The `print.finished` hook is declared but not run by this build. `print.before_send` does not run when a job already in the print
 queue is printed, for a file already on the printer, when sending to several
 printers at once, or for Send to the printer's storage. There are no per-extension settings and no signed
 extensions.

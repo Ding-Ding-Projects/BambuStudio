@@ -2533,7 +2533,9 @@ void PreferencesDialog::reset_section()
         return join_titles(out);
     };
     if (plan.reset.empty()) {
-        const wxString text = plan.by_hand.empty() ?
+        const bool     none = plan.by_hand.empty() && plan.unchanged.empty() && plan.private_keys.empty();
+        const wxString text = none                 ? wxString::Format(_L("%s has no settings to reset."), section) :
+                              plan.by_hand.empty() ?
                                   wxString::Format(_L("Every setting in %s already has its built-in default."), section) :
                                   wxString::Format(_L("Nothing in %s can be reset from here. Change these back with their own controls: %s."),
                                                    section, titles(plan.by_hand));

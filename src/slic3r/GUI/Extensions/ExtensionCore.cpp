@@ -157,7 +157,7 @@ bool safe_file_name(std::string_view name)
 const std::vector<HookInfo> &hooks()
 {
     static const std::vector<HookInfo> all = {
-        {Hook::ModelImported, "model.imported", L("After a model is imported"), L("Name, triangles, size and units"), L("Notes"), false},
+        {Hook::ModelImported, "model.imported", L("After a model is imported"), L("Name, triangles, size and units"), L("Notes"), true},
         {Hook::PlateSliced, "plate.sliced", L("After slicing"), L("Time, filament per slot, layers and warnings"), L("Notes"), true},
         {Hook::PrintBeforeSend, "print.before_send", L("Before sending a print"), L("Plate, printer model, filaments and options"),
          L("Checklist rows, a block with its reason"), true},

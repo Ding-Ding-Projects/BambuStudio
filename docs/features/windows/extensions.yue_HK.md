@@ -1,6 +1,6 @@
 ---
 translation-of: extensions.md
-source-sha256: 5ba109bebf13041b3167e3d8d1d5accfcf77d082629ce020f2c3dfbbc5757cc0
+source-sha256: 89ffb565c99711a76621162126c38cb26a82dd90afbe718bd99de86bb5afdb17
 review-status: agent-drafted
 ---
 
@@ -62,7 +62,7 @@ review-status: agent-drafted
 | `gcode.exported` | 匯出純 G-code（`.gcode`）之後，等切片工作用完個檔案先 | `slice`（有檔案名，永遠冇佢嘅資料夾）、`printer` | 檔案頭同尾嘅註解行 | 會行 |
 | `command` | 你喺呢頁或者指令面板開始佢其中一個指令嘅時候 | `model`（揀咗嘅嘢）、`slice`（打印板切咗片嘅話）、`printer` | 備註、一個畀你儲存嘅文字檔 | 會行 |
 | `print.before_send` | 喺打印對話框為呢個項目切咗片嘅打印板撳**發送**嗰陣，喺應用程式自己嘅打印前檢查之前 | `slice`（一次發送所有打印板就係全部加埋）、`printer`、`send` | 清單行、連原因嘅阻止、備註 | 會行 |
-| `model.imported` | 匯入模型之後 | | 備註 | 未做 |
+| `model.imported` | 載入檔案、有物件加入之後（匯入、拖放、項目），等成個載入做完先 | `model`（淨係加入咗嘅物件，連檔案名） | 備註 | 會行 |
 | `print.finished` | 打印完之後 | | 備註 | 未做 |
 
 清單檔可以宣告呢個版本未會行嘅掛鈎；佢會照樣列出，**用樣本試吓**都仲可以試佢。
@@ -189,7 +189,7 @@ hello/
   ```
 
   `connection` 係 `cloud` 或者 `lan`。`options` 係打印對話框顯示緊嘅選項同佢用緊嘅值。每個墨水係項目嘅一個槽，有切片時嘅類型同顏色；有對應嘅話，仲有打印機對嗰個槽嘅叫法（`A1`、`HT-A`、`Ext`）、打印機喺度報告嘅嘢，同剩幾多（打印機冇講就係 `-1`）；冇對應嘅 `tray` 係空。打印機自己嘅名、序號、地址同存取碼永遠唔會喺入面。
-- `model` 有 `plate`、`objects`（最多 200 個：`name`、`instances`、`triangles`、以毫米計嘅 `size`、`selected`）、`objectCount`、`selectedCount` 同 `triangles`。
+- `model` 有 `plate`、`objects`（最多 200 個：`name`、`instances`、`triangles`、以毫米計嘅 `size`、`selected`）、`objectCount`、`selectedCount` 同 `triangles`。`model.imported` 嘅 `model` 淨係有加入咗嘅物件，仲有 `"imported": true`、`files`（載入咗嘅檔案名，永遠冇資料夾，最多 50 個）同 `"units": "mm"`。
 - 克數同成本要靠墨水預設嘅密度同價錢；冇嘅話就係 0，成本會唔包括。
 
 ### 答覆
@@ -256,8 +256,9 @@ Windows PowerShell 5.1 會用系統嘅 ANSI 代碼頁讀冇位元組順序標記
 - `tests/extension_context.test.mjs`：請求嘅各部分（包括 `send` 部分同所有打印板加埋）、樣本同 G-code 註解行（放喺標頭之後、保留換行方式、拒絕、大檔案）。佢嘅反向建置將啲行放喺標頭上面，必須失敗。
 - `tests/extension_before_send_wiring.test.mjs`：打印對話框喺自己嘅檢查之前、而且淨係為切咗片嘅打印板問擴充功能；發送資料永遠唔讀打印機嘅序號、名、地址或者存取碼；檢查排喺所有等緊嘅執行前面，結果交畀佢嘅視窗；離開視窗會停咗啲執行；每個檢查喺壞咗嘅副本上都必須失敗。
 - `tests/extension_builtins.test.mjs`：內置清單檔同指令碼；喺 Windows 上每個內置擴充功能都會經應用程式自己嘅程式碼喺 Windows PowerShell 下真係行一次，壞咗嘅副本必須被捉到。
-- `.github/workflows/extensions-windows.yml` 喺託管嘅 Windows 機器上用 MSVC 行晒呢五個。
+- `tests/extension_import_wiring.test.mjs`：載入檔案會喺載入返嚟、有物件加入之後先行 `model.imported`，冇其他地方會叫內部嘅載入器，請求淨係有加入咗嘅嘢；每個檢查喺壞咗嘅副本上都必須失敗。
+- `.github/workflows/extensions-windows.yml` 喺託管嘅 Windows 機器上用 MSVC 行晒呢六個。
 
 ## 未做
 
-`model.imported` 同 `print.finished` 掛鈎已經宣告，但呢個版本未會行。打印隊列入面已經有嘅工作開始打印、打印機上已經有嘅檔案、同時發送去幾部打印機，同埋發送去打印機儲存空間，都唔會行 `print.before_send`。仲未有每個擴充功能自己嘅設定，亦未有簽署過嘅擴充功能。
+`print.finished` 掛鈎已經宣告，但呢個版本未會行。打印隊列入面已經有嘅工作開始打印、打印機上已經有嘅檔案、同時發送去幾部打印機，同埋發送去打印機儲存空間，都唔會行 `print.before_send`。仲未有每個擴充功能自己嘅設定，亦未有簽署過嘅擴充功能。

@@ -58746,3 +58746,13 @@ msgstr "匯入偏好設定…"
 #. review-status: agent-drafted
 msgid "Read preferences exported as JSON and change what differs, each setting through its own control"
 msgstr "讀取匯出做 JSON 嘅偏好設定，改返唔同嘅地方，每個設定都經佢自己嘅控制改"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "%s has no settings to reset."
+msgstr "%s 冇設定可以重設。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "%1% and %2% more"
+msgstr "%1% 同另外 %2% 個"
