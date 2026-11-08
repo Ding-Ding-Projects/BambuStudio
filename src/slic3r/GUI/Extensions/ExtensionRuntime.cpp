@@ -230,6 +230,13 @@ void Runtime::start_watching_prints()
 void Runtime::print_tick()
 {
     if (m_shut_down) return;
+    // Until someone has answered an extension's consent prompt nothing can be
+    // on, so the extensions are not even read (the built-ins are installed on
+    // first use, not at startup).
+    if (!m_host) {
+        std::error_code ec;
+        if (!fs::exists(fs::u8path(data_dir()) / "extension-state" / "consent.json", ec)) return;
+    }
     // Nothing is looked at while no extension is on for the hook; turning one
     // on later starts from what the printer is doing then.
     if (host().plan(Hook::PrintFinished).empty()) {

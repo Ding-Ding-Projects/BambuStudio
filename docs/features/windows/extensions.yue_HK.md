@@ -1,6 +1,6 @@
 ---
 translation-of: extensions.md
-source-sha256: f12d9eb1a8623ddd224a9d0955e1be16bb7aa1734f61d2837412682ff9b2f00c
+source-sha256: 7809a4af524d89773befef83c920c41daad6d5953554604cb3c6955d47bb3ffa
 review-status: agent-drafted
 ---
 
@@ -189,7 +189,7 @@ hello/
   ```
 
   `connection` 係 `cloud` 或者 `lan`。`options` 係打印對話框顯示緊嘅選項同佢用緊嘅值。每個墨水係項目嘅一個槽，有切片時嘅類型同顏色；有對應嘅話，仲有打印機對嗰個槽嘅叫法（`A1`、`HT-A`、`Ext`）、打印機喺度報告嘅嘢，同剩幾多（打印機冇講就係 `-1`）；冇對應嘅 `tray` 係空。打印機自己嘅名、序號、地址同存取碼永遠唔會喺入面。
-- `print`，畀 `print.finished` 用（要 `printer.read`）：`result`（`finished`、`failed` 或者 `cancelled`）、`printerModel`、`seconds`（Bambu Studio 見到佢行咗幾耐，或者 `null`）、`seenFromStart`（開始睇嗰陣已經行緊就係 false，即係 `seconds` 只係一部分）、`layers`（打印機報告嘅層數，唔知就係 0），失敗嘅打印仲有 `error`（打印機嘅代碼，八個十六進位數字）。開始睇之前已經完咗嘅打印永遠唔會報告，每次完結只報一次。打印機嘅身份只會用嚟比較有冇換機，永遠唔會送出。
+- `print`，畀 `print.finished` 用（要 `printer.read`）：`result`（`finished`、`failed` 或者 `cancelled`）、`printerModel`、`seconds`（Bambu Studio 見到佢行咗幾耐，或者 `null`）、`seenFromStart`（開始睇嗰陣已經行緊就係 false，即係 `seconds` 只係一部分）、`layers`（打印機報告嘅層數，唔知就係 0），失敗嘅打印仲有 `error`（打印機嘅代碼，八個十六進位數字）。開始睇之前已經完咗嘅打印永遠唔會報告，每次完結只報一次。打印機嘅身份只會用嚟比較有冇換機，永遠唔會送出。未有人答過擴充功能嘅同意提示之前，監察器連擴充功能資料夾都唔會讀，所以內置擴充功能仍然係第一次用先安裝。
 - `model` 有 `plate`、`objects`（最多 200 個：`name`、`instances`、`triangles`、以毫米計嘅 `size`、`selected`）、`objectCount`、`selectedCount` 同 `triangles`。`model.imported` 嘅 `model` 淨係有加入咗嘅物件，仲有 `"imported": true`、`files`（載入咗嘅檔案名，永遠冇資料夾，最多 50 個）同 `"units": "mm"`。
 - 克數同成本要靠墨水預設嘅密度同價錢；冇嘅話就係 0，成本會唔包括。
 

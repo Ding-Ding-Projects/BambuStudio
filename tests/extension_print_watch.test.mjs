@@ -2,8 +2,10 @@
 //
 // - The app starts the watcher after startup and the runtime stops its timer
 //   at shutdown.
-// - A tick looks at nothing while no extension is on for the hook, and forgets
-//   what it saw, so turning one on later starts from what the printer does then.
+// - A tick reads no extension before anyone has answered a consent prompt
+//   (the built-ins are installed on first use, not at startup), looks at
+//   nothing while no extension is on for the hook, and forgets what it saw,
+//   so turning one on later starts from what the printer does then.
 // - Endings come from the narrator's tested transition detector, so a print
 //   that was already over when watching began is never reported, and one end
 //   is reported once.
@@ -46,7 +48,9 @@ function checkLifetime(appSource, runtimeSource) {
 
 function checkTick(source) {
     const tick = code(body(source, 'void Runtime::print_tick('));
+    const consent = tick.indexOf('"consent.json"');
     const plan = tick.indexOf('if (host().plan(Hook::PrintFinished).empty()) {');
+    assert(consent >= 0 && plan > consent, 'extensions are not read before anyone answered a consent prompt');
     const forget = tick.indexOf('m_print_watch.reset();');
     const printer = tick.indexOf('get_selected_machine()');
     assert(plan >= 0 && forget > plan && printer > forget, 'no printer is looked at while no extension is on');
@@ -68,6 +72,7 @@ test('each checker fails on a broken copy', () => {
     assert.throws(() => checkLifetime(broken(app, '    Extensions::Runtime::instance().start_watching_prints();\n', ''), runtime));
     assert.throws(() => checkLifetime(app, broken(runtime, '    print_watch_timer()->Stop();\n', '')));
     assert.throws(() => checkTick(broken(runtime, '        m_print_watch.reset();\n        return;\n', '')));
+    assert.throws(() => checkTick(broken(runtime, '/ "extension-state" / "consent.json", ec)) return;', '/ "extension-state" / "nothing", ec)) {}')));
     assert.throws(() => checkTick(broken(runtime, '    w.running = false;\n\n    std::vector<PlannedRun> runs', '\n    std::vector<PlannedRun> runs')));
     assert.throws(() => checkTick(broken(runtime, '    facts.result          = ended;\n', '    facts.result          = ended;\n    facts.printer_model += obj->get_dev_id();\n')));
 });

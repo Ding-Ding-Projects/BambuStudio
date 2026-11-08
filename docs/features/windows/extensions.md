@@ -272,7 +272,10 @@ invalid, and the page shows which. A manifest is at most 64 KB.
   the printer reports them, 0 when unknown) and, for a failed print, `error`
   (the printer's code as eight hex digits). A print that was already over when
   watching began is never reported, and each ending is reported once. The
-  printer's identity is only compared to notice a switch, never sent.
+  printer's identity is only compared to notice a switch, never sent. Until
+  someone has answered an extension's consent prompt, the watcher does not
+  even read the extensions folder, so the built-ins are still installed on
+  first use.
 - `model` holds `plate`, `objects` (up to 200: `name`, `instances`,
   `triangles`, `size` in millimetres, `selected`), `objectCount`,
   `selectedCount` and `triangles`. For `model.imported` it holds only the
