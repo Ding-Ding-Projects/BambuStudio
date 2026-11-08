@@ -59211,3 +59211,78 @@ msgstr "呢個檔案唔係「匯出偏好設定...」寫嘅 %s。"
 #. review-status: agent-drafted
 msgid "Read preferences exported as JSON, YAML, TOML or XML and change what differs, each setting through its own control"
 msgstr "讀取匯出做 JSON、YAML、TOML 或者 XML 嘅偏好設定，改返唔同嘅地方，每個設定都經佢自己嘅控制項改"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Settings %d"
+msgstr "設定 %d"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "It is below the smallest value allowed."
+msgstr "細過可以用嘅最細值。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "It is above the largest value allowed."
+msgstr "大過可以用嘅最大值。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "It must be a whole number."
+msgstr "一定要係整數。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "It is longer than allowed."
+msgstr "長過上限。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "It holds a line break or another control character."
+msgstr "入面有換行或者其他控制字元。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "It is not a value this setting takes."
+msgstr "呢個設定唔收呢個值。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The setting was not saved."
+msgstr "設定冇儲存。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "This extension has no settings."
+msgstr "呢個擴充功能冇設定。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "From %s to %s."
+msgstr "由 %s 至 %s。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "At least %s."
+msgstr "最少 %s。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "At most %s."
+msgstr "最多 %s。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "It is not a number."
+msgstr "唔係數字。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Back to the defaults"
+msgstr "變返預設"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Saved as you change them, on this computer, and sent to this extension with every request. A setting that looks like a password, token or key is refused when the extension is added, so nothing here is ever a secret."
+msgstr "一改就儲存喺呢部電腦，每次請求都會送畀呢個擴充功能。睇落似密碼、權杖或者鎖匙嘅設定，喺加入擴充功能嗰陣已經會被拒絕，所以呢度永遠唔會有秘密。"

@@ -9,6 +9,7 @@
 #include "../MainFrame.hpp"
 #include "../MsgDialog.hpp"
 #include "../Widgets/Button.hpp"
+#include "../Widgets/ComboBox.hpp"
 #include "../Widgets/Label.hpp"
 #include "../Widgets/MD3DataView.hpp"
 #include "../Widgets/MD3DialogChrome.hpp"
@@ -22,6 +23,7 @@
 #include "../Widgets/StaticBox.hpp"
 #include "../Widgets/SwitchButton.hpp"
 #include "../Widgets/TextArea.hpp"
+#include "../Widgets/TextInput.hpp"
 #include "../Widgets/TextTabbar.hpp"
 
 #include "libslic3r/AppConfig.hpp"
@@ -53,7 +55,8 @@ enum Glyphs : std::uint32_t {
     GlyphCheck = 0xE86C, GlyphPlay = 0xE037, GlyphStop = 0xE047, GlyphDelete = 0xE872, GlyphSample = 0xEA4B,
     GlyphCode = 0xE86F, GlyphSave = 0xE161, GlyphInfo = 0xE88E, GlyphBlock = 0xE14B, GlyphLock = 0xE897,
     GlyphSwap = 0xE8D4, GlyphHistory = 0xE889, GlyphBolt = 0xEA0B, GlyphTerminal = 0xEB8E, GlyphWarning = 0xE002,
-    GlyphChart = 0xE26B, GlyphPrint = 0xE8AD, GlyphNote = 0xE24D, GlyphDescription = 0xE873, GlyphVisibility = 0xE8F4
+    GlyphChart = 0xE26B, GlyphPrint = 0xE8AD, GlyphNote = 0xE24D, GlyphDescription = 0xE873, GlyphVisibility = 0xE8F4,
+    GlyphUndo = 0xE166
 };
 
 constexpr const char *kGuide = "docs/features/windows/extensions.md";
@@ -625,6 +628,7 @@ wxWindow *ExtensionsPanel::build_detail_side(wxWindow *parent)
     };
     m_overview    = scrolled_page();
     m_permissions = scrolled_page();
+    m_settings    = scrolled_page();
 
     m_runs_page = new wxPanel(m_book);
     m_runs_page->SetBackgroundColour(m_book->GetBackgroundColour());
@@ -665,6 +669,7 @@ wxWindow *ExtensionsPanel::build_detail_side(wxWindow *parent)
 
     m_book->AddPage(m_overview, "overview");
     m_book->AddPage(m_permissions, "permissions");
+    m_book->AddPage(m_settings, "settings");
     m_book->AddPage(m_runs_page, "runs");
     m_book->AddPage(m_manifest_page, "manifest");
     s->Add(m_book, 1, wxEXPAND);
@@ -853,6 +858,8 @@ void ExtensionsPanel::refresh_tabs()
     m_tabs->ClearTabs();
     m_tabs->AddTab(_L("Overview"));
     m_tabs->AddTab(_L("Permissions"));
+    const int settings = x ? int(x->manifest.settings.size()) : 0;
+    m_tabs->AddTab(settings ? wxString::Format(_L("Settings %d"), settings) : _L("Settings"));
     m_tabs->AddTab(runs ? wxString::Format(_L("Runs %d"), int(runs)) : _L("Runs"));
     m_tabs->AddTab(_L("Manifest"));
     m_tabs->SetSelection(m_tab);
@@ -923,6 +930,7 @@ void ExtensionsPanel::refresh_detail()
     refresh_tabs();
     fill_overview(*x);
     fill_permissions(*x);
+    fill_settings(*x);
     fill_runs(*x);
     fill_manifest(*x);
     select_tab(m_tab);
@@ -1037,6 +1045,150 @@ void ExtensionsPanel::fill_permissions(const Installed &x)
                  _L("Every request is filtered here before it leaves: a section the extension may not receive is left out, and any value whose name "
                     "looks like a secret is removed at every depth. An answer that uses something not allowed is thrown away and recorded under Runs. "
                     "An extension is still a program running as you, so Bambu Studio cannot stop it from reading your own files."),
+                 true, true),
+           0, wxEXPAND);
+    page->Layout();
+    static_cast<MD3ScrolledWindow *>(page)->FitInside();
+}
+
+bool ExtensionsPanel::save_setting(const std::string &id, const std::string &setting, const nlohmann::json &value)
+{
+    std::string problem;
+    if (Runtime::instance().host().set_setting(id, setting, value, problem)) return true;
+    wxString why;
+    if (problem == "below-minimum") why = _L("It is below the smallest value allowed.");
+    else if (problem == "above-maximum") why = _L("It is above the largest value allowed.");
+    else if (problem == "not-whole") why = _L("It must be a whole number.");
+    else if (problem == "too-long") why = _L("It is longer than allowed.");
+    else if (problem == "has-control") why = _L("It holds a line break or another control character.");
+    else why = _L("It is not a value this setting takes.");
+    MessageDialog(this, _L("The setting was not saved.") + "\n\n" + why, _L("Extensions"), wxOK | wxICON_WARNING).ShowModal();
+    return false;
+}
+
+void ExtensionsPanel::fill_settings(const Installed &x)
+{
+    const std::string shown = x.manifest.id + "@" + x.manifest.version;
+    if (shown == m_settings_for) return;
+    m_settings_for = shown;
+    wxWindow *page = m_settings;
+    page->DestroyChildren();
+    wxSizer *s = page->GetSizer();
+    s->Clear(false);
+    const std::string id = x.manifest.id;
+    if (id.empty() || x.manifest.settings.empty()) {
+        s->Add(label(page, Label::Body_13, _L("This extension has no settings."), true, true), 0, wxEXPAND);
+        page->Layout();
+        static_cast<MD3ScrolledWindow *>(page)->FitInside();
+        return;
+    }
+    const nlohmann::json values = Runtime::instance().host().setting_values(id);
+    auto *table = new wxFlexGridSizer(2, FromDIP(10), FromDIP(16));
+    table->AddGrowableCol(0, 1);
+    for (const SettingSpec &spec : x.manifest.settings) {
+        const std::string     setting = spec.id;
+        const nlohmann::json &value   = values.contains(setting) ? values[setting] : spec.default_value;
+        auto *names = new wxBoxSizer(wxVERTICAL);
+        wxString title = wxString::FromUTF8(spec.title);
+        if (!spec.unit.empty()) title << " (" << wxString::FromUTF8(spec.unit) << ")";
+        names->Add(label(page, Label::Head_13, title), 0);
+        wxString note = wxString::FromUTF8(spec.description);
+        if (spec.type == SettingType::Number && (spec.has_minimum || spec.has_maximum)) {
+            if (!note.IsEmpty()) note << " ";
+            const auto number = [](double v) { return wxString::FromCDouble(v, v == double(static_cast<long long>(v)) ? 0 : 2); };
+            if (spec.has_minimum && spec.has_maximum)
+                note << wxString::Format(_L("From %s to %s."), number(spec.minimum), number(spec.maximum));
+            else if (spec.has_minimum) note << wxString::Format(_L("At least %s."), number(spec.minimum));
+            else note << wxString::Format(_L("At most %s."), number(spec.maximum));
+        }
+        if (!note.IsEmpty()) names->Add(label(page, Label::Body_12, note, true, true), 0, wxEXPAND | wxTOP, FromDIP(2));
+        names->Add(label(page, Label::Body_12, wxString::FromUTF8(setting), true), 0, wxTOP, FromDIP(2));
+        table->Add(names, 1, wxEXPAND | wxALIGN_CENTER_VERTICAL);
+
+        wxWindow *control = nullptr;
+        switch (spec.type) {
+        case SettingType::Switch: {
+            auto *sw = new SwitchButton(page);
+            sw->SetValue(value.is_boolean() && value.get<bool>());
+            sw->Bind(wxEVT_TOGGLEBUTTON, [this, id, setting, sw](wxCommandEvent &) {
+                if (!save_setting(id, setting, sw->GetValue())) sw->SetValue(!sw->GetValue());
+            });
+            control = sw;
+            break;
+        }
+        case SettingType::Choice: {
+            auto *combo = new ComboBox(page, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(200), -1), 0, nullptr, wxCB_READONLY);
+            std::vector<std::string> ids;
+            for (const SettingChoice &c : spec.choices) {
+                combo->Append(wxString::FromUTF8(c.title));
+                ids.push_back(c.id);
+                if (value.is_string() && value.get<std::string>() == c.id) combo->SetSelection(int(ids.size() - 1));
+            }
+            combo->Bind(wxEVT_COMBOBOX, [this, id, setting, combo, ids](wxCommandEvent &) {
+                const int at = combo->GetSelection();
+                if (at >= 0 && at < int(ids.size())) save_setting(id, setting, ids[std::size_t(at)]);
+            });
+            control = combo;
+            break;
+        }
+        case SettingType::Text:
+        case SettingType::Number: {
+            const bool number = spec.type == SettingType::Number;
+            wxString   shown_value;
+            if (number && value.is_number_integer()) shown_value = wxString::Format("%lld", value.get<long long>());
+            else if (number && value.is_number()) shown_value = wxString::FromCDouble(value.get<double>());
+            else if (value.is_string()) shown_value = wxString::FromUTF8(value.get<std::string>());
+            auto *input = new TextInput(page, shown_value, wxEmptyString, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(number ? 120 : 240), -1),
+                                        wxTE_PROCESS_ENTER);
+            auto saved = std::make_shared<wxString>(shown_value);
+            const auto commit = [this, id, setting, input, number, saved]() {
+                const wxString text = input->GetTextCtrl()->GetValue();
+                if (text == *saved) return;
+                nlohmann::json next;
+                if (number) {
+                    double parsed = 0;
+                    long long whole = 0;
+                    if (text.ToLongLong(&whole)) next = whole;
+                    else if (text.ToCDouble(&parsed)) next = parsed;
+                    else {
+                        MessageDialog(this, _L("The setting was not saved.") + "\n\n" + _L("It is not a number."), _L("Extensions"), wxOK | wxICON_WARNING).ShowModal();
+                        input->GetTextCtrl()->ChangeValue(*saved);
+                        return;
+                    }
+                } else {
+                    next = into_u8(text);
+                }
+                if (save_setting(id, setting, next)) *saved = text;
+                else input->GetTextCtrl()->ChangeValue(*saved);
+            };
+            input->GetTextCtrl()->Bind(wxEVT_TEXT_ENTER, [commit](wxCommandEvent &e) {
+                commit();
+                e.Skip();
+            });
+            input->GetTextCtrl()->Bind(wxEVT_KILL_FOCUS, [commit](wxFocusEvent &e) {
+                commit();
+                e.Skip();
+            });
+            control = input;
+            break;
+        }
+        }
+        control->SetName(wxString::FromUTF8(spec.title));
+        table->Add(control, 0, wxALIGN_CENTER_VERTICAL);
+    }
+    s->Add(table, 0, wxEXPAND | wxBOTTOM, FromDIP(12));
+    auto *reset = make_button(page, _L("Back to the defaults"), GlyphUndo);
+    reset->Bind(wxEVT_BUTTON, [this, id](wxCommandEvent &) {
+        Runtime::instance().host().reset_settings(id);
+        m_settings_for.clear(); // the page shows the defaults again
+        CallAfter([this]() {
+            if (const Installed *now = selected()) fill_settings(*now);
+        });
+    });
+    s->Add(reset, 0, wxBOTTOM, FromDIP(12));
+    s->Add(label(page, Label::Body_12,
+                 _L("Saved as you change them, on this computer, and sent to this extension with every request. A setting that looks like a password, "
+                    "token or key is refused when the extension is added, so nothing here is ever a secret."),
                  true, true),
            0, wxEXPAND);
     page->Layout();

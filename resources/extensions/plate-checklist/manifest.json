@@ -1,11 +1,17 @@
 {
   "id": "studio.builtin.plate-checklist",
   "name": "Plate checklist",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "apiVersion": 1,
   "description": "Points out what is worth a second look after slicing: slicing warnings, long prints, many filament changes and slots that need most of a spool. Says nothing when all is well.",
   "author": "Bambu Studio",
   "run": { "windows": "powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File plate-checklist.ps1" },
   "hooks": ["plate.sliced", "print.before_send"],
-  "permissions": ["slice.read", "notes.show", "send.warn"]
+  "permissions": ["slice.read", "notes.show", "send.warn"],
+  "settings": [
+    { "id": "long_print_hours", "title": "A long print from", "description": "Prints this long or longer get a reminder to check every spool.", "type": "number", "default": 8, "min": 1, "max": 72, "whole": true, "unit": "h" },
+    { "id": "filament_changes", "title": "Many filament changes from", "description": "Each change flushes filament and adds time.", "type": "number", "default": 30, "min": 1, "max": 1000, "whole": true },
+    { "id": "grams_per_slot", "title": "A slot needs a lot from", "description": "Slots that need this much filament or more are named.", "type": "number", "default": 500, "min": 10, "max": 5000, "whole": true, "unit": "g" },
+    { "id": "say_all_is_well", "title": "Say when all is well", "description": "After slicing, add a note even when nothing needs a second look.", "type": "switch", "default": false }
+  ]
 }

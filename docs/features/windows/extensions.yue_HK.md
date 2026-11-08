@@ -1,6 +1,6 @@
 ---
 translation-of: extensions.md
-source-sha256: 7809a4af524d89773befef83c920c41daad6d5953554604cb3c6955d47bb3ffa
+source-sha256: 9b48b7c65e6d02c529529a134b210010b8716bba87e5668627fa5242743e2228
 review-status: agent-drafted
 ---
 
@@ -37,6 +37,7 @@ review-status: agent-drafted
 | --- | --- |
 | 概覽 | 佢嘅掛鈎（呢個版本未會行嘅掛鈎會講明）、佢嘅指令同**執行**、佢嘅程式同 API 版本，同埋所有掛鈎嘅表 |
 | 權限 | 每個權限：已允許、而家問緊、唔允許：保持關閉，或者冇要求，同埋永遠唔會送出嘅嘢 |
+| 設定 | 佢自己嘅設定，每個一個控制項（文字同數字用輸入欄、開關、選項），一改就儲存；**變返預設** |
 | 執行紀錄 | 佢嘅執行，最新嘅喺頭：幾時、掛鈎或者指令、用咗幾耐、答覆大細同結果；**匯出執行紀錄**會將所有擴充功能嘅每次執行儲存做 JSON |
 | 清單檔 | 磁碟上嘅 `manifest.json` 原文，同埋係咪有效，或者錯喺邊 |
 
@@ -49,7 +50,7 @@ review-status: agent-drafted
 | 擴充功能 | 幾時行 | 做乜 |
 | --- | --- | --- |
 | Slice report | 切片之後；佢嘅指令 **Save a slice report** | 一條備註寫住打印時間、每個槽嘅墨水同層數，再加警告數量。個指令會答一份 Markdown 報告畀你儲存 |
-| Plate checklist | 切片之後同發送之前 | 切片之後，有嘢值得再望多眼先會出備註：切片警告、8 個鐘或以上嘅打印、30 次或以上換墨水、要 500 g 或以上嘅槽。發送之前，同樣幾點會變做清單行 |
+| Plate checklist | 切片之後同發送之前 | 切片之後，有嘢值得再望多眼先會出備註：切片警告、長時間打印、換好多次墨水、要好多墨水嘅槽。發送之前，同樣幾點會變做清單行。佢嘅設定決定點樣先算：長時間由 8 個鐘起、好多次由 30 次起、好多墨水由 500 g 起，仲有「冇事都講聲」（預設關），就算乜都唔使睇都出一條備註 |
 | G-code time stamp | 匯出 G-code 之後 | 喺檔案頭尾加註解行，寫住匯出時間，同打印板嘅時間、墨水同層數 |
 
 佢哋用 `powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File <script>` 行。如果部電腦嘅政策禁止 PowerShell 指令碼，佢哋就會失敗，呢頁會顯示結束代碼。
@@ -139,8 +140,37 @@ hello/
 | `hooks` | 掛鈎 id；有 actions 嘅話會自動加 `command` |
 | `actions` | 最多 10 個指令：`id`（細楷字母、數字同連字號，最多 40）同 `title`（最多 60） |
 | `permissions` | 權限 id |
+| `settings` | 最多 20 個由用家填嘅設定（見下面） |
 
 其他欄位、唔識嘅掛鈎或者唔識嘅權限都會令清單檔無效，呢頁會顯示係邊個。清單檔最多 64 KB。
+
+### 設定
+
+```json
+"settings": [
+  { "id": "long_print_hours", "title": "A long print from", "description": "Prints this long or longer get a reminder.",
+    "type": "number", "default": 8, "min": 1, "max": 72, "whole": true, "unit": "h" },
+  { "id": "label", "title": "Label", "type": "text", "default": "", "maxLength": 40 },
+  { "id": "loud", "title": "Say when all is well", "type": "switch", "default": false },
+  { "id": "mode", "title": "Strictness", "type": "choice", "default": "relaxed",
+    "choices": [ { "id": "relaxed", "title": "Relaxed" }, { "id": "strict", "title": "Strict" } ] }
+]
+```
+
+| 欄位 | 規則 |
+| --- | --- |
+| `id` | 必填。細楷字母、數字同 `_`，最多 40；每個只可以出現一次 |
+| `title` | 必填，最多 80 個字元 |
+| `description` | 最多 200 個字元 |
+| `type` | 必填：`text`、`number`、`switch` 或者 `choice` |
+| `default` | 必填，而且要係呢個設定接受嘅值 |
+| `min`、`max`、`whole`、`unit` | 淨係 `number`：範圍、淨係收整數，同埋喺標題旁邊顯示、最多 12 個字元嘅單位 |
+| `maxLength` | 淨係 `text`：1 至 500 個字元，冇寫就係 80 |
+| `choices` | 淨係 `choice`：2 至 20 項，每項有 `id`（細楷字母、數字同連字號）同 `title`（最多 60） |
+
+屬於其他類型嘅欄位（開關上面有 `unit`）會令個設定無效；id 或者標題睇落似密碼、權杖、鎖匙、存取碼或者其他秘密嘅亦一樣：設定永遠唔會裝秘密，所以呢種清單檔會用 `secret-setting` 拒絕，呢頁會講係邊個設定。
+
+用家喺擴充功能嘅設定分頁度改。每個值一改就儲存，儲存之前會先對清單檔檢查；唔收嘅值唔會儲存，呢頁會講原因（細過最細值、唔係整數、長過上限）。新版本收窄咗範圍或者刪咗選項嘅話，唔再接受嘅舊值會變返預設。
 
 ### 程式
 
@@ -157,6 +187,7 @@ hello/
   "hook": "plate.sliced",
   "action": "",
   "extension": { "id": "com.example.hello", "version": "1.0.0" },
+  "settings": { "long_print_hours": 8 },
   "context": {
     "slice": {
       "plate": 1, "plateName": "", "seconds": 5025, "prepareSeconds": 360, "layers": 245,
@@ -171,6 +202,7 @@ hello/
 ```
 
 - `action` 喺 `command` 係個指令嘅 id，其他時候係空。
+- `settings` 有清單檔宣告嘅每個設定同佢嘅值（用家冇改過就係預設），冇其他嘢。佢唔使權限：呢啲係用家為呢個擴充功能揀嘅值。
 - `gcode.exported` 嘅 `slice.file` 係匯出檔案嘅名。
 - 一次發送所有打印板嗰陣，`slice` 會將每塊切咗片嘅打印板加埋：`plate` 係 0，`allPlates` 係 true，`plateCount` 講有幾多塊；時間、層數、換墨水次數同每個槽嘅墨水都係總數；`bedType` 除非每塊都一樣，否則係空；每個警告都有佢嘅 `plate`。
 - `send`，畀 `print.before_send` 用（要 `printer.read`）：
@@ -248,19 +280,20 @@ Windows PowerShell 5.1 會用系統嘅 ANSI 代碼頁讀冇位元組順序標記
 | `%APPDATA%\BambuStudio\extensions\<folder>` | 裝咗嘅擴充功能；內置嘅仲有 `.builtin.json` |
 | `%APPDATA%\BambuStudio\extension-state\consent.json` | 每個擴充功能：你答咗邊個版本、允許咗乜、開定關、連續失敗次數 |
 | `%APPDATA%\BambuStudio\extension-state\settings.json` | 主開關、限制同你移除咗嘅內置擴充功能 |
+| `%APPDATA%\BambuStudio\extension-state\extension-settings.json` | 每個擴充功能，你畀佢嘅設定嘅值；讀返嚟淨係收普通文字、數字同 true 或 false。移除擴充功能會一齊移除 |
 | `%APPDATA%\BambuStudio\extension-state\runs.jsonl` | 最近 500 次執行：時間、擴充功能、掛鈎、打印板或者檔案名、秒數、答覆大細、結果。永遠唔記送出或者答覆嘅內容 |
 
 ## 檢查
 
-- `tests/extension_core.test.mjs`：清單檔同拒絕、請求同答覆嘅權限執行、同意、限制、執行紀錄、發送打印之前嘅判定同真實程序。佢嘅反向建置永遠唔會關失敗嘅擴充功能，或者放走阻止咗嘅打印，必須失敗。
-- `tests/extension_host.test.mjs`：內置擴充功能嘅安裝、只喺冇改過嗰陣更新、移除咗就保持移除；加資料夾；重複同壞咗嘅清單檔；同意；主開關；限制；真實執行、令擴充功能自動關嘅失敗，同埋停止執行。佢嘅反向建置會覆寫改過嘅內置擴充功能，必須失敗。
+- `tests/extension_core.test.mjs`：清單檔同拒絕、請求同答覆嘅權限執行、同意、限制、設定（每種拒絕連秘密、值同佢哋嘅後備、請求同儲存檔）、執行紀錄、發送打印之前嘅判定同真實程序。佢嘅反向建置永遠唔會關失敗嘅擴充功能、放走阻止咗嘅打印，或者送出清單檔已經唔接受嘅舊設定，必須失敗。
+- `tests/extension_host.test.mjs`：內置擴充功能嘅安裝、只喺冇改過嗰陣更新、移除咗就保持移除；加資料夾；重複同壞咗嘅清單檔；同意；主開關；限制；設定嘅儲存、拒絕、每次計劃都帶住、重新載入之後保留、變返預設同隨擴充功能移除；真實執行、令擴充功能自動關嘅失敗，同埋停止執行。佢嘅反向建置會覆寫改過嘅內置擴充功能，必須失敗。
 - `tests/extension_context.test.mjs`：請求嘅各部分（包括 `send` 部分同所有打印板加埋）、樣本同 G-code 註解行（放喺標頭之後、保留換行方式、拒絕、大檔案）。佢嘅反向建置將啲行放喺標頭上面，必須失敗。
 - `tests/extension_before_send_wiring.test.mjs`：打印對話框喺自己嘅檢查之前、而且淨係為切咗片嘅打印板問擴充功能；發送資料永遠唔讀打印機嘅序號、名、地址或者存取碼；檢查排喺所有等緊嘅執行前面，結果交畀佢嘅視窗；離開視窗會停咗啲執行；每個檢查喺壞咗嘅副本上都必須失敗。
-- `tests/extension_builtins.test.mjs`：內置清單檔同指令碼；喺 Windows 上每個內置擴充功能都會經應用程式自己嘅程式碼喺 Windows PowerShell 下真係行一次，壞咗嘅副本必須被捉到。
+- `tests/extension_builtins.test.mjs`：內置清單檔同指令碼，同埋 Plate checklist 嘅指令碼會讀佢宣告嘅每個設定；喺 Windows 上每個內置擴充功能都會經應用程式自己嘅程式碼喺 Windows PowerShell 下真係行一次，Plate checklist 換咗設定會答得唔同，壞咗嘅副本必須被捉到。
 - `tests/extension_import_wiring.test.mjs`：載入檔案會喺載入返嚟、有物件加入之後先行 `model.imported`，冇其他地方會叫內部嘅載入器，請求淨係有加入咗嘅嘢；每個檢查喺壞咗嘅副本上都必須失敗。
 - `tests/extension_print_watch.test.mjs`：監察器喺啟動之後開始、關程式嗰陣停；冇擴充功能開咗 `print.finished` 就乜都唔睇；經旁述功能測試過嘅轉變偵測器，每次完結只報一次；永遠唔送打印機身份；每個檢查喺壞咗嘅副本上都必須失敗。
 - `.github/workflows/extensions-windows.yml` 喺託管嘅 Windows 機器上用 MSVC 行晒呢七個。
 
 ## 未做
 
-每個宣告咗嘅掛鈎都會行。打印隊列入面已經有嘅工作開始打印、打印機上已經有嘅檔案、同時發送去幾部打印機，同埋發送去打印機儲存空間，都唔會行 `print.before_send`。`print.finished` 淨係睇裝置頁揀咗嗰部打印機，亦講唔到一次打印用咗幾多墨水。仲未有每個擴充功能自己嘅設定，亦未有簽署過嘅擴充功能。
+每個宣告咗嘅掛鈎都會行。打印隊列入面已經有嘅工作開始打印、打印機上已經有嘅檔案、同時發送去幾部打印機，同埋發送去打印機儲存空間，都唔會行 `print.before_send`。`print.finished` 淨係睇裝置頁揀咗嗰部打印機，亦講唔到一次打印用咗幾多墨水。冇簽署過嘅擴充功能：呢個項目唔簽署程式碼，自己嘅同其他人嘅都唔簽。

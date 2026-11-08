@@ -5,9 +5,11 @@
 // extension processes, and the verdict before a print is sent), with MSVC on
 // Windows and $CXX (or c++) elsewhere. A second build defines the
 // negative-fixture switch that never turns a failing extension off, and a
-// third one that lets a blocking answer through before a print is sent; both
+// third one that lets a blocking answer through before a print is sent, and a
+// fourth that passes a stored setting the manifest no longer allows; each
 // must fail: a suite that stayed green there could not notice a broken
-// extension running forever, or a print sent that an extension stopped.
+// extension running forever, a print sent that an extension stopped, or a
+// value an extension never declared reaching it.
 import {mkdtempSync, readFileSync, writeFileSync} from 'node:fs';
 import {spawnSync} from 'node:child_process';
 import {tmpdir} from 'node:os';
@@ -50,3 +52,12 @@ if (through.status === 0) {
   process.exit(1);
 }
 console.log('Send negative fixture turned red as required (a blocking answer let the print through).');
+
+const unchecked = build('settings-negative', '#define SLIC3R_EXTENSION_SETTINGS_NEGATIVE_FIXTURE 1\n');
+const stale = spawnSync(unchecked.exe, [], {cwd: unchecked.output, encoding: 'utf8'});
+if (stale.error) throw stale.error;
+if (stale.status === 0) {
+  console.error('Settings negative fixture stayed green: the suite cannot notice a stored value the manifest no longer allows reaching the extension.');
+  process.exit(1);
+}
+console.log('Settings negative fixture turned red as required (an invalid stored setting reached the request).');

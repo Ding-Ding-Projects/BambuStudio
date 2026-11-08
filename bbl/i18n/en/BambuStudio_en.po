@@ -38106,3 +38106,52 @@ msgstr ""
 
 msgid "Read preferences exported as JSON, YAML, TOML or XML and change what differs, each setting through its own control"
 msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Settings %d"
+msgstr ""
+
+msgid "It is below the smallest value allowed."
+msgstr ""
+
+msgid "It is above the largest value allowed."
+msgstr ""
+
+msgid "It must be a whole number."
+msgstr ""
+
+msgid "It is longer than allowed."
+msgstr ""
+
+msgid "It holds a line break or another control character."
+msgstr ""
+
+msgid "It is not a value this setting takes."
+msgstr ""
+
+msgid "The setting was not saved."
+msgstr ""
+
+msgid "This extension has no settings."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "From %s to %s."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "At least %s."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "At most %s."
+msgstr ""
+
+msgid "It is not a number."
+msgstr ""
+
+msgid "Back to the defaults"
+msgstr ""
+
+msgid "Saved as you change them, on this computer, and sent to this extension with every request. A setting that looks like a password, token or key is refused when the extension is added, so nothing here is ever a secret."
+msgstr ""

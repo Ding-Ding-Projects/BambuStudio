@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-08 12:25-0500\n"
+"POT-Creation-Date: 2026-11-08 12:39-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -32061,6 +32061,10 @@ msgid "Permissions"
 msgstr ""
 
 #, possible-c-format, possible-boost-format
+msgid "Settings %d"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
 msgid "Runs %d"
 msgstr ""
 
@@ -32168,6 +32172,51 @@ msgid "Never sent"
 msgstr ""
 
 msgid "Every request is filtered here before it leaves: a section the extension may not receive is left out, and any value whose name looks like a secret is removed at every depth. An answer that uses something not allowed is thrown away and recorded under Runs. An extension is still a program running as you, so Bambu Studio cannot stop it from reading your own files."
+msgstr ""
+
+msgid "It is below the smallest value allowed."
+msgstr ""
+
+msgid "It is above the largest value allowed."
+msgstr ""
+
+msgid "It must be a whole number."
+msgstr ""
+
+msgid "It is longer than allowed."
+msgstr ""
+
+msgid "It holds a line break or another control character."
+msgstr ""
+
+msgid "It is not a value this setting takes."
+msgstr ""
+
+msgid "The setting was not saved."
+msgstr ""
+
+msgid "This extension has no settings."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "From %s to %s."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "At least %s."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "At most %s."
+msgstr ""
+
+msgid "It is not a number."
+msgstr ""
+
+msgid "Back to the defaults"
+msgstr ""
+
+msgid "Saved as you change them, on this computer, and sent to this extension with every request. A setting that looks like a password, token or key is refused when the extension is added, so nothing here is ever a secret."
 msgstr ""
 
 msgid "An extension with a broken manifest never runs."

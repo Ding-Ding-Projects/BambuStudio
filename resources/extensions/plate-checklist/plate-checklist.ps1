@@ -9,6 +9,18 @@ $reader = [System.IO.StreamReader]::new([Console]::OpenStandardInput(), $utf8)
 $request = $reader.ReadToEnd() | ConvertFrom-Json
 $slice = $request.context.slice
 
+# Its settings (File > Extensions, Settings); the defaults when an older
+# Bambu Studio sends none.
+$settings = $request.settings
+function Get-Setting([string]$name, $default) {
+    if ($null -ne $settings -and $null -ne $settings.$name) { return $settings.$name }
+    return $default
+}
+$longHours = [double](Get-Setting 'long_print_hours' 8)
+$manyChanges = [int](Get-Setting 'filament_changes' 30)
+$slotGrams = [double](Get-Setting 'grams_per_slot' 500)
+$sayAllIsWell = [bool](Get-Setting 'say_all_is_well' $false)
+
 function Format-Duration([double]$seconds) {
     $total = [int][math]::Floor([math]::Max(0, $seconds) + 0.5)
     $h = [int][math]::Floor($total / 3600)
@@ -36,17 +48,17 @@ if ($null -eq $slice) {
     } else {
         $rows += @{ state = 'pass'; text = 'No slicing warnings.' }
     }
-    if ([double]$slice.seconds -ge 8 * 3600) {
+    if ([double]$slice.seconds -ge $longHours * 3600) {
         $rows += @{ state = 'warn'; text = ('A long print: {0}. Check that every spool has enough filament.' -f (Format-Duration $slice.seconds)) }
     }
     $changes = [int]$slice.filamentChanges
-    if ($changes -ge 30) {
+    if ($changes -ge $manyChanges) {
         $rows += @{ state = 'warn'; text = ('{0} filament changes: each one flushes filament and adds time.' -f $changes) }
     }
     foreach ($f in @($slice.filaments)) {
         if ($null -eq $f) { continue }
-        if ([double]$f.grams -ge 500) {
-            $rows += @{ state = 'warn'; text = ('Slot {0} needs {1:N0} g of {2}, half a 1 kg spool or more.' -f [int]$f.slot, [double]$f.grams, (Get-Short ([string]$f.type) 20)) }
+        if ([double]$f.grams -ge $slotGrams) {
+            $rows += @{ state = 'warn'; text = ('Slot {0} needs {1:N0} g of {2}.' -f [int]$f.slot, [double]$f.grams, (Get-Short ([string]$f.type) 20)) }
         }
     }
 }
@@ -59,6 +71,7 @@ if ($request.hook -eq 'print.before_send') {
     $notes = @()
     foreach ($r in $rows) { if ($r.state -ne 'pass') { $notes += ('Check: ' + $r.text) } }
     if ($notes.Count -gt 10) { $notes = $notes[0..9] }
+    if ($notes.Count -eq 0 -and $sayAllIsWell -and $null -ne $slice) { $notes += 'Checked: nothing needs a second look.' }
     if ($notes.Count -gt 0) { $answer.notes = @($notes) }
 }
 $writer = [System.IO.StreamWriter]::new([Console]::OpenStandardOutput(), $utf8)

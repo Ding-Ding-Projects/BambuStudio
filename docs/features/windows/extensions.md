@@ -61,6 +61,7 @@ Each extension has:
 | --- | --- |
 | Overview | Its hooks (a hook this build does not run yet says so), its commands with **Run**, its program and API version, and the table of every hook |
 | Permissions | Every permission: Allowed, Asking now, Not allowed: kept off, or Not asked for, and the things that are never sent |
+| Settings | Its own settings, one control each (a field for text and numbers, a switch, a choice), saved as you change them; **Back to the defaults** |
 | Runs | Its runs, newest first: when, hook or command, time, answer size and result; **Export runs** saves every run of every extension as JSON |
 | Manifest | `manifest.json` as it is on disk, and Valid or what is wrong with it |
 
@@ -81,7 +82,7 @@ built-in you remove stays removed until you add its folder again.
 | Extension | Runs | Does |
 | --- | --- | --- |
 | Slice report | After slicing; its command **Save a slice report** | A note with the print time, the filament per slot and the layers, plus a warning count. The command answers a Markdown report for you to save |
-| Plate checklist | After slicing and before sending | After slicing, a note only when something deserves a second look: slicing warnings, a print of 8 hours or more, 30 or more filament changes, a slot that needs 500 g or more. Before sending, the same points as checklist rows |
+| Plate checklist | After slicing and before sending | After slicing, a note only when something deserves a second look: slicing warnings, a long print, many filament changes, a slot that needs a lot of filament. Before sending, the same points as checklist rows. Its settings say what counts: a long print from 8 hours, many changes from 30, a lot of filament from 500 g, and Say when all is well (off) for a note even when nothing needs a look |
 | G-code time stamp | After G-code export | Comment lines with the export time and the plate's time, filament and layers, at the start and the end of the file |
 
 They run `powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass
@@ -194,9 +195,45 @@ hello/
 | `hooks` | Hook ids; `command` is added by itself when there are actions |
 | `actions` | Up to 10 commands: `id` (lower-case letters, digits and dashes, at most 40) and `title` (at most 60) |
 | `permissions` | Permission ids |
+| `settings` | Up to 20 settings the person fills in (below) |
 
 Any other field, an unknown hook or an unknown permission makes the manifest
 invalid, and the page shows which. A manifest is at most 64 KB.
+
+### Settings
+
+```json
+"settings": [
+  { "id": "long_print_hours", "title": "A long print from", "description": "Prints this long or longer get a reminder.",
+    "type": "number", "default": 8, "min": 1, "max": 72, "whole": true, "unit": "h" },
+  { "id": "label", "title": "Label", "type": "text", "default": "", "maxLength": 40 },
+  { "id": "loud", "title": "Say when all is well", "type": "switch", "default": false },
+  { "id": "mode", "title": "Strictness", "type": "choice", "default": "relaxed",
+    "choices": [ { "id": "relaxed", "title": "Relaxed" }, { "id": "strict", "title": "Strict" } ] }
+]
+```
+
+| Field | Rules |
+| --- | --- |
+| `id` | Required. Lower-case letters, digits and `_`, at most 40; each once |
+| `title` | Required, at most 80 characters |
+| `description` | At most 200 characters |
+| `type` | Required: `text`, `number`, `switch` or `choice` |
+| `default` | Required, and a valid value of the setting |
+| `min`, `max`, `whole`, `unit` | `number` only: the range, whole numbers only, and a unit of at most 12 characters shown beside the title |
+| `maxLength` | `text` only: 1 to 500 characters, 80 when left out |
+| `choices` | `choice` only: 2 to 20 entries with `id` (lower-case letters, digits and dashes) and `title` (at most 60) |
+
+A field of another type (a `unit` on a switch) makes the setting invalid, and
+so does an id or title that looks like a password, token, key, access code or
+other secret: settings never hold secrets, so such a manifest is refused with
+`secret-setting` and the page says which setting.
+
+The person changes them in the extension's Settings tab. Each value is saved as
+it changes and checked against the manifest first; a value it refuses is not
+saved and the page says why (below the smallest value, not a whole number,
+longer than allowed). A newer version that narrows a range or drops a choice
+gets its default back for a stored value it no longer allows.
 
 ### The program
 
@@ -224,6 +261,7 @@ invalid, and the page shows which. A manifest is at most 64 KB.
   "hook": "plate.sliced",
   "action": "",
   "extension": { "id": "com.example.hello", "version": "1.0.0" },
+  "settings": { "long_print_hours": 8 },
   "context": {
     "slice": {
       "plate": 1, "plateName": "", "seconds": 5025, "prepareSeconds": 360, "layers": 245,
@@ -238,6 +276,9 @@ invalid, and the page shows which. A manifest is at most 64 KB.
 ```
 
 - `action` is the command's id for `command`, empty otherwise.
+- `settings` holds every setting the manifest declares with its value (the
+  default when the person has not changed it), and nothing else. It needs no
+  permission: these are values the person chose for this extension.
 - `slice.file` is the exported file's name for `gcode.exported`.
 - When all plates are sent at once, `slice` adds every sliced plate up:
   `plate` is 0, `allPlates` is true, `plateCount` says how many, times,
@@ -352,19 +393,24 @@ turning it on again starts the count over.
 | `%APPDATA%\BambuStudio\extensions\<folder>` | The installed extensions; a built-in also has `.builtin.json` |
 | `%APPDATA%\BambuStudio\extension-state\consent.json` | Per extension: the version you answered for, what you allowed, on or off, failures in a row |
 | `%APPDATA%\BambuStudio\extension-state\settings.json` | The master switch, the limits and the built-ins you removed |
+| `%APPDATA%\BambuStudio\extension-state\extension-settings.json` | Per extension, the values you gave its settings; only plain text, numbers and true or false are read back. Removing the extension removes them |
 | `%APPDATA%\BambuStudio\extension-state\runs.jsonl` | The last 500 runs: time, extension, hook, plate or file name, seconds, answer size, result. Never what was sent or answered |
 
 ## Checks
 
 - `tests/extension_core.test.mjs`: manifests and refusals, permission
-  enforcement on requests and answers, consent, limits, the run record, the
-  verdict before a print is sent and real processes. Its negative builds never
-  turn a failing extension off, or let a blocking answer through, and must
-  fail.
+  enforcement on requests and answers, consent, limits, settings (every
+  refusal including secrets, values and their fallback, the request and the
+  stored file), the run record, the verdict before a print is sent and real
+  processes. Its negative builds never turn a failing extension off, let a
+  blocking answer through, or pass a stored setting the manifest no longer
+  allows, and must fail.
 - `tests/extension_host.test.mjs`: built-ins installed, updated only while
   unchanged and staying removed; adding folders; duplicates and broken
-  manifests; consent; the master switch; limits; real runs, failures that turn
-  an extension off, and stopping a run. Its negative build overwrites a changed
+  manifests; consent; the master switch; limits; settings stored, refused,
+  carried by every plan, kept across a reload, reset and removed with the
+  extension; real runs, failures that turn an extension off, and stopping a
+  run. Its negative build overwrites a changed
   built-in and must fail.
 - `tests/extension_context.test.mjs`: the request sections (the `send`
   section and every plate added up among them), the samples and comment lines
@@ -384,9 +430,11 @@ turning it on again starts the count over.
   never read the printer's serial number, name, address or access code, the
   check runs ahead of anything waiting and reports to its window, and leaving
   the window stops the runs; each checker must fail on a broken copy.
-- `tests/extension_builtins.test.mjs`: the built-in manifests and scripts; on
+- `tests/extension_builtins.test.mjs`: the built-in manifests and scripts,
+  and that the plate checklist's script reads every setting it declares; on
   Windows every built-in really runs under Windows PowerShell through the
-  app's own code, and a broken copy must be caught.
+  app's own code, the plate checklist answers differently with other
+  settings, and a broken copy must be caught.
 - `.github/workflows/extensions-windows.yml` runs all seven on a hosted Windows
   machine with MSVC.
 
@@ -396,5 +444,5 @@ Every declared hook runs. `print.before_send` does not run when a job already
 in the print queue is printed, for a file already on the printer, when
 sending to several printers at once, or for Send to the printer's storage.
 `print.finished` watches only the printer selected on the Device page and
-cannot report the filament a print used. There are no per-extension settings
-and no signed extensions.
+cannot report the filament a print used. There are no signed extensions:
+this project does not sign code, its own or anyone else's.

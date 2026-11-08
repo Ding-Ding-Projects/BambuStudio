@@ -58,6 +58,34 @@ struct Action
     std::string title;
 };
 
+// A setting the extension declares and the person fills in from File >
+// Extensions, Settings. Its value goes to the extension in every request
+// ("settings"). Never a secret: an id or title that looks like one is refused.
+enum class SettingType { Text, Number, Switch, Choice };
+
+struct SettingChoice
+{
+    std::string id;
+    std::string title;
+};
+
+struct SettingSpec
+{
+    std::string                id;          // lower-case letters, digits and _, at most 40
+    std::string                title;       // at most 80
+    std::string                description; // at most 200
+    SettingType                type = SettingType::Text;
+    nlohmann::json             default_value;
+    bool                       has_minimum = false, has_maximum = false;
+    double                     minimum = 0, maximum = 0; // Number
+    bool                       whole = false;            // Number: whole numbers only
+    std::string                unit;                     // Number: at most 12, "h", "g"
+    std::size_t                max_length = 80;          // Text: 1 to 500
+    std::vector<SettingChoice> choices;                  // Choice: 2 to 20
+};
+
+constexpr std::size_t kSettingsLimit = 20;
+
 struct Manifest
 {
     std::string              id;          // reverse-DNS style: lower-case letters, digits, dots and dashes
@@ -70,11 +98,12 @@ struct Manifest
     std::vector<Hook>        hooks;
     std::vector<Action>      actions;
     std::vector<Permission>  permissions; // sorted, unique
+    std::vector<SettingSpec> settings;    // in the order declared
 };
 
 struct ManifestError
 {
-    std::string code;   // stable ASCII: not-json, too-large, missing, wrong-type, bad-id, bad-version, api-newer, api-older, unknown-hook, unknown-permission, unknown-field, too-long, empty-run, duplicate
+    std::string code;   // stable ASCII: not-json, too-large, missing, wrong-type, bad-id, bad-version, api-newer, api-older, unknown-hook, unknown-permission, unknown-field, too-long, empty-run, duplicate, bad-setting, secret-setting
     std::string field;  // the manifest field, when there is one
     std::string detail; // a value the person can act on, never a secret: the API version found, the unknown name
     bool        ok() const { return code.empty(); }
@@ -85,6 +114,22 @@ bool parse_manifest(std::string_view json, Manifest &out, ManifestError &error);
 std::vector<std::string> split_command_line(std::string_view command);
 // -1, 0 or 1, comparing MAJOR.MINOR.PATCH numerically.
 int compare_versions(std::string_view a, std::string_view b);
+
+// ---------------------------------------------------------------- setting values
+// False with a stable ASCII reason when value cannot be this setting's value:
+// wrong-type, too-long, has-control, below-minimum, above-maximum, not-whole,
+// not-a-choice.
+bool valid_setting_value(const SettingSpec &spec, const nlohmann::json &value, std::string &problem);
+// The value a setting has: `stored` when it is valid for the setting as the
+// manifest declares it now, else its default (a newer version may have
+// narrowed a range or dropped a choice).
+nlohmann::json setting_value(const SettingSpec &spec, const nlohmann::json *stored);
+// Every declared setting with its value, for the request. Stored values for
+// settings the manifest no longer declares are left out.
+nlohmann::json settings_for_request(const Manifest &manifest, const nlohmann::json &stored);
+// extension-settings.json: {"<extension id>": {"<setting id>": value}}.
+std::string serialize_setting_values(const std::map<std::string, nlohmann::json> &values);
+bool        parse_setting_values(std::string_view json, std::map<std::string, nlohmann::json> &out);
 
 // ---------------------------------------------------------------- consent and state
 struct Consent
@@ -131,8 +176,10 @@ Limits clamp_limits(Limits limits);
 // "send" (where a print is going, with which options and filaments) and
 // "print" (how a print ended) need printer.read. Anything else is dropped. Values whose key looks like a secret
 // are removed at every depth, whatever the permissions.
+// "settings" holds the extension's own settings (settings_for_request): the
+// values the person chose for it, which need no permission.
 nlohmann::json build_request(Hook hook, const std::string &action, const nlohmann::json &context, const Manifest &manifest,
-                             const Consent &consent);
+                             const Consent &consent, const nlohmann::json &settings = nlohmann::json::object());
 bool           looks_sensitive(std::string_view key);
 
 // ---------------------------------------------------------------- answer

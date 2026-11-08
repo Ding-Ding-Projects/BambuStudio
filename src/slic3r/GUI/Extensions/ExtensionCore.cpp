@@ -274,6 +274,200 @@ int compare_versions(std::string_view a, std::string_view b)
     return 0;
 }
 
+namespace {
+
+bool valid_setting_id(std::string_view id)
+{
+    if (id.empty() || id.size() > 40) return false;
+    return std::all_of(id.begin(), id.end(), [](char c) { return (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_'; });
+}
+
+bool plain_text(const json &v, std::size_t max, bool allow_empty)
+{
+    if (!v.is_string()) return false;
+    const std::string text = v.get<std::string>();
+    return (allow_empty || !text.empty()) && code_points(text) <= max && !has_control(text);
+}
+
+// One entry of "settings". The default must be a valid value of the setting.
+bool parse_setting(const json &j, SettingSpec &spec, ManifestError &error)
+{
+    const auto bad = [&](const std::string &detail) {
+        error = fail("bad-setting", "settings", detail.substr(0, 40));
+        return false;
+    };
+    if (!j.is_object() || !j.contains("id") || !j["id"].is_string()) return bad(std::string());
+    spec.id = j["id"].get<std::string>();
+    if (!valid_setting_id(spec.id)) return bad(spec.id);
+    static const std::set<std::string> known = {"id", "title", "description", "type", "default", "min", "max", "whole", "unit", "maxLength", "choices"};
+    for (auto it = j.begin(); it != j.end(); ++it)
+        if (!known.count(it.key())) return bad(spec.id);
+    if (!j.contains("title") || !plain_text(j["title"], 80, false)) return bad(spec.id);
+    spec.title = j["title"].get<std::string>();
+    // A setting is never a place for a secret: no password, token or key fields.
+    if (looks_sensitive(spec.id) || looks_sensitive(spec.title)) {
+        error = fail("secret-setting", "settings", spec.id);
+        return false;
+    }
+    if (j.contains("description")) {
+        if (!plain_text(j["description"], 200, true)) return bad(spec.id);
+        spec.description = j["description"].get<std::string>();
+    }
+    if (!j.contains("type") || !j["type"].is_string()) return bad(spec.id);
+    const std::string type = j["type"].get<std::string>();
+    if (type == "text") spec.type = SettingType::Text;
+    else if (type == "number") spec.type = SettingType::Number;
+    else if (type == "switch") spec.type = SettingType::Switch;
+    else if (type == "choice") spec.type = SettingType::Choice;
+    else return bad(spec.id);
+    // Fields that belong to another type are refused, so a typo cannot pass unnoticed.
+    const bool number = spec.type == SettingType::Number, text = spec.type == SettingType::Text, choice = spec.type == SettingType::Choice;
+    if ((!number && (j.contains("min") || j.contains("max") || j.contains("whole") || j.contains("unit"))) || (!text && j.contains("maxLength")) ||
+        (!choice && j.contains("choices")))
+        return bad(spec.id);
+    if (number) {
+        for (const char *field : {"min", "max"})
+            if (j.contains(field) && !j[field].is_number()) return bad(spec.id);
+        if (j.contains("whole") && !j["whole"].is_boolean()) return bad(spec.id);
+        if (j.contains("unit") && !plain_text(j["unit"], 12, true)) return bad(spec.id);
+        spec.has_minimum = j.contains("min");
+        spec.has_maximum = j.contains("max");
+        if (spec.has_minimum) spec.minimum = j["min"].get<double>();
+        if (spec.has_maximum) spec.maximum = j["max"].get<double>();
+        spec.whole = j.value("whole", false);
+        if (j.contains("unit")) spec.unit = j["unit"].get<std::string>();
+        if (spec.has_minimum && spec.has_maximum && spec.minimum > spec.maximum) return bad(spec.id);
+    }
+    if (text && j.contains("maxLength")) {
+        if (!j["maxLength"].is_number_integer() || j["maxLength"].get<long long>() < 1 || j["maxLength"].get<long long>() > 500) return bad(spec.id);
+        spec.max_length = std::size_t(j["maxLength"].get<long long>());
+    }
+    if (choice) {
+        if (!j.contains("choices") || !j["choices"].is_array() || j["choices"].size() < 2 || j["choices"].size() > 20) return bad(spec.id);
+        for (const json &c : j["choices"]) {
+            if (!c.is_object() || c.size() != 2 || !c.contains("id") || !c.contains("title") || !c["id"].is_string() ||
+                !valid_action_id(c["id"].get<std::string>()) || !plain_text(c["title"], 60, false))
+                return bad(spec.id);
+            SettingChoice entry{c["id"].get<std::string>(), c["title"].get<std::string>()};
+            for (const SettingChoice &other : spec.choices)
+                if (other.id == entry.id) return bad(spec.id);
+            spec.choices.push_back(std::move(entry));
+        }
+    }
+    if (!j.contains("default")) return bad(spec.id);
+    std::string problem;
+    if (!valid_setting_value(spec, j["default"], problem)) return bad(spec.id);
+    spec.default_value = j["default"];
+    return true;
+}
+
+bool parse_settings(const json &j, std::vector<SettingSpec> &out, ManifestError &error)
+{
+    if (!j.is_array()) {
+        error = fail("wrong-type", "settings");
+        return false;
+    }
+    if (j.size() > kSettingsLimit) {
+        error = fail("too-long", "settings");
+        return false;
+    }
+    for (const json &entry : j) {
+        SettingSpec spec;
+        if (!parse_setting(entry, spec, error)) return false;
+        for (const SettingSpec &other : out)
+            if (other.id == spec.id) {
+                error = fail("duplicate", "settings", spec.id);
+                return false;
+            }
+        out.push_back(std::move(spec));
+    }
+    return true;
+}
+
+} // namespace
+
+bool valid_setting_value(const SettingSpec &spec, const json &value, std::string &problem)
+{
+    problem.clear();
+    switch (spec.type) {
+    case SettingType::Text: {
+        if (!value.is_string()) problem = "wrong-type";
+        else if (code_points(value.get<std::string>()) > spec.max_length) problem = "too-long";
+        else if (has_control(value.get<std::string>())) problem = "has-control";
+        break;
+    }
+    case SettingType::Number: {
+        if (!value.is_number()) {
+            problem = "wrong-type";
+            break;
+        }
+        const double number = value.get<double>();
+        if (spec.whole && (!value.is_number_integer() && number != double(static_cast<long long>(number)))) problem = "not-whole";
+        else if (spec.has_minimum && number < spec.minimum) problem = "below-minimum";
+        else if (spec.has_maximum && number > spec.maximum) problem = "above-maximum";
+        break;
+    }
+    case SettingType::Switch:
+        if (!value.is_boolean()) problem = "wrong-type";
+        break;
+    case SettingType::Choice: {
+        if (!value.is_string()) {
+            problem = "wrong-type";
+            break;
+        }
+        const std::string id = value.get<std::string>();
+        if (std::none_of(spec.choices.begin(), spec.choices.end(), [&](const SettingChoice &c) { return c.id == id; })) problem = "not-a-choice";
+        break;
+    }
+    }
+    return problem.empty();
+}
+
+json setting_value(const SettingSpec &spec, const json *stored)
+{
+    std::string problem;
+#ifdef SLIC3R_EXTENSION_SETTINGS_NEGATIVE_FIXTURE
+    // Test-only mutation (tests/extension_core.test.mjs): the suite must fail.
+    if (stored != nullptr) return *stored;
+#else
+    if (stored != nullptr && valid_setting_value(spec, *stored, problem)) return *stored;
+#endif
+    return spec.default_value;
+}
+
+json settings_for_request(const Manifest &manifest, const json &stored)
+{
+    json out = json::object();
+    for (const SettingSpec &spec : manifest.settings) {
+        const json *value = stored.is_object() && stored.contains(spec.id) ? &stored[spec.id] : nullptr;
+        out[spec.id]      = setting_value(spec, value);
+    }
+    return out;
+}
+
+std::string serialize_setting_values(const std::map<std::string, json> &values)
+{
+    json j = json::object();
+    for (const auto &[id, settings] : values)
+        if (settings.is_object() && !settings.empty()) j[id] = settings;
+    return j.dump(2, ' ', false, json::error_handler_t::replace);
+}
+
+bool parse_setting_values(std::string_view text, std::map<std::string, json> &out)
+{
+    out.clear();
+    const json j = json::parse(text.begin(), text.end(), nullptr, false);
+    if (!j.is_object()) return false;
+    for (auto it = j.begin(); it != j.end(); ++it) {
+        if (!valid_id(it.key()) || !it.value().is_object()) continue;
+        json kept = json::object();
+        for (auto v = it.value().begin(); v != it.value().end(); ++v)
+            if (valid_setting_id(v.key()) && (v.value().is_string() || v.value().is_number() || v.value().is_boolean())) kept[v.key()] = v.value();
+        if (!kept.empty()) out[it.key()] = std::move(kept);
+    }
+    return true;
+}
+
 bool parse_manifest(std::string_view text, Manifest &out, ManifestError &error)
 {
     error = {};
@@ -291,7 +485,7 @@ bool parse_manifest(std::string_view text, Manifest &out, ManifestError &error)
         return false;
     }
     static const std::set<std::string> known = {"id", "name", "version", "apiVersion", "description", "author", "run",
-                                                "hooks", "actions", "permissions"};
+                                                "hooks", "actions", "permissions", "settings"};
     for (auto it = j.begin(); it != j.end(); ++it)
         if (!known.count(it.key())) {
             error = fail("unknown-field", nullptr, it.key().substr(0, 40));
@@ -458,6 +652,7 @@ bool parse_manifest(std::string_view text, Manifest &out, ManifestError &error)
         }
     }
     m.permissions = sorted_unique(m.permissions);
+    if (j.contains("settings") && !parse_settings(j["settings"], m.settings, error)) return false;
     out           = std::move(m);
     return true;
 }
@@ -565,7 +760,8 @@ bool looks_sensitive(std::string_view key)
     return false;
 }
 
-json build_request(Hook hook, const std::string &action, const json &context, const Manifest &manifest, const Consent &consent)
+json build_request(Hook hook, const std::string &action, const json &context, const Manifest &manifest, const Consent &consent,
+                   const json &settings)
 {
     json filtered = json::object();
     if (context.is_object()) {
@@ -581,6 +777,7 @@ json build_request(Hook hook, const std::string &action, const json &context, co
                 {"hook", info(hook).id},
                 {"action", action},
                 {"extension", json{{"id", manifest.id}, {"version", manifest.version}}},
+                {"settings", settings_for_request(manifest, settings)},
                 {"context", filtered}};
 }
 

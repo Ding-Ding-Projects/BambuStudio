@@ -157,7 +157,7 @@ RunResult execute(const PlannedRun &plan, const json &context, const std::string
 {
     RunResult result;
     result.plan = plan;
-    const json request = build_request(plan.hook, plan.action, context, plan.manifest, plan.consent);
+    const json request = build_request(plan.hook, plan.action, context, plan.manifest, plan.consent, plan.settings);
 
     ProcessRequest process;
     process.folder     = plan.folder;
@@ -281,6 +281,8 @@ void Host::load()
     std::string text;
     m_consents.clear();
     if (read_file(m_state / "consent.json", 1 << 20, text)) parse_consents(text, m_consents);
+    m_values.clear();
+    if (read_file(m_state / "extension-settings.json", 1 << 20, text)) parse_setting_values(text, m_values);
     install_builtins();
     m_runs.load();
 
@@ -390,8 +392,10 @@ bool Host::remove(const std::string &id, std::string &error)
     if (builtin && std::find(m_removed_builtins.begin(), m_removed_builtins.end(), id) == m_removed_builtins.end())
         m_removed_builtins.push_back(id);
     m_consents.erase(id);
+    m_values.erase(id);
     save_consents();
     save_settings();
+    save_values();
     load();
     return true;
 }
@@ -445,7 +449,7 @@ std::vector<PlannedRun> Host::plan(Hook hook) const
     for (const Installed &x : m_extensions) {
         if (state(x) != State::On) continue;
         if (std::find(x.manifest.hooks.begin(), x.manifest.hooks.end(), hook) == x.manifest.hooks.end()) continue;
-        out.push_back(PlannedRun{x.manifest.id, x.folder, x.manifest, *consent(x.manifest.id), m_limits, hook, {}});
+        out.push_back(PlannedRun{x.manifest.id, x.folder, x.manifest, *consent(x.manifest.id), m_limits, hook, {}, stored_values(x.manifest.id)});
     }
     return out;
 }
@@ -456,7 +460,7 @@ std::optional<PlannedRun> Host::plan_action(const std::string &id, const std::st
     if (!x || state(*x) != State::On) return std::nullopt;
     const bool known = std::any_of(x->manifest.actions.begin(), x->manifest.actions.end(), [&](const Action &a) { return a.id == action; });
     if (!known) return std::nullopt;
-    return PlannedRun{x->manifest.id, x->folder, x->manifest, *consent(id), m_limits, Hook::Command, action};
+    return PlannedRun{x->manifest.id, x->folder, x->manifest, *consent(id), m_limits, Hook::Command, action, stored_values(id)};
 }
 
 std::optional<PlannedRun> Host::plan_sample(const std::string &id, Hook hook, const std::string &action) const
@@ -465,8 +469,47 @@ std::optional<PlannedRun> Host::plan_sample(const std::string &id, Hook hook, co
     if (!x || state(*x) != State::On) return std::nullopt;
     if (hook == Hook::Command) return plan_action(id, action);
     if (std::find(x->manifest.hooks.begin(), x->manifest.hooks.end(), hook) == x->manifest.hooks.end()) return std::nullopt;
-    return PlannedRun{x->manifest.id, x->folder, x->manifest, *consent(id), m_limits, hook, {}};
+    return PlannedRun{x->manifest.id, x->folder, x->manifest, *consent(id), m_limits, hook, {}, stored_values(id)};
 }
+
+json Host::stored_values(const std::string &id) const
+{
+    const auto it = m_values.find(id);
+    return it == m_values.end() ? json::object() : it->second;
+}
+
+json Host::setting_values(const std::string &id) const
+{
+    const Installed *x = find(id);
+    return x ? settings_for_request(x->manifest, stored_values(id)) : json::object();
+}
+
+bool Host::set_setting(const std::string &id, const std::string &setting, const json &value, std::string &problem)
+{
+    const Installed *x = find(id);
+    if (!x || !x->error.ok()) {
+        problem = "not-installed";
+        return false;
+    }
+    const auto spec = std::find_if(x->manifest.settings.begin(), x->manifest.settings.end(), [&](const SettingSpec &s) { return s.id == setting; });
+    if (spec == x->manifest.settings.end()) {
+        problem = "unknown-setting";
+        return false;
+    }
+    if (!valid_setting_value(*spec, value, problem)) return false;
+    json &stored = m_values[id];
+    if (!stored.is_object()) stored = json::object();
+    stored[setting] = value;
+    save_values();
+    return true;
+}
+
+void Host::reset_settings(const std::string &id)
+{
+    if (m_values.erase(id) > 0) save_values();
+}
+
+void Host::save_values() const { write_file(m_state / "extension-settings.json", serialize_setting_values(m_values)); }
 
 void Host::record(const RunResult &result)
 {

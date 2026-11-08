@@ -46,7 +46,8 @@ static bool ascii(const std::string &text)
 }
 
 #ifdef _WIN32
-static RunResult run_once(const fs::path &folder, const Manifest &m, Hook hook, const std::string &action, const nlohmann::json &context)
+static RunResult run_once(const fs::path &folder, const Manifest &m, Hook hook, const std::string &action, const nlohmann::json &context,
+                          const nlohmann::json &settings = nlohmann::json::object())
 {
     Consent all;
     all.version = m.version;
@@ -54,7 +55,7 @@ static RunResult run_once(const fs::path &folder, const Manifest &m, Hook hook, 
     all.enabled = true;
     Limits limits;
     limits.timeout_ms = 30000; // hosted machines can be slow to start PowerShell the first time
-    const PlannedRun plan{m.id, folder, m, all, limits, hook, action};
+    const PlannedRun plan{m.id, folder, m, all, limits, hook, action, settings};
     RunResult        r = execute(plan, context, "Sample request", std::int64_t(std::time(nullptr)));
     if (r.outcome != Outcome::Answered) {
         // Say why: run it again and show what the program wrote.
@@ -126,6 +127,28 @@ int main(int argc, char **argv)
                 CHECK(bare.outcome == Outcome::Answered);
             }
         }
+        if (m.id == "studio.builtin.plate-checklist") {
+            // Its settings change what it says: a low slot threshold names every slot,
+            // and Say when all is well speaks even without anything to check.
+            const RunResult strict = run_once(folder, m, Hook::PrintBeforeSend, std::string(), sample_context(Hook::PrintBeforeSend),
+                                              nlohmann::json{{"grams_per_slot", 10}});
+            bool slot_row = false;
+            for (const ChecklistRow &row : strict.answer.checklist) slot_row = slot_row || row.text.rfind("Slot ", 0) == 0;
+            CHECK(strict.outcome == Outcome::Answered && slot_row);
+            nlohmann::json calm = sample_context(Hook::PlateSliced);
+            if (calm.contains("slice")) calm["slice"]["warnings"] = nlohmann::json::array();
+            const RunResult quiet = run_once(folder, m, Hook::PlateSliced, std::string(), calm,
+                                             nlohmann::json{{"say_all_is_well", true}, {"long_print_hours", 72}, {"grams_per_slot", 5000}, {"filament_changes", 1000}});
+            CHECK(quiet.outcome == Outcome::Answered && quiet.answer.notes.size() == 1 && quiet.answer.notes.front().rfind("Checked:", 0) == 0);
+        }
+#endif
+        if (m.id == "studio.builtin.plate-checklist") {
+            // Everywhere: the settings it declares are what its script reads.
+            CHECK(m.settings.size() == 4);
+            const std::string script = read(folder / "plate-checklist.ps1");
+            for (const SettingSpec &spec : m.settings) CHECK(script.find("'" + spec.id + "'") != std::string::npos);
+        }
+#ifdef _WIN32
         if (m.id == "studio.builtin.slice-report") {
             // A copy that prints something else is caught as not JSON.
             const fs::path copy = fs::temp_directory_path() / ("ext-builtin-" + std::to_string(std::random_device{}()));

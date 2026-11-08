@@ -1,8 +1,8 @@
 // Standalone assertions for src/slic3r/GUI/Extensions/ExtensionHost.cpp: the
 // built-in extensions (installed, updated only while unchanged, staying
 // removed), adding a folder, duplicate and broken manifests, consent through
-// the list, the master switch, persisted limits, and real runs that answer or
-// fail until the extension turns itself off. Compiled and run by
+// the list, the master switch, persisted limits, each extension's settings,
+// and real runs that answer or fail until the extension turns itself off. Compiled and run by
 // tests/extension_host.test.mjs.
 #include "src/slic3r/GUI/Base64Toolkit/Base64Codec.cpp"
 #include "src/slic3r/GUI/Extensions/ExtensionCore.cpp"
@@ -208,6 +208,40 @@ int main()
     CHECK(host.install(incoming, error));
     CHECK(host.state(*host.find("com.example.weigh-in")) == State::WaitingChanged);
     CHECK(!host.set_enabled("com.example.weigh-in", true));
+
+    // Settings: stored per extension, checked against the manifest, carried by
+    // every plan, kept across a reload, reset to defaults and dropped on removal.
+    {
+        const fs::path picked = base / "picked" / "tuned";
+        write(picked / "manifest.json",
+              "{\"id\":\"com.example.tuned\",\"name\":\"Tuned\",\"version\":\"1.0.0\",\"apiVersion\":1,"
+              "\"run\":{\"windows\":\"" + std::string(kAnswerRun) + "\"},\"hooks\":[\"plate.sliced\"],\"permissions\":[\"notes.show\"],"
+              "\"settings\":[{\"id\":\"hours\",\"title\":\"Hours\",\"type\":\"number\",\"default\":8,\"min\":1,\"max\":72,\"whole\":true}]}");
+        make_script(picked, kAnswerName, kAnswerBody);
+        CHECK(host.install(picked, error));
+        host.allow("com.example.tuned");
+        CHECK(host.setting_values("com.example.tuned")["hours"] == 8);
+        std::string problem;
+        CHECK(!host.set_setting("com.example.tuned", "hours", 100, problem) && problem == "above-maximum");
+        CHECK(!host.set_setting("com.example.tuned", "minutes", 5, problem) && problem == "unknown-setting");
+        CHECK(!host.set_setting("com.example.missing", "hours", 5, problem) && problem == "not-installed");
+        CHECK(host.set_setting("com.example.tuned", "hours", 12, problem));
+        bool carried = false;
+        for (const PlannedRun &p : host.plan(Hook::PlateSliced))
+            if (p.id == "com.example.tuned") carried = p.settings == nlohmann::json{{"hours", 12}};
+        CHECK(carried);
+        Host reread(root, state, builtin);
+        reread.load();
+        CHECK(reread.setting_values("com.example.tuned")["hours"] == 12);
+        host.reset_settings("com.example.tuned");
+        CHECK(host.setting_values("com.example.tuned")["hours"] == 8);
+        CHECK(host.set_setting("com.example.tuned", "hours", 20, problem));
+        CHECK(host.remove("com.example.tuned", error));
+        Host after(root, state, builtin);
+        after.load();
+        std::string text;
+        CHECK(read_file(state / "extension-settings.json", 1 << 20, text) && text.find("com.example.tuned") == std::string::npos);
+    }
 
     // Limits persist; a removed built-in stays removed.
     host.set_limits(Limits{5000, 32 * 1024, 5});

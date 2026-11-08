@@ -38,6 +38,7 @@ struct PlannedRun
     Limits                limits;
     Hook                  hook = Hook::Command;
     std::string           action;
+    nlohmann::json        settings = nlohmann::json::object(); // the values stored for its settings
 };
 
 struct RunResult
@@ -98,6 +99,15 @@ public:
     std::optional<PlannedRun> plan_sample(const std::string &id, Hook hook, const std::string &action = std::string()) const;
     // Applies a finished run: failures in a row, the run record.
     void record(const RunResult &result);
+
+    // An extension's settings (File > Extensions, Settings): every declared
+    // setting with its value, defaults where nothing valid is stored.
+    nlohmann::json setting_values(const std::string &id) const;
+    // Stores one value; false with the reason (valid_setting_value's, or
+    // not-installed, unknown-setting) and nothing stored when it is not valid.
+    bool set_setting(const std::string &id, const std::string &setting, const nlohmann::json &value, std::string &problem);
+    // Back to the defaults the manifest declares.
+    void reset_settings(const std::string &id);
     RunLog       &runs() { return m_runs; }
     const RunLog &runs() const { return m_runs; }
 
@@ -108,10 +118,13 @@ private:
     void save_consents() const;
     void save_settings() const;
     void load_settings();
+    void save_values() const;
+    nlohmann::json stored_values(const std::string &id) const;
 
     std::filesystem::path          m_root, m_state, m_builtin;
     std::vector<Installed>         m_extensions;
     std::map<std::string, Consent> m_consents;
+    std::map<std::string, nlohmann::json> m_values; // extension-settings.json
     std::vector<std::string>       m_removed_builtins;
     bool                           m_master_on = true;
     Limits                         m_limits;

@@ -55,7 +55,7 @@ public:
     void select(const std::string &id);
 
     enum Filter { FilterAll = 0, FilterOn, FilterOff, FilterWaiting, FilterErrors, FilterBuiltin, FilterCount };
-    enum Tab { TabOverview = 0, TabPermissions, TabRuns, TabManifest };
+    enum Tab { TabOverview = 0, TabPermissions, TabSettings, TabRuns, TabManifest };
 
 private:
     // ---- building
@@ -76,6 +76,11 @@ private:
     void refresh_tabs();
     void fill_overview(const Installed &x);
     void fill_permissions(const Installed &x);
+    // The extension's own settings: one control per declared setting, saved as
+    // it changes. Rebuilt only when another extension or version is shown, so
+    // a run finishing never takes a field away while you type in it.
+    void fill_settings(const Installed &x);
+    bool save_setting(const std::string &id, const std::string &setting, const nlohmann::json &value);
     void fill_runs(const Installed &x);
     void fill_manifest(const Installed &x);
     void select_tab(int tab);
@@ -103,6 +108,7 @@ private:
     int                                      m_filter = FilterAll;
     int                                      m_tab    = TabOverview;
     std::string                              m_selected;
+    std::string                              m_settings_for; // id and version the Settings page shows
     std::vector<std::string>                 m_rows; // list row -> extension id
     bool                                     m_refreshing = false;
 
@@ -137,6 +143,7 @@ private:
     wxSimplebook                            *m_book        = nullptr;
     wxWindow                                *m_overview    = nullptr;
     wxWindow                                *m_permissions = nullptr;
+    wxWindow                                *m_settings    = nullptr;
     wxWindow                                *m_runs_page   = nullptr;
     MD3DataViewListCtrl                     *m_runs        = nullptr;
     Label                                   *m_runs_note   = nullptr;

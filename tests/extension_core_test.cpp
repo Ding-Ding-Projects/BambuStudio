@@ -1,7 +1,8 @@
 // Standalone assertions for src/slic3r/GUI/Extensions/ExtensionCore.cpp and
 // ExtensionProcess.cpp: manifests and their refusals, permissions and what they
 // let through, consent on new and changed permissions, answers and their
-// limits, the run record, the verdict of the check before a print is sent,
+// limits, the settings an extension declares and their values, the run
+// record, the verdict of the check before a print is sent,
 // and real extension processes (answered, timed out, too large, refused paths,
 // a clean environment). Compiled and run by tests/extension_core.test.mjs.
 #include "src/slic3r/GUI/Extensions/ExtensionCore.cpp"
@@ -159,6 +160,100 @@ static void requests_carry_only_what_is_allowed()
     CHECK(text.find("SECRET") == std::string::npos);
     CHECK(looks_sensitive("printerAccessCode") && looks_sensitive("access_code") && looks_sensitive("X-Token"));
     CHECK(!looks_sensitive("printerModel") && !looks_sensitive("author") && !looks_sensitive("seconds"));
+}
+
+static const char *kWithSettings = R"({
+  "id": "com.example.checker",
+  "name": "Checker",
+  "version": "1.0.0",
+  "apiVersion": 1,
+  "run": { "windows": "checker.exe" },
+  "hooks": ["plate.sliced"],
+  "settings": [
+    { "id": "long_print_hours", "title": "Long print from", "type": "number", "default": 8, "min": 1, "max": 72, "whole": true, "unit": "h" },
+    { "id": "label", "title": "Label", "type": "text", "default": "", "maxLength": 10 },
+    { "id": "loud", "title": "Say when all is well", "type": "switch", "default": false },
+    { "id": "mode", "title": "Strictness", "type": "choice", "default": "relaxed",
+      "choices": [ { "id": "relaxed", "title": "Relaxed" }, { "id": "strict", "title": "Strict" } ] }
+  ]
+})";
+
+static std::string settings_with(const std::string &from, const std::string &to)
+{
+    std::string text = kWithSettings;
+    const auto  at   = text.find(from);
+    if (at != std::string::npos) text.replace(at, from.size(), to);
+    return text;
+}
+
+static void settings()
+{
+    Manifest      m;
+    ManifestError e;
+    CHECK(parse_manifest(kWithSettings, m, e) && e.ok());
+    CHECK(m.settings.size() == 4);
+    CHECK(m.settings.size() == 4 && m.settings[0].type == SettingType::Number && m.settings[0].whole && m.settings[0].unit == "h");
+    CHECK(m.settings.size() == 4 && m.settings[3].type == SettingType::Choice && m.settings[3].choices.size() == 2);
+    // Refusals: a default that is not a valid value, fields of another type,
+    // a secret, a duplicate, too many, an unknown type.
+    const auto refused = [](const std::string &json) {
+        Manifest      out;
+        ManifestError error;
+        CHECK(!parse_manifest(json, out, error));
+        return error;
+    };
+    CHECK(refused(settings_with("\"default\": 8,", "\"default\": 99,")).code == "bad-setting");
+    CHECK(refused(settings_with("\"default\": 8,", "\"default\": 8.5,")).code == "bad-setting");
+    CHECK(refused(settings_with("\"default\": \"relaxed\"", "\"default\": \"chill\"")).code == "bad-setting");
+    CHECK(refused(settings_with("\"maxLength\": 10", "\"maxLength\": 10, \"unit\": \"g\"")).code == "bad-setting");
+    CHECK(refused(settings_with("\"type\": \"switch\"", "\"type\": \"slider\"")).code == "bad-setting");
+    CHECK(refused(settings_with("\"id\": \"label\"", "\"id\": \"Label\"")).code == "bad-setting");
+    const ManifestError secret = refused(settings_with("\"id\": \"label\"", "\"id\": \"api_token\""));
+    CHECK(secret.code == "secret-setting" && secret.detail == "api_token");
+    CHECK(refused(settings_with("\"title\": \"Label\"", "\"title\": \"Printer password\"")).code == "secret-setting");
+    CHECK(refused(settings_with("\"id\": \"loud\"", "\"id\": \"label\"")).code == "duplicate");
+    std::string many = "[";
+    for (std::size_t i = 0; i <= kSettingsLimit; ++i)
+        many += std::string(i ? "," : "") + "{ \"id\": \"s" + std::to_string(i) + "\", \"title\": \"S\", \"type\": \"switch\", \"default\": true }";
+    many += "]";
+    const std::string text = kWithSettings;
+    const auto        from = text.find("\"settings\": [");
+    CHECK(refused(text.substr(0, from) + "\"settings\": " + many + "\n}").code == "too-long");
+
+    // Values: valid ones are kept, anything else falls back to the default.
+    const SettingSpec &hours = m.settings[0], &label = m.settings[1], &loud = m.settings[2], &mode = m.settings[3];
+    std::string problem;
+    CHECK(valid_setting_value(hours, 12, problem));
+    CHECK(!valid_setting_value(hours, 12.5, problem) && problem == "not-whole");
+    CHECK(!valid_setting_value(hours, 0, problem) && problem == "below-minimum");
+    CHECK(!valid_setting_value(hours, 73, problem) && problem == "above-maximum");
+    CHECK(!valid_setting_value(hours, "12", problem) && problem == "wrong-type");
+    CHECK(!valid_setting_value(label, "far too long here", problem) && problem == "too-long");
+    CHECK(!valid_setting_value(label, "a\nb", problem) && problem == "has-control");
+    CHECK(!valid_setting_value(loud, 1, problem) && problem == "wrong-type");
+    CHECK(!valid_setting_value(mode, "chill", problem) && problem == "not-a-choice");
+    const nlohmann::json twelve = 12, bad = "twelve";
+    CHECK(setting_value(hours, &twelve) == 12);
+    CHECK(setting_value(hours, &bad) == 8);
+    CHECK(setting_value(hours, nullptr) == 8);
+
+    // The request carries every declared setting, and only those.
+    const nlohmann::json stored = {{"long_print_hours", 20}, {"mode", "strict"}, {"loud", "yes"}, {"gone", 1}};
+    const nlohmann::json values = settings_for_request(m, stored);
+    CHECK(values.size() == 4 && values["long_print_hours"] == 20 && values["mode"] == "strict");
+    CHECK(values["loud"] == false && values["label"] == "" && !values.contains("gone"));
+    const Consent        c       = answer_consent(m, nullptr, true);
+    const nlohmann::json request = build_request(Hook::PlateSliced, "", nlohmann::json::object(), m, c, stored);
+    CHECK(request.contains("settings") && request["settings"] == values);
+    CHECK(build_request(Hook::PlateSliced, "", nlohmann::json::object(), m, c)["settings"]["long_print_hours"] == 8);
+
+    // The stored file keeps plain values of valid ids only.
+    std::map<std::string, nlohmann::json> kept;
+    CHECK(parse_setting_values(R"({"com.example.checker": {"mode": "strict", "Bad Id": 1, "nested": {"x": 1}}, "Not An Id": {"a": 1}})", kept));
+    CHECK(kept.size() == 1 && kept["com.example.checker"].size() == 1 && kept["com.example.checker"]["mode"] == "strict");
+    std::map<std::string, nlohmann::json> again;
+    CHECK(parse_setting_values(serialize_setting_values(kept), again) && again == kept);
+    CHECK(!parse_setting_values("[1]", again));
 }
 
 static void answers_and_their_limits()
@@ -425,6 +520,7 @@ int main()
     manifests();
     consent_and_state();
     requests_carry_only_what_is_allowed();
+    settings();
     answers_and_their_limits();
     before_send();
     run_record();
