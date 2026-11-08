@@ -18,6 +18,7 @@
 #include <optional>
 #include <unordered_set>
 #include "PreferencesRemake/PreferenceHistory.hpp"
+#include "PreferencesRemake/PreferencePlans.hpp"
 #include "Widgets/ComboBox.hpp"
 #include "Widgets/CheckBox.hpp"
 #include "Widgets/TextInput.hpp"
@@ -166,6 +167,39 @@ protected:
     bool           key_changed(const std::string &key) const;
     bool           row_changed(const SearchRow &row) const;
     const RowInfo *row_info(const std::string &key) const;
+
+    // ---- Changing settings from elsewhere in the dialog ----------------------
+    // A setter makes a row's own control take a value, so every side effect a
+    // change through that control has still happens; it returns false when the
+    // control does not offer the value. Rows register one as they are built
+    // (switches, choices, the Appearance controls). Value labels name stored
+    // values the way the row shows them ("1" -> "Dark").
+    struct Setter
+    {
+        wxWindow                                *control = nullptr; // disabled (locked, gated): nothing is set
+        std::function<bool(const std::string &)> set;
+    };
+    std::map<std::string, Setter>                          m_setters;
+    std::map<std::string, std::map<std::string, wxString>> m_value_labels;
+    std::map<std::string, wxString>                        m_section_labels; // section id -> label without its count
+    ::Button                                              *m_reset_section = nullptr;
+    void register_setter(const std::string &key, wxWindow *control, std::function<bool(const std::string &)> set,
+                         std::map<std::string, wxString> labels = {});
+    bool can_set(const std::string &key) const;
+    bool set_value(const std::string &key, const std::string &value);
+    wxString shown_value(const std::string &key, const std::string &value) const;
+    // Every registered setting on a page (all pages when page < 0), in row order.
+    std::vector<PreferencePlans::Setting> settings_on_page(int page) const;
+    std::vector<PreferencePlans::Row>     plan_rows() const;
+    wxString                              setting_title(const std::string &key) const;
+    wxString                              section_label(int page) const;
+    void refresh_section_counts();
+    void reset_section();
+    void import_preferences();
+    // Puts back the newest recorded change; false when that is not possible.
+    bool undo_last_change(wxWindow *parent);
+    void add_related(const std::string &key);
+    void add_playground(const std::string &key);
 
 public:
     // Teleport to the row bound to `key`: returns false when no row registered

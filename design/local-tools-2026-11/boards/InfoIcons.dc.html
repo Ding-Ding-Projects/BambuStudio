@@ -102,9 +102,27 @@
       <div class="row"><button class="btn">Undo last change</button><button class="btn">Export settings</button></div>
     </section>
   </div>
+  <div class="g2">
+    <section class="card" aria-label="As built">
+      <div class="row"><div class="h3 grow">As built</div><span class="tag g">In the app</span></div>
+      <div class="row" style="align-items:flex-start"><span class="ms ok" aria-hidden="true">check_circle</span><span style="font-size:13px;line-height:1.45">Every row says where its value comes from, with an info button; the Appearance rows (theme, density, accent, font, text size) too</span></div>
+      <div class="row" style="align-items:flex-start"><span class="ms ok" aria-hidden="true">check_circle</span><span style="font-size:13px;line-height:1.45">Explanation panel: what it does, default, when it takes effect, key, last five changes, Related chips that jump to the setting, and the Playground for the Appearance settings</span></div>
+      <div class="row" style="align-items:flex-start"><span class="ms ok" aria-hidden="true">check_circle</span><span style="font-size:13px;line-height:1.45">Reset to the default for switches, choices and the Appearance controls, through the row's own control so its side effects run; a locked row is never changed</span></div>
+      <div class="row" style="align-items:flex-start"><span class="ms ok" aria-hidden="true">check_circle</span><span style="font-size:13px;line-height:1.45">Reset this section behind both keys and the slide, naming every setting and its default; settings that restart the app, sign you out or answer consent are left for their own controls</span></div>
+      <div class="row" style="align-items:flex-start"><span class="ms ok" aria-hidden="true">check_circle</span><span style="font-size:13px;line-height:1.45">Import preferences... reads the JSON export, previews what differs and changes each setting through its control; private values are never imported</span></div>
+      <div class="row" style="align-items:flex-start"><span class="ms ok" aria-hidden="true">check_circle</span><span style="font-size:13px;line-height:1.45">Preferences history with Undo last change; each section shows how many settings it holds</span></div>
+    </section>
+    <section class="card" aria-label="Not built">
+      <div class="h3">Kept as it was, or not built</div>
+      <div class="row" style="align-items:flex-start"><span class="ms mut" aria-hidden="true">info</span><span style="font-size:13px;line-height:1.45">The twelve regrouped sections: the existing sections keep their ids and names, which saved strip layouts and command palette links depend on</span></div>
+      <div class="row" style="align-items:flex-start"><span class="ms mut" aria-hidden="true">info</span><span style="font-size:13px;line-height:1.45">Needs a restart chip and Restart now</span></div>
+      <div class="row" style="align-items:flex-start"><span class="ms mut" aria-hidden="true">info</span><span style="font-size:13px;line-height:1.45">Reset for text fields and sliders: they say to change them back with their own control</span></div>
+      <div class="row" style="align-items:flex-start"><span class="ms mut" aria-hidden="true">info</span><span style="font-size:13px;line-height:1.45">Importing YAML, TOML or the other export formats: JSON only</span></div>
+    </section>
+  </div>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1570}}'>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1940}}'>
 class Component extends DCLogic {
   renderVals() {
     return {};

@@ -37674,3 +37674,131 @@ msgstr ""
 
 msgid "You allowed this extension to stop prints (send.block). To send anyway, change the plate or the mapping, or turn the extension off in Extensions and send again."
 msgstr ""
+
+msgid "Reset this section"
+msgstr ""
+
+msgid "Put every setting in this section back to its built-in default"
+msgstr ""
+
+msgid "Undo last change"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s back to %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s (%d)"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Every setting in %s already has its built-in default."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Nothing in %s can be reset from here. Change these back with their own controls: %s."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%d settings in %s go back to their built-in defaults, each through its own control. What they were stays in Preferences history."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "These could not take their default: %s."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Change these back with their own controls: %s."
+msgstr ""
+
+msgid "Import preferences"
+msgstr ""
+
+msgid "Preferences exported as JSON (*.json)|*.json"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s was not imported."
+msgstr ""
+
+msgid "The file is larger than 1 MB."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s could not be read."
+msgstr ""
+
+msgid "The file is not valid JSON. Import reads the JSON that Export preferences... writes."
+msgstr ""
+
+msgid "The file was exported by a newer version of Bambu Studio."
+msgstr ""
+
+msgid "The file holds no settings."
+msgstr ""
+
+msgid "The file is not a preferences export from Bambu Studio."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Left for their own controls: %s."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Not imported: %d settings Preferences does not show, %d private values and %d values that are not text."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Nothing in %s differs from your settings: %d already match."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Import %d settings from %s?"
+msgstr ""
+
+msgid "Each one changes through its own control, and what it was stays in Preferences history."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Imported %d of %d settings."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "These were not taken, their controls do not offer the value or are locked: %s."
+msgstr ""
+
+msgid "There is no change to undo yet."
+msgstr ""
+
+msgid "The last change was to a private value. Change it back where it is set."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The last change, to %s, can only be changed back with its own control."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s could not take %s back. Its control does not offer it now, or it is locked."
+msgstr ""
+
+msgid "Related"
+msgstr ""
+
+msgid "Go to this setting"
+msgstr ""
+
+msgid "Playground"
+msgstr ""
+
+msgid "Sample switch"
+msgstr ""
+
+msgid "A sample only. Nothing here changes your project."
+msgstr ""
+
+msgid "Import preferences..."
+msgstr ""
+
+msgid "Read preferences exported as JSON and change what differs, each setting through its own control"
+msgstr ""

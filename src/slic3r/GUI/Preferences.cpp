@@ -39,6 +39,8 @@
 #include <cassert>
 #include <ctime>
 #include <filesystem>
+#include <fstream>
+#include <iterator>
 #include <set>
 #include <wx/datetime.h>
 #include <string>
@@ -63,6 +65,8 @@
 #include "Widgets/MD3DialogChrome.hpp"
 #include "Widgets/StaticBox.hpp"
 #include "Widgets/MaterialIcon.hpp"
+#include "Widgets/ProgressBar.hpp"
+#include "Widgets/SuperConfirmGate.hpp"
 #include "wx/graphics.h"
 #include <wx/dcgraph.h>
 #include <wx/fontenum.h>
@@ -171,6 +175,39 @@ private:
     bool      m_expanded      = false;
 };
 
+namespace {
+
+// Make a switch take "true" or "false" the way a click does, so the row's own
+// handler (and every side effect it has) runs.
+bool drive_switch(::SwitchButton *sw, const std::string &value)
+{
+    if (sw == nullptr || (value != "true" && value != "false")) return false;
+    const bool on = value == "true";
+    if (sw->GetValue() == on) return true;
+    sw->SetValue(on);
+    wxCommandEvent toggled(wxEVT_TOGGLEBUTTON, sw->GetId());
+    toggled.SetEventObject(sw);
+    toggled.SetInt(on ? 1 : 0);
+    sw->GetEventHandler()->ProcessEvent(toggled);
+    return true;
+}
+
+// Make a choice take one of its values the way picking it from the list does.
+bool drive_combo(::ComboBox *combo, const std::vector<std::string> &values, const std::string &value)
+{
+    const auto it = std::find(values.begin(), values.end(), value);
+    if (combo == nullptr || it == values.end()) return false;
+    const int index = int(it - values.begin());
+    combo->SetSelection(index);
+    wxCommandEvent picked(wxEVT_COMBOBOX, combo->GetDropDown().GetId());
+    picked.SetEventObject(&combo->GetDropDown());
+    picked.SetInt(index);
+    combo->GetDropDown().GetEventHandler()->ProcessEvent(picked);
+    return true;
+}
+
+} // namespace
+
 wxBoxSizer *PreferencesDialog::create_item_title(wxString title, wxWindow *parent, wxString tooltip)
 {
     wxBoxSizer *m_sizer_title = new wxBoxSizer(wxHORIZONTAL);
@@ -277,6 +314,11 @@ wxBoxSizer *PreferencesDialog::create_item_combobox(wxString title, wxWindow *pa
         e.Skip();
     });
     register_option_row(param, m_sizer_combox);
+    std::map<std::string, wxString> labels;
+    for (std::size_t i = 0; i < value_list.size() && i < label_list.size(); ++i) labels.emplace(value_list[i], label_list[i]);
+    register_setter(param, combobox, [combobox, value_list, live_values](const std::string &value) {
+        return drive_combo(combobox, live_values ? *live_values : value_list, value);
+    }, std::move(labels));
     return m_sizer_combox;
 }
 
@@ -1079,6 +1121,7 @@ wxBoxSizer *PreferencesDialog::create_item_switch(wxString title, wxWindow *pare
         e.Skip();
     });
     register_option_row(param, m_sizer_switch);
+    register_setter(param, switchbox, [switchbox](const std::string &value) { return drive_switch(switchbox, value); });
     return m_sizer_switch;
 }
 
@@ -1481,6 +1524,10 @@ wxBoxSizer *PreferencesDialog::create_item_checkbox(wxString title, wxWindow *pa
 
     checkbox->SetToolTip(tooltip);
     register_option_row(param, m_sizer_checkbox);
+    // privacyuse and auto_stop_liveview are kept outside the app section, so
+    // their built-in defaults are not this row's to restore.
+    if (param != "privacyuse" && param != "auto_stop_liveview")
+        register_setter(param, checkbox, [checkbox](const std::string &value) { return drive_switch(checkbox, value); });
     if (param == "privacyuse" && wxGetApp().is_uep_force_disabled()) {
         checkbox->SetValue(wxGetApp().is_uep_force_checked());
         checkbox->Enable(false);
@@ -1748,6 +1795,15 @@ void PreferencesDialog::create()
         apply_search_filter(m_search->GetValue());
     });
     search_row->Add(m_changed_chip, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(8));
+    // Every setting of the section shown goes back to its built-in default,
+    // behind the two-key confirmation (reset_section).
+    m_reset_section = new ::Button(content_card, _L("Reset this section"));
+    m_reset_section->SetVariant(::Button::Variant::Outlined);
+    m_reset_section->SetButtonSize(::Button::Size::Small);
+    m_reset_section->SetGlyph(MaterialIcon::SettingsBackupRestore);
+    m_reset_section->SetToolTip(_L("Put every setting in this section back to its built-in default"));
+    m_reset_section->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { reset_section(); });
+    search_row->Add(m_reset_section, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(8));
     content_pane->Add(search_row, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(16));
     // Inline "no results" hint under the search pill; hidden until an active
     // query matches nothing (see apply_search_filter).
@@ -1775,6 +1831,7 @@ void PreferencesDialog::create()
 
     auto add_tab = [this](const std::string &id, const wxString &label, wxWindow *page) {
         m_page_ids.push_back(id);
+        m_section_labels[id] = label;
         m_book->AddPage(page, label);
         m_tabbar->AddTab(id, label);
     };
@@ -1835,6 +1892,7 @@ void PreferencesDialog::create()
     // Passing the raw field value keeps the empty-query reset path intact.
     m_search->SetOnRegexToggle([this](bool) { apply_search_filter(m_search->GetValue()); });
     start_change_tracking();
+    refresh_section_counts();
 
     main_sizer->Add(m_body_row, 1, wxEXPAND);
     main_sizer->Add(create_bottom_buttons(), 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(12));
@@ -2012,18 +2070,6 @@ wxString takes_effect_text(const std::string &key)
     return _L("The next time the feature that uses it runs.");
 }
 
-::SwitchButton *find_switch(wxSizer *sizer)
-{
-    if (sizer == nullptr) return nullptr;
-    for (auto *item : sizer->GetChildren()) {
-        if (item->IsWindow())
-            if (auto *sw = dynamic_cast<::SwitchButton *>(item->GetWindow())) return sw;
-        if (item->IsSizer())
-            if (auto *sw = find_switch(item->GetSizer())) return sw;
-    }
-    return nullptr;
-}
-
 } // namespace
 
 void PreferencesDialog::decorate_row(const std::string &key, wxSizer *row)
@@ -2137,20 +2183,20 @@ wxString PreferencesDialog::provenance_text(const std::string &key) const
     using PreferenceHistory::Origin;
     if (p.origin == Origin::ChangedByYou)
         return secret ? wxString::Format(_L("You changed this on %s at %s."), format_day(p.changed_at), format_clock(p.changed_at))
-                      : wxString::Format(_L("You set %s on %s at %s."), display_value(key, p.value), format_day(p.changed_at),
+                      : wxString::Format(_L("You set %s on %s at %s."), shown_value(key, p.value), format_day(p.changed_at),
                                          format_clock(p.changed_at));
     if (secret) return _L("This value is private, so it is not shown here.");
     switch (p.origin) {
     case Origin::Scheduled:
-        return wxString::Format(_L("Scheduled settings set this to %s for now."), display_value(key, p.value));
+        return wxString::Format(_L("Scheduled settings set this to %s for now."), shown_value(key, p.value));
     case Origin::BuiltInDefault:
-        return wxString::Format(_L("Built-in default: %s."), display_value(key, p.value));
+        return wxString::Format(_L("Built-in default: %s."), shown_value(key, p.value));
     case Origin::MatchesDefault:
-        return wxString::Format(_L("Built-in default: %s. You have not changed it."), display_value(key, p.value));
+        return wxString::Format(_L("Built-in default: %s. You have not changed it."), shown_value(key, p.value));
     case Origin::Stored:
-        return p.default_value ? wxString::Format(_L("Stored as %s. The built-in default is %s."), display_value(key, p.value),
-                                                  display_value(key, *p.default_value)) :
-                                 wxString::Format(_L("Stored as %s."), display_value(key, p.value));
+        return p.default_value ? wxString::Format(_L("Stored as %s. The built-in default is %s."), shown_value(key, p.value),
+                                                  shown_value(key, *p.default_value)) :
+                                 wxString::Format(_L("Stored as %s."), shown_value(key, p.value));
     case Origin::NoDefault:
     case Origin::ChangedByYou: break;
     }
@@ -2253,7 +2299,7 @@ void PreferencesDialog::show_info(const std::string &key)
 
     const std::optional<std::string> def = default_value(key);
     section(_L("Built-in default"));
-    text(def ? display_value(key, *def) : _L("Not declared for this setting"), ::Label::Body_13, MD3::Role::OnSurface, FromDIP(4));
+    text(def ? shown_value(key, *def) : _L("Not declared for this setting"), ::Label::Body_13, MD3::Role::OnSurface, FromDIP(4));
 
     section(_L("Takes effect"));
     text(takes_effect_text(key), ::Label::Body_13, MD3::Role::OnSurface, FromDIP(4));
@@ -2269,26 +2315,28 @@ void PreferencesDialog::show_info(const std::string &key)
              MD3::Role::OnSurfaceVariant, FromDIP(4));
     for (const PreferenceHistory::Change &c : changes) {
         const wxString what = c.redacted ? _L("changed") :
-                                           wxString::Format(_L("%s to %s"), display_value(key, c.from), display_value(key, c.to));
+                                           wxString::Format(_L("%s to %s"), shown_value(key, c.from), shown_value(key, c.to));
         text(format_day(c.time) + " " + format_clock(c.time) + "  " + what, ::Label::Body_12, MD3::Role::OnSurface, FromDIP(4));
     }
 
-    // Reset drives the row's own switch, so its usual side effects run too.
-    // Rows without a switch say how to change them back instead of pretending.
+    add_playground(key);
+    add_related(key);
+
+    // Reset drives the row's own control (a switch, a choice, an Appearance
+    // control), so its usual side effects run too. Rows without one, or whose
+    // control is locked right now, say how to change them back instead.
     if (def && key_changed(key)) {
-        ::SwitchButton *sw = find_switch(info->row);
-        if (sw != nullptr && (*def == "true" || *def == "false")) {
-            auto *reset = new ::Button(m_info_panel, wxString::Format(_L("Reset to %s"), display_value(key, *def)));
+        if (can_set(key)) {
+            auto *reset = new ::Button(m_info_panel, wxString::Format(_L("Reset to %s"), shown_value(key, *def)));
             reset->SetVariant(::Button::Variant::Outlined);
             reset->SetButtonSize(::Button::Size::Small);
-            const bool target = *def == "true";
-            reset->Bind(wxEVT_BUTTON, [this, sw, target](wxCommandEvent &) {
-                sw->SetValue(target);
-                wxCommandEvent toggled(wxEVT_TOGGLEBUTTON, sw->GetId());
-                toggled.SetEventObject(sw);
-                toggled.SetInt(target ? 1 : 0);
-                sw->GetEventHandler()->ProcessEvent(toggled);
-                CallAfter([this]() { poll_changes(); });
+            const std::string target = *def;
+            // After this click returns: the reset rebuilds this panel, button included.
+            reset->Bind(wxEVT_BUTTON, [this, key, target](wxCommandEvent &) {
+                CallAfter([this, key, target]() {
+                    set_value(key, target);
+                    poll_changes();
+                });
             });
             m_info_sizer->Add(reset, 0, wxLEFT | wxRIGHT | wxTOP, FromDIP(16));
         } else {
@@ -2335,7 +2383,7 @@ void PreferencesDialog::show_history()
         const RowInfo *info  = row_info(c.key);
         const wxString title = info ? info->title : wxString::FromUTF8(c.key);
         const wxString what  = c.redacted ? _L("changed") :
-                                            wxString::Format(_L("%s to %s"), display_value(c.key, c.from), display_value(c.key, c.to));
+                                            wxString::Format(_L("%s to %s"), shown_value(c.key, c.from), shown_value(c.key, c.to));
         auto *line = new ::Label(list, format_day(c.time) + " " + format_clock(c.time) + "   " + title + ": " + what);
         line->SetFont(::Label::Body_13);
         line->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
@@ -2345,14 +2393,350 @@ void PreferencesDialog::show_history()
     list->FitInside();
     root->Add(list, 1, wxEXPAND | wxALL, FromDIP(12));
 
+    auto *buttons = new wxBoxSizer(wxHORIZONTAL);
+    // The newest change only, through its row's own control; the undo is
+    // recorded like any other change.
+    const PreferencePlans::UndoPlan undo_plan = PreferencePlans::plan_undo(m_history ? m_history->newest(1) : std::vector<PreferenceHistory::Change>{},
+                                                                           settings_on_page(-1));
+    auto *undo = new ::Button(&dialog, _L("Undo last change"));
+    undo->SetVariant(::Button::Variant::Outlined);
+    undo->SetButtonSize(::Button::Size::Small);
+    undo->SetGlyph(MaterialIcon::Undo);
+    if (undo_plan.possible)
+        undo->SetToolTip(wxString::Format(_L("%s back to %s"), setting_title(undo_plan.key), shown_value(undo_plan.key, undo_plan.value)));
+    undo->Bind(wxEVT_BUTTON, [this, &dialog](wxCommandEvent &) {
+        if (undo_last_change(&dialog)) dialog.EndModal(wxID_OK);
+    });
+    buttons->Add(undo, 0, wxRIGHT, FromDIP(8));
+    buttons->AddStretchSpacer(1);
     auto *done = new ::Button(&dialog, _L("Close"));
     done->SetVariant(::Button::Variant::Filled);
     done->SetButtonSize(::Button::Size::Small);
     done->Bind(wxEVT_BUTTON, [&dialog](wxCommandEvent &) { dialog.EndModal(wxID_OK); });
-    root->Add(done, 0, wxALIGN_RIGHT | wxRIGHT | wxBOTTOM, FromDIP(12));
+    buttons->Add(done, 0);
+    root->Add(buttons, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(12));
     dialog.SetSizerAndFit(root);
     dialog.CenterOnParent();
     dialog.ShowModal();
+}
+
+// ---------------------------------------------------------------------------
+// Changing settings from elsewhere in the dialog: section reset, import, undo,
+// related settings, the playground and section counts
+// ---------------------------------------------------------------------------
+
+void PreferencesDialog::register_setter(const std::string &key, wxWindow *control, std::function<bool(const std::string &)> set,
+                                        std::map<std::string, wxString> labels)
+{
+    if (key.empty() || !set) return;
+    m_setters[key] = Setter{control, std::move(set)};
+    if (!labels.empty()) m_value_labels[key] = std::move(labels);
+}
+
+bool PreferencesDialog::can_set(const std::string &key) const
+{
+    const auto it = m_setters.find(key);
+    // A disabled control is locked (school mode, an element lock, a gate): a
+    // reset or an import must not get past what a click cannot.
+    return it != m_setters.end() && (it->second.control == nullptr || it->second.control->IsEnabled());
+}
+
+bool PreferencesDialog::set_value(const std::string &key, const std::string &value)
+{
+    if (!can_set(key)) return false;
+    return m_setters[key].set(value);
+}
+
+wxString PreferencesDialog::shown_value(const std::string &key, const std::string &value) const
+{
+    if (!PreferenceHistory::is_sensitive_key(key)) {
+        const auto labels = m_value_labels.find(key);
+        if (labels != m_value_labels.end()) {
+            const auto label = labels->second.find(value);
+            if (label != labels->second.end()) return label->second;
+        }
+    }
+    return display_value(key, value);
+}
+
+std::vector<PreferencePlans::Row> PreferencesDialog::plan_rows() const
+{
+    std::vector<PreferencePlans::Row> rows;
+    for (const SearchRow &row : m_search_rows)
+        if (row.baseline_shown) rows.push_back(PreferencePlans::Row{row.page, row.is_title, row.keys});
+    return rows;
+}
+
+std::vector<PreferencePlans::Setting> PreferencesDialog::settings_on_page(int page) const
+{
+    std::vector<PreferencePlans::Setting> out;
+    for (const SearchRow &row : m_search_rows) {
+        if (!row.baseline_shown || (page >= 0 && row.page != page)) continue;
+        for (const std::string &key : row.keys) out.push_back(PreferencePlans::Setting{key, stored_value(key), default_value(key), can_set(key)});
+    }
+    return out;
+}
+
+wxString PreferencesDialog::setting_title(const std::string &key) const
+{
+    if (const RowInfo *info = row_info(key); info != nullptr && !info->title.IsEmpty()) return info->title;
+    for (const SearchRow &row : m_search_rows)
+        if (std::find(row.keys.begin(), row.keys.end(), key) != row.keys.end() && !row.labels.empty())
+            return search_label_text(row.labels.front());
+    return wxString::FromUTF8(key);
+}
+
+wxString PreferencesDialog::section_label(int page) const
+{
+    if (page >= 0 && page < int(m_page_ids.size())) {
+        const auto it = m_section_labels.find(m_page_ids[page]);
+        if (it != m_section_labels.end()) return it->second;
+    }
+    return m_book != nullptr && page >= 0 && page < int(m_book->GetPageCount()) ? m_book->GetPageText(page) : wxString();
+}
+
+void PreferencesDialog::refresh_section_counts()
+{
+    if (m_tabbar == nullptr) return;
+    const std::map<int, int> counts = PreferencePlans::settings_per_page(plan_rows());
+    for (std::size_t page = 0; page < m_page_ids.size(); ++page) {
+        const auto label = m_section_labels.find(m_page_ids[page]);
+        if (label == m_section_labels.end()) continue;
+        const auto n = counts.find(int(page));
+        m_tabbar->SetTitle(m_page_ids[page], n == counts.end() ? label->second : wxString::Format(_L("%s (%d)"), label->second, n->second));
+    }
+}
+
+namespace {
+
+wxString join_titles(const std::vector<wxString> &titles)
+{
+    wxString out;
+    for (const wxString &t : titles) {
+        if (!out.IsEmpty()) out << ", ";
+        out << t;
+    }
+    return out;
+}
+
+} // namespace
+
+void PreferencesDialog::reset_section()
+{
+    if (m_book == nullptr) return;
+    const int                        page    = m_book->GetSelection();
+    const wxString                   section = section_label(page);
+    const PreferencePlans::ResetPlan plan    = PreferencePlans::plan_section_reset(settings_on_page(page));
+    auto titles = [this](const std::vector<std::string> &keys) {
+        std::vector<wxString> out;
+        for (const std::string &key : keys) out.push_back(setting_title(key));
+        return join_titles(out);
+    };
+    if (plan.reset.empty()) {
+        const wxString text = plan.by_hand.empty() ?
+                                  wxString::Format(_L("Every setting in %s already has its built-in default."), section) :
+                                  wxString::Format(_L("Nothing in %s can be reset from here. Change these back with their own controls: %s."),
+                                                   section, titles(plan.by_hand));
+        MessageDialog(this, text, _L("Reset this section"), wxOK | wxICON_INFORMATION).ShowModal();
+        return;
+    }
+
+    SuperConfirmGate::Spec spec;
+    spec.action      = wxString::Format(_L("Reset %s"), section);
+    spec.consequence = wxString::Format(_L("%d settings in %s go back to their built-in defaults, each through its own control. "
+                                           "What they were stays in Preferences history."),
+                                        int(plan.reset.size()), section);
+    for (const std::string &key : plan.reset) {
+        const std::optional<std::string> def = default_value(key);
+        spec.affected.push_back(wxString::Format(_L("%s to %s"), setting_title(key), def ? shown_value(key, *def) : wxString()));
+    }
+    spec.completed_label = _L("Reset");
+    if (!SuperConfirmGate::Run(m_reset_section, spec)) return;
+
+    std::vector<std::string> failed;
+    for (const std::string &key : plan.reset) {
+        const std::optional<std::string> def = default_value(key);
+        if (!def || !set_value(key, *def)) failed.push_back(key);
+    }
+    poll_changes();
+    wxString report;
+    if (!failed.empty()) report << wxString::Format(_L("These could not take their default: %s."), titles(failed));
+    if (!plan.by_hand.empty()) {
+        if (!report.IsEmpty()) report << "\n\n";
+        report << wxString::Format(_L("Change these back with their own controls: %s."), titles(plan.by_hand));
+    }
+    if (!report.IsEmpty()) MessageDialog(this, report, spec.action, wxOK | wxICON_INFORMATION).ShowModal();
+}
+
+void PreferencesDialog::import_preferences()
+{
+    wxFileDialog picker(this, _L("Import preferences"), wxEmptyString, wxEmptyString, _L("Preferences exported as JSON (*.json)|*.json"),
+                        wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+    if (picker.ShowModal() != wxID_OK) return;
+    const std::filesystem::path path = std::filesystem::u8path(into_u8(picker.GetPath()));
+    const wxString              name = wxString::FromUTF8(path.filename().u8string());
+
+    std::string     text;
+    std::error_code ec;
+    const auto      size = std::filesystem::file_size(path, ec);
+    if (!ec && size > PreferencePlans::kImportLimit) {
+        MessageDialog(this, wxString::Format(_L("%s was not imported."), name) + "\n\n" + _L("The file is larger than 1 MB."),
+                      _L("Import preferences"), wxOK | wxICON_WARNING)
+            .ShowModal();
+        return;
+    }
+    if (!ec) {
+        std::ifstream in(path, std::ios::binary);
+        text.assign(std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>());
+        if (in.bad()) ec = std::make_error_code(std::errc::io_error);
+    }
+    if (ec) {
+        MessageDialog(this, wxString::Format(_L("%s could not be read."), name), _L("Import preferences"), wxOK | wxICON_WARNING).ShowModal();
+        return;
+    }
+    if (text.size() >= 3 && text.compare(0, 3, "\xEF\xBB\xBF") == 0) text.erase(0, 3); // a UTF-8 byte order mark
+    const PreferencePlans::ImportPlan plan = PreferencePlans::plan_import(text, settings_on_page(-1));
+    if (!plan.problem.empty()) {
+        wxString why;
+        if (plan.problem == "too-large") why = _L("The file is larger than 1 MB.");
+        else if (plan.problem == "not-json") why = _L("The file is not valid JSON. Import reads the JSON that Export preferences... writes.");
+        else if (plan.problem == "newer-version") why = _L("The file was exported by a newer version of Bambu Studio.");
+        else if (plan.problem == "empty") why = _L("The file holds no settings.");
+        else why = _L("The file is not a preferences export from Bambu Studio.");
+        MessageDialog(this, wxString::Format(_L("%s was not imported."), name) + "\n\n" + why, _L("Import preferences"), wxOK | wxICON_WARNING)
+            .ShowModal();
+        return;
+    }
+
+    auto titles = [this](const std::vector<PreferencePlans::ImportItem> &items) {
+        std::vector<wxString> out;
+        for (const auto &item : items) out.push_back(setting_title(item.key));
+        return join_titles(out);
+    };
+    wxString skipped;
+    if (!plan.by_hand.empty()) skipped << "\n\n" << wxString::Format(_L("Left for their own controls: %s."), titles(plan.by_hand));
+    const int not_imported = int(plan.not_here.size() + plan.private_keys.size() + plan.not_text.size());
+    if (not_imported > 0)
+        skipped << "\n\n"
+                << wxString::Format(_L("Not imported: %d settings Preferences does not show, %d private values and %d values that are not text."),
+                                    int(plan.not_here.size()), int(plan.private_keys.size()), int(plan.not_text.size()));
+    if (plan.apply.empty()) {
+        MessageDialog(this,
+                      wxString::Format(_L("Nothing in %s differs from your settings: %d already match."), name, int(plan.same.size())) + skipped,
+                      _L("Import preferences"), wxOK | wxICON_INFORMATION)
+            .ShowModal();
+        return;
+    }
+
+    wxString list;
+    for (std::size_t i = 0; i < plan.apply.size(); ++i) {
+        if (i == 12) {
+            list << "\n" << wxString::Format(_L("and %d more"), int(plan.apply.size() - 12));
+            break;
+        }
+        list << "\n" << wxString::Format(_L("%s to %s"), setting_title(plan.apply[i].key), shown_value(plan.apply[i].key, plan.apply[i].value));
+    }
+    const wxString question = wxString::Format(_L("Import %d settings from %s?"), int(plan.apply.size()), name) + "\n" + list + skipped + "\n\n" +
+                              _L("Each one changes through its own control, and what it was stays in Preferences history.");
+    if (MessageDialog(this, question, _L("Import preferences"), wxOK | wxCANCEL | wxICON_QUESTION).ShowModal() != wxID_OK) return;
+
+    std::vector<wxString> failed;
+    for (const PreferencePlans::ImportItem &item : plan.apply)
+        if (!set_value(item.key, item.value)) failed.push_back(setting_title(item.key));
+    poll_changes();
+    wxString done = wxString::Format(_L("Imported %d of %d settings."), int(plan.apply.size() - failed.size()), int(plan.apply.size()));
+    if (!failed.empty()) done << "\n\n" << wxString::Format(_L("These were not taken, their controls do not offer the value or are locked: %s."), join_titles(failed));
+    MessageDialog(this, done, _L("Import preferences"), wxOK | wxICON_INFORMATION).ShowModal();
+}
+
+bool PreferencesDialog::undo_last_change(wxWindow *parent)
+{
+    const PreferencePlans::UndoPlan plan = PreferencePlans::plan_undo(m_history ? m_history->newest(1) : std::vector<PreferenceHistory::Change>{},
+                                                                      settings_on_page(-1));
+    wxString problem;
+    if (!plan.possible) {
+        if (plan.reason == "nothing") problem = _L("There is no change to undo yet.");
+        else if (plan.reason == "private") problem = _L("The last change was to a private value. Change it back where it is set.");
+        else problem = wxString::Format(_L("The last change, to %s, can only be changed back with its own control."), setting_title(plan.key));
+    } else if (!set_value(plan.key, plan.value)) {
+        problem = wxString::Format(_L("%s could not take %s back. Its control does not offer it now, or it is locked."), setting_title(plan.key),
+                                   shown_value(plan.key, plan.value));
+    }
+    if (!problem.IsEmpty()) {
+        MessageDialog(parent, problem, _L("Undo last change"), wxOK | wxICON_INFORMATION).ShowModal();
+        return false;
+    }
+    poll_changes();
+    return true;
+}
+
+void PreferencesDialog::add_related(const std::string &key)
+{
+    const std::vector<std::string> keys = PreferencePlans::related(plan_rows(), key, 5);
+    if (keys.empty() || m_info_panel == nullptr) return;
+    auto *heading = new ::Label(m_info_panel, _L("Related").Upper());
+    heading->SetFont(::Label::Head_12);
+    heading->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+    m_info_sizer->Add(heading, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(14));
+    auto *chips = new wxWrapSizer(wxHORIZONTAL);
+    for (const std::string &other : keys) {
+        auto *chip = new ::Button(m_info_panel, setting_title(other));
+        chip->SetVariant(::Button::Variant::Outlined);
+        chip->SetButtonSize(::Button::Size::Small);
+        chip->SetToolTip(_L("Go to this setting"));
+        // After this click returns: opening another setting rebuilds this panel.
+        chip->Bind(wxEVT_BUTTON, [this, other](wxCommandEvent &) {
+            CallAfter([this, other]() {
+                teleport_to_setting(other);
+                if (row_info(other) != nullptr) show_info(other);
+            });
+        });
+        chips->Add(chip, 0, wxRIGHT | wxBOTTOM, FromDIP(6));
+    }
+    m_info_sizer->Add(chips, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(6));
+}
+
+void PreferencesDialog::add_playground(const std::string &key)
+{
+    static const std::set<std::string> appearance = {"dark_color_mode", "ui_density", "ui_accent_seed", "ui_font_family", "ui_font_scale"};
+    if (!appearance.count(key) || m_info_panel == nullptr) return;
+    auto *heading = new ::Label(m_info_panel, _L("Playground").Upper());
+    heading->SetFont(::Label::Head_12);
+    heading->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+    m_info_sizer->Add(heading, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(14));
+
+    // Built fresh every time this panel is, so it always wears the look in
+    // effect: change the setting and the samples follow.
+    auto *box = new StaticBox(m_info_panel);
+    box->SetCornerRadius(FromDIP(12));
+    box->SetBorderWidth(0);
+    box->SetBackgroundColor(StateColor::semantic(MD3::Role::SurfaceContainerLow));
+    box->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
+    auto *bs   = new wxBoxSizer(wxVERTICAL);
+    auto *line = new wxBoxSizer(wxHORIZONTAL);
+    auto *sample_button = new ::Button(box, _L("Slice plate"));
+    sample_button->SetVariant(::Button::Variant::Filled);
+    sample_button->SetButtonSize(::Button::Size::Small);
+    line->Add(sample_button, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(10));
+    auto *sample_switch = new ::SwitchButton(box, wxID_ANY);
+    sample_switch->SetValue(true);
+    sample_switch->SetName(_L("Sample switch"));
+    line->Add(sample_switch, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(10));
+    auto *sample_bar = new ProgressBar(box, wxID_ANY, 100, wxDefaultPosition, wxSize(FromDIP(80), FromDIP(8)), false);
+    sample_bar->SetValue(60);
+    line->Add(sample_bar, 1, wxALIGN_CENTER_VERTICAL);
+    bs->Add(line, 0, wxEXPAND | wxALL, FromDIP(12));
+    auto *sample_text = new ::Label(box, _L("The quick brown fox"));
+    sample_text->SetFont(::Label::Body_16);
+    sample_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+    bs->Add(sample_text, 0, wxLEFT | wxRIGHT, FromDIP(12));
+    auto *note = new ::Label(box, _L("A sample only. Nothing here changes your project."));
+    note->SetFont(::Label::Body_12);
+    note->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+    note->Wrap(FromDIP(260));
+    bs->Add(note, 0, wxALL, FromDIP(12));
+    box->SetSizer(bs);
+    m_info_sizer->Add(box, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(8));
 }
 
 void PreferencesDialog::select_page(int page)
@@ -2850,7 +3234,11 @@ wxWindow *PreferencesDialog::create_appearance_tab()
         auto *lbl = new Label(scrolled, label, 0, wxSize(FromDIP(150), -1));
         lbl->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
         lbl->SetFont(::Label::Body_13);
-        row->Add(lbl, wxSizerFlags().CenterVertical());
+        // The title column: a registered row gets its provenance line under the
+        // label and its info button at the end (decorate_row).
+        auto *title_col = new wxBoxSizer(wxVERTICAL);
+        title_col->Add(lbl, 0);
+        row->Add(title_col, wxSizerFlags().CenterVertical());
         row->Add(control, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(ITEM_RIGHT_PADDING));
         return row;
     };
@@ -3112,9 +3500,21 @@ wxWindow *PreferencesDialog::create_appearance_tab()
     auto flags = wxSizerFlags().Expand().Border(wxTOP, FromDIP(8));
     auto *theme_row = make_row(_L("Theme"), theme);
     register_option_row("dark_color_mode", theme_row);
+    // MultiSwitchButton::SetSelection sends its selection event, so the
+    // handlers above persist and apply exactly as a click does.
+    register_setter("dark_color_mode", theme, [theme](const std::string &value) {
+        if (value != "0" && value != "1") return false;
+        theme->SetSelection(value == "1" ? 1 : 0);
+        return true;
+    }, {{"0", _L("Light")}, {"1", _L("Dark")}});
     sizer->Add(theme_row, flags);
     auto *density_row = make_row(_L("Density"), density);
     register_option_row("ui_density", density_row);
+    register_setter("ui_density", density, [density](const std::string &value) {
+        if (value != "comfortable" && value != "compact") return false;
+        density->SetSelection(value == "compact" ? 1 : 0);
+        return true;
+    }, {{"comfortable", _L("Comfortable")}, {"compact", _L("Compact")}});
     sizer->Add(density_row, flags);
 
     // Accent row (label + swatches).
@@ -3123,9 +3523,27 @@ wxWindow *PreferencesDialog::create_appearance_tab()
     auto *accent_lbl = new Label(scrolled, _L("Accent color"), 0, wxSize(FromDIP(150), -1));
     accent_lbl->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     accent_lbl->SetFont(::Label::Body_13);
-    accent_line->Add(accent_lbl, wxSizerFlags().CenterVertical());
+    auto *accent_col = new wxBoxSizer(wxVERTICAL);
+    accent_col->Add(accent_lbl, 0);
+    accent_line->Add(accent_col, wxSizerFlags().CenterVertical());
     accent_line->Add(accent_row, wxSizerFlags().CenterVertical().Border(wxRIGHT, FromDIP(ITEM_RIGHT_PADDING)));
     register_option_row("ui_accent_seed", accent_line);
+    {
+        std::map<std::string, wxString> names;
+        for (const auto &seed : seeds) names.emplace(into_u8(seed.first), seed.second);
+        // The swatches have no selection event: do what a swatch click does.
+        register_setter("ui_accent_seed", accent_custom, [this, swatches](const std::string &value) {
+            const wxColour colour(wxString::FromUTF8(value));
+            if (value.size() != 7 || value[0] != '#' || !colour.IsOk()) return false;
+            app_config->set("ui_accent_seed", value);
+            app_config->save();
+            MD3::setAccentSeed(colour);
+            for (AccentSwatch *swatch : *swatches)
+                swatch->SetSelected(swatch->colour().GetAsString(wxC2S_HTML_SYNTAX).IsSameAs(wxString::FromUTF8(value), false));
+            refresh_md3_appearance(this);
+            return true;
+        }, std::move(names));
+    }
     sizer->Add(accent_line, flags);
 
     // Live token preview row (label-column indented, stretches to the row edge).
@@ -3137,9 +3555,18 @@ wxWindow *PreferencesDialog::create_appearance_tab()
     // UI font rows (family + size + live preview), consistent with the rows above.
     auto *font_row = make_row(_L("Font"), font_combo);
     register_option_row("ui_font_family", font_row);
+    register_setter("ui_font_family", font_combo, [font_combo, font_values](const std::string &value) {
+        return drive_combo(font_combo, font_values, value);
+    }, {{"", _L("Default")}});
     sizer->Add(font_row, flags);
     auto *text_size_row = make_row(_L("Text size"), text_size);
     register_option_row("ui_font_scale", text_size_row);
+    register_setter("ui_font_scale", text_size, [text_size](const std::string &value) {
+        const auto it = std::find(kScaleStrs.begin(), kScaleStrs.end(), value);
+        if (it == kScaleStrs.end()) return false;
+        text_size->SetSelection(int(it - kScaleStrs.begin()));
+        return true;
+    }, {{"0.9", _L("Small")}, {"1.0", _L("Default")}, {"1.15", _L("Large")}});
     sizer->Add(text_size_row, flags);
     sizer->Add(make_row(_L("Preview"), font_preview), flags);
 
@@ -4420,6 +4847,11 @@ wxBoxSizer *PreferencesDialog::create_bottom_buttons()
     // TRN: Opens the shared Export dialog with every preference section.
     auto *btn_export_prefs              = new Button(this, _L("Export preferences..."));
     auto *btn_history                   = new Button(this, _L("Preferences history"));
+    auto *btn_import_prefs              = new Button(this, _L("Import preferences..."));
+    btn_import_prefs->SetVariant(Button::Variant::Outlined);
+    btn_import_prefs->SetButtonSize(Button::Size::Small);
+    btn_import_prefs->SetToolTip(_L("Read preferences exported as JSON and change what differs, each setting through its own control"));
+    btn_import_prefs->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { import_preferences(); });
     btn_history->SetVariant(Button::Variant::Outlined);
     btn_history->SetButtonSize(Button::Size::Small);
     btn_history->SetToolTip(_L("Every change made in Preferences, with its time"));
@@ -4450,6 +4882,7 @@ wxBoxSizer *PreferencesDialog::create_bottom_buttons()
     row->Add(btn_reset_warnings, 0, wxRIGHT, FromDIP(8));
     row->Add(btn_reset_prefs, 0, wxRIGHT, FromDIP(8));
     row->Add(btn_history, 0, wxRIGHT, FromDIP(8));
+    row->Add(btn_import_prefs, 0, wxRIGHT, FromDIP(8));
     row->Add(btn_export_prefs, 0, 0, 0);
     return row;
 }

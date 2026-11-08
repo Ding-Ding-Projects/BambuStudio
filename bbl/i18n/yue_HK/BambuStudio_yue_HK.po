@@ -58561,3 +58561,188 @@ msgstr "冇嘢要提。"
 #. review-status: agent-drafted
 msgid "You allowed this extension to stop prints (send.block). To send anyway, change the plate or the mapping, or turn the extension off in Extensions and send again."
 msgstr "你准咗呢個擴充功能阻止打印（send.block）。如果照樣要發送，就改打印板或者對應，或者喺擴充功能入面關咗佢再發送過。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Reset this section"
+msgstr "重設呢一部分"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Put every setting in this section back to its built-in default"
+msgstr "將呢一部分每個設定都還原做內建預設"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Undo last change"
+msgstr "復原上一次變更"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "%s back to %s"
+msgstr "%s 變返 %s"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "%s (%d)"
+msgstr "%s（%d）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Every setting in %s already has its built-in default."
+msgstr "%s 每個設定都已經係內建預設。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Nothing in %s can be reset from here. Change these back with their own controls: %s."
+msgstr "%s 入面冇嘢可以喺呢度重設。請用佢哋自己嘅控制改返：%s。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "%d settings in %s go back to their built-in defaults, each through its own control. What they were stays in Preferences history."
+msgstr "%d 個設定（喺 %s）會變返內建預設，每個都經佢自己嘅控制改。佢哋原本係乜會留喺偏好設定歷史。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "These could not take their default: %s."
+msgstr "呢啲設定變唔返預設：%s。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Change these back with their own controls: %s."
+msgstr "請用佢哋自己嘅控制改返呢啲：%s。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Import preferences"
+msgstr "匯入偏好設定"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Preferences exported as JSON (*.json)|*.json"
+msgstr "匯出做 JSON 嘅偏好設定 (*.json)|*.json"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "%s was not imported."
+msgstr "%s 冇匯入。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "The file is larger than 1 MB."
+msgstr "個檔案大過 1 MB。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "%s could not be read."
+msgstr "讀唔到 %s。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "The file is not valid JSON. Import reads the JSON that Export preferences... writes."
+msgstr "個檔案唔係有效嘅 JSON。匯入讀嘅係「匯出設定…」寫出嚟嘅 JSON。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "The file was exported by a newer version of Bambu Studio."
+msgstr "個檔案係由較新版本嘅 Bambu Studio 匯出嘅。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "The file holds no settings."
+msgstr "個檔案入面冇設定。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "The file is not a preferences export from Bambu Studio."
+msgstr "個檔案唔係 Bambu Studio 匯出嘅偏好設定。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Left for their own controls: %s."
+msgstr "留返畀佢哋自己嘅控制改：%s。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Not imported: %d settings Preferences does not show, %d private values and %d values that are not text."
+msgstr "冇匯入：%d 個偏好設定冇顯示嘅設定、%d 個私人值，同埋 %d 個唔係文字嘅值。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Nothing in %s differs from your settings: %d already match."
+msgstr "%s 入面冇嘢同你嘅設定唔同：%d 個已經一樣。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Import %d settings from %s?"
+msgstr "匯入 %d 個設定，嚟自 %s？"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Each one changes through its own control, and what it was stays in Preferences history."
+msgstr "每個都經佢自己嘅控制改，佢原本係乜會留喺偏好設定歷史。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Imported %d of %d settings."
+msgstr "匯入咗 %d 個設定（共 %d 個）。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "These were not taken, their controls do not offer the value or are locked: %s."
+msgstr "呢啲冇改到，佢哋嘅控制冇呢個值或者鎖咗：%s。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "There is no change to undo yet."
+msgstr "仲未有變更可以復原。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The last change was to a private value. Change it back where it is set."
+msgstr "上一次變更係改私人值。請喺設定佢嘅地方改返。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The last change, to %s, can only be changed back with its own control."
+msgstr "上一次變更改咗 %s，只可以用佢自己嘅控制改返。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "%s could not take %s back. Its control does not offer it now, or it is locked."
+msgstr "%s 變唔返 %s。佢嘅控制而家冇呢個值，或者鎖咗。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Related"
+msgstr "相關"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Go to this setting"
+msgstr "去呢個設定"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Playground"
+msgstr "試玩區"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Sample switch"
+msgstr "樣本開關"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "A sample only. Nothing here changes your project."
+msgstr "只係樣本。呢度乜都唔會改你嘅項目。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Import preferences..."
+msgstr "匯入偏好設定…"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Read preferences exported as JSON and change what differs, each setting through its own control"
+msgstr "讀取匯出做 JSON 嘅偏好設定，改返唔同嘅地方，每個設定都經佢自己嘅控制改"
