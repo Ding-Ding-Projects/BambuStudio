@@ -120,6 +120,7 @@
 #include "Extensions/ExtensionRuntime.hpp"
 #include "ElementLocks/LockService.hpp"
 #include "AttentionModes/AttentionService.hpp"
+#include "GameServers/ServersPanel.hpp"
 #include "StatusApi/StatusApiServer.hpp"
 #include "Melody/MelodyCreatorDialog.hpp"
 #include "VocabularyDrop.hpp"
@@ -2092,6 +2093,8 @@ void GUI_App::shutdown()
     AttentionModes::shutdown();
     Schedule::Scheduler::instance().shutdown();
     HomeAssistant::shutdown();
+    // Running Minecraft servers are asked to stop and save before the app goes.
+    GameServers::shutdown();
     set_closing(true);
     BOOST_LOG_TRIVIAL(info) << "exit";
 }
@@ -3526,6 +3529,7 @@ int GUI_App::OnExit()
     LanModelDrop::shutdown();
     StatusApi::shutdown();
     Extensions::Runtime::shutdown();
+    GameServers::shutdown(); // idempotent, as above
     if (m_automation_bridge) {
         m_automation_bridge->stop();
         m_automation_bridge.reset();

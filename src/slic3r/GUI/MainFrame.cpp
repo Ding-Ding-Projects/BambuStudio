@@ -114,6 +114,7 @@
 #include "LiveCharts/LiveChartsPanel.hpp"
 #include "Drawing/DrawingPanel.hpp"
 #include "VirtualDisks/VirtualDisksPanel.hpp"
+#include "GameServers/ServersPanel.hpp"
 #include "ElementLocks/LockService.hpp"
 #include "AttentionModes/AttentionService.hpp"
 #include "SetupWizard/SetupWizardDialog.hpp"
@@ -4928,6 +4929,10 @@ void MainFrame::init_menubar_as_editor()
         append_menu_item(fileMenu, wxID_ANY, _L("Virtual disks") + dots,
             _L("Every VHD, VHDX and ISO you add: attach, create, grow, compact, chains, merge and Quick pack"),
             feature_command("virtual-disks", []() { VirtualDisks::VirtualDisksPanel::open(); }), "", nullptr, []() { return true; }, this);
+
+        append_menu_item(fileMenu, wxID_ANY, _L("Minecraft servers") + dots,
+            _L("Create, adopt and run Java servers: console, every setting, players, versions, backups, schedules and a world generator"),
+            feature_command("minecraft-servers", []() { GameServers::ServersPanel::open(); }), "", nullptr, []() { return true; }, this);
 
         append_menu_item(fileMenu, wxID_ANY, _L("Element locks") + dots,
             _L("Every element you locked, with Unlock beside each"),

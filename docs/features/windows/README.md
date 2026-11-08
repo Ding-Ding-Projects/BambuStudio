@@ -38,6 +38,7 @@
 - [Attention modes](attention-modes.md)
 - [Drawing board](drawing-board.md)
 - [Virtual disks](virtual-disks.md)
+- [Minecraft servers](minecraft-servers.md)
 - [Set up Bambu Studio](practical-setup.md)
 - [In-app changelog viewer (Help ▸ What's new)](changelog-viewer.md)
 - [Prepare sidebar search (settings + filament slots)](sidebar-search.md)

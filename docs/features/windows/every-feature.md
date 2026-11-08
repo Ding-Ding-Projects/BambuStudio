@@ -22,7 +22,8 @@ and navigate, Records, Tools and Safety. Each row has:
 - an **Open** button, which does exactly what the menu item or setting does.
 
 A feature that is designed but not in this build says **Not built yet** and has
-no Open button. A feature that this system cannot open says why instead: for
+no Open button; every feature in this build is built, so none says so now. A
+feature that this system cannot open says why instead: for
 example **Hidden in School mode** for wording and humour settings while School
 mode is on, or **Not available on this system** when its menu command is not
 registered here.
@@ -33,7 +34,8 @@ registered here.
   shortcut and extra words (search "json" for the personal wording file,
   "VHDX" for virtual disks, "TOTP" for the authenticator). The `.*` button
   switches to a regular expression with the shared regex builder.
-- The chips filter by group, or show only the features that are not built yet.
+- The chips filter by group, or show only the features that are not built yet
+  (that chip appears only while there are some).
 - Sort by group, A to Z (by the translated name), or Recently used.
 - Recently opened features appear above the list. The last eight are kept.
 - The command palette lists every feature as "Feature / name" with the same

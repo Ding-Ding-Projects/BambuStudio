@@ -1110,6 +1110,12 @@ list(APPEND SLIC3R_GUI_SOURCES
     GUI/VirtualDisks/DiskSystem.hpp
     GUI/VirtualDisks/VirtualDisksPanel.cpp
     GUI/VirtualDisks/VirtualDisksPanel.hpp
+    GUI/GameServers/ServerModel.cpp
+    GUI/GameServers/ServerModel.hpp
+    GUI/GameServers/ServerSystem.cpp
+    GUI/GameServers/ServerSystem.hpp
+    GUI/GameServers/ServersPanel.cpp
+    GUI/GameServers/ServersPanel.hpp
     GUI/ElementLocks/LockModel.cpp
     GUI/ElementLocks/LockModel.hpp
     GUI/ElementLocks/LockService.cpp

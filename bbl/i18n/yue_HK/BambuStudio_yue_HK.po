@@ -55666,3 +55666,2743 @@ msgstr "權限已取消：乜都冇改，呢步會顯示做未完成。"
 #. review-status: agent-drafted
 msgid "No printer chosen"
 msgstr "未揀打印機"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Minecraft servers"
+msgstr "Minecraft 伺服器"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Create, adopt and run Java servers: console, every setting, players, versions, backups, schedules and a world generator"
+msgstr "建立、收編同運行 Java 伺服器：控制台、每個設定、玩家、版本、備份、排程同世界產生器"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Difficulty"
+msgstr "難度"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "How hard the world is: hunger, damage and which mobs spawn."
+msgstr "個世界有幾難：肚餓、傷害同會生成邊啲生物。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Game mode"
+msgstr "遊戲模式"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The mode new players start in."
+msgstr "新玩家開始時用嘅模式。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Force game mode"
+msgstr "強制遊戲模式"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Puts every player back in the game mode above each time they join."
+msgstr "每個玩家每次加入都會變返上面嘅遊戲模式。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Hardcore"
+msgstr "極限模式"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "One life: a player who dies becomes a spectator, and the difficulty stays hard."
+msgstr "得一條命：死咗嘅玩家會變成旁觀者，難度一直係困難。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Player versus player"
+msgstr "玩家對戰"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Whether players can hurt each other."
+msgstr "玩家可唔可以互相傷害。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Allow flight"
+msgstr "容許飛行"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Lets clients with a flying mod stay connected instead of being kicked for flying."
+msgstr "裝咗飛行模組嘅用戶端唔會因為飛而被踢走。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Allow the Nether"
+msgstr "容許地獄"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Whether players can travel to the Nether."
+msgstr "玩家可唔可以去地獄。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Spawn monsters"
+msgstr "生成怪物"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Whether hostile mobs spawn."
+msgstr "敵對生物會唔會生成。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Spawn animals"
+msgstr "生成動物"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Whether animals spawn."
+msgstr "動物會唔會生成。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Spawn villagers"
+msgstr "生成村民"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Whether villagers spawn."
+msgstr "村民會唔會生成。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Command blocks"
+msgstr "指令方塊"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Whether command blocks run their commands."
+msgstr "指令方塊會唔會執行佢哋嘅指令。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Spawn protection"
+msgstr "重生點保護"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Blocks around spawn that only operators can change; 0 turns it off."
+msgstr "重生點周圍只有管理員先改得嘅範圍（方塊數）；0 即係關閉。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Idle timeout"
+msgstr "閒置逾時"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Minutes before an idle player is kicked; 0 never kicks."
+msgstr "閒置玩家幾多分鐘後被踢走；0 即係永遠唔踢。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Pause when empty"
+msgstr "冇人時暫停"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Seconds with nobody online before the server pauses; 0 never pauses."
+msgstr "冇人在線幾多秒後伺服器暫停；0 即係永遠唔暫停。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "World folder"
+msgstr "世界資料夾"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The folder of the world the server runs."
+msgstr "伺服器運行緊嘅世界所在嘅資料夾。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Seed"
+msgstr "種子"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The seed a new world is made from; empty picks one at random."
+msgstr "整新世界用嘅種子；留空就隨機揀一個。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "World type"
+msgstr "世界類型"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "How a new world is shaped: normal, flat, large biomes, amplified or a single biome."
+msgstr "新世界嘅形狀：普通、平坦、巨型生態域、極端地形或者單一生態域。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Generator settings"
+msgstr "產生器設定"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Extra settings for the world type, such as flat layers."
+msgstr "世界類型嘅額外設定，例如平坦世界嘅層。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Generate structures"
+msgstr "生成結構"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Whether villages, temples and other structures are made in new chunks."
+msgstr "新區塊入面會唔會整村莊、神殿同其他結構。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "World size limit"
+msgstr "世界大小上限"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The largest radius, in blocks, the world border can reach."
+msgstr "世界邊界最大可以去到嘅半徑（方塊）。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Data packs on"
+msgstr "啟用嘅資料包"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Data packs a new world starts with, separated by commas."
+msgstr "新世界一開始用嘅資料包，用逗號分隔。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Data packs off"
+msgstr "停用嘅資料包"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Data packs a new world leaves out, separated by commas."
+msgstr "新世界唔用嘅資料包，用逗號分隔。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Region compression"
+msgstr "區域壓縮"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "How world files are compressed."
+msgstr "世界檔案點樣壓縮。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Max players"
+msgstr "最多玩家"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "How many players can be online at once."
+msgstr "同一時間最多幾多個玩家在線。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Allowlist only"
+msgstr "只限允許名單"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Only players on the allowlist can join."
+msgstr "只有允許名單上嘅玩家先可以加入。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Enforce the allowlist"
+msgstr "強制執行允許名單"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Kicks players who are online but not on the allowlist when it is reloaded."
+msgstr "重新載入名單時，踢走在線但唔喺允許名單上嘅玩家。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Online mode"
+msgstr "線上模式"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Checks each player's account with Mojang; off lets anyone use any name."
+msgstr "向 Mojang 核實每個玩家嘅帳戶；關咗就任何人用咩名都得。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Operator level"
+msgstr "管理員等級"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The level /op gives a new operator, 0 to 4."
+msgstr "/op 俾新管理員嘅等級，0 至 4。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Function level"
+msgstr "函數權限等級"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The permission level functions run with, 1 to 4."
+msgstr "函數執行時用嘅權限等級，1 至 4。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Hide who is online"
+msgstr "隱藏在線玩家"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Leaves player names out of the server list."
+msgstr "伺服器清單唔顯示玩家名。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Require signed chat"
+msgstr "要求簽署聊天"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Only players with a Mojang-signed profile key can join."
+msgstr "只有擁有 Mojang 簽署個人檔案金鑰嘅玩家先可以加入。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Block proxies"
+msgstr "封鎖代理"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Kicks players whose connection does not come from where their account says."
+msgstr "連線來源同帳戶所講唔同嘅玩家會被踢走。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Log addresses"
+msgstr "記錄位址"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Whether player IP addresses are written to the log."
+msgstr "玩家嘅 IP 位址會唔會寫入記錄。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Console output to operators"
+msgstr "控制台輸出俾管理員"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Shows console command output to online operators."
+msgstr "將控制台指令嘅輸出顯示俾在線管理員。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Remote console output to operators"
+msgstr "遠端控制台輸出俾管理員"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Shows remote console command output to online operators."
+msgstr "將遠端控制台指令嘅輸出顯示俾在線管理員。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The port players connect to."
+msgstr "玩家連線用嘅連接埠。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Address to listen on"
+msgstr "監聽位址"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Leave empty to listen on every address of this PC."
+msgstr "留空就監聽呢部電腦嘅所有位址。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Message of the day"
+msgstr "每日訊息"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "The line under the server's name in the server list; colour codes start with §."
+msgstr "伺服器清單入面伺服器名下面嗰行字；顏色代碼以 § 開頭。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Show in the server list"
+msgstr "喺伺服器清單顯示"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Whether the server answers server list pings."
+msgstr "伺服器會唔會回應伺服器清單嘅探測。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Query protocol"
+msgstr "查詢協定"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Answers GameSpy4 queries on the query port."
+msgstr "喺查詢連接埠回應 GameSpy4 查詢。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Query port"
+msgstr "查詢連接埠"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The port the query protocol listens on."
+msgstr "查詢協定監聽嘅連接埠。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Remote console"
+msgstr "遠端控制台"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Lets tools send commands over the network with the password below."
+msgstr "俾工具用下面嘅密碼經網絡傳送指令。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Remote console port"
+msgstr "遠端控制台連接埠"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The port the remote console listens on."
+msgstr "遠端控制台監聽嘅連接埠。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Remote console password"
+msgstr "遠端控制台密碼"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The password the remote console asks for. It is kept in this file in plain text."
+msgstr "遠端控制台要求嘅密碼。佢會以純文字儲存喺呢個檔案入面。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Compression threshold"
+msgstr "壓縮門檻"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Packets larger than this many bytes are compressed; -1 turns compression off."
+msgstr "大過呢個位元組數嘅封包會被壓縮；-1 即係關閉壓縮。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Packet rate limit"
+msgstr "封包速率限制"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Packets a client may send each second before it is kicked; 0 has no limit."
+msgstr "用戶端每秒最多傳幾多個封包先會被踢；0 即係冇限制。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Native networking"
+msgstr "原生網絡"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Uses Linux's faster network transport where it can."
+msgstr "可以嘅話用 Linux 較快嘅網絡傳輸。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Accept transfers"
+msgstr "接受轉移"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Lets players arrive from another server with /transfer."
+msgstr "俾玩家用 /transfer 由另一部伺服器過嚟。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Bug report link"
+msgstr "錯誤回報連結"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "A link the game shows players for reporting problems with this server."
+msgstr "遊戲顯示俾玩家用嚟回報呢部伺服器問題嘅連結。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "View distance"
+msgstr "視野距離"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "How many chunks around each player are sent to them, 3 to 32."
+msgstr "每個玩家周圍有幾多區塊會傳俾佢，3 至 32。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Simulation distance"
+msgstr "模擬距離"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "How many chunks around each player keep running, 3 to 32."
+msgstr "每個玩家周圍有幾多區塊保持運行，3 至 32。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Entity range"
+msgstr "實體範圍"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "How far away entities are sent to players, as a percentage."
+msgstr "幾遠嘅實體會傳俾玩家，以百分比計。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Watchdog"
+msgstr "看門狗"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Milliseconds a single tick may take before the server stops itself; -1 turns this off."
+msgstr "一個刻（tick）最多可以用幾多毫秒，超過伺服器就自己停；-1 即係關閉。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Write chunks at once"
+msgstr "即時寫入區塊"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Writes each chunk before going on; safer, slower."
+msgstr "寫完每個區塊先繼續；較安全，較慢。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Chained updates"
+msgstr "連鎖更新"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "How many block updates may chain before the rest are skipped."
+msgstr "方塊更新最多可以連鎖幾多次，之後嘅會略過。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "JMX monitoring"
+msgstr "JMX 監察"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Exposes tick times to Java monitoring tools."
+msgstr "將每刻用時提供俾 Java 監察工具。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Resource pack link"
+msgstr "資源包連結"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "A link to a resource pack players are offered."
+msgstr "提供俾玩家嘅資源包連結。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Resource pack SHA-1"
+msgstr "資源包 SHA-1"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The pack's SHA-1, so players' games can check it."
+msgstr "資源包嘅 SHA-1，等玩家嘅遊戲可以核對。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Resource pack id"
+msgstr "資源包 ID"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "A UUID that names the pack for players' games."
+msgstr "俾玩家遊戲識別資源包嘅 UUID。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Resource pack message"
+msgstr "資源包訊息"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "What players read when they are offered the pack."
+msgstr "玩家收到資源包時睇到嘅字。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Require the pack"
+msgstr "必須用資源包"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Players who decline the pack are disconnected."
+msgstr "拒絕資源包嘅玩家會被斷線。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Text filtering"
+msgstr "文字過濾"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Settings for a chat filtering service."
+msgstr "聊天過濾服務嘅設定。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Use true or false."
+msgstr "請用 true 或者 false。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Use a whole number."
+msgstr "請用整數。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Use {1} to {2}."
+msgstr "請用 {1} 至 {2}。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Not one of this setting's values."
+msgstr "唔係呢個設定可以用嘅值。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Can build inside spawn protection."
+msgstr "可以喺重生點保護範圍內建造。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Also cheat commands and command blocks."
+msgstr "仲可以用作弊指令同指令方塊。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Also kick, ban and make other operators."
+msgstr "仲可以踢人、封禁同設定其他管理員。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Can stop the server and change every setting."
+msgstr "可以停止伺服器同更改每個設定。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Not an operator."
+msgstr "唔係管理員。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "No Java was found. This server needs Java {1}."
+msgstr "搵唔到 Java。呢部伺服器需要 Java {1}。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "This version needs Java {1}; the chosen Java is {2}."
+msgstr "呢個版本需要 Java {1}；揀咗嘅 Java 係 {2}。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The chosen Java did not say its version."
+msgstr "揀咗嘅 Java 冇講佢係咩版本。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The server file {1} is missing."
+msgstr "伺服器檔案 {1} 唔見咗。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The Minecraft EULA has not been accepted for this server."
+msgstr "呢部伺服器仲未接受 Minecraft EULA。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Give the server at least 256 MB to start with."
+msgstr "開始時最少要俾伺服器 256 MB。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The most memory is less than the memory it starts with."
+msgstr "最多記憶體少過開始時嘅記憶體。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "This PC has {1} GB; leave at least 1 GB for everything else."
+msgstr "呢部電腦有 {1} GB；最少要留 1 GB 俾其他嘢。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The server may use most of this PC's memory."
+msgstr "伺服器可能會用晒呢部電腦大部分記憶體。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The port must be 1 to 65535."
+msgstr "連接埠必須係 1 至 65535。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Port {1} is already in use by another program."
+msgstr "連接埠 {1} 已經俾另一個程式用緊。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The typed arguments set the memory too; the last one Java reads wins."
+msgstr "你打嘅參數都有設定記憶體；Java 最後讀到嗰個為準。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Choose the version that makes the world."
+msgstr "揀用嚟整世界嘅版本。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "This version cannot make this kind of world."
+msgstr "呢個版本整唔到呢種世界。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "A flat world needs at least one layer."
+msgstr "平坦世界最少要有一層。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Layer {1} is not a block id."
+msgstr "第 {1} 層唔係方塊 ID。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Layer {1} must be at least 1 block tall."
+msgstr "第 {1} 層最少要有 1 格高。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The layers are {1} blocks tall; this version allows {2}."
+msgstr "啲層總共 {1} 格高；呢個版本最多容許 {2}。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Your own flat layers need 1.19 or newer; this version makes the classic flat world."
+msgstr "自訂平坦層需要 1.19 或者更新；呢個版本只會整經典平坦世界。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The biome is not an id."
+msgstr "個生態域唔係 ID。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Not a game mode."
+msgstr "唔係遊戲模式。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Not a difficulty."
+msgstr "唔係難度。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The area can be 0 to 1,000 chunks each way."
+msgstr "範圍每邊可以係 0 至 1,000 個區塊。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Give the area both a width and a depth, or neither."
+msgstr "範圍要同時有闊度同深度，或者兩樣都冇。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Making an area ahead of time needs 1.19.4 or newer; this version makes the spawn area only."
+msgstr "預先生成範圍需要 1.19.4 或者更新；呢個版本只會整重生點附近。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "This version has no game rule {1}."
+msgstr "呢個版本冇遊戲規則 {1}。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "{1} is true or false."
+msgstr "{1} 只可以係 true 或者 false。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "{1} must be {2} to {3}."
+msgstr "{1} 必須係 {2} 至 {3}。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Advancements are announced in chat."
+msgstr "進度會喺聊天公佈。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Some blocks destroyed by block explosions drop nothing."
+msgstr "部分俾方塊爆炸炸爛嘅方塊唔會掉落嘢。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Command blocks tell operators what they did."
+msgstr "指令方塊會話俾管理員知佢做咗咩。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "How many blocks one command may change."
+msgstr "一個指令最多可以改幾多個方塊。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The server stops checking how fast players fly with elytra."
+msgstr "伺服器唔再檢查玩家用鞘翅飛得幾快。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The server stops checking how fast players move."
+msgstr "伺服器唔再檢查玩家郁得幾快。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "No raids happen."
+msgstr "唔會有突襲。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Time of day moves on."
+msgstr "日夜時間會照行。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Minecarts, boats and other entities drop items."
+msgstr "礦車、船同其他實體會掉落物品。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Fire spreads and burns out."
+msgstr "火會蔓延同燒完熄滅。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Players respawn without the death screen."
+msgstr "玩家重生時唔會見到死亡畫面。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Phantoms appear for players who do not sleep."
+msgstr "唔瞓覺嘅玩家會遇到夜魅。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Players can only craft recipes they have unlocked."
+msgstr "玩家只可以合成已解鎖嘅配方。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Mobs drop items and experience."
+msgstr "生物會掉落物品同經驗。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Mobs spawn on their own."
+msgstr "生物會自然生成。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Pillager patrols spawn."
+msgstr "掠奪者巡邏隊會生成。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Broken blocks drop items."
+msgstr "打爛嘅方塊會掉落物品。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Wandering traders spawn."
+msgstr "流浪商人會生成。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Vines spread to nearby blocks."
+msgstr "藤蔓會蔓延到附近方塊。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Wardens spawn."
+msgstr "伏守者會生成。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Weather changes."
+msgstr "天氣會變。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Players can drown."
+msgstr "玩家會遇溺。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Thrown ender pearls vanish when their player dies."
+msgstr "玩家死咗之後，佢掟出嘅終界珍珠會消失。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Players take fall damage."
+msgstr "玩家會受跌落傷害。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Players take fire damage."
+msgstr "玩家會受火焰傷害。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Angry neutral mobs calm down when their target dies."
+msgstr "憤怒嘅中立生物喺目標死咗之後會冷靜返。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Players take freezing damage in powder snow."
+msgstr "玩家喺細雪入面會受凍傷。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Some sounds are heard by everyone."
+msgstr "有啲聲音所有人都聽到。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Players keep their items and experience when they die."
+msgstr "玩家死咗之後保留物品同經驗。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Flowing lava between two sources becomes a source."
+msgstr "兩個熔岩源之間嘅流動熔岩會變成源頭。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Operator commands are written to the log."
+msgstr "管理員指令會寫入記錄。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "How many commands one chain may run."
+msgstr "一條連鎖最多可以執行幾多個指令。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "How many contexts one command may split into."
+msgstr "一個指令最多可以分成幾多個情境。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Mobs squeezed together past this number take damage."
+msgstr "擠埋一齊嘅生物超過呢個數就會受傷。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Some blocks destroyed by mob explosions drop nothing."
+msgstr "部分俾生物爆炸炸爛嘅方塊唔會掉落嘢。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Mobs can change blocks and pick up items."
+msgstr "生物可以改變方塊同執起物品。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Players heal when they are not hungry."
+msgstr "玩家唔肚餓時會回血。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Ticks a creative player waits in a Nether portal."
+msgstr "創造模式玩家喺地獄傳送門等幾多刻。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Ticks a player waits in a Nether portal."
+msgstr "玩家喺地獄傳送門等幾多刻。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The share of players who must sleep to skip the night."
+msgstr "要有幾多比例嘅玩家瞓覺先可以跳過夜晚。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Projectiles can break blocks such as decorated pots."
+msgstr "投射物可以打爛裝飾陶罐之類嘅方塊。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "How fast crops grow, leaves fall and other random changes happen."
+msgstr "農作物生長、樹葉凋落同其他隨機變化有幾快。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The debug screen shows less."
+msgstr "除錯畫面顯示較少資料。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Players see what their commands did."
+msgstr "玩家會睇到佢哋嘅指令做咗咩。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Deaths are announced in chat."
+msgstr "死亡會喺聊天公佈。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "How many layers snow builds up to while it snows."
+msgstr "落雪時雪最多積到幾多層。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "How many chunks around spawn stay loaded."
+msgstr "重生點周圍保持載入嘅區塊數。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "How far from spawn new players appear."
+msgstr "新玩家喺離重生點幾遠嘅地方出現。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Spectators make new chunks."
+msgstr "旁觀者會生成新區塊。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Some blocks destroyed by TNT drop nothing."
+msgstr "部分俾 TNT 炸爛嘅方塊唔會掉落嘢。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Angry neutral mobs attack every player nearby."
+msgstr "憤怒嘅中立生物會攻擊附近所有玩家。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Flowing water between two sources becomes a source."
+msgstr "兩個水源之間嘅流動水會變成水源。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Plains"
+msgstr "平原"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Sunflower plains"
+msgstr "向日葵平原"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Snowy plains"
+msgstr "雪原"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Ice spikes"
+msgstr "冰刺"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Desert"
+msgstr "沙漠"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Swamp"
+msgstr "沼澤"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Mangrove swamp"
+msgstr "紅樹林沼澤"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Forest"
+msgstr "森林"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Flower forest"
+msgstr "繁花森林"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Birch forest"
+msgstr "樺木森林"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Dark forest"
+msgstr "黑森林"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Pale garden"
+msgstr "蒼白之園"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Old growth birch forest"
+msgstr "原始樺木森林"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Old growth pine taiga"
+msgstr "原始松木針葉林"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Old growth spruce taiga"
+msgstr "原始杉木針葉林"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Taiga"
+msgstr "針葉林"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Snowy taiga"
+msgstr "冰雪針葉林"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Savanna"
+msgstr "莽原"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Savanna plateau"
+msgstr "莽原高地"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Windswept hills"
+msgstr "風蝕丘陵"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Windswept forest"
+msgstr "風蝕森林"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Windswept savanna"
+msgstr "風蝕莽原"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Jungle"
+msgstr "叢林"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Sparse jungle"
+msgstr "稀疏叢林"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Bamboo jungle"
+msgstr "竹林"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Badlands"
+msgstr "惡地"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Eroded badlands"
+msgstr "侵蝕惡地"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Wooded badlands"
+msgstr "疏林惡地"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Meadow"
+msgstr "草甸"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Cherry grove"
+msgstr "櫻花樹林"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Grove"
+msgstr "雪林"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Snowy slopes"
+msgstr "雪坡"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Frozen peaks"
+msgstr "冰封山峰"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Jagged peaks"
+msgstr "尖峭山峰"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Stony peaks"
+msgstr "裸岩山峰"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "River"
+msgstr "河流"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Frozen river"
+msgstr "寒凍河流"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Beach"
+msgstr "沙灘"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Snowy beach"
+msgstr "冰雪沙灘"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Stony shore"
+msgstr "石岸"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Warm ocean"
+msgstr "溫水海洋"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Lukewarm ocean"
+msgstr "溫和海洋"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Ocean"
+msgstr "海洋"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Deep ocean"
+msgstr "深海"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Cold ocean"
+msgstr "寒冷海洋"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Frozen ocean"
+msgstr "寒凍海洋"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Mushroom fields"
+msgstr "蘑菇地"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Dripstone caves"
+msgstr "鐘乳石洞窟"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Lush caves"
+msgstr "繁茂洞窟"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Deep dark"
+msgstr "深淵"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Villages"
+msgstr "村莊"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Strongholds"
+msgstr "要塞"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Mineshafts"
+msgstr "廢棄礦坑"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Ancient cities"
+msgstr "遠古城市"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Trial chambers"
+msgstr "試煉密室"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Shipwrecks"
+msgstr "沉船"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Woodland mansions"
+msgstr "林地府邸"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Ruined portals"
+msgstr "廢棄傳送門"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Desert pyramids"
+msgstr "沙漠神殿"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Jungle temples"
+msgstr "叢林神殿"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Swamp huts"
+msgstr "沼澤小屋"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Igloos"
+msgstr "雪屋"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Pillager outposts"
+msgstr "掠奪者前哨站"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Ocean monuments"
+msgstr "海底神殿"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Ocean ruins"
+msgstr "海底遺跡"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Buried treasure"
+msgstr "埋藏嘅寶藏"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Trail ruins"
+msgstr "古跡廢墟"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Nether fortresses and bastions"
+msgstr "地獄要塞同堡壘遺跡"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Nether fossils"
+msgstr "地獄化石"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "End cities"
+msgstr "終界城"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Grass block"
+msgstr "草方塊"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Dirt"
+msgstr "泥土"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Coarse dirt"
+msgstr "粗泥"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Stone"
+msgstr "石頭"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Deepslate"
+msgstr "深板岩"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Bedrock"
+msgstr "基岩"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Sand"
+msgstr "沙"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Sandstone"
+msgstr "砂岩"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Gravel"
+msgstr "礫石"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Snow block"
+msgstr "雪塊"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Water"
+msgstr "水"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Lava"
+msgstr "熔岩"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Air"
+msgstr "空氣"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Clay"
+msgstr "黏土"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Moss block"
+msgstr "苔蘚方塊"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "%lld min"
+msgstr "%lld 分鐘"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "%lld h %lld min"
+msgstr "%lld 小時 %lld 分鐘"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Started in %.1f s"
+msgstr "用咗 %.1f 秒啟動"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "%s joined"
+msgstr "%s 加入咗"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "%s left"
+msgstr "%s 離開咗"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The port is in use by another program"
+msgstr "個連接埠俾另一個程式用緊"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "The server asks for the EULA to be accepted"
+msgstr "伺服器要求先接受 EULA"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Stopped (exit code %d)"
+msgstr "已停止（結束代碼 %d）"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "That server is no longer in the list."
+msgstr "呢部伺服器已經唔喺清單入面。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "The server is already running."
+msgstr "伺服器已經運行緊。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Running a server needs Windows in this build."
+msgstr "呢個版本要喺 Windows 先可以運行伺服器。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Another program has this server's world open. Stop it there first."
+msgstr "另一個程式開咗呢部伺服器嘅世界。請先喺嗰邊停咗佢。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "-- Starting with %s --"
+msgstr "-- 用 %s 啟動 --"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Starting"
+msgstr "啟動緊"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Restarting"
+msgstr "重新啟動緊"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Stopping safely"
+msgstr "安全停止緊"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Force stopped"
+msgstr "已強制停止"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "A backup of this server is already being made."
+msgstr "呢部伺服器已經有備份整緊。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Backup made, %s, checked"
+msgstr "已整好備份，%s，已檢查"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "The server restarts in %d minutes."
+msgstr "伺服器 %d 分鐘後重新啟動。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Create a Minecraft server"
+msgstr "建立 Minecraft 伺服器"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Downloads the official server file from Mojang, checks its SHA-1, and sets up a new folder. Nothing outside that folder changes."
+msgstr "由 Mojang 下載官方伺服器檔案，核對佢嘅 SHA-1，再設定一個新資料夾。嗰個資料夾以外乜都唔會改。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "My server"
+msgstr "我嘅伺服器"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Where the server folder goes"
+msgstr "伺服器資料夾放喺邊"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "In the folder"
+msgstr "放喺資料夾"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Most memory (MB)"
+msgstr "最多記憶體（MB）"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "I accept the Minecraft EULA for this server"
+msgstr "我接受呢部伺服器嘅 Minecraft EULA"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Read the EULA"
+msgstr "閱讀 EULA"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "That folder already has files in it; choose another name."
+msgstr "嗰個資料夾已經有檔案；請揀另一個名。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "The server goes into %s."
+msgstr "伺服器會放喺 %s。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Adopt servers"
+msgstr "收編伺服器"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Found servers stay untouched: adopting one adds it to this list and changes nothing in its folder."
+msgstr "搵到嘅伺服器唔會被郁：收編只係將佢加入呢個清單，佢個資料夾乜都唔改。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "(already in the list)"
+msgstr "（已經喺清單入面）"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "No server folders were found there."
+msgstr "嗰度搵唔到伺服器資料夾。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Adopt"
+msgstr "收編"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Only the spawn area"
+msgstr "只有重生點附近"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Create, adopt and run Java servers on this PC. Every setting has its own control."
+msgstr "喺呢部電腦建立、收編同運行 Java 伺服器。每個設定都有自己嘅控制項。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Find and adopt..."
+msgstr "尋找同收編..."
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Create server..."
+msgstr "建立伺服器..."
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Server"
+msgstr "伺服器"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Stop safely"
+msgstr "安全停止"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Restart"
+msgstr "重新啟動"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Force stop..."
+msgstr "強制停止..."
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Back up now"
+msgstr "即刻備份"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Remove from list..."
+msgstr "由清單移除..."
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Console"
+msgstr "控制台"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Properties"
+msgstr "屬性"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Players"
+msgstr "玩家"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Worlds"
+msgstr "世界"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Versions"
+msgstr "版本"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Schedule"
+msgstr "排程"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "World generator"
+msgstr "世界產生器"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Cancelling..."
+msgstr "取消緊..."
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Stopped"
+msgstr "已停止"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Running, %d online"
+msgstr "運行緊，%d 人在線"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "No Java was found on this PC. Current versions need Java 21: install it from adoptium.net or any Java vendor, then use Find Java again on a server's Overview."
+msgstr "呢部電腦搵唔到 Java。而家嘅版本需要 Java 21：由 adoptium.net 或者任何 Java 供應商安裝，然後喺伺服器嘅概覽撳「再搵 Java」。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Java here:"
+msgstr "呢度嘅 Java："
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "%llu GB memory"
+msgstr "%llu GB 記憶體"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Running servers needs Windows in this build."
+msgstr "呢個版本要喺 Windows 先可以運行伺服器。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "%s, process %lu"
+msgstr "%s，程序 %lu"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "up %s"
+msgstr "已運行 %s"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Memory"
+msgstr "記憶體"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Up for"
+msgstr "運行咗"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Java"
+msgstr "Java"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Next backup"
+msgstr "下次備份"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Next restart"
+msgstr "下次重新啟動"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Recent events"
+msgstr "最近事件"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Find Java again"
+msgstr "再搵 Java"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Open the full log"
+msgstr "打開完整記錄"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "%s of %d GB"
+msgstr "%s／%d GB"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Not read yet"
+msgstr "仲未讀取"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Picked at start"
+msgstr "啟動時揀"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Not scheduled"
+msgstr "冇排程"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "A server command, such as list or time set day"
+msgstr "伺服器指令，例如 list 或者 time set day"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The server is not running."
+msgstr "伺服器冇運行緊。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Commands run as the server console, with every permission. Up and Down bring back earlier commands."
+msgstr "指令以伺服器控制台身份執行，擁有所有權限。上同下鍵可以叫返之前嘅指令。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Find a setting"
+msgstr "搵設定"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Undo last save"
+msgstr "還原上次儲存"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "There is no save to undo in this session."
+msgstr "今次冇儲存可以還原。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "The last save was undone. A running server picks it up when it restarts."
+msgstr "上次儲存已還原。運行緊嘅伺服器會喺重新啟動時採用。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Save changes"
+msgstr "儲存變更"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "This server has no server.properties yet; it writes one the first time it starts. Values saved here are used from then on."
+msgstr "呢部伺服器仲未有 server.properties；佢第一次啟動時會寫一個。喺呢度儲存嘅值會由嗰陣開始用。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Settings marked Live change at once while the server runs; the others need a restart."
+msgstr "標示「即時」嘅設定喺伺服器運行時即刻生效；其他要重新啟動。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Changes are written to server.properties when you save. Lines you did not change stay exactly as they were."
+msgstr "儲存時變更會寫入 server.properties。你冇改過嘅行會完全保持原樣。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Gameplay"
+msgstr "遊戲玩法"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "World"
+msgstr "世界"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Network"
+msgstr "網絡"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Performance"
+msgstr "效能"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Resource packs"
+msgstr "資源包"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "In use by another program"
+msgstr "俾另一個程式用緊"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Needs restart"
+msgstr "需要重新啟動"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Default: %s"
+msgstr "預設：%s"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Since %s"
+msgstr "由 %s 開始"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "%d settings this version does not know are kept exactly as written:"
+msgstr "%d 個呢個版本唔識嘅設定會完全照原樣保留："
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Some values cannot be used"
+msgstr "有啲值用唔到"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Nothing changed."
+msgstr "乜都冇改。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Saved %d changes; %d of them take effect when the server restarts."
+msgstr "已儲存 %d 項變更；其中 %d 項要伺服器重新啟動先生效。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Saved %d changes."
+msgstr "已儲存 %d 項變更。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Allowlist"
+msgstr "允許名單"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Operators"
+msgstr "管理員"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Bans"
+msgstr "封禁"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Player"
+msgstr "玩家"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Add..."
+msgstr "加入..."
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Set level"
+msgstr "設定等級"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Online now: %d"
+msgstr "而家在線：%d"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "The server is stopped."
+msgstr "伺服器已停止。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Level %d: %s"
+msgstr "等級 %d：%s"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "A player list file is not valid JSON; it is shown as found and is not rewritten here."
+msgstr "有個玩家名單檔案唔係有效嘅 JSON；照搵到嘅樣顯示，呢度唔會重寫佢。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Adding and removing go through the server, which looks the player up and writes its own lists."
+msgstr "加入同移除會經伺服器處理，佢會查找玩家同寫佢自己嘅名單。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Start the server to add players, so it can look them up. Removing works while it is stopped too."
+msgstr "啟動伺服器先可以加玩家，等佢可以查找佢哋。停止咗都可以移除。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Start the server first: it looks each new player up and writes the list itself."
+msgstr "請先啟動伺服器：佢會查找每個新玩家，同自己寫名單。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Add to the allowlist"
+msgstr "加入允許名單"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Make an operator"
+msgstr "設為管理員"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Ban a player"
+msgstr "封禁玩家"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Player name"
+msgstr "玩家名"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Reason (optional)"
+msgstr "原因（可選）"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Choose an operator in the Operators list first."
+msgstr "請先喺管理員名單揀一個管理員。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Stop the server to change an operator's level: it keeps the list in memory while it runs."
+msgstr "請先停止伺服器先改管理員等級：運行時佢會將名單保留喺記憶體。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Every folder here with a level.dat. The server runs the one named by level-name."
+msgstr "呢度每個有 level.dat 嘅資料夾。伺服器會運行 level-name 指定嗰個。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Run this world"
+msgstr "運行呢個世界"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Switching worlds takes effect at the next start. Nether and End folders of a Bukkit-style server travel with their world."
+msgstr "換世界要下次啟動先生效。Bukkit 類伺服器嘅地獄同終界資料夾會跟住佢哋嘅世界。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Runs on this server"
+msgstr "喺呢部伺服器運行"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "open now"
+msgstr "而家開緊"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Releases"
+msgstr "正式版"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Snapshots"
+msgstr "快照"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Old alpha and beta"
+msgstr "舊 Alpha 同 Beta"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Read the Mojang list"
+msgstr "讀取 Mojang 清單"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Released"
+msgstr "發佈日期"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Needs"
+msgstr "需要"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Switch to this version..."
+msgstr "轉用呢個版本..."
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Java %d, found"
+msgstr "Java %d，已搵到"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Java %d, not found"
+msgstr "Java %d，搵唔到"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Running this"
+msgstr "運行緊呢個"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Read the Mojang list to see every version."
+msgstr "讀取 Mojang 清單就睇到所有版本。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "%d versions in the Mojang list."
+msgstr "Mojang 清單有 %d 個版本。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "This is a %s server; switching versions here is for Vanilla servers."
+msgstr "呢部係 %s 伺服器；喺呢度轉版本只適用於原版伺服器。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Going back to an older version is not proven safe: worlds saved by a newer one may not load. A full backup is made before any switch."
+msgstr "退返舊版本未證實安全：新版本儲存嘅世界未必載入到。任何轉換之前都會先整完整備份。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Reading the Mojang version list"
+msgstr "讀取緊 Mojang 版本清單"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The version list could not be read: %s"
+msgstr "讀取唔到版本清單：%s"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Stop the server before switching versions."
+msgstr "轉版本之前請先停止伺服器。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "This is a %s server. Switching versions here is for Vanilla servers; use %s's own downloads."
+msgstr "呢部係 %s 伺服器。喺呢度轉版本只適用於原版伺服器；請用 %s 自己嘅下載。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Switch %s from %s to %s? A full backup is made first, and the current server file stays in the folder."
+msgstr "將 %s 由 %s 轉做 %s？會先整完整備份，而家嘅伺服器檔案會留喺資料夾。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "This goes back to an older version. Worlds saved by a newer version may not load; the backup lets you return."
+msgstr "呢個係退返舊版本。新版本儲存嘅世界未必載入到；備份可以俾你返轉頭。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Switch version"
+msgstr "轉版本"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Switching to %s"
+msgstr "轉緊做 %s"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Making a full backup first"
+msgstr "先整完整備份"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The backup failed, so nothing was switched: %s"
+msgstr "備份失敗，所以乜都冇轉：%s"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Downloading the server file"
+msgstr "下載緊伺服器檔案"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Downloading: %s of %s"
+msgstr "下載緊：%s／%s"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Backup"
+msgstr "備份"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Made"
+msgstr "整於"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Kind"
+msgstr "類型"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Restore..."
+msgstr "還原..."
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Delete..."
+msgstr "刪除..."
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Keep backups in..."
+msgstr "備份放喺..."
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Where every server's backups go (a folder per server)"
+msgstr "所有伺服器嘅備份放喺邊（每部伺服器一個資料夾）"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "A backup holds the worlds and the settings and player files. It is written under a temporary name, renamed when complete, and every file is read back and checked before it counts. While the server runs, saving pauses for the backup."
+msgstr "備份包括世界、設定同玩家檔案。佢會先用暫時名寫入，完成先改名，每個檔案讀返嚟檢查過先算數。伺服器運行時，備份期間會暫停儲存。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Backups go to %s"
+msgstr "備份放喺 %s"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Automatic"
+msgstr "自動"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "By hand"
+msgstr "手動"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Backing up %s"
+msgstr "備份緊 %s"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "%s of %s"
+msgstr "%s／%s"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The backup failed: %s"
+msgstr "備份失敗：%s"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Stop the server before restoring a backup."
+msgstr "還原備份之前請先停止伺服器。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Restore this backup"
+msgstr "還原呢個備份"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The worlds and files in %s replace the ones in the server folder. The current ones are kept beside them, renamed \"before restore\", so nothing is lost."
+msgstr "%s 入面嘅世界同檔案會取代伺服器資料夾嗰啲。而家嘅會改名做「before restore」放喺旁邊，乜都唔會唔見。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Restoring"
+msgstr "還原緊"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Restoring %s"
+msgstr "還原緊 %s"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Delete this backup"
+msgstr "刪除呢個備份"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "%s is deleted from the disk for good."
+msgstr "%s 會由磁碟永久刪除。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Back up every"
+msgstr "每隔"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "hours, keeping the newest"
+msgstr "小時備份一次，保留最新嘅"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "automatic backups"
+msgstr "個自動備份"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Restart daily at"
+msgstr "每日喺"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "warning players"
+msgstr "重新啟動，提前"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "minutes before"
+msgstr "分鐘提醒玩家"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Save schedule"
+msgstr "儲存排程"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Schedules run while Bambu Studio is open. A backup while the server runs pauses saving for the copy; a restart says so in chat first."
+msgstr "Bambu Studio 開住時排程先會運行。伺服器運行時備份會喺複製期間暫停儲存；重新啟動前會先喺聊天通知。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Next backup:"
+msgstr "下次備份："
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "not scheduled"
+msgstr "冇排程"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Next restart:"
+msgstr "下次重新啟動："
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Empty picks one at random"
+msgstr "留空就隨機揀一個"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "A new random seed"
+msgstr "一個新嘅隨機種子"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Flat"
+msgstr "平坦"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Large biomes"
+msgstr "巨型生態域"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Amplified"
+msgstr "極端地形"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Single biome"
+msgstr "單一生態域"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Survival"
+msgstr "生存"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Creative"
+msgstr "創造"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Adventure"
+msgstr "冒險"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Peaceful"
+msgstr "和平"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Easy"
+msgstr "簡單"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Hard"
+msgstr "困難"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Biome (flat and single biome)"
+msgstr "生態域（平坦同單一生態域）"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Structures"
+msgstr "結構"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Flat layers, top first"
+msgstr "平坦層，由頂層開始"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Add layer"
+msgstr "加一層"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Start from classic flat"
+msgstr "由經典平坦開始"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Lakes"
+msgstr "湖泊"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Features (trees, ores)"
+msgstr "地物（樹、礦石）"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Structures in the flat world"
+msgstr "平坦世界入面嘅結構"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Area to make ahead of time, in chunks, centred on spawn"
+msgstr "預先生成嘅範圍（區塊），以重生點為中心"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Centre X"
+msgstr "中心 X"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Centre Z"
+msgstr "中心 Z"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Game rules"
+msgstr "遊戲規則"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Write the world"
+msgstr "寫出世界"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "As a folder"
+msgstr "做資料夾"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "As a ZIP file"
+msgstr "做 ZIP 檔"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Where the new world goes"
+msgstr "新世界放喺邊"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "I accept the Minecraft EULA for this run"
+msgstr "我接受今次運行嘅 Minecraft EULA"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Make the world"
+msgstr "整世界"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Cancelling: the generation server is stopping..."
+msgstr "取消緊：生成用嘅伺服器停止緊..."
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Never overwrites: the world is made in a folder of its own with a server that only this PC can reach, then copied, or zipped under a temporary name and checked, before it counts as done."
+msgstr "永遠唔會覆蓋：世界會喺佢自己嘅資料夾，由一部只有呢部電腦連到嘅伺服器整出嚟，再複製，或者先用暫時名壓縮成 ZIP 再檢查，之後先算完成。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Thin lines every 4 chunks; thick lines mark the batches of 16 x 16 chunks the server makes one after another."
+msgstr "幼線每 4 個區塊一條；粗線標示伺服器逐批整嘅 16 x 16 區塊。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Makes a new world with %s %s, using this server's own server file, without touching %s's world."
+msgstr "用呢部伺服器自己嘅伺服器檔案整一個 %s %s 新世界，唔會掂到 %s 嘅世界。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Start this server once (or adopt one whose version can be read) so the generator knows which version makes the world."
+msgstr "請先啟動呢部伺服器一次（或者收編一部讀得到版本嘅），等產生器知道用邊個版本整世界。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "%d chunks (%d x %d blocks) in %d batches, about %s and %s"
+msgstr "%d 個區塊（%d x %d 格），分 %d 批，大約 %s 同 %s"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "0: only the area around spawn, as the server makes it on its own."
+msgstr "0：只有重生點附近，由伺服器自己整。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Accept the EULA for this run to make the world."
+msgstr "要接受今次運行嘅 EULA 先可以整世界。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Making a world runs a server, which needs Windows in this build."
+msgstr "整世界要運行伺服器，呢個版本要喺 Windows 先得。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "This server has no server file to make the world with."
+msgstr "呢部伺服器冇伺服器檔案可以用嚟整世界。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Java %d is needed to make a world with this version, and none was found."
+msgstr "用呢個版本整世界需要 Java %d，但係搵唔到。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Starting a server for this world..."
+msgstr "為呢個世界啟動緊伺服器..."
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Saving the world..."
+msgstr "儲存緊世界..."
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Batch %d of %d, %d chunks ready"
+msgstr "第 %d／%d 批，%d 個區塊已完成"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Stopping the generation server..."
+msgstr "停止緊生成用嘅伺服器..."
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "A batch took more than four minutes; stopping."
+msgstr "有一批用咗超過四分鐘；停止緊。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Cancelled; nothing was written."
+msgstr "已取消；乜都冇寫入。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "The generation server stopped early (exit code %d)."
+msgstr "生成用嘅伺服器提早停咗（結束代碼 %d）。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Writing the ZIP file and checking it..."
+msgstr "寫緊 ZIP 檔同檢查緊..."
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Copying the world..."
+msgstr "複製緊世界..."
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Done: %s"
+msgstr "完成：%s"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "How it ended"
+msgstr "點樣結束"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Every start, stop, setting, player change, backup, restore, version switch and world made here. The last 300 are kept."
+msgstr "喺呢度每次啟動、停止、設定、玩家變更、備份、還原、轉版本同整世界。保留最近 300 項。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "This server cannot start yet"
+msgstr "呢部伺服器仲未可以啟動"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Force stop the server"
+msgstr "強制停止伺服器"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The server process ends at once without saving. Whatever changed since its last save is lost, and a world can be damaged."
+msgstr "伺服器程序會即刻結束，唔會儲存。上次儲存之後嘅變更會唔見，世界可能會損壞。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Remove %s from this list? Its folder, worlds and backups stay where they are."
+msgstr "由呢個清單移除 %s？佢嘅資料夾、世界同備份會留喺原位。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Remove from list"
+msgstr "由清單移除"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "A folder with Minecraft servers in it (three levels are searched)"
+msgstr "一個有 Minecraft 伺服器嘅資料夾（會搜尋三層）"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Read the Mojang version list first (Versions, Read the Mojang list), so there is a version to choose."
+msgstr "請先讀取 Mojang 版本清單（版本、讀取 Mojang 清單），咁先有版本可以揀。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Create server"
+msgstr "建立伺服器"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The folder could not be made: %s"
+msgstr "整唔到資料夾：%s"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Creating %s"
+msgstr "建立緊 %s"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Reading the version record"
+msgstr "讀取緊版本紀錄"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Error: %s"
+msgstr "錯誤：%s"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Could not start again: %s"
+msgstr "重新啟動唔到：%s"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Backup failed: %s"
+msgstr "備份失敗：%s"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "This server"
+msgstr "呢部伺服器"

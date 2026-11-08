@@ -1,6 +1,6 @@
 ---
 translation-of: README.md
-source-sha256: ff4383e61e5e361fcb8878621e781b717d38bb4a4c65e345625b2c0bb5fe321e
+source-sha256: 69491b644048d560f0cdf4a23bae696d32515c9155d4235d15483718150f11a6
 review-status: agent-drafted
 ---
 
@@ -30,6 +30,7 @@ review-status: agent-drafted
 - [專注模式](attention-modes.md)
 - [畫板](drawing-board.md)
 - [虛擬磁碟](virtual-disks.md)
+- [Minecraft 伺服器](minecraft-servers.md)
 - [設定 Bambu Studio](practical-setup.md)
 - [應用內變更日誌查看器（幫助 ▸ 有咩新嘢）](changelog-viewer.md)
 - [準備側邊欄搜尋（設定 + 墨水插槽）](sidebar-search.md)

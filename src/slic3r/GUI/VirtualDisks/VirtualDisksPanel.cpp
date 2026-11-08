@@ -18,6 +18,7 @@
 #include "../Widgets/SpinInput.hpp"
 #include "../Widgets/StateColor.hpp"
 #include "../Widgets/SuperConfirmGate.hpp"
+#include "../Widgets/TextArea.hpp"
 #include "../Widgets/TextInput.hpp"
 
 #include "libslic3r/Utils.hpp"
@@ -261,9 +262,8 @@ public:
         });
         steps_row->Add(copy, 0);
         body->Add(steps_row, 0, wxEXPAND | wxTOP, FromDIP(12));
-        m_script = new wxTextCtrl(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(640), FromDIP(150)),
-                                  wxTE_MULTILINE | wxTE_READONLY | wxTE_DONTWRAP);
-        m_script->SetFont(Label::Mono_12);
+        m_script = new TextArea(this, wxEmptyString, wxSize(FromDIP(640), FromDIP(150)), wxTE_READONLY | wxTE_DONTWRAP);
+        m_script->SetMonospace(true);
         body->Add(m_script, 1, wxEXPAND | wxTOP, FromDIP(6));
 
         for (ComboBox *c : {m_preset, m_format, m_type, m_unit, m_block, m_sectors, m_style, m_fs, m_letter, m_which})
@@ -349,7 +349,7 @@ private:
     TextInput  *m_size = nullptr, *m_label = nullptr, *m_path = nullptr;
     ::CheckBox *m_quick = nullptr, *m_attach = nullptr;
     Label      *m_checks = nullptr;
-    wxTextCtrl *m_script = nullptr;
+    TextArea *m_script = nullptr;
 };
 
 class DropFiles : public wxFileDropTarget

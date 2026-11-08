@@ -1365,12 +1365,12 @@
     {
       "route": "windows/README.md",
       "title": "Windows features",
-      "sha256": "ff4383e61e5e361fcb8878621e781b717d38bb4a4c65e345625b2c0bb5fe321e"
+      "sha256": "69491b644048d560f0cdf4a23bae696d32515c9155d4235d15483718150f11a6"
     },
     {
       "route": "windows/README.yue_HK.md",
       "title": "Windows 功能",
-      "sha256": "0d446f762a457f28037251f727ceea075ea43909d575239e81fbb5619ff20dff"
+      "sha256": "8c0d20b1db898f8ee71df2c7b858a4a37239db365f298337c53a5c5db927338f"
     },
     {
       "route": "windows/action-sounds.md",
@@ -1605,12 +1605,12 @@
     {
       "route": "windows/every-feature.md",
       "title": "Every feature page",
-      "sha256": "7f3accfc1c13d23dd9c0a67a896201871a72f716b261330b34817f695f51dde3"
+      "sha256": "335e543441315d8ab625d4fdc193f8839cdd3af3be1697560e39d9a29e8bb714"
     },
     {
       "route": "windows/every-feature.yue_HK.md",
       "title": "全部功能頁",
-      "sha256": "18ae19202e469fdebdf758f47db8cb1f31177c74e11e54e6c34fb2326ca076c4"
+      "sha256": "05066f3fb2ed9e9cdcf817519af6f84d057c7aade8606f82e351fda6c5200b62"
     },
     {
       "route": "windows/express-print-mode.md",
@@ -1761,6 +1761,16 @@
       "route": "windows/menu-motion.yue_HK.md",
       "title": "選單動態效果",
       "sha256": "61bd0f5671eb638907ba3ddfca65f8709dae05e0e93288aa2e7bfa18579ff6ef"
+    },
+    {
+      "route": "windows/minecraft-servers.md",
+      "title": "Minecraft servers",
+      "sha256": "4166f6932750883ba9878a1a8f953bb6f908100bc083f4f939fed894e14fd651"
+    },
+    {
+      "route": "windows/minecraft-servers.yue_HK.md",
+      "title": "Minecraft 伺服器",
+      "sha256": "ea44aa6d955bc892a0ef58053b06e27927b5dd0949af70ffaffd2b40179d3783"
     },
     {
       "route": "windows/motion-temporal-capture.md",
@@ -2275,7 +2285,7 @@
       "bytes": 16430
     }
   ],
-  "bundle_sha256": "d434be1a9ec5cecb7e79eb6c09fb8907a3b4a3f0a368d0382276ed44835114b6",
+  "bundle_sha256": "64a6d7b021edcb52d6a196dfbcae8f4b8232a0662363808483762ffe44d47cb6",
   "unavailable_references": [
     {
       "source": "api/README.md",

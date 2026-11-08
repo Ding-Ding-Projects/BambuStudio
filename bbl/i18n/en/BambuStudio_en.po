@@ -35863,3 +35863,1702 @@ msgstr ""
 
 msgid "No printer chosen"
 msgstr ""
+
+msgid "Minecraft servers"
+msgstr ""
+
+msgid "Create, adopt and run Java servers: console, every setting, players, versions, backups, schedules and a world generator"
+msgstr ""
+
+msgid "Difficulty"
+msgstr ""
+
+msgid "How hard the world is: hunger, damage and which mobs spawn."
+msgstr ""
+
+msgid "Game mode"
+msgstr ""
+
+msgid "The mode new players start in."
+msgstr ""
+
+msgid "Force game mode"
+msgstr ""
+
+msgid "Puts every player back in the game mode above each time they join."
+msgstr ""
+
+msgid "Hardcore"
+msgstr ""
+
+msgid "One life: a player who dies becomes a spectator, and the difficulty stays hard."
+msgstr ""
+
+msgid "Player versus player"
+msgstr ""
+
+msgid "Whether players can hurt each other."
+msgstr ""
+
+msgid "Allow flight"
+msgstr ""
+
+msgid "Lets clients with a flying mod stay connected instead of being kicked for flying."
+msgstr ""
+
+msgid "Allow the Nether"
+msgstr ""
+
+msgid "Whether players can travel to the Nether."
+msgstr ""
+
+msgid "Spawn monsters"
+msgstr ""
+
+msgid "Whether hostile mobs spawn."
+msgstr ""
+
+msgid "Spawn animals"
+msgstr ""
+
+msgid "Whether animals spawn."
+msgstr ""
+
+msgid "Spawn villagers"
+msgstr ""
+
+msgid "Whether villagers spawn."
+msgstr ""
+
+msgid "Command blocks"
+msgstr ""
+
+msgid "Whether command blocks run their commands."
+msgstr ""
+
+msgid "Spawn protection"
+msgstr ""
+
+msgid "Blocks around spawn that only operators can change; 0 turns it off."
+msgstr ""
+
+msgid "Idle timeout"
+msgstr ""
+
+msgid "Minutes before an idle player is kicked; 0 never kicks."
+msgstr ""
+
+msgid "Pause when empty"
+msgstr ""
+
+msgid "Seconds with nobody online before the server pauses; 0 never pauses."
+msgstr ""
+
+msgid "World folder"
+msgstr ""
+
+msgid "The folder of the world the server runs."
+msgstr ""
+
+msgid "Seed"
+msgstr ""
+
+msgid "The seed a new world is made from; empty picks one at random."
+msgstr ""
+
+msgid "World type"
+msgstr ""
+
+msgid "How a new world is shaped: normal, flat, large biomes, amplified or a single biome."
+msgstr ""
+
+msgid "Generator settings"
+msgstr ""
+
+msgid "Extra settings for the world type, such as flat layers."
+msgstr ""
+
+msgid "Generate structures"
+msgstr ""
+
+msgid "Whether villages, temples and other structures are made in new chunks."
+msgstr ""
+
+msgid "World size limit"
+msgstr ""
+
+msgid "The largest radius, in blocks, the world border can reach."
+msgstr ""
+
+msgid "Data packs on"
+msgstr ""
+
+msgid "Data packs a new world starts with, separated by commas."
+msgstr ""
+
+msgid "Data packs off"
+msgstr ""
+
+msgid "Data packs a new world leaves out, separated by commas."
+msgstr ""
+
+msgid "Region compression"
+msgstr ""
+
+msgid "How world files are compressed."
+msgstr ""
+
+msgid "Max players"
+msgstr ""
+
+msgid "How many players can be online at once."
+msgstr ""
+
+msgid "Allowlist only"
+msgstr ""
+
+msgid "Only players on the allowlist can join."
+msgstr ""
+
+msgid "Enforce the allowlist"
+msgstr ""
+
+msgid "Kicks players who are online but not on the allowlist when it is reloaded."
+msgstr ""
+
+msgid "Online mode"
+msgstr ""
+
+msgid "Checks each player's account with Mojang; off lets anyone use any name."
+msgstr ""
+
+msgid "Operator level"
+msgstr ""
+
+msgid "The level /op gives a new operator, 0 to 4."
+msgstr ""
+
+msgid "Function level"
+msgstr ""
+
+msgid "The permission level functions run with, 1 to 4."
+msgstr ""
+
+msgid "Hide who is online"
+msgstr ""
+
+msgid "Leaves player names out of the server list."
+msgstr ""
+
+msgid "Require signed chat"
+msgstr ""
+
+msgid "Only players with a Mojang-signed profile key can join."
+msgstr ""
+
+msgid "Block proxies"
+msgstr ""
+
+msgid "Kicks players whose connection does not come from where their account says."
+msgstr ""
+
+msgid "Log addresses"
+msgstr ""
+
+msgid "Whether player IP addresses are written to the log."
+msgstr ""
+
+msgid "Console output to operators"
+msgstr ""
+
+msgid "Shows console command output to online operators."
+msgstr ""
+
+msgid "Remote console output to operators"
+msgstr ""
+
+msgid "Shows remote console command output to online operators."
+msgstr ""
+
+msgid "The port players connect to."
+msgstr ""
+
+msgid "Address to listen on"
+msgstr ""
+
+msgid "Leave empty to listen on every address of this PC."
+msgstr ""
+
+msgid "Message of the day"
+msgstr ""
+
+msgid "The line under the server's name in the server list; colour codes start with §."
+msgstr ""
+
+msgid "Show in the server list"
+msgstr ""
+
+msgid "Whether the server answers server list pings."
+msgstr ""
+
+msgid "Query protocol"
+msgstr ""
+
+msgid "Answers GameSpy4 queries on the query port."
+msgstr ""
+
+msgid "Query port"
+msgstr ""
+
+msgid "The port the query protocol listens on."
+msgstr ""
+
+msgid "Remote console"
+msgstr ""
+
+msgid "Lets tools send commands over the network with the password below."
+msgstr ""
+
+msgid "Remote console port"
+msgstr ""
+
+msgid "The port the remote console listens on."
+msgstr ""
+
+msgid "Remote console password"
+msgstr ""
+
+msgid "The password the remote console asks for. It is kept in this file in plain text."
+msgstr ""
+
+msgid "Compression threshold"
+msgstr ""
+
+msgid "Packets larger than this many bytes are compressed; -1 turns compression off."
+msgstr ""
+
+msgid "Packet rate limit"
+msgstr ""
+
+msgid "Packets a client may send each second before it is kicked; 0 has no limit."
+msgstr ""
+
+msgid "Native networking"
+msgstr ""
+
+msgid "Uses Linux's faster network transport where it can."
+msgstr ""
+
+msgid "Accept transfers"
+msgstr ""
+
+msgid "Lets players arrive from another server with /transfer."
+msgstr ""
+
+msgid "Bug report link"
+msgstr ""
+
+msgid "A link the game shows players for reporting problems with this server."
+msgstr ""
+
+msgid "View distance"
+msgstr ""
+
+msgid "How many chunks around each player are sent to them, 3 to 32."
+msgstr ""
+
+msgid "Simulation distance"
+msgstr ""
+
+msgid "How many chunks around each player keep running, 3 to 32."
+msgstr ""
+
+msgid "Entity range"
+msgstr ""
+
+msgid "How far away entities are sent to players, as a percentage."
+msgstr ""
+
+msgid "Watchdog"
+msgstr ""
+
+msgid "Milliseconds a single tick may take before the server stops itself; -1 turns this off."
+msgstr ""
+
+msgid "Write chunks at once"
+msgstr ""
+
+msgid "Writes each chunk before going on; safer, slower."
+msgstr ""
+
+msgid "Chained updates"
+msgstr ""
+
+msgid "How many block updates may chain before the rest are skipped."
+msgstr ""
+
+msgid "JMX monitoring"
+msgstr ""
+
+msgid "Exposes tick times to Java monitoring tools."
+msgstr ""
+
+msgid "Resource pack link"
+msgstr ""
+
+msgid "A link to a resource pack players are offered."
+msgstr ""
+
+msgid "Resource pack SHA-1"
+msgstr ""
+
+msgid "The pack's SHA-1, so players' games can check it."
+msgstr ""
+
+msgid "Resource pack id"
+msgstr ""
+
+msgid "A UUID that names the pack for players' games."
+msgstr ""
+
+msgid "Resource pack message"
+msgstr ""
+
+msgid "What players read when they are offered the pack."
+msgstr ""
+
+msgid "Require the pack"
+msgstr ""
+
+msgid "Players who decline the pack are disconnected."
+msgstr ""
+
+msgid "Text filtering"
+msgstr ""
+
+msgid "Settings for a chat filtering service."
+msgstr ""
+
+msgid "Use true or false."
+msgstr ""
+
+msgid "Use a whole number."
+msgstr ""
+
+msgid "Use {1} to {2}."
+msgstr ""
+
+msgid "Not one of this setting's values."
+msgstr ""
+
+msgid "Can build inside spawn protection."
+msgstr ""
+
+msgid "Also cheat commands and command blocks."
+msgstr ""
+
+msgid "Also kick, ban and make other operators."
+msgstr ""
+
+msgid "Can stop the server and change every setting."
+msgstr ""
+
+msgid "Not an operator."
+msgstr ""
+
+msgid "No Java was found. This server needs Java {1}."
+msgstr ""
+
+msgid "This version needs Java {1}; the chosen Java is {2}."
+msgstr ""
+
+msgid "The chosen Java did not say its version."
+msgstr ""
+
+msgid "The server file {1} is missing."
+msgstr ""
+
+msgid "The Minecraft EULA has not been accepted for this server."
+msgstr ""
+
+msgid "Give the server at least 256 MB to start with."
+msgstr ""
+
+msgid "The most memory is less than the memory it starts with."
+msgstr ""
+
+msgid "This PC has {1} GB; leave at least 1 GB for everything else."
+msgstr ""
+
+msgid "The server may use most of this PC's memory."
+msgstr ""
+
+msgid "The port must be 1 to 65535."
+msgstr ""
+
+msgid "Port {1} is already in use by another program."
+msgstr ""
+
+msgid "The typed arguments set the memory too; the last one Java reads wins."
+msgstr ""
+
+msgid "Choose the version that makes the world."
+msgstr ""
+
+msgid "This version cannot make this kind of world."
+msgstr ""
+
+msgid "A flat world needs at least one layer."
+msgstr ""
+
+msgid "Layer {1} is not a block id."
+msgstr ""
+
+msgid "Layer {1} must be at least 1 block tall."
+msgstr ""
+
+msgid "The layers are {1} blocks tall; this version allows {2}."
+msgstr ""
+
+msgid "Your own flat layers need 1.19 or newer; this version makes the classic flat world."
+msgstr ""
+
+msgid "The biome is not an id."
+msgstr ""
+
+msgid "Not a game mode."
+msgstr ""
+
+msgid "Not a difficulty."
+msgstr ""
+
+msgid "The area can be 0 to 1,000 chunks each way."
+msgstr ""
+
+msgid "Give the area both a width and a depth, or neither."
+msgstr ""
+
+msgid "Making an area ahead of time needs 1.19.4 or newer; this version makes the spawn area only."
+msgstr ""
+
+msgid "This version has no game rule {1}."
+msgstr ""
+
+msgid "{1} is true or false."
+msgstr ""
+
+msgid "{1} must be {2} to {3}."
+msgstr ""
+
+msgid "Advancements are announced in chat."
+msgstr ""
+
+msgid "Some blocks destroyed by block explosions drop nothing."
+msgstr ""
+
+msgid "Command blocks tell operators what they did."
+msgstr ""
+
+msgid "How many blocks one command may change."
+msgstr ""
+
+msgid "The server stops checking how fast players fly with elytra."
+msgstr ""
+
+msgid "The server stops checking how fast players move."
+msgstr ""
+
+msgid "No raids happen."
+msgstr ""
+
+msgid "Time of day moves on."
+msgstr ""
+
+msgid "Minecarts, boats and other entities drop items."
+msgstr ""
+
+msgid "Fire spreads and burns out."
+msgstr ""
+
+msgid "Players respawn without the death screen."
+msgstr ""
+
+msgid "Phantoms appear for players who do not sleep."
+msgstr ""
+
+msgid "Players can only craft recipes they have unlocked."
+msgstr ""
+
+msgid "Mobs drop items and experience."
+msgstr ""
+
+msgid "Mobs spawn on their own."
+msgstr ""
+
+msgid "Pillager patrols spawn."
+msgstr ""
+
+msgid "Broken blocks drop items."
+msgstr ""
+
+msgid "Wandering traders spawn."
+msgstr ""
+
+msgid "Vines spread to nearby blocks."
+msgstr ""
+
+msgid "Wardens spawn."
+msgstr ""
+
+msgid "Weather changes."
+msgstr ""
+
+msgid "Players can drown."
+msgstr ""
+
+msgid "Thrown ender pearls vanish when their player dies."
+msgstr ""
+
+msgid "Players take fall damage."
+msgstr ""
+
+msgid "Players take fire damage."
+msgstr ""
+
+msgid "Angry neutral mobs calm down when their target dies."
+msgstr ""
+
+msgid "Players take freezing damage in powder snow."
+msgstr ""
+
+msgid "Some sounds are heard by everyone."
+msgstr ""
+
+msgid "Players keep their items and experience when they die."
+msgstr ""
+
+msgid "Flowing lava between two sources becomes a source."
+msgstr ""
+
+msgid "Operator commands are written to the log."
+msgstr ""
+
+msgid "How many commands one chain may run."
+msgstr ""
+
+msgid "How many contexts one command may split into."
+msgstr ""
+
+msgid "Mobs squeezed together past this number take damage."
+msgstr ""
+
+msgid "Some blocks destroyed by mob explosions drop nothing."
+msgstr ""
+
+msgid "Mobs can change blocks and pick up items."
+msgstr ""
+
+msgid "Players heal when they are not hungry."
+msgstr ""
+
+msgid "Ticks a creative player waits in a Nether portal."
+msgstr ""
+
+msgid "Ticks a player waits in a Nether portal."
+msgstr ""
+
+msgid "The share of players who must sleep to skip the night."
+msgstr ""
+
+msgid "Projectiles can break blocks such as decorated pots."
+msgstr ""
+
+msgid "How fast crops grow, leaves fall and other random changes happen."
+msgstr ""
+
+msgid "The debug screen shows less."
+msgstr ""
+
+msgid "Players see what their commands did."
+msgstr ""
+
+msgid "Deaths are announced in chat."
+msgstr ""
+
+msgid "How many layers snow builds up to while it snows."
+msgstr ""
+
+msgid "How many chunks around spawn stay loaded."
+msgstr ""
+
+msgid "How far from spawn new players appear."
+msgstr ""
+
+msgid "Spectators make new chunks."
+msgstr ""
+
+msgid "Some blocks destroyed by TNT drop nothing."
+msgstr ""
+
+msgid "Angry neutral mobs attack every player nearby."
+msgstr ""
+
+msgid "Flowing water between two sources becomes a source."
+msgstr ""
+
+msgid "Plains"
+msgstr ""
+
+msgid "Sunflower plains"
+msgstr ""
+
+msgid "Snowy plains"
+msgstr ""
+
+msgid "Ice spikes"
+msgstr ""
+
+msgid "Desert"
+msgstr ""
+
+msgid "Swamp"
+msgstr ""
+
+msgid "Mangrove swamp"
+msgstr ""
+
+msgid "Forest"
+msgstr ""
+
+msgid "Flower forest"
+msgstr ""
+
+msgid "Birch forest"
+msgstr ""
+
+msgid "Dark forest"
+msgstr ""
+
+msgid "Pale garden"
+msgstr ""
+
+msgid "Old growth birch forest"
+msgstr ""
+
+msgid "Old growth pine taiga"
+msgstr ""
+
+msgid "Old growth spruce taiga"
+msgstr ""
+
+msgid "Taiga"
+msgstr ""
+
+msgid "Snowy taiga"
+msgstr ""
+
+msgid "Savanna"
+msgstr ""
+
+msgid "Savanna plateau"
+msgstr ""
+
+msgid "Windswept hills"
+msgstr ""
+
+msgid "Windswept forest"
+msgstr ""
+
+msgid "Windswept savanna"
+msgstr ""
+
+msgid "Jungle"
+msgstr ""
+
+msgid "Sparse jungle"
+msgstr ""
+
+msgid "Bamboo jungle"
+msgstr ""
+
+msgid "Badlands"
+msgstr ""
+
+msgid "Eroded badlands"
+msgstr ""
+
+msgid "Wooded badlands"
+msgstr ""
+
+msgid "Meadow"
+msgstr ""
+
+msgid "Cherry grove"
+msgstr ""
+
+msgid "Grove"
+msgstr ""
+
+msgid "Snowy slopes"
+msgstr ""
+
+msgid "Frozen peaks"
+msgstr ""
+
+msgid "Jagged peaks"
+msgstr ""
+
+msgid "Stony peaks"
+msgstr ""
+
+msgid "River"
+msgstr ""
+
+msgid "Frozen river"
+msgstr ""
+
+msgid "Beach"
+msgstr ""
+
+msgid "Snowy beach"
+msgstr ""
+
+msgid "Stony shore"
+msgstr ""
+
+msgid "Warm ocean"
+msgstr ""
+
+msgid "Lukewarm ocean"
+msgstr ""
+
+msgid "Ocean"
+msgstr ""
+
+msgid "Deep ocean"
+msgstr ""
+
+msgid "Cold ocean"
+msgstr ""
+
+msgid "Frozen ocean"
+msgstr ""
+
+msgid "Mushroom fields"
+msgstr ""
+
+msgid "Dripstone caves"
+msgstr ""
+
+msgid "Lush caves"
+msgstr ""
+
+msgid "Deep dark"
+msgstr ""
+
+msgid "Villages"
+msgstr ""
+
+msgid "Strongholds"
+msgstr ""
+
+msgid "Mineshafts"
+msgstr ""
+
+msgid "Ancient cities"
+msgstr ""
+
+msgid "Trial chambers"
+msgstr ""
+
+msgid "Shipwrecks"
+msgstr ""
+
+msgid "Woodland mansions"
+msgstr ""
+
+msgid "Ruined portals"
+msgstr ""
+
+msgid "Desert pyramids"
+msgstr ""
+
+msgid "Jungle temples"
+msgstr ""
+
+msgid "Swamp huts"
+msgstr ""
+
+msgid "Igloos"
+msgstr ""
+
+msgid "Pillager outposts"
+msgstr ""
+
+msgid "Ocean monuments"
+msgstr ""
+
+msgid "Ocean ruins"
+msgstr ""
+
+msgid "Buried treasure"
+msgstr ""
+
+msgid "Trail ruins"
+msgstr ""
+
+msgid "Nether fortresses and bastions"
+msgstr ""
+
+msgid "Nether fossils"
+msgstr ""
+
+msgid "End cities"
+msgstr ""
+
+msgid "Grass block"
+msgstr ""
+
+msgid "Dirt"
+msgstr ""
+
+msgid "Coarse dirt"
+msgstr ""
+
+msgid "Stone"
+msgstr ""
+
+msgid "Deepslate"
+msgstr ""
+
+msgid "Bedrock"
+msgstr ""
+
+msgid "Sand"
+msgstr ""
+
+msgid "Sandstone"
+msgstr ""
+
+msgid "Gravel"
+msgstr ""
+
+msgid "Snow block"
+msgstr ""
+
+msgid "Water"
+msgstr ""
+
+msgid "Lava"
+msgstr ""
+
+msgid "Air"
+msgstr ""
+
+msgid "Clay"
+msgstr ""
+
+msgid "Moss block"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%lld min"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%lld h %lld min"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Started in %.1f s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s joined"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s left"
+msgstr ""
+
+msgid "The port is in use by another program"
+msgstr ""
+
+msgid "The server asks for the EULA to be accepted"
+msgstr ""
+
+
+#, possible-c-format, possible-boost-format
+msgid "Stopped (exit code %d)"
+msgstr ""
+
+
+msgid "That server is no longer in the list."
+msgstr ""
+
+msgid "The server is already running."
+msgstr ""
+
+msgid "Running a server needs Windows in this build."
+msgstr ""
+
+msgid "Another program has this server's world open. Stop it there first."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "-- Starting with %s --"
+msgstr ""
+
+msgid "Starting"
+msgstr ""
+
+msgid "Restarting"
+msgstr ""
+
+msgid "Stopping safely"
+msgstr ""
+
+msgid "Force stopped"
+msgstr ""
+
+msgid "A backup of this server is already being made."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Backup made, %s, checked"
+msgstr ""
+
+
+#, possible-c-format, possible-boost-format
+msgid "The server restarts in %d minutes."
+msgstr ""
+
+msgid "Create a Minecraft server"
+msgstr ""
+
+msgid "Downloads the official server file from Mojang, checks its SHA-1, and sets up a new folder. Nothing outside that folder changes."
+msgstr ""
+
+msgid "My server"
+msgstr ""
+
+msgid "Where the server folder goes"
+msgstr ""
+
+msgid "In the folder"
+msgstr ""
+
+msgid "Most memory (MB)"
+msgstr ""
+
+msgid "I accept the Minecraft EULA for this server"
+msgstr ""
+
+msgid "Read the EULA"
+msgstr ""
+
+msgid "That folder already has files in it; choose another name."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The server goes into %s."
+msgstr ""
+
+msgid "Adopt servers"
+msgstr ""
+
+msgid "Found servers stay untouched: adopting one adds it to this list and changes nothing in its folder."
+msgstr ""
+
+msgid "(already in the list)"
+msgstr ""
+
+msgid "No server folders were found there."
+msgstr ""
+
+msgid "Adopt"
+msgstr ""
+
+msgid "Only the spawn area"
+msgstr ""
+
+msgid "Create, adopt and run Java servers on this PC. Every setting has its own control."
+msgstr ""
+
+msgid "Find and adopt..."
+msgstr ""
+
+msgid "Create server..."
+msgstr ""
+
+msgid "Server"
+msgstr ""
+
+msgid "Stop safely"
+msgstr ""
+
+msgid "Restart"
+msgstr ""
+
+msgid "Force stop..."
+msgstr ""
+
+msgid "Back up now"
+msgstr ""
+
+msgid "Remove from list..."
+msgstr ""
+
+msgid "Console"
+msgstr ""
+
+msgid "Properties"
+msgstr ""
+
+msgid "Players"
+msgstr ""
+
+msgid "Worlds"
+msgstr ""
+
+msgid "Versions"
+msgstr ""
+
+msgid "Schedule"
+msgstr ""
+
+msgid "World generator"
+msgstr ""
+
+msgid "Cancelling..."
+msgstr ""
+
+msgid "Stopped"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Running, %d online"
+msgstr ""
+
+msgid "No Java was found on this PC. Current versions need Java 21: install it from adoptium.net or any Java vendor, then use Find Java again on a server's Overview."
+msgstr ""
+
+msgid "Java here:"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%llu GB memory"
+msgstr ""
+
+msgid "Running servers needs Windows in this build."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s, process %lu"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "up %s"
+msgstr ""
+
+msgid "Memory"
+msgstr ""
+
+msgid "Up for"
+msgstr ""
+
+msgid "Java"
+msgstr ""
+
+msgid "Next backup"
+msgstr ""
+
+msgid "Next restart"
+msgstr ""
+
+msgid "Recent events"
+msgstr ""
+
+msgid "Find Java again"
+msgstr ""
+
+msgid "Open the full log"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s of %d GB"
+msgstr ""
+
+msgid "Not read yet"
+msgstr ""
+
+msgid "Picked at start"
+msgstr ""
+
+msgid "Not scheduled"
+msgstr ""
+
+msgid "A server command, such as list or time set day"
+msgstr ""
+
+msgid "The server is not running."
+msgstr ""
+
+msgid "Commands run as the server console, with every permission. Up and Down bring back earlier commands."
+msgstr ""
+
+msgid "Find a setting"
+msgstr ""
+
+msgid "Undo last save"
+msgstr ""
+
+msgid "There is no save to undo in this session."
+msgstr ""
+
+msgid "The last save was undone. A running server picks it up when it restarts."
+msgstr ""
+
+msgid "Save changes"
+msgstr ""
+
+msgid "This server has no server.properties yet; it writes one the first time it starts. Values saved here are used from then on."
+msgstr ""
+
+msgid "Settings marked Live change at once while the server runs; the others need a restart."
+msgstr ""
+
+msgid "Changes are written to server.properties when you save. Lines you did not change stay exactly as they were."
+msgstr ""
+
+msgid "Gameplay"
+msgstr ""
+
+msgid "World"
+msgstr ""
+
+msgid "Network"
+msgstr ""
+
+msgid "Performance"
+msgstr ""
+
+msgid "Resource packs"
+msgstr ""
+
+msgid "In use by another program"
+msgstr ""
+
+msgid "Needs restart"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Default: %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Since %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%d settings this version does not know are kept exactly as written:"
+msgstr ""
+
+msgid "Some values cannot be used"
+msgstr ""
+
+msgid "Nothing changed."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Saved %d changes; %d of them take effect when the server restarts."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Saved %d changes."
+msgstr ""
+
+msgid "Allowlist"
+msgstr ""
+
+msgid "Operators"
+msgstr ""
+
+msgid "Bans"
+msgstr ""
+
+msgid "Player"
+msgstr ""
+
+msgid "Add..."
+msgstr ""
+
+msgid "Set level"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Online now: %d"
+msgstr ""
+
+msgid "The server is stopped."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Level %d: %s"
+msgstr ""
+
+msgid "A player list file is not valid JSON; it is shown as found and is not rewritten here."
+msgstr ""
+
+msgid "Adding and removing go through the server, which looks the player up and writes its own lists."
+msgstr ""
+
+msgid "Start the server to add players, so it can look them up. Removing works while it is stopped too."
+msgstr ""
+
+msgid "Start the server first: it looks each new player up and writes the list itself."
+msgstr ""
+
+msgid "Add to the allowlist"
+msgstr ""
+
+msgid "Make an operator"
+msgstr ""
+
+msgid "Ban a player"
+msgstr ""
+
+msgid "Player name"
+msgstr ""
+
+msgid "Reason (optional)"
+msgstr ""
+
+msgid "Choose an operator in the Operators list first."
+msgstr ""
+
+msgid "Stop the server to change an operator's level: it keeps the list in memory while it runs."
+msgstr ""
+
+msgid "Every folder here with a level.dat. The server runs the one named by level-name."
+msgstr ""
+
+msgid "Run this world"
+msgstr ""
+
+msgid "Switching worlds takes effect at the next start. Nether and End folders of a Bukkit-style server travel with their world."
+msgstr ""
+
+msgid "Runs on this server"
+msgstr ""
+
+msgid "open now"
+msgstr ""
+
+msgid "Releases"
+msgstr ""
+
+msgid "Snapshots"
+msgstr ""
+
+msgid "Old alpha and beta"
+msgstr ""
+
+msgid "Read the Mojang list"
+msgstr ""
+
+msgid "Released"
+msgstr ""
+
+msgid "Needs"
+msgstr ""
+
+
+msgid "Switch to this version..."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Java %d, found"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Java %d, not found"
+msgstr ""
+
+msgid "Running this"
+msgstr ""
+
+msgid "Read the Mojang list to see every version."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%d versions in the Mojang list."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "This is a %s server; switching versions here is for Vanilla servers."
+msgstr ""
+
+msgid "Going back to an older version is not proven safe: worlds saved by a newer one may not load. A full backup is made before any switch."
+msgstr ""
+
+msgid "Reading the Mojang version list"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The version list could not be read: %s"
+msgstr ""
+
+msgid "Stop the server before switching versions."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "This is a %s server. Switching versions here is for Vanilla servers; use %s's own downloads."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Switch %s from %s to %s? A full backup is made first, and the current server file stays in the folder."
+msgstr ""
+
+msgid "This goes back to an older version. Worlds saved by a newer version may not load; the backup lets you return."
+msgstr ""
+
+msgid "Switch version"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Switching to %s"
+msgstr ""
+
+msgid "Making a full backup first"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The backup failed, so nothing was switched: %s"
+msgstr ""
+
+msgid "Downloading the server file"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Downloading: %s of %s"
+msgstr ""
+
+msgid "Backup"
+msgstr ""
+
+msgid "Made"
+msgstr ""
+
+msgid "Kind"
+msgstr ""
+
+msgid "Restore..."
+msgstr ""
+
+msgid "Delete..."
+msgstr ""
+
+msgid "Keep backups in..."
+msgstr ""
+
+msgid "Where every server's backups go (a folder per server)"
+msgstr ""
+
+msgid "A backup holds the worlds and the settings and player files. It is written under a temporary name, renamed when complete, and every file is read back and checked before it counts. While the server runs, saving pauses for the backup."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Backups go to %s"
+msgstr ""
+
+msgid "Automatic"
+msgstr ""
+
+msgid "By hand"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Backing up %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s of %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The backup failed: %s"
+msgstr ""
+
+msgid "Stop the server before restoring a backup."
+msgstr ""
+
+msgid "Restore this backup"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The worlds and files in %s replace the ones in the server folder. The current ones are kept beside them, renamed \"before restore\", so nothing is lost."
+msgstr ""
+
+msgid "Restoring"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Restoring %s"
+msgstr ""
+
+msgid "Delete this backup"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s is deleted from the disk for good."
+msgstr ""
+
+msgid "Back up every"
+msgstr ""
+
+msgid "hours, keeping the newest"
+msgstr ""
+
+msgid "automatic backups"
+msgstr ""
+
+msgid "Restart daily at"
+msgstr ""
+
+msgid "warning players"
+msgstr ""
+
+msgid "minutes before"
+msgstr ""
+
+msgid "Save schedule"
+msgstr ""
+
+msgid "Schedules run while Bambu Studio is open. A backup while the server runs pauses saving for the copy; a restart says so in chat first."
+msgstr ""
+
+msgid "Next backup:"
+msgstr ""
+
+msgid "not scheduled"
+msgstr ""
+
+msgid "Next restart:"
+msgstr ""
+
+msgid "Empty picks one at random"
+msgstr ""
+
+msgid "A new random seed"
+msgstr ""
+
+msgid "Flat"
+msgstr ""
+
+msgid "Large biomes"
+msgstr ""
+
+msgid "Amplified"
+msgstr ""
+
+msgid "Single biome"
+msgstr ""
+
+msgid "Survival"
+msgstr ""
+
+msgid "Creative"
+msgstr ""
+
+msgid "Adventure"
+msgstr ""
+
+msgid "Peaceful"
+msgstr ""
+
+msgid "Easy"
+msgstr ""
+
+msgid "Hard"
+msgstr ""
+
+msgid "Biome (flat and single biome)"
+msgstr ""
+
+msgid "Structures"
+msgstr ""
+
+msgid "Flat layers, top first"
+msgstr ""
+
+msgid "Add layer"
+msgstr ""
+
+msgid "Start from classic flat"
+msgstr ""
+
+msgid "Lakes"
+msgstr ""
+
+msgid "Features (trees, ores)"
+msgstr ""
+
+msgid "Structures in the flat world"
+msgstr ""
+
+msgid "Area to make ahead of time, in chunks, centred on spawn"
+msgstr ""
+
+msgid "Centre X"
+msgstr ""
+
+msgid "Centre Z"
+msgstr ""
+
+msgid "Game rules"
+msgstr ""
+
+msgid "Write the world"
+msgstr ""
+
+msgid "As a folder"
+msgstr ""
+
+msgid "As a ZIP file"
+msgstr ""
+
+msgid "Where the new world goes"
+msgstr ""
+
+msgid "I accept the Minecraft EULA for this run"
+msgstr ""
+
+msgid "Make the world"
+msgstr ""
+
+msgid "Cancelling: the generation server is stopping..."
+msgstr ""
+
+msgid "Never overwrites: the world is made in a folder of its own with a server that only this PC can reach, then copied, or zipped under a temporary name and checked, before it counts as done."
+msgstr ""
+
+msgid "Thin lines every 4 chunks; thick lines mark the batches of 16 x 16 chunks the server makes one after another."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Makes a new world with %s %s, using this server's own server file, without touching %s's world."
+msgstr ""
+
+msgid "Start this server once (or adopt one whose version can be read) so the generator knows which version makes the world."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%d chunks (%d x %d blocks) in %d batches, about %s and %s"
+msgstr ""
+
+msgid "0: only the area around spawn, as the server makes it on its own."
+msgstr ""
+
+msgid "Accept the EULA for this run to make the world."
+msgstr ""
+
+msgid "Making a world runs a server, which needs Windows in this build."
+msgstr ""
+
+msgid "This server has no server file to make the world with."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Java %d is needed to make a world with this version, and none was found."
+msgstr ""
+
+msgid "Starting a server for this world..."
+msgstr ""
+
+msgid "Saving the world..."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Batch %d of %d, %d chunks ready"
+msgstr ""
+
+msgid "Stopping the generation server..."
+msgstr ""
+
+msgid "A batch took more than four minutes; stopping."
+msgstr ""
+
+msgid "Cancelled; nothing was written."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The generation server stopped early (exit code %d)."
+msgstr ""
+
+msgid "Writing the ZIP file and checking it..."
+msgstr ""
+
+msgid "Copying the world..."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Done: %s"
+msgstr ""
+
+msgid "How it ended"
+msgstr ""
+
+msgid "Every start, stop, setting, player change, backup, restore, version switch and world made here. The last 300 are kept."
+msgstr ""
+
+msgid "This server cannot start yet"
+msgstr ""
+
+msgid "Force stop the server"
+msgstr ""
+
+msgid "The server process ends at once without saving. Whatever changed since its last save is lost, and a world can be damaged."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Remove %s from this list? Its folder, worlds and backups stay where they are."
+msgstr ""
+
+msgid "Remove from list"
+msgstr ""
+
+msgid "A folder with Minecraft servers in it (three levels are searched)"
+msgstr ""
+
+msgid "Read the Mojang version list first (Versions, Read the Mojang list), so there is a version to choose."
+msgstr ""
+
+msgid "Create server"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The folder could not be made: %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Creating %s"
+msgstr ""
+
+msgid "Reading the version record"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Error: %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Could not start again: %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Backup failed: %s"
+msgstr ""
+
+msgid "This server"
+msgstr ""

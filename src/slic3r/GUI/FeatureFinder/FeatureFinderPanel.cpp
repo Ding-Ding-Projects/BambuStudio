@@ -164,8 +164,10 @@ void FeatureFinderPanel::build_filters(wxBoxSizer *root)
     add_filter("", wxString::Format(_L("All %d"), int(FeatureFinder::features().size())));
     for (const FeatureFinder::Category &c : FeatureFinder::categories())
         add_filter(c.id, wxString::Format("%s %d", _(c.title), int(FeatureFinder::count_in(c.id))));
-    add_filter(FeatureFinder::kNotBuiltFilter,
-               wxString::Format(_L("Not built yet %d"), int(FeatureFinder::count_state(State::NotBuilt))));
+    // Only while something is still designed but not built: an empty chip says nothing.
+    if (FeatureFinder::count_state(State::NotBuilt) > 0)
+        add_filter(FeatureFinder::kNotBuiltFilter,
+                   wxString::Format(_L("Not built yet %d"), int(FeatureFinder::count_state(State::NotBuilt))));
     row->AddStretchSpacer(1);
 
     auto *sort_label = new Label(this, Label::Body_13, _L("Sort"));

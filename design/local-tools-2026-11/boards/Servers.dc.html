@@ -15,7 +15,7 @@
 </helmet>
 <div class="pg" style="">
   <div class="row wrap">
-    <div class="grow"><div class="h1">Minecraft servers</div><div class="sub">Create, adopt and run Java and Bedrock servers on this PC, in Docker, or on machines you reach over SSH. Every setting has its own control.</div></div>
+    <div class="grow"><div class="h1">Minecraft servers</div><div class="sub">Create, adopt and run Java and Bedrock servers on this PC, in Docker, or on machines you reach over SSH. Every setting has its own control.</div><div class="note" style="margin-top:4px">As built: Java servers on this PC. Create (Vanilla from the Mojang list, SHA-1 checked), find and adopt, start with every check, stop safely, restart, force stop, overview, console, every property with Live and Needs restart, players, worlds, versions (Vanilla, a full backup first), backups checked as zips, restore, schedules, the world generator in batches, and history. Parts marked not built yet are still to come.</div></div>
     <button class="btn"><span class="ms" aria-hidden="true">travel_explore</span>Find and adopt</button>
     <button class="btn p"><span class="ms" aria-hidden="true">add</span>Create server</button>
   </div>
@@ -24,25 +24,25 @@
       <div class="lbl" style="padding:4px 8px">This PC</div>
       <a href="#" class="sv on" aria-current="page"><span class="dot" style="background:#6fdc98"></span><span class="grow">Family survival<br><span class="note">Java 1.21.4 · Paper · 2 players</span></span></a>
       <a href="#" class="sv"><span class="dot" style="background:#7c8a81"></span><span class="grow">Old school<br><span class="note">Java 1.12.2 · stopped</span></span></a>
-      <div class="lbl" style="padding:10px 8px 4px">Docker on this PC</div>
+      <div class="note" style="padding:10px 8px 0">Docker, SSH and Bedrock: not built yet</div><div class="lbl" style="padding:4px 8px 4px">Docker on this PC</div>
       <a href="#" class="sv"><span class="dot" style="background:#7c8a81"></span><span class="grow">Creative tests<br><span class="note">Snapshot 25w04a · stopped</span></span></a>
       <div class="lbl" style="padding:10px 8px 4px">farm-pi.local over SSH</div>
       <a href="#" class="sv"><span class="dot" style="background:#ffb870"></span><span class="grow">Bedrock island<br><span class="note warn">Connection lost 23:47 · was running</span></span></a>
       <div class="lbl" style="padding:10px 8px 4px">Docker on farm-pi.local</div>
       <a href="#" class="sv"><span class="dot" style="background:#6fdc98"></span><span class="grow">Lobby proxy<br><span class="note">Velocity · 2 backends</span></span></a>
-      <div class="well" style="margin-top:auto"><div class="note">Lost connection is not the same as stopped. The server may still be running; reconnecting checks before anything changes.</div><button class="btn" style="align-self:flex-start">Reconnect</button></div>
+      <div class="well" style="margin-top:auto"><div class="note">Lost connection is not the same as stopped. The server may still be running; reconnecting checks before anything changes. (Not built yet: it comes with SSH.)</div><button class="btn" style="align-self:flex-start">Reconnect</button></div>
     </nav>
     <main style="display:flex;flex-direction:column;gap:12px;min-width:0">
       <section class="card">
         <div class="row wrap"><span class="dot" style="background:#6fdc98;width:14px;height:14px;border-radius:7px"></span><div class="grow"><div class="h2">Family survival</div><div class="note">java.exe, process 14820 · localhost:25565 · up 1 h 12 m · D:\Servers\family</div></div><button class="btn"><span class="ms" aria-hidden="true">schedule</span>Schedule</button><button class="btn"><span class="ms" aria-hidden="true">backup</span>Back up now</button><button class="btn"><span class="ms" aria-hidden="true">restart_alt</span>Restart</button><button class="btn t"><span class="ms" aria-hidden="true">stop_circle</span>Stop safely</button></div>
-        <nav class="tabs" aria-label="Server sections"><a href="#" class="on">Overview</a><a href="#">Console</a><a href="#">Properties</a><a href="#">Players</a><a href="#">Worlds</a><a href="#">Versions</a><a href="#">Plugins and packs</a><a href="#">Backups</a><a href="#">World generator</a></nav>
+        <nav class="tabs" aria-label="Server sections"><a href="#" class="on">Overview</a><a href="#">Console</a><a href="#">Properties</a><a href="#">Players</a><a href="#">Worlds</a><a href="#">Versions</a><a href="#">Plugins and packs</a><a href="#">Backups</a><a href="#">World generator</a></nav><div class="note">Built: Overview, Console, Properties, Players, Worlds, Versions, Backups, Schedule, World generator and History. Plugins and packs: not built yet.</div>
         <div class="g4">
           <div class="well"><div class="lbl">Players</div><div class="row" style="align-items:baseline"><span class="num" style="font-size:26px;font-weight:500">2</span><span class="note">of 10 · Mei, Kit</span></div></div>
-          <div class="well"><div class="lbl">Ticks per second</div><div class="row" style="align-items:baseline"><span class="num" style="font-size:26px;font-weight:500">20.0</span><span class="note ok">Steady</span></div></div>
+          <div class="well"><div class="lbl">Ticks per second <span class="note">(not built yet)</span></div><div class="row" style="align-items:baseline"><span class="num" style="font-size:26px;font-weight:500">20.0</span><span class="note ok">Steady</span></div></div>
           <div class="well"><div class="lbl">Memory</div><div class="row" style="align-items:baseline"><span class="num" style="font-size:26px;font-weight:500">1.9</span><span class="note">of 4 GB · rising slowly</span></div></div>
           <div class="well"><div class="lbl">Next backup</div><div class="row" style="align-items:baseline"><span class="num" style="font-size:26px;font-weight:500">06:30</span><span class="note">then every 6 h</span></div></div>
         </div>
-        <div style="position:relative;height:150px;border-radius:14px;background:#141a17;overflow:hidden"><svg width="100%" height="100%" viewBox="0 0 900 150" preserveAspectRatio="none" role="img" aria-label="Memory over the last hour, rising slowly from 1.6 to 1.9 gigabytes" style="position:absolute;inset:0"><defs><linearGradient id="mem" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8ab4ff" stop-opacity=".28"></stop><stop offset="1" stop-color="#8ab4ff" stop-opacity="0"></stop></linearGradient></defs><path d="M0 92 C 120 90, 240 84, 360 80 S 600 70, 720 66 S 850 60, 880 58 L 880 150 L 0 150 Z" fill="url(#mem)"></path><path d="M0 92 C 120 90, 240 84, 360 80 S 600 70, 720 66 S 850 60, 880 58" fill="none" stroke="#8ab4ff" stroke-width="2.5"></path><circle cx="880" cy="58" r="5" fill="#8ab4ff"></circle></svg><span class="mono" style="position:absolute;right:12px;top:30px;padding:3px 8px;border-radius:10px;background:#8ab4ff;color:#0b1e3d;font-size:12px">1.9 GB</span><span class="note" style="position:absolute;left:12px;top:10px">Memory, last hour</span></div>
+        <div style="position:relative;height:150px;border-radius:14px;background:#141a17;overflow:hidden"><svg width="100%" height="100%" viewBox="0 0 900 150" preserveAspectRatio="none" role="img" aria-label="Memory over the last hour, rising slowly from 1.6 to 1.9 gigabytes" style="position:absolute;inset:0"><defs><linearGradient id="mem" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8ab4ff" stop-opacity=".28"></stop><stop offset="1" stop-color="#8ab4ff" stop-opacity="0"></stop></linearGradient></defs><path d="M0 92 C 120 90, 240 84, 360 80 S 600 70, 720 66 S 850 60, 880 58 L 880 150 L 0 150 Z" fill="url(#mem)"></path><path d="M0 92 C 120 90, 240 84, 360 80 S 600 70, 720 66 S 850 60, 880 58" fill="none" stroke="#8ab4ff" stroke-width="2.5"></path><circle cx="880" cy="58" r="5" fill="#8ab4ff"></circle></svg><span class="mono" style="position:absolute;right:12px;top:30px;padding:3px 8px;border-radius:10px;background:#8ab4ff;color:#0b1e3d;font-size:12px">1.9 GB</span><span class="note" style="position:absolute;left:12px;top:10px">Memory, last hour (chart not built yet; the Overview shows memory now)</span></div>
       </section>
       <section class="card" aria-label="Recent events">
         <div class="row"><span class="h3 grow">Recent events</span><button class="btn q" style="height:30px">Open the full log</button></div>
@@ -66,7 +66,7 @@
       <div class="pr"><div class="k"><span>Allowlist only</span><span>white-list</span></div><button class="sw" role="switch" aria-checked="true" aria-label="Allowlist only"></button><span class="lv">Live</span></div>
       <div class="pr"><div class="k"><span>Online mode</span><span>online-mode</span></div><button class="sw" role="switch" aria-checked="true" aria-label="Online mode"></button><span class="rs">Needs restart</span></div>
       <div class="pr"><div class="k"><span>Port</span><span>server-port · 1 to 65535</span></div><div class="row"><input class="in mono" value="25565" style="width:90px" aria-label="Port"><span class="tag g">Free</span></div><span class="rs">Needs restart</span></div>
-      <div class="pr"><div class="k"><span>Remote console</span><span>enable-rcon · password in Windows vault</span></div><button class="sw off" role="switch" aria-checked="false" aria-label="Remote console"></button><span class="rs">Needs restart</span></div>
+      <div class="pr"><div class="k"><span>Remote console</span><span>enable-rcon · password in Windows vault (not built yet)</span></div><button class="sw off" role="switch" aria-checked="false" aria-label="Remote console"></button><span class="rs">Needs restart</span></div>
       <div class="pr"><div class="k"><span>Message of the day</span><span>motd · colour codes shown</span></div><div class="in" style="width:220px;display:flex;align-items:center"><span style="color:#6fdc98">Family</span>&nbsp;<span style="color:#ffe066">survival</span>&nbsp;<span class="mut">· be nice</span></div><span class="lv">Live</span></div>
       <div class="well" style="flex-direction:row;align-items:center"><span class="ms mut" aria-hidden="true">inventory</span><span class="note grow">2 settings this version does not know are kept exactly as written.</span><button class="btn q" style="height:30px">Show</button></div>
     </section>
@@ -85,7 +85,7 @@
 [00:51:11 INFO] [Simple Homes] Saved 2 homes
 [00:52:05 INFO] Kit has made the advancement [Stone Age]</div>
         <div class="row"><div class="in grow mono" style="display:flex;align-items:center;gap:8px">gamerule keepInventory <span class="tag b">true | false</span></div><button class="btn t">Run</button></div>
-        <div class="note">Each command is checked against this version's command tree before it runs, and the result shows here.</div>
+        <div class="note">Each command is checked against this version's command tree before it runs, and the result shows here. (Not built yet; Up and Down history is built.)</div>
       </section>
       <section class="card" aria-label="Schedule" style="flex:1">
         <div class="row"><span class="h3 grow">Schedule</span><button class="btn q" style="height:30px">Edit</button></div>
@@ -97,17 +97,17 @@
   <div class="g2">
     <section class="card" aria-label="Versions">
       <div class="row"><span class="h3 grow">Versions and flavours</span><span class="note">Mojang list read 23:40 · complete</span></div>
-      <div class="row wrap" style="gap:8px"><div class="seg"><button class="on">Java</button><button>Bedrock</button></div><button class="chip on">Releases</button><button class="chip">Snapshots</button><button class="chip">Pre-releases</button><button class="chip">Old alpha and beta</button></div>
+      <div class="row wrap" style="gap:8px"><div class="seg"><button class="on">Java</button><button>Bedrock</button></div><button class="chip on">Releases</button><button class="chip">Snapshots</button><button class="chip">Pre-releases</button><button class="chip">Old alpha and beta</button><span class="note">Bedrock: not built yet. Pre-releases are listed with the snapshots, as Mojang lists them.</span></div>
       <div class="tr h" style="grid-template-columns:110px 110px minmax(0,1fr) 92px"><span>Version</span><span>Released</span><span>Needs</span><span></span></div>
       <div class="tr sel" style="grid-template-columns:110px 110px minmax(0,1fr) 92px"><span class="mono">1.21.4</span><span class="mono">2024-12-03</span><span>Java 21 · found</span><span class="mut">Installed</span></div>
       <div class="tr" style="grid-template-columns:110px 110px minmax(0,1fr) 92px"><span class="mono">1.21.3</span><span class="mono">2024-10-23</span><span>Java 21 · found</span><button class="btn q" style="height:30px;padding:0 6px">Switch</button></div>
       <div class="tr" style="grid-template-columns:110px 110px minmax(0,1fr) 92px"><span class="mono">1.20.6</span><span class="mono">2024-04-29</span><span>Java 21 · found</span><button class="btn q" style="height:30px;padding:0 6px">Switch</button></div>
       <div class="tr" style="grid-template-columns:110px 110px minmax(0,1fr) 92px"><span class="mono">1.12.2</span><span class="mono">2017-09-18</span><span class="warn">Java 8 · not installed</span><button class="btn q" style="height:30px;padding:0 6px">Get Java 8</button></div>
-      <div class="row wrap" style="gap:8px"><span class="lbl">Flavour</span><button class="chip">Vanilla</button><button class="chip on">Paper</button><button class="chip">Purpur</button><button class="chip">Fabric</button><button class="chip">NeoForge</button><button class="chip">Forge</button><button class="chip">Velocity</button></div>
+      <div class="row wrap" style="gap:8px"><span class="lbl">Flavour</span><button class="chip">Vanilla</button><button class="chip on">Paper</button><button class="chip">Purpur</button><button class="chip">Fabric</button><button class="chip">NeoForge</button><button class="chip">Forge</button><button class="chip">Velocity</button><span class="note">Installing flavours other than Vanilla: not built yet (each is recognised when adopted)</span></div>
       <div class="well" style="background:#3a1512"><div class="note" style="color:#ffdad6">Going back to 1.20.6 is not proven safe: worlds saved by 1.21.4 may not load. A full backup is made first and the switch can be rolled back.</div></div>
     </section>
     <section class="card" aria-label="Plugins and packs">
-      <div class="row"><span class="h3 grow">Plugins and packs</span><button class="btn t"><span class="ms" aria-hidden="true">add</span>Browse catalogue</button></div>
+      <div class="note">Plugins and packs: not built yet</div><div class="row"><span class="h3 grow">Plugins and packs</span><button class="btn t"><span class="ms" aria-hidden="true">add</span>Browse catalogue</button></div>
       <div class="tr h" style="grid-template-columns:minmax(0,1fr) 96px 104px 52px"><span>Name</span><span>Version fit</span><span>Checked</span><span>On</span></div>
       <div class="tr" style="grid-template-columns:minmax(0,1fr) 96px 104px 52px"><span>Simple Homes 3.2 <span class="mut">· MIT</span></span><span class="ok">Verified</span><span class="mono">SHA-512 ok</span><button class="sw" role="switch" aria-checked="true" aria-label="Simple Homes"></button></div>
       <div class="tr" style="grid-template-columns:minmax(0,1fr) 96px 104px 52px"><span>Chunk Tidy 1.4 <span class="mut">· GPL-3.0</span></span><span class="warn">Not stated</span><span class="mono">SHA-512 ok</span><button class="sw off" role="switch" aria-checked="false" aria-label="Chunk Tidy"></button></div>
@@ -122,7 +122,7 @@
     <div class="row wrap"><span class="ms ok" aria-hidden="true" style="font-size:28px">public</span><div class="grow"><div class="h2">World generator</div><div class="note">Makes a new world with Java 1.21.4 exactly, without touching Family survival's own world. Every list below is read from the 1.21.4 server files.</div></div><div class="seg"><button class="on">Java 1.21.4</button><button>Pick version</button></div></div>
     <div style="display:grid;grid-template-columns:minmax(0,1fr) 420px;gap:14px;align-items:start">
       <div style="display:flex;flex-direction:column;gap:12px;min-width:0">
-        <div class="row"><span class="lbl grow">Area to generate, centred on spawn</span><span class="note">Drag to move, drag a corner to resize · arrow keys move, Shift+arrow resizes</span></div>
+        <div class="row"><span class="lbl grow">Area to generate, centred on spawn</span><span class="note">Drag to move, drag a corner to resize · arrow keys move, Shift+arrow resizes (not built yet: width, depth and centre are typed)</span></div>
         <div style="position:relative;height:420px;border-radius:16px;background:#141a17;overflow:hidden">
           <svg width="100%" height="100%" viewBox="0 0 920 420" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Chunk grid with a 100 by 100 chunk rectangle centred on spawn" style="position:absolute;inset:0"><defs><pattern id="ck" x="262" y="12" width="15.84" height="15.84" patternUnits="userSpaceOnUse"><path d="M15.84 0H0V15.84" fill="none" stroke="#1f2823" stroke-width="1"></path></pattern><pattern id="bt" x="262" y="12" width="63.36" height="63.36" patternUnits="userSpaceOnUse"><path d="M63.36 0H0V63.36" fill="none" stroke="#34413a" stroke-width="1.2"></path></pattern></defs><rect width="920" height="420" fill="url(#ck)"></rect><rect x="262" y="12" width="396" height="396" fill="url(#bt)"></rect><rect x="262" y="12" width="396" height="396" fill="#6fdc98" fill-opacity="0.10" stroke="#6fdc98" stroke-width="2"></rect><g fill="#6fdc98"><rect x="256" y="6" width="12" height="12" rx="3"></rect><rect x="652" y="6" width="12" height="12" rx="3"></rect><rect x="256" y="402" width="12" height="12" rx="3"></rect><rect x="652" y="402" width="12" height="12" rx="3"></rect></g><circle cx="460" cy="210" r="7" fill="#ffb870" stroke="#141a17" stroke-width="2"></circle><path d="M460 192 L 460 228 M 442 210 L 478 210" stroke="#ffb870" stroke-width="1.5"></path></svg>
           <span class="tag" style="position:absolute;left:calc(50% + 10px);top:calc(50% + 10px);background:#28322c;color:#ffd8b0">Spawn 0, 0</span>
@@ -155,7 +155,7 @@
           </div>
           <div class="well">
             <div class="lbl">Shape of the world</div>
-            <div class="row"><span style="width:96px;font-size:13px">Sea level</span><div class="step"><button aria-label="Lower"><span class="ms" aria-hidden="true">remove</span></button><span>63</span><button aria-label="Higher"><span class="ms" aria-hidden="true">add</span></button></div></div>
+            <div class="note">Sea level, lowest Y, height, aquifers and ore veins: not built yet (they need a data pack)</div><div class="row"><span style="width:96px;font-size:13px">Sea level</span><div class="step"><button aria-label="Lower"><span class="ms" aria-hidden="true">remove</span></button><span>63</span><button aria-label="Higher"><span class="ms" aria-hidden="true">add</span></button></div></div>
             <div class="row"><span style="width:96px;font-size:13px">Lowest Y</span><div class="step"><button aria-label="Lower"><span class="ms" aria-hidden="true">remove</span></button><span>-64</span><button aria-label="Higher"><span class="ms" aria-hidden="true">add</span></button></div></div>
             <div class="row"><span style="width:96px;font-size:13px">Height</span><div class="step"><button aria-label="Less"><span class="ms" aria-hidden="true">remove</span></button><span>384</span><button aria-label="More"><span class="ms" aria-hidden="true">add</span></button></div></div>
             <div class="note">Lowest Y and height move in steps of 16 and stay inside the limits 1.21.4 accepts.</div>
@@ -164,7 +164,7 @@
           </div>
         </div>
         <div class="well" style="flex-direction:row;flex-wrap:wrap;align-items:center;gap:12px 32px">
-          <div class="row" style="gap:10px"><span style="font-size:13px">World border</span><span class="mono note">1,600 blocks across</span><span class="note">Follows the area</span><button class="sw" role="switch" aria-checked="true" aria-label="Border follows the area"></button></div>
+          <div class="note">World border and spawn point: not built yet</div><div class="row" style="gap:10px"><span style="font-size:13px">World border</span><span class="mono note">1,600 blocks across</span><span class="note">Follows the area</span><button class="sw" role="switch" aria-checked="true" aria-label="Border follows the area"></button></div>
           <div class="row" style="gap:8px"><span style="font-size:13px">Spawn</span><input class="in mono" value="0" style="width:60px" aria-label="Spawn X"><input class="in mono" value="72" style="width:60px" aria-label="Spawn Y"><input class="in mono" value="0" style="width:60px" aria-label="Spawn Z"></div>
           <div class="row" style="gap:10px"><span style="font-size:13px">Difficulty</span><div class="seg"><button>Peaceful</button><button>Easy</button><button class="on">Normal</button><button>Hard</button></div></div>
         </div>
@@ -210,7 +210,7 @@
   </div>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":3330}}'>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":3480}}'>
 class Component extends DCLogic {
   renderVals() {
     return {};
