@@ -41,7 +41,10 @@ static bool run(const Script &s, std::string *extra = nullptr)
 // What Windows reported, so a failure says what it saw.
 static void print_attached(const std::map<std::string, Attachment> &m, bool available)
 {
-    std::printf("   attached disks (%s):\n", available ? "asked" : "not available");
+    std::string why;
+    bool        again = false;
+    attached_disks(again, &why);
+    std::printf("   attached disks (%s; %s):\n", available ? "asked" : "not available", why.c_str());
     for (const auto &e : m) {
         std::printf("     %s%s", e.first.c_str(), e.second.attached ? "" : " (not attached)");
         for (const std::string &p : e.second.mount_points) std::printf(" at %s", p.c_str());

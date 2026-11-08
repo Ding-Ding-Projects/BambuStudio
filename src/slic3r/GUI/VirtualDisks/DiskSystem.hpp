@@ -34,7 +34,8 @@ struct Attachment
     std::vector<std::string> mount_points; // "E:\", "D:\Mounts\Projects\"
 };
 // Attached disks by lower-case path. available is false when Windows could not be asked.
-std::map<std::string, Attachment> attached_disks(bool &available);
+// diagnostic, when given, says what each question to Windows answered.
+std::map<std::string, Attachment> attached_disks(bool &available, std::string *diagnostic = nullptr);
 std::string                       path_key(const std::string &path); // the map's key for a path
 
 std::uint64_t free_space(const std::string &path); // on the drive that would hold path

@@ -18,6 +18,9 @@
 #include <objbase.h>
 #include <shellapi.h>
 #include <virtdisk.h>
+#ifndef ERROR_VIRTDISK_NOT_VIRTUAL_DISK
+#define ERROR_VIRTDISK_NOT_VIRTUAL_DISK 0xC03A0015L
+#endif
 #endif
 
 namespace Slic3r { namespace GUI { namespace VirtualDisks {
@@ -115,23 +118,31 @@ Routes find_routes()
     return r;
 }
 
-std::map<std::string, Attachment> attached_disks(bool &available)
+std::map<std::string, Attachment> attached_disks(bool &available, std::string *diagnostic)
 {
     std::map<std::string, Attachment> out;
     available = false;
+    const auto note = [diagnostic](const std::string &text) {
+        if (diagnostic) *diagnostic += (diagnostic->empty() ? "" : "; ") + text;
+    };
 #ifdef _WIN32
     HMODULE virtdisk = LoadLibraryW(L"virtdisk.dll");
-    if (!virtdisk) return out;
+    if (!virtdisk) {
+        note("virtdisk.dll is missing");
+        return out;
+    }
     // Every attached disk's file, without administrator permission (Windows 8 and later).
     using AllAttached = DWORD(WINAPI *)(PULONG, PWSTR);
     if (auto all = reinterpret_cast<AllAttached>(reinterpret_cast<void *>(GetProcAddress(virtdisk, "GetAllAttachedVirtualDiskPhysicalPaths")))) {
-        ULONG                size = 0;
-        std::vector<wchar_t> buffer;
-        DWORD                result = all(&size, nullptr);
+        std::vector<wchar_t> buffer(32 * 1024, L'\0');
+        ULONG                size   = ULONG(buffer.size() * sizeof(wchar_t));
+        DWORD                result = all(&size, buffer.data());
         if (result == ERROR_INSUFFICIENT_BUFFER && size > 0) {
-            buffer.resize(size / sizeof(wchar_t) + 2, L'\0');
+            buffer.assign(size / sizeof(wchar_t) + 2, L'\0');
+            size   = ULONG(buffer.size() * sizeof(wchar_t));
             result = all(&size, buffer.data());
         }
+        note("attached list " + std::to_string(result));
         if (result == ERROR_SUCCESS) {
             available = true;
             for (const wchar_t *p = buffer.data(); !buffer.empty() && *p; p += wcslen(p) + 1) out[path_key(narrow(p))].attached = true;
@@ -147,15 +158,26 @@ std::map<std::string, Attachment> attached_disks(bool &available)
             do {
                 std::wstring device = volume;
                 if (!device.empty() && device.back() == L'\\') device.pop_back();
-                HANDLE h = CreateFileW(device.c_str(), 0, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, 0, nullptr);
-                if (h == INVALID_HANDLE_VALUE)
-                    h = CreateFileW(device.c_str(), GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, 0, nullptr);
-                if (h == INVALID_HANDLE_VALUE) continue;
                 std::vector<std::uint8_t> info(64 * 1024);
-                auto *dep    = reinterpret_cast<PSTORAGE_DEPENDENCY_INFO>(info.data());
-                dep->Version = STORAGE_DEPENDENCY_INFO_VERSION_2;
-                ULONG used   = 0;
-                if (depend(h, GET_STORAGE_DEPENDENCY_FLAG_HOST_VOLUMES, ULONG(info.size()), dep, &used) == ERROR_SUCCESS) {
+                auto *dep  = reinterpret_cast<PSTORAGE_DEPENDENCY_INFO>(info.data());
+                ULONG used = 0;
+                DWORD got  = ERROR_INVALID_HANDLE;
+                HANDLE h   = INVALID_HANDLE_VALUE;
+                // Some systems answer only on a handle opened for reading.
+                for (DWORD access : {DWORD(0), DWORD(GENERIC_READ)}) {
+                    h = CreateFileW(device.c_str(), access, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, 0, nullptr);
+                    if (h == INVALID_HANDLE_VALUE) continue;
+                    std::fill(info.begin(), info.end(), std::uint8_t(0));
+                    dep->Version = STORAGE_DEPENDENCY_INFO_VERSION_2;
+                    got          = depend(h, GET_STORAGE_DEPENDENCY_FLAG_HOST_VOLUMES, ULONG(info.size()), dep, &used);
+                    if (got == ERROR_SUCCESS) break;
+                    CloseHandle(h);
+                    h = INVALID_HANDLE_VALUE;
+                }
+                if (got != ERROR_SUCCESS && got != DWORD(ERROR_VIRTDISK_NOT_VIRTUAL_DISK) && got != ERROR_NOT_SUPPORTED && got != ERROR_INVALID_FUNCTION)
+                    note("volume " + narrow(volume) + " " + std::to_string(got));
+                if (h == INVALID_HANDLE_VALUE) continue;
+                if (got == ERROR_SUCCESS) {
                     for (ULONG i = 0; i < dep->NumberEntries; ++i) {
                         const STORAGE_DEPENDENCY_INFO_TYPE_2 &e = dep->Version2Entries[i];
                         // The nearest host is the file this volume lives in; deeper levels are its parents.
