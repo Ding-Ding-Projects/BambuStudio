@@ -68,10 +68,12 @@ fs::path system_folder()
 }
 
 // The mount points of a volume ("E:\", "D:\Mounts\Projects\").
-std::vector<std::string> mount_points_of(const std::wstring &volume_guid_path)
+std::vector<std::string> mount_points_of(std::wstring volume_guid_path)
 {
     std::vector<std::string> out;
-    DWORD                    size = 0;
+    // Windows names a host volume without the trailing backslash this call needs.
+    if (!volume_guid_path.empty() && volume_guid_path.back() != L'\\') volume_guid_path += L'\\';
+    DWORD size = 0;
     GetVolumePathNamesForVolumeNameW(volume_guid_path.c_str(), nullptr, 0, &size);
     if (size == 0) return out;
     std::wstring names(size, L'\0');
@@ -228,7 +230,7 @@ std::map<std::string, Attachment> attached_disks(bool &available, std::string *d
             }
             if (!seen) continue;
             if (got != ERROR_SUCCESS) {
-                if (diagnostic) note("drive " + std::to_string(n) + " " + std::to_string(got));
+                if (diagnostic && got != DWORD(ERROR_VIRTDISK_NOT_VIRTUAL_DISK)) note("drive " + std::to_string(n) + " " + std::to_string(got));
                 continue;
             }
             for (ULONG i = 0; i < dep->NumberEntries; ++i) {

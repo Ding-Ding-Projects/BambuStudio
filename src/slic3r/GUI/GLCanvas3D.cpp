@@ -8227,7 +8227,7 @@ void GLCanvas3D::_render_3d_navigator()
     const float sc = get_3d_navigator_scale(*this);
 
     const ImGuiIO &io                 = ImGui::GetIO();
-    const float    viewManipulateLeft = 0;
+    float          viewManipulateLeft = 0;
     const float    viewManipulateTop  = io.DisplaySize.y;
     const float    camDistance        = 8.f;
     ImGuizmo::SetID(0);
@@ -8244,7 +8244,15 @@ void GLCanvas3D::_render_3d_navigator()
     }
 
     const float size  = 128 * sc;
-    m_fit_camrea_button_pos[0] = size - 10;
+    // A tool rail that still reaches the bottom-left corner keeps it: the
+    // navigator moves to the right of the rail instead of covering its tools.
+    if (m_canvas_type == ECanvasType::CanvasView3D && m_gizmo_toolbar && m_gizmo_toolbar->is_enabled()) {
+        const float margin      = 8.0f * get_scale();
+        const float rail_bottom = get_gizmo_toolbar_top_inset() + m_gizmo_toolbar->get_height();
+        if (rail_bottom > viewManipulateTop - size)
+            viewManipulateLeft = margin + m_gizmo_toolbar->get_width() + margin;
+    }
+    m_fit_camrea_button_pos[0] = static_cast<int>(viewManipulateLeft + size - 10);
     m_sc                       = sc;
 
     if (is_assembly_nav)
@@ -9984,6 +9992,24 @@ void GLCanvas3D::_check_and_update_toolbar_icon_scale()
     // height fit below so picking, centring and DPI scaling stay coherent.
     const float rail_tile_mul = 44.0f / GLToolbar::Default_Icons_Size;
 
+    // The rail's own fit: a canvas too short for every 44px tile between the
+    // top toolbar and the 3D navigator gets smaller tiles (down to 60 %), so no
+    // tool hides behind the navigator or under the bottom of the canvas.
+    const auto rail_fit = [&](float tile) {
+        if (!p_gizmo_toolbar || !p_gizmo_toolbar->is_enabled() || tile <= 0.0f)
+            return 1.0f;
+        const int items = p_gizmo_toolbar->get_visible_items_cnt();
+        if (items <= 0)
+            return 1.0f;
+        const float current  = p_gizmo_toolbar->get_icons_size();
+        const float non_item = std::max(0.0f, p_gizmo_toolbar->get_height() - current * static_cast<float>(items));
+        float       bottom   = 8.0f * get_scale();
+        if (wxGetApp().show_3d_navigator() && can_show_3d_navigator())
+            bottom += 128.0f * get_3d_navigator_scale(*this);
+        const float available = static_cast<float>(cnv_size.get_height()) - get_gizmo_toolbar_top_inset() - bottom;
+        return std::clamp((available - non_item) / (tile * static_cast<float>(items)), 0.6f, 1.0f);
+    };
+
     // Set current size for all top toolbars. It will be used for next calculations
     GLToolbar& collapse_toolbar = wxGetApp().plater()->get_collapse_toolbar();
 #if ENABLE_RETINA_GL
@@ -10009,8 +10035,8 @@ void GLCanvas3D::_check_and_update_toolbar_icon_scale()
         p_main_toolbar->set_icons_size(size);
     }
     if (p_gizmo_toolbar) {
-        // MD3: 44px rail tiles vs the 40px main-toolbar tiles.
-        p_gizmo_toolbar->set_icons_size(size * rail_tile_mul);
+        // MD3: 44px rail tiles vs the 40px main-toolbar tiles, smaller on a short canvas.
+        p_gizmo_toolbar->set_icons_size(size * rail_tile_mul * rail_fit(size * rail_tile_mul));
     }
     collapse_toolbar.set_icons_size(wxGetApp().plater()->get_collapse_toolbar_size());
 #endif // ENABLE_RETINA_GL
