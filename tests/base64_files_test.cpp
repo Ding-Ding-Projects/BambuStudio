@@ -237,6 +237,13 @@ static void refusals()
 
 static void names_outside_ascii()
 {
+#if defined(_WIN32) && defined(__GLIBCXX__)
+    // MinGW's libstdc++ opens file streams through narrow paths, so a name
+    // outside the code page cannot be created there at all. MSVC, which builds
+    // the app, and every POSIX library open them through the real name.
+    std::printf("names outside ASCII: skipped with MinGW's libstdc++\n");
+    return;
+#endif
     const fs::path    dir  = fresh_dir("names");
     const fs::path    file = dir / fs::u8path("\xE6\xA8\xA1\xE5\x9E\x8B \xC3\xBC.3mf"); // "model u-umlaut", in Chinese and German
     const std::string data = random_bytes(1000, 17);
