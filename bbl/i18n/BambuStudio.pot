@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-08 10:31-0500\n"
+"POT-Creation-Date: 2026-11-08 12:06-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -7409,6 +7409,12 @@ msgstr ""
 msgid "Browse and restore local Git-backed project versions"
 msgstr ""
 
+msgid "Local tools"
+msgstr ""
+
+msgid "Every local tool on one page: what each holds now, pins, search and what they finished"
+msgstr ""
+
 msgid "AI filament scanner"
 msgstr ""
 
@@ -7860,7 +7866,7 @@ msgstr[1] ""
 msgid "Import result"
 msgstr ""
 
-msgid "Local tools"
+msgid "All tools"
 msgstr ""
 
 msgid "File is missing"
@@ -30051,6 +30057,12 @@ msgstr ""
 msgid "Help, Status Hub"
 msgstr ""
 
+msgid "Local tools page"
+msgstr ""
+
+msgid "File, Local tools"
+msgstr ""
+
 msgid "File, Base64 toolkit"
 msgstr ""
 
@@ -30114,6 +30126,187 @@ msgstr ""
 msgid "Offered after wrong codes on a lock"
 msgstr ""
 
+msgid "Files and data"
+msgstr ""
+
+msgid "Windows"
+msgstr ""
+
+msgid "Drawing"
+msgstr ""
+
+msgid "Games"
+msgstr ""
+
+msgid "Setup"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Today %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Yesterday %s"
+msgstr ""
+
+msgid "Incomplete"
+msgstr ""
+
+msgid "Started"
+msgstr ""
+
+msgid "Not started"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Step %d of %d saved"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "In the history: %d"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "In the library: %d"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Running: %d of %d"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Servers: %d, none running"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Plates drawn on: %d"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "On: %d, waiting for your answer: %d"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "On: %d"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Locked: %d"
+msgstr ""
+
+msgid "Everything here runs on this computer. Nothing is uploaded."
+msgstr ""
+
+#. TRN: Placeholder of the search field on the Local tools page.
+msgid "Search tools"
+msgstr ""
+
+msgid "Read every tool's state again"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Version %s"
+msgstr ""
+
+msgid "What changed"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Pinned %d"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "All tools %d"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "At most %d tools can be pinned. Unpin one first."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Open %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Move %s earlier"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Move %s later"
+msgstr ""
+
+msgid "Unpin"
+msgstr ""
+
+msgid "Pin"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Unpin %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Pin %s"
+msgstr ""
+
+msgid "Recent activity"
+msgstr ""
+
+msgid "Open history"
+msgstr ""
+
+msgid "Recent activity is off. Nothing the tools do is written down."
+msgstr ""
+
+msgid "Turn on"
+msgstr ""
+
+msgid "Nothing yet. What a tool finishes shows here: a file encoded, a disk attached, a server started."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Tools found: %d"
+msgstr ""
+
+msgid "No tool matches. Try fewer words, or turn off the regular expression."
+msgstr ""
+
+msgid "Nothing is pinned. Pin a tool from All tools to keep it here."
+msgstr ""
+
+msgid "No tool in this group."
+msgstr ""
+
+msgid "Local tools activity"
+msgstr ""
+
+msgid "What the local tools finished, newest first, at most 200. It stays on this computer; what a file holds is never written down."
+msgstr ""
+
+msgid "Search activity"
+msgstr ""
+
+msgid "Nothing recorded yet."
+msgstr ""
+
+msgid "No activity matches."
+msgstr ""
+
+msgid "Keep recent activity"
+msgstr ""
+
+msgid "Clear activity..."
+msgstr ""
+
+msgid "Clear activity"
+msgstr ""
+
+msgid "Every entry in Recent activity is deleted from this computer. This cannot be undone. The tools and their own histories are not changed."
+msgstr ""
+
+msgid "Activity cleared"
+msgstr ""
+
 #, possible-c-format, possible-boost-format
 msgid "%d features in this version. Each says where it lives and opens in one click."
 msgstr ""
@@ -30159,10 +30352,6 @@ msgid "Fixed in this version"
 msgstr ""
 
 msgid "New in this version"
-msgstr ""
-
-#, possible-c-format, possible-boost-format
-msgid "Open %s"
 msgstr ""
 
 msgid "Designed and planned for this app. It is not in this build yet."
@@ -30783,6 +30972,24 @@ msgstr ""
 msgid "Keep payloads"
 msgstr ""
 
+msgid "Encoded text"
+msgstr ""
+
+msgid "Decoded text"
+msgstr ""
+
+msgid "Encoded"
+msgstr ""
+
+msgid "Decoded"
+msgstr ""
+
+msgid "Built a data: URL"
+msgstr ""
+
+msgid "Read a data: URL"
+msgstr ""
+
 #, possible-c-format, possible-boost-format
 msgid "Encoded text, %s"
 msgstr ""
@@ -31219,6 +31426,9 @@ msgstr ""
 msgid "No filament preset is available yet. Pick filaments first, or go on and come back; setup cannot finish without one."
 msgstr ""
 
+msgid "Finished setup"
+msgstr ""
+
 #, possible-c-format, possible-boost-format
 msgid "Saved at %s. Close any time and continue from Help, then Set up Bambu Studio."
 msgstr ""
@@ -31337,9 +31547,6 @@ msgstr ""
 msgid "Failed: %s"
 msgstr ""
 
-msgid "Not started"
-msgstr ""
-
 msgid "Stopped by you"
 msgstr ""
 
@@ -31360,6 +31567,9 @@ msgid "All plates (%1%)"
 msgstr ""
 
 msgid "Sample request"
+msgstr ""
+
+msgid "Did not answer"
 msgstr ""
 
 #, possible-boost-format
@@ -32406,6 +32616,9 @@ msgstr ""
 msgid "Export the drawing"
 msgstr ""
 
+msgid "Exported"
+msgstr ""
+
 msgid "The drawing could not be saved there."
 msgstr ""
 
@@ -32676,9 +32889,6 @@ msgstr ""
 msgid "Detail"
 msgstr ""
 
-msgid "Incomplete"
-msgstr ""
-
 msgid "Pack a folder into a new VHDX beside it"
 msgstr ""
 
@@ -32813,6 +33023,33 @@ msgid "New disk ID"
 msgstr ""
 
 msgid "Waiting for administrator permission..."
+msgstr ""
+
+msgid "Attached read-only"
+msgstr ""
+
+msgid "Created"
+msgstr ""
+
+msgid "Grew"
+msgstr ""
+
+msgid "Compacted"
+msgstr ""
+
+msgid "Made a child disk"
+msgstr ""
+
+msgid "Merged into the parent"
+msgstr ""
+
+msgid "Reconnected to a moved parent"
+msgstr ""
+
+msgid "Gave a new disk ID"
+msgstr ""
+
+msgid "Quick packed"
 msgstr ""
 
 #, possible-c-format, possible-boost-format
@@ -33721,6 +33958,33 @@ msgstr ""
 msgid "%lld h %lld min"
 msgstr ""
 
+msgid "Stopped"
+msgstr ""
+
+msgid "Restarted on schedule"
+msgstr ""
+
+msgid "Added an existing server"
+msgstr ""
+
+msgid "Backed up"
+msgstr ""
+
+msgid "Backed up on schedule"
+msgstr ""
+
+msgid "Restored a backup"
+msgstr ""
+
+msgid "Changed the version"
+msgstr ""
+
+msgid "Started the world generator"
+msgstr ""
+
+msgid "Removed from the list"
+msgstr ""
+
 #, possible-c-format, possible-boost-format
 msgid "Started in %.1f s"
 msgstr ""
@@ -33892,9 +34156,6 @@ msgid "World generator"
 msgstr ""
 
 msgid "Cancelling..."
-msgstr ""
-
-msgid "Stopped"
 msgstr ""
 
 #, possible-c-format, possible-boost-format

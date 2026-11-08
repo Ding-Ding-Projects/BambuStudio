@@ -4,6 +4,7 @@
 #include "../ConfigWizard.hpp"
 #include "../DeviceManager.hpp"
 #include "../DeviceCore/DevManager.h"
+#include "../FeatureFinder/LocalToolsActivity.hpp"
 #include "../Extensions/ExtensionRuntime.hpp"
 #include "../Extensions/ExtensionsPanel.hpp"
 #include "../FeatureServices/PresentationRoutes.hpp"
@@ -1179,8 +1180,11 @@ void SetupWizardDialog::save()
     AppConfig *cfg = wxGetApp().app_config;
     if (cfg == nullptr) return;
     if (m_progress.updated == 0) m_progress.updated = now_seconds();
+    Setup::Progress before;
+    const bool      was_finished = Setup::parse(cfg->get(Setup::kProgressKey), before) && before.finished;
     cfg->set(Setup::kProgressKey, Setup::serialize(m_progress));
     cfg->save();
+    if (m_progress.finished && !was_finished) LocalTools::record_activity("onboarding", L("Finished setup"), std::string());
     if (m_saved)
         m_saved->SetLabel(wxString::Format(_L("Saved at %s. Close any time and continue from Help, then Set up Bambu Studio."),
                                            wxDateTime::Now().FormatISOTime()));

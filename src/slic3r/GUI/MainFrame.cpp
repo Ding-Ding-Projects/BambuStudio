@@ -144,6 +144,7 @@
 #include "libslic3r/Log.hpp"
 #include "FeatureFinder/FeatureCommands.hpp"
 #include "FeatureFinder/FeatureFinderPanel.hpp"
+#include "FeatureFinder/LocalToolsHubPanel.hpp"
 #include "libslic3r/Utils.hpp"
 
 
@@ -4866,6 +4867,11 @@ void MainFrame::init_menubar_as_editor()
             feature_command("version-history", [this]() { show_project_history(); }), "", nullptr,
             [this](){return m_plater != nullptr; }, this);
 
+        append_menu_item(fileMenu, wxID_ANY, _L("Local tools") + dots,
+            _L("Every local tool on one page: what each holds now, pins, search and what they finished"),
+            feature_command("local-tools", []() { LocalToolsHubPanel::open(); }), "", nullptr,
+            []() { return true; }, this);
+
         append_menu_item(fileMenu, wxID_ANY, _L("AI filament scanner") + dots,
             _L("Snap a spool photo on your phone; a local model identifies it and loads an AMS slot"),
             feature_command("filament-scanner", [this]() { FilamentScanDialog(this).ShowModal(); }), "", nullptr,
@@ -6280,6 +6286,11 @@ wxPanel* MainFrame::open_service(const std::string& id, const wxString& title,
     if (!m_service_workspace) {
         m_service_workspace = new FeatureServices::ServiceWorkspace(m_tabpanel);
         m_tabpanel->AddPage(m_service_workspace, _L("Local tools"), "", "", false);
+        // The Local tools page is the tab's first page, whichever tool opened the tab.
+        if (id != "local-tools") {
+            if (auto* hub = m_service_workspace->open("local-tools", _L("All tools"), [](wxWindow* parent) { return new LocalToolsHubPanel(parent); }))
+                FeatureServices::SurfaceRegistry::instance().register_surface(hub, "services/local-tools");
+        }
     }
     FeatureServices::SurfaceRegistry::instance().register_surface(m_service_workspace, "service-workspace");
     auto* result = m_service_workspace->open(id, title, create);

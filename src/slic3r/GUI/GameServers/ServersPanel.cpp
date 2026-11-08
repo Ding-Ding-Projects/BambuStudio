@@ -4,6 +4,7 @@
 #include "ServerSystem.hpp"
 
 #include "../DocsBrowserDialog.hpp"
+#include "../FeatureFinder/LocalToolsActivity.hpp"
 #include "../GUI.hpp"
 #include "../GUI_App.hpp"
 #include "../GUI_Utils.hpp"
@@ -227,6 +228,8 @@ public:
     Manifest                        manifest;
     std::time_t                     manifest_read = 0;
 
+    bool loaded() const { return m_loaded; }
+
     void load()
     {
         if (m_loaded) return;
@@ -264,6 +267,29 @@ public:
     {
         library.record({std::time(nullptr), server, action, detail, outcome});
         save();
+        if (const char *words = activity_words(action)) LocalTools::record_activity("minecraft", words, server, outcome);
+    }
+
+    // The words Recent activity on the Local tools page shows for a history
+    // action; nullptr for the ones it leaves out (players, operator levels).
+    static const char *activity_words(const std::string &action)
+    {
+        static const std::pair<const char *, const char *> words[] = {
+            {"Start", L("Started")},
+            {"Stop", L("Stopped")},
+            {"Scheduled restart", L("Restarted on schedule")},
+            {"Create", L("Created")},
+            {"Adopt", L("Added an existing server")},
+            {"Backup", L("Backed up")},
+            {"Automatic backup", L("Backed up on schedule")},
+            {"Restore", L("Restored a backup")},
+            {"Switch version", L("Changed the version")},
+            {"World generator", L("Started the world generator")},
+            {"Remove from list", L("Removed from the list")},
+        };
+        for (const auto &[from, to] : words)
+            if (action == from) return to;
+        return nullptr;
     }
 
     void event(RunState &r, const std::string &what)
@@ -2957,5 +2983,22 @@ void ServersPanel::open()
 }
 
 void shutdown() { Live::get().shutdown(); }
+
+Summary summary()
+{
+    Live   &live = Live::get();
+    Summary out;
+    if (!live.loaded()) {
+        Library     library;
+        std::string text;
+        if (read_file((fs::u8path(data_dir()) / "minecraft-servers.json").u8string(), text)) from_json(text, library);
+        out.servers = int(library.servers.size());
+        return out;
+    }
+    out.servers = int(live.library.servers.size());
+    for (const ServerRecord &s : live.library.servers)
+        if (live.running(s.id)) ++out.running;
+    return out;
+}
 
 }}} // namespace Slic3r::GUI::GameServers

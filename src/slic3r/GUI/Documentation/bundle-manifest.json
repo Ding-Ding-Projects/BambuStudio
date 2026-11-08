@@ -1703,6 +1703,16 @@
       "sha256": "06d9fd198c4cc9fb1971ca7d3a611a23b6f44b68d62de4e2da1f11f7e19084c8"
     },
     {
+      "route": "windows/local-tools.md",
+      "title": "Local tools page",
+      "sha256": "b3b17b8686e11c202ff72f104471291f9cfa84bdf53e4d568d3598dd1a93fbd1"
+    },
+    {
+      "route": "windows/local-tools.yue_HK.md",
+      "title": "本機工具頁",
+      "sha256": "450b11ba0e3f231621c603b38c6fc5348e65d5da8384f8f0ee8c783a8409f131"
+    },
+    {
       "route": "windows/material-context-menus.md",
       "title": "Material context menus",
       "sha256": "87ff8d3648ae0c3c4589d2cc4d531c5b60b070a13391a157ce96ab1a1c86e98e"
@@ -2285,7 +2295,7 @@
       "bytes": 16430
     }
   ],
-  "bundle_sha256": "b2ede184ff2835e469e1f84ccae208cebd90e077a7dfcb7d1d8fe955b5ebd7ef",
+  "bundle_sha256": "8e46b879829a145eee793df2e021bfd0fd974d3d17adfe4c39adc56794411000",
   "unavailable_references": [
     {
       "source": "api/README.md",
@@ -3400,6 +3410,16 @@
     {
       "source": "windows/interface-motion.yue_HK.md",
       "target": "../../../design/interface-motion.md",
+      "kind": "link"
+    },
+    {
+      "source": "windows/local-tools.md",
+      "target": "../../../design/local-tools-2026-11/README.md",
+      "kind": "link"
+    },
+    {
+      "source": "windows/local-tools.yue_HK.md",
+      "target": "../../../design/local-tools-2026-11/README.md",
       "kind": "link"
     },
     {

@@ -1,5 +1,6 @@
 #include "Base64ToolkitPanel.hpp"
 
+#include "../FeatureFinder/LocalToolsActivity.hpp"
 #include "../GUI.hpp"
 #include "../GUI_App.hpp"
 #include "../I18N.hpp"
@@ -1814,6 +1815,14 @@ wxWindow *Base64ToolkitPanel::build_history_page(wxWindow *parent)
 
 void Base64ToolkitPanel::append_history(B64::HistoryEntry entry)
 {
+    // Recent activity on the Local tools page: the name only, never the payload.
+    static const std::pair<const char *, const char *> words[] = {
+        {"encode-text", L("Encoded text")},    {"decode-text", L("Decoded text")},
+        {"encode-file", L("Encoded")},         {"decode-file", L("Decoded")},
+        {"build-url", L("Built a data: URL")}, {"read-url", L("Read a data: URL")},
+    };
+    for (const auto &[action, said] : words)
+        if (entry.action == action) LocalTools::record_activity("base64", said, entry.name);
     const bool keep = m_keep_payloads && m_keep_payloads->GetValue();
     m_history.append(std::move(entry), keep);
     refresh_tab_labels();

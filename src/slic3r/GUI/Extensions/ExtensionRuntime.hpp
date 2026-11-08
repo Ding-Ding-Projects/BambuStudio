@@ -100,6 +100,16 @@ public:
     };
     Activity activity() const;
 
+    // For the Local tools page. Nothing is read while no consent prompt was
+    // ever answered (known stays false), as at startup.
+    struct Summary
+    {
+        bool known   = false;
+        int  on      = 0;
+        int  waiting = 0; // new or changed, waiting for an answer
+    };
+    Summary summary();
+
     // Panels refresh when something changes: a run started or finished, the list changed.
     int  subscribe(std::function<void()> changed);
     void unsubscribe(int token);

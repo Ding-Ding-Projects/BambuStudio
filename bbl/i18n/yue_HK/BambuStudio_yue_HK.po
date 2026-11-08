@@ -58761,3 +58761,403 @@ msgstr "%1% 同另外 %2% 個"
 #. review-status: agent-drafted
 msgid "Result, how long it ran and its layers"
 msgstr "結果、行咗幾耐同佢嘅層數"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Every local tool on one page: what each holds now, pins, search and what they finished"
+msgstr "一頁睇晒所有本機工具：每件而家有啲乜、釘選、搜尋，同埋佢哋做完咗啲乜"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "All tools"
+msgstr "所有工具"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Local tools page"
+msgstr "本機工具頁"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "File, Local tools"
+msgstr "檔案，本機工具"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Files and data"
+msgstr "檔案同資料"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Windows"
+msgstr "Windows"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Drawing"
+msgstr "畫畫"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Games"
+msgstr "遊戲"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Setup"
+msgstr "設定"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Today %s"
+msgstr "今日 %s"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Yesterday %s"
+msgstr "尋日 %s"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Started"
+msgstr "開始咗"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Step %d of %d saved"
+msgstr "已儲存第 %d 步，共 %d 步"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "In the history: %d"
+msgstr "記錄入面：%d"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "In the library: %d"
+msgstr "清單入面：%d"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Running: %d of %d"
+msgstr "運行緊：%d 個，共 %d 個"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Servers: %d, none running"
+msgstr "伺服器：%d 個，冇一個運行緊"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Plates drawn on: %d"
+msgstr "畫過嘅盤：%d"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "On: %d, waiting for your answer: %d"
+msgstr "開咗：%d，等你答覆：%d"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "On: %d"
+msgstr "開咗：%d"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Locked: %d"
+msgstr "鎖咗：%d"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Everything here runs on this computer. Nothing is uploaded."
+msgstr "呢度所有嘢都喺呢部電腦度運行，乜都唔會上載。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Search tools"
+msgstr "搜尋工具"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Read every tool's state again"
+msgstr "重新讀取每件工具嘅狀態"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Version %s"
+msgstr "版本 %s"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "What changed"
+msgstr "改咗啲乜"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Pinned %d"
+msgstr "已釘選 %d"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "All tools %d"
+msgstr "所有工具 %d"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "At most %d tools can be pinned. Unpin one first."
+msgstr "最多可以釘選 %d 件工具。請先取消釘選一件。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Move %s earlier"
+msgstr "將 %s 移前"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Move %s later"
+msgstr "將 %s 移後"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Unpin"
+msgstr "取消釘選"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Pin"
+msgstr "釘選"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Unpin %s"
+msgstr "取消釘選 %s"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Pin %s"
+msgstr "釘選 %s"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Recent activity"
+msgstr "最近活動"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Open history"
+msgstr "打開記錄"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Recent activity is off. Nothing the tools do is written down."
+msgstr "最近活動已經關咗。工具做咗乜都唔會記低。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Turn on"
+msgstr "開啟"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Nothing yet. What a tool finishes shows here: a file encoded, a disk attached, a server started."
+msgstr "暫時未有。工具做完嘅嘢會喺度顯示：編碼咗嘅檔案、掛載咗嘅磁碟、開咗嘅伺服器。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Tools found: %d"
+msgstr "搵到嘅工具：%d"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "No tool matches. Try fewer words, or turn off the regular expression."
+msgstr "冇工具符合。試下少啲字，或者關咗正規表達式。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Nothing is pinned. Pin a tool from All tools to keep it here."
+msgstr "未有釘選任何嘢。喺所有工具度釘選一件，佢就會留喺呢度。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "No tool in this group."
+msgstr "呢組冇工具。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Local tools activity"
+msgstr "本機工具活動"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "What the local tools finished, newest first, at most 200. It stays on this computer; what a file holds is never written down."
+msgstr "本機工具做完嘅嘢，最新嘅排先，最多 200 項。記錄只會留喺呢部電腦；檔案入面有乜永遠唔會記低。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Search activity"
+msgstr "搜尋活動"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Nothing recorded yet."
+msgstr "暫時未有記錄。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "No activity matches."
+msgstr "冇活動符合。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Keep recent activity"
+msgstr "保留最近活動"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Clear activity..."
+msgstr "清除活動..."
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Clear activity"
+msgstr "清除活動"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Every entry in Recent activity is deleted from this computer. This cannot be undone. The tools and their own histories are not changed."
+msgstr "最近活動入面每一項都會喺呢部電腦刪除，冇得復原。工具本身同佢哋自己嘅記錄唔會改。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Activity cleared"
+msgstr "已清除活動"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Encoded text"
+msgstr "編碼咗文字"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Decoded text"
+msgstr "解碼咗文字"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Encoded"
+msgstr "編碼咗"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Decoded"
+msgstr "解碼咗"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Built a data: URL"
+msgstr "整咗一條 data: URL"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Read a data: URL"
+msgstr "讀咗一條 data: URL"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Finished setup"
+msgstr "完成咗設定"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Did not answer"
+msgstr "冇回覆"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Exported"
+msgstr "匯出咗"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Attached read-only"
+msgstr "以唯讀方式掛載咗"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Created"
+msgstr "建立咗"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Grew"
+msgstr "放大咗"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Compacted"
+msgstr "壓縮咗"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Made a child disk"
+msgstr "整咗一個子磁碟"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Merged into the parent"
+msgstr "合併咗入父磁碟"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Reconnected to a moved parent"
+msgstr "重新連接咗搬咗位嘅父磁碟"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Gave a new disk ID"
+msgstr "換咗新嘅磁碟 ID"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Quick packed"
+msgstr "快速打包咗"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Restarted on schedule"
+msgstr "按排程重新啟動咗"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Added an existing server"
+msgstr "加入咗一個現有伺服器"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Backed up"
+msgstr "備份咗"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Backed up on schedule"
+msgstr "按排程備份咗"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Restored a backup"
+msgstr "還原咗一個備份"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Changed the version"
+msgstr "換咗版本"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Started the world generator"
+msgstr "開始咗世界生成器"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Removed from the list"
+msgstr "喺清單度移除咗"

@@ -30,6 +30,16 @@ private:
 // At app exit: asks every running server to stop and waits a little for it.
 void shutdown();
 
+// For the Local tools page: the servers in the list and how many run now. The
+// list is read from its file when the page was never opened (nothing can run
+// then: servers start only from here).
+struct Summary
+{
+    int servers = 0;
+    int running = 0;
+};
+Summary summary();
+
 }}} // namespace Slic3r::GUI::GameServers
 
 #endif // slic3r_GUI_GameServers_ServersPanel_hpp_

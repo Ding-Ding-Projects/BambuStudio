@@ -11,6 +11,7 @@
 
 #include "slic3r/GUI/DeviceCore/DevManager.h"
 #include "slic3r/GUI/DeviceManager.hpp"
+#include "slic3r/GUI/FeatureFinder/LocalToolsActivity.hpp"
 #include "slic3r/GUI/GUI.hpp"
 #include "slic3r/GUI/GUI_App.hpp"
 #include "slic3r/GUI/Narration/NarrationTransitions.hpp"
@@ -552,6 +553,23 @@ Runtime::Activity Runtime::activity() const
     return Activity{m_running, m_running_hook, int(m_queue.size())};
 }
 
+Runtime::Summary Runtime::summary()
+{
+    Summary out;
+    if (m_shut_down) return out;
+    if (!m_host) {
+        std::error_code ec;
+        if (!fs::exists(fs::u8path(data_dir()) / "extension-state" / "consent.json", ec)) return out;
+    }
+    out.known = true;
+    for (const Installed &e : host().extensions()) {
+        const State state = host().state(e);
+        if (state == State::On) ++out.on;
+        else if (state == State::WaitingNew || state == State::WaitingChanged) ++out.waiting;
+    }
+    return out;
+}
+
 // ---------------------------------------------------------------- worker
 
 void Runtime::submit(Job job)
@@ -647,6 +665,12 @@ void Runtime::apply(const RunResult &result, bool sample, const std::function<vo
 {
     if (m_shut_down || !m_host) return;
     m_host->record(result);
+    if (!sample && result.outcome != Outcome::Stopped) {
+        const Installed *ran      = m_host->find(result.plan.id);
+        const bool       answered = result.outcome == Outcome::Answered;
+        LocalTools::record_activity("extensions", answered ? L("Answered") : L("Did not answer"),
+                                    ran ? ran->manifest.name : result.plan.manifest.name, answered ? "Done" : "Failed");
+    }
     if (each) {
         // print.before_send: the check window shows the answer and any failure.
         each(result);

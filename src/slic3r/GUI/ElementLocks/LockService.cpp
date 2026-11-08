@@ -513,6 +513,8 @@ void shutdown()
 
 bool is_locked(const std::string &element) { return state().store.find(element) != nullptr; }
 
+int lock_count() { return int(state().store.locks().size()); }
+
 int lock_item_id() { return kLockItemId; }
 
 void append_lock_item(wxMenu &menu, const std::string &element_id, wxWindow *anchor)

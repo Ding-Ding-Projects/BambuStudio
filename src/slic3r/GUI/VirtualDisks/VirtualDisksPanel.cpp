@@ -1,6 +1,7 @@
 #include "VirtualDisksPanel.hpp"
 
 #include "../DocsBrowserDialog.hpp"
+#include "../FeatureFinder/LocalToolsActivity.hpp"
 #include "../GUI.hpp"
 #include "../GUI_App.hpp"
 #include "../GUI_Utils.hpp"
@@ -1061,6 +1062,28 @@ void VirtualDisksPanel::set_running(bool running, const wxString &what)
     Layout();
 }
 
+// The words Recent activity on the Local tools page shows for an operation,
+// from the start of its one-line summary ("Attach read-only Windows11.iso").
+static const char *activity_words(const std::string &summary)
+{
+    static const std::pair<const char *, const char *> words[] = {
+        {"Attach read-only ", L("Attached read-only")},
+        {"Attach ", L("Attached")},
+        {"Detach ", L("Detached")},
+        {"Create ", L("Created")},
+        {"Grow ", L("Grew")},
+        {"Compact ", L("Compacted")},
+        {"Make child ", L("Made a child disk")},
+        {"Merge ", L("Merged into the parent")},
+        {"Reconnect ", L("Reconnected to a moved parent")},
+        {"New disk ID ", L("Gave a new disk ID")},
+        {"Quick pack ", L("Quick packed")},
+    };
+    for (const auto &[prefix, words_for] : words)
+        if (summary.rfind(prefix, 0) == 0) return words_for;
+    return L("Changed");
+}
+
 void VirtualDisksPanel::run(const Script &script, const std::string &disk, std::function<void(const RunOutcome &)> after)
 {
     if (m_running || !m_routes.windows) return;
@@ -1104,6 +1127,7 @@ void VirtualDisksPanel::run(const Script &script, const std::string &disk, std::
             }
             m_library.record(h);
             save();
+            LocalTools::record_activity("virtual-disks", activity_words(script.summary), h.disk, h.result);
             set_running(false);
             refresh();
             // Windows mounts a volume a moment after its disk arrives: look

@@ -20,6 +20,8 @@ namespace Slic3r { namespace GUI { namespace ElementLocks {
 void init(const std::string &data_dir);
 void shutdown();
 bool is_locked(const std::string &element);
+// How many elements are locked now (the Local tools page).
+int  lock_count();
 
 int  lock_item_id();
 // Adds "Lock this element..." or "Unlock this element..." for element_id.

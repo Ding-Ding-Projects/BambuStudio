@@ -1,6 +1,7 @@
 #include "DrawingPanel.hpp"
 
 #include "../DocsBrowserDialog.hpp"
+#include "../FeatureFinder/LocalToolsActivity.hpp"
 #include "../GUI.hpp"
 #include "../GUI_App.hpp"
 #include "../I18N.hpp"
@@ -26,6 +27,7 @@
 #include <wx/datetime.h>
 #include <wx/dcbuffer.h>
 #include <wx/filedlg.h>
+#include <wx/filename.h>
 #include <wx/graphics.h>
 #include <wx/image.h>
 #include <wx/menu.h>
@@ -780,6 +782,7 @@ void DrawingPanel::export_drawing()
         out << to_svg(m_doc, 1.0f, background);
         ok = bool(out);
     }
+    LocalTools::record_activity("drawing", L("Exported"), into_u8(wxFileName(path).GetFullName()), ok ? "Done" : "Failed");
     if (!ok) MessageDialog(this, _L("The drawing could not be saved there."), _L("Drawing board"), wxOK | wxICON_WARNING).ShowModal();
 }
 

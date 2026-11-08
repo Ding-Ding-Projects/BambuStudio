@@ -437,6 +437,8 @@ src/slic3r/GUI/WorkspacePanel.cpp
 src/slic3r/GUI/wxMediaCtrl2.cpp
 src/slic3r/GUI/CommandPaletteIndex.cpp
 src/slic3r/GUI/FeatureFinder/FeatureCatalogue.cpp
+src/slic3r/GUI/FeatureFinder/LocalToolsHub.cpp
+src/slic3r/GUI/FeatureFinder/LocalToolsHubPanel.cpp
 src/slic3r/GUI/FeatureFinder/FeatureFinderPanel.cpp
 src/slic3r/GUI/Base64Toolkit/Base64ToolkitPanel.cpp
 src/slic3r/GUI/SetupWizard/SetupModel.cpp
