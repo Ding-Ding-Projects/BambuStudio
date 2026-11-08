@@ -37,6 +37,9 @@
 #define TOPBAR_TITLE_WIDTH  300
 // Project identity uses the remaining caption budget, capped at 240 logical pixels.
 #define TOPBAR_PROJECT_CHIP_MAX_W  240
+// Below this much room for the name the chip shows its folder glyph alone (the
+// full name stays in its tooltip and on the project tab below).
+#define TOPBAR_PROJECT_CHIP_MIN_TEXT_W  56
 // §3.5 history chip: cap the branch label so a long branch name cannot crowd the
 // window controls off the caption; the branch is ellipsized past this logical width.
 #define TOPBAR_HISTORY_BRANCH_MAX_W  130
@@ -559,6 +562,16 @@ static int atlasTitleTextBudget(int width, int fixed_width, int overhead, int li
     return std::max(0, std::min(limit, width - fixed_width - overhead));
 }
 
+// The project chip's width: the name when at least min_text of it fits (a name
+// cut to a character or two says nothing), else the folder glyph alone when
+// that fits, else nothing. Never wider than the budget.
+static int atlasTitleChipWidth(int budget, int text_room, int text_width, int min_text, int named_chrome, int glyph_only)
+{
+    if (text_room >= min_text && text_width > 0)
+        return std::min(budget, named_chrome + text_width);
+    return glyph_only > 0 && budget >= glyph_only ? glyph_only : 0;
+}
+
 void BBLTopbarArt::DrawLabel(wxDC& dc, wxWindow* wnd, const wxAuiToolBarItem& item, const wxRect& rect)
 {
     if (item.GetId() == ID_TITLE) {
@@ -571,30 +584,40 @@ void BBLTopbarArt::DrawLabel(wxDC& dc, wxWindow* wnd, const wxAuiToolBarItem& it
         const wxRect chip(rect.x, rect.y + (rect.height - H) / 2, std::max(0, rect.width), H);
 
         if (chip.width <= 0 || chip.height <= 0) return;
+
+        const wxColour fg    = StateColor::semantic(MD3::Role::OnSurface);
+        const int      padx  = wnd->FromDIP(10);
+        const int      gap   = wnd->FromDIP(8);
+        const wxString label = item.GetLabel();
+
+        // 'description' is absent from the vendored face; 'folder_open' is the
+        // nearest verified project/file glyph (reported as a followup).
+        const wxSize gs = MaterialIcon::available() ? MaterialIcon::measure(dc, MaterialIcon::FolderOpen, 20) : wxSize();
+        // A chip narrower than its glyph-only form draws nothing: the layout
+        // never asks for one, and a glyph painted past the chip's edge sat on
+        // top of the notification bell.
+        if (label.IsEmpty() && (gs.x <= 0 || chip.width < padx * 2 + gs.x)) return;
+
         dc.SetPen(wxPen(StateColor::semantic(MD3::Role::OutlineVariant), std::max(1, wnd->FromDIP(1))));
         dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::SurfaceContainerLowest)));
         dc.DrawRoundedRectangle(chip, radius);
 
-        const wxColour fg   = StateColor::semantic(MD3::Role::OnSurface);
-        const int      padx = wnd->FromDIP(10);
-        const int      gap  = wnd->FromDIP(8);
-        int            x    = chip.x + padx;
-
-        // 'description' is absent from the vendored face; 'folder_open' is the
-        // nearest verified project/file glyph (reported as a followup).
-        if (MaterialIcon::available()) {
-            const wxSize gs = MaterialIcon::measure(dc, MaterialIcon::FolderOpen, 20);
-            MaterialIcon::draw(dc, MaterialIcon::FolderOpen, 20, fg,
-                               wxPoint(x, chip.y + (H - gs.y) / 2));
+        // Everything the chip draws stays inside it. Without a name the glyph
+        // sits in the middle of the chip.
+        dc.SetClippingRegion(chip);
+        int x = chip.x + padx;
+        if (gs.x > 0) {
+            const int gx = label.IsEmpty() ? chip.x + (chip.width - gs.x) / 2 : x;
+            MaterialIcon::draw(dc, MaterialIcon::FolderOpen, 20, fg, wxPoint(gx, chip.y + (H - gs.y) / 2));
             x += gs.x + gap;
         }
-
-        dc.SetFont(m_font);
-        dc.SetTextForeground(fg);
-        int tw = 0, th = 0;
-        dc.GetTextExtent(item.GetLabel(), &tw, &th);
-        dc.SetClippingRegion(chip);
-        dc.DrawText(item.GetLabel(), x, chip.y + (H - th) / 2);
+        if (!label.IsEmpty()) {
+            dc.SetFont(m_font);
+            dc.SetTextForeground(fg);
+            int tw = 0, th = 0;
+            dc.GetTextExtent(label, &tw, &th);
+            dc.DrawText(label, x, chip.y + (H - th) / 2);
+        }
         dc.DestroyClippingRegion();
         return;
     }
@@ -1552,10 +1575,16 @@ void BBLTopbar::update_responsive_title(int width)
 
     const int budget = width > 0 ? std::max(0, width - measure_fixed_content_width())
                                  : FromDIP(TOPBAR_PROJECT_CHIP_MAX_W) + padx * 2 + glyph_w;
-    const int max_text = atlasTitleTextBudget(budget, 0, padx * 2 + glyph_w, FromDIP(TOPBAR_PROJECT_CHIP_MAX_W));
-    const wxString title = max_text > 0 ? wxControl::Ellipsize(m_full_title, dc, wxELLIPSIZE_END, max_text) : wxString();
+    const int chrome   = padx * 2 + glyph_w;
+    const int max_text = atlasTitleTextBudget(budget, 0, chrome, FromDIP(TOPBAR_PROJECT_CHIP_MAX_W));
+    const int min_text = FromDIP(TOPBAR_PROJECT_CHIP_MIN_TEXT_W);
+    // A name cut to "*..." says nothing: below min_text the chip is the folder
+    // glyph alone (padding either side, no gap after it), and the full name
+    // stays in the tooltip.
+    const wxString title = max_text >= min_text ? wxControl::Ellipsize(m_full_title, dc, wxELLIPSIZE_END, max_text) : wxString();
     const wxSize text_size = dc.GetTextExtent(title);
-    const int chip_w = max_text > 0 ? std::min(budget, padx * 2 + glyph_w + text_size.x) : 0;
+    const int glyph_only = glyph_w > 0 ? chrome - gap : 0;
+    const int chip_w = atlasTitleChipWidth(budget, max_text, title.IsEmpty() ? 0 : text_size.x, min_text, chrome, glyph_only);
     m_title_item->SetShortHelp(m_full_title);
     if (m_title_item->GetMinSize().GetWidth() != chip_w) {
         m_title_item->SetMinSize({chip_w, -1});

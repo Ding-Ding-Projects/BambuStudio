@@ -55661,3 +55661,8 @@ msgstr "%s 冇完成：%s"
 #. review-status: agent-drafted
 msgid "Permission cancelled: nothing changed, and the step shows as incomplete."
 msgstr "權限已取消：乜都冇改，呢步會顯示做未完成。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "No printer chosen"
+msgstr "未揀打印機"

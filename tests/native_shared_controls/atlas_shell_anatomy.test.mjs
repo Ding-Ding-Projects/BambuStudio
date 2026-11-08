@@ -31,7 +31,8 @@ if (extract >= 0) {
     const destination = path.resolve(process.argv[extract + 1]);
     fs.mkdirSync(destination, {recursive: true});
     const overflow = body(strip, 'struct AtlasTabOverflow') + ';\n' + body(strip, 'AtlasTabOverflow atlasTabOverflow(');
-    const geometry = overflow + '\n' + body(title, 'static int atlasTitleTextBudget(');
+    const geometry = overflow + '\n' + body(title, 'static int atlasTitleTextBudget(') + '\n'
+        + body(title, 'static int atlasTitleChipWidth(');
     fs.writeFileSync(path.join(destination, 'atlas_tab_overflow.inc'), overflow);
     fs.writeFileSync(path.join(destination, 'atlas_shell_layout.inc'), geometry);
     const drag = body(strip, 'struct AtlasDragTab') + ';\n' + body(strip, 'int atlasTabDragTarget(');
@@ -148,6 +149,15 @@ test('title chip uses matching measured glyph geometry and preserves 46-DIP heig
     }
     assert(layout.includes('atlasTitleTextBudget('));
     assert(layout.includes('SetShortHelp(m_full_title)'));
+    // A name too short to read gives way to the glyph alone, and nothing the
+    // chip paints may land outside it (the glyph once sat on the bell).
+    assert(layout.includes('atlasTitleChipWidth('));
+    assert(layout.includes('FromDIP(TOPBAR_PROJECT_CHIP_MIN_TEXT_W)'));
+    assert(layout.includes('max_text >= min_text'));
+    assert(draw.indexOf('dc.SetClippingRegion(chip)') >= 0);
+    assert(draw.indexOf('dc.SetClippingRegion(chip)') < draw.indexOf('MaterialIcon::draw('));
+    assert(draw.indexOf('chip.width < padx * 2 + gs.x') >= 0);
+    assert(draw.indexOf('chip.width < padx * 2 + gs.x') < draw.indexOf('dc.DrawRoundedRectangle(chip'));
     assert(body(title, 'void BBLTopbar::Rescale(').includes('FromDIP(MD3::Metrics::top_bar_height)'));
     assert(read('src/slic3r/GUI/Widgets/MD3Tokens.hpp').match(/top_bar_height\s*=\s*46/));
     const drawButton = body(title, 'void BBLTopbarArt::DrawButton(');

@@ -13,6 +13,10 @@ row's recipe:
   pages       handled by ui-md3/scripts/capture-site.mjs; reported as skipped
   historical  kept as-is; reported as skipped
 
+A Home or Ink capture (both are WebView2 pages) whose page body is one flat
+colour is reported as failed and removed before it replaces anything: WebView2
+does not paint into a PrintWindow capture of a hidden desktop.
+
 Steps understood: nav:<Tab label>, open:Preferences, open:<Dialog title or
 menu-item label>, tab:<Preferences sidebar label>, click:<label>, menu:<label>,
 key:<combo>, resize:WxH, scroll:end, arm:<label>, launch:<mode>, trigger:<what>,
@@ -61,6 +65,33 @@ PREF_TABS = {'appearance': (79, 75), 'general': (79, 120), 'user': (79, 166), '3
 RAIL_NAMES = ('Workspace navigation', 'Navigation rail')
 # Surfaces that are the main frame itself.
 MAIN_SURFACES = {'main', 'home', 'prepare', 'preview', 'device', 'project', 'ink', 'toast', 'menu'}
+# Surfaces whose body is a WebView2 page (Home, and Ink, the filament manager).
+# WebView2 does not paint into a PrintWindow capture of a hidden desktop, so
+# their body can come out as one flat colour. Such a capture is reported as
+# failed and removed; it never replaces an image or passes as done.
+WEBVIEW_SURFACES = {'home', 'ink'}
+# The page body at 1200x800: right of the navigation rail, below the caption
+# and the project tabs.
+WEBVIEW_BODY = (110, 110, 1190, 790)
+WEBVIEW_BLANK = ('the page body came out blank: WebView2 does not paint into a PrintWindow '
+                 'capture of a hidden desktop')
+
+
+def body_is_blank(path, box=WEBVIEW_BODY, share=0.995):
+    """True when one colour covers at least `share` of the page body."""
+    try:
+        from PIL import Image
+    except ImportError:
+        return False  # nothing can be judged without Pillow; the row stands
+    with Image.open(path) as im:
+        rgb = im.convert('RGB')
+        left, top, right, bottom = box
+        body = rgb.crop((min(left, rgb.width), min(top, rgb.height), min(right, rgb.width), min(bottom, rgb.height)))
+    pixels = body.width * body.height
+    if pixels == 0:
+        return False
+    colours = body.getcolors(pixels)
+    return bool(colours) and max(count for count, _ in colours) >= share * pixels
 # Surface -> predicate on a top-level window record from the probe / window list.
 # Sample files for open:<file> steps.
 SAMPLES = os.path.join(REPO, '.claude', 'skills', 'run-bambustudio')
@@ -548,6 +579,16 @@ class Runner:
         time.sleep(1.5)
         target = self.target_for(recipe['surface'])
         if recipe['kind'] == 'page':
+            if recipe['surface'] in WEBVIEW_SURFACES:
+                # Judged before it replaces anything: a blank web page body
+                # must never stand in for the image it would overwrite.
+                page = out_path + '.page.png'
+                self.app.shot(target, page)
+                if body_is_blank(page):
+                    os.remove(page)
+                    raise RuntimeError(WEBVIEW_BLANK)
+                os.replace(page, out_path)
+                return 'done'
             self.app.shot(target, out_path)
             return 'done'
         if recipe['kind'] == 'crop-probe':
@@ -572,6 +613,9 @@ class Runner:
             # the probe cannot see into (the Home webview at 1200x800).
             page = out_path + '.page.png'
             self.app.shot(target, page)
+            if recipe['surface'] in WEBVIEW_SURFACES and body_is_blank(page):
+                os.remove(page)
+                raise RuntimeError(WEBVIEW_BLANK)
             x, y, w, h = recipe['rect']
             cheap('crop_image', input_path=page, left=int(x), top=int(y), width=int(w), height=int(h), output_path=out_path)
             os.remove(page)

@@ -35860,3 +35860,6 @@ msgstr ""
 
 msgid "Permission cancelled: nothing changed, and the step shows as incomplete."
 msgstr ""
+
+msgid "No printer chosen"
+msgstr ""

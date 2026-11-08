@@ -1,9 +1,11 @@
 // Compiles and runs tests/md3_menu_live_test.cpp, the standalone assertions
-// for src/slic3r/GUI/Drawing/DrawingModel.cpp (pens, widths, smoothing,
-// direction lock, the eraser, undo, saving and SVG), with MSVC on Windows and
-// $CXX (or c++) elsewhere. A second build defines the negative-fixture switch
-// whose eraser throws away whole strokes and must fail: a suite that stayed
-// green there could not notice an eraser that removes more than it touches.
+// for src/slic3r/GUI/Widgets/MD3MenuLive.hpp (what a click, Left, Right or
+// Space does to a switch, a choice, a slider and a stepper in a menu row, how
+// each value reads aloud, and the step for a decimal setting), with MSVC on
+// Windows and $CXX (or c++) elsewhere. A second build defines the
+// negative-fixture switch that stops sliders and steppers from clamping and
+// must fail: a suite that stayed green there could not notice a value
+// leaving its range.
 import {mkdtempSync, readFileSync, writeFileSync} from 'node:fs';
 import {spawnSync} from 'node:child_process';
 import {tmpdir} from 'node:os';

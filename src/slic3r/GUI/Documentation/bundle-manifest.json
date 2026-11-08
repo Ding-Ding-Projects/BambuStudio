@@ -685,12 +685,12 @@
     {
       "route": "design-system/studio-atlas-shell-and-tabs.md",
       "title": "Studio Atlas shell and tab callers",
-      "sha256": "5162eabbc50cfe10193f5580305a93068e5a0c569ea8ebc43f5a17a0c79f9fa8"
+      "sha256": "e71993838e63f6a311772f5ebb5b64d8656a4f590a25ebfebaf961b089f34a66"
     },
     {
       "route": "design-system/studio-atlas-shell-and-tabs.yue_HK.md",
       "title": "Studio Atlas 外框同分頁呼叫端",
-      "sha256": "e19c243d86abe0c2cb7cc4f860dcfe7d01f05ac7032d062c1ff08271a9ee19b2"
+      "sha256": "3a48b0e9f4ee7f70a708075ccaf4566ca33e4bc96a99eea7a6e4fd52b24872e4"
     },
     {
       "route": "design-system/themed-surface-colors.md",
@@ -2275,7 +2275,7 @@
       "bytes": 16430
     }
   ],
-  "bundle_sha256": "b325a6366734253d199cf22cddc49e13ef3ec7aeeb2fef157abc14eb859e659f",
+  "bundle_sha256": "d434be1a9ec5cecb7e79eb6c09fb8907a3b4a3f0a368d0382276ed44835114b6",
   "unavailable_references": [
     {
       "source": "api/README.md",

@@ -1870,13 +1870,21 @@ void Sidebar::priv::update_printer_identity()
     PresetBundle *bundle = wxGetApp().preset_bundle;
     if (!bundle) return;
 
+    Preset &printer = bundle->printers.get_edited_preset();
+
     // Name mirrors exactly what the live (hidden) combo shows, dirty marker
     // and all, so the static label can never drift from the selection model.
+    // The combo shows nothing while the preset in use has no entry in its list
+    // (the built-in default before any printer is added); the card then names
+    // that preset instead of leaving its title blank.
     wxString name = combo_printer->GetValue();
+    if (name.IsEmpty() && !(printer.alias.empty() && printer.name.empty()))
+        name = from_u8((printer.alias.empty() ? printer.name : printer.alias)
+                       + (printer.is_dirty ? Preset::suffix_modified() : std::string()));
+    if (name.IsEmpty())
+        name = _L("No printer chosen");
     if (text_printer_name->GetLabel() != name)
         text_printer_name->SetLabel(name);
-
-    Preset &printer = bundle->printers.get_edited_preset();
     wxString status;
     if (auto *nd = printer.config.option<ConfigOptionFloats>("nozzle_diameter"); nd && !nd->values.empty()) {
         wxString diam = wxString::FromDouble(nd->values[0], 1);

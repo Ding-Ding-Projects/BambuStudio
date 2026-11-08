@@ -4,7 +4,7 @@
     {
       "file": "src/slic3r/GUI/MainFrame.cpp",
       "name": "void MainFrame::update_layout(",
-      "sha256": "51d42cfdcfb3dcda84ee14c41ccfd327c495066c722bc84e214c3224f98aa398"
+      "sha256": "4cbdb7d27abb2574be385ad0a2f8a7b73b703b48cfda8832827c022821ac866d"
     },
     {
       "file": "src/slic3r/GUI/MainFrame.cpp",
@@ -221,6 +221,10 @@
     {
       "name": "void TabStrip::OnKeyDown(",
       "reason": "Roving navigation and activation follow visible tabs plus the native overflow button. Covered by atlas_tab_focus_tests.cpp and native focus/accessibility source checks."
+    },
+    {
+      "name": "void MainFrame::update_layout(",
+      "reason": "The attention modes strip (Time awareness, One thing at a time) is added above the tab panel and stays hidden until one of those modes is on. Window, workflow and tab behaviour are unchanged. Covered by attention_model_test.cpp."
     }
   ]
 }

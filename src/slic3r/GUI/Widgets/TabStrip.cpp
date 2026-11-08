@@ -462,10 +462,23 @@ void TabStripButton::OnPaint(wxPaintEvent &)
                         MD3::Motion::color_channel(resting.Blue(), selected.Blue(), selection));
     wxRect surface = GetClientRect();
     surface.Deflate(FromDIP(1), FromDIP(2));
-    if (surface.width > 0 && surface.height > 0 && (m_active || m_hover || m_pressed || selection > 0.0)) {
+    const bool painted = surface.width > 0 && surface.height > 0 && (m_active || m_hover || m_pressed || selection > 0.0);
+    if (painted) {
         dc.SetPen(*wxTRANSPARENT_PEN);
         dc.SetBrush(wxBrush(fill));
         dc.DrawRoundedRectangle(surface, std::min(FromDIP(MD3::Metrics::active().small_radius), surface.height / 2));
+    }
+    // The close button sits on this painted surface, not on the window ground,
+    // so the corners outside its round state layer take the colour painted here;
+    // otherwise a selected or hovered tab shows a light square around its X.
+    // The button re-seeds from this window's ground whenever it is restyled, so
+    // every paint puts the surface back.
+    if (m_close) {
+        const wxColour behind = painted ? fill : base;
+        if (m_close->GetBackgroundColour() != behind) {
+            m_close->wxWindow::SetBackgroundColour(behind);
+            m_close->Refresh(false);
+        }
     }
     const wxColour fg = StateColor::semantic(m_active ? MD3::Role::OnPrimaryContainer : MD3::Role::OnSurfaceVariant);
     wxFont label_font = vertical ? ::Label::Body_13 : ::Label::Body_14;

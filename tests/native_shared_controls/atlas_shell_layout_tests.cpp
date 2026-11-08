@@ -54,6 +54,22 @@ int main()
     }
     verify(atlasTitleTextBudget(1000, 640, 48, 240) == 240);
     verify(atlasTitleTextBudget(660, 640, 48, 240) == 0);
-    std::cout << "7 shell-layout cases; " << checks << " assertions; " << failures << " failures\n";
+
+    // The project chip shows a readable name, or the folder glyph alone, or
+    // nothing, and never takes more than its budget.
+    verify(atlasTitleChipWidth(400, 240, 120, 56, 48, 40) == 168);
+    verify(atlasTitleChipWidth(100, 52, 52, 56, 48, 40) == 40);  // "*..." would fit; the glyph shows instead
+    verify(atlasTitleChipWidth(39, 0, 0, 56, 48, 40) == 0);      // not even the glyph fits
+    verify(atlasTitleChipWidth(120, 72, 0, 56, 48, 40) == 40);   // nothing to name
+    verify(atlasTitleChipWidth(300, 240, 120, 56, 48, 0) == 168);
+    verify(atlasTitleChipWidth(300, 20, 20, 56, 48, 0) == 0);    // no glyph face and no room for a name
+    for (int budget = 0; budget <= 400; ++budget)
+        for (int text = 0; text <= 260; text += 13) {
+            const int room = atlasTitleTextBudget(budget, 0, 48, 240);
+            const int chip = atlasTitleChipWidth(budget, room, room >= 56 ? std::min(text, room) : 0, 56, 48, 40);
+            verify(chip >= 0 && chip <= budget);
+            verify(chip == 0 || chip >= 40);
+        }
+    std::cout << "8 shell-layout cases; " << checks << " assertions; " << failures << " failures\n";
     return failures == 0 ? 0 : 1;
 }

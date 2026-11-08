@@ -2266,6 +2266,16 @@ namespace {
 // line of the two-tier print estimate without a new MainFrame member.
 constexpr const char *PREPARE_ESTIMATE_DETAIL_NAME = "md3_prepare_estimate_detail";
 
+// The window ground the Prepare action bar sits on. The Slice and Print pills
+// paint the corners outside their rounded shape with it, so the bar and the
+// pills must name the same role: when they drifted apart (the bar moved to
+// Surface while the corners stayed on SurfaceContainerLow) every pill showed
+// light square corners.
+wxColour prepare_bar_surface()
+{
+    return StateColor::semantic(MD3::Role::Surface);
+}
+
 // Roboto Mono 15/500 for the estimate's time line (MD3 Prepare kit line 1).
 // Derived from the 14px mono preset so the platform's design-px -> point
 // scaling is inherited rather than re-derived.
@@ -2446,7 +2456,7 @@ void MainFrame::update_prepare_action_bar_style()
     m_prepare_action_bar->SetMaxSize(wxDefaultSize);
     // Graphite shell: the plate, estimate and Slice/Print controls float on the
     // window ground under the canvas instead of sitting on a separate band.
-    const wxColour bar_bg = StateColor::semantic(MD3::Role::Surface);
+    const wxColour bar_bg = prepare_bar_surface();
     m_prepare_action_bar->SetBackgroundColour(bar_bg);
 
     // Re-seed every direct child's window background with the bar surface. The
@@ -2477,8 +2487,8 @@ void MainFrame::update_prepare_action_bar_style()
     }
     if (m_prepare_expand_btn) {
         // Re-derive the ghost IconButton's neutral rest fill/geometry now that the
-        // bar's SurfaceContainerLow background is applied (Rescale re-runs the MD3
-        // styling), keeping it theme- and DPI-correct.
+        // bar's surface is applied (Rescale re-runs the MD3 styling), keeping it
+        // theme- and DPI-correct.
         m_prepare_expand_btn->Rescale();
     }
 
@@ -2502,7 +2512,7 @@ void MainFrame::update_prepare_action_bar_style()
         // (bar-surface) fill, 12px radius, OnSurfaceVariant glyph.
         const StateColor background(
             std::pair{StateColor::semantic(MD3::Role::SurfaceContainerHigh), (int) StateColor::Hovered},
-            std::pair{StateColor::semantic(MD3::Role::Surface), (int) StateColor::Normal});
+            std::pair{bar_bg, (int) StateColor::Normal});
         m_prepare_add_plate_button->SetBackgroundColor(background);
         m_prepare_add_plate_button->SetBorderColor(StateColor(StateColor::semantic(MD3::Role::Outline)));
         m_prepare_add_plate_button->SetBorderWidth(FromDIP(1));
@@ -3466,7 +3476,7 @@ wxSizer* MainFrame::create_side_tools(wxWindow* parent)
     // (bar-surface) fill, 12px radius, OnSurfaceVariant glyph.
     const StateColor add_background(
         std::pair{StateColor::semantic(MD3::Role::SurfaceContainerHigh), (int) StateColor::Hovered},
-        std::pair{StateColor::semantic(MD3::Role::SurfaceContainerLow), (int) StateColor::Normal});
+        std::pair{prepare_bar_surface(), (int) StateColor::Normal});
     m_prepare_add_plate_button->SetBackgroundColor(add_background);
     m_prepare_add_plate_button->SetBorderColor(StateColor(outline));
     m_prepare_add_plate_button->SetBorderWidth(FromDIP(1));
@@ -4250,7 +4260,7 @@ void MainFrame::update_side_button_style()
     // radius.
     const int      btn_height = FromDIP(44);
     const double   pill       = MD3::Metrics::pill_radius(btn_height);
-    const wxColour bar_bg     = StateColor::semantic(R::SurfaceContainerLow); // action-bar fill behind the pill corners
+    const wxColour bar_bg     = prepare_bar_surface(); // the action bar's own ground behind the pill corners
 
     const wxColour disabled_bg  = StateColor::semantic(R::SurfaceContainerHigh);
     // Disabled label tone: OnSurface blended ~45% over the ACTUAL disabled fill

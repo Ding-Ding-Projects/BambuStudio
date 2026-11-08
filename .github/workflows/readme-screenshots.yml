@@ -148,6 +148,12 @@ jobs:
           & $env:README_PYTHON scripts/md3/test-readme-screenshot-privacy.py
           if ($LASTEXITCODE -ne 0) { throw 'The privacy check failed its own fixtures.' }
 
+      - name: Prove the blank web page guard
+        run: |
+          # Home and Ink are WebView2 pages; a blank body must fail, never pass as a capture.
+          & $env:README_PYTHON scripts/md3/test-recapture-blank-body.py
+          if ($LASTEXITCODE -ne 0) { throw 'The blank web page guard failed its own checks.' }
+
       - name: Set the display to 1920x1080
         run: |
           Add-Type -Path scripts/ci/HostedDisplayMode.cs
