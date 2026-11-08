@@ -766,7 +766,7 @@ int subscribe(std::function<void()> listener)
 
 void unsubscribe(int token) { state().listeners.erase(token); }
 
-void show_hint(wxWindow *near, const std::string &id) { hint_now(near, id, false); }
+void show_hint(wxWindow *anchor, const std::string &id) { hint_now(anchor, id, false); }
 
 bool is_locked(const std::string &element) { return state().store.find(element) != nullptr; }
 

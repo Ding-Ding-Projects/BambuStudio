@@ -54,7 +54,7 @@ void remember_name(const std::string &id, const wxString &name);
 int  subscribe(std::function<void()> changed);
 void unsubscribe(int token);
 // The short note a click on a locked element shows: who locked it and why.
-void show_hint(wxWindow *near, const std::string &id);
+void show_hint(wxWindow *anchor, const std::string &id);
 
 int  lock_item_id();
 // Adds "Lock this element..." or "Unlock this element..." for element_id.
