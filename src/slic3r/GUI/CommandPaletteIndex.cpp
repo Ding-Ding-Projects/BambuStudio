@@ -273,6 +273,7 @@ const std::vector<Article> &documentation_articles()
         {"docs/features/windows/base64-toolkit.md", L("Base64 toolkit")},
         {"docs/features/windows/practical-setup.md", L("Set up Bambu Studio")},
         {"docs/features/windows/extensions.md", L("Extensions")},
+        {"docs/features/windows/element-locks.md", L("Element locks and the unlock ladder")},
         {"docs/features/device/live-charts.md", L("Live charts")},
         {"docs/features/windows/command-palette.md", L("Command palette (Ctrl+Shift+F)")},
         {"docs/features/windows/gui-accessibility.md", L("Keyboard, assistive, and responsive GUI accessibility")},

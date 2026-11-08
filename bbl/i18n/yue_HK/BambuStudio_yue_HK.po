@@ -54216,3 +54216,183 @@ msgstr "複製十字線下面嘅數值"
 #. review-status: agent-drafted
 msgid "Save shown readings as CSV"
 msgstr "將顯示緊嘅讀數儲存做 CSV"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Every element you locked, with Unlock beside each"
+msgstr "你鎖過嘅每個元素，每個旁邊都有解鎖"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Element locks and the unlock ladder"
+msgstr "元素鎖同解鎖階梯"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "%d min"
+msgstr "%d 分鐘"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "%d s"
+msgstr "%d 秒"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Lock %s"
+msgstr "鎖住 %s"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "%s stops answering clicks, the mouse wheel and keys until it is unlocked. Its right-click menu still opens, with Unlock."
+msgstr "%s 會唔再理撳滑鼠、滑鼠滾輪同按鍵，直到解鎖為止。佢嘅右鍵選單仍然會打開，入面有解鎖。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Why (shown to whoever meets the lock, optional)"
+msgstr "原因（會顯示畀遇到呢個鎖嘅人睇，可選）"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Code, 4 to 32 characters"
+msgstr "密碼，4 至 32 個字元"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The code again"
+msgstr "再打一次密碼"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Forgot the code? The unlock ladder opens it after a wait: 1 minute, then typing its name, then 5 more minutes. A lock guards against slips and impulses, not against someone who can edit your settings files."
+msgstr "唔記得密碼？解鎖階梯等一陣就會幫你打開：先等 1 分鐘，再打佢個名，然後再等 5 分鐘。鎖係防止手快同一時衝動，唔係防止可以改你設定檔案嘅人。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The code needs at least 4 characters."
+msgstr "密碼最少要有 4 個字元。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The code can have at most 32 characters."
+msgstr "密碼最多只可以有 32 個字元。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The code cannot be only spaces or contain a line break."
+msgstr "密碼唔可以只係空格，亦唔可以有換行。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The two codes are different."
+msgstr "兩個密碼唔一樣。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Unlock %s"
+msgstr "解鎖 %s"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Locked by %s on %s."
+msgstr "由 %s 喺 %s 鎖住。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Why: %s"
+msgstr "原因：%s"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Code"
+msgstr "密碼"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "For a forgotten code: wait 1 minute, type the element's name, wait 5 more minutes, and the lock comes off. You can close this window; the ladder keeps its place."
+msgstr "畀唔記得密碼嘅時候用：等 1 分鐘、打元素個名、再等 5 分鐘，個鎖就會解開。你可以關咗呢個視窗；階梯會記住去到邊。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Start the ladder"
+msgstr "開始解鎖階梯"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Forgot the code?"
+msgstr "唔記得密碼？"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "%d wrong codes in a row. Try again in %s."
+msgstr "連續打錯 %d 次密碼。%s 之後再試。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "%d wrong codes in a row."
+msgstr "連續打錯 %d 次密碼。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Step 1 of 3: wait 1 minute."
+msgstr "第 1 步，共 3 步：等 1 分鐘。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Step %d of 3: wait. %s left."
+msgstr "第 %d 步，共 3 步：等緊。仲有 %s。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Step 2 of 3: type the name of what is locked, %s."
+msgstr "第 2 步，共 3 步：打鎖住咗嘅嘢嘅名，%s。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "That is not the name."
+msgstr "名唔啱。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "%s is locked by %s."
+msgstr "%s 由 %s 鎖住。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Right-click it to unlock."
+msgstr "撳右鍵就可以解鎖。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Unlock this element..."
+msgstr "解鎖呢個元素..."
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Lock this element..."
+msgstr "鎖住呢個元素..."
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Open it with its code or the unlock ladder"
+msgstr "用密碼或者解鎖階梯打開佢"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Stop clicks and keys from changing it until it is unlocked"
+msgstr "解鎖之前，唔畀撳滑鼠同按鍵改佢"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Every element you locked. Unlock opens it with its code or the unlock ladder."
+msgstr "你鎖過嘅每個元素。解鎖會用密碼或者解鎖階梯打開佢。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Nothing is locked. Right-click an element and choose Lock this element."
+msgstr "冇嘢鎖住。喺元素撳右鍵，揀鎖住呢個元素。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Unlock..."
+msgstr "解鎖..."

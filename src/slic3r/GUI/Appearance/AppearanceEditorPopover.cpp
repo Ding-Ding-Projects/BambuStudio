@@ -1,4 +1,5 @@
 #include "AppearanceEditorPopover.hpp"
+#include "../ElementLocks/LockService.hpp"
 
 #include <algorithm>
 #include <functional>
@@ -1300,6 +1301,8 @@ wxMenuItem *append_edit_appearance_item(wxMenu &menu, const std::string &element
         menu.AppendSeparator();
     const wxString text = (label.IsEmpty() ? _L("Edit appearance...") : label) + "\t" + shortcut_text();
     wxMenuItem *item = menu.Append(kMenuItemId, text, _L("Open the appearance editor beside this element"));
+    // Beside it, the element's lock: Lock this element, or Unlock when it is locked.
+    ElementLocks::append_lock_item(menu, element_id, anchor);
     menu.Bind(wxEVT_MENU, [menu_ptr = &menu](wxCommandEvent &) {
         auto it = menu_bindings().find(menu_ptr);
         if (it == menu_bindings().end())
@@ -1322,6 +1325,7 @@ wxMenuItem *append_edit_appearance_item(wxMenu &menu, const std::string &element
 
 void remove_edit_appearance_item(wxMenu &menu)
 {
+    ElementLocks::remove_lock_item(menu);
     wxMenuItem *item = menu.FindItem(kMenuItemId);
     if (!item)
         return;

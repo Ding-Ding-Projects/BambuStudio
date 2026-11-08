@@ -82,8 +82,8 @@ const std::vector<Feature> &features()
         {"authenticator", "safety", 0xF045 /* pin */, L("Authenticator and QR pairing"), L("File, Authenticator"), "", "TOTP two factor codes QR", Badge::None, State::Ready, "command:authenticator"},
         {"identity-history", "safety", 0xE90D /* fingerprint */, L("Identity history"), L("File, Identity history"), "", "history password encrypted", Badge::None, State::Ready, "command:identity-history"},
         {"super-confirmation", "safety", 0xF014 /* gpp_maybe */, L("Two-key super confirmation"), L("Every destructive action"), "", "two keys slider delete destructive", Badge::None, State::Ready, "docs:windows/super-confirmation.md"},
-        {"element-locks", "safety", 0xE88D /* lock */, L("Element locks"), L("Right-click a control, Lock this element"), "", "lock protect control", Badge::None, State::NotBuilt, ""},
-        {"unlock-ladder", "safety", 0xE898 /* lock_open */, L("Unlock ladder"), L("Offered after wrong codes on a lock"), "", "unlock wrong code lockout", Badge::None, State::NotBuilt, ""},
+        {"element-locks", "safety", 0xE88D /* lock */, L("Element locks"), L("Right-click a control, Lock this element"), "", "lock protect control code", Badge::New, State::Ready, "command:element-locks"},
+        {"unlock-ladder", "safety", 0xE898 /* lock_open */, L("Unlock ladder"), L("Offered after wrong codes on a lock"), "", "unlock wrong code lockout forgot", Badge::New, State::Ready, "docs:windows/element-locks.md"},
     };
     return list;
 }

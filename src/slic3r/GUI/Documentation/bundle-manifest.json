@@ -1365,12 +1365,12 @@
     {
       "route": "windows/README.md",
       "title": "Windows features",
-      "sha256": "9d35b7e0fb694445dbbd2ab8aeb7c5b0cc287c2eaba35489abd2fe33c10fab57"
+      "sha256": "b61e64c77a58b465482b3e298c5fd060c564d2aa2831d0d438fff9798d463865"
     },
     {
       "route": "windows/README.yue_HK.md",
       "title": "Windows 功能",
-      "sha256": "0211709fad09eb26265bbe8d01a7cc3c32ff0c5908f0458a8f854953d7db7d66"
+      "sha256": "2fdd12207f334773c727470acb7434f84877a80341cfeea5f7500071f41128fe"
     },
     {
       "route": "windows/action-sounds.md",
@@ -1571,6 +1571,16 @@
       "route": "windows/documentation-browser.yue_HK.md",
       "title": "離線文件瀏覽器（F1）",
       "sha256": "42a0b4e312e70a6020aa13804c805b0aa353c6df39cd6dff324908fce5d6437a"
+    },
+    {
+      "route": "windows/element-locks.md",
+      "title": "Element locks and the unlock ladder",
+      "sha256": "91702c736ae63229c8b5b3285c1b47ba813be8e2f27d0e2e30ada11ba85265c3"
+    },
+    {
+      "route": "windows/element-locks.yue_HK.md",
+      "title": "元素鎖同解鎖階梯",
+      "sha256": "6ff32ff838384f935237a2ff79e793e9468a0f3b4558717bf88c4d55776f3f50"
     },
     {
       "route": "windows/every-feature.md",
@@ -2225,7 +2235,7 @@
       "bytes": 16430
     }
   ],
-  "bundle_sha256": "55220504dcab5858017cf5c4aabda13ce551a2bdafff7fd341d4be28107658dc",
+  "bundle_sha256": "59516e1cbf1f18c21fb384e679c2ba93706c27aabdf0f1135764fd351e3d1288",
   "unavailable_references": [
     {
       "source": "api/README.md",

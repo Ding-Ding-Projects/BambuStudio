@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-08 06:01-0500\n"
+"POT-Creation-Date: 2026-11-08 06:13-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -7425,6 +7425,12 @@ msgid "Live charts"
 msgstr ""
 
 msgid "Nozzle, bed and chamber temperatures of the selected printer over time"
+msgstr ""
+
+msgid "Element locks"
+msgstr ""
+
+msgid "Every element you locked, with Unlock beside each"
 msgstr ""
 
 msgid "Scheduled settings"
@@ -29468,6 +29474,9 @@ msgstr ""
 msgid "Preferences: where every value comes from"
 msgstr ""
 
+msgid "Element locks and the unlock ladder"
+msgstr ""
+
 msgid "Command palette (Ctrl+Shift+F)"
 msgstr ""
 
@@ -29760,9 +29769,6 @@ msgid "Two-key super confirmation"
 msgstr ""
 
 msgid "Every destructive action"
-msgstr ""
-
-msgid "Element locks"
 msgstr ""
 
 msgid "Right-click a control, Lock this element"
@@ -31651,6 +31657,120 @@ msgid "Copy the value under the crosshair"
 msgstr ""
 
 msgid "Save shown readings as CSV"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%d min"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%d s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Lock %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s stops answering clicks, the mouse wheel and keys until it is unlocked. Its right-click menu still opens, with Unlock."
+msgstr ""
+
+msgid "Why (shown to whoever meets the lock, optional)"
+msgstr ""
+
+msgid "Code, 4 to 32 characters"
+msgstr ""
+
+msgid "The code again"
+msgstr ""
+
+msgid "Forgot the code? The unlock ladder opens it after a wait: 1 minute, then typing its name, then 5 more minutes. A lock guards against slips and impulses, not against someone who can edit your settings files."
+msgstr ""
+
+msgid "The code needs at least 4 characters."
+msgstr ""
+
+msgid "The code can have at most 32 characters."
+msgstr ""
+
+msgid "The code cannot be only spaces or contain a line break."
+msgstr ""
+
+msgid "The two codes are different."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Unlock %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Locked by %s on %s."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Why: %s"
+msgstr ""
+
+msgid "Code"
+msgstr ""
+
+msgid "For a forgotten code: wait 1 minute, type the element's name, wait 5 more minutes, and the lock comes off. You can close this window; the ladder keeps its place."
+msgstr ""
+
+msgid "Start the ladder"
+msgstr ""
+
+msgid "Forgot the code?"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%d wrong codes in a row. Try again in %s."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%d wrong codes in a row."
+msgstr ""
+
+msgid "Step 1 of 3: wait 1 minute."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Step %d of 3: wait. %s left."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Step 2 of 3: type the name of what is locked, %s."
+msgstr ""
+
+msgid "That is not the name."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s is locked by %s."
+msgstr ""
+
+msgid "Right-click it to unlock."
+msgstr ""
+
+msgid "Unlock this element..."
+msgstr ""
+
+msgid "Lock this element..."
+msgstr ""
+
+msgid "Open it with its code or the unlock ladder"
+msgstr ""
+
+msgid "Stop clicks and keys from changing it until it is unlocked"
+msgstr ""
+
+msgid "Every element you locked. Unlock opens it with its code or the unlock ladder."
+msgstr ""
+
+msgid "Nothing is locked. Right-click an element and choose Lock this element."
+msgstr ""
+
+msgid "Unlock..."
 msgstr ""
 
 msgid "No key is saved for this provider"

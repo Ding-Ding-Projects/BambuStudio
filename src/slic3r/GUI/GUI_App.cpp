@@ -118,6 +118,7 @@
 #include "LanModelDrop/LanModelDropStation.hpp"
 #include "SetupWizard/SetupWizardDialog.hpp"
 #include "Extensions/ExtensionRuntime.hpp"
+#include "ElementLocks/LockService.hpp"
 #include "StatusApi/StatusApiServer.hpp"
 #include "Melody/MelodyCreatorDialog.hpp"
 #include "VocabularyDrop.hpp"
@@ -2086,6 +2087,7 @@ void GUI_App::shutdown()
     LanModelDrop::shutdown();
     StatusApi::shutdown();
     Extensions::Runtime::shutdown();
+    ElementLocks::shutdown();
     Schedule::Scheduler::instance().shutdown();
     HomeAssistant::shutdown();
     set_closing(true);
@@ -3928,6 +3930,7 @@ bool GUI_App::on_init_inner()
     // registry from data_dir()/appearance/element-styles.json and install the
     // context-menu / shortcut hooks before the first adopted widget is built.
     AppearanceEditor::init(data_dir() + "/appearance");
+    ElementLocks::init(data_dir());
     // Tab strips (project tabs, settings tabs) open the same editor from their
     // "Edit tab appearance..." menu entries and Shift+right-click.
     TabStrip::SetAppearanceEditorHook([](wxWindow *anchor, const std::string &element_id) {
