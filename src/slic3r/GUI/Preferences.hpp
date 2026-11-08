@@ -9,6 +9,7 @@
 #include <wx/sizer.h>
 #include <wx/stattext.h>
 #include <wx/timer.h>
+#include <wx/weakref.h>
 #include <vector>
 #include <list>
 #include <map>
@@ -160,6 +161,9 @@ protected:
     void refresh_changed_chip();
     void show_info(const std::string &key);
     void hide_info();
+    // Attention modes, Focus: while a setting is explained, the other rows are muted.
+    void apply_focus_rows();
+    std::vector<std::pair<wxWeakRef<wxWindow>, wxColour>> m_focus_muted;
     void show_history();
     std::optional<std::string> stored_value(const std::string &key) const;
     std::optional<std::string> default_value(const std::string &key) const;

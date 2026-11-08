@@ -109,10 +109,15 @@ test('unknown custom RGB values remain outside the compatibility table', () => {
 test('accent override, contextual resolution and seed generation remain byte-identical to the baseline', () => {
     // This narrow source fingerprint is intentionally not a runtime accent test.
     // It protects the no-behaviour-change boundary of this palette-only unit.
+    // Updated once, deliberately, for Low stimulation's quieter colours: the
+    // role tones moved into resolve_tone / resolve_scheme_tone unchanged, and
+    // resolve() now passes them through detail::quiet, which returns them as
+    // they are while the quieter colours are off. That behaviour is checked
+    // at run time by tests/md3_quiet_colours.test.mjs.
     const portions = [tokens.slice(tokens.indexOf('namespace detail {'), tokens.indexOf('struct DensityMetrics')),
         tokens.slice(tokens.indexOf('// Live accent generator'))];
     assert.equal(createHash('sha256').update(portions.join('\n')).digest('hex'),
-        'dbed921ac70ceefcabd39aae5f47215afbef244b3a15512f44dc0593a95eaabe');
+        'bc3b8d14ff43fc88af6abe2e51847b28046e7c46bbaae9bceff7fd408f0f04ec');
 });
 test('contrast and dark-remap checks reject deliberate invalid palette mutations', () => {
     assert.throws(() => checkContrast(palette(tokens.replace('onSurfaceVariant{"#a9b6ad"}', 'onSurfaceVariant{"#28322c"}'))));

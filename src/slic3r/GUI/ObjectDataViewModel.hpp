@@ -2,6 +2,8 @@
 #define slic3r_GUI_ObjectDataViewModel_hpp_
 
 #include <wx/dataview.h>
+
+#include <functional>
 #include <vector>
 #include <map>
 
@@ -344,6 +346,7 @@ wxDECLARE_EVENT(wxCUSTOMEVT_LAST_VOLUME_IS_DELETED, wxCommandEvent);
 
 class ObjectDataViewModel :public wxDataViewModel
 {
+    std::function<bool(const wxDataViewItem &)> m_muted_rows;
     std::vector<ObjectDataViewModelNode*>       m_plates;
     std::vector<ObjectDataViewModelNode*>       m_objects;
     std::vector<wxBitmap>                       m_volume_bmps;
@@ -477,6 +480,9 @@ public:
     wxDataViewItem  ReorganizeObjects( int current_id, int new_id);
 
     bool    IsEnabled(const wxDataViewItem &item, unsigned int col) const override;
+    // Attention modes, Focus: rows the owner says step back are drawn muted, never hidden.
+    bool    GetAttr(const wxDataViewItem &item, unsigned int col, wxDataViewItemAttr &attr) const override;
+    void    set_muted_rows(std::function<bool(const wxDataViewItem &)> muted) { m_muted_rows = std::move(muted); }
 
     wxDataViewItem  GetParent(const wxDataViewItem &item) const override;
     // get object item

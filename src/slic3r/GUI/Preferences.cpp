@@ -2397,9 +2397,47 @@ void PreferencesDialog::poll_changes()
 void PreferencesDialog::hide_info()
 {
     m_info_key.clear();
+    apply_focus_rows();
     if (m_info_panel == nullptr || !m_info_panel->IsShown()) return;
     m_info_panel->Hide();
     Layout();
+}
+
+namespace {
+// Every label in a row, nested sizers included.
+void row_labels(wxSizer *sizer, std::vector<wxWindow *> &out)
+{
+    if (sizer == nullptr) return;
+    for (wxSizerItem *item : sizer->GetChildren()) {
+        if (item->IsSizer()) row_labels(item->GetSizer(), out);
+        else if (auto *label = dynamic_cast<::Label *>(item->GetWindow())) out.push_back(label);
+    }
+}
+} // namespace
+
+void PreferencesDialog::apply_focus_rows()
+{
+    // Back to how every row looked first.
+    for (auto &[window, colour] : m_focus_muted)
+        if (window) {
+            window->SetForegroundColour(colour);
+            window->Refresh();
+        }
+    m_focus_muted.clear();
+    // Attention modes, Focus: while one setting is explained, the other rows step back (muted, never hidden).
+    const RowInfo *focused = m_info_key.empty() ? nullptr : row_info(m_info_key);
+    if (focused == nullptr || app_config == nullptr || app_config->get(AttentionModes::kFocus) != "true") return;
+    const wxColour muted = StateColor::semantic(MD3::Role::Outline);
+    for (const RowInfo &info : m_row_info) {
+        if (info.row == nullptr || info.row == focused->row) continue;
+        std::vector<wxWindow *> labels;
+        row_labels(info.row, labels);
+        for (wxWindow *label : labels) {
+            m_focus_muted.emplace_back(wxWeakRef<wxWindow>(label), label->GetForegroundColour());
+            label->SetForegroundColour(muted);
+            label->Refresh();
+        }
+    }
 }
 
 void PreferencesDialog::show_info(const std::string &key)
@@ -2407,6 +2445,7 @@ void PreferencesDialog::show_info(const std::string &key)
     const RowInfo *info = row_info(key);
     if (info == nullptr || m_info_panel == nullptr || m_info_sizer == nullptr) return;
     m_info_key = key;
+    apply_focus_rows();
     const int pad   = FromDIP(16);
     const int wrap  = FromDIP(288);
     const auto text = [&](const wxString &value, const wxFont &font, MD3::Role role, int top) {
@@ -4811,12 +4850,12 @@ wxWindow *PreferencesDialog::create_attention_tab()
     intro->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     sizer->Add(intro, wxSizerFlags().Expand().Border(wxLEFT | wxRIGHT | wxTOP, FromDIP(12)));
     sizer->Add(create_item_checkbox(_L("Focus"), scrolled,
-                                    _L("While something is selected in Prepare, the rest of the plate steps back: drawn muted, never hidden. "
-                                       "Clear the selection to see everything again."),
+                                    _L("While something is selected in Prepare, the rest of the plate and the other object list rows step back, and while "
+                                       "Preferences explains one setting the other rows do: drawn muted, never hidden. Clear the selection to see everything again."),
                                     50, AttentionModes::kFocus),
                flags);
     sizer->Add(create_item_checkbox(_L("Low stimulation"), scrolled,
-                                    _L("Less motion on top of the Windows setting, no action sounds, and no dim sum surprise at start-up."), 50,
+                                    _L("Quieter colours that keep text as readable, less motion on top of the Windows setting, no action sounds, and no dim sum surprise at start-up."), 50,
                                     AttentionModes::kLowStimulation),
                flags);
     sizer->Add(create_item_checkbox(_L("Time awareness"), scrolled,

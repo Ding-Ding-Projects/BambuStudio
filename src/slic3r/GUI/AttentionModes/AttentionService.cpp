@@ -8,6 +8,7 @@
 #include "../I18N.hpp"
 #include "../MainFrame.hpp"
 #include "../NotificationManager.hpp"
+#include "../GUI_ObjectList.hpp"
 #include "../Plater.hpp"
 #include "../Widgets/Button.hpp"
 #include "../Widgets/Label.hpp"
@@ -147,6 +148,7 @@ struct Service
 {
     Clock               clock;
     std::atomic<bool>   focus{false};
+    bool                quiet = false; // Low stimulation's quieter colours are in use
     wxWeakRef<wxWindow> strip;
     wxTimer            *timer   = nullptr;
     wxEvtHandler       *handler = nullptr;
@@ -281,12 +283,42 @@ void redraw_canvas()
         }
 }
 
+// Low stimulation: quieter colours everywhere, applied the way a theme change is.
+void apply_quiet(bool on)
+{
+    MD3::setQuietColours(on);
+    wxGetApp().Update_dark_mode_flag();
+#ifdef _MSW_DARK_MODE
+    wxGetApp().force_colors_update();
+    wxGetApp().update_ui_from_settings();
+#endif
+    if (Plater *plater = wxGetApp().plater()) {
+        SimpleEvent evt = SimpleEvent(EVT_GLCANVAS_COLOR_MODE_CHANGED);
+        wxPostEvent(plater, evt);
+    }
+    if (wxGetApp().mainframe) wxGetApp().mainframe->Refresh();
+}
+
+// Focus outside the 3D view: the object list mutes the rows that are not
+// selected, so it has to repaint when Focus turns on or off.
+void refresh_lists()
+{
+    if (ObjectList *list = wxGetApp().obj_list()) list->Refresh();
+}
+
 void tick_all()
 {
     Service       &svc = service();
     Settings       s   = current();
     const bool     focus = s.focus;
-    if (svc.focus.exchange(focus) != focus) redraw_canvas();
+    if (svc.focus.exchange(focus) != focus) {
+        redraw_canvas();
+        refresh_lists();
+    }
+    if (s.low_stimulation != svc.quiet) {
+        svc.quiet = s.low_stimulation;
+        apply_quiet(svc.quiet);
+    }
     if (auto *strip = dynamic_cast<Strip *>(svc.strip.get())) strip->refresh();
 
     const std::int64_t now = now_seconds();
@@ -320,6 +352,11 @@ void init()
     svc.started             = true;
     svc.clock.session_start = now_seconds();
     svc.focus               = current().focus;
+    // The main frame is already drawn: quieter colours need the same repaint a theme change gets.
+    if (current().low_stimulation) {
+        svc.quiet = true;
+        apply_quiet(true);
+    }
     svc.handler             = new wxEvtHandler();
     svc.timer               = new wxTimer(svc.handler);
     svc.handler->Bind(wxEVT_TIMER, [](wxTimerEvent &) { tick_all(); });

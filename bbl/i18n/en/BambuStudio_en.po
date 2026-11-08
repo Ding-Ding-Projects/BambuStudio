@@ -38190,3 +38190,9 @@ msgstr ""
 
 msgid "The others stay: a preset of yours still uses them."
 msgstr ""
+
+msgid "While something is selected in Prepare, the rest of the plate and the other object list rows step back, and while Preferences explains one setting the other rows do: drawn muted, never hidden. Clear the selection to see everything again."
+msgstr ""
+
+msgid "Quieter colours that keep text as readable, less motion on top of the Windows setting, no action sounds, and no dim sum surprise at start-up."
+msgstr ""

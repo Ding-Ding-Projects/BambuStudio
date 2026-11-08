@@ -296,6 +296,9 @@ public:
     void                set_tooltip_for_item(const wxPoint& pt);
 
     void                selection_changed();
+    // Attention modes, Focus: whether a row steps back (muted) because something else is selected.
+    bool                muted_by_focus(const wxDataViewItem &item) const;
+    void                refresh_focus_rows();
     void                show_context_menu(const bool evt_context_menu);
     void                extruder_editing();
 #ifndef __WXOSX__

@@ -59341,3 +59341,13 @@ msgstr "佢哋嘅預設再次收埋咗；你儲存過嘅嘢一樣都冇刪。"
 #. review-status: agent-drafted
 msgid "The others stay: a preset of yours still uses them."
 msgstr "其他嘅留低：你有預設仲用緊佢哋。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "While something is selected in Prepare, the rest of the plate and the other object list rows step back, and while Preferences explains one setting the other rows do: drawn muted, never hidden. Clear the selection to see everything again."
+msgstr "喺準備揀咗嘢嘅時候，打印板上其他嘢同物件清單其他行會退後；偏好設定解釋緊一個設定嘅時候，其他行都一樣：畫得淡啲，但永遠唔會收埋。取消揀選就會再見到晒。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Quieter colours that keep text as readable, less motion on top of the Windows setting, no action sounds, and no dim sum surprise at start-up."
+msgstr "較安靜嘅顏色而文字一樣易讀、喺 Windows 設定之上再少啲動態、冇動作音效，開機亦冇點心驚喜。"

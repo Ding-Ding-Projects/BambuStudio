@@ -1465,12 +1465,12 @@
     {
       "route": "windows/attention-modes.md",
       "title": "Attention modes",
-      "sha256": "b8b4b92f51a135854ece692fecd7920fd5012031de981b6adebdddad898a8a53"
+      "sha256": "85c9c14b2699f9d2fe91ba984f29c123f8658ca8c7308236d0abd6edd3da00e0"
     },
     {
       "route": "windows/attention-modes.yue_HK.md",
       "title": "專注模式",
-      "sha256": "55a0d539b7cc5d424ed221c2248e3759a113f0f03caa630debeff46e18b66c38"
+      "sha256": "b1b299a882461cd50166de01c07595347d49575001db6432eb10dcb66e851e88"
     },
     {
       "route": "windows/base64-toolkit.md",
@@ -2295,7 +2295,7 @@
       "bytes": 16430
     }
   ],
-  "bundle_sha256": "390164519e1497fe0761c2be661c17b16d495bf47666cade929d0733e94994a0",
+  "bundle_sha256": "2834fabbed6c8f095486a29a32ac85913ba04ff002317b6c3274acb5d3a26a12",
   "unavailable_references": [
     {
       "source": "api/README.md",

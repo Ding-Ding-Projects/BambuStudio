@@ -2126,6 +2126,14 @@ wxDataViewItem ObjectDataViewModel::ReorganizeObjects(  const int current_id, co
     return wxDataViewItem(deleted_node);
 }
 
+bool ObjectDataViewModel::GetAttr(const wxDataViewItem &item, unsigned int col, wxDataViewItemAttr &attr) const
+{
+    (void) col;
+    if (!m_muted_rows || !m_muted_rows(item)) return false;
+    attr.SetColour(StateColor::semantic(MD3::Role::Outline));
+    return true;
+}
+
 bool ObjectDataViewModel::IsEnabled(const wxDataViewItem &item, unsigned int col) const
 {
     bool ret;

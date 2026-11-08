@@ -6,6 +6,7 @@
 #include "GUI_Factories.hpp"
 //#include "GUI_ObjectLayers.hpp"
 #include "GUI_App.hpp"
+#include "AttentionModes/AttentionService.hpp"
 #include "GUI.hpp"
 #include "GLToolbar.hpp"
 #include "I18N.hpp"
@@ -444,6 +445,8 @@ void ObjectList::create_objects_ctrl()
     m_objects_model = new ObjectDataViewModel;
     AssociateModel(m_objects_model);
     m_objects_model->SetAssociatedControl(this);
+    // Attention modes, Focus: with something selected, the other rows step back.
+    m_objects_model->set_muted_rows([this](const wxDataViewItem &item) { return muted_by_focus(item); });
 #if wxUSE_DRAG_AND_DROP && wxUSE_UNICODE
     EnableDragSource(wxDF_UNICODETEXT);
     EnableDropTarget(wxDF_UNICODETEXT);
@@ -1478,9 +1481,31 @@ void ObjectList::sync_filament_from_model()
     Refresh();
 }
 
+bool ObjectList::muted_by_focus(const wxDataViewItem &item) const
+{
+    if (!AttentionModes::focus_on() || !item.IsOk() || m_objects_model == nullptr) return false;
+    wxDataViewItemArray selected;
+    GetSelections(selected);
+    if (selected.empty()) return false;
+    if (m_objects_model->GetItemType(item) & itPlate) return false; // plates are headings, not things on the plate
+    // A selected row, anything inside a selected row, and the rows a selection sits in stay as they are.
+    for (wxDataViewItem it = item; it.IsOk(); it = m_objects_model->GetParent(it))
+        if (IsSelected(it)) return false;
+    for (const wxDataViewItem &chosen : selected)
+        for (wxDataViewItem it = chosen; it.IsOk(); it = m_objects_model->GetParent(it))
+            if (it == item) return false;
+    return true;
+}
+
+void ObjectList::refresh_focus_rows()
+{
+    if (AttentionModes::focus_on()) Refresh();
+}
+
 void ObjectList::selection_changed()
 {
     if (m_prevent_list_events) return;
+    refresh_focus_rows();
 
     fix_multiselection_conflicts();
 
@@ -5652,6 +5677,7 @@ void ObjectList::update_selections()
         // Scroll selected Item in the middle of an object list
         ensure_current_item_visible();
     }
+    refresh_focus_rows();
 }
 
 void ObjectList::update_selections_on_canvas()

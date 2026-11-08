@@ -225,11 +225,8 @@ inline const wxColour *accentOverrideColour(Role role, bool dark)
 
 } // namespace detail
 
-// Resolve by semantic role instead of by light-mode RGB value. Several MD3
-// roles deliberately share a light value but diverge in dark mode (for
-// example surface and surfaceBright), so a colour-to-colour lookup cannot
-// preserve their meaning.
-inline const wxColour &resolve(Role role, bool dark)
+// The role's tone before the quieter colours of Low stimulation (below).
+inline const wxColour &resolve_tone(Role role, bool dark)
 {
     // A user-chosen Appearance accent (setAccentSeed) recolours the six accent
     // roles for the default (Brand) scheme; non-accent roles fall through.
@@ -297,10 +294,10 @@ inline const wxColour &resolve(Role role, bool dark)
     return Light::surface;
 }
 
-inline const wxColour &resolve(Role role, bool dark, ColorScheme scheme)
+inline const wxColour &resolve_scheme_tone(Role role, bool dark, ColorScheme scheme)
 {
     if (scheme == ColorScheme::Brand)
-        return resolve(role, dark);
+        return resolve_tone(role, dark);
 
     if (scheme == ColorScheme::Preview) {
         if (dark) {
@@ -311,7 +308,7 @@ inline const wxColour &resolve(Role role, bool dark, ColorScheme scheme)
             case Role::OnPrimaryContainer: return Preview::onPrimaryContainerDark;
             case Role::SecondaryContainer: return Preview::secondaryContainerDark;
             case Role::OnSecondaryContainer: return Preview::onSecondaryContainerDark;
-            default: return resolve(role, true);
+            default: return resolve_tone(role, true);
             }
         }
         switch (role) {
@@ -321,7 +318,7 @@ inline const wxColour &resolve(Role role, bool dark, ColorScheme scheme)
         case Role::OnPrimaryContainer: return Preview::onPrimaryContainerLight;
         case Role::SecondaryContainer: return Preview::secondaryContainerLight;
         case Role::OnSecondaryContainer: return Preview::onSecondaryContainerLight;
-        default: return resolve(role, false);
+        default: return resolve_tone(role, false);
         }
     }
 
@@ -333,7 +330,7 @@ inline const wxColour &resolve(Role role, bool dark, ColorScheme scheme)
         case Role::OnPrimaryContainer: return Device::onPrimaryContainerDark;
         case Role::SecondaryContainer: return Device::secondaryContainerDark;
         case Role::OnSecondaryContainer: return Device::onSecondaryContainerDark;
-        default: return resolve(role, true);
+        default: return resolve_tone(role, true);
         }
     }
     switch (role) {
@@ -343,9 +340,82 @@ inline const wxColour &resolve(Role role, bool dark, ColorScheme scheme)
     case Role::OnPrimaryContainer: return Device::onPrimaryContainerLight;
     case Role::SecondaryContainer: return Device::secondaryContainerLight;
     case Role::OnSecondaryContainer: return Device::onSecondaryContainerLight;
-    default: return resolve(role, false);
+    default: return resolve_tone(role, false);
     }
 }
+
+namespace detail {
+
+// Attention modes, Low stimulation: the accent roles keep their lightness, so
+// every text stays as readable as before, and lose most of their colour.
+struct QuietState
+{
+    bool on = false;
+};
+
+inline QuietState &quietState()
+{
+    static QuietState state;
+    return state;
+}
+
+inline int quietSlot(Role role)
+{
+    switch (role) {
+    case Role::Primary: return 0;
+    case Role::OnPrimary: return 1;
+    case Role::PrimaryContainer: return 2;
+    case Role::OnPrimaryContainer: return 3;
+    case Role::SecondaryContainer: return 4;
+    case Role::OnSecondaryContainer: return 5;
+    case Role::InversePrimary: return 6;
+#ifdef SLIC3R_MD3_QUIET_NEGATIVE_FIXTURE
+    // Test-only mutation (tests/md3_quiet_colours.test.mjs): the suite must fail.
+    case Role::Error: return 7;
+#endif
+    default: return -1;
+    }
+}
+
+// The colour's own grey (same luminance) plus `keep` of its colourfulness.
+inline wxColour quieter(const wxColour &c, double keep)
+{
+    const double grey = 0.2126 * c.Red() + 0.7152 * c.Green() + 0.0722 * c.Blue();
+    const auto   mix  = [grey, keep](unsigned char v) {
+        const double out = grey + (double(v) - grey) * keep;
+        return static_cast<unsigned char>(out < 0 ? 0 : out > 255 ? 255 : out + 0.5);
+    };
+    return wxColour(mix(c.Red()), mix(c.Green()), mix(c.Blue()), c.Alpha());
+}
+
+// Error roles are never quieted: a problem must stay as visible as before.
+inline const wxColour &quiet(Role role, bool dark, int scheme, const wxColour &base)
+{
+    const int slot = quietSlot(role);
+    if (!quietState().on || slot < 0) return base;
+    static wxColour slots[3][2][8];
+    wxColour       &out = slots[scheme][dark ? 1 : 0][slot];
+    out                 = quieter(base, 0.35);
+    return out;
+}
+
+} // namespace detail
+
+// Resolve by semantic role instead of by light-mode RGB value. Several MD3
+// roles deliberately share a light value but diverge in dark mode (for
+// example surface and surfaceBright), so a colour-to-colour lookup cannot
+// preserve their meaning.
+inline const wxColour &resolve(Role role, bool dark) { return detail::quiet(role, dark, 0, resolve_tone(role, dark)); }
+
+inline const wxColour &resolve(Role role, bool dark, ColorScheme scheme)
+{
+    return detail::quiet(role, dark, int(scheme), resolve_scheme_tone(role, dark, scheme));
+}
+
+// Low stimulation's quieter colours, on or off; widgets repaint with them on
+// their next paint or rebuild.
+inline void setQuietColours(bool on) { detail::quietState().on = on; }
+inline bool quietColours() { return detail::quietState().on; }
 
 // Theme-aware overlay tints. scrim() dims content behind modal surfaces;
 // shadowTint() colours every elevation drop-shadow (see Metrics::elev*).
