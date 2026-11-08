@@ -133,6 +133,8 @@
 #endif // _WIN32
 #include <slic3r/GUI/CreatePresetsDialog.hpp>
 #include "libslic3r/Log.hpp"
+#include "FeatureFinder/FeatureCommands.hpp"
+#include "FeatureFinder/FeatureFinderPanel.hpp"
 #include "libslic3r/Utils.hpp"
 
 
@@ -324,6 +326,11 @@ DPIFrame(NULL, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, BORDERLESS_FRAME_
 
 #ifndef __APPLE__
     m_topbar         = new BBLTopbar(this);
+    FeatureFinder::Commands::instance().add("notification-centre", [this]() {
+        if (m_topbar == nullptr) return;
+        wxAuiToolBarEvent event;
+        m_topbar->OnNotificationBell(event);
+    });
 #else
     auto panel_topbar = new wxPanel(this, wxID_ANY);
     // Title-bar surface role (matches BBLTopbar's SurfaceContainerLow background).
@@ -4560,26 +4567,39 @@ static const wxString sep = " - ";
 static const wxString sep_space = "";
 #endif
 
+// Every feature page: register the handler a menu item runs under a stable id,
+// so opening a feature from the page does exactly what its menu item does.
+// Menus are rebuilt on language changes; registering again replaces the entry.
+static std::function<void(wxCommandEvent&)> feature_command(const char* id, std::function<void()> run)
+{
+    FeatureFinder::Commands::instance().add(id, run);
+    return [run](wxCommandEvent&) { run(); };
+}
+
 static wxMenu* generate_help_menu()
 {
     wxMenu* helpMenu = new wxMenu();
+    append_menu_item(helpMenu, wxID_ANY, _L("Every feature") + dots,
+        _L("Every feature in this app, where it lives, and one click to open it"), [](wxCommandEvent&) {
+            if (auto* frame = wxGetApp().mainframe) frame->open_every_feature();
+        });
     append_menu_item(helpMenu, wxID_ANY, _L("Status Hub") + dots,
-        _L("Inspect status delivery and enrollment state"), [](wxCommandEvent&) {
+        _L("Inspect status delivery and enrollment state"), feature_command("status-hub", []() {
             if (auto* frame = wxGetApp().mainframe)
                 frame->open_service("status-hub", _L("Status Hub"), [](wxWindow* parent) { return new StatusHubPanel(parent); });
-        });
+        }));
     append_menu_item(helpMenu, wxID_ANY, _L("Offline documentation") + dots,
-        _L("Read bundled feature guides without opening a browser"), [](wxCommandEvent&) {
+        _L("Read bundled feature guides without opening a browser"), feature_command("offline-docs", []() {
             Documentation::ShowOfflineDocumentation(wxGetApp().mainframe);
-        });
+        }));
 #ifdef __WINDOWS__
     // shortcut key
     auto alt = GUI::shortkey_alt_prefix();
     append_menu_item(helpMenu, wxID_ANY, _L("Keyboard Shortcuts") + sep + "& Shift+" + alt +"?", _L("Show the list of the keyboard shortcuts"),
-        [](wxCommandEvent&) { wxGetApp().keyboard_shortcuts(); });
+        feature_command("keyboard-shortcuts", []() { wxGetApp().keyboard_shortcuts(); }));
 #else
     append_menu_item(helpMenu, wxID_ANY, _L("Keyboard Shortcuts") + sep + "& Shift+?", _L("Show the list of the keyboard shortcuts"),
-                     [](wxCommandEvent &) { wxGetApp().keyboard_shortcuts(); });
+                     feature_command("keyboard-shortcuts", []() { wxGetApp().keyboard_shortcuts(); }));
 #endif
     append_menu_item(helpMenu, wxID_ANY, _L("Documentation") + sep + PaletteIndex::docs_shortcut_label(),
         _L("Browse every feature article offline, inside the app"),
@@ -4589,7 +4609,7 @@ static wxMenu* generate_help_menu()
     append_menu_item(helpMenu, wxID_ANY, _L("Dual-extruder TPU tutorial"), _L("Open the TPU printing tutorial video"),
         [](wxCommandEvent&) { play_dual_extruder_print_tpu_video(); });
     // Show Beginner's Tutorial
-    append_menu_item(helpMenu, wxID_ANY, _L("Setup Wizard"), _L("Setup Wizard"), [](wxCommandEvent &) {wxGetApp().ShowUserGuide();});
+    append_menu_item(helpMenu, wxID_ANY, _L("Setup Wizard"), _L("Setup Wizard"), feature_command("setup-wizard", []() { wxGetApp().ShowUserGuide(); }));
 
     helpMenu->AppendSeparator();
     // Open Config Folder
@@ -4632,10 +4652,10 @@ static wxMenu* generate_help_menu()
     // commit-linked entries (resources/changelog/changelog.json).
     append_menu_item(helpMenu, wxID_ANY, _L("What's new / Changelog") + dots,
             _L("Browse every released version with its dated, commit-linked changes"),
-            [](wxCommandEvent&) {
+            feature_command("changelog", []() {
                 ChangelogDialog dialog(wxGetApp().mainframe);
                 dialog.ShowModal();
-            });
+            }));
 
     // About
 #ifndef __APPLE__
@@ -4814,29 +4834,29 @@ void MainFrame::init_menubar_as_editor()
 
         append_menu_item(fileMenu, wxID_ANY, _L("Version history") + dots,
             _L("Browse and restore local Git-backed project versions"),
-            [this](wxCommandEvent&) { show_project_history(); }, "", nullptr,
+            feature_command("version-history", [this]() { show_project_history(); }), "", nullptr,
             [this](){return m_plater != nullptr; }, this);
 
         append_menu_item(fileMenu, wxID_ANY, _L("AI filament scanner") + dots,
             _L("Snap a spool photo on your phone; a local model identifies it and loads an AMS slot"),
-            [this](wxCommandEvent&) { FilamentScanDialog(this).ShowModal(); }, "", nullptr,
+            feature_command("filament-scanner", [this]() { FilamentScanDialog(this).ShowModal(); }), "", nullptr,
             []() { return true; }, this);
 
         append_menu_item(fileMenu, wxID_ANY, _L("Smart home") + dots,
             _L("Home Assistant speakers, media controls, TTS narrator and alert lights"),
-            [this](wxCommandEvent&) { SmartHomeDialog(this).ShowModal(); }, "", nullptr,
+            feature_command("smart-home", [this]() { SmartHomeDialog(this).ShowModal(); }), "", nullptr,
             []() { return true; }, this);
 
         append_menu_item(fileMenu, wxID_ANY, _L("Melody creator") + dots,
             _L("Compose a tune the printer plays, preview it, send it to the printer or add it to the start or end G-code"),
-            [this](wxCommandEvent&) { MelodyCreatorDialog(this).ShowModal(); }, "", nullptr,
+            feature_command("melody", [this]() { MelodyCreatorDialog(this).ShowModal(); }), "", nullptr,
             []() { return true; }, this);
 
         // LAN model drop (docs/features/application-integration/lan-model-drop.md): the settings
         // section, and the invite someone opens to send a model to this computer.
         append_menu_item(fileMenu, wxID_ANY, _L("LAN model drop") + dots,
             _L("Receive 3D models that people on your local network send through the drop site"),
-            [](wxCommandEvent&) { LanModelDrop::open_preferences_section(); }, "", nullptr,
+            feature_command("lan-drop", []() { LanModelDrop::open_preferences_section(); }), "", nullptr,
             []() { return true; }, this);
         append_menu_item(fileMenu, wxID_ANY, _L("Invite someone to send a model") + dots,
             _L("Show the link and QR code of the LAN drop site"),
@@ -4845,27 +4865,27 @@ void MainFrame::init_menubar_as_editor()
 
         append_menu_item(fileMenu, wxID_ANY, _L("Local model suite") + dots,
             _L("Inspect local Ollama models, catalog availability and guided tools"),
-            [this](wxCommandEvent&) { show_ollama_suite(this, std::filesystem::u8path(data_dir())); }, "", nullptr,
+            feature_command("model-suite", [this]() { show_ollama_suite(this, std::filesystem::u8path(data_dir())); }), "", nullptr,
             []() { return true; }, this);
 
         append_menu_item(fileMenu, wxID_ANY, _L("Local file converter") + dots,
             _L("Convert local files with verified bundled adapters"),
-            [this](wxCommandEvent&) {
+            feature_command("converter", [this]() {
                 open_service("converter", _L("Local file converter"), [](wxWindow* parent) {
                     const auto root = std::filesystem::path(wxStandardPaths::Get().GetExecutablePath().ToStdWstring()).parent_path();
                     return new LocalConverterPanel(parent, LocalConverter::PackageProof{
                         root, root / "BambuStudio_converter_worker.exe", FeatureServices::converter_worker_hash(root)},
                         std::filesystem::u8path(data_dir()) / "local-converter");
                 });
-            }, "", nullptr, []() { return true; }, this);
+            }), "", nullptr, []() { return true; }, this);
 
         append_menu_item(fileMenu, wxID_ANY, _L("Scheduled settings") + dots,
             _L("Schedule presentation without replacing stored preferences"),
-            [this](wxCommandEvent&) {
+            feature_command("scheduled-settings", [this]() {
                 auto* service = wxGetApp().scheduled_preferences();
                 if (service) open_service("scheduled-settings", _L("Scheduled settings"),
                     [service](wxWindow* parent) { return service->create_panel(parent); });
-            }, "", nullptr, []() { return wxGetApp().scheduled_preferences() != nullptr; }, this);
+            }), "", nullptr, []() { return wxGetApp().scheduled_preferences() != nullptr; }, this);
 
         const auto open_security = [this](const std::string& destination, const wxString& title) {
             try {
@@ -4882,20 +4902,20 @@ void MainFrame::init_menubar_as_editor()
         };
         append_menu_item(fileMenu, wxID_ANY, _L("Authenticator") + dots,
             _L("Manage local time-based authentication codes"),
-            [open_security](wxCommandEvent&) { open_security("authenticator", _L("Authenticator")); },
+            feature_command("authenticator", [open_security]() { open_security("authenticator", _L("Authenticator")); }),
             "", nullptr, [] { return true; }, this);
         append_menu_item(fileMenu, wxID_ANY, _L("Identity history") + dots,
             _L("Enroll an independent history password and inspect encrypted identity changes"),
-            [open_security](wxCommandEvent&) { open_security("identity-history", _L("Identity history")); },
+            feature_command("identity-history", [open_security]() { open_security("identity-history", _L("Identity history")); }),
             "", nullptr, [] { return true; }, this);
         append_menu_item(fileMenu, wxID_ANY, _L("Local support tickets") + dots,
             _L("Manage local-only support records; nothing is sent anywhere"),
-            [open_security](wxCommandEvent&) { open_security("local-support", _L("Local support tickets")); },
+            feature_command("local-support", [open_security]() { open_security("local-support", _L("Local support tickets")); }),
             "", nullptr, [] { return true; }, this);
 
         append_menu_item(fileMenu, wxID_ANY, _L("Config profiles & backup") + dots,
             _L("Export or import the complete data folder (secrets included, slide-to-confirm) and manage unlimited profiles with local Git snapshot history"),
-            [this](wxCommandEvent&) { ConfigProfilesDialog(this).ShowModal(); }, "", nullptr,
+            feature_command("config-profiles", [this]() { ConfigProfilesDialog(this).ShowModal(); }), "", nullptr,
             []() { return true; }, this);
 
         // Open the current project's folder in the configured external editor
@@ -4904,10 +4924,15 @@ void MainFrame::init_menubar_as_editor()
         // detected-editor table with a sensible default fallback.
         append_menu_item(fileMenu, wxID_ANY, _L("Open in External Editor"),
             _L("Open the current project's folder in the configured external editor"),
-            [this](wxCommandEvent&) {
+            feature_command("external-editor", [this]() {
                 if (!m_plater) return;
                 wxString proj = m_plater->get_project_filename(".3mf");
-                if (proj.IsEmpty()) return;
+                if (proj.IsEmpty()) {
+                    if (m_plater->get_notification_manager())
+                        m_plater->get_notification_manager()->push_notification(
+                            _u8L("Open or save a project first. The external editor opens the project's folder."));
+                    return;
+                }
                 boost::filesystem::path folder = boost::filesystem::path(into_u8(proj)).parent_path();
                 AppConfig *cfg = wxGetApp().app_config;
                 wxString editor_exe;
@@ -4928,7 +4953,7 @@ void MainFrame::init_menubar_as_editor()
                     return;
                 }
                 open_in_external_editor(editor_exe, from_u8(folder.string()));
-            }, "", nullptr,
+            }), "", nullptr,
             [this](){return m_plater != nullptr && !m_plater->get_project_filename(".3mf").IsEmpty(); }, this);
 
 
@@ -6205,6 +6230,11 @@ wxPanel* MainFrame::open_service(const std::string& id, const wxString& title,
         StatusHubService::instance().checkpoint();
     }
     return result;
+}
+
+void MainFrame::open_every_feature()
+{
+    open_service("every-feature", _L("Every feature"), [](wxWindow* parent) { return new FeatureFinderPanel(parent); });
 }
 
 //BBS

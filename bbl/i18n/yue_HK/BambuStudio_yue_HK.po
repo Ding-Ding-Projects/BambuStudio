@@ -50616,3 +50616,528 @@ msgstr "模型要拖去「準備」頁先會打開。拖一個 .json 用字檔�
 #. review-status: agent-drafted
 msgid "Fault reference"
 msgstr "故障參考碼"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Every feature"
+msgstr "全部功能"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Every feature in this app, where it lives, and one click to open it"
+msgstr "呢個程式每樣功能、佢住喺邊，一㩒就開"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Open or save a project first. The external editor opens the project's folder."
+msgstr "先開或者儲存一個專案啦。外部編輯器係打開專案嗰個資料夾嘅。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Feature"
+msgstr "功能"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Every feature page"
+msgstr "全部功能頁"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Language and voice"
+msgstr "語言同聲音"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Look"
+msgstr "外觀"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Find and navigate"
+msgstr "搵嘢同導航"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Records"
+msgstr "紀錄"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Tools"
+msgstr "工具"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Safety"
+msgstr "安全"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Language and Cantonese modes"
+msgstr "語言同廣東話模式"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Preferences, Language"
+msgstr "偏好設定，語言"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Funny levels and emoji"
+msgstr "搞笑程度同表情符號"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Preferences, Funny level"
+msgstr "偏好設定，搞笑程度"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Personal wording file"
+msgstr "個人用語檔"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Preferences, Personal vocabulary, or drop a .json on the window"
+msgstr "偏好設定，個人用語，或者將 .json 拖落視窗"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "School mode"
+msgstr "學校模式"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Preferences, Presentation mode"
+msgstr "偏好設定，顯示模式"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Narrator and voices"
+msgstr "旁白同聲線"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Preferences, Narrator"
+msgstr "偏好設定，旁白"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Action sounds"
+msgstr "動作音效"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Preferences, Sound effects"
+msgstr "偏好設定，音效"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "File, Scheduled settings"
+msgstr "檔案，排程設定"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Rename the app"
+msgstr "幫程式改名"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Preferences, App name"
+msgstr "偏好設定，應用程式名稱"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Attention modes"
+msgstr "專注模式"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Planned for Preferences"
+msgstr "計劃放喺偏好設定"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Now and then at start-up"
+msgstr "開程式嗰陣間中出現"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Edit appearance of any element"
+msgstr "改任何元素嘅外觀"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Focus an element, then the shortcut"
+msgstr "揀中一個元素，再㩒快速鍵"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Colour picker"
+msgstr "揀色器"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Inside Edit appearance"
+msgstr "喺改外觀入面"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Theme, density and accent"
+msgstr "主題、密度同強調色"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Preferences, Appearance"
+msgstr "偏好設定，外觀"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Preferences, App logo"
+msgstr "偏好設定，應用程式標誌"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Motion and reduced motion"
+msgstr "動畫同減少動畫"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Preferences, Interface motion"
+msgstr "偏好設定，介面動畫"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Live charts"
+msgstr "即時圖表"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Device page, temperatures"
+msgstr "裝置頁，溫度"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Anywhere"
+msgstr "喺邊度都得"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "The .* button in any search"
+msgstr "任何搜尋欄嘅 .* 掣"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Keyboard shortcuts"
+msgstr "鍵盤快速鍵"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Help, Keyboard Shortcuts"
+msgstr "說明，鍵盤快速鍵"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Printer and filament setup"
+msgstr "打印機同墨水設定"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Help, Setup Wizard"
+msgstr "說明，設定嚮導"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Context menus with live controls"
+msgstr "有即時控制嘅右鍵選單"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Right-click anything"
+msgstr "右㩒任何嘢"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Info icons and explanations"
+msgstr "資訊圖示同解釋"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Beside every Preferences setting"
+msgstr "每個偏好設定旁邊"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Practical setup wizard"
+msgstr "實用設定嚮導"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Help, Setup wizard"
+msgstr "說明，設定嚮導"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "File, Version history"
+msgstr "檔案，版本記錄"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "What is new"
+msgstr "有乜新嘢"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Help, What's new / Changelog"
+msgstr "說明，新功能 / 更新日誌"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Config profiles and backup"
+msgstr "設定檔同備份"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "File, Config profiles & backup"
+msgstr "檔案，設定檔同備份"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Bell in the title bar"
+msgstr "標題列嗰個鐘"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Help, Offline documentation"
+msgstr "說明，離線文件"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Open in your editor"
+msgstr "用你嘅編輯器開"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "File, Open in External Editor"
+msgstr "檔案，用外部編輯器開啟"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Help, Status Hub"
+msgstr "說明，狀態中心"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Base64 toolkit"
+msgstr "Base64 工具箱"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "File, Base64 toolkit"
+msgstr "檔案，Base64 工具箱"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Extensions"
+msgstr "擴充功能"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "File, Extensions"
+msgstr "檔案，擴充功能"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "File, Local file converter"
+msgstr "檔案，本機檔案轉換器"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "File, Local model suite"
+msgstr "檔案，本機模型套件"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Virtual disks"
+msgstr "虛擬磁碟"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "File, Virtual disks"
+msgstr "檔案，虛擬磁碟"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Minecraft servers and worlds"
+msgstr "Minecraft 伺服器同世界"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "File, Minecraft servers"
+msgstr "檔案，Minecraft 伺服器"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Drawing board"
+msgstr "畫板"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "File, Drawing board"
+msgstr "檔案，畫板"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "File, Melody creator"
+msgstr "檔案，旋律製作器"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "File, LAN model drop"
+msgstr "檔案，LAN 模型投遞"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "File, Smart home"
+msgstr "檔案，智能家居"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "File, AI filament scanner"
+msgstr "檔案，AI 墨水掃描器"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "File, Local support tickets"
+msgstr "檔案，本機支援個案"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Authenticator and QR pairing"
+msgstr "驗證器同 QR 配對"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "File, Authenticator"
+msgstr "檔案，驗證器"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "File, Identity history"
+msgstr "檔案，身份歷史紀錄"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Two-key super confirmation"
+msgstr "雙匙超級確認"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Every destructive action"
+msgstr "每個會刪嘢嘅動作"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Element locks"
+msgstr "元素鎖"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Right-click a control, Lock this element"
+msgstr "右㩒一個控制項，鎖住呢個元素"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Unlock ladder"
+msgstr "解鎖階梯"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Offered after wrong codes on a lock"
+msgstr "鎖入錯碼之後會出現"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "%d features in this version. Each says where it lives and opens in one click."
+msgstr "呢個版本有 %d 樣功能。每樣都講明住喺邊，一㩒就開。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Search features, places and shortcuts"
+msgstr "搵功能、位置同快速鍵"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "The command palette (%s) finds every feature too. A feature marked Not built yet is designed and planned; its Open button appears the day it ships."
+msgstr "指令面板（%s）一樣搵得到每樣功能。寫住「未起好」嘅功能已經設計好、排咗期；佢出嗰日，開啟掣就會出現。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "All %d"
+msgstr "全部 %d"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Not built yet %d"
+msgstr "未起好 %d"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "A to Z"
+msgstr "A 至 Z"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Not built yet"
+msgstr "未起好"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Hidden in School mode"
+msgstr "學校模式下收埋咗"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Not available on this system"
+msgstr "呢部機用唔到"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "This feature is not available on this system."
+msgstr "呢部機用唔到呢個功能。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Recently opened"
+msgstr "最近開過"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Open %s"
+msgstr "開啟%s"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Designed and planned for this app. It is not in this build yet."
+msgstr "已經為呢個程式設計好同排咗期，不過呢個版本未有。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "No feature matches. Try fewer words, or turn off the regular expression."
+msgstr "冇功能對得上。試下少打幾個字，或者熄咗正規表達式。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Recently used first"
+msgstr "最近用過嘅排先"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Fixed in this version"
+msgstr "呢個版本修好咗"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "New in this version"
+msgstr "呢個版本新增"

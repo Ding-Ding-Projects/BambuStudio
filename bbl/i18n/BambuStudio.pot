@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-08 02:00-0500\n"
+"POT-Creation-Date: 2026-11-08 02:59-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -7219,6 +7219,12 @@ msgstr ""
 msgid "Please configure the printer host first."
 msgstr ""
 
+msgid "Every feature"
+msgstr ""
+
+msgid "Every feature in this app, where it lives, and one click to open it"
+msgstr ""
+
 msgid "Status Hub"
 msgstr ""
 
@@ -7434,6 +7440,9 @@ msgid "Open in External Editor"
 msgstr ""
 
 msgid "Open the current project's folder in the configured external editor"
+msgstr ""
+
+msgid "Open or save a project first. The external editor opens the project's folder."
 msgstr ""
 
 msgid "No external editor is configured. Choose one in Preferences > General > External editor."
@@ -24590,6 +24599,9 @@ msgstr ""
 msgid "General, appearance, 3D and developer settings — with live search"
 msgstr ""
 
+msgid "Feature"
+msgstr ""
+
 msgid "Search in settings"
 msgstr ""
 
@@ -29298,6 +29310,9 @@ msgstr ""
 msgid "Offline documentation browser (F1)"
 msgstr ""
 
+msgid "Every feature page"
+msgstr ""
+
 msgid "Command palette (Ctrl+Shift+F)"
 msgstr ""
 
@@ -29356,6 +29371,315 @@ msgid "Browser-like project tabs"
 msgstr ""
 
 msgid "Project version history"
+msgstr ""
+
+msgid "Language and voice"
+msgstr ""
+
+msgid "Look"
+msgstr ""
+
+msgid "Find and navigate"
+msgstr ""
+
+msgid "Records"
+msgstr ""
+
+msgid "Tools"
+msgstr ""
+
+msgid "Safety"
+msgstr ""
+
+msgid "Language and Cantonese modes"
+msgstr ""
+
+msgid "Preferences, Language"
+msgstr ""
+
+msgid "Funny levels and emoji"
+msgstr ""
+
+msgid "Preferences, Funny level"
+msgstr ""
+
+msgid "Personal wording file"
+msgstr ""
+
+msgid "Preferences, Personal vocabulary, or drop a .json on the window"
+msgstr ""
+
+msgid "School mode"
+msgstr ""
+
+msgid "Preferences, Presentation mode"
+msgstr ""
+
+msgid "Narrator and voices"
+msgstr ""
+
+msgid "Preferences, Narrator"
+msgstr ""
+
+msgid "Action sounds"
+msgstr ""
+
+msgid "Preferences, Sound effects"
+msgstr ""
+
+msgid "File, Scheduled settings"
+msgstr ""
+
+msgid "Rename the app"
+msgstr ""
+
+msgid "Preferences, App name"
+msgstr ""
+
+msgid "Attention modes"
+msgstr ""
+
+msgid "Planned for Preferences"
+msgstr ""
+
+msgid "Now and then at start-up"
+msgstr ""
+
+msgid "Edit appearance of any element"
+msgstr ""
+
+msgid "Focus an element, then the shortcut"
+msgstr ""
+
+msgid "Colour picker"
+msgstr ""
+
+msgid "Inside Edit appearance"
+msgstr ""
+
+msgid "Theme, density and accent"
+msgstr ""
+
+msgid "Preferences, Appearance"
+msgstr ""
+
+msgid "Preferences, App logo"
+msgstr ""
+
+msgid "Motion and reduced motion"
+msgstr ""
+
+msgid "Preferences, Interface motion"
+msgstr ""
+
+msgid "Live charts"
+msgstr ""
+
+msgid "Device page, temperatures"
+msgstr ""
+
+msgid "Anywhere"
+msgstr ""
+
+msgid "The .* button in any search"
+msgstr ""
+
+msgid "Keyboard shortcuts"
+msgstr ""
+
+msgid "Help, Keyboard Shortcuts"
+msgstr ""
+
+msgid "Printer and filament setup"
+msgstr ""
+
+msgid "Help, Setup Wizard"
+msgstr ""
+
+msgid "Context menus with live controls"
+msgstr ""
+
+msgid "Right-click anything"
+msgstr ""
+
+msgid "Info icons and explanations"
+msgstr ""
+
+msgid "Beside every Preferences setting"
+msgstr ""
+
+msgid "Practical setup wizard"
+msgstr ""
+
+msgid "Help, Setup wizard"
+msgstr ""
+
+msgid "File, Version history"
+msgstr ""
+
+msgid "What is new"
+msgstr ""
+
+msgid "Help, What's new / Changelog"
+msgstr ""
+
+msgid "Config profiles and backup"
+msgstr ""
+
+msgid "File, Config profiles & backup"
+msgstr ""
+
+msgid "Bell in the title bar"
+msgstr ""
+
+msgid "Help, Offline documentation"
+msgstr ""
+
+msgid "Open in your editor"
+msgstr ""
+
+msgid "File, Open in External Editor"
+msgstr ""
+
+msgid "Help, Status Hub"
+msgstr ""
+
+msgid "Base64 toolkit"
+msgstr ""
+
+msgid "File, Base64 toolkit"
+msgstr ""
+
+msgid "Extensions"
+msgstr ""
+
+msgid "File, Extensions"
+msgstr ""
+
+msgid "File, Local file converter"
+msgstr ""
+
+msgid "File, Local model suite"
+msgstr ""
+
+msgid "Virtual disks"
+msgstr ""
+
+msgid "File, Virtual disks"
+msgstr ""
+
+msgid "Minecraft servers and worlds"
+msgstr ""
+
+msgid "File, Minecraft servers"
+msgstr ""
+
+msgid "Drawing board"
+msgstr ""
+
+msgid "File, Drawing board"
+msgstr ""
+
+msgid "File, Melody creator"
+msgstr ""
+
+msgid "File, LAN model drop"
+msgstr ""
+
+msgid "File, Smart home"
+msgstr ""
+
+msgid "File, AI filament scanner"
+msgstr ""
+
+msgid "File, Local support tickets"
+msgstr ""
+
+msgid "Authenticator and QR pairing"
+msgstr ""
+
+msgid "File, Authenticator"
+msgstr ""
+
+msgid "File, Identity history"
+msgstr ""
+
+msgid "Two-key super confirmation"
+msgstr ""
+
+msgid "Every destructive action"
+msgstr ""
+
+msgid "Element locks"
+msgstr ""
+
+msgid "Right-click a control, Lock this element"
+msgstr ""
+
+msgid "Unlock ladder"
+msgstr ""
+
+msgid "Offered after wrong codes on a lock"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%d features in this version. Each says where it lives and opens in one click."
+msgstr ""
+
+#. TRN: Placeholder of the search field on the Every feature page.
+msgid "Search features, places and shortcuts"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "The command palette (%s) finds every feature too. A feature marked Not built yet is designed and planned; its Open button appears the day it ships."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "All %d"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Not built yet %d"
+msgstr ""
+
+msgid "Sort"
+msgstr ""
+
+msgid "A to Z"
+msgstr ""
+
+msgid "Not built yet"
+msgstr ""
+
+msgid "Hidden in School mode"
+msgstr ""
+
+msgid "Not available on this system"
+msgstr ""
+
+msgid "This feature is not available on this system."
+msgstr ""
+
+msgid "Recently opened"
+msgstr ""
+
+msgid "Fixed in this version"
+msgstr ""
+
+msgid "New in this version"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Open %s"
+msgstr ""
+
+msgid "Designed and planned for this app. It is not in this build yet."
+msgstr ""
+
+msgid "No feature matches. Try fewer words, or turn off the regular expression."
+msgstr ""
+
+msgid "Recently used first"
 msgstr ""
 
 msgid "No key is saved for this provider"
@@ -29730,9 +30054,6 @@ msgid "Quantization"
 msgstr ""
 
 msgid "Hardware fit"
-msgstr ""
-
-msgid "Sort"
 msgstr ""
 
 msgid "Clear filters"

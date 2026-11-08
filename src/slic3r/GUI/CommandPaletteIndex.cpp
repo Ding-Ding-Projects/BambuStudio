@@ -267,6 +267,7 @@ const std::vector<Article> &documentation_articles()
         {"docs/features/windows/bulk-filament-actions.md", L("Bulk filament actions")},
         {"docs/features/windows/cloud-web-recovery.md", L("Cloud web-page failure recovery")},
         {"docs/features/windows/documentation-browser.md", L("Offline documentation browser (F1)")},
+        {"docs/features/windows/every-feature.md", L("Every feature page")},
         {"docs/features/windows/command-palette.md", L("Command palette (Ctrl+Shift+F)")},
         {"docs/features/windows/gui-accessibility.md", L("Keyboard, assistive, and responsive GUI accessibility")},
         {"docs/features/windows/ink-terminology.md", L("Ink terminology (filament \xE2\x86\x92 ink, AMS \xE2\x86\x92 Ink Dispenser)")},

@@ -1,6 +1,6 @@
 ---
 translation-of: README.md
-source-sha256: 330b6222531381e60207ca108c52caad408e30229a7258b97de5518e26f1c157
+source-sha256: 1451605058f4dc5975886298b052c601b52b598ac6bf68af83eba8edcb4453de
 review-status: agent-drafted
 ---
 
@@ -21,6 +21,7 @@ review-status: agent-drafted
 - [正則表達式建立者](regex-builder.md)
 - [Material 內容選單（搜尋、快速鍵、子選單）](material-context-menus.md)
 - [命令調板（Ctrl+Shift+F）](command-palette.md)
+- [全部功能頁](every-feature.md)
 - [應用內變更日誌查看器（幫助 ▸ 有咩新嘢）](changelog-viewer.md)
 - [準備側邊欄搜尋（設定 + 墨水插槽）](sidebar-search.md)
 - [Material 顏色選擇器 & 顏色翻譯器](md3-color-picker.md)

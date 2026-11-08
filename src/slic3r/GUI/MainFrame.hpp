@@ -401,6 +401,8 @@ public:
     void        select_tab(wxPanel* panel);
     wxPanel*    open_service(const std::string& id, const wxString& title,
                              const std::function<wxPanel*(wxWindow*)>& create);
+    // Help > Every feature, the command palette and the Local tools tab.
+    void        open_every_feature();
     void        select_tab(size_t tab = size_t(-1));
     void        request_select_tab(TabPosition pos);
     void        show_print_preparation();

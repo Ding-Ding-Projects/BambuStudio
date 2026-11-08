@@ -974,6 +974,12 @@ list(APPEND SLIC3R_GUI_SOURCES
     GUI/CommandPalette.hpp
     GUI/CommandPaletteIndex.cpp
     GUI/CommandPaletteIndex.hpp
+    GUI/FeatureFinder/FeatureCatalogue.cpp
+    GUI/FeatureFinder/FeatureCatalogue.hpp
+    GUI/FeatureFinder/FeatureCommands.cpp
+    GUI/FeatureFinder/FeatureCommands.hpp
+    GUI/FeatureFinder/FeatureFinderPanel.cpp
+    GUI/FeatureFinder/FeatureFinderPanel.hpp
     GUI/Export/ExportFormats.hpp
     GUI/Export/ExportEverything.cpp
     GUI/Export/ExportEverything.hpp

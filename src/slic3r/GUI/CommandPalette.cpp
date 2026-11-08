@@ -10,6 +10,8 @@
 #include "PersonalModes/SchoolMode.hpp"
 #include "PersonalModes/SchoolRuntime.hpp"
 #include "FeatureServices/PresentationRoutes.hpp"
+#include "FeatureFinder/FeatureCatalogue.hpp"
+#include "FeatureFinder/FeatureFinderPanel.hpp"
 #include "Documentation/OfflineDocumentation.hpp"
 #include "I18N.hpp"
 #include "LanModelDrop/LanModelDropStation.hpp"
@@ -248,6 +250,26 @@ void CommandPalette::collect_entries()
     m_entries.push_back({MaterialIcon::Settings, _L("Open Preferences"),
                          _L("General, appearance, 3D and developer settings — with live search"),
                          [this]() { wxGetApp().open_preferences(); }});
+    // --- Every feature: the page, then each feature with where it lives -------
+    // A feature that cannot open here (not built yet, hidden in School mode)
+    // says why in its row and opens the Every feature page instead.
+    m_entries.push_back({0xE5C3 /* apps */, _L("Every feature"),
+                         _L("Every feature in this app, where it lives, and one click to open it"),
+                         [this]() {
+                             MainFrame *frame = m_frame;
+                             frame->CallAfter([frame]() { frame->open_every_feature(); });
+                         }});
+    for (const FeatureFinder::Feature &f : FeatureFinder::features()) {
+        const wxString reason = FeatureFinderPanel::unavailable_reason(f);
+        wxString desc = _(f.where);
+        if (!reason.IsEmpty()) desc += wxString(L" \u00B7 ") + reason;
+        const FeatureFinder::Feature *feature = &f;
+        m_entries.push_back({f.glyph, _L("Feature") + " / " + _(f.title), desc, [this, feature]() {
+                                 MainFrame *frame = m_frame;
+                                 if (!FeatureFinderPanel::open(*feature))
+                                     frame->CallAfter([frame]() { frame->open_every_feature(); });
+                             }});
+    }
     m_entries.push_back({MaterialIcon::Search, _L("Search in settings"),
                          _L("Find any print / filament / printer parameter"),
                          [this]() { wxGetApp().sidebar().search(); }});

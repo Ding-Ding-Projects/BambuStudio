@@ -1272,6 +1272,8 @@ wxBoxSizer *PreferencesDialog::create_item_funny_level_slider(wxWindow *parent, 
         refresh(clamped);
     });
 
+    // Teleport target (command palette, Every feature page).
+    register_option_row(param, row);
     return row;
 }
 
@@ -2857,7 +2859,9 @@ wxWindow *PreferencesDialog::create_appearance_tab()
         scrolled->FitInside();
     });
 
-    sizer->Add(make_row(_L("App name"), name_input), flags);
+    auto *name_row = make_row(_L("App name"), name_input);
+    sizer->Add(name_row, flags);
+    register_option_row(AppDisplayName::CONFIG_KEY, name_row);
     auto *name_status_line = new wxBoxSizer(wxHORIZONTAL);
     name_status_line->AddSpacer(FromDIP(ITEM_LEFT_PADDING) + FromDIP(150));
     name_status_line->Add(name_status, 1, wxEXPAND | wxRIGHT, FromDIP(ITEM_RIGHT_PADDING));
