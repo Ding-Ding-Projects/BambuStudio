@@ -38362,3 +38362,23 @@ msgstr ""
 
 msgid "Edit appearance, including Animation and transition"
 msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s is locked, so this plate is not arranged. Arrange all arranges around it."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s is locked, so this plate is not emptied. Unlock it first (right-click its row in the object list), or delete the other objects one by one."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s is locked, so Delete all is off. Unlock it first (right-click its row in the object list), or delete the other objects one by one."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s is locked"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s is locked. Click for who locked it and why."
+msgstr ""

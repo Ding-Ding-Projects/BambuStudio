@@ -1,4 +1,5 @@
 #include "ArrangeJob.hpp"
+#include "../ElementLocks/LockService.hpp"
 
 #include "libslic3r/SVG.hpp"
 #include "libslic3r/ClipperUtils.hpp"
@@ -242,15 +243,17 @@ void ArrangeJob::prepare_all() {
     for (size_t oidx = 0; oidx < model.objects.size(); ++oidx) {
         ModelObject *mo = model.objects[oidx];
 
+        // Element locks: a locked object stays where it is, and the others are arranged around it.
+        const bool object_locked = ElementLocks::object_locked(mo->name);
         for (size_t i = 0; i < mo->instances.size(); ++i) {
             ModelInstance * mi = mo->instances[i];
             ArrangePolygon&& ap = prepare_arrange_polygon(mo->instances[i]);
             //BBS: partplate_list preprocess
             //remove the locked plate's instances, neither in selected, nor in un-selected
-            bool locked = plate_list.preprocess_arrange_polygon(oidx, i, ap, true);
+            bool locked = plate_list.preprocess_arrange_polygon(oidx, i, ap, !object_locked);
             if (!locked)
             {
-                ArrangePolygons& cont = mo->instances[i]->printable ? m_selected :m_unprintable;
+                ArrangePolygons& cont = !mo->instances[i]->printable ? m_unprintable : object_locked ? m_unselected : m_selected;
 
                 ap.itemid = cont.size();
                 cont.emplace_back(std::move(ap));
@@ -602,6 +605,16 @@ void ArrangeJob::prepare_partplate() {
     }
 
     Model& model = m_plater->model();
+
+    // Element locks: a plate that holds a locked object is not arranged on its own.
+    for (size_t oidx = 0; oidx < model.objects.size(); ++oidx)
+        if (plate->contain_instance(int(oidx), 0) && ElementLocks::object_locked(model.objects[oidx]->name)) {
+            m_plater->get_notification_manager()->push_notification(NotificationType::BBLPlateInfo,
+                NotificationManager::NotificationLevel::WarningNotificationLevel,
+                into_u8(wxString::Format(_L("%s is locked, so this plate is not arranged. Arrange all arranges around it."),
+                                         from_u8(model.objects[oidx]->name))));
+            return;
+        }
 
     // Go through the objects and check if inside the selection
     for (size_t oidx = 0; oidx < model.objects.size(); ++oidx)

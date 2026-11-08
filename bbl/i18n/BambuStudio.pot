@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-08 13:39-0500\n"
+"POT-Creation-Date: 2026-11-08 14:08-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -4638,6 +4638,10 @@ msgstr ""
 msgid ""
 "This plate is locked,\n"
 "We can not do auto-arrange on this plate."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s is locked, so this plate is not arranged. Arrange all arranges around it."
 msgstr ""
 
 msgid "Arranging"
@@ -11641,6 +11645,10 @@ msgstr ""
 msgid "Comfirm Save As"
 msgstr ""
 
+#, possible-c-format, possible-boost-format
+msgid "%s is locked, so this plate is not emptied. Unlock it first (right-click its row in the object list), or delete the other objects one by one."
+msgstr ""
+
 msgid "Delete object which is a part of cut object"
 msgstr ""
 
@@ -12155,6 +12163,10 @@ msgid "The current project has unsaved changes, save it before continue?"
 msgstr ""
 
 msgid "Remember my choice."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s is locked, so Delete all is off. Unlock it first (right-click its row in the object list), or delete the other objects one by one."
 msgstr ""
 
 msgid "Number of copies:"
@@ -32669,6 +32681,17 @@ msgstr ""
 msgid "Right-click it to unlock."
 msgstr ""
 
+msgid "Unlock..."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s is locked"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s is locked. Click for who locked it and why."
+msgstr ""
+
 msgid "Unlock this element..."
 msgstr ""
 
@@ -32685,9 +32708,6 @@ msgid "Every element you locked. Unlock opens it with its code or the unlock lad
 msgstr ""
 
 msgid "Nothing is locked. Right-click an element and choose Lock this element."
-msgstr ""
-
-msgid "Unlock..."
 msgstr ""
 
 msgid "under a minute"

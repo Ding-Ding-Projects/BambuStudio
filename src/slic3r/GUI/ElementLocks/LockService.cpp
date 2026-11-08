@@ -12,12 +12,14 @@
 #include "../Widgets/Label.hpp"
 #include "../Widgets/MD3DialogChrome.hpp"
 #include "../Widgets/MD3Tokens.hpp"
+#include "../Widgets/MaterialIcon.hpp"
 #include "../Widgets/RoundedPopupWindow.hpp"
 #include "../Widgets/StateColor.hpp"
 #include "../Widgets/StaticBox.hpp"
 #include "../Widgets/TextInput.hpp"
 
 #include <wx/datetime.h>
+#include <wx/dcbuffer.h>
 #include <wx/eventfilter.h>
 #include <wx/menu.h>
 #include <wx/sizer.h>
@@ -48,11 +50,23 @@ wxColour role(MD3::Role r) { return StateColor::semantic(r); }
 
 std::int64_t now_seconds() { return std::int64_t(std::time(nullptr)); }
 
+class LockBadge;
+
 struct State
 {
     fs::path file;
     Store    store;
     bool     ready = false;
+    // Names of row locks (an object, an ink row), which no adopted window carries.
+    std::map<std::string, wxString> names;
+    // Windows styled together with their siblings, locked one by one.
+    std::map<wxWindow *, std::function<Identity()>> identities;
+    // Windows that hold rows: the lock of the row under a point.
+    std::map<wxWindow *, std::function<Identity(const wxPoint &)>> lookups;
+    std::map<int, std::function<void()>>                    listeners;
+    int                                                     next_token = 1;
+    std::map<wxWindow *, wxWeakRef<LockBadge>>              badges;
+    std::unique_ptr<wxTimer>                                badge_timer;
 };
 
 State &state()
@@ -93,9 +107,18 @@ std::string random_salt()
 
 wxString element_name(const std::string &element)
 {
+    // A row's name first (an object, an ink row), then the element's, then
+    // the name it had when it was locked.
+    const auto named = state().names.find(element);
+    if (named != state().names.end() && !named->second.IsEmpty()) return named->second;
     const wxString name = ElementStyle::display_name_of(element);
-    return name.IsEmpty() ? wxString::FromUTF8(element) : name;
+    if (!name.IsEmpty() && name != wxString::FromUTF8(element)) return name;
+    if (const Lock *lock = state().store.find(element); lock && !lock->label.empty()) return wxString::FromUTF8(lock->label);
+    return wxString::FromUTF8(element);
 }
+
+// Every listener and every badge hear about a lock that came or went.
+void changed();
 
 wxString wait_text(std::int64_t seconds)
 {
@@ -404,6 +427,142 @@ private:
     bool        m_show_ladder = false, m_name_wrong = false;
 };
 
+// ---------------------------------------------------------------- the hint
+
+// Who locked it and why. From a right-click on a locked row, or a click on a
+// badge, it also offers Unlock.
+void hint_now(wxWindow *window, const std::string &id, bool offer_unlock)
+{
+    static std::chrono::steady_clock::time_point last{};
+    const auto now = std::chrono::steady_clock::now();
+    if (!offer_unlock && now - last < std::chrono::milliseconds(1500)) return;
+    last             = now;
+    const Lock *lock = state().store.find(id);
+    if (!lock || !window) return;
+    wxString text = wxString::Format(_L("%s is locked by %s."), element_name(id), wxString::FromUTF8(lock->who));
+    if (!lock->reason.empty()) text << " " << wxString::FromUTF8(lock->reason);
+    if (!offer_unlock) text << "\n" << _L("Right-click it to unlock.");
+    auto *popup = new RoundedPopupWindow(window, window->FromDIP(10));
+    popup->SetBackgroundColour(role(MD3::Role::InverseSurface));
+    auto *s = new wxBoxSizer(wxVERTICAL);
+    auto *l = new Label(popup, Label::Body_13, text);
+    l->SetBackgroundColour(role(MD3::Role::InverseSurface));
+    l->SetForegroundColour(role(MD3::Role::InverseOn));
+    s->Add(l, 0, wxALL, window->FromDIP(10));
+    if (offer_unlock) {
+        auto *unlock = new Button(popup, _L("Unlock..."));
+        unlock->SetVariant(Button::Variant::Text);
+        unlock->SetButtonSize(Button::Size::Small);
+        unlock->SetTextColor(StateColor(role(MD3::Role::InversePrimary)));
+        wxWeakRef<wxWindow> anchor(window);
+        unlock->Bind(wxEVT_BUTTON, [popup, anchor, id](wxCommandEvent &) {
+            popup->Dismiss();
+            wxWindow *at = anchor.get() ? anchor.get() : wxGetApp().mainframe;
+            if (at) at->CallAfter([anchor, id]() { unlock_element(anchor.get() ? anchor.get() : wxGetApp().mainframe, id); });
+        });
+        s->Add(unlock, 0, wxLEFT | wxRIGHT | wxBOTTOM | wxALIGN_RIGHT, window->FromDIP(6));
+    }
+    popup->SetSizer(s);
+    popup->Finalize();
+    // Gone once it closes, so notes do not pile up hidden.
+    popup->Bind(wxEVT_SHOW, [popup](wxShowEvent &e) {
+        e.Skip();
+        if (!e.IsShown()) popup->CallAfter([popup]() { popup->Destroy(); });
+    });
+    popup->Position(wxGetMousePosition() + window->FromDIP(wxPoint(12, 16)), wxSize(0, 0));
+    popup->Popup();
+}
+
+// ---------------------------------------------------------------- the badge
+
+// A small lock on the top right corner of a locked element, as its sibling
+// so the element itself is not repainted. It follows the element, and a
+// click on it says who locked it and offers Unlock.
+class LockBadge : public wxWindow
+{
+public:
+    LockBadge(wxWindow *target, const std::string &id)
+        : wxWindow(target->GetParent(), wxID_ANY, wxDefaultPosition, target->FromDIP(wxSize(18, 18)), wxBORDER_NONE), m_target(target), m_id(id)
+    {
+        SetBackgroundStyle(wxBG_STYLE_PAINT);
+        SetName(wxString::Format(_L("%s is locked"), element_name(id)));
+        SetToolTip(wxString::Format(_L("%s is locked. Click for who locked it and why."), element_name(id)));
+        SetCursor(wxCursor(wxCURSOR_HAND));
+        Bind(wxEVT_PAINT, &LockBadge::on_paint, this);
+        Bind(wxEVT_LEFT_UP, [this](wxMouseEvent &) { hint_now(m_target.get() ? m_target.get() : this, m_id, true); });
+        Bind(wxEVT_RIGHT_UP, [this](wxMouseEvent &) { hint_now(m_target.get() ? m_target.get() : this, m_id, true); });
+        place();
+        Raise();
+    }
+
+    const std::string &id() const { return m_id; }
+    wxWindow          *target() const { return m_target.get(); }
+
+    void place()
+    {
+        wxWindow *t = m_target.get();
+        if (!t || t->GetParent() != GetParent()) return;
+        const wxRect r    = t->GetRect();
+        const wxSize size = GetSize();
+        const wxPoint at(std::max(0, r.GetRight() - size.x + FromDIP(5)), std::max(0, r.GetTop() - FromDIP(5)));
+        if (GetPosition() != at) Move(at);
+        const bool show = t->IsShown();
+        if (IsShown() != show) Show(show);
+    }
+
+private:
+    void on_paint(wxPaintEvent &)
+    {
+        wxAutoBufferedPaintDC dc(this);
+        dc.SetBackground(wxBrush(GetParent()->GetBackgroundColour()));
+        dc.Clear();
+        const wxRect r = GetClientRect();
+        dc.SetPen(wxPen(role(MD3::Role::Surface), 1));
+        dc.SetBrush(wxBrush(role(MD3::Role::InverseSurface)));
+        dc.DrawEllipse(r);
+        MaterialIcon::drawCentered(dc, 0xE897 /* lock */, FromDIP(12), role(MD3::Role::InverseOn), r);
+    }
+
+    wxWeakRef<wxWindow> m_target;
+    std::string         m_id;
+};
+
+// Puts a badge on every locked element there is now and takes the others away.
+void refresh_badges()
+{
+    State                           &s = state();
+    std::map<wxWindow *, std::string> want;
+    for (const auto &[id, lock] : s.store.locks())
+        for (wxWindow *w : ElementStyle::windows_of(id)) want[w] = id;
+    for (const auto &[w, identity] : s.identities) {
+        if (!identity) continue;
+        const Identity mine = identity();
+        if (!mine.id.empty() && s.store.find(mine.id)) want[w] = mine.id;
+    }
+    for (auto it = s.badges.begin(); it != s.badges.end();) {
+        LockBadge *badge = it->second.get();
+        const auto wanted = want.find(it->first);
+        if (badge && wanted != want.end() && badge->target() == it->first && badge->id() == wanted->second) {
+            badge->place();
+            ++it;
+            continue;
+        }
+        if (badge) badge->Destroy();
+        it = s.badges.erase(it);
+    }
+    for (const auto &[w, id] : want)
+        if (!s.badges.count(w) && !w->IsTopLevel() && w->GetParent() && !w->IsBeingDeleted()) s.badges[w] = new LockBadge(w, id);
+}
+
+void changed()
+{
+    // Copy: a listener may subscribe or unsubscribe.
+    const auto listeners = state().listeners;
+    for (const auto &[token, listener] : listeners)
+        if (listener) listener();
+    refresh_badges();
+}
+
 // ---------------------------------------------------------------- the filter
 
 class LockFilter : public wxEventFilter
@@ -412,12 +571,58 @@ public:
     int FilterEvent(wxEvent &event) override
     {
         if (state().store.empty()) return Event_Skip;
-        const wxEventType t = event.GetEventType();
-        const bool mouse = t == wxEVT_LEFT_DOWN || t == wxEVT_LEFT_UP || t == wxEVT_LEFT_DCLICK || t == wxEVT_MIDDLE_DOWN || t == wxEVT_MOUSEWHEEL;
-        const bool keys  = t == wxEVT_KEY_DOWN || t == wxEVT_CHAR;
-        if (!mouse && !keys) return Event_Skip;
+        const wxEventType t     = event.GetEventType();
+        const bool        left  = t == wxEVT_LEFT_DOWN || t == wxEVT_LEFT_UP || t == wxEVT_LEFT_DCLICK;
+        const bool        right = t == wxEVT_RIGHT_DOWN || t == wxEVT_RIGHT_UP;
+        const bool        mouse = left || t == wxEVT_MIDDLE_DOWN || t == wxEVT_MOUSEWHEEL;
+        const bool        keys  = t == wxEVT_KEY_DOWN || t == wxEVT_CHAR;
+        if (!mouse && !right && !keys) return Event_Skip;
         auto *window = wxDynamicCast(event.GetEventObject(), wxWindow);
         if (!window) return Event_Skip;
+
+        // A locked row under the mouse (an object in the list or the 3D view):
+        // a click stops with the hint and a right-click offers only Unlock.
+        // The wheel and the keys go on, so the list scrolls and the view zooms.
+        // A release is held back only after its press was: a drag that started
+        // elsewhere and ends over a locked row still ends.
+        if (left || right) {
+            if (t == wxEVT_LEFT_UP || t == wxEVT_RIGHT_UP) {
+                wxWindow *&held = t == wxEVT_LEFT_UP ? m_held_left : m_held_right;
+                if (held != window) {
+                    if (right) return Event_Skip;
+                } else {
+                    held = nullptr;
+                    if (t == wxEVT_RIGHT_UP && !m_held_id.empty()) {
+                        wxWeakRef<wxWindow> at(window);
+                        const std::string   id = m_held_id;
+                        window->CallAfter([at, id]() {
+                            if (at.get()) hint_now(at.get(), id, true);
+                        });
+                    }
+                    return Event_Processed;
+                }
+            } else {
+                const wxPoint screen = window->ClientToScreen(static_cast<wxMouseEvent &>(event).GetPosition());
+                for (wxWindow *w = window; w; w = w->GetParent()) {
+                    const auto it = state().lookups.find(w);
+                    if (it != state().lookups.end()) {
+                        const Identity row = it->second ? it->second(screen) : Identity{};
+                        if (!row.id.empty() && state().store.find(row.id)) {
+                            remember_name(row.id, row.name);
+                            if (t == wxEVT_RIGHT_DOWN) m_held_right = window;
+                            else m_held_left = window;
+                            m_held_id = row.id;
+                            if (t == wxEVT_LEFT_DOWN) hint_now(window, row.id, false);
+                            return Event_Processed;
+                        }
+                        break; // the nearest window with rows decides
+                    }
+                    if (w->IsTopLevel()) break;
+                }
+                if (right) return Event_Skip;
+            }
+        }
+
         // The element itself or any element around it, up to its window.
         std::string id;
         for (wxWindow *w = window; w; w = w->GetParent()) {
@@ -425,6 +630,15 @@ public:
             if (!own.empty() && state().store.find(own)) {
                 id = own;
                 break;
+            }
+            const auto identity = state().identities.find(w);
+            if (identity != state().identities.end() && identity->second) {
+                const Identity mine = identity->second();
+                if (!mine.id.empty() && state().store.find(mine.id)) {
+                    remember_name(mine.id, mine.name);
+                    id = mine.id;
+                    break;
+                }
             }
             if (w->IsTopLevel()) break;
         }
@@ -436,35 +650,14 @@ public:
                 k.GetKeyCode() == WXK_TAB)
                 return Event_Skip;
         }
-        if (t == wxEVT_LEFT_DOWN || t == wxEVT_KEY_DOWN) hint(window, id);
+        if (t == wxEVT_LEFT_DOWN || t == wxEVT_KEY_DOWN) hint_now(window, id, false);
         return Event_Processed;
     }
 
 private:
-    void hint(wxWindow *window, const std::string &id)
-    {
-        const auto now = std::chrono::steady_clock::now();
-        if (now - m_last < std::chrono::milliseconds(1500)) return;
-        m_last           = now;
-        const Lock *lock = state().store.find(id);
-        if (!lock) return;
-        wxString text = wxString::Format(_L("%s is locked by %s."), element_name(id), wxString::FromUTF8(lock->who));
-        if (!lock->reason.empty()) text << " " << wxString::FromUTF8(lock->reason);
-        text << "\n" << _L("Right-click it to unlock.");
-        auto *popup = new RoundedPopupWindow(window, window->FromDIP(10));
-        popup->SetBackgroundColour(role(MD3::Role::InverseSurface));
-        auto *s = new wxBoxSizer(wxVERTICAL);
-        auto *l = new Label(popup, Label::Body_13, text);
-        l->SetBackgroundColour(role(MD3::Role::InverseSurface));
-        l->SetForegroundColour(role(MD3::Role::InverseOn));
-        s->Add(l, 0, wxALL, window->FromDIP(10));
-        popup->SetSizer(s);
-        popup->Finalize();
-        popup->Position(wxGetMousePosition() + window->FromDIP(wxPoint(12, 16)), wxSize(0, 0));
-        popup->Popup();
-    }
-
-    std::chrono::steady_clock::time_point m_last{};
+    // The window whose press on a locked row was held back, so its release is too.
+    wxWindow   *m_held_left = nullptr, *m_held_right = nullptr;
+    std::string m_held_id;
 };
 
 std::unique_ptr<LockFilter> &filter()
@@ -501,15 +694,79 @@ void init(const std::string &data_dir)
         filter() = std::make_unique<LockFilter>();
         wxEvtHandler::AddFilter(filter().get());
     }
+    // Windows come and go (a dialog opens, a row is added): the badges catch
+    // up once a second while anything is locked.
+    if (!s.badge_timer) {
+        s.badge_timer = std::make_unique<wxTimer>();
+        s.badge_timer->Bind(wxEVT_TIMER, [](wxTimerEvent &) {
+            if (!state().store.empty() || !state().badges.empty()) refresh_badges();
+        });
+        s.badge_timer->Start(1000);
+    }
 }
 
 void shutdown()
 {
+    State &s = state();
+    if (s.badge_timer) {
+        s.badge_timer->Stop();
+        s.badge_timer.reset();
+    }
+    s.badges.clear(); // the windows go with their parents
+    s.identities.clear();
+    s.lookups.clear();
+    s.listeners.clear();
     if (filter()) {
         wxEvtHandler::RemoveFilter(filter().get());
         filter().reset();
     }
 }
+
+std::string object_lock_id(const std::string &object_name) { return "object-list.row/" + object_name; }
+
+std::string ink_row_lock_id(int slot) { return "sidebar.filament-row/" + std::to_string(slot); }
+
+bool object_locked(const std::string &object_name) { return !state().store.empty() && is_locked(object_lock_id(object_name)); }
+
+void set_lock_identity(wxWindow *window, std::function<Identity()> identity)
+{
+    if (!window) return;
+    const bool first = state().identities.find(window) == state().identities.end();
+    state().identities[window] = std::move(identity);
+    if (first)
+        window->Bind(wxEVT_DESTROY, [window](wxWindowDestroyEvent &e) {
+            if (e.GetEventObject() == window) state().identities.erase(window);
+            e.Skip();
+        });
+}
+
+void set_row_lookup(wxWindow *window, std::function<Identity(const wxPoint &screen)> lookup)
+{
+    if (!window) return;
+    const bool first = state().lookups.find(window) == state().lookups.end();
+    state().lookups[window] = std::move(lookup);
+    if (first)
+        window->Bind(wxEVT_DESTROY, [window](wxWindowDestroyEvent &e) {
+            if (e.GetEventObject() == window) state().lookups.erase(window);
+            e.Skip();
+        });
+}
+
+void remember_name(const std::string &id, const wxString &name)
+{
+    if (!id.empty() && !name.IsEmpty()) state().names[id] = name;
+}
+
+int subscribe(std::function<void()> listener)
+{
+    const int token          = state().next_token++;
+    state().listeners[token] = std::move(listener);
+    return token;
+}
+
+void unsubscribe(int token) { state().listeners.erase(token); }
+
+void show_hint(wxWindow *near, const std::string &id) { hint_now(near, id, false); }
 
 bool is_locked(const std::string &element) { return state().store.find(element) != nullptr; }
 
@@ -522,10 +779,16 @@ void append_lock_item(wxMenu &menu, const std::string &element_id, wxWindow *anc
     // Only where a window stands behind the element: a row of a list has none to lock.
     if (element_id.empty() || !anchor || !state().ready) return;
     bindings()[&menu] = MenuBinding{element_id, anchor};
-    if (menu.FindItem(kLockItemId)) return;
-    const bool locked = is_locked(element_id);
-    menu.Append(kLockItemId, locked ? _L("Unlock this element...") : _L("Lock this element..."),
-                locked ? _L("Open it with its code or the unlock ladder") : _L("Stop clicks and keys from changing it until it is unlocked"));
+    const bool     locked = is_locked(element_id);
+    const wxString text   = locked ? _L("Unlock this element...") : _L("Lock this element...");
+    const wxString help   = locked ? _L("Open it with its code or the unlock ladder") : _L("Stop clicks and keys from changing it until it is unlocked");
+    // A menu kept between popups (the object menu) says what is true now.
+    if (wxMenuItem *item = menu.FindItem(kLockItemId)) {
+        item->SetItemLabel(text);
+        item->SetHelp(help);
+        return;
+    }
+    menu.Append(kLockItemId, text, help);
     menu.Bind(wxEVT_MENU, [menu_ptr = &menu](wxCommandEvent &) {
         const auto it = bindings().find(menu_ptr);
         if (it == bindings().end()) return;
@@ -552,15 +815,25 @@ void remove_lock_item(wxMenu &menu)
 bool lock_element(wxWindow *anchor, const std::string &element_id)
 {
     if (element_id.empty()) return false;
-    LockDialog dialog(anchor ? wxGetTopLevelParent(anchor) : nullptr, element_id);
-    return dialog.ShowModal() == wxID_OK;
+    bool done = false;
+    {
+        LockDialog dialog(anchor ? wxGetTopLevelParent(anchor) : nullptr, element_id);
+        done = dialog.ShowModal() == wxID_OK;
+    }
+    if (done) changed();
+    return done;
 }
 
 bool unlock_element(wxWindow *anchor, const std::string &element_id)
 {
     if (!is_locked(element_id)) return true;
-    UnlockDialog dialog(anchor ? wxGetTopLevelParent(anchor) : nullptr, element_id);
-    return dialog.ShowModal() == wxID_OK;
+    bool done = false;
+    {
+        UnlockDialog dialog(anchor ? wxGetTopLevelParent(anchor) : nullptr, element_id);
+        done = dialog.ShowModal() == wxID_OK;
+    }
+    if (done) changed();
+    return done;
 }
 
 void open_manager(wxWindow *parent)

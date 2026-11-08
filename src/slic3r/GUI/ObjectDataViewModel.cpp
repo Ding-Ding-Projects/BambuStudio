@@ -1909,6 +1909,52 @@ wxString ObjectDataViewModel::GetColumnType(unsigned int col) const
     return wxT("string");
 }
 
+// Element locks: the row's icon with a small lock on its lower right corner,
+// or the lock alone when the row has no icon. Kept per icon and colour, so a
+// repaint does not draw it again.
+static wxBitmap locked_icon(const wxBitmap &icon)
+{
+    struct Entry
+    {
+        wxBitmap source, badged;
+        wxColour colour;
+    };
+    static std::vector<Entry> cache;
+    const wxColour            colour = StateColor::semantic(MD3::Role::Primary);
+    for (const Entry &e : cache)
+        if (e.colour == colour && e.source.IsOk() == icon.IsOk() && (!icon.IsOk() || e.source.IsSameAs(icon))) return e.badged;
+    wxBitmap badged;
+    if (!icon.IsOk()) {
+        badged = MaterialIcon::bitmapPx(0xE897 /* lock */, 16, colour, wxGetApp().em_unit() / 10.0);
+    } else {
+        wxImage base = icon.ConvertToImage();
+        if (!base.HasAlpha()) base.InitAlpha();
+        const int side = std::max(6, base.GetHeight() * 3 / 5);
+        wxImage   lock = MaterialIcon::bitmapPx(0xE897 /* lock */, side, colour, 1.0).ConvertToImage();
+        if (!lock.HasAlpha()) lock.InitAlpha();
+        const int ox = base.GetWidth() - lock.GetWidth(), oy = base.GetHeight() - lock.GetHeight();
+        for (int y = 0; y < lock.GetHeight(); ++y)
+            for (int x = 0; x < lock.GetWidth(); ++x) {
+                const int bx = ox + x, by = oy + y;
+                if (bx < 0 || by < 0 || bx >= base.GetWidth() || by >= base.GetHeight()) continue;
+                const double a = lock.GetAlpha(x, y) / 255.0;
+                if (a <= 0) continue;
+                const double b   = base.GetAlpha(bx, by) / 255.0;
+                const double out = a + b * (1 - a);
+                const auto   mix = [&](unsigned char over, unsigned char under) {
+                    return static_cast<unsigned char>(std::lround((over * a + under * b * (1 - a)) / std::max(1e-9, out)));
+                };
+                base.SetRGB(bx, by, mix(lock.GetRed(x, y), base.GetRed(bx, by)), mix(lock.GetGreen(x, y), base.GetGreen(bx, by)),
+                            mix(lock.GetBlue(x, y), base.GetBlue(bx, by)));
+                base.SetAlpha(bx, by, static_cast<unsigned char>(std::lround(out * 255)));
+            }
+        badged = wxBitmap(base);
+    }
+    if (cache.size() > 64) cache.clear();
+    cache.push_back({icon, badged, colour});
+    return badged;
+}
+
 void ObjectDataViewModel::GetValue(wxVariant &variant, const wxDataViewItem &item, unsigned int col) const
 {
 	wxASSERT(item.IsOk());
@@ -1923,7 +1969,10 @@ void ObjectDataViewModel::GetValue(wxVariant &variant, const wxDataViewItem &ite
         variant << node->m_variable_height_icon;
         break;
 	case colName:
-        variant << DataViewBitmapText(node->m_name, node->m_bmp);
+        if (m_locked_rows && m_locked_rows(item))
+            variant << DataViewBitmapText(node->m_name, locked_icon(node->m_bmp));
+        else
+            variant << DataViewBitmapText(node->m_name, node->m_bmp);
 		break;
 	case colFilament:
 		variant << DataViewBitmapText(node->m_extruder, node->m_extruder_bmp);

@@ -1,5 +1,6 @@
 #include "ProjectTabBar.hpp"
 #include "Plater.hpp"
+#include "ElementLocks/LockService.hpp"
 #include "VocabularyDrop.hpp"
 #include "SettingsDraftUndo.hpp"
 #include "Jobs/ImportJob.hpp"
@@ -6345,6 +6346,23 @@ void Sidebar::init_filament_combo(PlaterPresetComboBox **combo, const int filame
 
     item_sizer->Add(diameter_btns, 0, wxLEFT | wxBOTTOM, FromDIP(10));
     p->filament_diameter_btns.push_back(diameter_btns);
+    // Element locks: each ink row is locked on its own, under the number it
+    // has now, so a lock follows the row when an earlier row is deleted. The
+    // row's menu button stays free: its menu offers Unlock.
+    {
+        wxWeakRef<PlaterPresetComboBox> row_combo(combobox);
+        const auto identity = [row_combo]() {
+            ElementLocks::Identity mine;
+            if (!row_combo) return mine;
+            const int slot = row_combo->get_filament_idx() + 1;
+            mine.id        = ElementLocks::ink_row_lock_id(slot);
+            mine.name      = wxString::Format(_L("Filament %d"), slot);
+            return mine;
+        };
+        ElementLocks::set_lock_identity(combobox, identity);
+        if (combobox->clr_picker) ElementLocks::set_lock_identity(combobox->clr_picker, identity);
+        ElementLocks::set_lock_identity(diameter_btns, identity);
+    }
     // One row is both the MD3 info-row and the list item; the single-column sizer below holds it.
     p->filament_rows.push_back(row);
     p->filament_items.push_back(row);
@@ -8333,6 +8351,14 @@ void Sidebar::delete_filament(size_t filament_id, int replace_filament_id) {
     size_t total_filaments = wxGetApp().preset_bundle->filament_presets.size();
     if (filament_id >= total_filaments || replace_filament_id < -1 || replace_filament_id >= static_cast<int>(total_filaments) ||
         replace_filament_id == static_cast<int>(filament_id)) return;
+    // A locked ink row is not deleted or merged away until it is unlocked.
+    if (const std::string lock = ElementLocks::ink_row_lock_id(int(filament_id) + 1); ElementLocks::is_locked(lock)) {
+        wxWindow *anchor = this;
+        for (auto *choice : p->combos_filament)
+            if (choice->get_filament_idx() == static_cast<int>(filament_id)) { anchor = choice; break; }
+        ElementLocks::show_hint(anchor, lock);
+        return;
+    }
     const auto *mixed_flags = wxGetApp().preset_bundle->project_config.option<ConfigOptionBools>("filament_is_mixed");
     const bool is_mixed = mixed_flags && filament_id < mixed_flags->values.size() && mixed_flags->values[filament_id];
     if (!is_mixed && p->combos_filament.size() <= 1) return;
@@ -13234,6 +13260,23 @@ Plater::priv::priv(Plater *q, MainFrame *main_frame)
         view3D_canvas->Bind(EVT_GLCANVAS_SELECT_CURR_PLATE_ALL, [this](SimpleEvent&) {this->q->select_curr_plate_all(); });
 
         view3D_canvas->Bind(EVT_GLCANVAS_SELECT_ALL, [this](SimpleEvent&) { this->q->select_all(); });
+        // Element locks: a click on a locked object in the 3D view stops with
+        // the hint, and a right-click offers Unlock, unless a gizmo handle is
+        // under the mouse.
+        ElementLocks::set_row_lookup(view3D_canvas, [this](const wxPoint &) {
+            ElementLocks::Identity row;
+            GLCanvas3D *canvas = view3D ? view3D->get_canvas3d() : nullptr;
+            if (canvas == nullptr) return row;
+            if (const GLGizmoBase *gizmo = canvas->get_gizmos_manager().get_current(); gizmo && gizmo->get_hover_id() != -1) return row;
+            const int volume = canvas->get_first_hover_volume_idx();
+            const auto &volumes = canvas->get_volumes().volumes;
+            if (volume < 0 || volume >= int(volumes.size()) || volumes[volume] == nullptr) return row;
+            const int object = volumes[volume]->object_idx();
+            if (object < 0 || object >= int(model.objects.size())) return row;
+            row.id   = ElementLocks::object_lock_id(model.objects[object]->name);
+            row.name = from_u8(model.objects[object]->name);
+            return row;
+        });
         view3D_canvas->Bind(EVT_GLCANVAS_QUESTION_MARK, [](SimpleEvent&) { wxGetApp().keyboard_shortcuts(); });
         view3D_canvas->Bind(EVT_GLCANVAS_INCREASE_INSTANCES, [this](Event<int>& evt)
             { if (evt.data == 1) this->q->increase_instances(); else if (this->can_decrease_instances()) this->q->decrease_instances(); });
@@ -17903,6 +17946,17 @@ void Plater::priv::select_curr_plate_all()
 
 void Plater::priv::remove_curr_plate_all()
 {
+    // A locked object on this plate keeps the plate from being emptied.
+    if (PartPlate *plate = partplate_list.get_curr_plate())
+        for (int obj_idx = 0; obj_idx < int(model.objects.size()); ++obj_idx)
+            if (plate->contain_instance(obj_idx, 0) && ElementLocks::object_locked(model.objects[obj_idx]->name)) {
+                MessageDialog(q, wxString::Format(_L("%s is locked, so this plate is not emptied. Unlock it first (right-click its row in "
+                                                     "the object list), or delete the other objects one by one."),
+                                                  from_u8(model.objects[obj_idx]->name)),
+                              _L("Delete all"), wxOK | wxICON_INFORMATION)
+                    .ShowModal();
+                return;
+            }
     SingleSnapshot ss(q);
     view3D->remove_curr_plate_all();
     this->sidebar->obj_list()->update_selections();
@@ -24059,6 +24113,8 @@ void Plater::priv::on_right_click(RBtnEvent& evt)
     }
 
     if (q != nullptr && menu) {
+        // Element locks: one object's own lock, as on the object list.
+        if (sidebar && sidebar->obj_list()) sidebar->obj_list()->offer_lock(menu);
         show_right_click_menu(evt.data.first, menu);
     }
 }
@@ -31261,6 +31317,17 @@ void Plater::delete_all_objects_from_model()
 {
     // Edit > Delete all and Ctrl+Shift+D land here, not in reset_with_confirm,
     // so the two-key super confirmation gate has to sit on this path too.
+    // A locked object is never deleted with the rest: Delete all waits for its unlock.
+    for (const ModelObject *obj : p->model.objects)
+        if (obj && ElementLocks::object_locked(obj->name)) {
+            MessageDialog(static_cast<wxWindow *>(this),
+                          wxString::Format(_L("%s is locked, so Delete all is off. Unlock it first (right-click its row in the object "
+                                              "list), or delete the other objects one by one."),
+                                           from_u8(obj->name)),
+                          _L("Delete all"), wxOK | wxICON_INFORMATION)
+                .ShowModal();
+            return;
+        }
     if (!p->model.objects.empty()) {
         SuperConfirmGate::Spec spec;
         spec.action      = _L("Delete all");

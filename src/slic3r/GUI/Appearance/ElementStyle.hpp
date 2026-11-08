@@ -261,6 +261,8 @@ public:
     static std::string element_id_of(const wxWindow *window);
     // The id `window` itself was adopted under, without the ancestor walk.
     static std::string own_id_of(const wxWindow *window);
+    // Every window adopted under `id` now (Element locks draws its badge on them).
+    static std::vector<wxWindow *> windows_of(const std::string &id);
     static wxString    display_name_of(const std::string &id);
     // Re-apply the style to every adopted window (after a theme flip, for
     // example, when the remembered base colours went stale).

@@ -1,4 +1,6 @@
 #include "libslic3r/libslic3r.h"
+#include "ElementLocks/LockService.hpp"
+#include "PresetComboBoxes.hpp"
 #include "libslic3r/PresetBundle.hpp"
 #include "libslic3r/Model.hpp"
 
@@ -1633,7 +1635,9 @@ void MenuFactory::create_filament_action_menu(wxMenu* menu, int active_filament_
             if (plater())
                 plater()->sidebar().delete_filament_with_confirm(kSidebarContextMenuFilamentId);
         }, "", nullptr, []() { return true; }, nullptr);
-    delete_item->Enable(plater() && plater()->sidebar().combos_filament().size() > 1);
+    // A locked row is neither deleted nor merged away until it is unlocked.
+    const bool row_locked = active_filament_menu_id >= 0 && ElementLocks::is_locked(ElementLocks::ink_row_lock_id(active_filament_menu_id + 1));
+    delete_item->Enable(!row_locked && plater() && plater()->sidebar().combos_filament().size() > 1);
 
     wxMenu* sub_menu = new wxMenu();
     const std::vector<wxBitmap*> icons = get_extruder_color_icons(true);
@@ -1657,7 +1661,7 @@ void MenuFactory::create_filament_action_menu(wxMenu* menu, int active_filament_
     auto* merge_item = append_submenu(menu, sub_menu, wxID_ANY, _L("Merge with"),
         _L("Choose the filament that will replace this one"), "",
         []() { return true; }, nullptr);
-    merge_item->Enable(active_filament_menu_id >= 0 &&
+    merge_item->Enable(!row_locked && active_filament_menu_id >= 0 &&
                        active_filament_menu_id < filaments_cnt && filaments_cnt > 1);
 }
 
@@ -2018,6 +2022,18 @@ wxMenu *MenuFactory::filament_action_menu(int active_filament_menu_id) {
     m_filament_popup_menu = std::make_unique<wxMenu>();
     create_filament_action_menu(m_filament_popup_menu.get(), active_filament_menu_id);
     AppearanceEditor::append_edit_appearance_item(*m_filament_popup_menu, "sidebar.filament-row", nullptr);
+    // This row's own lock: every ink row is locked on its own, by its number.
+    if (active_filament_menu_id >= 0 && plater()) {
+        const int   slot = active_filament_menu_id + 1;
+        wxWindow   *row  = plater();
+        for (auto *choice : plater()->sidebar().combos_filament())
+            if (choice && choice->get_filament_idx() == active_filament_menu_id) {
+                row = choice;
+                break;
+            }
+        ElementLocks::remember_name(ElementLocks::ink_row_lock_id(slot), wxString::Format(_L("Filament %d"), slot));
+        ElementLocks::append_lock_item(*m_filament_popup_menu, ElementLocks::ink_row_lock_id(slot), row);
+    }
     return m_filament_popup_menu.get();
 }
 

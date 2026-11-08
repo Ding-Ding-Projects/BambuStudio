@@ -1595,12 +1595,12 @@
     {
       "route": "windows/element-locks.md",
       "title": "Element locks and the unlock ladder",
-      "sha256": "91702c736ae63229c8b5b3285c1b47ba813be8e2f27d0e2e30ada11ba85265c3"
+      "sha256": "377f38c39d981ca3f32b2e01b1bd06a17c7e3b464cda1c1ced5d2bb01666c54f"
     },
     {
       "route": "windows/element-locks.yue_HK.md",
       "title": "元素鎖同解鎖階梯",
-      "sha256": "6ff32ff838384f935237a2ff79e793e9468a0f3b4558717bf88c4d55776f3f50"
+      "sha256": "46b66df89bab8b98c9e33017eb28e662f5bb577315108f5743e5f4daaae33281"
     },
     {
       "route": "windows/every-feature.md",
@@ -2295,7 +2295,7 @@
       "bytes": 16430
     }
   ],
-  "bundle_sha256": "121472fbb1c67c0339f7f0c5b6252d5db84c9608c1700f5ef6d0cfe881a03ab9",
+  "bundle_sha256": "1601ac307f2b456f6fb1db42343fae224a2517c43a833c468d80aea39972ecfb",
   "unavailable_references": [
     {
       "source": "api/README.md",

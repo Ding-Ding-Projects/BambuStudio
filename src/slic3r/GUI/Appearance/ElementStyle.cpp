@@ -964,6 +964,14 @@ std::string ElementStyle::own_id_of(const wxWindow *window)
     return it == map.end() ? std::string() : it->second->id;
 }
 
+std::vector<wxWindow *> ElementStyle::windows_of(const std::string &id)
+{
+    std::vector<wxWindow *> out;
+    for (const auto &[window, a] : adopted())
+        if (a && a->id == id) out.push_back(window);
+    return out;
+}
+
 wxString ElementStyle::display_name_of(const std::string &id)
 {
     const auto &known = registry().known_ids();

@@ -7,6 +7,7 @@
 //#include "GUI_ObjectLayers.hpp"
 #include "GUI_App.hpp"
 #include "AttentionModes/AttentionService.hpp"
+#include "ElementLocks/LockService.hpp"
 #include "GUI.hpp"
 #include "GLToolbar.hpp"
 #include "I18N.hpp"
@@ -396,6 +397,70 @@ ObjectList::ObjectList(wxWindow* parent) :
 
 ObjectList::~ObjectList()
 {
+    if (m_lock_token) ElementLocks::unsubscribe(m_lock_token);
+}
+
+bool ObjectList::locked_row(const wxDataViewItem &item) const
+{
+    if (ElementLocks::lock_count() == 0 || !item.IsOk() || !(m_objects_model->GetItemType(item) & (itObject | itVolume | itInstance)))
+        return false;
+    const int   obj_idx = m_objects_model->GetObjectIdByItem(item);
+    const auto &objects = wxGetApp().plater()->model().objects;
+    return obj_idx >= 0 && obj_idx < int(objects.size()) && ElementLocks::object_locked(objects[obj_idx]->name);
+}
+
+// One object selected (or a part of it): its own lock on the menu; anything
+// else: no object lock on the menu.
+void ObjectList::offer_lock(wxMenu *menu)
+{
+    if (!menu) return;
+    const auto &content = scene_selection().get_content();
+    const auto &objects = wxGetApp().plater()->model().objects;
+    if (content.size() == 1 && content.begin()->first >= 0 && content.begin()->first < int(objects.size())) {
+        const std::string &name = objects[content.begin()->first]->name;
+        const std::string  id   = ElementLocks::object_lock_id(name);
+        ElementLocks::remember_name(id, from_u8(name));
+        ElementLocks::append_lock_item(*menu, id, this);
+    } else {
+        ElementLocks::remove_lock_item(*menu);
+    }
+}
+
+// A locked object stays out of the selection: picked with the keyboard, a
+// range or Select all here, it is let go again with the hint.
+bool ObjectList::drop_locked_from_selection()
+{
+    if (ElementLocks::lock_count() == 0) return false;
+    wxDataViewItemArray sels;
+    GetSelections(sels);
+    const auto &objects = wxGetApp().plater()->model().objects;
+    std::string first;
+    for (const wxDataViewItem &item : sels) {
+        if (!locked_row(item)) continue;
+        Unselect(item);
+        if (first.empty()) first = objects[m_objects_model->GetObjectIdByItem(item)]->name;
+    }
+    if (first.empty()) return false;
+    ElementLocks::show_hint(this, ElementLocks::object_lock_id(first));
+    return true;
+}
+
+// The same in the 3D view: a locked object taken in by Select all or a
+// rectangle leaves the selection before the list follows it.
+void ObjectList::drop_locked_from_scene()
+{
+    if (ElementLocks::lock_count() == 0 || !wxGetApp().plater()) return;
+    GLCanvas3D *canvas = wxGetApp().plater()->canvas3D();
+    if (!canvas) return;
+    Selection        &selection = canvas->get_selection();
+    const auto       &objects   = wxGetApp().plater()->model().objects;
+    std::vector<int>  locked;
+    for (const auto &[obj_idx, instances] : selection.get_content())
+        if (obj_idx >= 0 && obj_idx < int(objects.size()) && ElementLocks::object_locked(objects[obj_idx]->name)) locked.push_back(obj_idx);
+    if (locked.empty()) return;
+    for (int obj_idx : locked) selection.remove_object(unsigned(obj_idx));
+    canvas->set_as_dirty();
+    ElementLocks::show_hint(this, ElementLocks::object_lock_id(objects[locked.front()]->name));
 }
 
 void ObjectList::set_min_height()
@@ -447,6 +512,24 @@ void ObjectList::create_objects_ctrl()
     m_objects_model->SetAssociatedControl(this);
     // Attention modes, Focus: with something selected, the other rows step back.
     m_objects_model->set_muted_rows([this](const wxDataViewItem &item) { return muted_by_focus(item); });
+    // Element locks: a locked object's rows carry the lock badge; a click on
+    // one stops with the hint and a right-click offers Unlock; the list
+    // repaints whenever a lock comes or goes.
+    m_objects_model->set_locked_rows([this](const wxDataViewItem &item) { return locked_row(item); });
+    ElementLocks::set_row_lookup(this, [this](const wxPoint &screen) {
+        ElementLocks::Identity row;
+        wxDataViewItem         item;
+        wxDataViewColumn      *col = nullptr;
+        HitTest(screen - GetScreenPosition(), item, col);
+        const int obj_idx = item.IsOk() ? m_objects_model->GetObjectIdByItem(item) : -1;
+        const auto &objects = wxGetApp().plater()->model().objects;
+        if (obj_idx < 0 || obj_idx >= int(objects.size()) || !(m_objects_model->GetItemType(item) & (itObject | itVolume | itInstance)))
+            return row;
+        row.id   = ElementLocks::object_lock_id(objects[obj_idx]->name);
+        row.name = from_u8(objects[obj_idx]->name);
+        return row;
+    });
+    m_lock_token = ElementLocks::subscribe([this]() { Refresh(); });
 #if wxUSE_DRAG_AND_DROP && wxUSE_UNICODE
     EnableDragSource(wxDF_UNICODETEXT);
     EnableDropTarget(wxDF_UNICODETEXT);
@@ -1505,6 +1588,7 @@ void ObjectList::refresh_focus_rows()
 void ObjectList::selection_changed()
 {
     if (m_prevent_list_events) return;
+    drop_locked_from_selection();
     refresh_focus_rows();
 
     fix_multiselection_conflicts();
@@ -1968,6 +2052,13 @@ void ObjectList::show_context_menu(const bool evt_context_menu)
         }
         else if (evt_context_menu)
             menu = plater->default_menu();
+    }
+
+    // Element locks: one object's own lock, beside Edit appearance.
+    if (menu) {
+        const wxDataViewItem item = multiple_selection() ? wxDataViewItem() : GetSelection();
+        if (item.IsOk() && (m_objects_model->GetItemType(item) & (itObject | itVolume | itInstance))) offer_lock(menu);
+        else ElementLocks::remove_lock_item(*menu);
     }
 
     if (menu)
@@ -5455,6 +5546,7 @@ bool ObjectList::resolve_prepare_object_volume_idx(int& obj_idx, int& vol_idx, c
 
 void ObjectList::update_selections()
 {
+    drop_locked_from_scene();
     const Selection& selection = scene_selection();
     wxDataViewItemArray sels;
 

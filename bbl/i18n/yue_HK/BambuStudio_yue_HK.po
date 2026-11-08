@@ -59606,3 +59606,28 @@ msgstr "冇嘢可以畫"
 #. review-status: agent-drafted
 msgid "Edit appearance, including Animation and transition"
 msgstr "編輯外觀，包括動畫同過渡"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "%s is locked, so this plate is not arranged. Arrange all arranges around it."
+msgstr "%s 鎖住咗，所以呢塊板唔會排列。全部排列會圍住佢嚟排。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "%s is locked, so this plate is not emptied. Unlock it first (right-click its row in the object list), or delete the other objects one by one."
+msgstr "%s 鎖住咗，所以呢塊板唔會清空。請先解鎖（喺物件清單撳佢嗰行嘅右鍵），或者逐件刪除其他物件。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "%s is locked, so Delete all is off. Unlock it first (right-click its row in the object list), or delete the other objects one by one."
+msgstr "%s 鎖住咗，所以全部刪除停用咗。請先解鎖（喺物件清單撳佢嗰行嘅右鍵），或者逐件刪除其他物件。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "%s is locked"
+msgstr "%s 鎖住咗"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "%s is locked. Click for who locked it and why."
+msgstr "%s 鎖住咗。撳一下睇吓邊個鎖同點解。"

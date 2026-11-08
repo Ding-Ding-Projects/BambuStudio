@@ -299,6 +299,14 @@ public:
     // Attention modes, Focus: whether a row steps back (muted) because something else is selected.
     bool                muted_by_focus(const wxDataViewItem &item) const;
     void                refresh_focus_rows();
+    // Element locks: whether a row belongs to a locked object, the object's
+    // own lock on its right-click menu, and a locked object kept out of the
+    // selection here and in the 3D view.
+    bool                locked_row(const wxDataViewItem &item) const;
+    void                offer_lock(wxMenu *menu);
+    bool                drop_locked_from_selection();
+    void                drop_locked_from_scene();
+    int                 m_lock_token = 0;
     void                show_context_menu(const bool evt_context_menu);
     void                extruder_editing();
 #ifndef __WXOSX__

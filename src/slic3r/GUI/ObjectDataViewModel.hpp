@@ -347,6 +347,8 @@ wxDECLARE_EVENT(wxCUSTOMEVT_LAST_VOLUME_IS_DELETED, wxCommandEvent);
 class ObjectDataViewModel :public wxDataViewModel
 {
     std::function<bool(const wxDataViewItem &)> m_muted_rows;
+    // Element locks: rows of a locked object carry a lock badge on their icon.
+    std::function<bool(const wxDataViewItem &)> m_locked_rows;
     std::vector<ObjectDataViewModelNode*>       m_plates;
     std::vector<ObjectDataViewModelNode*>       m_objects;
     std::vector<wxBitmap>                       m_volume_bmps;
@@ -483,6 +485,7 @@ public:
     // Attention modes, Focus: rows the owner says step back are drawn muted, never hidden.
     bool    GetAttr(const wxDataViewItem &item, unsigned int col, wxDataViewItemAttr &attr) const override;
     void    set_muted_rows(std::function<bool(const wxDataViewItem &)> muted) { m_muted_rows = std::move(muted); }
+    void    set_locked_rows(std::function<bool(const wxDataViewItem &)> locked) { m_locked_rows = std::move(locked); }
 
     wxDataViewItem  GetParent(const wxDataViewItem &item) const override;
     // get object item
