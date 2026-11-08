@@ -1498,6 +1498,17 @@ void BBLTopbar::RefreshBrandTile()
 
 int BBLTopbar::measure_fixed_content_width() const
 {
+    // The realized sizer holds everything that takes room: the items, the
+    // packing wxAuiToolBar puts between them and the bar's own padding. A sum
+    // over the items alone left the packing out, so a long project name could
+    // push the window controls past the right edge. The chip's own width is
+    // the only part left out; its border padding stays counted as fixed.
+    if (m_sizer != nullptr) {
+        int total = m_sizer->CalcMin().GetWidth();
+        if (m_title_item != nullptr && m_title_item->GetSizerItem() != nullptr && m_title_item->GetSizerItem()->IsShown())
+            total -= std::max(0, m_title_item->GetMinSize().GetWidth());
+        return std::max(0, total);
+    }
     int fixed_width = 0;
     for (size_t index = 0; index < GetToolCount(); ++index) {
         const wxAuiToolBarItem* item = FindToolByIndex(static_cast<int>(index));

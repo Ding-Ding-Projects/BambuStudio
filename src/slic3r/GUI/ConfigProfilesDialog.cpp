@@ -376,6 +376,11 @@ void ConfigProfilesDialog::apply_theme()
     // The secrets warning uses the error-container roles: prominent without
     // reading as a blocking failure.
     m_transfer_card->SetBackgroundColorNormal(StateColor::semantic(MD3::Role::ErrorContainer));
+    // Children that paint their own background (the slide-to-confirm control
+    // clears with its parent's window colour) must see the card's colour, or
+    // they leave light corners on the error container.
+    m_transfer_card->SetBackgroundColour(StateColor::semantic(MD3::Role::ErrorContainer));
+    m_confirm_slider->Refresh();
     m_transfer_card->SetBorderColorNormal(StateColor::semantic(MD3::Role::Error));
     m_secrets_label->SetForegroundColour(StateColor::semantic(MD3::Role::OnErrorContainer));
 

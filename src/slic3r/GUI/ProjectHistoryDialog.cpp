@@ -363,7 +363,9 @@ void ProjectHistoryDialog::create_ui()
     });
     filter_sizer->Add(m_search_field, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(8));
     auto *filters = new wxFlexGridSizer(2, 4, FromDIP(6), FromDIP(8));
-    filters->AddGrowableCol(1); filters->AddGrowableCol(3);
+    // Every column shares the width: with only two growing, the device and
+    // date fields kept their tiny default width and cut their hints short.
+    for (int column = 0; column < 4; ++column) filters->AddGrowableCol(column, 1);
     // Kit read-only ComboBoxes and TextInput fields: the filters draw as the
     // kit select and text fields, and keep their items, hints and events.
     m_category_filter = new ComboBox(filter_body, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, wxCB_READONLY);
@@ -380,8 +382,11 @@ void ProjectHistoryDialog::create_ui()
     m_from_filter = from_field->GetTextCtrl(); m_from_filter->SetHint(_L("From YYYY-MM-DD")); m_from_filter->SetName(_L("From YYYY-MM-DD"));
     auto *to_field = new TextInput(filter_body, wxEmptyString, wxEmptyString, wxEmptyString);
     m_to_filter = to_field->GetTextCtrl(); m_to_filter->SetHint(_L("Through YYYY-MM-DD")); m_to_filter->SetName(_L("Through YYYY-MM-DD"));
-    for (auto *control : std::vector<wxWindow*>{m_category_filter, m_status_filter, device_field, m_store_filter, from_field, to_field})
+    for (auto *control : std::vector<wxWindow*>{m_category_filter, m_status_filter, device_field, m_store_filter, from_field, to_field}) {
+        // Wide enough for the longest hint, "Through YYYY-MM-DD", at any scale.
+        control->SetMinSize(wxSize(FromDIP(170), -1));
         filters->Add(control, 1, wxEXPAND);
+    }
     for (ComboBox *choice : {m_category_filter, m_status_filter, m_store_filter})
         choice->Bind(wxEVT_COMBOBOX, [this](wxCommandEvent &) { populate_versions(); update_selection(); });
     for (wxTextCtrl *field : {m_device_filter, m_from_filter, m_to_filter})
