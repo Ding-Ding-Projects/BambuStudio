@@ -4,9 +4,11 @@
 
 - [x] Build the Every feature page, Preferences provenance and its remake (section reset, import, undo, related settings, playground, section counts), job names in your own wording, the Base64 toolkit, the practical setup wizard, extensions with the check before a print is sent, live charts, element locks, attention modes, the drawing board, live menu controls, virtual disks and Minecraft servers, each with an article, a Cantonese twin, a board and checks.
 - [x] Fix the MSVC C2872 failure in the Minecraft servers page and guard against namespace-named members there.
-- [ ] Confirm the hosted Windows build of a1043de and the queued release publications.
+- [x] Confirm the hosted Windows builds of a1043de, 47a2298 and a5d148a.
+- [ ] Confirm the queued release publications.
+- [x] Run every declared extension hook: model.imported after a load and print.finished after a print ends.
 - [ ] Take native screenshots of the Minecraft servers page, the before-send window and the Preferences additions from a published release.
-- [ ] Build what the articles list under "Not done yet", including the twelve regrouped Preferences sections, Docker, SSH and Bedrock servers, and the model.imported and print.finished extension hooks.
+- [ ] Build what the articles list under "Not done yet", including the twelve regrouped Preferences sections, Docker, SSH and Bedrock servers, and per-extension settings.
 
 ## Installed wording acceptance, 7 November 2026
 

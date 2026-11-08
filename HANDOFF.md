@@ -2,7 +2,7 @@
 
 ## Local tools and the last unbuilt features, 8 November 2026
 
-Commits 6d33c47 to a1043de add, each with an article, a Cantonese twin, a
+Commits 6d33c47 to 1514031 add, each with an article, a Cantonese twin, a
 design board in `design/local-tools-2026-11` and standalone or source checks:
 the Every feature page (nothing is listed as not built any more), where every
 Preferences value comes from with a change record, and the rest of the
@@ -11,8 +11,9 @@ import of the JSON export, Undo last change, Related settings, the Appearance
 playground, section counts, reset through each row's own control and never
 through a locked one), printer job names in your own wording, the Base64
 toolkit, a practical setup wizard, extensions (manifests, consent, limits, a
-process runner, a manager, three built-ins and the check before a print is
-sent), live temperature charts, element locks, attention modes, the drawing
+process runner, a manager, three built-ins, and every declared hook running:
+after slicing, after export, commands, after a model is imported, the check
+before a print is sent and after a print ends), live temperature charts, element locks, attention modes, the drawing
 board, live controls inside menus, Windows virtual disks and Minecraft
 servers. b6bd13e fixes four chrome glitches and stops blank web pages passing
 as captures.
@@ -20,8 +21,9 @@ as captures.
 The Windows build of 6d9567b and 46547e5 failed: MSVC found a ServersPanel
 member named `detail` ambiguous with the boost and nlohmann `detail`
 namespaces from inside a lambda (C2872), which GCC accepts. a1043de renames
-it and adds a source guard; its hosted build was pending when this was
-written, as were the serialized release publications of the earlier commits.
+it and adds a source guard. The hosted Windows builds of a1043de, 47a2298
+and a5d148a passed; the serialized release publications were still queued
+when this was written.
 The virtual disk operations passed their hosted Windows workflow on real
 disks. No native screenshot of the Minecraft servers page, the before-send
 window or the Preferences additions exists yet, and running a server needs
