@@ -414,6 +414,8 @@ set(SLIC3R_GUI_SOURCES
     GUI/OptionsGroup.cpp
     GUI/OptionsGroup.hpp
     GUI/OG_CustomCtrl.cpp
+    GUI/SettingContextMenu.cpp
+    GUI/SettingContextMenu.hpp
     GUI/OG_CustomCtrl.hpp
     GUI/MarkdownTip.cpp
     GUI/MarkdownTip.hpp
@@ -855,6 +857,7 @@ list(APPEND SLIC3R_GUI_SOURCES
     GUI/Widgets/ListBox.cpp
     GUI/Widgets/ListBox.hpp
     GUI/Widgets/MD3MenuModel.hpp
+    GUI/Widgets/MD3MenuLive.hpp
     GUI/Widgets/MD3Menu.cpp
     GUI/Widgets/MD3Menu.hpp
     GUI/Appearance/ElementStyle.cpp

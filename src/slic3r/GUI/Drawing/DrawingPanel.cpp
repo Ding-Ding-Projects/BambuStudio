@@ -10,6 +10,7 @@
 #include "../Plater.hpp"
 #include "../Widgets/Button.hpp"
 #include "../Widgets/Label.hpp"
+#include "../Widgets/MD3ColorPicker.hpp"
 #include "../Widgets/MD3DataView.hpp"
 #include "../Widgets/MD3Menu.hpp"
 #include "../Widgets/MD3Tokens.hpp"
@@ -22,7 +23,6 @@
 #include "libslic3r/Utils.hpp"
 
 #include <wx/base64.h>
-#include <wx/colordlg.h>
 #include <wx/datetime.h>
 #include <wx/dcbuffer.h>
 #include <wx/filedlg.h>
@@ -573,12 +573,13 @@ void DrawingPanel::set_color(std::uint32_t c)
 
 void DrawingPanel::pick_custom_color()
 {
-    wxColourData data;
-    data.SetChooseFull(true);
-    data.SetColour(rgb(m_color));
-    wxColourDialog dialog(this, &data);
+    MD3ColorPickerDialog::Options options;
+    for (std::uint32_t c : m_recent) options.recent.push_back(rgb(c));
+    options.opacity = false; // each pen keeps its own opacity
+    options.title   = _L("Drawing colour");
+    MD3ColorPickerDialog dialog(this, rgb(m_color), options);
     if (dialog.ShowModal() != wxID_OK) return;
-    const wxColour c = dialog.GetColourData().GetColour();
+    const wxColour c = dialog.GetColour();
     set_color((std::uint32_t(c.Red()) << 16) | (std::uint32_t(c.Green()) << 8) | c.Blue());
 }
 

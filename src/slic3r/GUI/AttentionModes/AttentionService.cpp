@@ -87,7 +87,14 @@ Button *text_button(wxWindow *parent, const wxString &text, std::uint32_t code)
 class NextStepDialog : public DPIDialog
 {
 public:
-    explicit NextStepDialog(wxWindow *parent) : DPIDialog(parent, wxID_ANY, _L("Your next step"), wxDefaultPosition, wxDefaultSize, wxBORDER_NONE) {}
+    explicit NextStepDialog(wxWindow *parent) : DPIDialog(parent, wxID_ANY, _L("Your next step"), wxDefaultPosition, wxDefaultSize, wxBORDER_NONE)
+    {
+        SetBackgroundColour(role(MD3::Role::Surface));
+        root = new wxBoxSizer(wxVERTICAL);
+        root->Add(new MD3DialogCaption(this, _L("Your next step")), 0, wxEXPAND);
+        SetSizer(root);
+    }
+    wxBoxSizer *root = nullptr; // the caption is in; the body goes under it
 
 protected:
     void on_dpi_changed(const wxRect &) override { Layout(); }
@@ -97,9 +104,7 @@ protected:
 bool edit_next_action(wxWindow *parent, std::string &text)
 {
     NextStepDialog dialog(parent);
-    dialog.SetBackgroundColour(role(MD3::Role::Surface));
-    auto *root = new wxBoxSizer(wxVERTICAL);
-    root->Add(new MD3DialogCaption(&dialog, _L("Your next step")), 0, wxEXPAND);
+    wxBoxSizer    *root = dialog.root;
     auto *body = new wxBoxSizer(wxVERTICAL);
     auto *lead = new Label(&dialog, Label::Body_13, _L("One thing, in your words. It stays in the strip until you mark it done."),
                            LB_AUTO_WRAP | wxST_NO_AUTORESIZE);
@@ -125,7 +130,6 @@ bool edit_next_action(wxWindow *parent, std::string &text)
     buttons->Add(cancel, 0, wxLEFT, dialog.FromDIP(8));
     buttons->Add(save, 0, wxLEFT, dialog.FromDIP(8));
     root->Add(buttons, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, dialog.FromDIP(20));
-    dialog.SetSizer(root);
     dialog.Fit();
     MD3DialogCaption::FinishChrome(&dialog);
     dialog.CenterOnParent();
@@ -337,6 +341,15 @@ void shutdown()
 void note_change() { service().clock.last_change = now_seconds(); }
 
 bool focus_on() { return service().focus.load(); }
+
+void set_focus(bool on)
+{
+    Settings s = current();
+    if (s.focus == on) return;
+    s.focus = on;
+    store(s);
+    tick_all();
+}
 
 wxWindow *create_strip(wxWindow *parent)
 {

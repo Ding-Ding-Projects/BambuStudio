@@ -1,6 +1,6 @@
 ---
 translation-of: material-context-menus.md
-source-sha256: 46505612ee158cd37419eac0486b6a984372bdf527febee5044a8b81c283da31
+source-sha256: 87ff8d3648ae0c3c4589d2cc4d531c5b60b070a13391a157ce96ab1a1c86e98e
 review-status: agent-drafted
 ---
 
@@ -50,3 +50,4 @@ review-status: agent-drafted
 - [正則構建器](regex-builder.md) 、 選單搜尋丸形後面嘅構建器。
 - [外觀自訂](appearance-customization.md) 、 表面令牌來自何處。
 - [命令調色板](command-palette.md) 、 其他可搜尋命令表面。
+- [選單入面嘅即時控制](menu-live-controls.md) 、 行入面嘅開關、選擇、滑桿同加減器，同每個設定嘅選單。

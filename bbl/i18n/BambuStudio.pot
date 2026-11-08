@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-08 06:53-0500\n"
+"POT-Creation-Date: 2026-11-08 07:19-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -3286,6 +3286,42 @@ msgstr ""
 msgid "Add a new plate"
 msgstr ""
 
+msgid "Camera"
+msgstr ""
+
+msgid "Perspective"
+msgstr ""
+
+msgid "Orthographic"
+msgstr ""
+
+msgid "How the 3D view projects the plate, as in View"
+msgstr ""
+
+msgid "Show 3D Navigator"
+msgstr ""
+
+msgid "Show 3D navigator in Prepare and Preview scene"
+msgstr ""
+
+msgid "Show labels"
+msgstr ""
+
+msgid "Labels by layer, or by object when the plate prints object by object, as in View"
+msgstr ""
+
+msgid "Show &Overhang"
+msgstr ""
+
+msgid "Show object overhang highlight in 3D scene"
+msgstr ""
+
+msgid "Focus"
+msgstr ""
+
+msgid "While something is selected, the rest of the plate steps back, as in Preferences > Attention modes"
+msgstr ""
+
 msgid "To objects"
 msgstr ""
 
@@ -3302,6 +3338,12 @@ msgid "Split"
 msgstr ""
 
 msgid "Split the selected object"
+msgstr ""
+
+msgid "Copies"
+msgstr ""
+
+msgid "How many copies of this object are on the plate; each step adds or removes one"
 msgstr ""
 
 msgid "Auto orientation"
@@ -7628,12 +7670,6 @@ msgstr ""
 msgid "Use Orthogonal View"
 msgstr ""
 
-msgid "Show 3D Navigator"
-msgstr ""
-
-msgid "Show 3D navigator in Prepare and Preview scene"
-msgstr ""
-
 msgid "Reset Window Layout"
 msgstr ""
 
@@ -7641,12 +7677,6 @@ msgid "Reset to default window layout"
 msgstr ""
 
 msgid "Show Labels of printing by layer in 3D scene"
-msgstr ""
-
-msgid "Show &Overhang"
-msgstr ""
-
-msgid "Show object overhang highlight in 3D scene"
 msgstr ""
 
 msgid "Set 3DConnexion"
@@ -10197,6 +10227,67 @@ msgstr ""
 msgid "nozzle"
 msgstr ""
 
+msgid "On"
+msgstr ""
+
+msgid "This setting has no description yet."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Setting key: %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Range: %s to %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Unit: %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Now: %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "In the saved preset: %s"
+msgstr ""
+
+msgid "Back to the preset value"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Back to the preset value, %s"
+msgstr ""
+
+msgid "Undo your change to this setting"
+msgstr ""
+
+msgid "Back to the system value"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Back to the system value, %s"
+msgstr ""
+
+msgid "Use the value of the system preset this one is based on"
+msgstr ""
+
+msgid "Copy the setting key"
+msgstr ""
+
+msgid "Compare with other presets..."
+msgstr ""
+
+msgid "Open the preset comparison for this kind of preset"
+msgstr ""
+
+msgid "Explain this"
+msgstr ""
+
+msgid "What this setting does, its key, range and values"
+msgstr ""
+
 msgid "Notify only"
 msgstr ""
 
@@ -10327,9 +10418,6 @@ msgid "Filament Tangle Detect"
 msgstr ""
 
 msgid "Checks if the nozzle is clumping by filament or other foreign objects."
-msgstr ""
-
-msgid "On"
 msgstr ""
 
 msgid "Detects air printing caused by nozzle clogging, filament tangling, or filament grinding."
@@ -13287,9 +13375,6 @@ msgid "The port on 127.0.0.1 that the status API listens on."
 msgstr ""
 
 msgid "Interface accommodations, each off by default and independent of the others. They change only how Bambu Studio looks and behaves for you; nothing here is measured, scored or shared."
-msgstr ""
-
-msgid "Focus"
 msgstr ""
 
 msgid "While something is selected in Prepare, the rest of the plate steps back: drawn muted, never hidden. Clear the selection to see everything again."
@@ -27441,6 +27526,18 @@ msgstr ""
 msgid "%d results"
 msgstr ""
 
+msgid "Space turns it on or off; the menu stays open."
+msgstr ""
+
+msgid "Left and Right change it; the menu stays open."
+msgstr ""
+
+msgid "Toggle"
+msgstr ""
+
+msgid "Next value"
+msgstr ""
+
 msgid "Activate"
 msgstr ""
 
@@ -29573,6 +29670,9 @@ msgstr ""
 msgid "Element locks and the unlock ladder"
 msgstr ""
 
+msgid "Live controls in menus"
+msgstr ""
+
 msgid "Command palette (Ctrl+Shift+F)"
 msgstr ""
 
@@ -29759,7 +29859,7 @@ msgstr ""
 msgid "Context menus with live controls"
 msgstr ""
 
-msgid "Right-click anything"
+msgid "Right-click a setting, the 3D view or an object"
 msgstr ""
 
 msgid "Info icons and explanations"
@@ -32003,6 +32103,9 @@ msgstr ""
 
 #, possible-c-format, possible-boost-format
 msgid "%s (drawing with it)"
+msgstr ""
+
+msgid "Drawing colour"
 msgstr ""
 
 msgid "The plate could not be captured. Open Prepare once so the 3D view is ready, then try again."

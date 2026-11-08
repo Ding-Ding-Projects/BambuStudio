@@ -127,6 +127,11 @@ public:
     void    OnMotion(wxMouseEvent& event);
     void    OnLeftDown(wxMouseEvent& event);
     void    OnLeaveWin(wxMouseEvent& event);
+    // Right-click or Shift+F10 on a row's name, value or empty space: the setting's menu.
+    void    OnContextMenu(wxContextMenuEvent& event);
+    // The setting at a client point (x or y below 0 to skip it), or the one whose
+    // field holds `source`; empty when there is none.
+    std::string option_at(const wxPoint& client_pos, const wxWindow* source) const;
 
     void    init_ctrl_lines();
     bool    update_visibility(ConfigOptionMode mode);

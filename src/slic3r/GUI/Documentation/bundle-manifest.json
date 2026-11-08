@@ -1365,12 +1365,12 @@
     {
       "route": "windows/README.md",
       "title": "Windows features",
-      "sha256": "324473988a5c1e94ee352d2941bfd0697cd805865c1aa1b4f3acb29bcdeda41e"
+      "sha256": "a1a728f8fad4fd068ecf11e80f30c5da6ab5707c73b4aeb2fbd0ca73e3f36fcc"
     },
     {
       "route": "windows/README.yue_HK.md",
       "title": "Windows 功能",
-      "sha256": "0bb09c580be651c1c9e8c87309a3a43e6ee1eb1e9d1a4d95170c7a13e0ceacec"
+      "sha256": "d3ee14e4ef67d6cb1d425a20e65802aca38ea208132623828f90fd836d7a199f"
     },
     {
       "route": "windows/action-sounds.md",
@@ -1705,12 +1705,12 @@
     {
       "route": "windows/material-context-menus.md",
       "title": "Material context menus",
-      "sha256": "46505612ee158cd37419eac0486b6a984372bdf527febee5044a8b81c283da31"
+      "sha256": "87ff8d3648ae0c3c4589d2cc4d531c5b60b070a13391a157ce96ab1a1c86e98e"
     },
     {
       "route": "windows/material-context-menus.yue_HK.md",
       "title": "物料脈絡選單",
-      "sha256": "272517d95eaa91806dd5a3cacd305582619a1a42331dcb238c444d27f9bcf7dc"
+      "sha256": "920aeffb2a1d020e598a9be2b6b43c3c75240b9e6cdf5744a4622e71d1395c2d"
     },
     {
       "route": "windows/md3-color-picker.md",
@@ -1741,6 +1741,16 @@
       "route": "windows/menu-interaction-verification.yue_HK.md",
       "title": "原生選單建構器互動驗證",
       "sha256": "dc9a4c343f0cf3c526218f016b7b9c56f62cbacd141c7dcbec6d399c4c37886d"
+    },
+    {
+      "route": "windows/menu-live-controls.md",
+      "title": "Live controls in menus",
+      "sha256": "b0c5cb7bec18d3a0510e8d30bfb5aff3af47fd596989cb289fbfb5026b477bed"
+    },
+    {
+      "route": "windows/menu-live-controls.yue_HK.md",
+      "title": "選單入面嘅即時控制",
+      "sha256": "682f7f5b305745fea191a63a1179c7ced2b2cc76af164d4c1946b41c0ab7a057"
     },
     {
       "route": "windows/menu-motion.md",
@@ -2255,7 +2265,7 @@
       "bytes": 16430
     }
   ],
-  "bundle_sha256": "b8e6a673e821d9ceb6ab7f69cff56ff16effd97df6b1a6521b0c6b982aa97ba3",
+  "bundle_sha256": "53c982e9cb7a3849faa47fce161c7a4223ed4df2d7b3b4fc3fce9fdf3ff2c467",
   "unavailable_references": [
     {
       "source": "api/README.md",

@@ -28,6 +28,7 @@
 - [Per-element appearance editor (right-click ▸ Edit appearance..., Ctrl+Shift+E)](appearance-editor.md)
 - [Regex builder](regex-builder.md)
 - [Material context menus (search, shortcuts, submenus)](material-context-menus.md)
+- [Live controls in menus and the menu on every setting](menu-live-controls.md)
 - [Command palette (Ctrl+Shift+F)](command-palette.md)
 - [Every feature page](every-feature.md)
 - [Preferences: where every value comes from](preferences-provenance.md)

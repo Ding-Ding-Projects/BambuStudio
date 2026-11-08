@@ -27,6 +27,8 @@ void shutdown();
 void note_change();
 // Read by the 3D view on every frame.
 bool focus_on();
+// Turns Focus on or off as Preferences would (the 3D view's menu offers it).
+void set_focus(bool on);
 // The strip under the title bar; it shows itself only while a mode needs it.
 wxWindow *create_strip(wxWindow *parent);
 // Preferences on the Attention modes section.

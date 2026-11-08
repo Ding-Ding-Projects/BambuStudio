@@ -35359,3 +35359,106 @@ msgstr ""
 
 msgid "1 to 7 pick a pen and E the eraser, C a colour and S the width. Hold Shift to keep a stroke on one of eight directions. Ctrl+Z and Ctrl+Y undo and redo, Ctrl+Shift+E exports. With the board focused, the arrow keys move the keyboard pen (Shift for small steps), Space puts it down and lifts it, and Esc lifts it. Right-click or Shift+F10 lists every pen with its key."
 msgstr ""
+
+msgid "Perspective"
+msgstr ""
+
+msgid "Orthographic"
+msgstr ""
+
+msgid "How the 3D view projects the plate, as in View"
+msgstr ""
+
+msgid "Show labels"
+msgstr ""
+
+msgid "Labels by layer, or by object when the plate prints object by object, as in View"
+msgstr ""
+
+msgid "While something is selected, the rest of the plate steps back, as in Preferences > Attention modes"
+msgstr ""
+
+msgid "Copies"
+msgstr ""
+
+msgid "How many copies of this object are on the plate; each step adds or removes one"
+msgstr ""
+
+msgid "This setting has no description yet."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Setting key: %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Range: %s to %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Unit: %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Now: %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "In the saved preset: %s"
+msgstr ""
+
+msgid "Back to the preset value"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Back to the preset value, %s"
+msgstr ""
+
+msgid "Undo your change to this setting"
+msgstr ""
+
+msgid "Back to the system value"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Back to the system value, %s"
+msgstr ""
+
+msgid "Use the value of the system preset this one is based on"
+msgstr ""
+
+msgid "Copy the setting key"
+msgstr ""
+
+msgid "Compare with other presets..."
+msgstr ""
+
+msgid "Open the preset comparison for this kind of preset"
+msgstr ""
+
+msgid "Explain this"
+msgstr ""
+
+msgid "What this setting does, its key, range and values"
+msgstr ""
+
+msgid "Space turns it on or off; the menu stays open."
+msgstr ""
+
+msgid "Left and Right change it; the menu stays open."
+msgstr ""
+
+msgid "Toggle"
+msgstr ""
+
+msgid "Next value"
+msgstr ""
+
+msgid "Live controls in menus"
+msgstr ""
+
+msgid "Right-click a setting, the 3D view or an object"
+msgstr ""
+
+msgid "Drawing colour"
+msgstr ""

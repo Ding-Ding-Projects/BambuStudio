@@ -96,3 +96,4 @@ the new candidate or its new Escape behavior.
 - [Regex builder](regex-builder.md) — the builder behind the menu search pill.
 - [Appearance customization](appearance-customization.md) — where the surface tokens come from.
 - [Command palette](command-palette.md) — the other searchable command surface.
+- [Live controls in menus](menu-live-controls.md): switches, choices, sliders and steppers inside rows, and the menu on every setting.

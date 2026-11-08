@@ -4,6 +4,7 @@
 #include "Plater.hpp"
 #include "GUI_App.hpp"
 #include "MsgDialog.hpp"
+#include "SettingContextMenu.hpp"
 #include "libslic3r/AppConfig.hpp"
 #include "libslic3r/Flow.hpp"
 #include "libslic3r/PresetBundle.hpp"
@@ -74,11 +75,86 @@ OG_CustomCtrl::OG_CustomCtrl(   wxWindow*            parent,
     this->Bind(wxEVT_MOTION,    &OG_CustomCtrl::OnMotion, this);
     this->Bind(wxEVT_LEFT_DOWN, &OG_CustomCtrl::OnLeftDown, this);
     this->Bind(wxEVT_LEAVE_WINDOW, &OG_CustomCtrl::OnLeaveWin, this);
+    this->Bind(wxEVT_CONTEXT_MENU, &OG_CustomCtrl::OnContextMenu, this);
+    // F1 on a setting's field: what the setting does, beside the field.
+    this->Bind(wxEVT_CHAR_HOOK, [this](wxKeyEvent &e) {
+        if (e.GetKeyCode() == WXK_F1 && !e.HasAnyModifiers()) {
+            wxWindow         *focus = wxWindow::FindFocus();
+            const std::string key   = option_at(wxPoint(-1, -1), focus);
+            if (!key.empty()) {
+                const wxRect r = focus->GetScreenRect();
+                SettingContextMenu::explain(this, opt_group, key, wxPoint(r.GetRight() + FromDIP(8), r.y));
+                return;
+            }
+        }
+        e.Skip();
+    });
+    SettingContextMenu::install();
     // Fields of full_width rows are sized during paint (CtrlLine::render). This
     // panel does not repaint on a plain resize, so narrowing it would leave a
     // wide field cut off at the panel edge: refresh on every size change so the
     // width is recomputed both ways.
     this->Bind(wxEVT_SIZE, [this](wxSizeEvent &e) { Refresh(); e.Skip(); });
+}
+
+std::string OG_CustomCtrl::option_at(const wxPoint& pos, const wxWindow* source) const
+{
+    if (!opt_group)
+        return {};
+    // A field's own window, or anything inside it, names its setting directly.
+    if (source && source != this) {
+        for (const CtrlLine& line : ctrl_lines)
+            for (const Option& opt : line.og_line.get_options())
+                if (Field* field = opt_group->get_field(opt.opt_id))
+                    if (wxWindow* w = field->getWindow(); w && (w == source || w->IsDescendant(const_cast<wxWindow*>(source))))
+                        return opt.opt_id;
+    }
+    if (pos.x < 0 || pos.y < 0)
+        return {};
+    // Otherwise the row under the point, laid out exactly as OnPaint draws it.
+    wxCoord v_pos = 0;
+    for (const CtrlLine& line : ctrl_lines) {
+        if (!line.is_visible)
+            continue;
+        if (pos.y >= v_pos && pos.y < v_pos + line.height) {
+            const std::vector<Option>& options = line.og_line.get_options();
+            if (options.empty())
+                return {};
+            // A row with several settings: the one whose field is under the pointer.
+            for (const Option& opt : options)
+                if (Field* field = opt_group->get_field(opt.opt_id))
+                    if (wxWindow* w = field->getWindow(); w && w->IsShown()) {
+                        wxRect r = w->GetScreenRect();
+                        r.SetPosition(ScreenToClient(r.GetPosition()));
+                        if (pos.x >= r.x && pos.x <= r.GetRight())
+                            return opt.opt_id;
+                    }
+            return options.front().opt_id;
+        }
+        v_pos += line.height;
+    }
+    return {};
+}
+
+void OG_CustomCtrl::OnContextMenu(wxContextMenuEvent& event)
+{
+    auto*       source   = dynamic_cast<wxWindow*>(event.GetEventObject());
+    wxPoint     at       = event.GetPosition();
+    const bool  keyboard = at == wxDefaultPosition;
+    std::string key      = option_at(keyboard ? wxPoint(-1, -1) : ScreenToClient(at), source);
+    if (key.empty() && keyboard)
+        key = option_at(wxPoint(-1, -1), wxWindow::FindFocus());
+    if (key.empty()) {
+        event.Skip();
+        return;
+    }
+    if (keyboard) {
+        // Shift+F10 carries no position: open under the setting's field.
+        Field*   field = opt_group->get_field(key);
+        wxWindow* w    = field ? field->getWindow() : nullptr;
+        at             = w ? w->ClientToScreen(wxPoint(0, w->GetSize().y)) : ClientToScreen(wxPoint(0, 0));
+    }
+    SettingContextMenu::show(this, opt_group, key, at);
 }
 
 void OG_CustomCtrl::refresh_nozzle_mirror_context()

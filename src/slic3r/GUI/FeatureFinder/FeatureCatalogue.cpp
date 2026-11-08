@@ -54,7 +54,7 @@ const std::vector<Feature> &features()
         {"regex-builder", "find", 0xF750 /* regular_expression */, L("Regex builder"), L("The .* button in any search"), "", "regular expression pattern search", Badge::None, State::Ready, "docs:windows/regex-builder.md"},
         {"keyboard-shortcuts", "find", 0xE312 /* keyboard */, L("Keyboard shortcuts"), L("Help, Keyboard Shortcuts"), "Shift+?", "hotkeys keys shortcuts", Badge::None, State::Ready, "command:keyboard-shortcuts"},
         {"printer-setup", "find", 0xE555 /* print */, L("Printer and filament setup"), L("Help, Setup Wizard"), "", "wizard printers filaments first run", Badge::None, State::Ready, "command:setup-wizard"},
-        {"context-menus", "find", 0xF706 /* right_click */, L("Context menus with live controls"), L("Right-click anything"), "", "right click menu", Badge::New, State::NotBuilt, ""},
+        {"context-menus", "find", 0xF706 /* right_click */, L("Context menus with live controls"), L("Right-click a setting, the 3D view or an object"), "Shift+F10", "right click menu switch slider stepper setting explain copy key", Badge::New, State::Ready, "docs:windows/menu-live-controls.md"},
         {"info-icons", "find", 0xE88E /* info */, L("Info icons and explanations"), L("Beside every Preferences setting"), "", "help explanation info button", Badge::New, State::Ready, "command:preferences"},
         {"onboarding", "find", 0xEB9B /* rocket_launch */, L("Practical setup wizard"), L("Help, Set up Bambu Studio"), "", "wizard first run welcome onboarding resume", Badge::New, State::Ready, "command:practical-setup"},
         // Records

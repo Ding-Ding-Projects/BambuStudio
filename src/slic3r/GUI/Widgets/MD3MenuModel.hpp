@@ -12,12 +12,36 @@
 #include <wx/menu.h>
 #include <wx/string.h>
 
+#include "MD3MenuLive.hpp"
+
 #include <algorithm>
 #include <functional>
 #include <utility>
 #include <vector>
 
 namespace MD3 { namespace Menu {
+
+// A menu item that carries a live control (MD3MenuLive.hpp). The control lives
+// and dies with the item, so a menu built once and shown many times keeps it.
+// Outside the Material menu a switch still works as a check item.
+class LiveMenuItem : public wxMenuItem
+{
+public:
+    LiveMenuItem(wxMenu *parent, int id, const wxString &label, const wxString &help, LiveControl control)
+        : wxMenuItem(parent, id, label, help, control.kind == LiveControl::Kind::Switch ? wxITEM_CHECK : wxITEM_NORMAL)
+        , m_control(std::move(control))
+    {}
+    const LiveControl &control() const { return m_control; }
+
+private:
+    LiveControl m_control;
+};
+
+inline const LiveControl *live_control_of(const wxMenuItem *item)
+{
+    const auto *live = dynamic_cast<const LiveMenuItem *>(item);
+    return live ? &live->control() : nullptr;
+}
 
 struct Item
 {
@@ -34,6 +58,7 @@ struct Item
     bool        checked { false };
     wxMenu *    submenu { nullptr }; // non-null only for Kind::Submenu
     wxMenuItem *source { nullptr };  // the wx item this row mirrors
+    const LiveControl *live { nullptr }; // a switch, choice, slider or stepper drawn in the row
 
     bool actionable() const { return kind != Separator; }
 };
@@ -97,6 +122,9 @@ inline std::vector<Item> snapshot(wxMenu &menu, const SecondaryLookup &secondary
         row.help    = item->GetHelp();
         row.enabled = item->IsEnabled();
         row.checked = item->IsCheckable() && item->IsChecked();
+        row.live    = live_control_of(item);
+        if (row.live && row.live->kind == LiveControl::Kind::Switch && row.live->get)
+            row.checked = row.live->value() >= 0.5;
         if (item->GetBitmap().IsOk())
             row.icon = item->GetBitmap();
 

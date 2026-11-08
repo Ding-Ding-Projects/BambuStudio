@@ -54871,3 +54871,163 @@ msgstr "永遠唔會上載"
 #. review-status: agent-drafted
 msgid "1 to 7 pick a pen and E the eraser, C a colour and S the width. Hold Shift to keep a stroke on one of eight directions. Ctrl+Z and Ctrl+Y undo and redo, Ctrl+Shift+E exports. With the board focused, the arrow keys move the keyboard pen (Shift for small steps), Space puts it down and lifts it, and Esc lifts it. Right-click or Shift+F10 lists every pen with its key."
 msgstr "1 至 7 揀筆，E 揀擦膠，C 揀顏色，S 跳去闊度。撳住 Shift 會將筆畫保持喺八個方向之一。Ctrl+Z 同 Ctrl+Y 復原同重做，Ctrl+Shift+E 匯出。畫板有焦點嘅時候，方向鍵會郁鍵盤筆（撳住 Shift 行細步），Space 落筆同提筆，Esc 提筆。撳右掣或者 Shift+F10 會列出每支筆同佢嘅鍵。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Perspective"
+msgstr "透視"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Orthographic"
+msgstr "正交"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "How the 3D view projects the plate, as in View"
+msgstr "3D 視圖點樣投射打印板，同檢視選單一樣"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Show labels"
+msgstr "顯示標籤"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Labels by layer, or by object when the plate prints object by object, as in View"
+msgstr "按層顯示標籤，打印板逐件打印嘅時候就按物件，同檢視選單一樣"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "While something is selected, the rest of the plate steps back, as in Preferences > Attention modes"
+msgstr "揀咗嘢嘅時候，打印板上其他嘢會退後，同偏好設定 > 專注模式一樣"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Copies"
+msgstr "副本"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "How many copies of this object are on the plate; each step adds or removes one"
+msgstr "打印板上有幾多個呢件物件嘅副本；每一步加或者減一個"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "This setting has no description yet."
+msgstr "呢個設定仲未有描述。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Setting key: %s"
+msgstr "設定鍵：%s"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Range: %s to %s"
+msgstr "範圍：%s 至 %s"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Unit: %s"
+msgstr "單位：%s"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Now: %s"
+msgstr "而家：%s"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "In the saved preset: %s"
+msgstr "儲咗嘅預設入面：%s"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Back to the preset value"
+msgstr "返去預設值"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Back to the preset value, %s"
+msgstr "返去預設值，%s"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Undo your change to this setting"
+msgstr "復原你對呢個設定嘅改動"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Back to the system value"
+msgstr "返去系統值"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Back to the system value, %s"
+msgstr "返去系統值，%s"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Use the value of the system preset this one is based on"
+msgstr "用呢個預設所根據嘅系統預設嘅值"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Copy the setting key"
+msgstr "複製設定鍵"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Compare with other presets..."
+msgstr "同其他預設比較..."
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Open the preset comparison for this kind of preset"
+msgstr "打開呢類預設嘅預設比較"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Explain this"
+msgstr "解釋呢個"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "What this setting does, its key, range and values"
+msgstr "呢個設定做乜、佢嘅鍵、範圍同數值"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Space turns it on or off; the menu stays open."
+msgstr "Space 會開或者關；選單會保持打開。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Left and Right change it; the menu stays open."
+msgstr "Left 同 Right 會改佢；選單會保持打開。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Toggle"
+msgstr "切換"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Next value"
+msgstr "下一個值"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Live controls in menus"
+msgstr "選單入面嘅即時控制"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Right-click a setting, the 3D view or an object"
+msgstr "喺設定、3D 視圖或者物件上面撳右掣"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Drawing colour"
+msgstr "畫筆顏色"

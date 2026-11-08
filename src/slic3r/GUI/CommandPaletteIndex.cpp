@@ -287,6 +287,7 @@ const std::vector<Article> &documentation_articles()
         {"docs/features/windows/attention-modes.md", L("Attention modes")},
         {"docs/features/device/live-charts.md", L("Live charts")},
         {"docs/features/windows/drawing-board.md", L("Drawing board")},
+        {"docs/features/windows/menu-live-controls.md", L("Live controls in menus")},
         {"docs/features/windows/command-palette.md", L("Command palette (Ctrl+Shift+F)")},
         {"docs/features/windows/gui-accessibility.md", L("Keyboard, assistive, and responsive GUI accessibility")},
         {"docs/features/windows/ink-terminology.md", L("Ink terminology (filament \xE2\x86\x92 ink, AMS \xE2\x86\x92 Ink Dispenser)")},

@@ -1,6 +1,6 @@
 ---
 translation-of: README.md
-source-sha256: 324473988a5c1e94ee352d2941bfd0697cd805865c1aa1b4f3acb29bcdeda41e
+source-sha256: a1a728f8fad4fd068ecf11e80f30c5da6ab5707c73b4aeb2fbd0ca73e3f36fcc
 review-status: agent-drafted
 ---
 
@@ -20,6 +20,7 @@ review-status: agent-drafted
 - [每元素外觀編輯器（右鍵點擊 ▸ 編輯外觀...、Ctrl+Shift+E）](appearance-editor.md)
 - [正則表達式建立者](regex-builder.md)
 - [Material 內容選單（搜尋、快速鍵、子選單）](material-context-menus.md)
+- [選單入面嘅即時控制同每個設定嘅選單](menu-live-controls.md)
 - [命令調板（Ctrl+Shift+F）](command-palette.md)
 - [全部功能頁](every-feature.md)
 - [偏好設定：每個值由邊度嚟](preferences-provenance.md)

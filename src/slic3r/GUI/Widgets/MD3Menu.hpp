@@ -81,6 +81,9 @@ public:
     wxMenu *      OpenSubmenuMenu() const { return m_child ? m_child->m_menu : nullptr; }
     // Activate a row (Normal/Check/Radio) and close the whole menu chain.
     void ActivateItem(const MD3::Menu::Item &item);
+    // Close the whole menu chain without choosing anything (Enter on a live
+    // row whose value is already applied).
+    void CloseChain();
     // Open the submenu carried by a row; focus_first moves keyboard selection
     // into it (keyboard Right / Enter), hover-open leaves the parent selected.
     void OpenSubmenu(const MD3::Menu::Item &item, const wxRect &row_screen, bool focus_first);
@@ -171,6 +174,27 @@ bool PopupMenuBelow(wxWindow *anchor, wxMenu *menu, bool show_search = false);
 // Copy. Enabled once at startup; disabled during shutdown while the event loop
 // still exists.
 void EnableTextContextMenus(bool enable);
+
+// Lets a feature add its own rows under a text entry's edit menu (a setting's
+// value field adds the setting's rows, for example). Called with the text
+// window and the menu just before it opens; rows bind their own wxEVT_MENU
+// handlers on the menu that holds them.
+using TextMenuSection = std::function<void(wxWindow *text_window, wxMenu &menu)>;
+void AddTextMenuSection(TextMenuSection section);
+
+// Rows with a live control (MD3MenuLive.hpp): the value changes in place and
+// the menu stays open. Click the control or the label; Space flips a switch;
+// Left and Right move a choice, slider or stepper; a screen reader hears the
+// label, the kind of control and the value. Labels may carry "\tShortcut".
+wxMenuItem *AppendSwitch(wxMenu *menu, const wxString &label, std::function<bool()> get, std::function<void(bool)> set,
+                         const wxString &help = wxString());
+wxMenuItem *AppendChoice(wxMenu *menu, const wxString &label, const std::vector<wxString> &choices, std::function<int()> get,
+                         std::function<void(int)> set, const wxString &help = wxString());
+wxMenuItem *AppendSlider(wxMenu *menu, const wxString &label, double min, double max, double step, const wxString &unit,
+                         std::function<double()> get, std::function<void(double)> set, const wxString &help = wxString());
+wxMenuItem *AppendStepper(wxMenu *menu, const wxString &label, double min, double max, double step, int decimals,
+                          const wxString &unit, std::function<double()> get, std::function<void(double)> set,
+                          const wxString &help = wxString());
 
 } // namespace MD3
 

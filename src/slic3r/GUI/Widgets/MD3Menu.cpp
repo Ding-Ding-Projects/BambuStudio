@@ -2,6 +2,7 @@
 #include "MD3Menu.hpp"
 
 #include "../BilingualRegistry.hpp"
+#include "../GUI.hpp"
 #include "../GUI_App.hpp"
 #include "../I18N.hpp"
 #include "../Appearance/AppearanceEditorPopover.hpp"
@@ -111,6 +112,185 @@ wxUniChar mnemonic_of(const wxString &raw)
 // MD3MenuList: the owner-drawn row surface inside the popup.
 // ---------------------------------------------------------------------------
 
+// ---- live controls drawn inside a row (MD3MenuLive.hpp) -------------------
+
+constexpr int kLiveSwitchW   = 36;
+constexpr int kLiveSwitchH   = 20;
+constexpr int kLiveSegPad    = 10;
+constexpr int kLiveSegH      = 26;
+constexpr int kLiveTrack     = 96;
+constexpr int kLiveButton    = 24;
+constexpr int kLiveGap       = 8;
+
+wxString live_value_text(const MD3::Menu::LiveControl &c, double value)
+{
+    return wxString::FromUTF8(MD3::Menu::value_text(c, value, into_u8(_L("On")), into_u8(_L("Off"))));
+}
+
+// The widest value a slider or stepper can show, so the row does not jump.
+int live_value_width(wxDC &dc, const MD3::Menu::LiveControl &c)
+{
+    dc.SetFont(caption_font());
+    int w = 0;
+    for (double v : {c.min, c.max, c.value()})
+        w = std::max(w, dc.GetTextExtent(live_value_text(c, v)).x);
+    return w;
+}
+
+int live_width(wxDC &dc, const wxWindow *w, const MD3::Menu::LiveControl &c)
+{
+    using K = MD3::Menu::LiveControl::Kind;
+    switch (c.kind) {
+    case K::Switch: return w->FromDIP(kLiveSwitchW);
+    case K::Choice: {
+        dc.SetFont(caption_font());
+        int total = 0;
+        for (const std::string &choice : c.choices)
+            total += dc.GetTextExtent(wxString::FromUTF8(choice)).x + 2 * w->FromDIP(kLiveSegPad);
+        return total;
+    }
+    case K::Slider: return w->FromDIP(kLiveTrack) + w->FromDIP(kLiveGap) + live_value_width(dc, c);
+    case K::Stepper: return 2 * w->FromDIP(kLiveButton) + 2 * w->FromDIP(kLiveGap) + live_value_width(dc, c);
+    }
+    return 0;
+}
+
+// Where the parts of a live control sit in a row: for a choice one rectangle
+// per segment, for a stepper the minus and plus buttons, for a slider the track.
+struct LiveGeometry
+{
+    wxRect              area;
+    std::vector<wxRect> parts;
+    wxRect              track;
+    wxRect              value;
+};
+
+LiveGeometry live_geometry(wxDC &dc, const wxWindow *w, const MD3::Menu::LiveControl &c, const wxRect &row, int pad)
+{
+    using K = MD3::Menu::LiveControl::Kind;
+    LiveGeometry g;
+    const int width = live_width(dc, w, c);
+    const int right = row.GetRight() - pad + 1;
+    g.area          = wxRect(right - width, row.y, width, row.height);
+    switch (c.kind) {
+    case K::Switch: {
+        const int h = w->FromDIP(kLiveSwitchH);
+        g.track     = wxRect(g.area.x, row.y + (row.height - h) / 2, width, h);
+        break;
+    }
+    case K::Choice: {
+        dc.SetFont(caption_font());
+        const int h = w->FromDIP(kLiveSegH);
+        int       x = g.area.x;
+        for (const std::string &choice : c.choices) {
+            const int seg = dc.GetTextExtent(wxString::FromUTF8(choice)).x + 2 * w->FromDIP(kLiveSegPad);
+            g.parts.emplace_back(x, row.y + (row.height - h) / 2, seg, h);
+            x += seg;
+        }
+        break;
+    }
+    case K::Slider: {
+        const int track_w = w->FromDIP(kLiveTrack);
+        const int h       = w->FromDIP(18);
+        g.track           = wxRect(g.area.x, row.y + (row.height - h) / 2, track_w, h);
+        g.value           = wxRect(g.track.GetRight() + 1 + w->FromDIP(kLiveGap), row.y, g.area.GetRight() - g.track.GetRight() - w->FromDIP(kLiveGap), row.height);
+        break;
+    }
+    case K::Stepper: {
+        const int b = w->FromDIP(kLiveButton);
+        g.parts.emplace_back(g.area.x, row.y + (row.height - b) / 2, b, b);
+        g.parts.emplace_back(g.area.GetRight() - b + 1, row.y + (row.height - b) / 2, b, b);
+        g.value = wxRect(g.parts[0].GetRight() + 1, row.y, g.parts[1].x - g.parts[0].GetRight() - 1, row.height);
+        break;
+    }
+    }
+    return g;
+}
+
+// Paints the control and returns where it starts, so the label stops short of it.
+int paint_live(wxDC &dc, const wxWindow *w, const MD3::Menu::LiveControl &c, const wxRect &row, int pad, const wxColour &fg,
+               const wxColour &fg_muted, const wxColour &under, bool enabled)
+{
+    using K             = MD3::Menu::LiveControl::Kind;
+    const LiveGeometry g = live_geometry(dc, w, c, row, pad);
+    const double       v = MD3::Menu::clamp_to(c, c.value());
+    const auto tone = [&](MD3::Role role) {
+        const wxColour col = StateColor::semantic(role);
+        return enabled ? col : blend(col, under, 0.38);
+    };
+    switch (c.kind) {
+    case K::Switch: {
+        const bool on = v >= 0.5;
+        const int  r  = g.track.height / 2;
+        dc.SetPen(on ? *wxTRANSPARENT_PEN : wxPen(tone(MD3::Role::Outline), std::max(1, w->FromDIP(2))));
+        dc.SetBrush(wxBrush(on ? tone(MD3::Role::Primary) : tone(MD3::Role::SurfaceContainerHighest)));
+        dc.DrawRoundedRectangle(g.track, r);
+        const int thumb = on ? g.track.height - w->FromDIP(6) : g.track.height - w->FromDIP(10);
+        const int cx    = on ? g.track.GetRight() - r : g.track.x + r;
+        dc.SetPen(*wxTRANSPARENT_PEN);
+        dc.SetBrush(wxBrush(on ? tone(MD3::Role::OnPrimary) : tone(MD3::Role::Outline)));
+        dc.DrawCircle(cx, g.track.y + g.track.height / 2, thumb / 2);
+        break;
+    }
+    case K::Choice: {
+        dc.SetFont(caption_font());
+        const int radius = g.parts.empty() ? 0 : g.parts.front().height / 2;
+        if (!g.parts.empty()) {
+            wxRect all = g.parts.front();
+            all.SetRight(g.parts.back().GetRight());
+            dc.SetPen(wxPen(tone(MD3::Role::Outline)));
+            dc.SetBrush(*wxTRANSPARENT_BRUSH);
+            dc.DrawRoundedRectangle(all, radius);
+        }
+        for (std::size_t i = 0; i < g.parts.size(); ++i) {
+            const bool chosen = std::size_t(v) == i;
+            if (chosen) {
+                dc.SetPen(*wxTRANSPARENT_PEN);
+                dc.SetBrush(wxBrush(tone(MD3::Role::SecondaryContainer)));
+                dc.DrawRoundedRectangle(wxRect(g.parts[i]).Deflate(1), radius);
+            }
+            dc.SetTextForeground(chosen ? tone(MD3::Role::OnSecondaryContainer) : (enabled ? fg : fg_muted));
+            dc.DrawLabel(wxString::FromUTF8(c.choices[i]), g.parts[i], wxALIGN_CENTER);
+        }
+        break;
+    }
+    case K::Slider: {
+        const int    thick = std::max(2, w->FromDIP(4));
+        const int    y     = g.track.y + g.track.height / 2;
+        const double f     = MD3::Menu::fraction_of(c, v);
+        const int    knob  = g.track.x + int(std::lround(f * g.track.width));
+        dc.SetPen(*wxTRANSPARENT_PEN);
+        dc.SetBrush(wxBrush(tone(MD3::Role::SurfaceContainerHighest)));
+        dc.DrawRoundedRectangle(g.track.x, y - thick / 2, g.track.width, thick, thick / 2);
+        dc.SetBrush(wxBrush(tone(MD3::Role::Primary)));
+        dc.DrawRoundedRectangle(g.track.x, y - thick / 2, std::max(thick, knob - g.track.x), thick, thick / 2);
+        dc.DrawCircle(knob, y, w->FromDIP(7));
+        dc.SetFont(caption_font());
+        dc.SetTextForeground(enabled ? fg : fg_muted);
+        dc.DrawLabel(live_value_text(c, v), g.value, wxALIGN_RIGHT | wxALIGN_CENTER_VERTICAL);
+        break;
+    }
+    case K::Stepper: {
+        const bool can[2] = {v > std::min(c.min, c.max), v < std::max(c.min, c.max)};
+        const wxString signs[2] = {wxString(wxUniChar(0x2212)), wxString("+")};
+        dc.SetFont(body_s_font());
+        for (int i = 0; i < 2; ++i) {
+            const bool active = enabled && can[i];
+            dc.SetPen(wxPen(active ? tone(MD3::Role::Outline) : blend(StateColor::semantic(MD3::Role::Outline), under, 0.38)));
+            dc.SetBrush(*wxTRANSPARENT_BRUSH);
+            dc.DrawRoundedRectangle(g.parts[i], g.parts[i].height / 2);
+            dc.SetTextForeground(active ? fg : blend(fg, under, 0.38));
+            dc.DrawLabel(signs[i], g.parts[i], wxALIGN_CENTER);
+        }
+        dc.SetFont(caption_font());
+        dc.SetTextForeground(enabled ? fg : fg_muted);
+        dc.DrawLabel(live_value_text(c, v), g.value, wxALIGN_CENTER);
+        break;
+    }
+    }
+    return g.area.x;
+}
+
 class MD3MenuList : public wxWindow
 {
 public:
@@ -137,6 +317,11 @@ public:
     bool OpenSelectedSubmenu(bool focus_first);
     bool ActivateMnemonic(wxUniChar ch);
 
+    // Rows with a live control change their value in place; the menu stays open.
+    bool IsLive(int vis_index) const;
+    bool AdjustLive(int vis_index, int direction); // Left and Right
+    bool ToggleLive(int vis_index);                // Space, or a click on a switch
+
     const MD3::Menu::Item *ItemAt(int vis_index) const;
     wxRect RowRect(int vis_index) const;        // client coordinates
     wxRect RowScreenRect(int vis_index) const;
@@ -158,7 +343,12 @@ private:
     void onMotion(wxMouseEvent &);
     void onLeave(wxMouseEvent &);
     void onLeftUp(wxMouseEvent &);
+    void onLeftDown(wxMouseEvent &);
     void onWheel(wxMouseEvent &);
+    // A click inside a live row: the control part under the pointer decides.
+    void liveClick(int vis_index, const wxPoint &pt);
+    void applyLive(int vis_index, double value);
+    void dragSlider(const wxPoint &pt);
     void onHoverTimer(wxTimerEvent &);
     void setHover(int vis_index);
     void ensureVisible(int vis_index);
@@ -181,6 +371,7 @@ private:
     double m_filter_progress = 1.0;
     wxTimer m_hover_timer;
     int     m_pending_submenu { -1 };
+    int     m_drag_slider { -1 }; // visible row whose slider is being dragged
 };
 
 #if wxUSE_ACCESSIBILITY
@@ -246,6 +437,24 @@ public:
         if (!it)
             return wxACC_NOT_IMPLEMENTED;
         *description = it->help;
+        if (it->live) {
+            if (!description->IsEmpty())
+                *description << ' ';
+            *description << (it->live->kind == MD3::Menu::LiveControl::Kind::Switch
+                                 ? _L("Space turns it on or off; the menu stays open.")
+                                 : _L("Left and Right change it; the menu stays open."));
+        }
+        return wxACC_OK;
+    }
+
+    wxAccStatus GetValue(int child_id, wxString *value) override
+    {
+        if (!value)
+            return wxACC_FAIL;
+        const MD3::Menu::Item *it = item(child_id);
+        if (!it || !it->live)
+            return wxACC_NOT_IMPLEMENTED;
+        *value = live_value_text(*it->live, it->live->value());
         return wxACC_OK;
     }
 
@@ -261,6 +470,14 @@ public:
         if (!it)
             return wxACC_FAIL;
         *role = it->actionable() ? wxROLE_SYSTEM_MENUITEM : wxROLE_SYSTEM_SEPARATOR;
+        if (it->live) {
+            switch (it->live->kind) {
+            case MD3::Menu::LiveControl::Kind::Switch: *role = wxROLE_SYSTEM_CHECKBUTTON; break;
+            case MD3::Menu::LiveControl::Kind::Choice: *role = wxROLE_SYSTEM_COMBOBOX; break;
+            case MD3::Menu::LiveControl::Kind::Slider: *role = wxROLE_SYSTEM_SLIDER; break;
+            case MD3::Menu::LiveControl::Kind::Stepper: *role = wxROLE_SYSTEM_SPINBUTTON; break;
+            }
+        }
         return wxACC_OK;
     }
 
@@ -285,7 +502,10 @@ public:
             *state |= wxACC_STATE_SYSTEM_FOCUSED | wxACC_STATE_SYSTEM_SELECTED;
         if (!it->enabled)
             *state |= wxACC_STATE_SYSTEM_UNAVAILABLE;
-        if ((it->kind == MD3::Menu::Item::Check || it->kind == MD3::Menu::Item::Radio) && it->checked)
+        if (it->live) {
+            if (it->live->kind == MD3::Menu::LiveControl::Kind::Switch && it->live->value() >= 0.5)
+                *state |= wxACC_STATE_SYSTEM_CHECKED;
+        } else if ((it->kind == MD3::Menu::Item::Check || it->kind == MD3::Menu::Item::Radio) && it->checked)
             *state |= wxACC_STATE_SYSTEM_CHECKED;
         // wx defines no HASPOPUP state and its MSAA bridge only forwards the
         // wx-defined flags, so a submenu row reports the expandable pair the
@@ -315,7 +535,8 @@ public:
         const MD3::Menu::Item *it = item(child_id);
         if (!it || !it->actionable())
             return wxACC_NOT_IMPLEMENTED;
-        *action_name = _L("Activate");
+        *action_name = it->live ? (it->live->kind == MD3::Menu::LiveControl::Kind::Switch ? _L("Toggle") : _L("Next value"))
+                                : _L("Activate");
         return wxACC_OK;
     }
 
@@ -382,7 +603,8 @@ MD3MenuList::MD3MenuList(MD3MenuPopup *popup, const std::vector<MD3::Menu::Item>
     Bind(wxEVT_MOTION, &MD3MenuList::onMotion, this);
     Bind(wxEVT_LEAVE_WINDOW, &MD3MenuList::onLeave, this);
     Bind(wxEVT_LEFT_UP, &MD3MenuList::onLeftUp, this);
-    Bind(wxEVT_LEFT_DOWN, [](wxMouseEvent &) {}); // activation happens on release
+    Bind(wxEVT_LEFT_DOWN, &MD3MenuList::onLeftDown, this); // activation happens on release; a slider drags from here
+    Bind(wxEVT_MOUSE_CAPTURE_LOST, [this](wxMouseCaptureLostEvent &) { m_drag_slider = -1; });
     Bind(wxEVT_MOUSEWHEEL, &MD3MenuList::onWheel, this);
     Bind(wxEVT_TIMER, &MD3MenuList::onHoverTimer, this);
     Bind(wxEVT_ERASE_BACKGROUND, [](wxEraseEvent &) {});
@@ -393,6 +615,8 @@ MD3MenuList::MD3MenuList(MD3MenuPopup *popup, const std::vector<MD3::Menu::Item>
 
 MD3MenuList::~MD3MenuList()
 {
+    if (HasCapture())
+        ReleaseMouse();
     m_hover_motion.Stop();
     m_filter_motion.Stop();
     m_hover_timer.Stop();
@@ -460,7 +684,9 @@ int MD3MenuList::MeasureWidth()
         if (!it.secondary.IsEmpty())
             label_w = dc.GetTextExtent(PersonalVocabulary::display(it.label) + wxString::FromUTF8(" \xC2\xB7 ") + PersonalVocabulary::display(it.secondary)).x;
         int trailing = 0;
-        if (it.kind == MD3::Menu::Item::Submenu) {
+        if (it.live) {
+            trailing = live_width(dc, this, *it.live);
+        } else if (it.kind == MD3::Menu::Item::Submenu) {
             trailing = FromDIP(kGlyphPx);
         } else if (!it.shortcut.IsEmpty()) {
             dc.SetFont(caption_font());
@@ -619,6 +845,10 @@ void MD3MenuList::ActivateSelected()
     const MD3::Menu::Item *it = ItemAt(m_selected);
     if (!it || !selectable(m_selected))
         return;
+    if (it->live) {
+        ToggleLive(m_selected);
+        return;
+    }
     if (it->kind == MD3::Menu::Item::Submenu) {
         openSubmenuAt(m_selected, true);
         return;
@@ -738,7 +968,120 @@ void MD3MenuList::onHoverTimer(wxTimerEvent &)
 
 void MD3MenuList::onMotion(wxMouseEvent &evt)
 {
+    if (m_drag_slider >= 0 && evt.LeftIsDown()) {
+        dragSlider(evt.GetPosition());
+        return;
+    }
     setHover(HitTest(evt.GetPosition()));
+}
+
+bool MD3MenuList::IsLive(int vis_index) const
+{
+    const MD3::Menu::Item *it = ItemAt(vis_index);
+    return it && it->live && selectable(vis_index);
+}
+
+void MD3MenuList::applyLive(int vis, double value)
+{
+    const MD3::Menu::Item *it = ItemAt(vis);
+    if (!it || !it->live || !it->enabled || !it->live->set)
+        return;
+    const MD3::Menu::LiveControl &c = *it->live;
+    const double next = MD3::Menu::clamp_to(c, value);
+    if (c.get && MD3::Menu::clamp_to(c, c.value()) == next)
+        return;
+    c.set(next);
+    if (c.kind == MD3::Menu::LiveControl::Kind::Switch && it->source && it->source->IsCheckable())
+        it->source->Check(next >= 0.5);
+    Refresh();
+#if wxUSE_ACCESSIBILITY
+    wxAccessible::NotifyEvent(c.kind == MD3::Menu::LiveControl::Kind::Switch ? wxACC_EVENT_OBJECT_STATECHANGE
+                                                                            : wxACC_EVENT_OBJECT_VALUECHANGE,
+                              this, wxOBJID_CLIENT, vis + 1);
+#endif
+}
+
+bool MD3MenuList::AdjustLive(int vis, int direction)
+{
+    if (!IsLive(vis))
+        return false;
+    const MD3::Menu::LiveControl &c = *ItemAt(vis)->live;
+    if (c.kind == MD3::Menu::LiveControl::Kind::Switch)
+        applyLive(vis, direction > 0 ? 1.0 : 0.0); // Right turns it on, Left off
+    else
+        applyLive(vis, MD3::Menu::nudge(c, c.value(), direction));
+    return true;
+}
+
+bool MD3MenuList::ToggleLive(int vis)
+{
+    if (!IsLive(vis))
+        return false;
+    const MD3::Menu::LiveControl &c = *ItemAt(vis)->live;
+    // A choice moves on and wraps, so Space visits every option; a slider or
+    // stepper moves one step up.
+    double next = MD3::Menu::nudge(c, c.value(), +1);
+    if (c.kind == MD3::Menu::LiveControl::Kind::Choice && next == MD3::Menu::clamp_to(c, c.value()))
+        next = 0;
+    applyLive(vis, next);
+    return true;
+}
+
+void MD3MenuList::liveClick(int vis, const wxPoint &pt)
+{
+    const MD3::Menu::Item *it = ItemAt(vis);
+    if (!it || !it->live || !it->enabled)
+        return;
+    const MD3::Menu::LiveControl &c = *it->live;
+    wxClientDC          dc(this);
+    const LiveGeometry  g = live_geometry(dc, this, c, RowRect(vis), FromDIP(MD3::Metrics::active().padding));
+    using K = MD3::Menu::LiveControl::Kind;
+    switch (c.kind) {
+    case K::Switch: ToggleLive(vis); break; // the label and the switch both flip it
+    case K::Choice:
+        for (std::size_t i = 0; i < g.parts.size(); ++i)
+            if (g.parts[i].Contains(pt)) {
+                applyLive(vis, double(i));
+                return;
+            }
+        ToggleLive(vis); // the label moves to the next choice
+        break;
+    case K::Stepper:
+        if (g.parts.size() == 2 && g.parts[0].Contains(pt)) AdjustLive(vis, -1);
+        else if (g.parts.size() == 2 && g.parts[1].Contains(pt)) AdjustLive(vis, +1);
+        break;
+    case K::Slider: break; // handled from the press so it can drag
+    }
+}
+
+void MD3MenuList::dragSlider(const wxPoint &pt)
+{
+    const MD3::Menu::Item *it = ItemAt(m_drag_slider);
+    if (!it || !it->live)
+        return;
+    wxClientDC         dc(this);
+    const LiveGeometry g = live_geometry(dc, this, *it->live, RowRect(m_drag_slider), FromDIP(MD3::Metrics::active().padding));
+    if (g.track.width <= 0)
+        return;
+    applyLive(m_drag_slider, MD3::Menu::value_at(*it->live, double(pt.x - g.track.x) / double(g.track.width)));
+}
+
+void MD3MenuList::onLeftDown(wxMouseEvent &evt)
+{
+    const int vis = HitTest(evt.GetPosition());
+    if (!IsLive(vis) || ItemAt(vis)->live->kind != MD3::Menu::LiveControl::Kind::Slider)
+        return;
+    wxClientDC         dc(this);
+    const LiveGeometry g = live_geometry(dc, this, *ItemAt(vis)->live, RowRect(vis), FromDIP(MD3::Metrics::active().padding));
+    wxRect             grab = g.track;
+    grab.Inflate(FromDIP(8), 0);
+    if (!grab.Contains(evt.GetPosition()))
+        return;
+    Select(vis, false);
+    m_drag_slider = vis;
+    if (!HasCapture())
+        CaptureMouse();
+    dragSlider(evt.GetPosition());
 }
 
 void MD3MenuList::onLeave(wxMouseEvent &)
@@ -751,10 +1094,21 @@ void MD3MenuList::onLeave(wxMouseEvent &)
 
 void MD3MenuList::onLeftUp(wxMouseEvent &evt)
 {
+    if (m_drag_slider >= 0) {
+        m_drag_slider = -1;
+        if (HasCapture())
+            ReleaseMouse();
+        return;
+    }
     const int vis = HitTest(evt.GetPosition());
     if (!selectable(vis))
         return;
     const MD3::Menu::Item *it = ItemAt(vis);
+    if (it->live) {
+        Select(vis, false);
+        liveClick(vis, evt.GetPosition());
+        return;
+    }
     if (it->kind == MD3::Menu::Item::Submenu) {
         Select(vis);
         openSubmenuAt(vis, false);
@@ -856,7 +1210,7 @@ void MD3MenuList::paintRow(wxDC &dc, int vis, const wxRect &r, const wxColour &s
     const int    glyph = FromDIP(kGlyphPx);
     switch (it->kind) {
     case MD3::Menu::Item::Check:
-        if (it->checked)
+        if (it->checked && !it->live)
             MaterialIcon::drawCentered(dc, MaterialIcon::Check, glyph, fg, slot_rect);
         break;
     case MD3::Menu::Item::Radio:
@@ -873,7 +1227,10 @@ void MD3MenuList::paintRow(wxDC &dc, int vis, const wxRect &r, const wxColour &s
 
     // Trailing area: chevron for submenus, else the shortcut in caption type.
     int trailing_left = r.GetRight() - pad + 1;
-    if (it->kind == MD3::Menu::Item::Submenu) {
+    if (it->live) {
+        trailing_left = paint_live(dc, this, *it->live, r, pad, fg, fg_muted,
+                                   selected ? StateColor::semantic(MD3::Role::SecondaryContainer) : surface, it->enabled);
+    } else if (it->kind == MD3::Menu::Item::Submenu) {
         const wxRect chevron(r.GetRight() - pad - glyph + 1, r.y + (r.height - glyph) / 2, glyph, glyph);
         MaterialIcon::drawCentered(dc, MaterialIcon::ChevronRight, glyph, fg_muted, chevron);
         trailing_left = chevron.x;
@@ -1171,6 +1528,18 @@ void MD3MenuPopup::ActivateItem(const MD3::Menu::Item &item)
     }
 }
 
+void MD3MenuPopup::CloseChain()
+{
+    for (MD3MenuPopup *p = this; p;) {
+        MD3MenuPopup *parent = p->m_parent;
+        p->m_reason          = DismissReason::Chain;
+        if (parent)
+            parent->m_child = nullptr;
+        p->DismissAndNotify();
+        p = parent;
+    }
+}
+
 void MD3MenuPopup::OpenSubmenu(const MD3::Menu::Item &item, const wxRect &row_screen, bool focus_first)
 {
     if (!item.submenu)
@@ -1336,6 +1705,14 @@ void MD3MenuPopup::onCharHook(wxKeyEvent &evt)
     case WXK_RETURN:
     case WXK_NUMPAD_ENTER:
         if (search_control_focused && !search_focused) break;
+        if (m_list->IsLive(m_list->Selected())) {
+            // A live value is applied as it changes: Enter flips a switch, then closes.
+            const MD3::Menu::Item *it = m_list->ItemAt(m_list->Selected());
+            if (it && it->live->kind == MD3::Menu::LiveControl::Kind::Switch)
+                m_list->ToggleLive(m_list->Selected());
+            CloseChain();
+            return;
+        }
         m_list->ActivateSelected(); return;
     case WXK_SPACE:
         if (search_control_focused) break; // text entry or a focused search action
@@ -1343,10 +1720,12 @@ void MD3MenuPopup::onCharHook(wxKeyEvent &evt)
         return;
     case WXK_RIGHT:
         if (search_control_focused) break;
+        if (m_list->AdjustLive(m_list->Selected(), +1)) return;
         if (m_list->OpenSelectedSubmenu(true)) return;
         return;
     case WXK_LEFT:
         if (search_control_focused) break;
+        if (m_list->AdjustLive(m_list->Selected(), -1)) return;
         if (m_parent) { ReturnToParent(); return; }
         return;
     default: {
@@ -1558,6 +1937,12 @@ bool is_masked(wxWindow *window)
     return false;
 }
 
+std::vector<MD3::TextMenuSection> &text_menu_sections()
+{
+    static std::vector<MD3::TextMenuSection> sections;
+    return sections;
+}
+
 void show_text_menu(wxWindow *window, wxPoint screen_pos)
 {
     wxTextEntryBase *entry = text_entry_of(window);
@@ -1583,6 +1968,9 @@ void show_text_menu(wxWindow *window, wxPoint screen_pos)
     menu.Bind(wxEVT_MENU, [entry](wxCommandEvent &) { entry->Paste(); }, wxID_PASTE);
     menu.Bind(wxEVT_MENU, [entry, from, to](wxCommandEvent &) { entry->Remove(from, to); }, wxID_DELETE);
     menu.Bind(wxEVT_MENU, [entry](wxCommandEvent &) { entry->SelectAll(); }, wxID_SELECTALL);
+    for (const MD3::TextMenuSection &section : text_menu_sections())
+        if (section)
+            section(window, menu);
 
     // The Menu key and Shift+F10 carry no position: open under the field.
     if (screen_pos == wxDefaultPosition)
@@ -1635,6 +2023,84 @@ void EnableTextContextMenus(bool enable)
         instance.reset();
     else if (!instance)
         instance = std::make_unique<TextContextMenus>();
+}
+
+void AddTextMenuSection(TextMenuSection section)
+{
+    text_menu_sections().push_back(std::move(section));
+}
+
+namespace {
+
+wxMenuItem *append_live(wxMenu *menu, const wxString &label, const wxString &help, MD3::Menu::LiveControl control)
+{
+    if (!menu)
+        return nullptr;
+    auto *item = new MD3::Menu::LiveMenuItem(menu, wxID_ANY, label, help, std::move(control));
+    menu->Append(item);
+    if (item->IsCheckable())
+        item->Check(item->control().value() >= 0.5);
+    // Outside the Material menu a switch is a check item: keep it working there too.
+    if (item->control().kind == MD3::Menu::LiveControl::Kind::Switch)
+        menu->Bind(wxEVT_MENU, [item](wxCommandEvent &e) {
+            const MD3::Menu::LiveControl &c = item->control();
+            if (c.set)
+                c.set(e.IsChecked() ? 1.0 : 0.0);
+        }, item->GetId());
+    return item;
+}
+
+} // namespace
+
+wxMenuItem *AppendSwitch(wxMenu *menu, const wxString &label, std::function<bool()> get, std::function<void(bool)> set, const wxString &help)
+{
+    MD3::Menu::LiveControl c;
+    c.kind = MD3::Menu::LiveControl::Kind::Switch;
+    c.get  = [get]() { return get && get() ? 1.0 : 0.0; };
+    c.set  = [set](double v) { if (set) set(v >= 0.5); };
+    return append_live(menu, label, help, std::move(c));
+}
+
+wxMenuItem *AppendChoice(wxMenu *menu, const wxString &label, const std::vector<wxString> &choices, std::function<int()> get,
+                         std::function<void(int)> set, const wxString &help)
+{
+    MD3::Menu::LiveControl c;
+    c.kind = MD3::Menu::LiveControl::Kind::Choice;
+    for (const wxString &choice : choices)
+        c.choices.push_back(Slic3r::GUI::into_u8(choice));
+    c.get = [get]() { return get ? double(get()) : 0.0; };
+    c.set = [set](double v) { if (set) set(int(std::lround(v))); };
+    return append_live(menu, label, help, std::move(c));
+}
+
+wxMenuItem *AppendSlider(wxMenu *menu, const wxString &label, double min, double max, double step, const wxString &unit,
+                         std::function<double()> get, std::function<void(double)> set, const wxString &help)
+{
+    MD3::Menu::LiveControl c;
+    c.kind     = MD3::Menu::LiveControl::Kind::Slider;
+    c.min      = min;
+    c.max      = max;
+    c.step     = step;
+    c.decimals = MD3::Menu::decimals_for(step);
+    c.unit     = Slic3r::GUI::into_u8(unit);
+    c.get      = std::move(get);
+    c.set      = std::move(set);
+    return append_live(menu, label, help, std::move(c));
+}
+
+wxMenuItem *AppendStepper(wxMenu *menu, const wxString &label, double min, double max, double step, int decimals, const wxString &unit,
+                          std::function<double()> get, std::function<void(double)> set, const wxString &help)
+{
+    MD3::Menu::LiveControl c;
+    c.kind     = MD3::Menu::LiveControl::Kind::Stepper;
+    c.min      = min;
+    c.max      = max;
+    c.step     = step;
+    c.decimals = decimals;
+    c.unit     = Slic3r::GUI::into_u8(unit);
+    c.get      = std::move(get);
+    c.set      = std::move(set);
+    return append_live(menu, label, help, std::move(c));
 }
 
 } // namespace MD3

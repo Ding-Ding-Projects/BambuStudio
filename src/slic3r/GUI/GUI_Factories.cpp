@@ -8,6 +8,8 @@
 #include "Export/ExportDialog.hpp"
 #include "GUI_ObjectList.hpp"
 #include "GUI_App.hpp"
+#include "AttentionModes/AttentionService.hpp"
+#include "Widgets/MD3Menu.hpp"
 #include "Widgets/MaterialIcon.hpp"
 #include "Widgets/StateColor.hpp"
 #include "I18N.hpp"
@@ -1321,6 +1323,46 @@ void MenuFactory::create_default_menu()
     append_menu_item(&m_default_menu, wxID_ANY, _L("Add New Plate"), _L("Add a new plate"),
         [](wxCommandEvent &) { plater()->get_current_canvas3D()->post_event(SimpleEvent(EVT_GLTOOLBAR_ADD_PLATE)); },
         "", nullptr, []() { return plater()->can_add_plate(); }, m_parent);
+
+    // The view, changed in place: each row applies at once and the menu stays open.
+    m_default_menu.AppendSeparator();
+    const auto repaint = []() {
+        if (GLCanvas3D *canvas = plater()->get_current_canvas3D()) canvas->post_event(SimpleEvent(wxEVT_PAINT));
+    };
+    MD3::AppendChoice(&m_default_menu, _L("Camera"), {_L("Perspective"), _L("Orthographic")},
+        []() { return wxGetApp().app_config->get_bool("use_perspective_camera") ? 0 : 1; },
+        [](int choice) {
+            wxGetApp().app_config->set_bool("use_perspective_camera", choice == 0);
+            wxGetApp().update_ui_from_settings();
+        },
+        _L("How the 3D view projects the plate, as in View"));
+    MD3::AppendSwitch(&m_default_menu, _L("Show 3D Navigator"), []() { return wxGetApp().show_3d_navigator(); },
+        [repaint](bool on) {
+            if (wxGetApp().show_3d_navigator() != on) wxGetApp().toggle_show_3d_navigator();
+            repaint();
+        },
+        _L("Show 3D navigator in Prepare and Preview scene"));
+    const auto by_object = []() {
+        PartPlate *plate = plater()->get_partplate_list().get_curr_plate();
+        return plate && plate->get_real_print_seq() == PrintSequence::ByObject;
+    };
+    MD3::AppendSwitch(&m_default_menu, _L("Show labels"),
+        [by_object]() { return by_object() ? plater()->are_view3D_object_labels_shown() : plater()->are_view3D_layer_labels_shown(); },
+        [by_object, repaint](bool on) {
+            if (by_object()) plater()->show_view3D_object_labels(on);
+            else plater()->show_view3D_layer_labels(on);
+            repaint();
+        },
+        _L("Labels by layer, or by object when the plate prints object by object, as in View"));
+    MD3::AppendSwitch(&m_default_menu, _L("Show &Overhang"), []() { return plater()->is_view3D_overhang_shown(); },
+        [repaint](bool on) {
+            plater()->show_view3D_overhang(on);
+            repaint();
+        },
+        _L("Show object overhang highlight in 3D scene"));
+    MD3::AppendSwitch(&m_default_menu, _L("Focus"), []() { return AttentionModes::focus_on(); },
+        [](bool on) { AttentionModes::set_focus(on); },
+        _L("While something is selected, the rest of the plate steps back, as in Preferences > Attention modes"));
 }
 
 void MenuFactory::create_common_object_menu(wxMenu* menu)
@@ -1374,6 +1416,23 @@ void MenuFactory::create_bbl_object_menu()
     append_menu_item_fill_bed(&m_object_menu);
     // Object Clone
     append_menu_item_clone(&m_object_menu);
+    // How many copies are on the plate, changed in place: the menu stays open.
+    MD3::AppendStepper(&m_object_menu, _L("Copies"), 1, 1000, 1, 0, wxString(),
+        []() {
+            Plater   *p   = plater();
+            const int idx = p ? p->get_selected_object_idx() : -1;
+            return idx >= 0 && idx < int(p->model().objects.size()) ? double(p->model().objects[idx]->instances.size()) : 1.0;
+        },
+        [](double value) {
+            Plater   *p   = plater();
+            const int idx = p ? p->get_selected_object_idx() : -1;
+            if (idx < 0 || idx >= int(p->model().objects.size())) return;
+            const int now  = int(p->model().objects[idx]->instances.size());
+            const int want = int(std::lround(value));
+            if (want > now && p->can_increase_instances()) p->increase_instances(size_t(want - now));
+            else if (want < now && p->can_decrease_instances()) p->decrease_instances(size_t(now - want));
+        },
+        _L("How many copies of this object are on the plate; each step adds or removes one"));
     // Object Repair
     append_menu_item_fix_through_netfabb(&m_object_menu);
     // Object Simplify
@@ -2656,11 +2715,9 @@ void MenuFactory::update_object_menu()
 
 void MenuFactory::update_default_menu()
 {
-    for (auto& name : { _L("Add Primitive"), _L("Add New Plate") }) {
-        const auto menu_item_id = m_default_menu.FindItem(name);
-        if (menu_item_id != wxNOT_FOUND)
-            m_default_menu.Destroy(menu_item_id);
-    }
+    // Rebuilt whole, so the view rows under the add items are never appended twice.
+    while (m_default_menu.GetMenuItemCount() > 0)
+        m_default_menu.Destroy(m_default_menu.FindItemByPosition(0));
     create_default_menu();
 }
 

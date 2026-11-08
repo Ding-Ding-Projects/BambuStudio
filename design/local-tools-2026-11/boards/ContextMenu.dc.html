@@ -14,7 +14,7 @@
 <style>body{margin:0;background:#0e1311}.mn{width:360px;padding:8px;border-radius:20px;background:#1f2823;box-shadow:0 12px 32px rgba(0,0,0,.45);display:flex;flex-direction:column;gap:2px}.mi{height:40px;display:flex;align-items:center;gap:12px;padding:0 12px;border-radius:12px;border:0;background:transparent;color:#e3ebe5;font:inherit;font-size:14px;text-align:left}.mi .ms{color:#a9b6ad;font-size:18px}.mi kbd{margin-left:auto;font-family:'Roboto Mono',monospace;font-size:12px;color:#a9b6ad}.mi.f{background:#28322c;outline:2px solid #6fdc98;outline-offset:-2px}.mi.x{color:#7c8a81}.sep{height:1px;margin:4px 8px;background:#34413a}.mf{display:flex;align-items:center;gap:8px;height:38px;padding:0 10px;margin-bottom:4px;border-radius:12px;background:#141a17;color:#a9b6ad;font-size:13px}</style>
 </helmet>
 <div class="pg" style="">
-  <div><div class="h1">Context menus everywhere</div><div class="sub">Every element answers a right-click or Shift+F10. Values show their live control right in the row, the shortcut that really works shows on the right, and the filter finds any row.</div></div>
+  <div><div class="h1">Context menus everywhere</div><div class="sub">Every element answers a right-click or Shift+F10. Values show their live control right in the row, the shortcut that really works shows on the right, and the filter finds any row.</div><div class="note" style="margin-top:4px">As built: the menu on every setting, the view rows on empty space in Prepare, and Copies on an object. Rows marked not built yet are still to come.</div></div>
   <div style="position:relative;height:640px;border-radius:24px;background:#141a17;overflow:hidden">
     <svg width="100%" height="100%" viewBox="0 0 1000 640" preserveAspectRatio="xMidYMid slice" aria-hidden="true" style="position:absolute;inset:0"><defs><pattern id="g" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" stroke="#1f2823" stroke-width="1"></path></pattern></defs><rect width="1000" height="640" fill="url(#g)"></rect><polygon points="120,430 620,430 700,580 40,580" fill="#18201c" stroke="#34413a"></polygon><polygon points="250,250 370,250 395,460 225,460" fill="#2a8a52" stroke="#9ff7bf" stroke-width="2"></polygon><polygon points="250,250 285,225 405,225 370,250" fill="#3ca866"></polygon><polygon points="370,250 405,225 430,440 395,460" fill="#1d6b3f"></polygon></svg>
     <div class="row" style="position:absolute;left:16px;top:16px;padding:8px 14px;border-radius:14px;background:#1f2823;font-size:13px"><span class="ms ok" aria-hidden="true">select</span>bracket_v3.stl selected</div>
@@ -25,9 +25,9 @@
       <button role="menuitem" class="mi"><span class="ms" aria-hidden="true">screen_rotation_alt</span>Auto orient<kbd>Q</kbd></button>
       <button role="menuitem" aria-haspopup="menu" aria-expanded="true" class="mi" style="background:#24342b;color:#cde9d6"><span class="ms" aria-hidden="true">palette</span>Ink<span style="margin-left:auto" class="ms" aria-hidden="true">chevron_right</span></button>
       <div class="sep"></div>
-      <div class="mi"><span class="ms" aria-hidden="true">grid_4x4</span><span class="grow">Snap to grid</span><button role="menuitemcheckbox" aria-checked="true" class="sw" aria-label="Snap to grid"></button></div>
-      <div class="mi"><span class="ms" aria-hidden="true">view_in_ar</span><span class="grow">View</span><div class="seg" role="radiogroup" aria-label="View"><button class="on" role="menuitemradio" aria-checked="true">Solid</button><button role="menuitemradio" aria-checked="false">Wire</button></div></div>
-      <div class="mi"><span class="ms" aria-hidden="true">opacity</span><span style="width:78px">Opacity</span><div class="sl"><i style="width:78%"></i><b style="left:78%"></b></div><span class="mono mut" style="font-size:12px;width:38px;text-align:right">80 %</span></div>
+      <div class="mi"><span class="ms" aria-hidden="true">grid_4x4</span><span class="grow">Snap to grid <span class="note">(not built yet)</span></span><button role="menuitemcheckbox" aria-checked="true" class="sw" aria-label="Snap to grid"></button></div>
+      <div class="mi"><span class="ms" aria-hidden="true">view_in_ar</span><span class="grow">View <span class="note">(not built yet)</span></span><div class="seg" role="radiogroup" aria-label="View"><button class="on" role="menuitemradio" aria-checked="true">Solid</button><button role="menuitemradio" aria-checked="false">Wire</button></div></div>
+      <div class="mi"><span class="ms" aria-hidden="true">opacity</span><span style="width:78px;line-height:14px">Opacity<span class="note" style="display:block;font-size:10px;line-height:12px">not built yet</span></span><div class="sl"><i style="width:78%"></i><b style="left:78%"></b></div><span class="mono mut" style="font-size:12px;width:38px;text-align:right">80 %</span></div>
       <div class="sep"></div>
       <button role="menuitem" class="mi"><span class="ms" aria-hidden="true">info</span>Explain this<kbd>F1</kbd></button>
       <button role="menuitem" class="mi"><span class="ms" aria-hidden="true">format_paint</span>Edit appearance</button>
@@ -50,7 +50,7 @@
         <div class="note" style="width:280px;margin-top:10px">Right-click the name, the value or the empty space of a row. Shift+F10 opens the same menu for whatever has focus.</div></div>
         <div role="menu" aria-label="Wall loops" class="mn" style="width:330px">
           <div class="mi"><span class="ms" aria-hidden="true">tag</span><span class="grow">Wall loops</span><div class="step"><button aria-label="Fewer"><span class="ms" aria-hidden="true">remove</span></button><span>3</span><button aria-label="More"><span class="ms" aria-hidden="true">add</span></button></div></div>
-          <button role="menuitem" class="mi"><span class="ms" aria-hidden="true">restart_alt</span>Back to the preset value, 2<kbd>Ctrl+Z</kbd></button>
+          <button role="menuitem" class="mi"><span class="ms" aria-hidden="true">restart_alt</span>Back to the preset value, 2<span class="note" style="margin-left:auto">(Ctrl+Z not built yet)</span></button>
           <button role="menuitem" class="mi"><span class="ms" aria-hidden="true">key</span>Copy the setting key</button>
           <button role="menuitem" class="mi"><span class="ms" aria-hidden="true">compare_arrows</span>Compare with other presets</button>
           <button role="menuitem" class="mi"><span class="ms" aria-hidden="true">info</span>Explain this<kbd>F1</kbd></button>
@@ -72,7 +72,7 @@
   </div>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1120}}'>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1150}}'>
 class Component extends DCLogic {
   renderVals() {
     return {};
