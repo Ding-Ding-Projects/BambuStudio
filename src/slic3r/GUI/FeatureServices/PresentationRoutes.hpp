@@ -8,7 +8,7 @@ inline bool presentation_setting_available(std::string_view key, bool suppressed
 {
     if (!suppressed) return true;
     return key != "language" && key != "funny_level_en" && key != "funny_level_yue" &&
-        key != "personal_vocabulary" && key != "dialog_emojis" &&
+        key != "personal_vocabulary" && key != "vocabulary_job_names" && key != "dialog_emojis" &&
         key != "narrator_voice_yue" && key != "narrator_rate_yue" && key != "narrator_pitch_yue" &&
         key.find("dim_sum") == std::string_view::npos;
 }

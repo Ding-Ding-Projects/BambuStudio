@@ -229,3 +229,17 @@ pixel acceptance is claimed. Preferences capture protection remained unchanged.
 Clear followed by another restart, sound outcomes, original wording in exports
 and logs, custom-painted display coverage and the complete layout/language/theme
 matrix remain unverified. Private wording and mapped images were not published.
+
+## Your wording on the printer
+
+Preferences has a switch under the personal vocabulary card: **Use my wording in
+job names sent to printers**. It is off by default and hidden in School mode.
+When it is on and a vocabulary is loaded, Send print applies the vocabulary to
+the job name before the job is sent, so the printer's screen and the job list
+show the name in your own words. The name is cleaned the same way as a rename
+(no `<>[]:/\|?*"`). The model, the G-code and the file contents never change,
+and nothing else is sent. A name that contains a path or a `%` is left as it is.
+
+`node tests/vocabulary_job_names.test.mjs` checks the source contract: the
+default is declared off, the transform runs only behind the switch and is
+followed by the rename cleaning, and School mode hides the switch.

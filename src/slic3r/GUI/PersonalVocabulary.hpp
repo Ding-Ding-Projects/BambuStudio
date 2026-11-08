@@ -49,6 +49,10 @@ wxString remember_composed(const std::vector<wxString> &parts, const wxString &s
 // A dynamic menu label or a different normalized string grants no provenance.
 void remember_menu_label(const wxString &source, const wxString &normalized);
 wxString display(const wxString &source);
+// Applies the loaded vocabulary to text the person chose to send through it,
+// such as a print job name when "Use my wording in job names sent to printers"
+// is on. Unchanged in School mode or when no vocabulary is loaded.
+wxString apply_loaded(const wxString &source);
 // Stateless display transform for deterministic validation with synthetic data.
 wxString apply(const wxString &source, const Entries &mapping);
 }

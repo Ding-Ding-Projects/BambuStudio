@@ -51316,3 +51316,23 @@ msgstr "偏好設定入面每一次變更，連時間"
 #. review-status: agent-drafted
 msgid "Preferences: where every value comes from"
 msgstr "偏好設定：每個值由邊度嚟"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Use my wording in job names sent to printers"
+msgstr "喺傳去打印機嘅工作名用我嘅用字"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Applies your personal vocabulary to the print name a printer shows. The model, the G-code and the file contents never change."
+msgstr "將你嘅個人用語套落打印機顯示嘅打印名。模型、G-code 同檔案內容永遠唔會變。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Your wording on the printer"
+msgstr "你嘅用字去到打印機"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Preferences, Use my wording in job names sent to printers"
+msgstr "偏好設定，喺傳去打印機嘅工作名用我嘅用字"

@@ -1,6 +1,7 @@
 #include "PrintSetupLayout.hpp"
 #include "PrepareInspectorLayout.hpp"
 #include "SelectMachine.hpp"
+#include "PersonalVocabulary.hpp"
 #include "Widgets/MD3ScrolledWindow.hpp"
 #include "Widgets/LinkLabel.hpp"
 #include "Widgets/Button.hpp"
@@ -3861,6 +3862,12 @@ void SelectMachineDialog::on_send_print()
         std::string project_name = m_current_project_name.utf8_string();
         if (is_imported_3mf && boost::algorithm::iends_with(project_name, ".gcode"))
             project_name.erase(project_name.size() - std::string(".gcode").size());
+        // Opt-in: the printer shows the job name in the person's own wording.
+        // Only the name changes, and it is cleaned the same way as a rename.
+        if (wxGetApp().app_config && wxGetApp().app_config->get_bool("vocabulary_job_names")) {
+            const wxString worded = PersonalVocabulary::apply_loaded(wxString::FromUTF8(project_name));
+            project_name = filter_characters(worded.utf8_string(), "<>[]:/\\|?*\"");
+        }
         m_print_job->set_project_name(std::move(project_name));
     }
     else if(m_print_type == PrintFromType::FROM_SDCARD_VIEW){

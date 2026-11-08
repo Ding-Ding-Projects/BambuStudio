@@ -33077,3 +33077,15 @@ msgstr ""
 
 msgid "Preferences: where every value comes from"
 msgstr ""
+
+msgid "Use my wording in job names sent to printers"
+msgstr ""
+
+msgid "Applies your personal vocabulary to the print name a printer shows. The model, the G-code and the file contents never change."
+msgstr ""
+
+msgid "Your wording on the printer"
+msgstr ""
+
+msgid "Preferences, Use my wording in job names sent to printers"
+msgstr ""

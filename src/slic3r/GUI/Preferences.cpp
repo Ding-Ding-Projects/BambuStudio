@@ -3376,6 +3376,11 @@ wxWindow *PreferencesDialog::create_appearance_tab()
     });
     sizer->Add(wording, 0, wxEXPAND | wxALL, FromDIP(16));
     register_option_row("personal_vocabulary", nullptr, wording);
+    // The only place the vocabulary leaves this computer, and only when asked:
+    // the job name a printer shows. Models, G-code and file contents never change.
+    sizer->Add(create_item_checkbox(_L("Use my wording in job names sent to printers"), scrolled,
+        _L("Applies your personal vocabulary to the print name a printer shows. The model, the G-code and the file contents never change."),
+        50, "vocabulary_job_names"), flags);
     refresh_wording(wxString());
     }
 

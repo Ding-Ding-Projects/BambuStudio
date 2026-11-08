@@ -126,6 +126,10 @@ void AppConfig::set_defaults()
 #ifdef SUPPORT_SHOW_DROP_PROJECT
         if (get("show_drop_project_dialog").empty())
             set_bool("show_drop_project_dialog", true);
+        // Personal vocabulary stays on this computer unless the person turns
+        // this on for the job names printers show.
+        if (get("vocabulary_job_names").empty())
+            set_bool("vocabulary_job_names", false);
 #endif
 
         // Only absence migrates to the new default. Explicit opt-out survives.

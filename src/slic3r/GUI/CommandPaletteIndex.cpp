@@ -95,6 +95,7 @@ const std::vector<PreferenceEntry> &preference_entries()
         {"ui_accent_seed", L("Accent color"), L("Seed color the interface is tinted with"), PageAppearance},
         {"ui_font_family", L("Font"), L("Interface typeface"), PageAppearance},
         {"ui_font_scale", L("Text size"), L("Interface text scale"), PageAppearance},
+        {"vocabulary_job_names", L("Use my wording in job names sent to printers"), L("Applies your personal vocabulary to the print name a printer shows. The model, the G-code and the file contents never change."), PageAppearance},
         // General ------------------------------------------------------------
         {"language", L("Language"), L("Interface language mode"), PageGeneral},
         {"region", L("Login Region"), L("Cloud login region"), PageGeneral},

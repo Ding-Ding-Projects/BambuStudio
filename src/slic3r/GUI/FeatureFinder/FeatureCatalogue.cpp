@@ -39,6 +39,7 @@ const std::vector<Feature> &features()
         {"action-sounds", "language-voice", 0xE050 /* volume_up */, L("Action sounds"), L("Preferences, Sound effects"), "", "sound effects audio clicks", Badge::None, State::Ready, "prefs:action_sounds_enabled"},
         {"scheduled-settings", "language-voice", 0xEB7B /* event_repeat */, L("Scheduled settings"), L("File, Scheduled settings"), "", "schedule time of day automatic", Badge::None, State::Ready, "command:scheduled-settings"},
         {"app-name", "language-voice", 0xEA67 /* badge */, L("Rename the app"), L("Preferences, App name"), "", "rename title display name", Badge::None, State::Ready, "prefs:app_display_name"},
+        {"printer-wording", "language-voice", 0xE555 /* print */, L("Your wording on the printer"), L("Preferences, Use my wording in job names sent to printers"), "", "printer job name vocabulary send print wording", Badge::New, State::Ready, "prefs:vocabulary_job_names"},
         {"attention-modes", "language-voice", 0xEA78 /* self_improvement */, L("Attention modes"), L("Planned for Preferences"), "", "focus ADHD low stimulation time awareness", Badge::None, State::NotBuilt, ""},
         {"dim-sum", "language-voice", 0xEA64 /* ramen_dining */, L("Dim sum surprise"), L("Now and then at start-up"), "", "surprise startup food photo", Badge::None, State::Ready, "docs:windows/dim-sum-surprise.md"},
         // Look

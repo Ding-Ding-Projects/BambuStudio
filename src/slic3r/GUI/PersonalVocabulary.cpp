@@ -407,6 +407,14 @@ wxString display(const wxString &source)
     return apply_indexed(source, s.entries, s.index);
 }
 
+wxString apply_loaded(const wxString &source)
+{
+    if (PersonalModes::school_presentation_suppressed.load()) return source;
+    if (!loaded()) return source;
+    auto &s = state();
+    return apply_indexed(source, s.entries, s.index);
+}
+
 wxString apply(const wxString &source, const Entries &mapping)
 {
     return apply_indexed(source, mapping, index_entries(mapping));
