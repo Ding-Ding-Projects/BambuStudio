@@ -16,6 +16,7 @@
 #include "DiskSystem.hpp"
 
 #include <wx/panel.h>
+#include <wx/timer.h>
 
 #include <atomic>
 #include <functional>
@@ -93,6 +94,8 @@ private:
     bool                            m_running      = false;
     std::shared_ptr<std::atomic<bool>> m_cancel;
     std::shared_ptr<bool>              m_alive;
+    wxTimer                            m_reread;           // reads again after an operation ends
+    int                                m_rereads_left = 0;
 
     Label                     *m_routes_label = nullptr;
     Label                     *m_system_label = nullptr;

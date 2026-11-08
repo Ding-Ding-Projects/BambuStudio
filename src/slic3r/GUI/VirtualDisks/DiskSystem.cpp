@@ -15,6 +15,10 @@
 #define NOMINMAX
 #endif
 #include <windows.h>
+// Named on its own: the app's precompiled header defines WIN32_LEAN_AND_MEAN,
+// which keeps windows.h from pulling in the volume extent IOCTL and its
+// structures.
+#include <winioctl.h>
 #include <objbase.h>
 #include <shellapi.h>
 #include <virtdisk.h>

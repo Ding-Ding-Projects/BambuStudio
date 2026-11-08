@@ -6,6 +6,12 @@
 // disk ID so the two no longer clash, reconnect a moved parent, and Quick pack
 // a folder with every file checked. Windows only; run by
 // tests/virtual_disks_windows.test.mjs.
+//
+// Built with WIN32_LEAN_AND_MEAN, as the app's precompiled header is: a header
+// the code needs but only the full windows.h brings in then fails here too.
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
 #include "src/slic3r/GUI/VirtualDisks/DiskImage.cpp"
 #include "src/slic3r/GUI/VirtualDisks/DiskPlan.cpp"
 #include "src/slic3r/GUI/VirtualDisks/DiskSystem.cpp"

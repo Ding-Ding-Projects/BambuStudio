@@ -387,10 +387,18 @@ VirtualDisksPanel::VirtualDisksPanel(wxWindow *parent) : wxPanel(parent, wxID_AN
     build();
     refresh();
     SetDropTarget(new DropFiles([this](const std::vector<std::string> &paths) { add_files(paths); }));
+    // Windows mounts a volume a moment after its disk arrives, so a finished
+    // operation is followed by two more reads (see run()).
+    m_reread.SetOwner(this);
+    Bind(wxEVT_TIMER, [this](wxTimerEvent &) {
+        if (!m_running) refresh();
+        if (--m_rereads_left > 0) m_reread.StartOnce(2500);
+    }, m_reread.GetId());
 }
 
 VirtualDisksPanel::~VirtualDisksPanel()
 {
+    m_reread.Stop();
     *m_alive = false;
     m_cancel->store(true);
 }
@@ -1098,12 +1106,12 @@ void VirtualDisksPanel::run(const Script &script, const std::string &disk, std::
             save();
             set_running(false);
             refresh();
-            // Windows mounts a volume a moment after its disk arrives: look again shortly.
-            if (outcome.status == RunOutcome::Status::Done)
-                for (int delay : {1500, 4000})
-                    CallLater(delay, [this, alive]() {
-                        if (*alive && !m_running) refresh();
-                    });
+            // Windows mounts a volume a moment after its disk arrives: look
+            // again after 1.5 s and 4 s.
+            if (outcome.status == RunOutcome::Status::Done) {
+                m_rereads_left = 2;
+                m_reread.StartOnce(1500);
+            }
             if (outcome.status == RunOutcome::Status::Failed || outcome.status == RunOutcome::Status::Unavailable)
                 MessageDialog(this, wxString::Format(_L("%s did not finish: %s"), u8(script.summary), u8(outcome.message)), _L("Virtual disks"), wxOK | wxICON_WARNING)
                     .ShowModal();
