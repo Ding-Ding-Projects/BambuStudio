@@ -119,6 +119,7 @@
 #include "SetupWizard/SetupWizardDialog.hpp"
 #include "Extensions/ExtensionRuntime.hpp"
 #include "ElementLocks/LockService.hpp"
+#include "AttentionModes/AttentionService.hpp"
 #include "StatusApi/StatusApiServer.hpp"
 #include "Melody/MelodyCreatorDialog.hpp"
 #include "VocabularyDrop.hpp"
@@ -2088,6 +2089,7 @@ void GUI_App::shutdown()
     StatusApi::shutdown();
     Extensions::Runtime::shutdown();
     ElementLocks::shutdown();
+    AttentionModes::shutdown();
     Schedule::Scheduler::instance().shutdown();
     HomeAssistant::shutdown();
     set_closing(true);

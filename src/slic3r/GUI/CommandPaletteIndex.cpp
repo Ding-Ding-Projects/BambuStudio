@@ -81,6 +81,7 @@ const std::vector<const char *> &preference_page_names()
 {
     static const std::vector<const char *> names = {
         L("Appearance"), L("General"), L("User"), L("3D"), L("Other"), L("Developer Tools"), L("LAN model drop"), L("Local status API"),
+        L("Attention modes"),
     };
     return names;
 }
@@ -182,6 +183,15 @@ const std::vector<PreferenceEntry> &preference_entries()
         {"status_api_port", L("Port"), L("The port on 127.0.0.1 that the status API listens on."), PageStatusApi},
         {"status_api_token", L("Access token"), L("Copy or regenerate the bearer token of the status API"), PageStatusApi},
         {"status_api_state", L("Status API state"), L("Where the status API listens"), PageStatusApi},
+        // Attention modes ------------------------------------------------------
+        {"attention_focus", L("Focus"), L("With something selected, the rest of the plate steps back"), PageAttention},
+        {"attention_low_stimulation", L("Low stimulation"), L("Less motion, no action sounds, no start-up surprise"), PageAttention},
+        {"attention_time_awareness", L("Time awareness"), L("How long this session has been open and since the last change"), PageAttention},
+        {"attention_one_thing", L("One thing at a time"), L("The one next step you chose, in the strip under the title bar"), PageAttention},
+        {"attention_next_action", L("Next step"), L("The one next step the strip shows"), PageAttention},
+        {"attention_momentum", L("Momentum"), L("A quiet note when nothing has changed for a while"), PageAttention},
+        {"attention_momentum_minutes", L("Momentum after"), L("How long without a change before Momentum speaks"), PageAttention},
+        {"attention_not_now_minutes", L("Not now lasts"), L("How long Momentum stays quiet after Not now"), PageAttention},
         // Developer Tools (non-public builds) ------------------------------------
         {"internal_developer_mode", L("Internal developer mode"), "", PageDeveloper},
         {"enable_ssl_for_mqtt", L("Enable SSL(MQTT)"), "", PageDeveloper},
@@ -274,6 +284,7 @@ const std::vector<Article> &documentation_articles()
         {"docs/features/windows/practical-setup.md", L("Set up Bambu Studio")},
         {"docs/features/windows/extensions.md", L("Extensions")},
         {"docs/features/windows/element-locks.md", L("Element locks and the unlock ladder")},
+        {"docs/features/windows/attention-modes.md", L("Attention modes")},
         {"docs/features/device/live-charts.md", L("Live charts")},
         {"docs/features/windows/command-palette.md", L("Command palette (Ctrl+Shift+F)")},
         {"docs/features/windows/gui-accessibility.md", L("Keyboard, assistive, and responsive GUI accessibility")},

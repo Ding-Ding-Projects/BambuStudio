@@ -29,7 +29,8 @@ Preferences preferences()
     const auto* cfg = wxGetApp().app_config;
     if (!cfg) { prefs.enabled = false; return prefs; }
     prefs.enabled = Narration::parse_bool(cfg->get(enabled_key), true);
-    prefs.quiet = Narration::parse_bool(cfg->get(Narration::kKeyQuietToggle), false);
+    // Low stimulation (an attention mode) keeps every action sound quiet.
+    prefs.quiet = Narration::parse_bool(cfg->get(Narration::kKeyQuietToggle), false) || cfg->get("attention_low_stimulation") == "true";
     prefs.hours.enabled = Narration::parse_bool(cfg->get(Narration::kKeyQuietHours), false);
     if (auto n = Narration::parse_clock(cfg->get(Narration::kKeyQuietStart))) prefs.hours.start_minute = *n;
     if (auto n = Narration::parse_clock(cfg->get(Narration::kKeyQuietEnd))) prefs.hours.end_minute = *n;

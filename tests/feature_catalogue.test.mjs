@@ -62,6 +62,7 @@ const keyTokens = {
   funny_level_en: ['I18N::FUNNY_LEVEL_ENGLISH_KEY'],
   funny_level_yue: ['I18N::FUNNY_LEVEL_CANTONESE_KEY'],
   action_sounds_enabled: ['ActionSounds::enabled_key'],
+  attention_time_awareness: ['AttentionModes::kTimeAwareness'],
 };
 
 function scan({mainframe, preferences, bundleRoutes}) {

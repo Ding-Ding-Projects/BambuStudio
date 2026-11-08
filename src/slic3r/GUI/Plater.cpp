@@ -123,6 +123,7 @@
 #include "GUI.hpp"
 #include "GUI_App.hpp"
 #include "Extensions/ExtensionRuntime.hpp"
+#include "AttentionModes/AttentionService.hpp"
 #include "TtsNarrator.hpp"
 #include "GuiColor.hpp"
 #include "GUI_ObjectList.hpp"
@@ -27087,6 +27088,8 @@ void Plater::priv::take_snapshot(const std::string& snapshot_name, const UndoRed
 {
     if (m_prevent_snapshots > 0)
         return;
+    // Time awareness and Momentum count from the last change.
+    AttentionModes::note_change();
     assert(m_prevent_snapshots >= 0);
     // Assembly stack: take a slim snapshot of m_assemble_model only, bypassing the prepare-model
     // project machinery (wipe tower / presets / sidebar). Must run before the m_single project filter.

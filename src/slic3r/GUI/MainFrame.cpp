@@ -113,6 +113,7 @@
 #include "Extensions/ExtensionRuntime.hpp"
 #include "LiveCharts/LiveChartsPanel.hpp"
 #include "ElementLocks/LockService.hpp"
+#include "AttentionModes/AttentionService.hpp"
 #include "SetupWizard/SetupWizardDialog.hpp"
 #include "FeatureServices/PackageReceipts.hpp"
 #include "FeatureServices/ServiceWorkspace.hpp"
@@ -1240,6 +1241,9 @@ void MainFrame::update_layout()
         m_tabpanel->InsertPage(tp3DEditor, m_plater, _L("Prepare"), std::string("tab_3d_active"), std::string("tab_3d_active"), false);
         m_tabpanel->InsertPage(tpPreview, m_plater, _L("Preview"), std::string("tab_preview_active"), std::string("tab_preview_active"), false);
         m_tabpanel->SetWorkflowPages(tp3DEditor, tpPreview, m_tabpanel->FindPage(m_workflow_print), tpMonitor);
+        // Attention modes: hidden until Time awareness, One thing at a time or Focus is on.
+        m_main_sizer->Add(AttentionModes::create_strip(this), 0, wxEXPAND);
+        AttentionModes::init();
         m_main_sizer->Add(m_tabpanel, 1, wxEXPAND | wxTOP, 0);
         m_main_sizer->Add(m_prepare_action_bar, 0, wxEXPAND);
         show_option(m_tabpanel->GetSelection() == tp3DEditor || m_tabpanel->GetSelection() == tpPreview);

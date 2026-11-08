@@ -18,7 +18,9 @@ bool reduced()
 #endif
     const auto *app = dynamic_cast<Slic3r::GUI::GUI_App*>(wxTheApp);
     const std::string preference = app && app->app_config ? app->app_config->get("motion_preference") : "system";
-    return reduce_motion(preference, system_reduced);
+    // Low stimulation (an attention mode) adds to the reduction; it never brings motion back.
+    const bool low_stimulation = app && app->app_config && app->app_config->get("attention_low_stimulation") == "true";
+    return low_stimulation || reduce_motion(preference, system_reduced);
 }
 
 } } // namespace MD3::Motion

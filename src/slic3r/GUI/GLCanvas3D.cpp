@@ -1,5 +1,6 @@
 #include "libslic3r/libslic3r.h"
 #include "GLCanvas3D.hpp"
+#include "AttentionModes/AttentionService.hpp"
 #include "WipeTowerPlacement.hpp"
 #include "Overview/AssemblyStepsUtils.hpp"
 #include "Overview/OverviewUtils.hpp"
@@ -3283,6 +3284,8 @@ void GLCanvas3D::render(bool only_init)
     int hover_id = (m_hover_plate_idxs.size() > 0) ? m_hover_plate_idxs.front() : -1;
     bool b_with_stencil_outline = !m_gizmos.is_running() && (EPickingEffect::StencilOutline == picking_effect);
     if (m_canvas_type == ECanvasType::CanvasView3D) {
+        // Focus (an attention mode): with something selected and no gizmo at work, the rest steps back.
+        GLVolume::s_focus_dim = AttentionModes::focus_on() && !m_selection.is_empty() && !m_gizmos.is_running();
         //BBS: add outline logic
         _render_objects(m_volumes,GLVolumeCollection::ERenderType::Opaque, b_with_stencil_outline);
         if (!m_paint_outline_volumes.empty()) {
@@ -3296,6 +3299,7 @@ void GLCanvas3D::render(bool only_init)
             _render_platelist(!camera.is_looking_downward(), only_current, only_body, hover_id, true, show_grid);
         _render_objects(m_volumes, GLVolumeCollection::ERenderType::Transparent, b_with_stencil_outline);
         _render_objects(m_paint_outline_volumes, GLVolumeCollection::ERenderType::Transparent, b_with_stencil_outline, true);
+        GLVolume::s_focus_dim = false;
     }
     /* preview render */
     else if (m_canvas_type == ECanvasType::CanvasPreview && m_render_preview) {

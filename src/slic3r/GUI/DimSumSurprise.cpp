@@ -702,6 +702,9 @@ void maybe_show_after_startup(bool config_wizard_shown)
     if (app.app_config == nullptr || app.mainframe == nullptr)
         return;
     AppConfig &config = *app.app_config;
+    // Low stimulation (an attention mode): no surprise at start-up.
+    if (config.get("attention_low_stimulation") == "true")
+        return;
 
     Eligibility early;
     early.onboarding_finished   = config.get("firstguide", "finish") == "true";

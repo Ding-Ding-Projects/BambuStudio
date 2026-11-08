@@ -554,6 +554,7 @@ void GLVolume::set_color(const std::array<float, 4>& rgba)
 
 // BBS
 float GLVolume::explosion_ratio = 1.0;
+bool GLVolume::s_focus_dim = false;
 float GLVolume::last_explosion_ratio = 1.0;
 
 void GLVolume::set_render_color(float r, float g, float b, float a)
@@ -613,6 +614,11 @@ void GLVolume::set_render_color()
         } else {
             render_color[3] = color[3];
         }
+    }
+
+    // Focus: everything not selected steps back toward a neutral grey; nothing is hidden.
+    if (s_focus_dim && !selected && !disabled && printable) {
+        for (int i = 0; i < 3; ++i) render_color[i] = render_color[i] * 0.35f + 0.55f * 0.65f;
     }
 
     //BBS set unprintable color

@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Attention modes</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./kit.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&amp;family=Roboto+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..500,0..1,0&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#0a0e0c}.strip{background:#18201c;border-radius:14px;height:40px;display:flex;align-items:center;gap:10px;padding:0 12px;font-size:13px;color:#e3ebe5}.strip .ms{font-size:18px}.plate{height:250px;border-radius:16px;background:#141a17;position:relative;overflow:hidden}.obj{position:absolute;border-radius:10px}.toast{background:#e3ebe5;color:#18201c;border-radius:12px;padding:12px 14px;font-size:13px;display:flex;gap:12px;align-items:center;max-width:460px}</style>
+</helmet>
+<div class="pg" style="background: #0a0e0c">
+  <div class="row wrap"><div class="grow"><div class="h1">Attention modes</div><div class="sub">Five interface accommodations, each off by default and each on its own switch. They change how Bambu Studio looks and behaves for you; nothing is measured, scored or shared, and none of it is advice.</div></div><span class="tag g">Built</span></div>
+  <div class="strip" role="region" aria-label="Attention strip"><span class="ms mut" aria-hidden="true">schedule</span><span>Open 1 h 12 min &nbsp;·&nbsp; last change 4 min ago</span><span class="ms ok" aria-hidden="true" style="margin-left:18px">flag</span><b style="font-weight:500">Next: check the brim on plate 2</b><button class="btn q" style="height:30px">Edit</button><button class="btn q" style="height:30px">Done</button><span class="ms ok" aria-hidden="true" style="margin-left:18px">center_focus_strong</span><span class="mut">Focus is on: with something selected, the rest of the plate steps back.</span><button class="btn q" style="height:30px">Turn Focus off</button><span class="grow"></span><button class="ib" aria-label="Attention modes in Preferences"><span class="ms" aria-hidden="true">tune</span></button></div>
+  <div style="display:grid;grid-template-columns:minmax(0,1fr) 560px;gap:12px">
+    <section class="card" aria-label="Preferences, Attention modes">
+      <div class="h2">Preferences · Attention modes</div>
+      <div class="sub">Interface accommodations, each off by default and independent of the others.</div>
+      <div class="tr" style="grid-template-columns:minmax(0,1fr) 52px"><span>Focus<br><span class="note">While something is selected in Prepare, the rest of the plate steps back: drawn muted, never hidden.</span></span><button class="sw" role="switch" aria-checked="true" aria-label="Focus"></button></div>
+      <div class="tr" style="grid-template-columns:minmax(0,1fr) 52px"><span>Low stimulation<br><span class="note">Less motion on top of the Windows setting, no action sounds, no dim sum surprise at start-up.</span></span><button class="sw off" role="switch" aria-checked="false" aria-label="Low stimulation"></button></div>
+      <div class="tr" style="grid-template-columns:minmax(0,1fr) 52px"><span>Time awareness<br><span class="note">The strip states how long this session has been open and how long since the last change.</span></span><button class="sw" role="switch" aria-checked="true" aria-label="Time awareness"></button></div>
+      <div class="tr" style="grid-template-columns:minmax(0,1fr) 52px"><span>One thing at a time<br><span class="note">The strip shows the one next step you choose, kept until you mark it done.</span></span><button class="sw" role="switch" aria-checked="true" aria-label="One thing at a time"></button></div>
+      <div class="row"><span style="width:180px;font-size:13px">Next step</span><div class="in grow" style="display:flex;align-items:center;padding:0 12px;font-size:13px">check the brim on plate 2</div></div>
+      <div class="tr" style="grid-template-columns:minmax(0,1fr) 52px"><span>Momentum<br><span class="note">A quiet notification when nothing has changed for a while, once per stretch, with Not now.</span></span><button class="sw" role="switch" aria-checked="true" aria-label="Momentum"></button></div>
+      <div class="row"><span style="width:180px;font-size:13px">Momentum after</span><div class="seg"><button>15 min</button><button class="on">30 min</button><button>1 h</button><button>1 h 30 min</button></div></div>
+      <div class="row"><span style="width:180px;font-size:13px">Not now lasts</span><div class="seg"><button>30 min</button><button class="on">1 h</button><button>2 h</button><button>4 h</button></div></div>
+      <div class="note">School mode leaves these modes as they are: they are accommodations, not presentation choices.</div>
+    </section>
+    <section class="card" aria-label="Focus and Momentum">
+      <div class="h2">Focus on the plate</div>
+      <div class="plate" aria-label="Prepare view with Focus on">
+        <div class="obj" style="left:60px;top:70px;width:120px;height:110px;background:#00ae42;outline:2px solid #6fdc98"></div>
+        <div class="obj" style="left:230px;top:90px;width:90px;height:90px;background:#5b665f"></div>
+        <div class="obj" style="left:360px;top:60px;width:110px;height:130px;background:#666b62"></div>
+      </div>
+      <div class="note">The selected bracket keeps its colour; the others are drawn muted toward grey. Clear the selection, or Turn Focus off, and everything is back.</div>
+      <div class="h2" style="margin-top:8px">Momentum</div>
+      <div class="toast" role="status"><span class="grow">Nothing has changed here for 40 min.</span><button class="btn q" style="height:30px;color:#0f5130">Not now (1 h)</button></div>
+      <div class="note">Once per untouched stretch. Not now lasts the period you set, across restarts. No streaks, no scores, no judgement.</div>
+    </section>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

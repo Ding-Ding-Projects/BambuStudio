@@ -1,5 +1,6 @@
 #include <wx/wrapsizer.h>
 #include "Preferences.hpp"
+#include "AttentionModes/AttentionModel.hpp"
 #include "PreferencesGeometry.hpp"
 #include "PreferencesGeometryProbe.hpp"
 #include "PreferencesSearchTraversal.hpp"
@@ -1789,6 +1790,8 @@ void PreferencesDialog::create()
     add_tab("lan_drop", _L("LAN model drop"), create_lan_drop_tab());
     // Off by default; local and read-only (docs/features/device/status-api.md).
     add_tab("status_api", _L("Local status API"), create_status_api_tab());
+    // Interface accommodations, each off by default (docs/features/windows/attention-modes.md).
+    add_tab("attention", _L("Attention modes"), create_attention_tab());
 
 #if !BBL_RELEASE_TO_PUBLIC
     add_tab("developer", _L("Developer Tools"), create_developer_tab());
@@ -4188,6 +4191,60 @@ wxWindow *PreferencesDialog::create_status_api_tab()
     auto *status = StatusApi::create_status_row(scrolled);
     sizer->Add(status, flags);
     register_option_row("status_api_state", nullptr, status);
+
+    sizer->AddSpacer(FromDIP(20));
+    scrolled->SetSizer(sizer);
+    scrolled->FitInside();
+    return scrolled;
+}
+
+wxWindow *PreferencesDialog::create_attention_tab()
+{
+    auto        scrolled = new ScrollPanel(m_book);
+    wxBoxSizer *sizer    = new wxBoxSizer(wxVERTICAL);
+    auto        flags    = wxSizerFlags().Expand().Border(wxTOP, FromDIP(8));
+
+    sizer->Add(create_item_title(_L("Attention modes"), scrolled, _L("Attention modes")), wxSizerFlags().Expand().Border(wxTOP, FromDIP(16)));
+    auto *intro = new Label(scrolled, ::Label::Body_13,
+                            _L("Interface accommodations, each off by default and independent of the others. They change only how Bambu Studio "
+                               "looks and behaves for you; nothing here is measured, scored or shared."),
+                            LB_AUTO_WRAP);
+    intro->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+    sizer->Add(intro, wxSizerFlags().Expand().Border(wxLEFT | wxRIGHT | wxTOP, FromDIP(12)));
+    sizer->Add(create_item_checkbox(_L("Focus"), scrolled,
+                                    _L("While something is selected in Prepare, the rest of the plate steps back: drawn muted, never hidden. "
+                                       "Clear the selection to see everything again."),
+                                    50, AttentionModes::kFocus),
+               flags);
+    sizer->Add(create_item_checkbox(_L("Low stimulation"), scrolled,
+                                    _L("Less motion on top of the Windows setting, no action sounds, and no dim sum surprise at start-up."), 50,
+                                    AttentionModes::kLowStimulation),
+               flags);
+    sizer->Add(create_item_checkbox(_L("Time awareness"), scrolled,
+                                    _L("The strip under the title bar states how long this session has been open and how long since the last change."),
+                                    50, AttentionModes::kTimeAwareness),
+               flags);
+    sizer->Add(create_item_checkbox(_L("One thing at a time"), scrolled,
+                                    _L("The strip shows the one next step you choose, kept across restarts until you mark it done."), 50,
+                                    AttentionModes::kOneThing),
+               flags);
+    sizer->Add(create_item_input(_L("Next step"), wxString(), scrolled, _L("The one next step the strip shows, at most 120 characters"),
+                                 AttentionModes::kNextAction, [](wxString) {}),
+               flags);
+    sizer->Add(create_item_checkbox(_L("Momentum"), scrolled,
+                                    _L("A quiet notification when nothing has changed for a while, once per stretch, with Not now."), 50,
+                                    AttentionModes::kMomentum),
+               flags);
+    sizer->Add(create_item_combobox(_L("Momentum after"), scrolled, _L("How long without a change before Momentum speaks"), AttentionModes::kMomentumAfter,
+                                    {_L("15 min"), _L("30 min"), _L("1 h"), _L("1 h 30 min")}, {"15", "30", "60", "90"}),
+               flags);
+    sizer->Add(create_item_combobox(_L("Not now lasts"), scrolled, _L("How long Momentum stays quiet after Not now"), AttentionModes::kNotNowFor,
+                                    {_L("30 min"), _L("1 h"), _L("2 h"), _L("4 h")}, {"30", "60", "120", "240"}),
+               flags);
+    auto *school = new Label(scrolled, ::Label::Body_12,
+                             _L("School mode leaves these modes as they are: they are accommodations, not presentation choices."), LB_AUTO_WRAP);
+    school->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+    sizer->Add(school, wxSizerFlags().Expand().Border(wxLEFT | wxRIGHT | wxTOP, FromDIP(12)));
 
     sizer->AddSpacer(FromDIP(20));
     scrolled->SetSizer(sizer);

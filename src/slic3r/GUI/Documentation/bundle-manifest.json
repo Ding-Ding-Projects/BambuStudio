@@ -1365,12 +1365,12 @@
     {
       "route": "windows/README.md",
       "title": "Windows features",
-      "sha256": "b61e64c77a58b465482b3e298c5fd060c564d2aa2831d0d438fff9798d463865"
+      "sha256": "4398698e59660911259503c0b481a110f227cb7337f700e7fd64d31f2b11f053"
     },
     {
       "route": "windows/README.yue_HK.md",
       "title": "Windows 功能",
-      "sha256": "2fdd12207f334773c727470acb7434f84877a80341cfeea5f7500071f41128fe"
+      "sha256": "c0d122321ecd8ff6656fecf17bf78cad7b027cf2f61078d4f901b6c88f6839be"
     },
     {
       "route": "windows/action-sounds.md",
@@ -1461,6 +1461,16 @@
       "route": "windows/async-stl-replacement-proposal.yue_HK.md",
       "title": "非同步 STL 替換提案",
       "sha256": "691876876265da3ee9e7dcb31c2472e1cff063ca05cf5b5a15c68136b3448883"
+    },
+    {
+      "route": "windows/attention-modes.md",
+      "title": "Attention modes",
+      "sha256": "b8b4b92f51a135854ece692fecd7920fd5012031de981b6adebdddad898a8a53"
+    },
+    {
+      "route": "windows/attention-modes.yue_HK.md",
+      "title": "專注模式",
+      "sha256": "55a0d539b7cc5d424ed221c2248e3759a113f0f03caa630debeff46e18b66c38"
     },
     {
       "route": "windows/base64-toolkit.md",
@@ -2235,7 +2245,7 @@
       "bytes": 16430
     }
   ],
-  "bundle_sha256": "59516e1cbf1f18c21fb384e679c2ba93706c27aabdf0f1135764fd351e3d1288",
+  "bundle_sha256": "69cc255807f7480accbbf6f3cf6b277683a6f023f164af6cc8db46a746550832",
   "unavailable_references": [
     {
       "source": "api/README.md",

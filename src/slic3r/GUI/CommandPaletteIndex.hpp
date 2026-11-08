@@ -76,6 +76,7 @@ enum PreferencePage : int {
     PageDeveloper  = 5,
     PageLanDrop    = 6, // LAN model drop (its own section, after Other)
     PageStatusApi  = 7, // Local status API (its own section, after LAN model drop)
+    PageAttention  = 8, // Attention modes (its own section, after the status API)
 };
 
 const std::vector<const char *> &preference_page_names();

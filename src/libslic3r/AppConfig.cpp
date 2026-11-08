@@ -110,6 +110,11 @@ void AppConfig::set_defaults()
     // Unknown settings from newer or edited profiles use the system default.
     if (get("motion_preference") != "system" && get("motion_preference") != "reduced")
         set("motion_preference", PresentationDefaults::value_or_empty("motion_preference"));
+    // Attention modes: each off by default (docs/features/windows/attention-modes.md).
+    for (const auto *key : {"attention_focus", "attention_low_stimulation", "attention_time_awareness", "attention_one_thing", "attention_momentum"})
+        if (get(key) != "true" && get(key) != "false") set(key, "false");
+    if (get("attention_momentum_minutes").empty()) set("attention_momentum_minutes", "30");
+    if (get("attention_not_now_minutes").empty()) set("attention_not_now_minutes", "60");
     if (m_mode == EAppMode::Editor) {
 #ifdef SUPPORT_AUTO_CENTER
         // Reset the empty fields to defaults.

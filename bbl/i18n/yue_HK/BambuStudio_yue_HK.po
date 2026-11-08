@@ -54396,3 +54396,218 @@ msgstr "冇嘢鎖住。喺元素撳右鍵，揀鎖住呢個元素。"
 #. review-status: agent-drafted
 msgid "Unlock..."
 msgstr "解鎖..."
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Interface accommodations, each off by default and independent of the others. They change only how Bambu Studio looks and behaves for you; nothing here is measured, scored or shared."
+msgstr "介面上嘅遷就，每一個預設都係關，而且互相獨立。佢哋只會改變 Bambu Studio 喺你面前嘅樣同表現；呢度冇嘢會被量度、評分或者分享。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "While something is selected in Prepare, the rest of the plate steps back: drawn muted, never hidden. Clear the selection to see everything again."
+msgstr "喺準備揀咗嘢嘅時候，打印板上其他嘢會退後：畫得淡啲，但永遠唔會收埋。取消揀選就會再見到晒。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Low stimulation"
+msgstr "低刺激"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Less motion on top of the Windows setting, no action sounds, and no dim sum surprise at start-up."
+msgstr "喺 Windows 設定之上再減少動態、冇動作音效，開機都冇點心驚喜。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Time awareness"
+msgstr "時間感"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The strip under the title bar states how long this session has been open and how long since the last change."
+msgstr "標題列下面嘅橫條會講今次開咗幾耐，同埋上次改動係幾耐之前。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "One thing at a time"
+msgstr "一次一件事"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The strip shows the one next step you choose, kept across restarts until you mark it done."
+msgstr "橫條會顯示你揀嘅下一步，重開都會保留，直到你標記完成。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Next step"
+msgstr "下一步"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The one next step the strip shows, at most 120 characters"
+msgstr "橫條顯示嘅下一步，最多 120 個字元"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Momentum"
+msgstr "動力"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "A quiet notification when nothing has changed for a while, once per stretch, with Not now."
+msgstr "一段時間冇改動就會有一個安靜嘅通知，每段時間一次，有「唔係而家」。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Momentum after"
+msgstr "動力幾耐之後出聲"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "How long without a change before Momentum speaks"
+msgstr "冇改動幾耐之後動力先會出聲"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "30 min"
+msgstr "30 分鐘"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "1 h 30 min"
+msgstr "1 個半鐘"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Not now lasts"
+msgstr "唔係而家維持"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "How long Momentum stays quiet after Not now"
+msgstr "撳咗唔係而家之後，動力會安靜幾耐"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "2 h"
+msgstr "2 個鐘"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "4 h"
+msgstr "4 個鐘"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "School mode leaves these modes as they are: they are accommodations, not presentation choices."
+msgstr "學校模式唔會郁呢啲模式：佢哋係遷就，唔係外觀選擇。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "With something selected, the rest of the plate steps back"
+msgstr "揀咗嘢嘅時候，打印板上其他嘢會退後"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Less motion, no action sounds, no start-up surprise"
+msgstr "少啲動態、冇動作音效、開機冇驚喜"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "How long this session has been open and since the last change"
+msgstr "今次開咗幾耐，同埋上次改動之後幾耐"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The one next step you chose, in the strip under the title bar"
+msgstr "你揀嘅下一步，喺標題列下面嘅橫條"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The one next step the strip shows"
+msgstr "橫條顯示嘅下一步"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "A quiet note when nothing has changed for a while"
+msgstr "一段時間冇改動就會有一句安靜嘅提示"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Preferences, Attention modes"
+msgstr "偏好設定，專注模式"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "%d h %d min"
+msgstr "%d 小時 %d 分鐘"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "under a minute"
+msgstr "唔夠一分鐘"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Your next step"
+msgstr "你嘅下一步"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "One thing, in your words. It stays in the strip until you mark it done."
+msgstr "一件事，用你自己嘅講法。佢會留喺橫條，直到你標記完成。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Set the next step"
+msgstr "設定下一步"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Clear the next step"
+msgstr "清除下一步"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Focus is on: with something selected, the rest of the plate steps back."
+msgstr "專注已開：揀咗嘢嘅時候，打印板上其他嘢會退後。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Turn Focus off"
+msgstr "關閉專注"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Attention modes in Preferences"
+msgstr "偏好設定入面嘅專注模式"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "last change %s ago"
+msgstr "上次改動 %s 前"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "no changes yet"
+msgstr "仲未有改動"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Next:"
+msgstr "下一步："
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Nothing has changed here for %s."
+msgstr "呢度 %s 冇改動。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Nothing has changed since Bambu Studio opened, %s ago."
+msgstr "由 Bambu Studio 開咗到而家都冇改動，已經 %s。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Not now (%s)"
+msgstr "唔係而家（%s）"

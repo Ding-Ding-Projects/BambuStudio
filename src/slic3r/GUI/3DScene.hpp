@@ -309,6 +309,8 @@ public:
     static void load_render_colors();
 
     static float explosion_ratio;
+    // Focus (an attention mode): set while the 3D view draws with something selected.
+    static bool  s_focus_dim;
     static float last_explosion_ratio;
 
     enum EHoverState : unsigned char

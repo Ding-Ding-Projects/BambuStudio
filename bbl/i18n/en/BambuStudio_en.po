@@ -35062,3 +35062,137 @@ msgstr ""
 
 msgid "Unlock..."
 msgstr ""
+
+msgid "Interface accommodations, each off by default and independent of the others. They change only how Bambu Studio looks and behaves for you; nothing here is measured, scored or shared."
+msgstr ""
+
+msgid "While something is selected in Prepare, the rest of the plate steps back: drawn muted, never hidden. Clear the selection to see everything again."
+msgstr ""
+
+msgid "Low stimulation"
+msgstr ""
+
+msgid "Less motion on top of the Windows setting, no action sounds, and no dim sum surprise at start-up."
+msgstr ""
+
+msgid "Time awareness"
+msgstr ""
+
+msgid "The strip under the title bar states how long this session has been open and how long since the last change."
+msgstr ""
+
+msgid "One thing at a time"
+msgstr ""
+
+msgid "The strip shows the one next step you choose, kept across restarts until you mark it done."
+msgstr ""
+
+msgid "Next step"
+msgstr ""
+
+msgid "The one next step the strip shows, at most 120 characters"
+msgstr ""
+
+msgid "Momentum"
+msgstr ""
+
+msgid "A quiet notification when nothing has changed for a while, once per stretch, with Not now."
+msgstr ""
+
+msgid "Momentum after"
+msgstr ""
+
+msgid "How long without a change before Momentum speaks"
+msgstr ""
+
+msgid "30 min"
+msgstr ""
+
+msgid "1 h 30 min"
+msgstr ""
+
+msgid "Not now lasts"
+msgstr ""
+
+msgid "How long Momentum stays quiet after Not now"
+msgstr ""
+
+msgid "2 h"
+msgstr ""
+
+msgid "4 h"
+msgstr ""
+
+msgid "School mode leaves these modes as they are: they are accommodations, not presentation choices."
+msgstr ""
+
+msgid "With something selected, the rest of the plate steps back"
+msgstr ""
+
+msgid "Less motion, no action sounds, no start-up surprise"
+msgstr ""
+
+msgid "How long this session has been open and since the last change"
+msgstr ""
+
+msgid "The one next step you chose, in the strip under the title bar"
+msgstr ""
+
+msgid "The one next step the strip shows"
+msgstr ""
+
+msgid "A quiet note when nothing has changed for a while"
+msgstr ""
+
+msgid "Preferences, Attention modes"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%d h %d min"
+msgstr ""
+
+msgid "under a minute"
+msgstr ""
+
+msgid "Your next step"
+msgstr ""
+
+msgid "One thing, in your words. It stays in the strip until you mark it done."
+msgstr ""
+
+msgid "Set the next step"
+msgstr ""
+
+msgid "Clear the next step"
+msgstr ""
+
+msgid "Focus is on: with something selected, the rest of the plate steps back."
+msgstr ""
+
+msgid "Turn Focus off"
+msgstr ""
+
+msgid "Attention modes in Preferences"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "last change %s ago"
+msgstr ""
+
+msgid "no changes yet"
+msgstr ""
+
+msgid "Next:"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Nothing has changed here for %s."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Nothing has changed since Bambu Studio opened, %s ago."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Not now (%s)"
+msgstr ""

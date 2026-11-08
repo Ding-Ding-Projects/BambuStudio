@@ -1,6 +1,6 @@
 ---
 translation-of: README.md
-source-sha256: b61e64c77a58b465482b3e298c5fd060c564d2aa2831d0d438fff9798d463865
+source-sha256: 4398698e59660911259503c0b481a110f227cb7337f700e7fd64d31f2b11f053
 review-status: agent-drafted
 ---
 
@@ -26,6 +26,7 @@ review-status: agent-drafted
 - [Base64 工具箱](base64-toolkit.md)
 - [擴充功能](extensions.md)
 - [元素鎖同解鎖階梯](element-locks.md)
+- [專注模式](attention-modes.md)
 - [設定 Bambu Studio](practical-setup.md)
 - [應用內變更日誌查看器（幫助 ▸ 有咩新嘢）](changelog-viewer.md)
 - [準備側邊欄搜尋（設定 + 墨水插槽）](sidebar-search.md)
