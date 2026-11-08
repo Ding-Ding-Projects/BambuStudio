@@ -5,6 +5,37 @@
 
 # ==================== Node.js/pnpm ???????? deviceweb ????===================
 
+# Downloads url to destination and checks its SHA-256, trying up to five times.
+# GitHub release downloads return HTTP 504 now and then; one bad answer must not
+# stop the build. The hash is checked after the download rather than through
+# EXPECTED_HASH, because a failed attempt with EXPECTED_HASH is reported as a
+# CMake error that fails the configure even when a later attempt succeeds.
+function(download_verified url destination sha256 out_code out_message)
+    set(code 1)
+    set(msg "not attempted")
+    foreach(attempt RANGE 1 5)
+        file(DOWNLOAD ${url} "${destination}" STATUS status TLS_VERIFY OFF)
+        list(GET status 0 code)
+        list(GET status 1 msg)
+        if(code EQUAL 0)
+            file(SHA256 "${destination}" actual)
+            if(actual STREQUAL sha256)
+                break()
+            endif()
+            set(code 1)
+            set(msg "SHA-256 mismatch: ${actual}")
+        endif()
+        file(REMOVE "${destination}")
+        if(attempt LESS 5)
+            math(EXPR wait "${attempt} * 10")
+            message(STATUS "Download attempt ${attempt} of ${url} failed (${msg}); trying again in ${wait} s")
+            execute_process(COMMAND ${CMAKE_COMMAND} -E sleep ${wait})
+        endif()
+    endforeach()
+    set(${out_code} ${code} PARENT_SCOPE)
+    set(${out_message} "${msg}" PARENT_SCOPE)
+endfunction()
+
 function(prepare_node_env)
     # ??????
     set(NODE_VERSION "22.22.2")
@@ -80,16 +111,7 @@ function(prepare_node_env)
         message(STATUS "Downloading Node.js v${NODE_VERSION} from ${NODE_URL}")
         file(MAKE_DIRECTORY "${NODE_CACHE_DIR}")
 
-        file(DOWNLOAD
-            ${NODE_URL}
-            "${NODE_CACHE_DIR}/${NODE_ARCHIVE_NAME}"
-            SHOW_PROGRESS
-            STATUS node_dl_status
-            EXPECTED_HASH SHA256=${NODE_HASH}
-            TLS_VERIFY OFF
-        )
-        list(GET node_dl_status 0 node_dl_code)
-        list(GET node_dl_status 1 node_dl_msg)
+        download_verified(${NODE_URL} "${NODE_CACHE_DIR}/${NODE_ARCHIVE_NAME}" ${NODE_HASH} node_dl_code node_dl_msg)
         if(NOT node_dl_code EQUAL 0)
             file(REMOVE "${NODE_CACHE_DIR}/${NODE_ARCHIVE_NAME}")
             message(FATAL_ERROR "Failed to download Node.js: ${node_dl_msg}")
@@ -135,16 +157,7 @@ function(prepare_node_env)
     if(NOT EXISTS "${PNPM_EXECUTABLE}")
         message(STATUS "Downloading pnpm v${PNPM_VERSION} from ${PNPM_URL}")
 
-        file(DOWNLOAD
-            ${PNPM_URL}
-            "${PNPM_EXECUTABLE}"
-            SHOW_PROGRESS
-            STATUS pnpm_dl_status
-            EXPECTED_HASH SHA256=${PNPM_HASH}
-            TLS_VERIFY OFF
-        )
-        list(GET pnpm_dl_status 0 pnpm_dl_code)
-        list(GET pnpm_dl_status 1 pnpm_dl_msg)
+        download_verified(${PNPM_URL} "${PNPM_EXECUTABLE}" ${PNPM_HASH} pnpm_dl_code pnpm_dl_msg)
         if(NOT pnpm_dl_code EQUAL 0)
             file(REMOVE "${PNPM_EXECUTABLE}")
             message(FATAL_ERROR "Failed to download pnpm: ${pnpm_dl_msg}")
