@@ -36,6 +36,8 @@ const ALLOWED_FILES = new Map([
   ['GLGizmoMeasure.hpp', 'macOS key symbol in a std::string'],
   ['GUI.cpp', 'macOS key names in a std::string'],
   ['wgtFilaManagerCloudDispatcher.cpp', 'debug-log text, not shown in the UI'],
+  // Paths relative to src/slic3r/GUI name one file where the base name is shared.
+  ['ScheduledSettings/Panel.cpp', 'Cantonese copies are the second argument of tr(); the translator the panel is given converts only the English one, through _L, so they never reach wx'],
 ]);
 
 function* sources(dir) {
@@ -82,7 +84,8 @@ test('the scan flags a bare degree sign and accepts a converted one', () => {
 test('no GUI source hands a non-ASCII narrow literal straight to wx', () => {
   const leaks = [];
   for (const file of sources(guiDir)) {
-    if (ALLOWED_FILES.has(path.basename(file))) continue;
+    const relative = path.relative(guiDir, file).replace(/\\/g, '/');
+    if (ALLOWED_FILES.has(path.basename(file)) || ALLOWED_FILES.has(relative)) continue;
     for (const hit of unsafeLiterals(readFileSync(file, 'utf8'))) {
       leaks.push(`${path.relative(repoDir, file).replace(/\\/g, '/')}:${hit.line} "${hit.literal}"`);
     }

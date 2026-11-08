@@ -116,6 +116,7 @@
 #include "PreferencesHistory.hpp"
 #include "PrinterWatch.hpp"
 #include "LanModelDrop/LanModelDropStation.hpp"
+#include "SetupWizard/SetupWizardDialog.hpp"
 #include "StatusApi/StatusApiServer.hpp"
 #include "Melody/MelodyCreatorDialog.hpp"
 #include "VocabularyDrop.hpp"
@@ -5216,6 +5217,8 @@ void GUI_App::recreate_GUI(const wxString &msg_name)
     m_is_recreating_gui = false;
     // Received files still waiting for Open or Discard get their notifications in the new window.
     LanModelDrop::after_gui_rebuild();
+    // A language change made in the setup wizard opens it again where it was.
+    SetupWizardDialog::after_gui_rebuild();
 
 #if defined(__WXOSX__)
     // STUDIO-18472: a GUI rebuild just happened (and trigger_restore_project()
@@ -10054,6 +10057,10 @@ bool GUI_App::config_wizard_startup()
         BOOST_LOG_TRIVIAL(info) << "run wizard...";
         run_wizard(ConfigWizard::RR_DATA_EMPTY);
         BOOST_LOG_TRIVIAL(info) << "finished run wizard";
+        // A new installation continues with the practical setup wizard
+        // (language, look, inks, backups), which picks up the printers just added.
+        if (!m_app_conf_exists)
+            CallAfter([]() { SetupWizardDialog::open_for_first_run(); });
         return true;
     } /*else if (get_app_config()->legacy_datadir()) {
         // Looks like user has legacy pre-vendorbundle data directory,

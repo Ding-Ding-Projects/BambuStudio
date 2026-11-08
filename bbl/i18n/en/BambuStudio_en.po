@@ -33756,3 +33756,355 @@ msgstr ""
 
 msgid "Opened the options on the Text tab. The text was not kept, so your current text stays."
 msgstr ""
+
+msgid "Set up Bambu Studio"
+msgstr ""
+
+msgid "Language, look, printers, inks and backups in one guided pass that saves as it goes"
+msgstr ""
+
+msgid "Help, Set up Bambu Studio"
+msgstr ""
+
+msgid "Language and humour"
+msgstr ""
+
+msgid "Look and motion"
+msgstr ""
+
+msgid "Printers"
+msgstr ""
+
+msgid "Inks and filaments"
+msgstr ""
+
+msgid "Backups"
+msgstr ""
+
+msgid "Start over"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Welcome back. Setup stopped at step %d of %d on %s at %s; %s kept."
+msgstr ""
+
+msgid "your first step is"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%d finished steps are"
+msgstr ""
+
+msgid "About five minutes. Every step saves as you go."
+msgstr ""
+
+msgid "Keyboard: Alt+N next, Alt+B back, Alt+S skip an optional step, Esc saves and closes."
+msgstr ""
+
+msgid "Setup progress"
+msgstr ""
+
+msgid "Why this step matters"
+msgstr ""
+
+msgid "Required to finish"
+msgstr ""
+
+msgid "Saved. Close any time and continue from Help, then Set up Bambu Studio."
+msgstr ""
+
+msgid "Skip this step"
+msgstr ""
+
+msgid "Changing the language reloads the window; setup opens again where you are."
+msgstr ""
+
+msgid "School mode is on, so humour, emoji and personal wording settings are hidden here and in Preferences."
+msgstr ""
+
+msgid "English funny level"
+msgstr ""
+
+msgid "Cantonese funny level"
+msgstr ""
+
+msgid "1 is plain, 5 is the most playful. Humour changes the tone, never the facts."
+msgstr ""
+
+msgid "Emoji in dialogs"
+msgstr ""
+
+msgid "A .json file of your own words for things on screen. You can also drop it on the window later."
+msgstr ""
+
+msgid "Choose .json"
+msgstr ""
+
+msgid "Windows opened from now on use the new density; open windows keep theirs until they are opened again."
+msgstr ""
+
+msgid "Choose printers"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Added %d printers"
+msgstr ""
+
+msgid "Their plates, nozzles and process presets are now in Prepare."
+msgstr ""
+
+msgid "Printer choices saved"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "You have %d printers set up."
+msgstr ""
+
+msgid "The printer guide closed without changes"
+msgstr ""
+
+msgid "Search my network"
+msgstr ""
+
+msgid "Network search is not available"
+msgstr ""
+
+msgid "The network plug-in is not installed, so printers on your network cannot be listed here."
+msgstr ""
+
+msgid "No printers answered on your network yet"
+msgstr ""
+
+msgid "Printers announce themselves every few seconds. Make sure the printer is on and on the same network, then search again."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Found on your network: %s"
+msgstr ""
+
+msgid "Connecting needs its access code, which you enter on the Device tab."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%d more printers answered"
+msgstr ""
+
+msgid "The Device tab lists every printer on your network."
+msgstr ""
+
+msgid "Import a printer profile"
+msgstr ""
+
+msgid "Your printers"
+msgstr ""
+
+msgid "Result of each action"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Imported %d printers"
+msgstr ""
+
+msgid "No new printer came from that import"
+msgstr ""
+
+msgid "A filament or process file goes to its own list; use the Inks step for filaments."
+msgstr ""
+
+msgid "Choose another file"
+msgstr ""
+
+msgid "None yet. Choose printers, or import a printer profile."
+msgstr ""
+
+msgid "Read the AMS now and fill the plate's filament list from the printer"
+msgstr ""
+
+msgid "Asked the printer for its AMS"
+msgstr ""
+
+msgid "The list below shows what Prepare has now. Without a connected printer, nothing changes."
+msgstr ""
+
+msgid "Pick filaments"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%d filament presets available"
+msgstr ""
+
+msgid "The filament guide closed without changes"
+msgstr ""
+
+msgid "Or pick filaments by brand, type and colour."
+msgstr ""
+
+msgid "On the plate now"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Slot %d"
+msgstr ""
+
+msgid "No filaments on the plate yet."
+msgstr ""
+
+msgid "Back up the open project every"
+msgstr ""
+
+msgid "Auto-backup is off"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Auto-backup every %s"
+msgstr ""
+
+msgid "The same setting is in Preferences, Auto-Backup."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Now every %s seconds, set in Preferences."
+msgstr ""
+
+msgid "Make a config backup now"
+msgstr ""
+
+msgid "Opens Config profiles & backup. Snapshot now keeps a complete copy of your settings on this PC; Export moves everything, secrets included, to another PC behind a confirmation."
+msgstr ""
+
+msgid "Back up"
+msgstr ""
+
+msgid "Opened Config profiles & backup"
+msgstr ""
+
+msgid "Snapshots you recorded there are listed in its history."
+msgstr ""
+
+msgid "Extensions are designed but not built yet, so this step is passed over. It will offer the built-in extensions the day they ship."
+msgstr ""
+
+msgid "Open Prepare"
+msgstr ""
+
+msgid "Take the feature tour"
+msgstr ""
+
+msgid "Setup stays in Help for later changes."
+msgstr ""
+
+msgid "auto-backup off"
+msgstr ""
+
+msgid "auto-backup every 2 minutes"
+msgstr ""
+
+msgid "auto-backup every 10 minutes"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "auto-backup every %s seconds"
+msgstr ""
+
+msgid "Almost ready"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%d printers, %d filaments on the plate, %s."
+msgstr ""
+
+msgid "Still needed: at least one printer (Printers step)."
+msgstr ""
+
+msgid "Still needed: at least one filament preset (Inks step)."
+msgstr ""
+
+msgid "Pick how Bambu Studio talks to you. Humour changes the tone, never the facts."
+msgstr ""
+
+msgid "The language and humour you pick show up in every dialog. Change them later in Preferences."
+msgstr ""
+
+msgid "Choose light or dark, how roomy controls are, and how much things move."
+msgstr ""
+
+msgid "These apply right away and stay in Preferences, Appearance."
+msgstr ""
+
+msgid "Add your printers"
+msgstr ""
+
+msgid "Pick the printers and nozzles you own. Slicing presets, plates and process profiles come from these choices."
+msgstr ""
+
+msgid "Printers decide which plates, nozzles and process presets Prepare offers. Add more later from Prepare, then Printer."
+msgstr ""
+
+msgid "At least one printer. Next stays available; it explains what is missing instead of greying out."
+msgstr ""
+
+msgid "Tell Bambu Studio what is loaded. Reading the AMS fills the plate's filament list from the printer."
+msgstr ""
+
+msgid "Filament presets set temperatures, cooling and flow for every slice."
+msgstr ""
+
+msgid "At least one filament preset. Printers you add bring their own."
+msgstr ""
+
+msgid "Keep your work safe while you print. This step is optional."
+msgstr ""
+
+msgid "Auto-backup keeps a recovery copy of the open project; a config snapshot keeps your settings."
+msgstr ""
+
+msgid "Not built yet."
+msgstr ""
+
+msgid "Here is what setup did. Open Prepare to start, or take the feature tour."
+msgstr ""
+
+msgid "Every choice here is in Preferences or Help afterwards."
+msgstr ""
+
+msgid "Required"
+msgstr ""
+
+msgid "Optional"
+msgstr ""
+
+msgid "Now"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Step %d of %d"
+msgstr ""
+
+msgid "Every required step is done"
+msgstr ""
+
+msgid "1 required step left"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%d required steps left"
+msgstr ""
+
+msgid "Next anyway"
+msgstr ""
+
+msgid "Setup can finish once every required step is done. The summary above says what is still needed; click a step on the left to do it."
+msgstr ""
+
+msgid "No printer is set up yet. Choose printers or import a printer profile first. You can also go on and come back; setup cannot finish without one."
+msgstr ""
+
+msgid "No filament preset is available yet. Pick filaments first, or go on and come back; setup cannot finish without one."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Saved at %s. Close any time and continue from Help, then Set up Bambu Studio."
+msgstr ""
+
+msgid "That language could not be loaded"
+msgstr ""

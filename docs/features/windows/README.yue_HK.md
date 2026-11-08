@@ -24,6 +24,7 @@ review-status: agent-drafted
 - [全部功能頁](every-feature.md)
 - [偏好設定：每個值由邊度嚟](preferences-provenance.md)
 - [Base64 工具箱](base64-toolkit.md)
+- [設定 Bambu Studio](practical-setup.md)
 - [應用內變更日誌查看器（幫助 ▸ 有咩新嘢）](changelog-viewer.md)
 - [準備側邊欄搜尋（設定 + 墨水插槽）](sidebar-search.md)
 - [Material 顏色選擇器 & 顏色翻譯器](md3-color-picker.md)

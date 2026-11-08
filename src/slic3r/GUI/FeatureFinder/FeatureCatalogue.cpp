@@ -56,7 +56,7 @@ const std::vector<Feature> &features()
         {"printer-setup", "find", 0xE555 /* print */, L("Printer and filament setup"), L("Help, Setup Wizard"), "", "wizard printers filaments first run", Badge::None, State::Ready, "command:setup-wizard"},
         {"context-menus", "find", 0xF706 /* right_click */, L("Context menus with live controls"), L("Right-click anything"), "", "right click menu", Badge::New, State::NotBuilt, ""},
         {"info-icons", "find", 0xE88E /* info */, L("Info icons and explanations"), L("Beside every Preferences setting"), "", "help explanation info button", Badge::New, State::Ready, "command:preferences"},
-        {"onboarding", "find", 0xEB9B /* rocket_launch */, L("Practical setup wizard"), L("Help, Setup wizard"), "", "wizard first run welcome", Badge::New, State::NotBuilt, ""},
+        {"onboarding", "find", 0xEB9B /* rocket_launch */, L("Practical setup wizard"), L("Help, Set up Bambu Studio"), "", "wizard first run welcome onboarding resume", Badge::New, State::Ready, "command:practical-setup"},
         // Records
         {"version-history", "records", 0xE28E /* history */, L("Version history"), L("File, Version history"), "", "git snapshots restore project versions", Badge::None, State::Ready, "command:version-history"},
         {"changelog", "records", 0xEF49 /* campaign */, L("What is new"), L("Help, What's new / Changelog"), "", "release notes what is new", Badge::None, State::Ready, "command:changelog"},

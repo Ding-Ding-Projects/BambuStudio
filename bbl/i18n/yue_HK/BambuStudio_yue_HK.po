@@ -52371,3 +52371,563 @@ msgstr "已喺文字分頁打開保留咗嘅文字同佢嘅選項。"
 #. review-status: agent-drafted
 msgid "Opened the options on the Text tab. The text was not kept, so your current text stays."
 msgstr "已喺文字分頁打開選項。文字當時冇保留，所以而家嘅文字照留。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Set up Bambu Studio"
+msgstr "設定 Bambu Studio"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Language, look, printers, inks and backups in one guided pass that saves as it goes"
+msgstr "語言、外觀、打印機、墨水同備份，一次過帶住你做，一路做一路儲存"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Help, Set up Bambu Studio"
+msgstr "說明，設定 Bambu Studio"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Language and humour"
+msgstr "語言同幽默"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Look and motion"
+msgstr "外觀同動態"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Printers"
+msgstr "打印機"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Inks and filaments"
+msgstr "墨水同線材"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Backups"
+msgstr "備份"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Start over"
+msgstr "重新開始"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Welcome back. Setup stopped at step %d of %d on %s at %s; %s kept."
+msgstr "歡迎返嚟。設定停喺第 %d 步（共 %d 步），時間係 %s %s；%s保留。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "your first step is"
+msgstr "你第一步會"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "%d finished steps are"
+msgstr "已完成嘅 %d 步會"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "About five minutes. Every step saves as you go."
+msgstr "大約五分鐘。每一步都會一路做一路儲存。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Keyboard: Alt+N next, Alt+B back, Alt+S skip an optional step, Esc saves and closes."
+msgstr "鍵盤：Alt+N 下一步，Alt+B 上一步，Alt+S 跳過可選步驟，Esc 儲存再關。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Setup progress"
+msgstr "設定進度"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Why this step matters"
+msgstr "點解呢步重要"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Required to finish"
+msgstr "完成需要"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Saved. Close any time and continue from Help, then Set up Bambu Studio."
+msgstr "已儲存。隨時可以關，之後喺說明 > 設定 Bambu Studio 繼續。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Skip this step"
+msgstr "跳過呢步"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Changing the language reloads the window; setup opens again where you are."
+msgstr "改語言會重新載入視窗；設定會喺你而家嘅位置再打開。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "School mode is on, so humour, emoji and personal wording settings are hidden here and in Preferences."
+msgstr "學校模式開咗，所以幽默、表情符號同個人用字設定喺度同喺偏好設定都會收埋。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "English funny level"
+msgstr "英文搞笑程度"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Cantonese funny level"
+msgstr "廣東話搞笑程度"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "1 is plain, 5 is the most playful. Humour changes the tone, never the facts."
+msgstr "1 係最平實，5 係最搞笑。幽默只會改語氣，永遠唔會改事實。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Emoji in dialogs"
+msgstr "對話框表情符號"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "A .json file of your own words for things on screen. You can also drop it on the window later."
+msgstr "一個 .json 檔，入面係你自己對畫面上嘢嘅叫法。遲啲亦可以直接拖落視窗。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Choose .json"
+msgstr "揀 .json"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Windows opened from now on use the new density; open windows keep theirs until they are opened again."
+msgstr "由而家起打開嘅視窗會用新密度；已經開咗嘅視窗要再打開先會跟。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Choose printers"
+msgstr "揀打印機"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Added %d printers"
+msgstr "加咗 %d 部打印機"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Their plates, nozzles and process presets are now in Prepare."
+msgstr "佢哋嘅打印板、噴嘴同處理預設而家喺準備度。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Printer choices saved"
+msgstr "打印機選擇已儲存"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "You have %d printers set up."
+msgstr "你設定咗 %d 部打印機。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The printer guide closed without changes"
+msgstr "打印機指南冇改到嘢就關咗"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Search my network"
+msgstr "搜尋我嘅網絡"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Network search is not available"
+msgstr "網絡搜尋用唔到"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The network plug-in is not installed, so printers on your network cannot be listed here."
+msgstr "網絡插件未安裝，所以喺度列唔到你網絡上嘅打印機。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "No printers answered on your network yet"
+msgstr "你網絡上暫時未有打印機回應"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Printers announce themselves every few seconds. Make sure the printer is on and on the same network, then search again."
+msgstr "打印機每幾秒會廣播一次。確認打印機開咗而且喺同一個網絡，再搜尋多次。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Found on your network: %s"
+msgstr "喺你網絡上搵到：%s"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Connecting needs its access code, which you enter on the Device tab."
+msgstr "連接要用佢嘅存取碼，喺裝置分頁輸入。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "%d more printers answered"
+msgstr "仲有 %d 部打印機回應"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The Device tab lists every printer on your network."
+msgstr "裝置分頁會列出你網絡上每一部打印機。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Import a printer profile"
+msgstr "匯入打印機設定檔"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Your printers"
+msgstr "你嘅打印機"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Result of each action"
+msgstr "每個動作嘅結果"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Imported %d printers"
+msgstr "匯入咗 %d 部打印機"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "No new printer came from that import"
+msgstr "嗰次匯入冇帶到新打印機"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "A filament or process file goes to its own list; use the Inks step for filaments."
+msgstr "線材或者處理檔會入返佢自己嘅清單；線材請用墨水嗰步。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Choose another file"
+msgstr "揀另一個檔案"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "None yet. Choose printers, or import a printer profile."
+msgstr "暫時未有。揀打印機，或者匯入打印機設定檔。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Read the AMS now and fill the plate's filament list from the printer"
+msgstr "即刻讀取 AMS，由打印機填好打印板嘅線材清單"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Asked the printer for its AMS"
+msgstr "已經問打印機攞 AMS 資料"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The list below shows what Prepare has now. Without a connected printer, nothing changes."
+msgstr "下面嘅清單係準備而家有嘅嘢。冇連接打印機嘅話，乜都唔會變。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Pick filaments"
+msgstr "揀線材"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "%d filament presets available"
+msgstr "有 %d 個線材預設可以用"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The filament guide closed without changes"
+msgstr "線材指南冇改到嘢就關咗"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Or pick filaments by brand, type and colour."
+msgstr "或者按品牌、種類同顏色揀線材。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "On the plate now"
+msgstr "打印板上而家有"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Slot %d"
+msgstr "槽位 %d"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "No filaments on the plate yet."
+msgstr "打印板上暫時未有線材。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Back up the open project every"
+msgstr "每隔一段時間備份開住嘅專案"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Auto-backup is off"
+msgstr "自動備份已關"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Auto-backup every %s"
+msgstr "每 %s 自動備份"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The same setting is in Preferences, Auto-Backup."
+msgstr "同一個設定喺偏好設定，自動備份。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Now every %s seconds, set in Preferences."
+msgstr "而家係每 %s 秒，喺偏好設定設定。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Make a config backup now"
+msgstr "即刻備份設定"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Opens Config profiles & backup. Snapshot now keeps a complete copy of your settings on this PC; Export moves everything, secrets included, to another PC behind a confirmation."
+msgstr "打開設定檔同備份。「即刻快照」會喺呢部電腦保留一份完整嘅設定；「匯出」會將所有嘢（包括秘密資料）搬去另一部電腦，要先確認。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Back up"
+msgstr "備份"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Opened Config profiles & backup"
+msgstr "已打開設定檔同備份"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Snapshots you recorded there are listed in its history."
+msgstr "喺嗰度記錄嘅快照會列喺佢嘅歷史記錄。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Extensions are designed but not built yet, so this step is passed over. It will offer the built-in extensions the day they ship."
+msgstr "擴充功能已經設計好但未起，所以呢步會跳過。佢推出嗰日，呢步就會提供內置擴充功能。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Open Prepare"
+msgstr "打開準備"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Take the feature tour"
+msgstr "行一轉功能導覽"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Setup stays in Help for later changes."
+msgstr "設定會一直喺說明度，方便之後改。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "auto-backup off"
+msgstr "自動備份已關"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "auto-backup every 2 minutes"
+msgstr "每 2 分鐘自動備份"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "auto-backup every 10 minutes"
+msgstr "每 10 分鐘自動備份"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "auto-backup every %s seconds"
+msgstr "每 %s 秒自動備份"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Almost ready"
+msgstr "就快搞掂"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "%d printers, %d filaments on the plate, %s."
+msgstr "%d 部打印機，打印板上 %d 款線材，%s。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Still needed: at least one printer (Printers step)."
+msgstr "仲需要：至少一部打印機（打印機嗰步）。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Still needed: at least one filament preset (Inks step)."
+msgstr "仲需要：至少一個線材預設（墨水嗰步）。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Pick how Bambu Studio talks to you. Humour changes the tone, never the facts."
+msgstr "揀 Bambu Studio 點樣同你講嘢。幽默只會改語氣，永遠唔會改事實。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The language and humour you pick show up in every dialog. Change them later in Preferences."
+msgstr "你揀嘅語言同幽默會喺每個對話框出現。之後可以喺偏好設定改。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Choose light or dark, how roomy controls are, and how much things move."
+msgstr "揀淺色定深色、控制項幾寬鬆，同埋啲嘢郁幾多。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "These apply right away and stay in Preferences, Appearance."
+msgstr "呢啲即刻生效，之後喺偏好設定，外觀度都有。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Add your printers"
+msgstr "加入你嘅打印機"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Pick the printers and nozzles you own. Slicing presets, plates and process profiles come from these choices."
+msgstr "揀你擁有嘅打印機同噴嘴。切片預設、打印板同處理設定檔都由呢啲選擇嚟。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Printers decide which plates, nozzles and process presets Prepare offers. Add more later from Prepare, then Printer."
+msgstr "打印機決定準備提供邊啲打印板、噴嘴同處理預設。之後可以喺準備 > 打印機再加。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "At least one printer. Next stays available; it explains what is missing instead of greying out."
+msgstr "至少一部打印機。下一步一直都撳得；佢會解釋欠乜，唔會變灰。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Tell Bambu Studio what is loaded. Reading the AMS fills the plate's filament list from the printer."
+msgstr "話俾 Bambu Studio 知裝咗乜。讀取 AMS 會由打印機填好打印板嘅線材清單。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Filament presets set temperatures, cooling and flow for every slice."
+msgstr "線材預設會為每次切片設定溫度、冷卻同流量。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "At least one filament preset. Printers you add bring their own."
+msgstr "至少一個線材預設。你加嘅打印機會自帶。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Keep your work safe while you print. This step is optional."
+msgstr "打印期間保住你嘅工作。呢步係可選嘅。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Auto-backup keeps a recovery copy of the open project; a config snapshot keeps your settings."
+msgstr "自動備份會保留開住嘅專案嘅復原副本；設定快照會保留你嘅設定。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Not built yet."
+msgstr "未起好。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Here is what setup did. Open Prepare to start, or take the feature tour."
+msgstr "呢度係設定做咗嘅嘢。打開準備就可以開始，或者行一轉功能導覽。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Every choice here is in Preferences or Help afterwards."
+msgstr "呢度每個選擇，之後都喺偏好設定或者說明度搵到。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Required"
+msgstr "必要"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Optional"
+msgstr "可選"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Now"
+msgstr "而家"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Step %d of %d"
+msgstr "第 %d 步（共 %d 步）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Every required step is done"
+msgstr "所有必要步驟都完成咗"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "1 required step left"
+msgstr "仲剩 1 個必要步驟"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "%d required steps left"
+msgstr "仲剩 %d 個必要步驟"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Next anyway"
+msgstr "照樣下一步"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Setup can finish once every required step is done. The summary above says what is still needed; click a step on the left to do it."
+msgstr "所有必要步驟完成之後，設定先可以完成。上面嘅摘要講咗仲需要乜；撳左邊嘅步驟去做。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "No printer is set up yet. Choose printers or import a printer profile first. You can also go on and come back; setup cannot finish without one."
+msgstr "暫時未設定任何打印機。請先揀打印機或者匯入打印機設定檔。你亦可以繼續，遲啲先返嚟；冇打印機設定就完成唔到。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "No filament preset is available yet. Pick filaments first, or go on and come back; setup cannot finish without one."
+msgstr "暫時未有線材預設。請先揀線材，或者繼續，遲啲先返嚟；冇線材預設設定就完成唔到。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Saved at %s. Close any time and continue from Help, then Set up Bambu Studio."
+msgstr "%s 已儲存。隨時可以關，之後喺說明 > 設定 Bambu Studio 繼續。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "That language could not be loaded"
+msgstr "載入唔到嗰個語言"

@@ -1079,6 +1079,10 @@ list(APPEND SLIC3R_GUI_SOURCES
     GUI/Base64Toolkit/Base64ToolkitPanel.hpp
     GUI/Base64Toolkit/Base64Workbench.cpp
     GUI/Base64Toolkit/Base64Workbench.hpp
+    GUI/SetupWizard/SetupModel.cpp
+    GUI/SetupWizard/SetupModel.hpp
+    GUI/SetupWizard/SetupWizardDialog.cpp
+    GUI/SetupWizard/SetupWizardDialog.hpp
     GUI/PrinterFaultReference.cpp
     GUI/PrinterFaultReference.hpp
     GUI/Melody/MelodyModel.hpp

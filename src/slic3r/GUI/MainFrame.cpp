@@ -110,6 +110,7 @@
 #include "OllamaSuite/OllamaSuiteDialog.hpp"
 #include "LocalConverter/LocalConverterPanel.hpp"
 #include "Base64Toolkit/Base64ToolkitPanel.hpp"
+#include "SetupWizard/SetupWizardDialog.hpp"
 #include "FeatureServices/PackageReceipts.hpp"
 #include "FeatureServices/ServiceWorkspace.hpp"
 #include "FeatureServices/SurfaceRegistry.hpp"
@@ -4610,6 +4611,12 @@ static wxMenu* generate_help_menu()
         [](wxCommandEvent&) { play_dual_extruder_slice_video(); });
     append_menu_item(helpMenu, wxID_ANY, _L("Dual-extruder TPU tutorial"), _L("Open the TPU printing tutorial video"),
         [](wxCommandEvent&) { play_dual_extruder_print_tpu_video(); });
+    // Practical setup: language, look, printers, inks, backups; saves as it goes.
+    append_menu_item(helpMenu, wxID_ANY, _L("Set up Bambu Studio") + dots,
+        _L("Language, look, printers, inks and backups in one guided pass that saves as it goes"),
+        feature_command("practical-setup", []() {
+            if (auto* frame = wxGetApp().mainframe) SetupWizardDialog::open(frame);
+        }));
     // Show Beginner's Tutorial
     append_menu_item(helpMenu, wxID_ANY, _L("Setup Wizard"), _L("Setup Wizard"), feature_command("setup-wizard", []() { wxGetApp().ShowUserGuide(); }));
 

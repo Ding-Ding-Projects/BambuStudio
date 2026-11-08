@@ -1355,12 +1355,12 @@
     {
       "route": "windows/README.md",
       "title": "Windows features",
-      "sha256": "9b9185ff5d6770173671a493d095910c7fa89d490d69172305eafe4300bc4989"
+      "sha256": "c56de7f0bed0efa0c66da1bbdee78626678a36706b64b294bd9788bf4fb87c02"
     },
     {
       "route": "windows/README.yue_HK.md",
       "title": "Windows 功能",
-      "sha256": "766104086fafd8f2f034c8d13266d69f4a964ac0c352501fa70ab13c5956d2e4"
+      "sha256": "819e3cd1ec2b68a16f74947d88e7693dcb2494d4edc52c36b702f27540f207ec"
     },
     {
       "route": "windows/action-sounds.md",
@@ -1751,6 +1751,16 @@
       "route": "windows/personal-vocabulary.yue_HK.md",
       "title": "個人詞彙",
       "sha256": "45129189e508e11f5b0056914e4f7fff9cd92c88131ee8613bdd5c4ac3ddea27"
+    },
+    {
+      "route": "windows/practical-setup.md",
+      "title": "Set up Bambu Studio",
+      "sha256": "949a42a460edba7c877bfe6bc108204e6ba9e3119c23c507bab946483c10f67c"
+    },
+    {
+      "route": "windows/practical-setup.yue_HK.md",
+      "title": "設定 Bambu Studio",
+      "sha256": "41bf5cee25cbe7bb315cd05a682590bc1a7dfb31d80d3c11e2ecff78e9b342d1"
     },
     {
       "route": "windows/preferences-provenance.md",
@@ -2195,7 +2205,7 @@
       "bytes": 16430
     }
   ],
-  "bundle_sha256": "b7b27eb556f24544bd32109be641bc5fe720b8b10e374a136c3a8799d41dc8d0",
+  "bundle_sha256": "85caf9063124d33eb68679a8f2a11175a1cadf55fc73a8414b170abcfa645eeb",
   "unavailable_references": [
     {
       "source": "api/README.md",
@@ -3300,6 +3310,16 @@
     {
       "source": "windows/personal-vocabulary.yue_HK.md",
       "target": "../../screenshots/vocabulary-drop/README.md",
+      "kind": "link"
+    },
+    {
+      "source": "windows/practical-setup.md",
+      "target": "../../../design/local-tools-2026-11/README.md",
+      "kind": "link"
+    },
+    {
+      "source": "windows/practical-setup.yue_HK.md",
+      "target": "../../../design/local-tools-2026-11/README.md",
       "kind": "link"
     },
     {
