@@ -1329,7 +1329,7 @@ void MenuFactory::create_default_menu()
     // The view, changed in place: each row applies at once and the menu stays open.
     m_default_menu.AppendSeparator();
     const auto repaint = []() {
-        if (GLCanvas3D *canvas = plater()->get_current_canvas3D()) canvas->post_event(SimpleEvent(wxEVT_PAINT));
+        if (GLCanvas3D *canvas = plater() ? plater()->get_current_canvas3D() : nullptr) canvas->post_event(SimpleEvent(wxEVT_PAINT));
     };
     MD3::AppendChoice(&m_default_menu, _L("Camera"), {_L("Perspective"), _L("Orthographic")},
         []() { return wxGetApp().app_config->get_bool("use_perspective_camera") ? 0 : 1; },
@@ -1344,20 +1344,27 @@ void MenuFactory::create_default_menu()
             repaint();
         },
         _L("Show 3D navigator in Prepare and Preview scene"));
+    // Every getter and setter here copes with no Plater yet: these menus are
+    // built inside the Plater's constructor.
     const auto by_object = []() {
-        PartPlate *plate = plater()->get_partplate_list().get_curr_plate();
+        PartPlate *plate = plater() ? plater()->get_partplate_list().get_curr_plate() : nullptr;
         return plate && plate->get_real_print_seq() == PrintSequence::ByObject;
     };
     MD3::AppendSwitch(&m_default_menu, _L("Show labels"),
-        [by_object]() { return by_object() ? plater()->are_view3D_object_labels_shown() : plater()->are_view3D_layer_labels_shown(); },
+        [by_object]() {
+            if (!plater()) return false;
+            return by_object() ? plater()->are_view3D_object_labels_shown() : plater()->are_view3D_layer_labels_shown();
+        },
         [by_object, repaint](bool on) {
+            if (!plater()) return;
             if (by_object()) plater()->show_view3D_object_labels(on);
             else plater()->show_view3D_layer_labels(on);
             repaint();
         },
         _L("Labels by layer, or by object when the plate prints object by object, as in View"));
-    MD3::AppendSwitch(&m_default_menu, _L("Show &Overhang"), []() { return plater()->is_view3D_overhang_shown(); },
+    MD3::AppendSwitch(&m_default_menu, _L("Show &Overhang"), []() { return plater() && plater()->is_view3D_overhang_shown(); },
         [repaint](bool on) {
+            if (!plater()) return;
             plater()->show_view3D_overhang(on);
             repaint();
         },

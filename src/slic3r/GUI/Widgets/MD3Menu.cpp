@@ -2038,8 +2038,16 @@ wxMenuItem *append_live(wxMenu *menu, const wxString &label, const wxString &hel
         return nullptr;
     auto *item = new MD3::Menu::LiveMenuItem(menu, wxID_ANY, label, help, std::move(control));
     menu->Append(item);
+    // A row reads its value when its menu opens, never while it is being
+    // added: menus are built while the window that owns the value may not
+    // exist yet (the 3D view's menus are built inside the Plater's
+    // constructor, before wxGetApp().plater() is set). The Material menu reads
+    // the value as it draws; a native menu gets the check mark here.
     if (item->IsCheckable())
-        item->Check(item->control().value() >= 0.5);
+        menu->Bind(wxEVT_MENU_OPEN, [item](wxMenuEvent &e) {
+            e.Skip();
+            item->Check(item->control().value() >= 0.5);
+        });
     // Outside the Material menu a switch is a check item: keep it working there too.
     if (item->control().kind == MD3::Menu::LiveControl::Kind::Switch)
         menu->Bind(wxEVT_MENU, [item](wxCommandEvent &e) {
