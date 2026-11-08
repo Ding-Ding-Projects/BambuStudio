@@ -1,5 +1,13 @@
 # Roadmap
 
+## Local tools and the last unbuilt features, 8 November 2026
+
+- [x] Build the Every feature page, Preferences provenance and its remake (section reset, import, undo, related settings, playground, section counts), job names in your own wording, the Base64 toolkit, the practical setup wizard, extensions with the check before a print is sent, live charts, element locks, attention modes, the drawing board, live menu controls, virtual disks and Minecraft servers, each with an article, a Cantonese twin, a board and checks.
+- [x] Fix the MSVC C2872 failure in the Minecraft servers page and guard against namespace-named members there.
+- [ ] Confirm the hosted Windows build of a1043de and the queued release publications.
+- [ ] Take native screenshots of the Minecraft servers page, the before-send window and the Preferences additions from a published release.
+- [ ] Build what the articles list under "Not done yet", including the twelve regrouped Preferences sections, Docker, SSH and Bedrock servers, and the model.imported and print.finished extension hooks.
+
 ## Installed wording acceptance, 7 November 2026
 
 - [x] Exercise actual native-picker import, isolated cache equality, restart retention, invalid-input preservation, neutral replacement and Clear/original-status behavior in installed 2.9.1936.

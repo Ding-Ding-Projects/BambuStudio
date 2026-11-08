@@ -1,5 +1,34 @@
 # Bambu Studio handoff
 
+## Local tools and the last unbuilt features, 8 November 2026
+
+Commits 6d33c47 to a1043de add, each with an article, a Cantonese twin, a
+design board in `design/local-tools-2026-11` and standalone or source checks:
+the Every feature page (nothing is listed as not built any more), where every
+Preferences value comes from with a change record, and the rest of the
+Preferences remake (Reset this section behind the two-key confirmation,
+import of the JSON export, Undo last change, Related settings, the Appearance
+playground, section counts, reset through each row's own control and never
+through a locked one), printer job names in your own wording, the Base64
+toolkit, a practical setup wizard, extensions (manifests, consent, limits, a
+process runner, a manager, three built-ins and the check before a print is
+sent), live temperature charts, element locks, attention modes, the drawing
+board, live controls inside menus, Windows virtual disks and Minecraft
+servers. b6bd13e fixes four chrome glitches and stops blank web pages passing
+as captures.
+
+The Windows build of 6d9567b and 46547e5 failed: MSVC found a ServersPanel
+member named `detail` ambiguous with the boost and nlohmann `detail`
+namespaces from inside a lambda (C2872), which GCC accepts. a1043de renames
+it and adds a source guard; its hosted build was pending when this was
+written, as were the serialized release publications of the earlier commits.
+The virtual disk operations passed their hosted Windows workflow on real
+disks. No native screenshot of the Minecraft servers page, the before-send
+window or the Preferences additions exists yet, and running a server needs
+Windows (other systems build a stub). Each article's "Not done yet" section
+lists what was designed but deliberately not built, including the board's
+twelve regrouped Preferences sections.
+
 ## Installed wording workflow evidence, 7 November 2026
 
 Installed 2.9.1936/f1526f802 passed actual Settings/native-picker import, isolated
