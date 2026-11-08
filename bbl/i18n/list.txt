@@ -443,6 +443,7 @@ src/slic3r/GUI/SetupWizard/SetupModel.cpp
 src/slic3r/GUI/SetupWizard/SetupWizardDialog.cpp
 src/slic3r/GUI/Extensions/ExtensionCore.cpp
 src/slic3r/GUI/Extensions/ExtensionRuntime.cpp
+src/slic3r/GUI/Extensions/BeforeSendCheck.cpp
 src/slic3r/GUI/Extensions/ExtensionsPanel.cpp
 src/slic3r/GUI/LiveCharts/LiveChartsPanel.cpp
 src/slic3r/GUI/ElementLocks/LockService.cpp

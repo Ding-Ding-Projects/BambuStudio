@@ -41,6 +41,9 @@
 #include "DeviceCore/DevNozzleSystem.h"
 #include "DeviceCore/DevExtensionTool.h"
 #include "DeviceCore/DevExtruderSystem.h"
+#include "ExtruderHelpers.hpp"
+#include "Extensions/BeforeSendCheck.hpp"
+#include "Extensions/ExtensionRuntime.hpp"
 #include "DeviceCore/DevConfigUtil.h"
 #include "DeviceCore/DevFilaBlackList.h"
 #include "DeviceCore/DevFilaSystem.h"
@@ -2588,6 +2591,47 @@ void SelectMachineDialog::on_reselect_dialog_btn_clicked(wxMouseEvent&)
     m_best_pos_dialog->ShowModal();
 }
 
+// What an extension's print.before_send check is told about this send: the
+// plate, the printer's model and connection, the options shown and where each
+// filament goes. Never the printer's name, serial number, address or access code.
+static Extensions::SendFacts extension_send_facts(MachineObject *obj, int plate_idx, bool same_model,
+                                                  const std::unordered_map<std::string, PrintOption *> &options,
+                                                  const std::vector<FilamentInfo> &mapping, const std::vector<FilamentInfo> &filaments)
+{
+    Extensions::SendFacts f;
+    f.all_plates            = plate_idx == PLATE_ALL_IDX;
+    f.plate                 = f.all_plates ? 0 : plate_idx + 1;
+    f.printer_model         = obj ? into_u8(obj->get_printer_type_display_str()) : std::string();
+    f.sliced_for_this_model = same_model;
+    f.connection            = obj && obj->is_lan_mode_printer() ? "lan" : "cloud";
+    std::vector<std::string> shown;
+    for (const auto &[id, option] : options)
+        if (option && option->IsShown()) shown.push_back(id);
+    std::sort(shown.begin(), shown.end()); // the map has no order; the request should
+    for (const std::string &id : shown) f.options.emplace_back(id, options.at(id)->getValue());
+    for (const FilamentInfo &m : mapping) {
+        Extensions::SendFilamentFacts s;
+        s.slot = m.id + 1;
+        s.type = m.type;
+        const auto source = std::find_if(filaments.begin(), filaments.end(), [&m](const FilamentInfo &p) { return p.id == m.id; });
+        if (source != filaments.end()) {
+            s.color = source->color;
+            if (s.type.empty()) s.type = source->type;
+        }
+        if (obj && m.tray_id >= 0 && !m.ams_id.empty() && !m.slot_id.empty()) {
+            s.tray = slot_name(obj, m.get_ams_id(), std::atoi(m.slot_id.c_str()));
+            if (const auto tray = obj->get_tray(m.ams_id, m.slot_id)) {
+                DevAmsTray copy  = *tray;
+                s.tray_type      = copy.get_filament_type();
+                s.tray_color     = copy.color;
+                s.remain_percent = copy.remain;
+            }
+        }
+        f.filaments.push_back(std::move(s));
+    }
+    return f;
+}
+
 void SelectMachineDialog::on_ok_btn(wxCommandEvent &event)
 {
     // Send is disabled while a nozzle move is pending; if a click still gets
@@ -2609,6 +2653,21 @@ void SelectMachineDialog::on_ok_btn(wxCommandEvent &event)
     if (!dev) return;
     MachineObject* obj_ = dev->get_selected_machine();
     if (!obj_) return;
+
+    // Extensions that check a print before it is sent answer first, before the
+    // app's own pre-print check; with none on for print.before_send this returns
+    // at once. Only a plate sliced in this project is checked.
+    if (m_print_type == PrintFromType::FROM_NORMAL) {
+        const Extensions::SendCheckOutcome check = Extensions::check_before_send(
+            this, extension_send_facts(obj_, m_print_plate_idx, is_same_printer_model(), m_checkbox_list, m_ams_mapping_result, m_filaments));
+        if (check.decision == Extensions::SendDecision::OpenExtensions) {
+            const std::string id = check.extension;
+            wxGetApp().CallAfter([id]() { Extensions::Runtime::open_manager(id); });
+            EndModal(wxID_CANCEL);
+            return;
+        }
+        if (check.decision == Extensions::SendDecision::Back) return;
+    }
 
     std::vector<ConfirmBeforeSendInfo> confirm_text;
 

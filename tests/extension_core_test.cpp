@@ -1,9 +1,9 @@
 // Standalone assertions for src/slic3r/GUI/Extensions/ExtensionCore.cpp and
 // ExtensionProcess.cpp: manifests and their refusals, permissions and what they
 // let through, consent on new and changed permissions, answers and their
-// limits, the run record, and real extension processes (answered, timed out,
-// too large, refused paths, a clean environment). Compiled and run by
-// tests/extension_core.test.mjs.
+// limits, the run record, the verdict of the check before a print is sent,
+// and real extension processes (answered, timed out, too large, refused paths,
+// a clean environment). Compiled and run by tests/extension_core.test.mjs.
 #include "src/slic3r/GUI/Extensions/ExtensionCore.cpp"
 #include "src/slic3r/GUI/Extensions/ExtensionProcess.cpp"
 
@@ -196,6 +196,81 @@ static void answers_and_their_limits()
     CHECK(!parse_answer(nlohmann::json{{"notes", {std::string(301, 'x')}}}.dump(), Hook::PlateSliced, m, all, a, problem) && problem == "too-long:notes");
 }
 
+// print.before_send runs in this build, and only a valid answer can stop a print.
+static void before_send()
+{
+    CHECK(info(Hook::PrintBeforeSend).built);
+    CHECK(std::string(info(Hook::PrintBeforeSend).id) == "print.before_send");
+
+    // The send section needs printer.read, like the printer section, and loses secrets at every depth.
+    Manifest      m;
+    ManifestError e;
+    parse_manifest(kSpool, m, e);
+    Consent c = answer_consent(m, nullptr, true);
+    const nlohmann::json context = {
+        {"send", {{"printerModel", "Bambu Lab X1 Carbon"}, {"accessCode", "SECRET-SEND"}, {"filaments", {{{"slot", 1}, {"token", "SECRET-TRAY"}}}}}},
+        {"slice", {{"seconds", 60}}}};
+    c.allowed = {Permission::SliceRead};
+    CHECK(!build_request(Hook::PrintBeforeSend, "", context, m, c)["context"].contains("send"));
+    c.allowed = {Permission::SliceRead, Permission::PrinterRead};
+    const nlohmann::json request = build_request(Hook::PrintBeforeSend, "", context, m, c);
+    CHECK(request["hook"] == "print.before_send");
+    CHECK(request["context"]["send"]["printerModel"] == "Bambu Lab X1 Carbon");
+    CHECK(request["context"]["send"]["filaments"][0]["slot"] == 1);
+    CHECK(request.dump().find("SECRET") == std::string::npos);
+
+    auto answered = [](std::vector<ChecklistRow> rows, std::vector<std::string> notes = {}, bool block = false) {
+        SendCheckRun r;
+        r.id               = "com.example.x";
+        r.outcome          = Outcome::Answered;
+        r.answer.checklist = std::move(rows);
+        r.answer.notes     = std::move(notes);
+        r.answer.block     = block;
+        return r;
+    };
+    auto other = [](Outcome outcome, bool block = false) {
+        SendCheckRun r;
+        r.id           = "com.example.y";
+        r.outcome      = outcome;
+        r.answer.block = block;
+        return r;
+    };
+
+    // Nothing ran, or nothing to look at: sending carries on.
+    CHECK(summarise_send_check({}).verdict == SendVerdict::Continue);
+    SendSummary s = summarise_send_check({answered({{"pass", "a"}, {"pass", "b"}}), answered({})});
+    CHECK(s.verdict == SendVerdict::Continue && s.passed == 2 && s.warned == 0 && s.blockers.empty());
+    // Rows that warn or fail, notes, and runs without a valid answer wait for the person.
+    s = summarise_send_check({answered({{"pass", "a"}, {"warn", "b"}})});
+    CHECK(s.verdict == SendVerdict::Look && s.passed == 1 && s.warned == 1);
+    s = summarise_send_check({answered({{"fail", "a"}})});
+    CHECK(s.verdict == SendVerdict::Look && s.failed == 1);
+    s = summarise_send_check({answered({}, {"Weights were read 2 hours ago."})});
+    CHECK(s.verdict == SendVerdict::Look && s.notes == 1);
+    for (Outcome o : {Outcome::TimedOut, Outcome::TooLarge, Outcome::NotJson, Outcome::Invalid, Outcome::Failed, Outcome::NotStarted}) {
+        s = summarise_send_check({answered({{"pass", "a"}}), other(o)});
+        CHECK(s.verdict == SendVerdict::Look && s.not_answered == 1 && s.passed == 1);
+    }
+    // Skipped by the person: counts for nothing.
+    s = summarise_send_check({other(Outcome::Stopped), answered({{"pass", "a"}})});
+    CHECK(s.verdict == SendVerdict::Continue && s.stopped == 1);
+    // A valid answer that blocks stops the print, whatever else answered.
+    s = summarise_send_check({answered({{"pass", "a"}}), answered({{"fail", "b"}}, {}, true), other(Outcome::TimedOut)});
+    CHECK(s.verdict == SendVerdict::Stop && s.blockers.size() == 1 && s.blockers[0] == 1 && s.failed == 1 && s.not_answered == 1);
+    s = summarise_send_check({answered({}, {}, true), answered({}, {}, true)});
+    CHECK(s.verdict == SendVerdict::Stop && s.blockers.size() == 2 && s.blockers[0] == 0 && s.blockers[1] == 1);
+    // An answer that broke a rule never blocks, even if it said so.
+    s = summarise_send_check({other(Outcome::Invalid, true)});
+    CHECK(s.verdict == SendVerdict::Look && s.blockers.empty());
+    // A block is only a valid answer when the extension may block.
+    Answer      a;
+    std::string problem;
+    Consent     warn_only = answer_consent(m, nullptr, true);
+    warn_only.allowed     = {Permission::SendWarn};
+    CHECK(!parse_answer(R"({"block":true,"blockReason":"no"})", Hook::PrintBeforeSend, m, warn_only, a, problem) && problem == "not-allowed:send.block");
+    CHECK(parse_answer(R"({"block":false,"checklist":[{"state":"pass","text":"ok"}]})", Hook::PrintBeforeSend, m, warn_only, a, problem));
+}
+
 static void run_record()
 {
     const fs::path dir = fs::temp_directory_path() / ("ext-runs-" + std::to_string(std::random_device{}()));
@@ -341,6 +416,7 @@ int main()
     consent_and_state();
     requests_carry_only_what_is_allowed();
     answers_and_their_limits();
+    before_send();
     run_record();
 #ifndef _WIN32
     real_processes();

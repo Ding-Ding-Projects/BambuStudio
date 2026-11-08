@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-08 09:03-0500\n"
+"POT-Creation-Date: 2026-11-08 09:44-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -31219,6 +31219,10 @@ msgstr ""
 msgid "Plate %1%, nothing selected"
 msgstr ""
 
+#, possible-boost-format
+msgid "All plates (%1%)"
+msgstr ""
+
 msgid "Sample request"
 msgstr ""
 
@@ -31228,6 +31232,17 @@ msgstr ""
 
 #, possible-boost-format
 msgid "Sample answer: a file named %1%, not saved."
+msgstr ""
+
+#, possible-boost-format
+msgid "Sample answer: %1% checklist rows (%2% pass, %3% warn, %4% fail)."
+msgstr ""
+
+#, possible-boost-format
+msgid "Sample answer: it would stop the print: %1%"
+msgstr ""
+
+msgid "no reason given."
 msgstr ""
 
 msgid "Sample answer: valid, with nothing to show."
@@ -31250,6 +31265,103 @@ msgstr ""
 
 #, possible-boost-format
 msgid "Comment lines were not added to %1% (%2%). The exported file is unchanged."
+msgstr ""
+
+msgid "every plate"
+msgstr ""
+
+msgid "Check before sending"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Each one has the time limit set in Extensions (%d s). Skipping stops the run now; it is recorded as stopped by you and never counts as a failure."
+msgstr ""
+
+msgid "Checking every plate before it is sent"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Checking Plate %d before it is sent"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Extensions: %d, one at a time"
+msgstr ""
+
+msgid "Send without the checks"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Checking... %.1f s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Waiting for %s to finish another run"
+msgstr ""
+
+msgid "Stopped the print"
+msgstr ""
+
+msgid "All checks passed"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Sending %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s stopped this print"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Stopped by %d extensions"
+msgstr ""
+
+msgid "Nothing is sent"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Plate %d is not sent"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Passed: %d"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "To look at: %d"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Notes: %d"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Did not answer: %d"
+msgstr ""
+
+msgid "Look before you send every plate"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Look before you send Plate %d"
+msgstr ""
+
+msgid "It gave no reason."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s did not answer: %s."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "It is off after %d failed runs in a row."
+msgstr ""
+
+msgid "Nothing to point out."
+msgstr ""
+
+msgid "You allowed this extension to stop prints (send.block). To send anyway, change the plate or the mapping, or turn the extension off in Extensions and send again."
 msgstr ""
 
 msgid "not run by this build yet"

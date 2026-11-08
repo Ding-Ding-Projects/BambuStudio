@@ -29,7 +29,7 @@
   <div style="display: grid; grid-template-columns: 560px minmax(0, 1fr); gap: 12px">
     <section class="card" aria-label="Installed extensions">
       <div class="tr h" style="grid-template-columns: 28px minmax(0,1fr) 90px 52px"><span></span><span>Extension</span><span>Last run</span><span>On</span></div>
-      <div class="tr" style="grid-template-columns: 28px minmax(0,1fr) 90px 52px"><span class="ms ok" aria-hidden="true">checklist</span><span>Plate checklist<br><span class="note">Built in 1.0.0 · after slicing</span></span><span class="mut">00:41:07</span><button class="sw" role="switch" aria-checked="true" aria-label="Plate checklist"></button></div>
+      <div class="tr" style="grid-template-columns: 28px minmax(0,1fr) 90px 52px"><span class="ms ok" aria-hidden="true">checklist</span><span>Plate checklist<br><span class="note">Built in 1.0.0 · after slicing, before sending</span></span><span class="mut">00:41:07</span><button class="sw" role="switch" aria-checked="true" aria-label="Plate checklist"></button></div>
       <div class="tr" style="grid-template-columns: 28px minmax(0,1fr) 90px 52px"><span class="ms ok" aria-hidden="true">schedule</span><span>G-code time stamp<br><span class="note">Built in 1.0.0 · after G-code export</span></span><span class="mut">00:41:09</span><button class="sw" role="switch" aria-checked="true" aria-label="G-code time stamp"></button></div>
       <div class="tr" style="grid-template-columns: 28px minmax(0,1fr) 90px 52px"><span class="ms ok" aria-hidden="true">summarize</span><span>Slice report<br><span class="note">Built in 1.0.0 · after slicing</span></span><span class="mut">00:41:07</span><button class="sw" role="switch" aria-checked="true" aria-label="Slice report"></button></div>
       <div class="tr sel" style="grid-template-columns: 28px minmax(0,1fr) 90px 52px"><span class="ms warn" aria-hidden="true">scale</span><span>Spool weigh-in<br><span class="note" style="color:#cde9d6">1.2.0 · permissions changed, waiting for you</span></span><span>Yesterday</span><button class="sw off" role="switch" aria-checked="false" aria-label="Spool weigh-in"></button></div>
@@ -48,7 +48,7 @@
       <div class="row"><span style="width:52px;height:52px;border-radius:16px;background:#28322c;display:grid;place-items:center"><span class="ms warn" aria-hidden="true" style="font-size:28px">scale</span></span><div class="grow"><div class="h2">Spool weigh-in 1.2.0</div><div class="sub">Subtracts the filament each print used from your spool weights and warns before a spool runs out.</div></div><span class="mono mut" style="font-size:12px">com.example.spool-weigh-in</span></div>
       <div class="seg" role="tablist" style="align-self:flex-start"><button class="on" role="tab">Overview</button><button role="tab">Permissions</button><button role="tab">Runs 24</button><button role="tab">Manifest</button></div>
       <div class="g3">
-        <div class="well"><div class="lbl">Hooks</div><div style="font-size:13px">After slicing</div><div style="font-size:13px">Before sending a print <span class="note">(not run by this build yet)</span></div><div style="font-size:13px">After a print finishes <span class="note">(not run by this build yet)</span></div></div>
+        <div class="well"><div class="lbl">Hooks</div><div style="font-size:13px">After slicing</div><div style="font-size:13px">Before sending a print</div><div style="font-size:13px">After a print finishes <span class="note">(not run by this build yet)</span></div></div>
         <div class="well"><div class="lbl">Commands</div><div class="row"><span class="grow" style="font-size:13px">Show spool weights</span><button class="btn" style="height:30px">Run</button></div><div class="note">Also in the command palette (Ctrl+Shift+F) while it is on.</div></div>
         <div class="well"><div class="lbl">Program</div><div class="mono" style="font-size:12px">powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File weigh-in.ps1</div><div style="font-size:13px">API version 1 · runs in its own folder</div></div>
       </div>
@@ -78,7 +78,7 @@
       <div class="tr h" style="grid-template-columns: 170px minmax(0,1fr) 170px 90px"><span>Hook</span><span>Receives</span><span>May answer</span><span>This build</span></div>
       <div class="tr" style="grid-template-columns: 170px minmax(0,1fr) 170px 90px"><span class="mono">model.imported</span><span>Name, triangles, size and units</span><span>Notes</span><span class="mut">Not yet</span></div>
       <div class="tr" style="grid-template-columns: 170px minmax(0,1fr) 170px 90px"><span class="mono">plate.sliced</span><span>Time, filament per slot, layers and warnings</span><span>Notes</span><span class="ok">Runs</span></div>
-      <div class="tr" style="grid-template-columns: 170px minmax(0,1fr) 170px 90px"><span class="mono">print.before_send</span><span>Plate, printer model, filaments and options</span><span>Checklist rows, a block with its reason</span><span class="mut">Not yet</span></div>
+      <div class="tr" style="grid-template-columns: 170px minmax(0,1fr) 170px 90px"><span class="mono">print.before_send</span><span>Plate, printer model, filaments and options</span><span>Checklist rows, a block with its reason</span><span class="ok">Runs</span></div>
       <div class="tr" style="grid-template-columns: 170px minmax(0,1fr) 170px 90px"><span class="mono">gcode.exported</span><span>The file name and the slice statistics</span><span>Comment lines to add at the start or end</span><span class="ok">Runs</span></div>
       <div class="tr" style="grid-template-columns: 170px minmax(0,1fr) 170px 90px"><span class="mono">print.finished</span><span>Result, duration and filament used</span><span>Notes</span><span class="mut">Not yet</span></div>
       <div class="tr" style="grid-template-columns: 170px minmax(0,1fr) 170px 90px"><span class="mono">command</span><span>A summary of the selection</span><span>Notes, a text file to save</span><span class="ok">Runs</span></div>
@@ -115,9 +115,79 @@
       <div class="row" style="justify-content:flex-end"><button class="btn q">Keep 0.4.1</button><button class="btn p">Replace</button></div>
     </section>
   </div>
+  <div class="row"><div class="grow"><div class="h2">Before a print is sent</div><div class="sub">Print plate, then Send: every extension that is on for print.before_send answers first, one at a time, before the app's own pre-print check. Only a plate sliced in this project is checked; printing a file already on the printer is not.</div></div><span class="tag g">Runs in this build</span></div>
+  <div class="g3">
+    <section class="dlg" role="dialog" aria-label="Checking this print">
+      <div class="row"><span class="ms ok" aria-hidden="true" style="font-size:26px">checklist</span><div class="grow"><div class="h2">Checking Plate 1 before it is sent</div><div class="sub">2 extensions, one at a time</div></div></div>
+      <div class="bar"><i style="width:45%"></i></div>
+      <div class="well">
+        <div class="row"><span class="ms ok" aria-hidden="true">progress_activity</span><span class="grow" style="font-size:14px">Plate checklist 1.0.0</span><span class="mono note">0.4 s</span></div>
+        <div class="row"><span class="ms mut" aria-hidden="true">schedule</span><span class="grow mut" style="font-size:14px">Spool weigh-in 1.2.0</span><span class="note">Waiting</span></div>
+      </div>
+      <div class="note">Each one has the time limit set in Extensions (10 s). Skipping stops the run now; it is recorded as stopped by you and never counts as a failure.</div>
+      <div class="row" style="justify-content:flex-end"><button class="btn q">Back</button><button class="btn">Send without the checks</button></div>
+    </section>
+    <section class="dlg" role="dialog" aria-label="Look before you send">
+      <div class="row"><span class="ms warn" aria-hidden="true" style="font-size:26px">fact_check</span><div class="grow"><div class="h2">Look before you send Plate 1</div><div class="sub">3 passed · 2 to look at · 1 did not answer</div></div></div>
+      <div class="well">
+        <div class="lbl">Plate checklist 1.0.0</div>
+        <div class="row"><span class="ms ok" aria-hidden="true">check_circle</span><span class="grow" style="font-size:13px">No slicing warnings.</span></div>
+        <div class="row"><span class="ms warn" aria-hidden="true">warning</span><span class="grow" style="font-size:13px">A long print: 9 h 12 min. Check that every spool has enough filament.</span></div>
+      </div>
+      <div class="well">
+        <div class="lbl">Spool weigh-in 1.2.0</div>
+        <div class="row"><span class="ms ok" aria-hidden="true">check_circle</span><span class="grow" style="font-size:13px">Slot 1 (A1): 612 g left, this plate needs 148 g.</span></div>
+        <div class="row"><span class="ms warn" aria-hidden="true">warning</span><span class="grow" style="font-size:13px">Slot 2 (A2): about 70 g left, this plate needs 63 g.</span></div>
+        <div class="row"><span class="ms ok" aria-hidden="true">check_circle</span><span class="grow" style="font-size:13px">Timelapse is on.</span></div>
+        <div class="row"><span class="ms mut" aria-hidden="true">info</span><span class="grow mut" style="font-size:13px">Weights were last read 2 hours ago.</span></div>
+      </div>
+      <div class="well"><div class="row"><span class="ms err" aria-hidden="true">error</span><span class="grow" style="font-size:13px">Timelapse renamer did not answer: ran past its time limit of 10 s.</span></div></div>
+      <div class="row" style="justify-content:flex-end"><button class="btn q">Open Extensions</button><button class="btn">Back</button><button class="btn p">Send</button></div>
+    </section>
+    <section class="dlg" role="dialog" aria-label="An extension stopped this print">
+      <div class="row"><span class="ms err" aria-hidden="true" style="font-size:26px">block</span><div class="grow"><div class="h2">Spool weigh-in stopped this print</div><div class="sub">Plate 1 is not sent</div></div></div>
+      <div class="well" style="background:#3b1f20;color:#ffdad6"><div class="row"><span class="ms" aria-hidden="true">block</span><span class="grow" style="font-size:14px">Slot 2 (A2) has about 40 g left and this plate needs 63 g. Load a fuller spool or map another slot.</span></div></div>
+      <div class="well">
+        <div class="lbl">Spool weigh-in 1.2.0</div>
+        <div class="row"><span class="ms ok" aria-hidden="true">check_circle</span><span class="grow" style="font-size:13px">Slot 1 (A1): 612 g left, this plate needs 148 g.</span></div>
+        <div class="row"><span class="ms err" aria-hidden="true">cancel</span><span class="grow" style="font-size:13px">Slot 2 (A2): about 40 g left, this plate needs 63 g.</span></div>
+      </div>
+      <div class="note">You allowed this extension to stop prints (send.block). To send anyway, change the plate or the mapping, or turn the extension off in Extensions and send again.</div>
+      <div class="row" style="justify-content:flex-end"><button class="btn q">Open Extensions</button><button class="btn p">Back</button></div>
+    </section>
+  </div>
+  <div class="g2">
+    <section class="card" aria-label="What a before-send request carries">
+      <div class="row"><div class="h2 grow">What the check receives</div><span class="tag">printer.read</span></div>
+      <div class="code">"send": {
+  "plate": 1, "allPlates": false,
+  "printerModel": "Bambu Lab X1 Carbon",
+  "slicedForThisModel": true,
+  "connection": "lan",
+  "options": { "timelapse": "on", "bed_leveling": "auto",
+               "flow_cali": "off", "nozzle_offset_cali": "auto" },
+  "filaments": [
+    { "slot": 1, "type": "PLA", "color": "#00AE42", "tray": "A1",
+      "trayType": "PLA", "trayColor": "#00AE42", "remainPercent": 61 },
+    { "slot": 2, "type": "PETG", "color": "#F4EE2A", "tray": "A2",
+      "trayType": "PETG", "trayColor": "#F4EE2A", "remainPercent": -1 }
+  ]
+}</div>
+      <div class="note">Beside "slice" (slice.read) and "printer" (printer.read). The printer's name, serial number, address and access code are never sent.</div>
+    </section>
+    <section class="card" aria-label="How the answers are used">
+      <div class="h2">How the answers are used</div>
+      <div class="tr h" style="grid-template-columns: 170px minmax(0,1fr)"><span>Answer</span><span>What happens</span></div>
+      <div class="tr" style="grid-template-columns: 170px minmax(0,1fr)"><span>Every row passes</span><span>Nothing to look at: the window closes by itself and sending carries on.</span></div>
+      <div class="tr" style="grid-template-columns: 170px minmax(0,1fr)"><span class="warn">warn or fail rows, notes</span><span>Shown grouped by extension. <b>Send</b> carries on; <b>Back</b> returns.</span></div>
+      <div class="tr" style="grid-template-columns: 170px minmax(0,1fr)"><span class="err">block: true</span><span>The print is not sent. Only extensions you allowed send.block can do this.</span></div>
+      <div class="tr" style="grid-template-columns: 170px minmax(0,1fr)"><span class="mut">No valid answer</span><span>Shown with the reason. It never holds a print back.</span></div>
+      <div class="tr" style="grid-template-columns: 170px minmax(0,1fr)"><span class="mut">Send without the checks</span><span>The runs stop at once and are recorded as stopped by you.</span></div>
+    </section>
+  </div>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1790}}'>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":2840}}'>
 class Component extends DCLogic {
   renderVals() {
     return {};

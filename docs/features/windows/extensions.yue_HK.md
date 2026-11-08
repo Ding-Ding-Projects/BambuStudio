@@ -1,6 +1,6 @@
 ---
 translation-of: extensions.md
-source-sha256: 2bb852fa3a9b41d91976bb2babba534d56215f099d244cb3b725ae55adbf215d
+source-sha256: 5ba109bebf13041b3167e3d8d1d5accfcf77d082629ce020f2c3dfbbc5757cc0
 review-status: agent-drafted
 ---
 
@@ -40,7 +40,7 @@ review-status: agent-drafted
 | 執行紀錄 | 佢嘅執行，最新嘅喺頭：幾時、掛鈎或者指令、用咗幾耐、答覆大細同結果；**匯出執行紀錄**會將所有擴充功能嘅每次執行儲存做 JSON |
 | 清單檔 | 磁碟上嘅 `manifest.json` 原文，同埋係咪有效，或者錯喺邊 |
 
-**用樣本試吓**會用一個由虛構數值組成嘅請求行佢一次，每部分都標住 `"sample": true`。佢嘅備註會顯示；佢答嘅註解行同檔案只會報告，永遠唔會套用。旁邊有**打開佢嘅資料夾**同**移除**（問過你之後刪除個資料夾）。
+**用樣本試吓**會用一個由虛構數值組成嘅請求行佢一次，每部分都標住 `"sample": true`。佢嘅備註會顯示；佢答嘅註解行、檔案、清單行同阻止只會報告，永遠唔會套用。旁邊有**打開佢嘅資料夾**同**移除**（問過你之後刪除個資料夾）。
 
 ## 內置擴充功能
 
@@ -49,7 +49,7 @@ review-status: agent-drafted
 | 擴充功能 | 幾時行 | 做乜 |
 | --- | --- | --- |
 | Slice report | 切片之後；佢嘅指令 **Save a slice report** | 一條備註寫住打印時間、每個槽嘅墨水同層數，再加警告數量。個指令會答一份 Markdown 報告畀你儲存 |
-| Plate checklist | 切片之後（同埋發送之前，等呢個版本行呢個掛鈎嗰陣） | 有嘢值得再望多眼先會出備註：切片警告、8 個鐘或以上嘅打印、30 次或以上換墨水、要 500 g 或以上嘅槽 |
+| Plate checklist | 切片之後同發送之前 | 切片之後，有嘢值得再望多眼先會出備註：切片警告、8 個鐘或以上嘅打印、30 次或以上換墨水、要 500 g 或以上嘅槽。發送之前，同樣幾點會變做清單行 |
 | G-code time stamp | 匯出 G-code 之後 | 喺檔案頭尾加註解行，寫住匯出時間，同打印板嘅時間、墨水同層數 |
 
 佢哋用 `powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File <script>` 行。如果部電腦嘅政策禁止 PowerShell 指令碼，佢哋就會失敗，呢頁會顯示結束代碼。
@@ -61,11 +61,27 @@ review-status: agent-drafted
 | `plate.sliced` | 一塊打印板切完片之後；每個切片結果一次，所以匯出一塊已經切好嘅打印板唔會再行 | `slice`、`printer` | 備註 | 會行 |
 | `gcode.exported` | 匯出純 G-code（`.gcode`）之後，等切片工作用完個檔案先 | `slice`（有檔案名，永遠冇佢嘅資料夾）、`printer` | 檔案頭同尾嘅註解行 | 會行 |
 | `command` | 你喺呢頁或者指令面板開始佢其中一個指令嘅時候 | `model`（揀咗嘅嘢）、`slice`（打印板切咗片嘅話）、`printer` | 備註、一個畀你儲存嘅文字檔 | 會行 |
+| `print.before_send` | 喺打印對話框為呢個項目切咗片嘅打印板撳**發送**嗰陣，喺應用程式自己嘅打印前檢查之前 | `slice`（一次發送所有打印板就係全部加埋）、`printer`、`send` | 清單行、連原因嘅阻止、備註 | 會行 |
 | `model.imported` | 匯入模型之後 | | 備註 | 未做 |
-| `print.before_send` | 發送打印之前 | | 清單行、連原因嘅阻止 | 未做 |
 | `print.finished` | 打印完之後 | | 備註 | 未做 |
 
 清單檔可以宣告呢個版本未會行嘅掛鈎；佢會照樣列出，**用樣本試吓**都仲可以試佢。
+
+## 發送打印之前
+
+喺打印對話框撳**發送**（或者將打印板加入打印隊列）嗰陣，會先逐個問每個為 `print.before_send` 開咗嘅擴充功能，排喺所有等緊嘅執行前面。一個都冇開嘅話就乜都冇變：冇視窗，冇延遲。否則會出一個視窗，講係邊個擴充功能檢查緊、檢查咗幾耐，有**返回**同**唔檢查直接發送**（即刻停咗嗰次執行；記錄會寫你停咗佢，永遠唔會當做失敗）。如果另一個擴充功能仲做緊之前開始嘅執行，視窗會講明，等佢做完。
+
+全部擴充功能答完之後：
+
+| 答覆 | 會點 |
+| --- | --- |
+| 淨係有通過嘅行 | **全部檢查通過**會顯示一陣，跟住繼續發送 |
+| 有警告或者唔合格嘅行、備註，或者有執行冇有效答覆 | 全部按擴充功能分組顯示，有**打開擴充功能**、**返回**同**發送** |
+| 有效答覆有 `"block": true` | 唔會發送。原因排先，跟住係每個答覆，淨係有**打開擴充功能**同**返回** |
+
+只有有效答覆先可以阻止打印，而且只限你准咗 `send.block` 嘅擴充功能：冇呢個權限而阻止就係犯規則；超時、失敗或者答錯嘅執行會顯示做冇答覆，永遠唔會攔住打印（不過仍然會計入自動關閉嘅次數）。想發送一個被擴充功能阻止咗嘅打印，就改打印板或者墨水對應，或者關咗嗰個擴充功能。**打開擴充功能**會關咗打印對話框，再喺要睇嗰個擴充功能度打開呢頁。
+
+擴充功能之後，應用程式自己嘅打印前檢查照舊跟住嚟。每次執行都會喺執行紀錄分頁度，以「發送打印之前」同打印板列出。
 
 ## 權限
 
@@ -73,7 +89,7 @@ review-status: agent-drafted
 | --- | --- |
 | `slice.read` | `slice` 部分：時間、層數、每個槽嘅墨水、警告、打印板類型 |
 | `model.read` | `model` 部分：物件名稱、實例數量、三角形數量、尺寸、揀咗嘅嘢 |
-| `printer.read` | `printer` 部分：打印機預設、型號、噴嘴尺寸同墨水預設 |
+| `printer.read` | `printer` 部分：打印機預設、型號、噴嘴尺寸同墨水預設；發送打印之前，仲有 `send` 部分 |
 | `notes.show` | 以通知顯示備註 |
 | `send.warn` | 發送打印之前嘅清單行 |
 | `send.block` | 阻止一個打印發送出去，要講原因 |
@@ -156,6 +172,23 @@ hello/
 
 - `action` 喺 `command` 係個指令嘅 id，其他時候係空。
 - `gcode.exported` 嘅 `slice.file` 係匯出檔案嘅名。
+- 一次發送所有打印板嗰陣，`slice` 會將每塊切咗片嘅打印板加埋：`plate` 係 0，`allPlates` 係 true，`plateCount` 講有幾多塊；時間、層數、換墨水次數同每個槽嘅墨水都係總數；`bedType` 除非每塊都一樣，否則係空；每個警告都有佢嘅 `plate`。
+- `send`，畀 `print.before_send` 用（要 `printer.read`）：
+
+  ```json
+  "send": {
+    "plate": 1, "allPlates": false,
+    "printerModel": "Bambu Lab X1 Carbon", "slicedForThisModel": true,
+    "connection": "lan",
+    "options": { "bed_leveling": "auto", "flow_cali": "off", "timelapse": "on" },
+    "filaments": [
+      { "slot": 1, "type": "PLA", "color": "#00AE42", "tray": "A1",
+        "trayType": "PLA", "trayColor": "#00AE42", "remainPercent": 61 }
+    ]
+  }
+  ```
+
+  `connection` 係 `cloud` 或者 `lan`。`options` 係打印對話框顯示緊嘅選項同佢用緊嘅值。每個墨水係項目嘅一個槽，有切片時嘅類型同顏色；有對應嘅話，仲有打印機對嗰個槽嘅叫法（`A1`、`HT-A`、`Ext`）、打印機喺度報告嘅嘢，同剩幾多（打印機冇講就係 `-1`）；冇對應嘅 `tray` 係空。打印機自己嘅名、序號、地址同存取碼永遠唔會喺入面。
 - `model` 有 `plate`、`objects`（最多 200 個：`name`、`instances`、`triangles`、以毫米計嘅 `size`、`selected`）、`objectCount`、`selectedCount` 同 `triangles`。
 - 克數同成本要靠墨水預設嘅密度同價錢；冇嘅話就係 0，成本會唔包括。
 
@@ -166,7 +199,7 @@ hello/
 | 欄位 | 掛鈎 | 權限 | 規則 |
 | --- | --- | --- | --- |
 | `apiVersion` | 全部 | | 有嘅話係 `1` |
-| `notes` | 全部 | `notes.show` | 最多 10 個字串，每個最多 300 個字元，以一個通知顯示 |
+| `notes` | 全部 | `notes.show` | 最多 10 個字串，每個最多 300 個字元，以一個通知顯示（發送打印之前就喺檢查視窗度顯示） |
 | `checklist` | `print.before_send` | `send.warn` | 最多 20 行 `{"state": "pass" 或者 "warn" 或者 "fail", "text": ...}`，text 最多 200 個字元 |
 | `block`、`blockReason` | `print.before_send` | `send.block` | `true` 同一個最多 300 個字元嘅原因 |
 | `gcode` | `gcode.exported` | `gcode.comment` | `{"prepend": [...], "append": [...]}`，各自最多 20 行，每行最多 200 個字元，要用 `;` 開頭，唔可以有換行 |
@@ -218,12 +251,13 @@ Windows PowerShell 5.1 會用系統嘅 ANSI 代碼頁讀冇位元組順序標記
 
 ## 檢查
 
-- `tests/extension_core.test.mjs`：清單檔同拒絕、請求同答覆嘅權限執行、同意、限制、執行紀錄同真實程序。佢嘅反向建置永遠唔會關失敗嘅擴充功能，必須失敗。
+- `tests/extension_core.test.mjs`：清單檔同拒絕、請求同答覆嘅權限執行、同意、限制、執行紀錄、發送打印之前嘅判定同真實程序。佢嘅反向建置永遠唔會關失敗嘅擴充功能，或者放走阻止咗嘅打印，必須失敗。
 - `tests/extension_host.test.mjs`：內置擴充功能嘅安裝、只喺冇改過嗰陣更新、移除咗就保持移除；加資料夾；重複同壞咗嘅清單檔；同意；主開關；限制；真實執行、令擴充功能自動關嘅失敗，同埋停止執行。佢嘅反向建置會覆寫改過嘅內置擴充功能，必須失敗。
-- `tests/extension_context.test.mjs`：請求嘅各部分、樣本同 G-code 註解行（放喺標頭之後、保留換行方式、拒絕、大檔案）。佢嘅反向建置將啲行放喺標頭上面，必須失敗。
+- `tests/extension_context.test.mjs`：請求嘅各部分（包括 `send` 部分同所有打印板加埋）、樣本同 G-code 註解行（放喺標頭之後、保留換行方式、拒絕、大檔案）。佢嘅反向建置將啲行放喺標頭上面，必須失敗。
+- `tests/extension_before_send_wiring.test.mjs`：打印對話框喺自己嘅檢查之前、而且淨係為切咗片嘅打印板問擴充功能；發送資料永遠唔讀打印機嘅序號、名、地址或者存取碼；檢查排喺所有等緊嘅執行前面，結果交畀佢嘅視窗；離開視窗會停咗啲執行；每個檢查喺壞咗嘅副本上都必須失敗。
 - `tests/extension_builtins.test.mjs`：內置清單檔同指令碼；喺 Windows 上每個內置擴充功能都會經應用程式自己嘅程式碼喺 Windows PowerShell 下真係行一次，壞咗嘅副本必須被捉到。
-- `.github/workflows/extensions-windows.yml` 喺託管嘅 Windows 機器上用 MSVC 行晒呢四個。
+- `.github/workflows/extensions-windows.yml` 喺託管嘅 Windows 機器上用 MSVC 行晒呢五個。
 
 ## 未做
 
-`model.imported`、`print.before_send` 同 `print.finished` 掛鈎已經宣告，但呢個版本未會行。仲未有每個擴充功能自己嘅設定，亦未有簽署過嘅擴充功能。
+`model.imported` 同 `print.finished` 掛鈎已經宣告，但呢個版本未會行。打印隊列入面已經有嘅工作開始打印、打印機上已經有嘅檔案、同時發送去幾部打印機，同埋發送去打印機儲存空間，都唔會行 `print.before_send`。仲未有每個擴充功能自己嘅設定，亦未有簽署過嘅擴充功能。

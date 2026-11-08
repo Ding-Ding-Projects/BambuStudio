@@ -58406,3 +58406,158 @@ msgstr "備份失敗：%s"
 #. review-status: agent-drafted
 msgid "This server"
 msgstr "呢部伺服器"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "All plates (%1%)"
+msgstr "所有打印板（%1%）"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Sample answer: %1% checklist rows (%2% pass, %3% warn, %4% fail)."
+msgstr "樣本答覆：%1% 行清單（%2% 行通過、%3% 行警告、%4% 行唔合格）。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Sample answer: it would stop the print: %1%"
+msgstr "樣本答覆：佢會阻止呢次打印：%1%"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "no reason given."
+msgstr "冇講原因。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "every plate"
+msgstr "所有打印板"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Check before sending"
+msgstr "發送之前檢查"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Each one has the time limit set in Extensions (%d s). Skipping stops the run now; it is recorded as stopped by you and never counts as a failure."
+msgstr "每個都有擴充功能入面設定嘅時間上限（%d 秒）。跳過會即刻停咗嗰次執行；記錄會寫你停咗佢，永遠唔會當做失敗。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Checking every plate before it is sent"
+msgstr "發送之前檢查緊所有打印板"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Checking Plate %d before it is sent"
+msgstr "發送之前檢查緊打印板 %d"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Extensions: %d, one at a time"
+msgstr "擴充功能：%d 個，逐個嚟"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Send without the checks"
+msgstr "唔檢查直接發送"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Checking... %.1f s"
+msgstr "檢查緊…… %.1f 秒"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Waiting for %s to finish another run"
+msgstr "等緊 %s 做完另一次執行"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Stopped the print"
+msgstr "阻止咗呢次打印"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "All checks passed"
+msgstr "全部檢查通過"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Sending %s"
+msgstr "發送緊%s"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "%s stopped this print"
+msgstr "%s 阻止咗呢次打印"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Stopped by %d extensions"
+msgstr "%d 個擴充功能阻止咗"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Nothing is sent"
+msgstr "乜都冇發送"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Plate %d is not sent"
+msgstr "打印板 %d 冇發送"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Passed: %d"
+msgstr "通過：%d"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "To look at: %d"
+msgstr "要睇睇：%d"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Notes: %d"
+msgstr "備註：%d"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Did not answer: %d"
+msgstr "冇答覆：%d"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Look before you send every plate"
+msgstr "發送所有打印板之前睇一睇"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Look before you send Plate %d"
+msgstr "發送打印板 %d 之前睇一睇"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "It gave no reason."
+msgstr "佢冇講原因。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "%s did not answer: %s."
+msgstr "%s 冇答覆：%s。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "It is off after %d failed runs in a row."
+msgstr "連續 %d 次執行失敗之後，佢已經關咗。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Nothing to point out."
+msgstr "冇嘢要提。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "You allowed this extension to stop prints (send.block). To send anyway, change the plate or the mapping, or turn the extension off in Extensions and send again."
+msgstr "你准咗呢個擴充功能阻止打印（send.block）。如果照樣要發送，就改打印板或者對應，或者喺擴充功能入面關咗佢再發送過。"

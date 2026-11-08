@@ -160,7 +160,7 @@ const std::vector<HookInfo> &hooks()
         {Hook::ModelImported, "model.imported", L("After a model is imported"), L("Name, triangles, size and units"), L("Notes"), false},
         {Hook::PlateSliced, "plate.sliced", L("After slicing"), L("Time, filament per slot, layers and warnings"), L("Notes"), true},
         {Hook::PrintBeforeSend, "print.before_send", L("Before sending a print"), L("Plate, printer model, filaments and options"),
-         L("Checklist rows, a block with its reason"), false},
+         L("Checklist rows, a block with its reason"), true},
         {Hook::GcodeExported, "gcode.exported", L("After G-code export"), L("The file name and the slice statistics"),
          L("Comment lines to add at the start or end"), true},
         {Hook::PrintFinished, "print.finished", L("After a print finishes"), L("Result, duration and filament used"), L("Notes"), false},
@@ -569,8 +569,10 @@ json build_request(Hook hook, const std::string &action, const json &context, co
 {
     json filtered = json::object();
     if (context.is_object()) {
-        const std::pair<const char *, Permission> sections[] = {
-            {"slice", Permission::SliceRead}, {"model", Permission::ModelRead}, {"printer", Permission::PrinterRead}};
+        const std::pair<const char *, Permission> sections[] = {{"slice", Permission::SliceRead},
+                                                                {"model", Permission::ModelRead},
+                                                                {"printer", Permission::PrinterRead},
+                                                                {"send", Permission::PrinterRead}};
         for (const auto &[section, permission] : sections)
             if (context.contains(section) && allowed(consent, permission)) filtered[section] = scrub(context[section]);
     }
@@ -828,6 +830,38 @@ Consent after_run(Consent consent, Outcome outcome, const Limits &limits)
     (void) limits;
 #endif
     return consent;
+}
+
+// ---------------------------------------------------------------- before a print is sent
+
+SendSummary summarise_send_check(const std::vector<SendCheckRun> &runs)
+{
+    SendSummary s;
+    bool        look = false;
+    for (std::size_t i = 0; i < runs.size(); ++i) {
+        const SendCheckRun &r = runs[i];
+        if (r.outcome == Outcome::Stopped) {
+            ++s.stopped;
+            continue;
+        }
+        if (r.outcome != Outcome::Answered) {
+            ++s.not_answered;
+            look = true;
+            continue;
+        }
+        for (const ChecklistRow &row : r.answer.checklist) {
+            if (row.state == "pass") ++s.passed;
+            else if (row.state == "warn") ++s.warned;
+            else ++s.failed;
+        }
+        s.notes += int(r.answer.notes.size());
+        if (s.warned + s.failed + s.notes > 0) look = true;
+#ifndef SLIC3R_EXTENSION_SEND_NEGATIVE_FIXTURE
+        if (r.answer.block) s.blockers.push_back(i);
+#endif
+    }
+    s.verdict = !s.blockers.empty() ? SendVerdict::Stop : look ? SendVerdict::Look : SendVerdict::Continue;
+    return s;
 }
 
 }}} // namespace Slic3r::GUI::Extensions

@@ -1,6 +1,7 @@
 #include "ExtensionContext.hpp"
 
 #include <algorithm>
+#include <cctype>
 #include <cmath>
 #include <cstdint>
 #include <cstdio>
@@ -78,6 +79,7 @@ json slice_section(const SliceFacts &facts)
         json row{{"level", warning_level(w.level)}};
         if (!w.code.empty()) row["code"] = w.code;
         if (!w.message.empty()) row["message"] = w.message;
+        if (w.plate > 0) row["plate"] = w.plate;
         warnings.push_back(std::move(row));
     }
     json out{{"plate", facts.plate},
@@ -93,6 +95,10 @@ json slice_section(const SliceFacts &facts)
              {"warnings", warnings}};
     if (any_cost) out["totalCost"] = round_to(total_cost, 2);
     if (!facts.file.empty()) out["file"] = fs::u8path(facts.file).filename().u8string();
+    if (facts.plate_count > 1) {
+        out["allPlates"]  = true;
+        out["plateCount"] = facts.plate_count;
+    }
     return out;
 }
 
@@ -132,7 +138,7 @@ json sample_context(Hook hook)
     slice.bed_type   = "textured_plate";
     slice.filament_changes = 4;
     slice.filaments  = {{1, "PLA", "#00AE42", 12000.0, 1.24, 1.75, 24.99}, {2, "PETG", "#FFFFFF", 3500.0, 1.27, 1.75, 0}};
-    slice.warnings   = {{1, "", "Sample warning: a floating region was detected"}};
+    slice.warnings   = {{1, "", "Sample warning: a floating region was detected", 0}};
     if (hook == Hook::GcodeExported) slice.file = "Sample plate.gcode";
     json context{{"slice", slice_section(slice)}};
     context["slice"]["sample"] = true;
@@ -140,7 +146,91 @@ json sample_context(Hook hook)
     context["printer"]["sample"] = true;
     context["model"] = model_section({{"Sample bracket", 2, 12480, {{42.0, 18.5, 9.0}}, true}, {"Sample hook", 1, 3302, {{20.0, 20.0, 35.0}}, false}}, 1);
     context["model"]["sample"] = true;
+    if (hook == Hook::PrintBeforeSend) {
+        SendFacts send;
+        send.plate         = 1;
+        send.printer_model = "Sample printer";
+        send.connection    = "lan";
+        send.options       = {{"timelapse", "on"}, {"bed_leveling", "auto"}, {"flow_cali", "off"}};
+        send.filaments     = {{1, "PLA", "#00AE42", "A1", "PLA", "#00AE42", 61}, {2, "PETG", "#FFFFFF", "A2", "PETG", "#FFFFFF", -1}};
+        context["send"]           = send_section(send);
+        context["send"]["sample"] = true;
+    }
     return context;
+}
+
+// ---------------------------------------------------------------- before a print is sent
+
+std::string normalise_color(const std::string &color)
+{
+    std::string hex = !color.empty() && color.front() == '#' ? color.substr(1) : color;
+    if (hex.size() != 6 && hex.size() != 8) return {};
+    for (char &c : hex) {
+        if (!std::isxdigit(static_cast<unsigned char>(c))) return {};
+        c = char(std::toupper(static_cast<unsigned char>(c)));
+    }
+    return "#" + hex.substr(0, 6);
+}
+
+json send_section(const SendFacts &facts)
+{
+    json options = json::object();
+    for (const auto &[id, value] : facts.options) {
+        if (options.size() >= 20) break;
+        const bool plain = !id.empty() && id.size() <= 40 && std::all_of(id.begin(), id.end(), [](char c) {
+            return (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_';
+        });
+        if (plain && value.size() <= 40) options[id] = value;
+    }
+    json filaments = json::array();
+    for (const SendFilamentFacts &f : facts.filaments) {
+        if (filaments.size() >= 64) break;
+        json row{{"slot", f.slot}, {"type", f.type}, {"color", normalise_color(f.color)}, {"tray", f.tray}};
+        if (!f.tray.empty()) {
+            row["trayType"]      = f.tray_type;
+            row["trayColor"]     = normalise_color(f.tray_color);
+            row["remainPercent"] = f.remain_percent >= 0 && f.remain_percent <= 100 ? f.remain_percent : -1;
+        }
+        filaments.push_back(std::move(row));
+    }
+    const std::string connection = facts.connection == "cloud" || facts.connection == "lan" ? facts.connection : std::string();
+    return json{{"plate", facts.all_plates ? 0 : std::max(0, facts.plate)},
+                {"allPlates", facts.all_plates},
+                {"printerModel", facts.printer_model},
+                {"slicedForThisModel", facts.sliced_for_this_model},
+                {"connection", connection},
+                {"options", options},
+                {"filaments", filaments}};
+}
+
+SliceFacts combine_plates(const std::vector<SliceFacts> &plates)
+{
+    if (plates.size() == 1) return plates.front();
+    SliceFacts all;
+    all.plate_count = int(plates.size());
+    bool same_bed   = true;
+    for (const SliceFacts &p : plates) {
+        all.seconds += p.seconds;
+        all.prepare_seconds += p.prepare_seconds;
+        all.layers += p.layers;
+        all.filament_changes += p.filament_changes;
+        if (&p == &plates.front()) all.bed_type = p.bed_type;
+        else if (p.bed_type != all.bed_type) same_bed = false;
+        for (const FilamentUse &use : p.filaments) {
+            auto it = std::find_if(all.filaments.begin(), all.filaments.end(), [&](const FilamentUse &u) { return u.slot == use.slot; });
+            if (it == all.filaments.end()) all.filaments.push_back(use);
+            else it->volume_mm3 += use.volume_mm3;
+        }
+        for (const SliceWarningFact &w : p.warnings) {
+            if (all.warnings.size() >= 20) break;
+            SliceWarningFact from = w;
+            from.plate            = p.plate;
+            all.warnings.push_back(std::move(from));
+        }
+    }
+    if (!same_bed) all.bed_type.clear();
+    std::sort(all.filaments.begin(), all.filaments.end(), [](const FilamentUse &a, const FilamentUse &b) { return a.slot < b.slot; });
+    return all;
 }
 
 // ---------------------------------------------------------------- G-code comment lines

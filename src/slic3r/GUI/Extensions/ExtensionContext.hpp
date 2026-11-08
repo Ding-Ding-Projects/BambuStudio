@@ -2,8 +2,8 @@
 #define slic3r_GUI_Extensions_ExtensionContext_hpp_
 
 // What Bambu Studio tells an extension, and the one change it makes to a file
-// on an extension's behalf, without wxWidgets: the "slice", "printer" and
-// "model" sections of a request built from plain facts the app gathered, the
+// on an extension's behalf, without wxWidgets: the "slice", "printer", "model"
+// and "send" sections of a request built from plain facts the app gathered, the
 // clearly marked sample requests used by "Try with a sample", and adding an
 // extension's comment lines to an exported G-code file through a copy beside
 // it. Tested on its own by tests/extension_context_test.cpp.
@@ -37,6 +37,7 @@ struct SliceWarningFact
     int         level = 1;         // 0 tip, 1 warning, 2 error
     std::string code;
     std::string message;
+    int         plate = 0;         // set when every plate is added up: the plate it came from
 };
 
 struct SliceFacts
@@ -51,6 +52,7 @@ struct SliceFacts
     std::vector<FilamentUse>      filaments;
     std::vector<SliceWarningFact> warnings;
     std::string                   file;      // gcode.exported: the file name, never its folder
+    int                           plate_count = 1; // more than 1: every plate added up (see combine_plates)
 };
 
 struct PrinterFacts
@@ -80,6 +82,40 @@ nlohmann::json model_section(const std::vector<ModelObjectFacts> &objects, int p
 // A request context made of invented values, marked "sample": true in every
 // section, for trying an extension without slicing anything.
 nlohmann::json sample_context(Hook hook);
+
+// ---------------------------------------------------------------- before a print is sent
+struct SendFilamentFacts
+{
+    int         slot = 0;            // 1-based, the project's filament
+    std::string type;                // as sliced
+    std::string color;               // as sliced: #RRGGBB, RRGGBB or RRGGBBAA
+    std::string tray;                // the printer's name for the slot it is mapped to ("A1", "Ext"); empty when unmapped
+    std::string tray_type;           // what the printer reports in that slot
+    std::string tray_color;
+    int         remain_percent = -1; // 0 to 100; -1 when the printer does not say
+};
+
+struct SendFacts
+{
+    int                                              plate      = 0; // 1-based; 0 when every plate is sent
+    bool                                             all_plates = false;
+    std::string                                      printer_model;   // the model of the printer it goes to, as the app names it
+    bool                                             sliced_for_this_model = true;
+    std::string                                      connection;      // "cloud" or "lan"
+    std::vector<std::pair<std::string, std::string>> options;         // the print dialog's options shown, id and value
+    std::vector<SendFilamentFacts>                   filaments;
+};
+
+// The "send" section of a print.before_send request (needs printer.read). It
+// never holds the printer's own name, serial number, address or access code:
+// SendFacts has no place for them.
+nlohmann::json send_section(const SendFacts &facts);
+// Every sliced plate as one, for sending all plates at once: plate 0, times,
+// layers, filament changes and each slot's filament added up, the bed type
+// when every plate shares it, warnings in plate order (at most 20).
+SliceFacts combine_plates(const std::vector<SliceFacts> &plates);
+// "#RRGGBB" in capitals from #RRGGBB, RRGGBB, #RRGGBBAA or RRGGBBAA; empty for anything else.
+std::string normalise_color(const std::string &color);
 
 // ---------------------------------------------------------------- G-code comment lines
 struct CommentBlock

@@ -64,7 +64,7 @@ SliceFacts facts_for(PartPlate *plate, const Print *print, const GCodeProcessorR
         }
         for (const auto &w : result->warnings) {
             if (f.warnings.size() >= 20) break;
-            f.warnings.push_back({w.level, w.error_code, w.msg});
+            f.warnings.push_back({w.level, w.error_code, w.msg, 0});
         }
     }
     BedType bed = plate->get_bed_type();
@@ -283,6 +283,85 @@ json Runtime::current_context(Hook hook, std::string &subject)
     return context;
 }
 
+// ---------------------------------------------------------------- before a print is sent
+
+std::vector<PlannedRun> Runtime::plan_before_send()
+{
+    if (m_shut_down) return {};
+    return host().plan(Hook::PrintBeforeSend);
+}
+
+json Runtime::before_send_context(const SendFacts &send, std::string &subject)
+{
+    std::vector<SliceFacts> plates;
+    if (Plater *plater = wxGetApp().plater()) {
+        PartPlateList &list = plater->get_partplate_list();
+        for (int i = 0; i < list.get_plate_count(); ++i) {
+            if (!send.all_plates && i + 1 != send.plate) continue;
+            PartPlate *plate = list.get_plate(i);
+            if (!plate || !plate->is_slice_result_valid()) continue;
+            PrintBase   *base   = nullptr;
+            GCodeResult *result = nullptr;
+            int          index  = 0;
+            plate->get_print(&base, &result, &index);
+            plates.push_back(facts_for(plate, dynamic_cast<const Print *>(base), result));
+        }
+    }
+    json context = json::object();
+    if (!plates.empty()) context["slice"] = slice_section(combine_plates(plates));
+    context["printer"] = printer_section(printer_facts());
+    context["send"]    = send_section(send);
+    if (send.all_plates) subject = (boost::format(_u8L("All plates (%1%)")) % plates.size()).str();
+    else if (plates.size() == 1) subject = plate_subject(plates.front());
+    else subject = (boost::format(_u8L("Plate %1%")) % send.plate).str();
+    return context;
+}
+
+std::shared_ptr<std::atomic<bool>> Runtime::run_before_send(std::vector<PlannedRun> runs, json context, std::string subject,
+                                                            std::function<void(const RunResult &)> each, std::function<void()> done)
+{
+    if (m_shut_down || runs.empty()) return nullptr;
+    Job job;
+    job.hook    = Hook::PrintBeforeSend;
+    job.runs    = std::move(runs);
+    job.context = std::move(context);
+    job.subject = std::move(subject);
+    job.first   = true;
+    job.each    = std::move(each);
+    job.done    = std::move(done);
+    job.cancel  = std::make_shared<std::atomic<bool>>(false);
+    auto cancel = job.cancel;
+    submit(std::move(job));
+    return cancel;
+}
+
+void Runtime::stop(const std::shared_ptr<std::atomic<bool>> &cancel)
+{
+    if (!cancel) return;
+    std::vector<std::function<void()>> dropped;
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        cancel->store(true);
+        dropped = drop_queue(cancel);
+    }
+    for (auto &fn : dropped) post(std::move(fn));
+    notify_changed();
+}
+
+std::vector<std::function<void()>> Runtime::drop_queue(const std::shared_ptr<std::atomic<bool>> &only)
+{
+    std::vector<std::function<void()>> dropped;
+    for (auto it = m_queue.begin(); it != m_queue.end();) {
+        if (only && it->cancel != only) {
+            ++it;
+            continue;
+        }
+        if (it->done) dropped.push_back(std::move(it->done));
+        it = m_queue.erase(it);
+    }
+    return dropped;
+}
+
 // ---------------------------------------------------------------- commands
 
 bool Runtime::run_action(const std::string &id, const std::string &action)
@@ -315,11 +394,13 @@ bool Runtime::try_sample(const std::string &id, Hook hook, const std::string &ac
 
 void Runtime::stop_all()
 {
+    std::vector<std::function<void()>> dropped;
     {
         std::lock_guard<std::mutex> lock(m_mutex);
-        m_queue.clear();
+        dropped = drop_queue();
         if (m_current_cancel) m_current_cancel->store(true);
     }
+    for (auto &fn : dropped) post(std::move(fn));
     notify_changed();
 }
 
@@ -334,11 +415,12 @@ Runtime::Activity Runtime::activity() const
 void Runtime::submit(Job job)
 {
     if (m_shut_down || job.runs.empty()) return;
-    job.cancel = std::make_shared<std::atomic<bool>>(false);
+    if (!job.cancel) job.cancel = std::make_shared<std::atomic<bool>>(false);
     {
         std::lock_guard<std::mutex> lock(m_mutex);
         if (m_stopping) return;
-        m_queue.push_back(std::move(job));
+        if (job.first) m_queue.push_front(std::move(job));
+        else m_queue.push_back(std::move(job));
     }
     ensure_worker();
     m_wake.notify_one();
@@ -384,7 +466,7 @@ void Runtime::worker_loop()
             if (result.outcome == Outcome::Answered && (!result.answer.gcode_prepend.empty() || !result.answer.gcode_append.empty()))
                 blocks.push_back(CommentBlock{run.id, run.manifest.version, result.answer.gcode_prepend, result.answer.gcode_append});
             const bool sample = job.sample;
-            post([result = std::move(result), sample]() { Runtime::instance().apply(result, sample); });
+            post([result = std::move(result), sample, each = job.each]() { Runtime::instance().apply(result, sample, each); });
         }
         if (!job.gcode.empty() && !blocks.empty() && !job.cancel->load()) {
             std::string problem;
@@ -400,6 +482,7 @@ void Runtime::worker_loop()
             m_running_hook.clear();
             m_current_cancel.reset();
         }
+        if (job.done) post(std::move(job.done));
         post([]() { Runtime::instance().notify_changed(); });
     }
 }
@@ -418,10 +501,16 @@ void Runtime::stop_worker()
 
 // ---------------------------------------------------------------- answers
 
-void Runtime::apply(const RunResult &result, bool sample)
+void Runtime::apply(const RunResult &result, bool sample, const std::function<void(const RunResult &)> &each)
 {
     if (m_shut_down || !m_host) return;
     m_host->record(result);
+    if (each) {
+        // print.before_send: the check window shows the answer and any failure.
+        each(result);
+        notify_changed();
+        return;
+    }
     const Installed     *x    = m_host->find(result.plan.id);
     const std::string    name = x ? x->manifest.name : result.plan.manifest.name;
     NotificationManager *nm   = notifications();
@@ -433,6 +522,15 @@ void Runtime::apply(const RunResult &result, bool sample)
                 lines.push_back((boost::format(_u8L("Sample answer: %1% start and %2% end comment lines, added to no file.")) % start % end).str());
             if (!result.answer.file_name.empty())
                 lines.push_back((boost::format(_u8L("Sample answer: a file named %1%, not saved.")) % result.answer.file_name).str());
+            if (!result.answer.checklist.empty()) {
+                int pass = 0, warn = 0, fail = 0;
+                for (const ChecklistRow &row : result.answer.checklist) (row.state == "pass" ? pass : row.state == "warn" ? warn : fail) += 1;
+                lines.push_back((boost::format(_u8L("Sample answer: %1% checklist rows (%2% pass, %3% warn, %4% fail).")) %
+                                 result.answer.checklist.size() % pass % warn % fail).str());
+            }
+            if (result.answer.block)
+                lines.push_back((boost::format(_u8L("Sample answer: it would stop the print: %1%")) %
+                                 (result.answer.block_reason.empty() ? _u8L("no reason given.") : result.answer.block_reason)).str());
             if (lines.empty()) lines.push_back(_u8L("Sample answer: valid, with nothing to show."));
         }
         if (!lines.empty() && nm)

@@ -2,10 +2,12 @@
 // for src/slic3r/GUI/Extensions/ExtensionCore.cpp and ExtensionProcess.cpp
 // (manifests and refusals, permission enforcement on requests and answers,
 // consent on new and changed permissions, limits, the run record, and real
-// extension processes), with MSVC on Windows and $CXX (or c++) elsewhere. A
-// second build defines the negative-fixture switch that never turns a failing
-// extension off and must fail: a suite that stayed green there could not
-// notice a broken extension running forever.
+// extension processes, and the verdict before a print is sent), with MSVC on
+// Windows and $CXX (or c++) elsewhere. A second build defines the
+// negative-fixture switch that never turns a failing extension off, and a
+// third one that lets a blocking answer through before a print is sent; both
+// must fail: a suite that stayed green there could not notice a broken
+// extension running forever, or a print sent that an extension stopped.
 import {mkdtempSync, readFileSync, writeFileSync} from 'node:fs';
 import {spawnSync} from 'node:child_process';
 import {tmpdir} from 'node:os';
@@ -39,3 +41,12 @@ if (red.status === 0) {
   process.exit(1);
 }
 console.log('Negative fixture turned red as required (a failing extension stayed on).');
+
+const unblocked = build('send-negative', '#define SLIC3R_EXTENSION_SEND_NEGATIVE_FIXTURE 1\n');
+const through = spawnSync(unblocked.exe, [], {cwd: unblocked.output, encoding: 'utf8'});
+if (through.error) throw through.error;
+if (through.status === 0) {
+  console.error('Send negative fixture stayed green: the suite cannot notice a print sent that an extension stopped.');
+  process.exit(1);
+}
+console.log('Send negative fixture turned red as required (a blocking answer let the print through).');

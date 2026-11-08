@@ -1092,6 +1092,8 @@ list(APPEND SLIC3R_GUI_SOURCES
     GUI/Extensions/ExtensionProcess.hpp
     GUI/Extensions/ExtensionRuntime.cpp
     GUI/Extensions/ExtensionRuntime.hpp
+    GUI/Extensions/BeforeSendCheck.cpp
+    GUI/Extensions/BeforeSendCheck.hpp
     GUI/Extensions/ExtensionsPanel.cpp
     GUI/Extensions/ExtensionsPanel.hpp
     GUI/AttentionModes/AttentionModel.cpp

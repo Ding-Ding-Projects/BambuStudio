@@ -65,9 +65,10 @@ Each extension has:
 | Manifest | `manifest.json` as it is on disk, and Valid or what is wrong with it |
 
 **Try with a sample** runs it once with a request made of invented values, every
-section marked `"sample": true`. Its notes show; comment lines and files it
-answers are reported and never applied. **Open its folder** and **Remove**
-(which deletes the folder after asking) are beside it.
+section marked `"sample": true`. Its notes show; comment lines, files,
+checklist rows and blocks it answers are reported and never applied. **Open
+its folder** and **Remove** (which deletes the folder after asking) are beside
+it.
 
 ## The built-in extensions
 
@@ -80,7 +81,7 @@ built-in you remove stays removed until you add its folder again.
 | Extension | Runs | Does |
 | --- | --- | --- |
 | Slice report | After slicing; its command **Save a slice report** | A note with the print time, the filament per slot and the layers, plus a warning count. The command answers a Markdown report for you to save |
-| Plate checklist | After slicing (and before sending, once this build runs that hook) | A note only when something deserves a second look: slicing warnings, a print of 8 hours or more, 30 or more filament changes, a slot that needs 500 g or more |
+| Plate checklist | After slicing and before sending | After slicing, a note only when something deserves a second look: slicing warnings, a print of 8 hours or more, 30 or more filament changes, a slot that needs 500 g or more. Before sending, the same points as checklist rows |
 | G-code time stamp | After G-code export | Comment lines with the export time and the plate's time, filament and layers, at the start and the end of the file |
 
 They run `powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass
@@ -94,12 +95,42 @@ fail, and the page shows the exit code.
 | `plate.sliced` | After a plate slices; once per slice result, so exporting an already sliced plate does not run it again | `slice`, `printer` | Notes | Runs |
 | `gcode.exported` | After plain G-code (`.gcode`) is exported, once the slicing job has finished with the file | `slice` (with the file's name, never its folder), `printer` | Comment lines for the start and the end | Runs |
 | `command` | When you start one of its commands: from the page or the command palette | `model` (the selection), `slice` (when the plate is sliced), `printer` | Notes, a text file for you to save | Runs |
+| `print.before_send` | When **Send** is pressed in the print dialog for a plate sliced in this project, before the app's own pre-print check | `slice` (every plate added up when all plates are sent), `printer`, `send` | Checklist rows, a block with its reason, notes | Runs |
 | `model.imported` | After a model is imported | | Notes | Not yet |
-| `print.before_send` | Before a print is sent | | Checklist rows, a block with its reason | Not yet |
 | `print.finished` | After a print finishes | | Notes | Not yet |
 
 A manifest may declare a hook this build does not run yet; it is listed as such
 and **Try with a sample** can still exercise it.
+
+## Before a print is sent
+
+Pressing **Send** (or adding the plate to the print queue) in the print dialog
+asks every extension that is on for `print.before_send` first, one at a time,
+ahead of anything else waiting to run. With none on, nothing changes: no
+window, no delay. Otherwise a window says which extension is checking and for
+how long, and offers **Back** and **Send without the checks** (which stops the
+run at once; it is recorded as stopped by you and never counts as a failure).
+When another extension is still finishing a run it started earlier, the window
+says so and waits for it.
+
+When every extension has answered:
+
+| Answers | What happens |
+| --- | --- |
+| Nothing but rows that pass | **All checks passed** shows for a moment and sending carries on |
+| A row that warns or fails, a note, or a run without a valid answer | Everything is shown, grouped by extension, with **Open Extensions**, **Back** and **Send** |
+| A valid answer with `"block": true` | The print is not sent. The reasons come first, then every answer, with **Open Extensions** and **Back** only |
+
+Only a valid answer can stop a print, and only from an extension you allowed
+`send.block`: an answer that blocks without it breaks a rule, and a run that
+times out, fails or answers something invalid is shown as did not answer and
+never holds a print back (it still counts toward turning the extension off).
+To send a print an extension stopped, change the plate or the filament
+mapping, or turn the extension off. **Open Extensions** closes the print
+dialog and opens the page at the extension to look at.
+
+After the extensions, the app's own pre-print check follows as before. Each
+run is on the Runs tab as `Before sending a print` with the plate.
 
 ## Permissions
 
@@ -107,7 +138,7 @@ and **Try with a sample** can still exercise it.
 | --- | --- |
 | `slice.read` | The `slice` section: time, layers, filament per slot, warnings, plate type |
 | `model.read` | The `model` section: object names, instance counts, triangle counts, sizes, the selection |
-| `printer.read` | The `printer` section: the printer preset, model, nozzle sizes and filament presets |
+| `printer.read` | The `printer` section: the printer preset, model, nozzle sizes and filament presets; before a print is sent, also the `send` section |
 | `notes.show` | Showing notes as notifications |
 | `send.warn` | Checklist rows before a print is sent |
 | `send.block` | Stopping a print from being sent, with a reason |
@@ -208,6 +239,32 @@ invalid, and the page shows which. A manifest is at most 64 KB.
 
 - `action` is the command's id for `command`, empty otherwise.
 - `slice.file` is the exported file's name for `gcode.exported`.
+- When all plates are sent at once, `slice` adds every sliced plate up:
+  `plate` is 0, `allPlates` is true, `plateCount` says how many, times,
+  layers, filament changes and each slot's filament are totals, `bedType` is
+  empty unless every plate shares it, and each warning has its `plate`.
+- `send`, for `print.before_send` (with `printer.read`):
+
+  ```json
+  "send": {
+    "plate": 1, "allPlates": false,
+    "printerModel": "Bambu Lab X1 Carbon", "slicedForThisModel": true,
+    "connection": "lan",
+    "options": { "bed_leveling": "auto", "flow_cali": "off", "timelapse": "on" },
+    "filaments": [
+      { "slot": 1, "type": "PLA", "color": "#00AE42", "tray": "A1",
+        "trayType": "PLA", "trayColor": "#00AE42", "remainPercent": 61 }
+    ]
+  }
+  ```
+
+  `connection` is `cloud` or `lan`. `options` are the options the print
+  dialog shows, with the values it uses. Each filament is a project slot with
+  its sliced type and colour and, when it is mapped, the printer's name for
+  the slot (`A1`, `HT-A`, `Ext`), what the printer reports there and how much
+  is left (`-1` when the printer does not say); an unmapped one has an empty
+  `tray`. The printer's own name, serial number, address and access code are
+  never part of it.
 - `model` holds `plate`, `objects` (up to 200: `name`, `instances`,
   `triangles`, `size` in millimetres, `selected`), `objectCount`,
   `selectedCount` and `triangles`.
@@ -222,7 +279,7 @@ nothing.
 | Field | Hooks | Permission | Rules |
 | --- | --- | --- | --- |
 | `apiVersion` | all | | When present, `1` |
-| `notes` | all | `notes.show` | Up to 10 strings of at most 300 characters, shown as one notification |
+| `notes` | all | `notes.show` | Up to 10 strings of at most 300 characters, shown as one notification (before a print is sent, in the check window) |
 | `checklist` | `print.before_send` | `send.warn` | Up to 20 rows `{"state": "pass" or "warn" or "fail", "text": ...}`, text at most 200 characters |
 | `block`, `blockReason` | `print.before_send` | `send.block` | `true` and a reason of at most 300 characters |
 | `gcode` | `gcode.exported` | `gcode.comment` | `{"prepend": [...], "append": [...]}`, each up to 20 lines of at most 200 characters that start with `;` and have no line break |
@@ -287,25 +344,34 @@ turning it on again starts the count over.
 ## Checks
 
 - `tests/extension_core.test.mjs`: manifests and refusals, permission
-  enforcement on requests and answers, consent, limits, the run record and
-  real processes. Its negative build never turns a failing extension off and
-  must fail.
+  enforcement on requests and answers, consent, limits, the run record, the
+  verdict before a print is sent and real processes. Its negative builds never
+  turn a failing extension off, or let a blocking answer through, and must
+  fail.
 - `tests/extension_host.test.mjs`: built-ins installed, updated only while
   unchanged and staying removed; adding folders; duplicates and broken
   manifests; consent; the master switch; limits; real runs, failures that turn
   an extension off, and stopping a run. Its negative build overwrites a changed
   built-in and must fail.
-- `tests/extension_context.test.mjs`: the request sections, the samples and
-  comment lines in G-code (after the header, line endings kept, refusals, large
-  files). Its negative build puts the lines above the header and must fail.
+- `tests/extension_context.test.mjs`: the request sections (the `send`
+  section and every plate added up among them), the samples and comment lines
+  in G-code (after the header, line endings kept, refusals, large files). Its
+  negative build puts the lines above the header and must fail.
+- `tests/extension_before_send_wiring.test.mjs`: the print dialog asks the
+  extensions before its own check and only for a sliced plate, the send facts
+  never read the printer's serial number, name, address or access code, the
+  check runs ahead of anything waiting and reports to its window, and leaving
+  the window stops the runs; each checker must fail on a broken copy.
 - `tests/extension_builtins.test.mjs`: the built-in manifests and scripts; on
   Windows every built-in really runs under Windows PowerShell through the
   app's own code, and a broken copy must be caught.
-- `.github/workflows/extensions-windows.yml` runs all four on a hosted Windows
+- `.github/workflows/extensions-windows.yml` runs all five on a hosted Windows
   machine with MSVC.
 
 ## Not done yet
 
-The `model.imported`, `print.before_send` and `print.finished` hooks are
-declared but not run by this build. There are no per-extension settings and no
-signed extensions.
+The `model.imported` and `print.finished` hooks are declared but not run by
+this build. `print.before_send` does not run when a job already in the print
+queue is printed, for a file already on the printer, when sending to several
+printers at once, or for Send to the printer's storage. There are no per-extension settings and no signed
+extensions.

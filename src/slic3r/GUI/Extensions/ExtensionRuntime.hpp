@@ -57,6 +57,23 @@ public:
     void export_finished(const std::string &path);
     void process_completed(bool success, PartPlate *plate, const Print *print);
 
+    // ---- before a print is sent (print.before_send)
+    // The runs it takes; empty when no extension is on for it.
+    std::vector<PlannedRun> plan_before_send();
+    // The request for a send: the plate (every sliced plate added up when all
+    // are sent), the printer and the send section; subject names the plate.
+    nlohmann::json before_send_context(const SendFacts &send, std::string &subject);
+    // Runs them ahead of anything waiting, one at a time. each() gets every
+    // result on the UI thread and done() comes once after the last, also when
+    // they are stopped. Their answers and failures are the caller's to show,
+    // never notifications. Returns what stop() takes.
+    std::shared_ptr<std::atomic<bool>> run_before_send(std::vector<PlannedRun> runs, nlohmann::json context, std::string subject,
+                                                       std::function<void(const RunResult &)> each, std::function<void()> done);
+    // Stops what run_before_send started: the run in progress ends within a
+    // tenth of a second and is recorded as stopped by you; a job still waiting
+    // is dropped (its done() still comes).
+    void stop(const std::shared_ptr<std::atomic<bool>> &cancel);
+
     // ---- commands
     // Runs an extension's own command with what the app has now. False when it
     // is not on, or the command is unknown.
@@ -108,7 +125,10 @@ private:
         std::string                        subject;
         std::filesystem::path              gcode;   // gcode.exported: the file to add comment lines to
         bool                               sample = false;
+        bool                               first  = false; // ahead of every job waiting (print.before_send)
         std::shared_ptr<std::atomic<bool>> cancel;
+        std::function<void(const RunResult &)> each; // set: results go here instead of notifications
+        std::function<void()>                  done; // after the last run, or when the job is dropped
     };
 
     void submit(Job job);
@@ -116,7 +136,9 @@ private:
     void worker_loop();
     // Worker thread: queues fn on the UI thread unless the app is closing.
     void post(std::function<void()> fn);
-    void apply(const RunResult &result, bool sample);
+    // Empties the queue (m_mutex held) and returns the done() of every job dropped.
+    std::vector<std::function<void()>> drop_queue(const std::shared_ptr<std::atomic<bool>> &only = nullptr);
+    void apply(const RunResult &result, bool sample, const std::function<void(const RunResult &)> &each);
     void apply_comment_lines(const std::string &file, int extensions, bool ok, const std::string &problem);
     void stop_worker();
 

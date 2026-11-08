@@ -1,6 +1,7 @@
 // Standalone assertions for src/slic3r/GUI/Extensions/ExtensionContext.cpp:
-// the slice, printer and model sections an extension receives (grams, metres,
-// cost, warnings, only the file's name), the sample requests, and adding
+// the slice, printer, model and send sections an extension receives (grams,
+// metres, cost, warnings, only the file's name, every plate added up, where
+// each filament goes), the sample requests, and adding
 // comment lines to an exported G-code file after its header block, keeping
 // the file's line endings, refusing anything but comments and leaving the
 // original untouched when something goes wrong. Compiled and run by
@@ -40,7 +41,7 @@ static void sections()
     f.layers     = 245;
     f.bed_type   = "textured_plate";
     f.filaments  = {{1, "PLA", "#00AE42", 10000.0, 1.24, 1.75, 20.0}, {3, "PETG", "", 2405.28, 0, 1.75, 0}};
-    f.warnings   = {{2, "1000C001", "bad"}, {0, "", "tip"}};
+    f.warnings   = {{2, "1000C001", "bad", 0}, {0, "", "tip", 0}};
     f.file       = "C:/Users/someone/Desktop/private folder/bracket.gcode";
     const nlohmann::json s = slice_section(f);
     CHECK(s["plate"] == 2 && s["plateName"] == "Brackets" && s["seconds"] == 3723 && s["layers"] == 245);
@@ -63,11 +64,68 @@ static void sections()
     CHECK(m["objects"].size() == 200 && m["objectCount"] == 205 && m["selectedCount"] == 2 && m["triangles"] == 2000);
 
     // Samples are marked in every section, so an extension can tell.
-    for (Hook h : {Hook::PlateSliced, Hook::GcodeExported, Hook::Command}) {
+    for (Hook h : {Hook::PlateSliced, Hook::GcodeExported, Hook::Command, Hook::PrintBeforeSend}) {
         const nlohmann::json c = sample_context(h);
         CHECK(c["slice"]["sample"] == true && c["printer"]["sample"] == true && c["model"]["sample"] == true);
         CHECK((h == Hook::GcodeExported) == c["slice"].contains("file"));
+        CHECK((h == Hook::PrintBeforeSend) == c.contains("send"));
+        if (c.contains("send")) CHECK(c["send"]["sample"] == true && c["send"]["filaments"].size() == 2);
     }
+}
+
+static void send()
+{
+    CHECK(normalise_color("#00ae42") == "#00AE42" && normalise_color("00AE42FF") == "#00AE42" && normalise_color("#F4EE2A80") == "#F4EE2A");
+    CHECK(normalise_color("").empty() && normalise_color("green").empty() && normalise_color("#12345").empty() && normalise_color("#GG0000").empty());
+
+    SendFacts f;
+    f.plate         = 2;
+    f.printer_model = "Bambu Lab X1 Carbon";
+    f.connection    = "lan";
+    f.options       = {{"bed_leveling", "auto"}, {"timelapse", "on"}, {"Bad Id", "x"}, {"flow_cali", std::string(41, 'x')}};
+    f.filaments     = {{1, "PLA", "00AE42FF", "A1", "PLA", "00AE42FF", 61}, {2, "PETG", "#F4EE2A", "", "", "", 40}, {3, "PLA", "#000000", "Ext", "PLA", "", 140}};
+    const nlohmann::json s = send_section(f);
+    CHECK(s["plate"] == 2 && s["allPlates"] == false && s["printerModel"] == "Bambu Lab X1 Carbon" && s["connection"] == "lan");
+    CHECK(s["slicedForThisModel"] == true);
+    // Option ids are plain, values short; anything else is left out.
+    CHECK(s["options"].size() == 2 && s["options"]["timelapse"] == "on" && s["options"]["bed_leveling"] == "auto");
+    CHECK(s["filaments"][0]["color"] == "#00AE42" && s["filaments"][0]["tray"] == "A1" && s["filaments"][0]["trayColor"] == "#00AE42");
+    CHECK(s["filaments"][0]["remainPercent"] == 61);
+    // Not mapped: no tray details, whatever was passed.
+    CHECK(s["filaments"][1]["tray"] == "" && !s["filaments"][1].contains("trayType") && !s["filaments"][1].contains("remainPercent"));
+    // A remain outside 0 to 100 is unknown.
+    CHECK(s["filaments"][2]["remainPercent"] == -1 && s["filaments"][2]["trayColor"] == "");
+    // Only the two connections there are.
+    f.connection = "usb";
+    CHECK(send_section(f)["connection"] == "");
+    f.all_plates = true;
+    CHECK(send_section(f)["plate"] == 0 && send_section(f)["allPlates"] == true);
+    // Nothing names the printer itself: the section has exactly these keys.
+    const std::vector<std::string> keys = {"allPlates", "connection", "filaments", "options", "plate", "printerModel", "slicedForThisModel"};
+    std::vector<std::string>       found;
+    for (auto it = s.begin(); it != s.end(); ++it) found.push_back(it.key());
+    CHECK(found == keys);
+
+    // Every plate as one.
+    SliceFacts a, b;
+    a.plate = 1; a.seconds = 3600; a.prepare_seconds = 300; a.layers = 100; a.bed_type = "textured_plate"; a.filament_changes = 2;
+    a.filaments = {{1, "PLA", "#00AE42", 1000.0, 1.24, 1.75, 20.0}, {2, "PETG", "", 500.0, 1.27, 1.75, 0}};
+    a.warnings  = {{1, "", "first", 0}};
+    b.plate = 2; b.seconds = 1800; b.prepare_seconds = 200; b.layers = 50; b.bed_type = "cool_plate"; b.filament_changes = 1;
+    b.filaments = {{1, "PLA", "#00AE42", 2000.0, 1.24, 1.75, 20.0}, {4, "TPU", "", 100.0, 1.2, 1.75, 0}};
+    b.warnings  = {{2, "C1", "second", 0}};
+    const SliceFacts all = combine_plates({a, b});
+    CHECK(all.plate == 0 && all.plate_count == 2 && all.seconds == 5400 && all.prepare_seconds == 500 && all.layers == 150);
+    CHECK(all.filament_changes == 3 && all.bed_type.empty());
+    CHECK(all.filaments.size() == 3 && all.filaments[0].slot == 1 && all.filaments[0].volume_mm3 == 3000.0 && all.filaments[2].slot == 4);
+    CHECK(all.warnings.size() == 2 && all.warnings[0].plate == 1 && all.warnings[1].plate == 2);
+    const nlohmann::json js = slice_section(all);
+    CHECK(js["allPlates"] == true && js["plateCount"] == 2 && js["warnings"][1]["plate"] == 2 && js["warnings"][1]["code"] == "C1");
+    // One plate stays itself, without the all-plates fields.
+    const nlohmann::json one = slice_section(combine_plates({a}));
+    CHECK(one["plate"] == 1 && !one.contains("allPlates") && !one["warnings"][0].contains("plate"));
+    b.bed_type = "textured_plate";
+    CHECK(combine_plates({a, b}).bed_type == "textured_plate");
 }
 
 static void comment_lines(const fs::path &dir)
@@ -115,6 +173,7 @@ int main()
     const fs::path dir = fs::temp_directory_path() / ("ext-context-" + std::to_string(std::random_device{}()));
     fs::create_directories(dir);
     sections();
+    send();
     comment_lines(dir);
     std::error_code ec;
     fs::remove_all(dir, ec);

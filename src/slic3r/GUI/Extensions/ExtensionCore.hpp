@@ -128,8 +128,9 @@ Limits clamp_limits(Limits limits);
 // ---------------------------------------------------------------- request
 // The app's context is a JSON object whose top-level sections need a
 // permission: "slice" needs slice.read, "model" needs model.read, "printer"
-// needs printer.read. Anything else is dropped. Values whose key looks like a
-// secret are removed at every depth, whatever the permissions.
+// and "send" (where a print is going, with which options and filaments) need
+// printer.read. Anything else is dropped. Values whose key looks like a secret
+// are removed at every depth, whatever the permissions.
 nlohmann::json build_request(Hook hook, const std::string &action, const nlohmann::json &context, const Manifest &manifest,
                              const Consent &consent);
 bool           looks_sensitive(std::string_view key);
@@ -197,6 +198,34 @@ private:
 
 // Applies a run's outcome to the consent: failures in a row turn an extension off.
 Consent after_run(Consent consent, Outcome outcome, const Limits &limits);
+
+// ---------------------------------------------------------------- before a print is sent
+// One extension's part in the check before a print is sent.
+struct SendCheckRun
+{
+    std::string id;
+    Outcome     outcome = Outcome::NotStarted;
+    std::string problem;
+    Answer      answer; // when outcome is Answered
+};
+
+// Continue: nothing to look at, sending carries on. Look: rows that warn or
+// fail, notes, or a run without a valid answer, for the person to read before
+// sending. Stop: a valid answer blocked the print.
+enum class SendVerdict { Continue, Look, Stop };
+
+struct SendSummary
+{
+    int                      passed = 0, warned = 0, failed = 0, notes = 0;
+    int                      not_answered = 0; // ran but gave no valid answer
+    int                      stopped      = 0; // stopped by the person: counts for nothing
+    std::vector<std::size_t> blockers;          // runs whose answer blocked the print, in order
+    SendVerdict              verdict = SendVerdict::Continue;
+};
+
+// Only a valid answer can block: one that broke a rule (a block without
+// send.block among them) or never came is shown, and never holds a print back.
+SendSummary summarise_send_check(const std::vector<SendCheckRun> &runs);
 
 }}} // namespace Slic3r::GUI::Extensions
 

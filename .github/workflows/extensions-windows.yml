@@ -10,6 +10,7 @@ on:
     branches: [main]
     paths:
       - src/slic3r/GUI/Extensions/**
+      - src/slic3r/GUI/SelectMachine.cpp
       - resources/extensions/**
       - tests/extension_*
       - .github/workflows/extensions-windows.yml
@@ -46,3 +47,7 @@ jobs:
         run: |
           node tests/extension_builtins.test.mjs
           if ($LASTEXITCODE -ne 0) { throw 'The built-in extensions failed' }
+      - name: The check before a print is sent, wired into the print dialog
+        run: |
+          node --test tests/extension_before_send_wiring.test.mjs
+          if ($LASTEXITCODE -ne 0) { throw 'The before-send wiring checks failed' }
