@@ -794,7 +794,7 @@ struct ServersPanel::Ui
     // Shell
     Label               *system_line = nullptr;
     MD3DataViewListCtrl *list = nullptr;
-    wxPanel             *detail = nullptr;
+    wxPanel             *detail_page = nullptr; // not "detail": MSVC finds boost and nlohmann detail namespaces from lambdas
     Label               *title = nullptr, *status = nullptr;
     Button              *b_start = nullptr, *b_stop = nullptr, *b_restart = nullptr, *b_kill = nullptr, *b_backup = nullptr, *b_folder = nullptr,
            *b_remove = nullptr;
@@ -998,16 +998,16 @@ void ServersPanel::Ui::build()
     });
     main->Add(list, 0, wxEXPAND | wxRIGHT, p->FromDIP(14));
 
-    detail = new wxPanel(p);
-    detail->SetBackgroundColour(role(MD3::Role::Surface));
+    detail_page = new wxPanel(p);
+    detail_page->SetBackgroundColour(role(MD3::Role::Surface));
     auto *d = new wxBoxSizer(wxVERTICAL);
-    title  = text(detail, Label::Head_16, wxEmptyString);
-    status = text(detail, Label::Body_12, wxEmptyString, true);
+    title  = text(detail_page, Label::Head_16, wxEmptyString);
+    status = text(detail_page, Label::Body_12, wxEmptyString, true);
     d->Add(title, 0);
     d->Add(status, 0, wxTOP, p->FromDIP(2));
     auto *actions = new wxWrapSizer(wxHORIZONTAL);
     const auto act = [&](const wxString &label, std::uint32_t glyph, Button::Variant v, std::function<void()> fn) {
-        auto *b = button(detail, label, glyph, v);
+        auto *b = button(detail_page, label, glyph, v);
         b->Bind(wxEVT_BUTTON, [fn](wxCommandEvent &) { fn(); });
         actions->Add(b, 0, wxRIGHT | wxTOP, p->FromDIP(8));
         return b;
@@ -1027,13 +1027,13 @@ void ServersPanel::Ui::build()
     const wxString names[] = {_L("Overview"), _L("Console"), _L("Properties"), _L("Players"), _L("Worlds"), _L("Versions"),
                               _L("Backups"), _L("Schedule"), _L("World generator"), _L("History")};
     for (int i = 0; i < 10; ++i) {
-        auto *b = button(detail, names[i], 0, Button::Variant::Text);
+        auto *b = button(detail_page, names[i], 0, Button::Variant::Text);
         b->Bind(wxEVT_BUTTON, [this, i](wxCommandEvent &) { show_tab(i); });
         tab_row->Add(b, 0, wxRIGHT | wxTOP, p->FromDIP(4));
         tabs.push_back(b);
     }
     d->Add(tab_row, 0, wxEXPAND | wxTOP, p->FromDIP(10));
-    book = new wxSimplebook(detail);
+    book = new wxSimplebook(detail_page);
     book->SetBackgroundColour(role(MD3::Role::Surface));
     const auto page = [&](void (Ui::*fn)(wxWindow *)) {
         auto *pg = new wxPanel(book);
@@ -1052,8 +1052,8 @@ void ServersPanel::Ui::build()
     page(&Ui::build_generator);
     page(&Ui::build_history);
     d->Add(book, 1, wxEXPAND | wxTOP, p->FromDIP(10));
-    detail->SetSizer(d);
-    main->Add(detail, 1, wxEXPAND);
+    detail_page->SetSizer(d);
+    main->Add(detail_page, 1, wxEXPAND);
     root->Add(main, 1, wxEXPAND | wxALL, pad);
 
     busy_bar = new wxPanel(p);
@@ -1088,7 +1088,7 @@ void ServersPanel::Ui::show_tab(int i)
     case 9: refresh_history(); break;
     default: refresh_overview();
     }
-    detail->Layout();
+    detail_page->Layout();
 }
 
 void ServersPanel::Ui::refresh_list()
@@ -1135,7 +1135,7 @@ void ServersPanel::Ui::refresh_list()
 void ServersPanel::Ui::refresh_detail()
 {
     ServerRecord *s = server();
-    detail->Show(s != nullptr);
+    detail_page->Show(s != nullptr);
     if (!s) {
         self->Layout();
         return;
@@ -1161,7 +1161,7 @@ void ServersPanel::Ui::refresh_detail()
     case 3: refresh_players(); break;
     default: break;
     }
-    detail->Layout();
+    detail_page->Layout();
     self->Layout();
 }
 
@@ -1546,9 +1546,9 @@ void ServersPanel::Ui::save_properties()
         return;
     }
     prop_undo[sv->id] = before;
-    std::string detail;
-    for (const std::string &k : changed) detail += (detail.empty() ? "" : ", ") + k;
-    Live::get().record(sv->name, "Settings", detail, "Done");
+    std::string keys;
+    for (const std::string &k : changed) keys += (keys.empty() ? "" : ", ") + k;
+    Live::get().record(sv->name, "Settings", keys, "Done");
     int restart = int(changed.size());
     if (Live::get().running(sv->id)) {
         for (const std::string &cmd : live_cmds) Live::get().send(sv->id, cmd);

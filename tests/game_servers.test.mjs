@@ -40,3 +40,22 @@ if (red.status === 0) {
   process.exit(1);
 }
 console.log('Negative fixture turned red as required (a rewritten file, a batch over 256 chunks).');
+
+// MSVC looks names up from lambdas through the using-directives the app's
+// headers bring in (boost::asio, boost::system and nlohmann all have a
+// `detail` namespace), so a page member named after one of them is ambiguous
+// there even though GCC and Clang accept it. The Windows build once failed on
+// exactly that; keep the page's members clear of those names.
+const panel = readFileSync(path.join(root, 'src/slic3r/GUI/GameServers/ServersPanel.cpp'), 'utf8');
+function clashes(text) {
+  return [...text.matchAll(/^\s+[A-Za-z_:<>]+\s*\*?\s*(detail|impl|placeholders)\s*(?:=[^;]*)?;/gm)].map(m => m[1]);
+}
+if (clashes(panel).length) {
+  console.error('ServersPanel declares a name MSVC also sees as a namespace from lambdas: ' + clashes(panel).join(', '));
+  process.exit(1);
+}
+if (!clashes('struct X {\n    wxPanel             *detail = nullptr;\n};\n').length) {
+  console.error('Negative check: the namespace-name guard no longer notices a member named detail.');
+  process.exit(1);
+}
+console.log('ServersPanel: no member is named after detail, impl or placeholders.');
