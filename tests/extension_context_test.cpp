@@ -72,15 +72,30 @@ static void sections()
     CHECK(imported.dump().find("someone") == std::string::npos);
 
     // print.finished: how a print ended, never which printer it was.
-    nlohmann::json ended = print_section(PrintEndFacts{"failed", "Bambu Lab X1 Carbon", 3723.6, true, 245, 0x0300400C});
+    nlohmann::json ended = print_section(PrintEndFacts{"failed", "Bambu Lab X1 Carbon", 3723.6, true, 245, 0x0300400C, false, {}});
     CHECK(ended["result"] == "failed" && ended["seconds"] == 3724 && ended["seenFromStart"] == true && ended["layers"] == 245);
     CHECK(ended["error"] == "0300400C" && ended["printerModel"] == "Bambu Lab X1 Carbon");
-    ended = print_section(PrintEndFacts{"finished", "X", -1, true, -3, 0x0300400C});
+    ended = print_section(PrintEndFacts{"finished", "X", -1, true, -3, 0x0300400C, false, {}});
     CHECK(ended["seconds"].is_null() && ended["seenFromStart"] == false && ended["layers"] == 0 && !ended.contains("error"));
-    CHECK(print_section(PrintEndFacts{"exploded", "X", 1, false, 1, 0})["result"] == "");
+    CHECK(print_section(PrintEndFacts{"exploded", "X", 1, false, 1, 0, false, {}})["result"] == "");
     std::vector<std::string> ended_keys;
     for (auto it = ended.begin(); it != ended.end(); ++it) ended_keys.push_back(it.key());
     CHECK(ended_keys == std::vector<std::string>({"layers", "printerModel", "result", "seconds", "seenFromStart"}));
+
+    // The filament the slice planned: only for a print sent from here and seen from its start.
+    PrintEndFacts sent{"cancelled", "X", 600, true, 40, 0, true, {{1, "PLA", "00ae42", 1000.0, 1.24, 1.75, 0}, {2, "PETG", "", 500.0, 1.27, 1.75, 0}}};
+    const nlohmann::json planned = print_section(sent);
+    CHECK(planned.contains("plannedFilament") && planned["plannedFilament"]["filaments"].size() == 2);
+    CHECK(planned["plannedFilament"]["complete"] == false); // cancelled: it used less than planned
+    CHECK(planned["plannedFilament"]["filaments"][0]["color"] == "#00AE42" && planned["plannedFilament"]["filaments"][0]["grams"] == 1.24);
+    CHECK(planned["plannedFilament"]["totalGrams"] == 1.88);
+    sent.result = "finished";
+    CHECK(print_section(sent)["plannedFilament"]["complete"] == true);
+    sent.seen_from_start = false; // already running when watching began: it may be another print
+    CHECK(!print_section(sent).contains("plannedFilament"));
+    sent.seen_from_start = true;
+    sent.planned_known   = false;
+    CHECK(!print_section(sent).contains("plannedFilament"));
 
     // Samples are marked in every section, so an extension can tell.
     for (Hook h : {Hook::PlateSliced, Hook::GcodeExported, Hook::Command, Hook::PrintBeforeSend, Hook::ModelImported, Hook::PrintFinished}) {
@@ -123,10 +138,34 @@ static void send()
     f.all_plates = true;
     CHECK(send_section(f)["plate"] == 0 && send_section(f)["allPlates"] == true);
     // Nothing names the printer itself: the section has exactly these keys.
-    const std::vector<std::string> keys = {"allPlates", "connection", "filaments", "options", "plate", "printerModel", "slicedForThisModel"};
+    const std::vector<std::string> keys = {"allPlates", "connection", "filaments", "options", "plate", "printerModel", "slicedForThisModel", "source", "toQueue"};
     std::vector<std::string>       found;
     for (auto it = s.begin(); it != s.end(); ++it) found.push_back(it.key());
     CHECK(found == keys);
+    CHECK(s["source"] == "project" && s["toQueue"] == false && sliced_here(f));
+
+    // Where it comes from and goes. A file on the printer or a queue job was
+    // not sliced here; its name never carries a folder.
+    SendFacts file = f;
+    file.source    = "printer-file";
+    file.file      = "/sdcard/cache/bracket v3.gcode.3mf";
+    const nlohmann::json from_printer = send_section(file);
+    CHECK(from_printer["source"] == "printer-file" && from_printer["file"] == "bracket v3.gcode.3mf" && !from_printer.contains("toQueue"));
+    CHECK(!sliced_here(file));
+    file.source = "queue";
+    file.file   = "C:\\jobs\\night.3mf";
+    CHECK(send_section(file)["file"] == "night.3mf" && !sliced_here(file));
+    file.source = "elsewhere";
+    CHECK(send_section(file)["source"] == "project" && !send_section(file).contains("file"));
+    SendFacts several = f;
+    several.source         = "several";
+    several.printers       = 3;
+    several.printer_models = {"Bambu Lab X1 Carbon", "Bambu Lab P1S", ""};
+    const nlohmann::json many = send_section(several);
+    CHECK(many["printers"] == 3 && many["printerModels"].size() == 2 && sliced_here(several));
+    SendFacts storage = f;
+    storage.source    = "storage";
+    CHECK(send_section(storage)["source"] == "storage" && sliced_here(storage) && !send_section(storage).contains("printers"));
 
     // Every plate as one.
     SliceFacts a, b;

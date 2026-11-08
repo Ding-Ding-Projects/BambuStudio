@@ -17,6 +17,8 @@
 #include "Widgets/StaticBox.hpp"
 #include "Widgets/MaterialIcon.hpp"
 #include "ConnectPrinter.hpp"
+#include "Extensions/BeforeSendCheck.hpp"
+#include "Extensions/ExtensionRuntime.hpp"
 
 #include <wx/graphics.h>
 #include <wx/dcbuffer.h>
@@ -1001,6 +1003,29 @@ void SendToPrinterDialog::on_ok(wxCommandEvent &event)
         return;
     }
     assert(obj_->get_dev_id() == m_printer_last_select);
+
+    // Extensions that check a print before it is sent answer first. The file
+    // goes to the printer's storage and was sliced in this project, so the
+    // request carries its slice; it never names the printer itself.
+    {
+        Extensions::SendFacts facts;
+        facts.source        = "storage";
+        facts.all_plates    = m_print_plate_idx == PLATE_ALL_IDX;
+        facts.plate         = facts.all_plates ? 0 : m_print_plate_idx + 1;
+        facts.printer_model = into_u8(obj_->get_printer_type_display_str());
+        facts.connection    = obj_->is_lan_mode_printer() ? "lan" : "cloud";
+        const Extensions::SendCheckOutcome check = Extensions::check_before_send(this, facts);
+        if (check.decision == Extensions::SendDecision::OpenExtensions) {
+            const std::string id = check.extension;
+            wxGetApp().CallAfter([id]() { Extensions::Runtime::open_manager(id); });
+            EndModal(wxID_CANCEL);
+            return;
+        }
+        if (check.decision == Extensions::SendDecision::Back) {
+            Enable_Send_Button(true);
+            return;
+        }
+    }
 
     BOOST_LOG_TRIVIAL(info) << "print_job: for send task, current " << KV(log_key::dev_id, m_printer_last_select) << std::endl;
     show_status(PrintDialogStatus::PrintStatusSending);

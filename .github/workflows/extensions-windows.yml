@@ -11,6 +11,8 @@ on:
     paths:
       - src/slic3r/GUI/Extensions/**
       - src/slic3r/GUI/SelectMachine.cpp
+      - src/slic3r/GUI/SendToPrinter.cpp
+      - src/slic3r/GUI/SendMultiMachinePage.cpp
       - src/slic3r/GUI/Plater.cpp
       - src/slic3r/GUI/GUI_App.cpp
       - resources/extensions/**

@@ -13,6 +13,7 @@
 #include "ExtensionHost.hpp"
 
 #include <atomic>
+#include <chrono>
 #include <condition_variable>
 #include <cstdint>
 #include <deque>
@@ -21,6 +22,7 @@
 #include <map>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <string>
 #include <thread>
 #include <vector>
@@ -64,6 +66,13 @@ public:
     // once the slicing job has finished with the file (see process_completed).
     void export_finished(const std::string &path);
     void process_completed(bool success, PartPlate *plate, const Print *print);
+
+    // ---- print.finished: what was sent from here
+    // Remembers, in memory only, that this printer was just sent `plate` (0:
+    // every plate) from this project, with the filament its slice planned.
+    // When that printer starts printing within 30 minutes, print.finished
+    // reports the plan. The printer's id is only compared, never sent.
+    void remember_send(const std::string &printer, int plate);
 
     // ---- before a print is sent (print.before_send)
     // The runs it takes; empty when no extension is on for it.
@@ -163,6 +172,13 @@ private:
     // print.finished
     struct PrintWatch;
     std::unique_ptr<PrintWatch>            m_print_watch;
+    struct SentPlan
+    {
+        std::string                           printer;
+        std::vector<FilamentUse>              planned;
+        std::chrono::steady_clock::time_point sent;
+    };
+    std::optional<SentPlan>                m_sent_plan;
 
     std::unique_ptr<Host>                  m_host;
     std::map<int, std::size_t>             m_sliced_stamp; // plate index -> slice timestamp already run

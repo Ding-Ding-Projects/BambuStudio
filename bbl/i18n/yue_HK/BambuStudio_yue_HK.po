@@ -59286,3 +59286,8 @@ msgstr "變返預設"
 #. review-status: agent-drafted
 msgid "Saved as you change them, on this computer, and sent to this extension with every request. A setting that looks like a password, token or key is refused when the extension is added, so nothing here is ever a secret."
 msgstr "一改就儲存喺呢部電腦，每次請求都會送畀呢個擴充功能。睇落似密碼、權杖或者鎖匙嘅設定，喺加入擴充功能嗰陣已經會被拒絕，所以呢度永遠唔會有秘密。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "A file on the printer"
+msgstr "打印機上嘅檔案"

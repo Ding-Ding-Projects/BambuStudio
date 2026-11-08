@@ -185,6 +185,7 @@ struct Runtime::PrintWatch
     bool                                  running = false;   // a print is going and its end has not been reported
     bool                                  seen_from_start = false;
     std::chrono::steady_clock::time_point started;
+    std::optional<std::vector<FilamentUse>> planned;         // sent from here and seen starting
 };
 
 namespace {
@@ -267,6 +268,12 @@ void Runtime::print_tick()
             w.running         = true;
             w.seen_from_start = true;
             w.started         = clock;
+            w.planned.reset();
+            // A print sent from here to this printer in the last 30 minutes is the one starting.
+            if (m_sent_plan && m_sent_plan->printer == now.machine && clock - m_sent_plan->sent <= std::chrono::minutes(30)) {
+                w.planned = m_sent_plan->planned;
+                m_sent_plan.reset();
+            }
         } else if (e.kind == Narration::EventKind::PrintFinished) ended = "finished";
         else if (e.kind == Narration::EventKind::PrintFailed) ended = "failed";
         else if (e.kind == Narration::EventKind::PrintCancelled) ended = "cancelled";
@@ -289,12 +296,38 @@ void Runtime::print_tick()
     facts.seen_from_start = w.seen_from_start;
     facts.layers          = obj->total_layers;
     facts.error           = ended == "failed" ? obj->print_error : 0;
+    if (w.planned) {
+        facts.planned_known = true;
+        facts.planned       = *w.planned;
+        w.planned.reset();
+    }
     Job job;
     job.hook    = Hook::PrintFinished;
     job.runs    = std::move(runs);
     job.context = json{{"print", print_section(facts)}, {"printer", printer_section(printer_facts())}};
     job.subject = facts.printer_model;
     submit(std::move(job));
+}
+
+void Runtime::remember_send(const std::string &printer, int plate)
+{
+    if (m_shut_down || printer.empty()) return;
+    Plater *plater = wxGetApp().plater();
+    if (plater == nullptr) return;
+    std::vector<SliceFacts> plates;
+    PartPlateList          &list = plater->get_partplate_list();
+    for (int i = 0; i < list.get_plate_count(); ++i) {
+        if (plate != 0 && i + 1 != plate) continue;
+        PartPlate *p = list.get_plate(i);
+        if (!p || !p->is_slice_result_valid()) continue;
+        PrintBase   *base   = nullptr;
+        GCodeResult *result = nullptr;
+        int          index  = 0;
+        p->get_print(&base, &result, &index);
+        plates.push_back(facts_for(p, dynamic_cast<const Print *>(base), result));
+    }
+    if (plates.empty()) return;
+    m_sent_plan = SentPlan{printer, combine_plates(plates).filaments, std::chrono::steady_clock::now()};
 }
 
 fs::path Runtime::folder() const { return fs::u8path(data_dir()) / "extensions"; }
@@ -437,7 +470,10 @@ std::vector<PlannedRun> Runtime::plan_before_send()
 json Runtime::before_send_context(const SendFacts &send, std::string &subject)
 {
     std::vector<SliceFacts> plates;
-    if (Plater *plater = wxGetApp().plater()) {
+    // A file already on the printer, or a queue job, was not sliced in this
+    // project: the project's plates say nothing about it.
+    Plater *plater = sliced_here(send) ? wxGetApp().plater() : nullptr;
+    if (plater != nullptr) {
         PartPlateList &list = plater->get_partplate_list();
         for (int i = 0; i < list.get_plate_count(); ++i) {
             if (!send.all_plates && i + 1 != send.plate) continue;
@@ -454,7 +490,8 @@ json Runtime::before_send_context(const SendFacts &send, std::string &subject)
     if (!plates.empty()) context["slice"] = slice_section(combine_plates(plates));
     context["printer"] = printer_section(printer_facts());
     context["send"]    = send_section(send);
-    if (send.all_plates) subject = (boost::format(_u8L("All plates (%1%)")) % plates.size()).str();
+    if (!sliced_here(send)) subject = send.file.empty() ? _u8L("A file on the printer") : send.file;
+    else if (send.all_plates) subject = (boost::format(_u8L("All plates (%1%)")) % plates.size()).str();
     else if (plates.size() == 1) subject = plate_subject(plates.front());
     else subject = (boost::format(_u8L("Plate %1%")) % send.plate).str();
     return context;

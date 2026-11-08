@@ -140,6 +140,21 @@ json print_section(const PrintEndFacts &facts)
         std::snprintf(code, sizeof(code), "%08X", static_cast<unsigned>(facts.error));
         out["error"] = code;
     }
+    // Only for a print sent from here and seen from its start: otherwise the
+    // plan may be another print's.
+    if (facts.planned_known && facts.seen_from_start && facts.seconds >= 0) {
+        json planned = json::array();
+        double total_g = 0, total_m = 0;
+        for (const FilamentUse &use : facts.planned) {
+            if (planned.size() >= 64) break;
+            const double g = grams(use), m = meters(use);
+            total_g += g;
+            total_m += m;
+            planned.push_back(json{{"slot", use.slot}, {"type", use.type}, {"color", normalise_color(use.color)}, {"grams", round_to(g, 2)}, {"meters", round_to(m, 2)}});
+        }
+        out["plannedFilament"] = json{{"filaments", planned}, {"totalGrams", round_to(total_g, 2)}, {"totalMeters", round_to(total_m, 2)},
+                                      {"complete", result == "finished"}};
+    }
     return out;
 }
 
@@ -180,7 +195,15 @@ json sample_context(Hook hook)
                            model_section({{"Sample bracket", 2, 12480, {{42.0, 18.5, 9.0}}, true}, {"Sample hook", 1, 3302, {{20.0, 20.0, 35.0}}, false}}, 1);
     context["model"]["sample"] = true;
     if (hook == Hook::PrintFinished) {
-        context["print"]           = print_section(PrintEndFacts{"finished", "Sample printer", 5025, true, 245, 0});
+        PrintEndFacts ended;
+        ended.result          = "finished";
+        ended.printer_model   = "Sample printer";
+        ended.seconds         = 5025;
+        ended.seen_from_start = true;
+        ended.layers          = 245;
+        ended.planned_known   = true;
+        ended.planned         = {{1, "PLA", "#00AE42", 12000.0, 1.24, 1.75, 0.0}};
+        context["print"]           = print_section(ended);
         context["print"]["sample"] = true;
     }
     if (hook == Hook::PrintBeforeSend) {
@@ -231,13 +254,45 @@ json send_section(const SendFacts &facts)
         filaments.push_back(std::move(row));
     }
     const std::string connection = facts.connection == "cloud" || facts.connection == "lan" ? facts.connection : std::string();
-    return json{{"plate", facts.all_plates ? 0 : std::max(0, facts.plate)},
-                {"allPlates", facts.all_plates},
-                {"printerModel", facts.printer_model},
-                {"slicedForThisModel", facts.sliced_for_this_model},
-                {"connection", connection},
-                {"options", options},
-                {"filaments", filaments}};
+    static const char *sources[]  = {"project", "storage", "several", "printer-file", "queue"};
+    std::string        source     = "project";
+    for (const char *known : sources)
+        if (facts.source == known) source = known;
+    json out{{"source", source},
+             {"plate", facts.all_plates ? 0 : std::max(0, facts.plate)},
+             {"allPlates", facts.all_plates},
+             {"printerModel", facts.printer_model},
+             {"slicedForThisModel", facts.sliced_for_this_model},
+             {"connection", connection},
+             {"options", options},
+             {"filaments", filaments}};
+    if (source == "project") out["toQueue"] = facts.to_queue;
+    if (source == "printer-file" || source == "queue") {
+        // The name only: whatever came before the last slash is a folder.
+        std::string name = facts.file;
+        if (const std::size_t slash = name.find_last_of("/\\"); slash != std::string::npos) name = name.substr(slash + 1);
+        if (name.size() > 120) name.resize(120);
+        out["file"] = name;
+    }
+    if (source == "several") {
+        out["printers"] = std::max(1, facts.printers);
+        json models     = json::array();
+        for (const std::string &m : facts.printer_models)
+            if (models.size() < 20 && !m.empty()) models.push_back(m.substr(0, 80));
+        out["printerModels"] = models;
+    }
+    return out;
+}
+
+bool sliced_here(const SendFacts &facts)
+{
+#ifdef SLIC3R_EXTENSION_CONTEXT_SOURCE_NEGATIVE_FIXTURE
+    // Test-only mutation (tests/extension_context.test.mjs): the suite must fail.
+    (void) facts;
+    return true;
+#else
+    return facts.source == "project" || facts.source == "storage" || facts.source == "several";
+#endif
 }
 
 SliceFacts combine_plates(const std::vector<SliceFacts> &plates)

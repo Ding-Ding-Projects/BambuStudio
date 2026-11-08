@@ -1,6 +1,8 @@
 #include "SendMultiMachinePage.hpp"
 #include "Widgets/MD3ScrolledWindow.hpp"
 #include "TaskManager.hpp"
+#include "Extensions/BeforeSendCheck.hpp"
+#include "Extensions/ExtensionRuntime.hpp"
 #include "I18N.hpp"
 
 #include "GUI_App.hpp"
@@ -15,8 +17,10 @@
 #include "DeviceCore/DevStorage.h"
 #include "Widgets/Label.hpp"
 #include <algorithm>
+#include <set>
 #include <cmath>
-#include "libslic3r/Log.hpp"
+#include "libslic3r/Log.hpp"
+
 #include "DeviceCore/DevSliceContext.hpp"
 
 namespace Slic3r {
@@ -855,6 +859,36 @@ void SendMultiMachinePage::on_send(wxCommandEvent& event)
             dialog.ShowModal();
             return;
         }
+    }
+
+    // Extensions that check a print before it is sent answer once for every
+    // printer chosen: how many, and each model once; never which printers.
+    if (!selected_device_ids.empty()) {
+        Extensions::SendFacts facts;
+        facts.source     = "several";
+        facts.printers   = int(selected_device_ids.size());
+        facts.all_plates = m_print_plate_idx == PLATE_ALL_IDX;
+        facts.plate      = facts.all_plates ? 0 : m_print_plate_idx + 1;
+        std::set<std::string> connections;
+        for (const auto& id : selected_device_ids) {
+            auto item = m_device_items.find(id);
+            MachineObject* obj = item != m_device_items.end() ? item->second->get_obj() : nullptr;
+            if (!obj) continue;
+            const std::string model = into_u8(obj->get_printer_type_display_str());
+            if (std::find(facts.printer_models.begin(), facts.printer_models.end(), model) == facts.printer_models.end())
+                facts.printer_models.push_back(model);
+            connections.insert(obj->is_lan_mode_printer() ? "lan" : "cloud");
+        }
+        if (connections.size() == 1) facts.connection = *connections.begin();
+        if (facts.printer_models.size() == 1) facts.printer_model = facts.printer_models.front();
+        const Extensions::SendCheckOutcome check = Extensions::check_before_send(this, facts);
+        if (check.decision == Extensions::SendDecision::OpenExtensions) {
+            const std::string id = check.extension;
+            wxGetApp().CallAfter([id]() { Extensions::Runtime::open_manager(id); });
+            EndModal(wxID_CANCEL);
+            return;
+        }
+        if (check.decision == Extensions::SendDecision::Back) return;
     }
 
     int result = m_plater->send_gcode(m_print_plate_idx, [this](int export_stage, int current, int total, bool& cancel) {

@@ -107,7 +107,10 @@ and **Try with a sample** can still exercise it.
 
 Pressing **Send** (or adding the plate to the print queue) in the print dialog
 asks every extension that is on for `print.before_send` first, one at a time,
-ahead of anything else waiting to run. With none on, nothing changes: no
+ahead of anything else waiting to run. So does printing a file already on the
+printer or a job from the print queue from that dialog, **Send** in Send to the
+printer's storage, and **Send** to several printers at once (asked once, before
+the file is prepared). The request's `send.source` says which of these it is. With none on, nothing changes: no
 window, no delay. Otherwise a window says which extension is checking and for
 how long, and offers **Back** and **Send without the checks** (which stops the
 run at once; it is recorded as stopped by you and never counts as a failure).
@@ -131,7 +134,8 @@ mapping, or turn the extension off. **Open Extensions** closes the print
 dialog and opens the page at the extension to look at.
 
 After the extensions, the app's own pre-print check follows as before. Each
-run is on the Runs tab as `Before sending a print` with the plate.
+run is on the Runs tab as `Before sending a print` with the plate, or with the
+file's name for a file on the printer or a queue job.
 
 ## Permissions
 
@@ -288,6 +292,7 @@ gets its default back for a stored value it no longer allows.
 
   ```json
   "send": {
+    "source": "project", "toQueue": false,
     "plate": 1, "allPlates": false,
     "printerModel": "Bambu Lab X1 Carbon", "slicedForThisModel": true,
     "connection": "lan",
@@ -299,8 +304,17 @@ gets its default back for a stored value it no longer allows.
   }
   ```
 
-  `connection` is `cloud` or `lan`. `options` are the options the print
-  dialog shows, with the values it uses. Each filament is a project slot with
+  `source` is `project` (a plate of this project to the printer; `toQueue`
+  says whether it goes to the print queue instead), `storage` (to the
+  printer's storage, not printed), `several` (to several printers at once:
+  `printers` says how many and `printerModels` lists each model once, never
+  which printers), `printer-file` (a file already on the printer) or `queue`
+  (a job from the print queue). The last two carry `file`, the file's or job's
+  name without any folder, and no `slice`: they were not sliced in this
+  project. `connection` is `cloud` or `lan` (empty when several printers mix
+  both). `options` are the options the print dialog shows, with the values it
+  uses; Send to storage and several printers have none, and no filament
+  mapping. Each filament is a project slot with
   its sliced type and colour and, when it is mapped, the printer's name for
   the slot (`A1`, `HT-A`, `Ext`), what the printer reports there and how much
   is left (`-1` when the printer does not say); an unmapped one has an empty
@@ -311,8 +325,14 @@ gets its default back for a stored value it no longer allows.
   saw it run, or `null`), `seenFromStart` (false when it was already running
   when watching began, so `seconds` is only part of the print), `layers` (as
   the printer reports them, 0 when unknown) and, for a failed print, `error`
-  (the printer's code as eight hex digits). A print that was already over when
-  watching began is never reported, and each ending is reported once. The
+  (the printer's code as eight hex digits). When Bambu Studio sent the print
+  (printed now, not queued) and saw that printer start within 30 minutes,
+  `plannedFilament` holds what the slice planned: `filaments` (slot, type,
+  colour, grams, metres), `totalGrams`, `totalMeters` and `complete` (true
+  only for a finished print: a failed or cancelled one used less). It is the
+  plan, not a measurement, and it is left out for a print that was already
+  running when watching began. A print that was already over when watching
+  began is never reported, and each ending is reported once. The
   printer's identity is only compared to notice a switch, never sent. Until
   someone has answered an extension's consent prompt, the watcher does not
   even read the extensions folder, so the built-ins are still installed on
@@ -413,9 +433,12 @@ turning it on again starts the count over.
   run. Its negative build overwrites a changed
   built-in and must fail.
 - `tests/extension_context.test.mjs`: the request sections (the `send`
-  section and every plate added up among them), the samples and comment lines
-  in G-code (after the header, line endings kept, refusals, large files). Its
-  negative build puts the lines above the header and must fail.
+  section with every source, file names without folders and several
+  printers, the `print` section with the planned filament, and every plate
+  added up), the samples and comment lines in G-code (after the header, line
+  endings kept, refusals, large files). Its negative builds put the lines
+  above the header, or count a file on the printer as sliced here, and must
+  fail.
 - `tests/extension_import_wiring.test.mjs`: loading files runs
   `model.imported` once the load has returned and objects arrived, nothing
   else calls the inner loader, and the request holds only what arrived; each
@@ -426,8 +449,12 @@ turning it on again starts the count over.
   transition detector, and never sends the printer's identity; each checker
   must fail on a broken copy.
 - `tests/extension_before_send_wiring.test.mjs`: the print dialog asks the
-  extensions before its own check and only for a sliced plate, the send facts
-  never read the printer's serial number, name, address or access code, the
+  extensions before its own check, for a plate of this project, a file on the
+  printer and a queue job (their name only), Send to storage and several
+  printers ask before anything is sent and never name the printers, only a
+  send sliced here carries the slice, the send facts never read the printer's
+  serial number, name, address or access code, the plan is remembered only
+  for a print sent now and matched to the same printer within 30 minutes, the
   check runs ahead of anything waiting and reports to its window, and leaving
   the window stops the runs; each checker must fail on a broken copy.
 - `tests/extension_builtins.test.mjs`: the built-in manifests and scripts,
@@ -440,9 +467,8 @@ turning it on again starts the count over.
 
 ## Not done yet
 
-Every declared hook runs. `print.before_send` does not run when a job already
-in the print queue is printed, for a file already on the printer, when
-sending to several printers at once, or for Send to the printer's storage.
-`print.finished` watches only the printer selected on the Device page and
-cannot report the filament a print used. There are no signed extensions:
-this project does not sign code, its own or anyone else's.
+Every declared hook runs, on every way a print is sent. `print.finished`
+watches only the printer selected on the Device page, and the filament it
+reports is the slice's plan, never what the printer measured. There are no
+signed extensions: this project does not sign code, its own or anyone
+else's.

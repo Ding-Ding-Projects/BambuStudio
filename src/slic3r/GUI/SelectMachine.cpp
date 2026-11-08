@@ -2656,10 +2656,21 @@ void SelectMachineDialog::on_ok_btn(wxCommandEvent &event)
 
     // Extensions that check a print before it is sent answer first, before the
     // app's own pre-print check; with none on for print.before_send this returns
-    // at once. Only a plate sliced in this project is checked.
-    if (m_print_type == PrintFromType::FROM_NORMAL) {
-        const Extensions::SendCheckOutcome check = Extensions::check_before_send(
-            this, extension_send_facts(obj_, m_print_plate_idx, is_same_printer_model(), m_checkbox_list, m_ams_mapping_result, m_filaments));
+    // at once. A file already on the printer and a print queue job are checked
+    // too: the request says where the print comes from and, as neither was
+    // sliced in this project, carries no slice of it.
+    if (m_print_type == PrintFromType::FROM_NORMAL || m_print_type == PrintFromType::FROM_SDCARD_VIEW ||
+        m_print_type == PrintFromType::FROM_PRINT_QUEUE) {
+        Extensions::SendFacts facts = extension_send_facts(obj_, m_print_plate_idx, is_same_printer_model(), m_checkbox_list, m_ams_mapping_result, m_filaments);
+        if (m_print_type == PrintFromType::FROM_NORMAL) {
+            facts.to_queue = m_add_to_queue;
+        } else {
+            facts.source = m_print_type == PrintFromType::FROM_SDCARD_VIEW ? "printer-file" : "queue";
+            // The name only, never the folder it sits in.
+            const std::size_t slash = m_required_data_file_name.find_last_of("/\\");
+            facts.file = slash == std::string::npos ? m_required_data_file_name : m_required_data_file_name.substr(slash + 1);
+        }
+        const Extensions::SendCheckOutcome check = Extensions::check_before_send(this, facts);
         if (check.decision == Extensions::SendDecision::OpenExtensions) {
             const std::string id = check.extension;
             wxGetApp().CallAfter([id]() { Extensions::Runtime::open_manager(id); });
@@ -4058,6 +4069,11 @@ void SelectMachineDialog::on_send_print()
 
     m_print_job->start();
     BOOST_LOG_TRIVIAL(info) << "print_job: start print job";
+    // print.finished: when this printer starts printing soon, the slice's plan
+    // for this plate is the one it prints. A queued job prints later, so it
+    // is not remembered.
+    if (m_print_type == PrintFromType::FROM_NORMAL && !m_add_to_queue)
+        Extensions::Runtime::instance().remember_send(obj_->get_dev_id(), m_print_plate_idx == PLATE_ALL_IDX ? 0 : m_print_plate_idx + 1);
 }
 
 void SelectMachineDialog::clear_ip_address_config(wxCommandEvent& e)

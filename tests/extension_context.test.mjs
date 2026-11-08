@@ -39,3 +39,12 @@ if (red.status === 0) {
   process.exit(1);
 }
 console.log('Negative fixture turned red as required (start lines went above the header block).');
+
+const unsourced = build('source-negative', '#define SLIC3R_EXTENSION_CONTEXT_SOURCE_NEGATIVE_FIXTURE 1\n');
+const wrong = spawnSync(unsourced.exe, [], {cwd: unsourced.output, encoding: 'utf8'});
+if (wrong.error) throw wrong.error;
+if (wrong.status === 0) {
+  console.error('Source negative fixture stayed green: the suite cannot notice a file on the printer getting this project\'s slice.');
+  process.exit(1);
+}
+console.log('Source negative fixture turned red as required (a file on the printer counted as sliced here).');

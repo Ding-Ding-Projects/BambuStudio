@@ -96,6 +96,10 @@ struct PrintEndFacts
     bool        seen_from_start = false; // false: it was already running when Bambu Studio started watching
     int         layers         = 0;   // the job's layers, as the printer reports them; 0 when unknown
     int         error          = 0;   // the printer's error code for a failed print; 0 when none
+    // When Bambu Studio sent this print and saw it start: the filament the
+    // slice planned per slot. A failed or cancelled print used less.
+    bool                     planned_known = false;
+    std::vector<FilamentUse> planned;
 };
 
 // The "print" section of a print.finished request (needs printer.read).
@@ -115,6 +119,16 @@ struct SendFilamentFacts
 
 struct SendFacts
 {
+    // Where the print comes from and goes: "project" (a plate of this project
+    // to the printer), "storage" (to the printer's storage, not printed),
+    // "several" (one plate to several printers), "printer-file" (a file
+    // already on the printer) or "queue" (a job from the print queue). Only
+    // the first three were sliced in this project, so only they carry "slice".
+    std::string                                      source     = "project";
+    std::string                                      file;            // printer-file and queue: the file's or job's name, never a path
+    bool                                             to_queue   = false; // project: added to the print queue instead of printed now
+    int                                              printers   = 1;  // several: how many printers
+    std::vector<std::string>                         printer_models;  // several: each model once
     int                                              plate      = 0; // 1-based; 0 when every plate is sent
     bool                                             all_plates = false;
     std::string                                      printer_model;   // the model of the printer it goes to, as the app names it
@@ -128,6 +142,9 @@ struct SendFacts
 // never holds the printer's own name, serial number, address or access code:
 // SendFacts has no place for them.
 nlohmann::json send_section(const SendFacts &facts);
+// Whether this send was sliced in this project, so the request may carry the
+// project's "slice" section.
+bool sliced_here(const SendFacts &facts);
 // Every sliced plate as one, for sending all plates at once: plate 0, times,
 // layers, filament changes and each slot's filament added up, the bed type
 // when every plate shares it, warnings in plate order (at most 20).
