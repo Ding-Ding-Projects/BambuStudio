@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-08 12:51-0500\n"
+"POT-Creation-Date: 2026-11-08 13:01-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -12778,6 +12778,9 @@ msgid "Light"
 msgstr ""
 
 msgid "Dark"
+msgstr ""
+
+msgid "Follow Windows"
 msgstr ""
 
 msgid "Theme"
@@ -31152,6 +31155,9 @@ msgstr ""
 msgid "Personal wording applied"
 msgstr ""
 
+msgid "Follow Windows switches between light and dark when Windows does, also while Bambu Studio is open."
+msgstr ""
+
 msgid "Windows opened from now on use the new density; open windows keep theirs until they are opened again."
 msgstr ""
 
@@ -31211,6 +31217,32 @@ msgid "Your printers"
 msgstr ""
 
 msgid "Result of each action"
+msgstr ""
+
+msgid "Already undone"
+msgstr ""
+
+msgid "The printers added there were removed before."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Remove the printers added here again? %s"
+msgstr ""
+
+msgid "The printer guide's choices go back to how they were before it opened. Nothing you saved is deleted, and the printer guide adds them again any time."
+msgstr ""
+
+msgid "The printers added in setup are removed again."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Removed %d of the printers added here"
+msgstr ""
+
+msgid "Their presets are hidden again; nothing you saved was deleted."
+msgstr ""
+
+msgid "The others stay: a preset of yours still uses them."
 msgstr ""
 
 #, possible-c-format, possible-boost-format

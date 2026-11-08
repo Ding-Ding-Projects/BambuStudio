@@ -13,6 +13,9 @@
 #include <array>
 #include <cstdint>
 #include <functional>
+#include <map>
+#include <memory>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -76,6 +79,15 @@ private:
     void add_result(int step, std::uint32_t glyph, bool ok, const wxString &title, const wxString &detail,
                     const wxString &action = wxString(), std::function<void()> on_action = {});
     void import_printer_profile();
+    // Undo on "Added N printers": the printer guide's choices as they were
+    // before it opened, and the printers it added.
+    struct PrinterGuideState
+    {
+        std::map<std::string, std::map<std::string, std::set<std::string>>> vendors;
+        std::map<std::string, std::string>                                  filaments;
+        std::vector<std::string>                                            added;
+    };
+    void undo_added_printers(int step, const PrinterGuideState &state, const std::shared_ptr<bool> &undone);
     // Saves, closes setup and shows the Device tab for a printer found on the network.
     void connect_on_device_tab(const std::string &dev_id);
     void on_next();

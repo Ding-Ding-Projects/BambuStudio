@@ -17,7 +17,7 @@ Help whenever they want to change something.
 | Step | Kind | What it does |
 | --- | --- | --- |
 | Language and humour | | English, 廣東話 or both; the English and Cantonese funny levels (1 to 5); emoji in dialogs; a personal wording file |
-| Look and motion | | Light or dark; comfortable or compact; system or reduced motion |
+| Look and motion | | Light, dark or follow Windows; comfortable or compact; system or reduced motion |
 | Printers | Required | Choose printers (the printer guide), search your network, import a printer profile |
 | Inks and filaments | Required | Sync AMS, pick filaments (the filament guide), and see what is on the plate |
 | Backups | Optional | Auto-backup of the open project (off, 2 or 10 minutes) and a config backup |
@@ -36,6 +36,18 @@ says why, and an import that brought no printer says so.
 - **Search my network** lists the printers that answered on your network,
   each with **Connect**, which saves setup and opens the Device tab on that
   printer. Connecting needs the printer's access code, which you enter there.
+- **Follow Windows** sets light or dark from Windows' own choice for apps,
+  and switches the whole app within three seconds whenever Windows switches,
+  also while Bambu Studio is open. Choosing Light or Dark, here or in
+  Preferences, stops following. Where Windows does not say (another system),
+  the look stays as it is.
+- **Choose printers** lists the printers the printer guide added, with
+  **Undo**: after you agree, the guide's printer and filament choices go back
+  to how they were before it opened and the presets it added are hidden
+  again. Unsaved changes to the printer in use are saved or dropped first, as
+  the guide asks. Nothing you saved is deleted, a printer one of your presets
+  still uses stays, and the result says how many were removed. Undo acts
+  once.
 - An import that brought no printer offers **Choose another file**.
 - A bar under the step counter shows how many steps are done or skipped.
 - **Back up** opens Config profiles & backup: Snapshot now keeps a complete
@@ -76,6 +88,7 @@ The steps on the left can also be clicked.
 | --- | --- |
 | `setup_wizard_progress` | JSON: current step, step states, time, finished, first run |
 | `setup_wizard_reopen` | `1` while the window is rebuilt for a language change |
+| `theme_follow_windows` | `1` while Windows decides light or dark; `dark_color_mode` still holds the look in effect |
 
 The steps themselves write the settings Preferences already uses: `language`,
 `funny_level_en`, `funny_level_yue`, `dialog_emojis`, `dark_color_mode`,
@@ -89,7 +102,17 @@ skipped), resuming, and saving, including a hand-edited record that tries to
 skip a required step. A negative build lets a required step be skipped and must
 fail.
 
+`tests/theme_follow.test.mjs` compiles `tests/theme_follow_test.cpp`: what
+Light, Dark and Follow Windows store, Windows' own setting, and when following
+switches the look. A negative build follows Windows while following is off and
+must fail. It also checks the sources: the look is set before the first
+window, the watcher starts after startup and stops at exit and changes the
+look only when the rules say so, Preferences and setup store both values
+through the shared rules, and Undo asks first, handles unsaved changes, puts
+the guide's choices back and acts once; each check must fail on a broken
+copy.
+
 ## Not done yet
 
-Following the Windows light or dark setting and undoing a printer added here
-are designed but not built.
+Everything on the board is built. Following Windows reads Windows' setting for
+apps; on other systems the choice keeps the look in effect.

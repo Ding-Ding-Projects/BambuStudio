@@ -158,6 +158,7 @@
 #include "../Utils/HelioDragon.hpp"
 #include "slic3r/Config/Snapshot.hpp"
 #include "Preferences.hpp"
+#include "Appearance/ThemeFollowWatcher.hpp"
 #include "CommandPaletteIndex.hpp"
 #include "Tab.hpp"
 #include "SysInfoDialog.hpp"
@@ -1683,6 +1684,8 @@ void GUI_App::post_init()
     Extensions::Runtime::instance().start_watching_prints();
     // What the settings read only at startup were when this app started (Needs a restart).
     PreferencesDialog::remember_values_in_use();
+    // Follow Windows: switches the look when Windows switches, while following is on.
+    ThemeFollow::start_watching();
     m_narrator_environment = std::make_unique<FeatureServices::NarratorEnvironment>([this] {
         return app_config && app_config->get("narrator_quiet") == "true";
     }, [this](const char* key) { return app_config ? app_config->get(key) : std::string(); });
@@ -3543,6 +3546,7 @@ int GUI_App::OnExit()
     // and Update.exe finishes staging on its own. Joining keeps the worker from touching this
     // object once it is gone.
     m_update_check_timer.Stop();
+    ThemeFollow::stop_watching();
     m_auto_update_cancel = true;
     if (m_auto_update_thread.joinable())
         m_auto_update_thread.join();
@@ -4024,6 +4028,8 @@ bool GUI_App::on_init_inner()
 #endif // __APPLE__
 
 
+    // Follow Windows: the look Windows wants, before anything is drawn.
+    ThemeFollow::apply_at_startup();
     bool init_dark_color_mode = dark_mode();
     bool init_sys_menu_enabled = app_config->get("sys_menu_enabled") == "1";
 #ifdef __WINDOWS__

@@ -3,6 +3,8 @@
 #include "../ConfigProfilesDialog.hpp"
 #include "../ConfigWizard.hpp"
 #include "../DeviceManager.hpp"
+#include "../Appearance/ThemeFollow.hpp"
+#include "../Appearance/ThemeFollowWatcher.hpp"
 #include "../DeviceCore/DevManager.h"
 #include "../FeatureFinder/LocalToolsActivity.hpp"
 #include "../Extensions/ExtensionRuntime.hpp"
@@ -595,13 +597,23 @@ wxWindow *SetupWizardDialog::build_look(wxWindow *parent)
     AppConfig *cfg = wxGetApp().app_config;
 
     s->Add(make_label(page, Label::Head_14, _L("Theme")), 0, wxBOTTOM, FromDIP(6));
-    auto *theme = segmented(page, {_L("Light"), _L("Dark")}, cfg->get("dark_color_mode") == "1" ? 1 : 0, _L("Theme"));
+    const ThemeFollow::Choice theme_now = ThemeFollow::choice_from(cfg->get("dark_color_mode"), cfg->get(ThemeFollow::kFollowKey));
+    auto *theme = segmented(page, {_L("Light"), _L("Dark"), _L("Follow Windows")},
+                            theme_now == ThemeFollow::Choice::FollowWindows ? 2 : theme_now == ThemeFollow::Choice::Dark ? 1 : 0, _L("Theme"));
     theme->Bind(wxCUSTOMEVT_MULTISWITCH_SELECTION, [this](wxCommandEvent &e) {
-        apply_dark_mode(this, e.GetInt() == 1);
+        const ThemeFollow::Choice choice = e.GetInt() == 2 ? ThemeFollow::Choice::FollowWindows :
+                                           e.GetInt() == 1 ? ThemeFollow::Choice::Dark : ThemeFollow::Choice::Light;
+        AppConfig                *config = wxGetApp().app_config;
+        const ThemeFollow::Stored stored = ThemeFollow::store(choice, ThemeFollow::windows_prefers_dark(), config->get("dark_color_mode"));
+        config->set(ThemeFollow::kFollowKey, stored.follow);
+        apply_dark_mode(this, stored.dark_color_mode == "1");
         save();
         e.Skip();
     });
-    s->Add(theme, 0, wxBOTTOM, FromDIP(16));
+    s->Add(theme, 0, wxBOTTOM, FromDIP(4));
+    s->Add(make_label(page, Label::Body_12, _L("Follow Windows switches between light and dark when Windows does, also while Bambu Studio is open."),
+                      MD3::Role::OnSurfaceVariant, true),
+           0, wxEXPAND | wxBOTTOM, FromDIP(16));
 
     s->Add(make_label(page, Label::Head_14, _L("Density")), 0, wxBOTTOM, FromDIP(6));
     auto *density = segmented(page, {_L("Comfortable"), _L("Compact")}, cfg->get("ui_density") == "compact" ? 1 : 0, _L("Density"));
@@ -645,15 +657,25 @@ wxWindow *SetupWizardDialog::build_printers(wxWindow *parent)
     auto *actions = new wxWrapSizer(wxHORIZONTAL);
     auto *choose = make_button(page, _L("Choose printers"), GlyphAdd, Button::Variant::Tonal);
     choose->Bind(wxEVT_BUTTON, [this, step](wxCommandEvent &) {
-        const std::size_t before = your_printers().size();
-        const bool        ok     = wxGetApp().run_wizard(ConfigWizard::RR_USER, ConfigWizard::SP_PRINTERS);
-        const std::size_t after  = your_printers().size();
+        AppConfig *cfg = wxGetApp().app_config;
+        const std::vector<std::string> before = your_printers();
+        // What the printer guide can change, kept so Undo can put it back.
+        PrinterGuideState state;
+        state.vendors   = cfg->vendors();
+        state.filaments = cfg->has_section(AppConfig::SECTION_FILAMENTS) ? cfg->get_section(AppConfig::SECTION_FILAMENTS)
+                                                                        : std::map<std::string, std::string>();
+        const bool                     ok    = wxGetApp().run_wizard(ConfigWizard::RR_USER, ConfigWizard::SP_PRINTERS);
+        const std::vector<std::string> after = your_printers();
+        for (const std::string &name : after)
+            if (std::find(before.begin(), before.end(), name) == before.end()) state.added.push_back(name);
         refresh_printers();
-        if (ok && after > before)
-            add_result(step, GlyphDone, true, wxString::Format(_L("Added %d printers"), int(after - before)),
-                       _L("Their plates, nozzles and process presets are now in Prepare."));
-        else if (ok)
-            add_result(step, GlyphInfo, true, _L("Printer choices saved"), wxString::Format(_L("You have %d printers set up."), int(after)));
+        if (ok && !state.added.empty()) {
+            auto undone = std::make_shared<bool>(false);
+            add_result(step, GlyphDone, true, wxString::Format(_L("Added %d printers"), int(state.added.size())),
+                       join_names(state.added, 4) + ". " + _L("Their plates, nozzles and process presets are now in Prepare."),
+                       _L("Undo"), [this, step, state, undone]() { undo_added_printers(step, state, undone); });
+        } else if (ok)
+            add_result(step, GlyphInfo, true, _L("Printer choices saved"), wxString::Format(_L("You have %d printers set up."), int(after.size())));
         else
             add_result(step, GlyphInfo, true, _L("The printer guide closed without changes"), wxString());
     });
@@ -699,6 +721,39 @@ wxWindow *SetupWizardDialog::build_printers(wxWindow *parent)
     page->SetSizer(s);
     refresh_printers();
     return page;
+}
+
+void SetupWizardDialog::undo_added_printers(int step, const PrinterGuideState &state, const std::shared_ptr<bool> &undone)
+{
+    if (*undone) {
+        add_result(step, GlyphInfo, true, _L("Already undone"), _L("The printers added there were removed before."));
+        return;
+    }
+    const wxString question = wxString::Format(_L("Remove the printers added here again? %s"), join_names(state.added, 6)) + "\n\n" +
+                              _L("The printer guide's choices go back to how they were before it opened. Nothing you saved is deleted, and the printer guide adds them again any time.");
+    if (MessageDialog(this, question, _L("Undo"), wxOK | wxCANCEL | wxICON_QUESTION).ShowModal() != wxID_OK) return;
+    // Unsaved changes to the printer in use are saved or dropped first, as the printer guide asks.
+    if (!wxGetApp().check_and_keep_current_preset_changes(_L("Undo"), _L("The printers added in setup are removed again."),
+                                                          UnsavedChangesDialog::ActionButtons::SAVE))
+        return;
+    AppConfig    *cfg    = wxGetApp().app_config;
+    PresetBundle *bundle = wxGetApp().preset_bundle;
+    if (cfg == nullptr || bundle == nullptr) return;
+    cfg->set_section(AppConfig::SECTION_FILAMENTS, state.filaments);
+    cfg->set_vendors(state.vendors);
+    const auto loaded = bundle->load_presets(*cfg, ForwardCompatibilitySubstitutionRule::EnableSilentDisableSystem);
+    if (!loaded.second.empty()) show_error(this, loaded.second);
+    bundle->export_selections(*cfg);
+    wxGetApp().load_current_presets();
+    cfg->save();
+    *undone = true;
+    refresh_printers();
+    const std::vector<std::string> now = your_printers();
+    const int gone = int(std::count_if(state.added.begin(), state.added.end(),
+                                       [&now](const std::string &name) { return std::find(now.begin(), now.end(), name) == now.end(); }));
+    add_result(step, GlyphDone, true, wxString::Format(_L("Removed %d of the printers added here"), gone),
+               gone == int(state.added.size()) ? _L("Their presets are hidden again; nothing you saved was deleted.") :
+                                                 _L("The others stay: a preset of yours still uses them."));
 }
 
 void SetupWizardDialog::import_printer_profile()

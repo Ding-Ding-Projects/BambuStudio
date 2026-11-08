@@ -861,6 +861,10 @@ list(APPEND SLIC3R_GUI_SOURCES
     GUI/Widgets/MD3Menu.cpp
     GUI/Widgets/MD3Menu.hpp
     GUI/Appearance/ElementStyle.cpp
+    GUI/Appearance/ThemeFollow.cpp
+    GUI/Appearance/ThemeFollow.hpp
+    GUI/Appearance/ThemeFollowWatcher.cpp
+    GUI/Appearance/ThemeFollowWatcher.hpp
     GUI/Appearance/ElementStyle.hpp
     GUI/Appearance/ElementMotion.cpp
     GUI/Appearance/ElementMotion.hpp

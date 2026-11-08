@@ -1,6 +1,8 @@
 #include <wx/wrapsizer.h>
 #include "Preferences.hpp"
 #include "PreferencesRemake/PreferenceFormats.hpp"
+#include "Appearance/ThemeFollow.hpp"
+#include "Appearance/ThemeFollowWatcher.hpp"
 #include "AttentionModes/AttentionModel.hpp"
 #include "PreferencesGeometry.hpp"
 #include "PreferencesGeometryProbe.hpp"
@@ -3408,17 +3410,22 @@ wxWindow *PreferencesDialog::create_appearance_tab()
         return row;
     };
 
-    // Theme: light / dark SegmentedControl bound to dark_color_mode (cross-platform).
+    // Theme: Light, Dark or Follow Windows. dark_color_mode keeps the look in
+    // effect; theme_follow_windows says Windows decides it (ThemeFollow).
     auto *theme = new MultiSwitchButton(scrolled);
     m_segmented_list.push_back(theme);
-    theme->SetOptions({_L("Light"), _L("Dark")});
+    theme->SetOptions({_L("Light"), _L("Dark"), _L("Follow Windows")});
     theme->SetName(_L("Theme"));
-    theme->SetMinSize(wxSize(FromDIP(200), FromDIP(30)));
-    const bool is_dark = app_config->get("dark_color_mode") == "1";
-    theme->SetSelection(is_dark ? 1 : 0); // set before Bind so init does not re-fire the handler
+    theme->SetMinSize(wxSize(FromDIP(300), FromDIP(30)));
+    const ThemeFollow::Choice theme_now = ThemeFollow::choice_from(app_config->get("dark_color_mode"), app_config->get(ThemeFollow::kFollowKey));
+    theme->SetSelection(theme_now == ThemeFollow::Choice::FollowWindows ? 2 : theme_now == ThemeFollow::Choice::Dark ? 1 : 0); // set before Bind so init does not re-fire the handler
     theme->Bind(wxCUSTOMEVT_MULTISWITCH_SELECTION, [this](wxCommandEvent &e) {
-        const bool dark = e.GetInt() == 1;
-        app_config->set("dark_color_mode", dark ? "1" : "0");
+        const ThemeFollow::Choice choice = e.GetInt() == 2 ? ThemeFollow::Choice::FollowWindows :
+                                           e.GetInt() == 1 ? ThemeFollow::Choice::Dark : ThemeFollow::Choice::Light;
+        const ThemeFollow::Stored stored = ThemeFollow::store(choice, ThemeFollow::windows_prefers_dark(), app_config->get("dark_color_mode"));
+        const bool                dark   = stored.dark_color_mode == "1";
+        app_config->set(ThemeFollow::kFollowKey, stored.follow);
+        app_config->set("dark_color_mode", stored.dark_color_mode);
         app_config->save();
         // An active search tints matched labels and remembers their pre-tint
         // foregrounds. Restore those before the theme fan-out recolours the

@@ -1835,12 +1835,12 @@
     {
       "route": "windows/practical-setup.md",
       "title": "Set up Bambu Studio",
-      "sha256": "caf080fd114136eb6e92b1f698397d5e7fc7d7fde4320ab9e21ae7e46dbea0b3"
+      "sha256": "dfe7cea7363741d392c28be70949911806a46bf533c06c00d2a3db256a78821d"
     },
     {
       "route": "windows/practical-setup.yue_HK.md",
       "title": "設定 Bambu Studio",
-      "sha256": "a96a14ea195ddb27b93f6c05d3c28a792a1081b442378ab884c3f4562855a0be"
+      "sha256": "9da76c020763c57fcd9d4f14972c1e9ab7eee2505e743c5cf142b007f2fbf140"
     },
     {
       "route": "windows/preferences-provenance.md",
@@ -2295,7 +2295,7 @@
       "bytes": 16430
     }
   ],
-  "bundle_sha256": "3bc0c53e7decb8111e5f34d9cdd65aa92c4334b829d0c19c79070e2c1beaa1e5",
+  "bundle_sha256": "390164519e1497fe0761c2be661c17b16d495bf47666cade929d0733e94994a0",
   "unavailable_references": [
     {
       "source": "api/README.md",

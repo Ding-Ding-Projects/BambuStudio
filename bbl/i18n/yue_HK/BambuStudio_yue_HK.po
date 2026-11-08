@@ -59291,3 +59291,53 @@ msgstr "一改就儲存喺呢部電腦，每次請求都會送畀呢個擴充功
 #. review-status: agent-drafted
 msgid "A file on the printer"
 msgstr "打印機上嘅檔案"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Follow Windows"
+msgstr "跟 Windows"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Follow Windows switches between light and dark when Windows does, also while Bambu Studio is open."
+msgstr "跟 Windows 會喺 Windows 轉淺色或深色嗰陣一齊轉，Bambu Studio 開住都一樣。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Already undone"
+msgstr "已經復原咗"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "The printers added there were removed before."
+msgstr "嗰度加嘅打印機之前已經移除咗。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Remove the printers added here again? %s"
+msgstr "再移除喺度加咗嘅打印機？%s"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The printer guide's choices go back to how they were before it opened. Nothing you saved is deleted, and the printer guide adds them again any time."
+msgstr "打印機指南嘅選擇會變返佢打開之前嘅樣。你儲存過嘅嘢一樣都唔會刪，打印機指南隨時可以再加返佢哋。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The printers added in setup are removed again."
+msgstr "喺設定加咗嘅打印機會再移除。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Removed %d of the printers added here"
+msgstr "移除咗喺度加嘅打印機：%d 部"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Their presets are hidden again; nothing you saved was deleted."
+msgstr "佢哋嘅預設再次收埋咗；你儲存過嘅嘢一樣都冇刪。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "The others stay: a preset of yours still uses them."
+msgstr "其他嘅留低：你有預設仲用緊佢哋。"
