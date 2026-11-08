@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-07 17:57-0500\n"
+"POT-Creation-Date: 2026-11-08 02:00-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2791,6 +2791,9 @@ msgid "You can keep the modified presets for the new project, discard or save ch
 msgstr ""
 
 msgid "User logged out"
+msgstr ""
+
+msgid "Drop models on the Prepare page to open them. Drop one .json wording file anywhere to apply personal wording."
 msgstr ""
 
 msgid "Install network plug-in"
@@ -9543,7 +9546,6 @@ msgstr ""
 msgid "Almost complete"
 msgstr ""
 
-#, possible-c++-format
 msgid "For users under the age of majority, some services will be restricted. See our {0} for Bambu Lab Account. To understand our privacy practices, see {1}."
 msgstr ""
 
@@ -12287,9 +12289,6 @@ msgid "External editor path"
 msgstr ""
 
 msgid "External editor browse"
-msgstr ""
-
-msgid "Download path browse"
 msgstr ""
 
 msgid "Executable files"
@@ -26886,6 +26885,9 @@ msgstr ""
 msgid "Opened %s."
 msgstr ""
 
+msgid "Fault reference"
+msgstr ""
+
 msgid "Stop print - safety interlock"
 msgstr ""
 
@@ -27452,7 +27454,6 @@ msgstr ""
 msgid "Backreferences"
 msgstr ""
 
-#, possible-c++-format
 msgid "A backslash takes only one digit: \\10 is group 1 then 0, so write \\g{10}. \\g<1> is a backreference here, not a subroutine call."
 msgstr ""
 

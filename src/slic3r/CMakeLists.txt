@@ -1063,6 +1063,10 @@ list(APPEND SLIC3R_GUI_SOURCES
     GUI/Schedule/ScheduleRuleStart.hpp
     GUI/SmartHomeDialog.cpp
     GUI/SmartHomeDialog.hpp
+    GUI/Base64Toolkit/Base64Codec.cpp
+    GUI/Base64Toolkit/Base64Codec.hpp
+    GUI/PrinterFaultReference.cpp
+    GUI/PrinterFaultReference.hpp
     GUI/Melody/MelodyModel.hpp
     GUI/Melody/MelodyCreatorDialog.cpp
     GUI/Melody/MelodyCreatorDialog.hpp

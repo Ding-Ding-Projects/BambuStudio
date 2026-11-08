@@ -795,3 +795,60 @@ function showBase64ImageLayer(base64Str) {
   });
   window.addEventListener('keydown', handleKeydown);
 }
+
+// Files dropped on a page shown inside Bambu Studio. A single .json file is a
+// personal wording file: its bytes go to the application, which runs exactly the
+// same checks as a file dropped on a native window. Anything else is kept from
+// replacing the page with the raw file, and the application shows where models go.
+(function installWordingDrop() {
+	if (typeof window === 'undefined' || typeof document === 'undefined' || window.__bbsWordingDrop) return;
+	window.__bbsWordingDrop = true;
+
+	const MAX_BYTES = 256 * 1024;
+
+	function hasFiles(event) {
+		const types = event.dataTransfer && event.dataTransfer.types;
+		if (!types) return false;
+		for (let i = 0; i < types.length; i++) {
+			if (types[i] === 'Files') return true;
+		}
+		return false;
+	}
+
+	function send(command, data) {
+		const message = { sequence_id: Math.round(new Date() / 1000), command: command, data: data };
+		SendWXMessage(JSON.stringify(message));
+	}
+
+	document.addEventListener('dragover', function (event) {
+		if (!IsInSlicer() || !hasFiles(event)) return;
+		event.preventDefault();
+		event.dataTransfer.dropEffect = 'copy';
+	}, true);
+
+	document.addEventListener('drop', function (event) {
+		if (!IsInSlicer() || !hasFiles(event)) return;
+		event.preventDefault();
+		event.stopPropagation();
+		const files = event.dataTransfer.files;
+		if (files.length === 1 && /\.json$/i.test(files[0].name)) {
+			const file = files[0];
+			if (file.size > MAX_BYTES) {
+				send('vocabulary_drop', { too_large: true });
+				return;
+			}
+			const reader = new FileReader();
+			reader.onload = function () {
+				const url = String(reader.result || '');
+				const comma = url.indexOf(',');
+				send('vocabulary_drop', { content_base64: comma >= 0 ? url.substring(comma + 1) : '' });
+			};
+			reader.onerror = function () {
+				send('vocabulary_drop', { unreadable: true });
+			};
+			reader.readAsDataURL(file);
+			return;
+		}
+		send('web_file_drop', { count: files.length });
+	}, true);
+})();

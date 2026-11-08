@@ -118,6 +118,9 @@
 #include "LanModelDrop/LanModelDropStation.hpp"
 #include "StatusApi/StatusApiServer.hpp"
 #include "Melody/MelodyCreatorDialog.hpp"
+#include "VocabularyDrop.hpp"
+#include "Base64Toolkit/Base64Codec.hpp"
+#include <nlohmann/json.hpp>
 #include "DimSumSurprise.hpp"
 #include "TtsNarrator.hpp"
 #include "PersonalModes/SchoolRuntime.hpp"
@@ -6090,8 +6093,55 @@ int GUI_App::request_user_unbind(std::string dev_id)
     return result;
 }
 
+namespace {
+// Files dropped on a page shown inside the application. resources/web/include/
+// globalapi.js reads a single dropped .json file and posts its bytes as Base64;
+// anything else becomes a short hint. This runs before the request logger below
+// because personal wording is private: the file's keys and values are never
+// logged, only the outcome.
+bool handle_page_file_drop(const std::string &cmd, wxWindow *frame)
+{
+    if (cmd.find("\"vocabulary_drop\"") == std::string::npos && cmd.find("\"web_file_drop\"") == std::string::npos)
+        return false;
+    const nlohmann::json request = nlohmann::json::parse(cmd, nullptr, false);
+    if (request.is_discarded() || !request.is_object() || !request.contains("command") || !request["command"].is_string())
+        return false;
+    const std::string command = request["command"].get<std::string>();
+    const nlohmann::json data = request.contains("data") && request["data"].is_object() ? request["data"] : nlohmann::json::object();
+    if (command == "web_file_drop") {
+        BOOST_LOG_TRIVIAL(info) << "Page drop of " << data.value("count", 0) << " file(s): not a wording file";
+        if (frame != nullptr)
+            frame->CallAfter([] {
+                if (auto *plater = wxGetApp().plater())
+                    plater->get_notification_manager()->push_notification(
+                        into_u8(_L("Drop models on the Prepare page to open them. Drop one .json wording file anywhere to apply personal wording.")));
+            });
+        return true;
+    }
+    if (command != "vocabulary_drop") return false;
+    if (frame == nullptr) return true;
+    if (data.value("too_large", false)) {
+        frame->CallAfter([frame] { VocabularyDrop::refuse_dropped(frame, PersonalVocabulary::Rejection::TooLarge); });
+        return true;
+    }
+    const std::string encoded = data.contains("content_base64") && data["content_base64"].is_string()
+                                    ? data["content_base64"].get<std::string>() : std::string();
+    Base64Toolkit::DecodeOptions options;
+    options.strict = false;
+    const auto decoded = Base64Toolkit::decode(encoded, options);
+    if (data.value("unreadable", false) || !decoded.ok()) {
+        frame->CallAfter([frame] { VocabularyDrop::refuse_dropped(frame, PersonalVocabulary::Rejection::Unreadable); });
+        return true;
+    }
+    std::string bytes(decoded.bytes.begin(), decoded.bytes.end());
+    frame->CallAfter([frame, bytes = std::move(bytes)] { VocabularyDrop::apply_dropped_bytes(frame, bytes); });
+    return true;
+}
+} // namespace
+
 std::string GUI_App::handle_web_request(std::string cmd)
 {
+    if (handle_page_file_drop(cmd, mainframe)) return "";
     try {
         //BBS use nlohmann json format
         BOOST_LOG_TRIVIAL(info) << cmd;

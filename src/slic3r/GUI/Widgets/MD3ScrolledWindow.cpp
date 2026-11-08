@@ -62,6 +62,16 @@ void MD3ScrolledWindow::OnChar(wxKeyEvent &event)
     event.Skip();
 }
 
+void MD3ScrolledWindow::ScrollWindow(int dx, int dy, const wxRect *rect)
+{
+    wxScrolledWindow::ScrollWindow(dx, dy, rect);
+    if (dx == 0 && dy == 0) return;
+    // Refresh() invalidates this window and every child (RDW_ALLCHILDREN on
+    // Windows), so the next paint redraws the whole viewport from the current
+    // positions instead of keeping fragments the scroll blit copied.
+    Refresh(true);
+}
+
 void MD3ScrolledWindow::SetRevealOwner(MD3ScrolledWindow *owner)
 {
     if (owner == this || (owner && !owner->IsDescendant(this))) return;

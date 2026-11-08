@@ -1,4 +1,5 @@
 #include "DeviceErrorDialog.hpp"
+#include "PrinterFaultReference.hpp"
 #include "Widgets/MD3ScrolledWindow.hpp"
 #include "HMS.hpp"
 
@@ -90,6 +91,9 @@ DeviceErrorDialog::DeviceErrorDialog(MachineObject* obj, wxWindow* parent, wxWin
     m_error_code_label = new Label(m_scroll_area, wxEmptyString, LB_AUTO_WRAP);
     text_sizer->AddSpacer(5);
     text_sizer->Add(m_error_code_label, 0, wxALIGN_CENTER, FromDIP(5));
+    // The fault reference line (PrinterFaultReference.hpp) under the printer's code.
+    text_sizer->AddSpacer(2);
+    text_sizer->Add(PrinterFaultReference::create_label(m_scroll_area), 0, wxALIGN_CENTER, 0);
     m_scroll_area->SetSizer(text_sizer);
 
     auto bottom_sizer = new wxBoxSizer(wxVERTICAL);

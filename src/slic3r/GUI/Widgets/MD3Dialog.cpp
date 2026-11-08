@@ -1,4 +1,5 @@
 #include "MD3Dialog.hpp"
+#include "../VocabularyDrop.hpp"
 
 #include <wx/dcbuffer.h>
 #include <wx/dcgraph.h>
@@ -178,6 +179,11 @@ MD3Dialog::MD3Dialog(wxWindow *          parent,
     // to both variants — the resizable one is borderless too (its thin resize
     // frame is all the native chrome it has), so nothing else would move it.
     bind_drag(this);
+
+    // Modal dialogs disable the main window, so a personal wording file dropped
+    // on an open dialog would otherwise go nowhere. Dialogs that accept other
+    // files install their own target after this one and replace it.
+    SetDropTarget(VocabularyDrop::create_drop_target(this));
 }
 
 // ADDITIVE two-phase default ctor: create the bare classic borderless shaped

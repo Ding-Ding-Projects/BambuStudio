@@ -5,6 +5,8 @@
 #include <wx/arrstr.h>
 #include <wx/string.h>
 
+#include <string>
+
 class wxFileDropTarget;
 class wxWindow;
 
@@ -37,5 +39,14 @@ wxString rejection_text(PersonalVocabulary::Rejection reason);
 // Drop target for windows that accept no other files: it handles vocabulary
 // drops and refuses everything else.
 wxFileDropTarget *create_drop_target(wxWindow *frame);
+
+// A vocabulary file dropped on a page shown inside the application (the Home
+// page and other local web pages). The page reads the file and hands over its
+// bytes; they go through exactly the same validation as a file dropped on a
+// native window. Nothing is kept outside the private copy the validator writes.
+void apply_dropped_bytes(wxWindow *frame, const std::string &bytes);
+// Shows and announces a refusal for a drop that never reached the validator,
+// for example a page that could not read the file or a file over the size limit.
+void refuse_dropped(wxWindow *frame, PersonalVocabulary::Rejection reason);
 
 } // namespace Slic3r::GUI::VocabularyDrop

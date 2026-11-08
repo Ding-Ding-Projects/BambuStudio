@@ -32636,3 +32636,9 @@ msgstr ""
 
 msgid "The previous project needs review before it can be restored. Its tab and file have been kept. Select that tab to review the import options, or use File > Open."
 msgstr ""
+
+msgid "Drop models on the Prepare page to open them. Drop one .json wording file anywhere to apply personal wording."
+msgstr ""
+
+msgid "Fault reference"
+msgstr ""

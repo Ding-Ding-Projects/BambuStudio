@@ -1660,6 +1660,11 @@ PreferencesDialog::PreferencesDialog(wxWindow *parent, wxWindowID id, const wxSt
     // re-fetch the UEP decision on open to keep telemetry enable/disable in sync.
     wxGetApp().set_preferences_dialog(this);
     wxGetApp().fetch_uep_decision();
+
+    // Preferences is modal, so a wording file dropped on it never reaches the
+    // main window. It takes the same drop itself: one .json applies personal
+    // wording through the shared validator, anything else is refused.
+    SetDropTarget(VocabularyDrop::create_drop_target(this));
 }
 
 void PreferencesDialog::place_settings_strip()

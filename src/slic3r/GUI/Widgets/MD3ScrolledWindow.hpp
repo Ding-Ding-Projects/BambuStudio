@@ -52,6 +52,14 @@ public:
     WXLRESULT MSWWindowProc(WXUINT msg, WXWPARAM wParam, WXLPARAM lParam) override;
 #endif
 
+    // Scrolling moves the pixels already on screen and repaints only the
+    // strip that became visible. The settings pages are composited
+    // (SetDoubleBuffered), and Windows does not support that blit on a
+    // composited window: rounded cards, separators and custom-drawn rows were
+    // left clipped or half drawn while scrolling. Every scroll therefore asks
+    // for a complete repaint of the window and its children.
+    void ScrollWindow(int dx, int dy, const wxRect *rect = nullptr) override;
+
     void SetRevealOwner(MD3ScrolledWindow *owner);
     void RevealChild(wxWindow *child);
     bool ShouldScrollToChildOnFocus(wxWindow *child) override;

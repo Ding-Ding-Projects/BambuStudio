@@ -1,6 +1,7 @@
 #include "HMS.hpp"
 #include "Widgets/MD3ScrolledWindow.hpp"
 #include "HMSPanel.hpp"
+#include "PrinterFaultReference.hpp"
 #include "DeviceCore/DevHMSQuery.h"
 #include <slic3r/GUI/Widgets/SideTools.hpp>
 #include <slic3r/GUI/Widgets/Label.hpp>
@@ -79,7 +80,11 @@ HMSNotifyItem::HMSNotifyItem(const std::string& dev_id, wxWindow *parent, DevHMS
 
     m_panel_sizer_inner->Add(m_bitmap_notify, 0, wxALIGN_CENTER_VERTICAL, 0);
     m_panel_sizer_inner->AddSpacer(FromDIP(8));
-    m_panel_sizer_inner->Add(m_hms_content, 0, wxALIGN_CENTER_VERTICAL, 0);
+    // The message with the fault reference line (PrinterFaultReference.hpp) under it.
+    auto *text_column = new wxBoxSizer(wxVERTICAL);
+    text_column->Add(m_hms_content, 0, 0, 0);
+    text_column->Add(PrinterFaultReference::create_label(m_panel_hms), 0, wxTOP, FromDIP(4));
+    m_panel_sizer_inner->Add(text_column, 0, wxALIGN_CENTER_VERTICAL, 0);
     m_panel_sizer_inner->AddStretchSpacer();
     m_panel_sizer_inner->Add(m_bitmap_arrow, 0, wxALIGN_CENTER_VERTICAL, 0);
 

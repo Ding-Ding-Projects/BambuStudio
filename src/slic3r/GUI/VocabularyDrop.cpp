@@ -12,6 +12,8 @@
 #include <boost/log/trivial.hpp>
 
 #include <algorithm>
+#include <atomic>
+#include <fstream>
 #include <cmath>
 #include <filesystem>
 #include <memory>
@@ -470,5 +472,45 @@ void apply_dropped(wxWindow *frame, const wxString &file)
 }
 
 wxFileDropTarget *create_drop_target(wxWindow *frame) { return new VocabularyDropTarget(frame); }
+
+void refuse_dropped(wxWindow *frame, PersonalVocabulary::Rejection reason)
+{
+    if (frame == nullptr) return;
+    ActionSounds::play(ActionSounds::Cue::Rejected);
+    BOOST_LOG_TRIVIAL(info) << "Personal vocabulary drop from a page: refused, rule " << int(reason);
+    show_refusal(frame, rejection_copy(reason));
+}
+
+void apply_dropped_bytes(wxWindow *frame, const std::string &bytes)
+{
+    if (frame == nullptr) return;
+    if (bytes.size() > PersonalVocabulary::max_file_bytes) {
+        refuse_dropped(frame, PersonalVocabulary::Rejection::TooLarge);
+        return;
+    }
+    // The validator reads a file, so the page's bytes take a short trip through a
+    // uniquely named file in the system temporary folder that is removed straight
+    // after the check, whatever its outcome.
+    std::error_code ec;
+    const auto folder = std::filesystem::temp_directory_path(ec);
+    if (ec) {
+        refuse_dropped(frame, PersonalVocabulary::Rejection::Unreadable);
+        return;
+    }
+    static std::atomic<unsigned> counter{0};
+    const auto file = folder / std::filesystem::u8path("bambustudio-wording-drop-" + std::to_string(::GetCurrentProcessId()) + "-" +
+                                                       std::to_string(counter.fetch_add(1)) + ".json");
+    {
+        std::ofstream out(file, std::ios::binary | std::ios::trunc);
+        out.write(bytes.data(), std::streamsize(bytes.size()));
+        if (!out) {
+            std::filesystem::remove(file, ec);
+            refuse_dropped(frame, PersonalVocabulary::Rejection::Unreadable);
+            return;
+        }
+    }
+    apply_dropped(frame, wxString(file.wstring()));
+    std::filesystem::remove(file, ec);
+}
 
 } // namespace Slic3r::GUI::VocabularyDrop
