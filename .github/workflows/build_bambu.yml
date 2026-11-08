@@ -80,8 +80,33 @@ jobs:
         with:
           arch: x64
 
-      - name: Setup sccache
+      # The sccache action downloads its binary from GitHub releases. When that
+      # download fails (every attempt returned HTTP 504 on 2026-11-08 for half
+      # an hour), the build compiles without the cache instead of failing.
+      - name: Check that sccache can be downloaded
+        id: sccache_probe
         if: inputs.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          $url = 'https://github.com/mozilla/sccache/releases/download/v0.19.0/sccache-v0.19.0-x86_64-pc-windows-msvc.tar.gz'
+          $probe = Join-Path $env:RUNNER_TEMP 'sccache-probe.tar.gz'
+          $ok = $false
+          foreach ($attempt in 1..3) {
+              try {
+                  Invoke-WebRequest -Uri $url -OutFile $probe -TimeoutSec 120 -UseBasicParsing
+                  if ((Get-Item -LiteralPath $probe).Length -gt 0) { $ok = $true; break }
+              } catch {
+                  Write-Host "sccache download check $attempt failed: $($_.Exception.Message)"
+              }
+              Start-Sleep -Seconds (15 * $attempt)
+          }
+          Remove-Item -LiteralPath $probe -ErrorAction SilentlyContinue
+          if (-not $ok) { Write-Host '::warning::sccache cannot be downloaded right now, so this build compiles without it.' }
+          "ok=$($ok.ToString().ToLowerInvariant())" >> $env:GITHUB_OUTPUT
+
+      - name: Setup sccache
+        id: sccache
+        if: inputs.os == 'windows-latest' && steps.sccache_probe.outputs.ok == 'true'
         uses: mozilla-actions/sccache-action@9e7fa8a12102821edf02ca5dbea1acd0f89a2696 # v0.0.10
 
       - name: Install pkgconfig for the Windows build
@@ -176,6 +201,7 @@ jobs:
         shell: pwsh
         env:
           SCCACHE_GHA_ENABLED: 'true'
+          SCCACHE_READY: ${{ steps.sccache.outcome == 'success' }}
           DEBUG_SYMBOLS: ${{ inputs.debug-symbols }}
           SYMBOL_PUBLIC_KEY: ${{ inputs.symbol-public-key }}
         run: |
@@ -204,10 +230,12 @@ jobs:
             '-DCMAKE_BUILD_TYPE=Release',
             '-DWIN10SDK_PATH=C:/Program Files (x86)/Windows Kits/10/Include/10.0.22000.0'
           )
-          if ($symbolMode) {
-              $configure += @('-DCMAKE_C_COMPILER_LAUNCHER=', '-DCMAKE_CXX_COMPILER_LAUNCHER=')
-          } else {
+          # Symbol builds never use the cache; other builds use it when it installed.
+          $useSccache = (-not $symbolMode) -and ($env:SCCACHE_READY -eq 'true')
+          if ($useSccache) {
               $configure += @('-DCMAKE_C_COMPILER_LAUNCHER=sccache', '-DCMAKE_CXX_COMPILER_LAUNCHER=sccache')
+          } else {
+              $configure += @('-DCMAKE_C_COMPILER_LAUNCHER=', '-DCMAKE_CXX_COMPILER_LAUNCHER=')
           }
           cmake @configure 2>&1 | Tee-Object -FilePath "$env:RUNNER_TEMP/native-configure.log"
           # A restored tree that will not configure is dropped, never trusted:
@@ -236,7 +264,7 @@ jobs:
 
           # Stats from THIS step's server session — the post-job stats step
           # spawns a fresh server whose zeroed counters say nothing.
-          sccache --show-stats
+          if ($useSccache) { sccache --show-stats }
 
       - name: Retain sanitized native build diagnostics
         if: always() && inputs.os == 'windows-latest'
