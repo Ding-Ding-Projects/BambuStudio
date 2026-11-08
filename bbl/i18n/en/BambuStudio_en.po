@@ -32962,3 +32962,118 @@ msgstr ""
 
 msgid "New in this version"
 msgstr ""
+
+msgid "Changed by you"
+msgstr ""
+
+msgid "Show only the settings whose value differs from the built-in default"
+msgstr ""
+
+msgid "About this setting"
+msgstr ""
+
+msgid "hidden"
+msgstr ""
+
+msgid "empty"
+msgstr ""
+
+msgid "After a restart."
+msgstr ""
+
+msgid "Right away, in every window."
+msgstr ""
+
+msgid "The next time the feature that uses it runs."
+msgstr ""
+
+msgid "What this setting does and where its value comes from"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "You changed this on %s at %s."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "You set %s on %s at %s."
+msgstr ""
+
+msgid "This value is private, so it is not shown here."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Scheduled settings set this to %s for now."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Built-in default: %s."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Built-in default: %s. You have not changed it."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Stored as %s. The built-in default is %s."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Stored as %s."
+msgstr ""
+
+msgid "Not stored yet; the app uses its built-in behaviour."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Changed by you %d"
+msgstr ""
+
+msgid "Close the explanation"
+msgstr ""
+
+msgid "Where the value comes from"
+msgstr ""
+
+msgid "Built-in default"
+msgstr ""
+
+msgid "Not declared for this setting"
+msgstr ""
+
+msgid "Takes effect"
+msgstr ""
+
+msgid "Stored in"
+msgstr ""
+
+msgid "Changes to this setting"
+msgstr ""
+
+msgid "None yet. Every change you make here is recorded with its time, on this computer only."
+msgstr ""
+
+msgid "changed"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%s to %s"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Reset to %s"
+msgstr ""
+
+msgid "Change it back with its own control; the built-in default is shown above."
+msgstr ""
+
+msgid "Every change made in Preferences, newest first. It stays on this computer; private values are never recorded."
+msgstr ""
+
+msgid "No changes recorded yet."
+msgstr ""
+
+msgid "Every change made in Preferences, with its time"
+msgstr ""
+
+msgid "Preferences: where every value comes from"
+msgstr ""

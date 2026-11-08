@@ -51141,3 +51141,178 @@ msgstr "呢個版本修好咗"
 #. review-status: agent-drafted
 msgid "New in this version"
 msgstr "呢個版本新增"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Changed by you"
+msgstr "你改過嘅"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Show only the settings whose value differs from the built-in default"
+msgstr "淨係顯示同內建預設唔同嘅設定"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "About this setting"
+msgstr "關於呢個設定"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "hidden"
+msgstr "已收埋"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "empty"
+msgstr "空白"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "After a restart."
+msgstr "重新開程式之後。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Right away, in every window."
+msgstr "即刻，每個視窗都係。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The next time the feature that uses it runs."
+msgstr "下次用到佢嘅功能行嗰陣。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "What this setting does and where its value comes from"
+msgstr "呢個設定做乜，同埋個值由邊度嚟"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "You changed this on %s at %s."
+msgstr "你喺 %s %s 改咗呢個。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "You set %s on %s at %s."
+msgstr "你設咗做%s（%s %s）。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "This value is private, so it is not shown here."
+msgstr "呢個值係私人嘅，所以唔會喺度顯示。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Scheduled settings set this to %s for now."
+msgstr "排程設定而家暫時將佢設做%s。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Built-in default: %s."
+msgstr "內建預設：%s。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Built-in default: %s. You have not changed it."
+msgstr "內建預設：%s。你未改過。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Stored as %s. The built-in default is %s."
+msgstr "儲存咗做%s。內建預設係%s。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Stored as %s."
+msgstr "儲存咗做%s。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Not stored yet; the app uses its built-in behaviour."
+msgstr "未儲存；程式用緊內建做法。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Changed by you %d"
+msgstr "你改過嘅 %d"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Close the explanation"
+msgstr "閂咗解釋"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Where the value comes from"
+msgstr "個值由邊度嚟"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Built-in default"
+msgstr "內建預設"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Not declared for this setting"
+msgstr "呢個設定冇宣告預設值"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Takes effect"
+msgstr "幾時生效"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Stored in"
+msgstr "儲存喺"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Changes to this setting"
+msgstr "呢個設定嘅變更"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "None yet. Every change you make here is recorded with its time, on this computer only."
+msgstr "暫時冇。你喺度改嘅每樣嘢都會連時間記低，只會留喺呢部電腦。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "changed"
+msgstr "改咗"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "%s to %s"
+msgstr "%s 變 %s"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Reset to %s"
+msgstr "重設做%s"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Change it back with its own control; the built-in default is shown above."
+msgstr "用佢自己嘅控制改返；內建預設喺上面寫住。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Every change made in Preferences, newest first. It stays on this computer; private values are never recorded."
+msgstr "偏好設定入面每一次變更，最新嘅排先。只會留喺呢部電腦；私人值永遠唔會記低。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "No changes recorded yet."
+msgstr "暫時未有變更紀錄。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Every change made in Preferences, with its time"
+msgstr "偏好設定入面每一次變更，連時間"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Preferences: where every value comes from"
+msgstr "偏好設定：每個值由邊度嚟"

@@ -54,7 +54,7 @@ const std::vector<Feature> &features()
         {"keyboard-shortcuts", "find", 0xE312 /* keyboard */, L("Keyboard shortcuts"), L("Help, Keyboard Shortcuts"), "Shift+?", "hotkeys keys shortcuts", Badge::None, State::Ready, "command:keyboard-shortcuts"},
         {"printer-setup", "find", 0xE555 /* print */, L("Printer and filament setup"), L("Help, Setup Wizard"), "", "wizard printers filaments first run", Badge::None, State::Ready, "command:setup-wizard"},
         {"context-menus", "find", 0xF706 /* right_click */, L("Context menus with live controls"), L("Right-click anything"), "", "right click menu", Badge::New, State::NotBuilt, ""},
-        {"info-icons", "find", 0xE88E /* info */, L("Info icons and explanations"), L("Beside every Preferences setting"), "", "help explanation info button", Badge::New, State::NotBuilt, ""},
+        {"info-icons", "find", 0xE88E /* info */, L("Info icons and explanations"), L("Beside every Preferences setting"), "", "help explanation info button", Badge::New, State::Ready, "command:preferences"},
         {"onboarding", "find", 0xEB9B /* rocket_launch */, L("Practical setup wizard"), L("Help, Setup wizard"), "", "wizard first run welcome", Badge::New, State::NotBuilt, ""},
         // Records
         {"version-history", "records", 0xE28E /* history */, L("Version history"), L("File, Version history"), "", "git snapshots restore project versions", Badge::None, State::Ready, "command:version-history"},

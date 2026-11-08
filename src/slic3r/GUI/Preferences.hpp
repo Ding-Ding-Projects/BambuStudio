@@ -15,6 +15,9 @@
 #include <unordered_map>
 #include <memory>
 #include <functional>
+#include <optional>
+#include <unordered_set>
+#include "PreferencesRemake/PreferenceHistory.hpp"
 #include "Widgets/ComboBox.hpp"
 #include "Widgets/CheckBox.hpp"
 #include "Widgets/TextInput.hpp"
@@ -26,6 +29,7 @@
 // (members are pointers) so the header stays light; the .cpp includes the full
 // definitions (SwitchButton.hpp / SearchField.hpp).
 class SwitchButton;
+class Label;
 class MultiSwitchButton;
 class SearchField;
 
@@ -124,6 +128,44 @@ protected:
     void register_option_row(const std::string &key, wxSizer *sizer, wxWindow *window = nullptr);
     void clear_teleport_highlight();
     void on_teleport_timer(wxTimerEvent &);
+
+    // ---- Where every value comes from (provenance, explanations, record) --
+    // Every row registered through register_option_row gets a provenance line
+    // under its title and an info button that opens the explanation panel.
+    // A timer compares the shown keys with their last values and appends what
+    // changed to the local record (PreferenceHistory).
+    struct RowInfo
+    {
+        std::string key;
+        wxString    title;
+        wxString    description;
+        wxSizer    *row        = nullptr;
+        ::Label    *provenance = nullptr; // null for a second key on the same row
+    };
+    std::vector<RowInfo>                                m_row_info;
+    std::unordered_set<wxSizer *>                       m_decorated_rows;
+    std::map<std::string, std::string>                  m_seen_values;
+    std::unique_ptr<PreferenceHistory::Store>           m_history;
+    wxTimer                                             m_change_timer;
+    wxPanel                                            *m_info_panel   = nullptr;
+    wxBoxSizer                                         *m_info_sizer   = nullptr;
+    std::string                                         m_info_key;
+    ::Button                                           *m_changed_chip = nullptr;
+    bool                                                m_changed_only = false;
+    void decorate_row(const std::string &key, wxSizer *row);
+    void start_change_tracking();
+    void poll_changes();
+    void refresh_provenance();
+    void refresh_changed_chip();
+    void show_info(const std::string &key);
+    void hide_info();
+    void show_history();
+    std::optional<std::string> stored_value(const std::string &key) const;
+    std::optional<std::string> default_value(const std::string &key) const;
+    wxString       provenance_text(const std::string &key) const;
+    bool           key_changed(const std::string &key) const;
+    bool           row_changed(const SearchRow &row) const;
+    const RowInfo *row_info(const std::string &key) const;
 
 public:
     // Teleport to the row bound to `key`: returns false when no row registered

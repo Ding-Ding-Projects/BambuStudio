@@ -1355,12 +1355,12 @@
     {
       "route": "windows/README.md",
       "title": "Windows features",
-      "sha256": "1451605058f4dc5975886298b052c601b52b598ac6bf68af83eba8edcb4453de"
+      "sha256": "65d81f279d0e9aaab8bad9d4e01af60d570718bfaf880b3792b2fc3cb7fcd564"
     },
     {
       "route": "windows/README.yue_HK.md",
       "title": "Windows 功能",
-      "sha256": "d2b16cc3efce6e5d7a2f100356c15258ec9a3f7f297143eab3e26cf37a309ec8"
+      "sha256": "3d06117dc3ed6d42edab6d585c9cfc479765e0100c4f070dbda3b721fc47693f"
     },
     {
       "route": "windows/action-sounds.md",
@@ -1741,6 +1741,16 @@
       "route": "windows/personal-vocabulary.yue_HK.md",
       "title": "個人詞彙",
       "sha256": "4d431c964ba26ae0541f5a7600c9f74904e57466bc77f045477de25f6465f4b4"
+    },
+    {
+      "route": "windows/preferences-provenance.md",
+      "title": "Preferences: where every value comes from",
+      "sha256": "77392396434aa87ca3228701ac86e79c059ddb4d0674ae33f0f5514fd213c097"
+    },
+    {
+      "route": "windows/preferences-provenance.yue_HK.md",
+      "title": "偏好設定：每個值由邊度嚟",
+      "sha256": "a6221ad930d8216a54e92f7a093e5b447d5836d3893933f24832e5327f6e1899"
     },
     {
       "route": "windows/print-actions.md",
@@ -2175,7 +2185,7 @@
       "bytes": 16430
     }
   ],
-  "bundle_sha256": "f627a14e7827570b9676f2c642efccb3e8c1b65d2ee31b392050da576e03e416",
+  "bundle_sha256": "34d82722e06fdaf4f66e2d741701f12df0eef5c3af623ad5e70c5825ac55a095",
   "unavailable_references": [
     {
       "source": "api/README.md",
@@ -3270,6 +3280,16 @@
     {
       "source": "windows/personal-vocabulary.yue_HK.md",
       "target": "../../screenshots/vocabulary-drop/README.md",
+      "kind": "link"
+    },
+    {
+      "source": "windows/preferences-provenance.md",
+      "target": "../../../design/local-tools-2026-11/README.md",
+      "kind": "link"
+    },
+    {
+      "source": "windows/preferences-provenance.yue_HK.md",
+      "target": "../../../design/local-tools-2026-11/README.md",
       "kind": "link"
     },
     {

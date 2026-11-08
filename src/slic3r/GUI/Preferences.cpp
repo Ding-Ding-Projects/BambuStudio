@@ -36,6 +36,10 @@
 #include "libslic3r/AppConfig.hpp"
 #include "../Utils/ExternalEditor.hpp"
 #include <cassert>
+#include <ctime>
+#include <filesystem>
+#include <set>
+#include <wx/datetime.h>
 #include <string>
 #include <vector>
 #include <wx/string.h>
@@ -1731,7 +1735,19 @@ void PreferencesDialog::create()
     // Right-hand content pane: a top MD3 SearchField pill over the section book.
     auto *content_pane = new wxBoxSizer(wxVERTICAL);
     m_search = new SearchField(content_card, _L("Search settings"));
-    content_pane->Add(m_search, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(16));
+    auto *search_row = new wxBoxSizer(wxHORIZONTAL);
+    search_row->Add(m_search, 1, wxALIGN_CENTER_VERTICAL);
+    m_changed_chip = new ::Button(content_card, _L("Changed by you"));
+    m_changed_chip->SetVariant(::Button::Variant::Outlined);
+    m_changed_chip->SetButtonSize(::Button::Size::Small);
+    m_changed_chip->SetToolTip(_L("Show only the settings whose value differs from the built-in default"));
+    m_changed_chip->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) {
+        m_changed_only = !m_changed_only;
+        refresh_changed_chip();
+        apply_search_filter(m_search->GetValue());
+    });
+    search_row->Add(m_changed_chip, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(8));
+    content_pane->Add(search_row, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(16));
     // Inline "no results" hint under the search pill; hidden until an active
     // query matches nothing (see apply_search_filter).
     m_search_empty_hint = new Label(content_card, _L("No settings match your search."));
@@ -1746,6 +1762,15 @@ void PreferencesDialog::create()
     m_body_row = new wxBoxSizer(wxHORIZONTAL);
     content_card->SetSizer(content_pane);
     m_body_row->Add(content_card, 1, wxEXPAND | wxALL, FromDIP(MD3::Metrics::active().gap));
+    // The explanation panel opened by each row's info button.
+    m_info_panel = new wxPanel(this, wxID_ANY);
+    m_info_panel->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainer));
+    m_info_panel->SetMinSize(wxSize(FromDIP(320), -1));
+    m_info_panel->SetName(_L("About this setting"));
+    m_info_sizer = new wxBoxSizer(wxVERTICAL);
+    m_info_panel->SetSizer(m_info_sizer);
+    m_info_panel->Hide();
+    m_body_row->Add(m_info_panel, 0, wxEXPAND | wxTOP | wxBOTTOM | wxRIGHT, FromDIP(MD3::Metrics::active().gap));
 
     auto add_tab = [this](const std::string &id, const wxString &label, wxWindow *page) {
         m_page_ids.push_back(id);
@@ -1806,6 +1831,7 @@ void PreferencesDialog::create()
     // the visible rows reflect the new matching mode without a fresh keystroke.
     // Passing the raw field value keeps the empty-query reset path intact.
     m_search->SetOnRegexToggle([this](bool) { apply_search_filter(m_search->GetValue()); });
+    start_change_tracking();
 
     main_sizer->Add(m_body_row, 1, wxEXPAND);
     main_sizer->Add(create_bottom_buttons(), 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(12));
@@ -1861,6 +1887,9 @@ void PreferencesDialog::save_geometry()
 static void collect_search_labels_from_window(wxWindow *win, std::vector<wxStaticText *> &labels)
 {
     if (win == nullptr) return;
+    // Provenance lines change with the value; searching them would match
+    // "default" on every row.
+    if (win->GetName() == "preferences-provenance") return;
     if (auto *text = dynamic_cast<wxStaticText *>(win)) labels.push_back(text);
     for (auto *child : win->GetChildren()) collect_search_labels_from_window(child, labels);
 }
@@ -1945,6 +1974,382 @@ void PreferencesDialog::register_option_row(const std::string &key, wxSizer *siz
 {
     if (key.empty() || (sizer == nullptr && window == nullptr)) return;
     m_option_rows.push_back({key, sizer, window});
+    if (sizer != nullptr) decorate_row(key, sizer);
+}
+
+// ---------------------------------------------------------------------------
+// Where every value comes from
+// ---------------------------------------------------------------------------
+
+namespace {
+
+wxString display_value(const std::string &key, const std::string &value)
+{
+    if (PreferenceHistory::is_sensitive_key(key)) return _L("hidden");
+    if (value == "true") return _L("On");
+    if (value == "false") return _L("Off");
+    if (value.empty()) return _L("empty");
+    wxString shown = wxString::FromUTF8(value);
+    if (shown.length() > 40) shown = shown.Left(37) + wxString(L"…");
+    return shown;
+}
+
+wxString format_day(std::int64_t time) { return wxDateTime(time_t(time)).Format("%Y-%m-%d"); }
+wxString format_clock(std::int64_t time) { return wxDateTime(time_t(time)).Format("%H:%M:%S"); }
+
+wxString takes_effect_text(const std::string &key)
+{
+    static const std::set<std::string> restart = {"language", "enable_lod", "single_instance"};
+    static const std::set<std::string> live    = {"dark_color_mode", "ui_density", "ui_accent_seed", "ui_font_family", "ui_font_scale",
+                                                  "motion_preference", "action_sounds_enabled", "dialog_emojis", "funny_level_en",
+                                                  "funny_level_yue", "app_display_name", "app_logo", "lan_drop_enabled",
+                                                  "status_api_enabled", "staff_pick_switch", "show_print_history", "sync_user_preset"};
+    if (restart.count(key)) return _L("After a restart.");
+    if (live.count(key) || key.rfind("narrator_", 0) == 0) return _L("Right away, in every window.");
+    return _L("The next time the feature that uses it runs.");
+}
+
+::SwitchButton *find_switch(wxSizer *sizer)
+{
+    if (sizer == nullptr) return nullptr;
+    for (auto *item : sizer->GetChildren()) {
+        if (item->IsWindow())
+            if (auto *sw = dynamic_cast<::SwitchButton *>(item->GetWindow())) return sw;
+        if (item->IsSizer())
+            if (auto *sw = find_switch(item->GetSizer())) return sw;
+    }
+    return nullptr;
+}
+
+} // namespace
+
+void PreferencesDialog::decorate_row(const std::string &key, wxSizer *row)
+{
+    if (row == nullptr) return;
+    if (!m_decorated_rows.insert(row).second) {
+        // A second key on a row that is already decorated: explain it too, but
+        // leave the single provenance line to the first key.
+        for (const RowInfo &info : m_row_info)
+            if (info.row == row) {
+                RowInfo extra    = info;
+                extra.key        = key;
+                extra.provenance = nullptr;
+                m_row_info.push_back(std::move(extra));
+                return;
+            }
+        return;
+    }
+    // The title column: the first vertical box sizer in the row. Rows built
+    // another way (a whole panel, a picker) keep their own UI and are not
+    // decorated; they stay teleport targets all the same.
+    wxBoxSizer *text_col = nullptr;
+    for (auto *item : row->GetChildren())
+        if (item->IsSizer())
+            if (auto *box = dynamic_cast<wxBoxSizer *>(item->GetSizer()); box && box->GetOrientation() == wxVERTICAL) {
+                text_col = box;
+                break;
+            }
+    if (text_col == nullptr) return;
+    std::vector<wxStaticText *> labels;
+    collect_search_labels_from_sizer(text_col, labels);
+    if (labels.empty()) return; // nothing to explain
+    // New controls must be children of the window that owns the row sizer:
+    // the parent of the row's own windows (the sizer is not attached yet).
+    wxWindow *parent = labels.front()->GetParent();
+    for (auto *item : row->GetChildren())
+        if (item->IsWindow()) {
+            parent = item->GetWindow()->GetParent();
+            break;
+        }
+
+    RowInfo info;
+    info.key   = key;
+    info.row   = row;
+    info.title = search_label_text(labels.front());
+    if (labels.size() > 1) info.description = search_label_text(labels[1]);
+
+    auto *line = new ::Label(parent, wxEmptyString);
+    line->SetName("preferences-provenance");
+    line->SetFont(::Label::Body_12);
+    line->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+    text_col->Add(line, 0, wxTOP, FromDIP(2));
+    info.provenance = line;
+
+    auto *about = new ::Button(parent, wxEmptyString);
+    about->SetIconButton(::Button::IconShape::Circle, 32);
+    about->SetGlyph(MaterialIcon::Info);
+    about->SetName(wxString::Format(_L("About %s"), info.title));
+    about->SetToolTip(_L("What this setting does and where its value comes from"));
+    about->Bind(wxEVT_BUTTON, [this, key](wxCommandEvent &) { show_info(key); });
+    row->Add(about, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(8));
+
+    m_row_info.push_back(std::move(info));
+}
+
+const PreferencesDialog::RowInfo *PreferencesDialog::row_info(const std::string &key) const
+{
+    for (const RowInfo &info : m_row_info)
+        if (info.key == key) return &info;
+    return nullptr;
+}
+
+std::optional<std::string> PreferencesDialog::stored_value(const std::string &key) const
+{
+    std::string value;
+    if (app_config == nullptr || !app_config->get_base("app", key, value)) return std::nullopt;
+    return value;
+}
+
+std::optional<std::string> PreferencesDialog::default_value(const std::string &key) const
+{
+    // A configuration built only from AppConfig::set_defaults() holds every
+    // built-in default the app declares.
+    static const AppConfig defaults;
+    std::string value;
+    if (!defaults.get_base("app", key, value)) return std::nullopt;
+    return value;
+}
+
+bool PreferencesDialog::key_changed(const std::string &key) const
+{
+    return PreferenceHistory::differs_from_default(stored_value(key), default_value(key));
+}
+
+bool PreferencesDialog::row_changed(const SearchRow &row) const
+{
+    for (const std::string &key : row.keys)
+        if (key_changed(key)) return true;
+    return false;
+}
+
+wxString PreferencesDialog::provenance_text(const std::string &key) const
+{
+    std::optional<std::string> scheduled;
+    if (app_config != nullptr && app_config->has_effective_preference(key)) scheduled = app_config->get(key);
+    std::optional<PreferenceHistory::Change> last;
+    if (m_history) last = m_history->last_for_key(key);
+    const PreferenceHistory::Provenance p = PreferenceHistory::describe(stored_value(key), default_value(key), scheduled, last);
+    const bool secret = PreferenceHistory::is_sensitive_key(key);
+
+    using PreferenceHistory::Origin;
+    if (p.origin == Origin::ChangedByYou)
+        return secret ? wxString::Format(_L("You changed this on %s at %s."), format_day(p.changed_at), format_clock(p.changed_at))
+                      : wxString::Format(_L("You set %s on %s at %s."), display_value(key, p.value), format_day(p.changed_at),
+                                         format_clock(p.changed_at));
+    if (secret) return _L("This value is private, so it is not shown here.");
+    switch (p.origin) {
+    case Origin::Scheduled:
+        return wxString::Format(_L("Scheduled settings set this to %s for now."), display_value(key, p.value));
+    case Origin::BuiltInDefault:
+        return wxString::Format(_L("Built-in default: %s."), display_value(key, p.value));
+    case Origin::MatchesDefault:
+        return wxString::Format(_L("Built-in default: %s. You have not changed it."), display_value(key, p.value));
+    case Origin::Stored:
+        return p.default_value ? wxString::Format(_L("Stored as %s. The built-in default is %s."), display_value(key, p.value),
+                                                  display_value(key, *p.default_value)) :
+                                 wxString::Format(_L("Stored as %s."), display_value(key, p.value));
+    case Origin::NoDefault:
+    case Origin::ChangedByYou: break;
+    }
+    return _L("Not stored yet; the app uses its built-in behaviour.");
+}
+
+void PreferencesDialog::refresh_provenance()
+{
+    for (const RowInfo &info : m_row_info) {
+        if (info.provenance == nullptr) continue;
+        info.provenance->SetLabel(provenance_text(info.key));
+        info.provenance->Wrap(FromDIP(320));
+    }
+    refresh_changed_chip();
+}
+
+void PreferencesDialog::refresh_changed_chip()
+{
+    if (m_changed_chip == nullptr) return;
+    std::set<std::string> changed;
+    for (const RowInfo &info : m_row_info)
+        if (key_changed(info.key)) changed.insert(info.key);
+    m_changed_chip->SetLabel(wxString::Format(_L("Changed by you %d"), int(changed.size())));
+    m_changed_chip->SetVariant(m_changed_only ? ::Button::Variant::Tonal : ::Button::Variant::Outlined);
+    m_changed_chip->Refresh();
+}
+
+void PreferencesDialog::start_change_tracking()
+{
+    m_history = std::make_unique<PreferenceHistory::Store>(std::filesystem::u8path(data_dir()) / "preferences-history.jsonl");
+    m_history->load();
+    for (const RowInfo &info : m_row_info) m_seen_values[info.key] = stored_value(info.key).value_or(std::string());
+    refresh_provenance();
+    const int timer_id = wxWindow::NewControlId();
+    m_change_timer.SetOwner(this, timer_id);
+    Bind(wxEVT_TIMER, [this](wxTimerEvent &) { poll_changes(); }, timer_id);
+    m_change_timer.Start(700);
+}
+
+void PreferencesDialog::poll_changes()
+{
+    std::map<std::string, std::string> now;
+    for (const auto &entry : m_seen_values) now[entry.first] = stored_value(entry.first).value_or(std::string());
+    const std::vector<PreferenceHistory::Change> changes = PreferenceHistory::diff(m_seen_values, now, std::int64_t(std::time(nullptr)));
+    if (changes.empty()) return;
+    if (m_history && !m_history->append(changes))
+        BOOST_LOG_TRIVIAL(warning) << "Preferences: the change record could not be written";
+    m_seen_values = std::move(now);
+    refresh_provenance();
+    if (!m_info_key.empty()) show_info(m_info_key);
+    Layout();
+}
+
+void PreferencesDialog::hide_info()
+{
+    m_info_key.clear();
+    if (m_info_panel == nullptr || !m_info_panel->IsShown()) return;
+    m_info_panel->Hide();
+    Layout();
+}
+
+void PreferencesDialog::show_info(const std::string &key)
+{
+    const RowInfo *info = row_info(key);
+    if (info == nullptr || m_info_panel == nullptr || m_info_sizer == nullptr) return;
+    m_info_key = key;
+    const int pad   = FromDIP(16);
+    const int wrap  = FromDIP(288);
+    const auto text = [&](const wxString &value, const wxFont &font, MD3::Role role, int top) {
+        auto *label = new ::Label(m_info_panel, value);
+        label->SetFont(font);
+        label->SetForegroundColour(StateColor::semantic(role));
+        label->Wrap(wrap);
+        m_info_sizer->Add(label, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, top);
+        return label;
+    };
+    const auto section = [&](const wxString &heading) { text(heading.Upper(), ::Label::Head_12, MD3::Role::OnSurfaceVariant, FromDIP(14)); };
+
+    m_info_panel->Freeze();
+    m_info_sizer->Clear(true);
+
+    auto *head  = new wxBoxSizer(wxHORIZONTAL);
+    auto *title = new ::Label(m_info_panel, info->title);
+    title->SetFont(::Label::Head_16);
+    title->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+    title->Wrap(FromDIP(240));
+    head->Add(title, 1, wxALIGN_CENTER_VERTICAL);
+    auto *close = new ::Button(m_info_panel, wxEmptyString);
+    close->SetIconButton(::Button::IconShape::Circle, 32);
+    close->SetGlyph(MaterialIcon::Close);
+    close->SetName(_L("Close the explanation"));
+    close->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { hide_info(); });
+    head->Add(close, 0, wxALIGN_CENTER_VERTICAL);
+    m_info_sizer->Add(head, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, pad);
+
+    if (!info->description.IsEmpty()) text(info->description, ::Label::Body_13, MD3::Role::OnSurface, FromDIP(8));
+
+    section(_L("Where the value comes from"));
+    text(provenance_text(key), ::Label::Body_13, MD3::Role::OnSurface, FromDIP(4));
+
+    const std::optional<std::string> def = default_value(key);
+    section(_L("Built-in default"));
+    text(def ? display_value(key, *def) : _L("Not declared for this setting"), ::Label::Body_13, MD3::Role::OnSurface, FromDIP(4));
+
+    section(_L("Takes effect"));
+    text(takes_effect_text(key), ::Label::Body_13, MD3::Role::OnSurface, FromDIP(4));
+
+    section(_L("Stored in"));
+    text(wxString("BambuStudio.conf ") + wxString(L"·") + " " + wxString::FromUTF8(key), ::Label::Body_12,
+         MD3::Role::OnSurfaceVariant, FromDIP(4));
+
+    section(_L("Changes to this setting"));
+    const std::vector<PreferenceHistory::Change> changes = m_history ? m_history->for_key(key, 5) : std::vector<PreferenceHistory::Change>{};
+    if (changes.empty())
+        text(_L("None yet. Every change you make here is recorded with its time, on this computer only."), ::Label::Body_13,
+             MD3::Role::OnSurfaceVariant, FromDIP(4));
+    for (const PreferenceHistory::Change &c : changes) {
+        const wxString what = c.redacted ? _L("changed") :
+                                           wxString::Format(_L("%s to %s"), display_value(key, c.from), display_value(key, c.to));
+        text(format_day(c.time) + " " + format_clock(c.time) + "  " + what, ::Label::Body_12, MD3::Role::OnSurface, FromDIP(4));
+    }
+
+    // Reset drives the row's own switch, so its usual side effects run too.
+    // Rows without a switch say how to change them back instead of pretending.
+    if (def && key_changed(key)) {
+        ::SwitchButton *sw = find_switch(info->row);
+        if (sw != nullptr && (*def == "true" || *def == "false")) {
+            auto *reset = new ::Button(m_info_panel, wxString::Format(_L("Reset to %s"), display_value(key, *def)));
+            reset->SetVariant(::Button::Variant::Outlined);
+            reset->SetButtonSize(::Button::Size::Small);
+            const bool target = *def == "true";
+            reset->Bind(wxEVT_BUTTON, [this, sw, target](wxCommandEvent &) {
+                sw->SetValue(target);
+                wxCommandEvent toggled(wxEVT_TOGGLEBUTTON, sw->GetId());
+                toggled.SetEventObject(sw);
+                toggled.SetInt(target ? 1 : 0);
+                sw->GetEventHandler()->ProcessEvent(toggled);
+                CallAfter([this]() { poll_changes(); });
+            });
+            m_info_sizer->Add(reset, 0, wxLEFT | wxRIGHT | wxTOP, FromDIP(16));
+        } else {
+            text(_L("Change it back with its own control; the built-in default is shown above."), ::Label::Body_12,
+                 MD3::Role::OnSurfaceVariant, FromDIP(12));
+        }
+    }
+    m_info_sizer->AddSpacer(pad);
+
+    m_info_panel->Show();
+    m_info_panel->Layout();
+    m_info_panel->Thaw();
+    Layout();
+}
+
+void PreferencesDialog::show_history()
+{
+    wxDialog dialog(this, wxID_ANY, _L("Preferences history"), wxDefaultPosition, wxDefaultSize,
+                    wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER);
+    dialog.SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerHigh));
+    auto *root    = new wxBoxSizer(wxVERTICAL);
+    auto *heading = new ::Label(&dialog, _L("Preferences history"));
+    heading->SetFont(::Label::Head_16);
+    heading->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+    root->Add(heading, 0, wxLEFT | wxRIGHT | wxTOP, FromDIP(16));
+    auto *note = new ::Label(&dialog, _L("Every change made in Preferences, newest first. It stays on this computer; private values are never recorded."));
+    note->SetFont(::Label::Body_12);
+    note->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+    note->Wrap(FromDIP(520));
+    root->Add(note, 0, wxLEFT | wxRIGHT | wxTOP, FromDIP(8));
+
+    auto *list = new MD3ScrolledWindow(&dialog, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(560), FromDIP(360)), wxVSCROLL | wxBORDER_NONE);
+    list->SetBackgroundColour(dialog.GetBackgroundColour());
+    list->SetScrollRate(0, FromDIP(20));
+    auto *rows = new wxBoxSizer(wxVERTICAL);
+    const std::vector<PreferenceHistory::Change> changes = m_history ? m_history->newest(200) : std::vector<PreferenceHistory::Change>{};
+    if (changes.empty()) {
+        auto *empty = new ::Label(list, _L("No changes recorded yet."));
+        empty->SetFont(::Label::Body_13);
+        empty->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+        rows->Add(empty, 0, wxALL, FromDIP(8));
+    }
+    for (const PreferenceHistory::Change &c : changes) {
+        const RowInfo *info  = row_info(c.key);
+        const wxString title = info ? info->title : wxString::FromUTF8(c.key);
+        const wxString what  = c.redacted ? _L("changed") :
+                                            wxString::Format(_L("%s to %s"), display_value(c.key, c.from), display_value(c.key, c.to));
+        auto *line = new ::Label(list, format_day(c.time) + " " + format_clock(c.time) + "   " + title + ": " + what);
+        line->SetFont(::Label::Body_13);
+        line->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+        rows->Add(line, 0, wxLEFT | wxRIGHT | wxTOP, FromDIP(6));
+    }
+    list->SetSizer(rows);
+    list->FitInside();
+    root->Add(list, 1, wxEXPAND | wxALL, FromDIP(12));
+
+    auto *done = new ::Button(&dialog, _L("Close"));
+    done->SetVariant(::Button::Variant::Filled);
+    done->SetButtonSize(::Button::Size::Small);
+    done->Bind(wxEVT_BUTTON, [&dialog](wxCommandEvent &) { dialog.EndModal(wxID_OK); });
+    root->Add(done, 0, wxALIGN_RIGHT | wxRIGHT | wxBOTTOM, FromDIP(12));
+    dialog.SetSizerAndFit(root);
+    dialog.CenterOnParent();
+    dialog.ShowModal();
 }
 
 void PreferencesDialog::select_page(int page)
@@ -2006,6 +2411,10 @@ bool PreferencesDialog::teleport_to_setting(const std::string &key)
     if (target == nullptr || target->item == nullptr) return false;
 
     // Any active search filter would hide the row; teleport wins.
+    if (m_changed_only) {
+        m_changed_only = false;
+        refresh_changed_chip();
+    }
     if (m_search) m_search->SetValue(wxEmptyString);
     reset_search_filter();
 
@@ -2085,7 +2494,7 @@ void PreferencesDialog::apply_search_filter(const wxString &raw_query)
 {
     wxString query = raw_query;
     query.Trim(true).Trim(false);
-    if (query.empty()) {
+    if (query.empty() && !m_changed_only) {
         reset_search_filter();
         return;
     }
@@ -2100,7 +2509,8 @@ void PreferencesDialog::apply_search_filter(const wxString &raw_query)
     const bool     multiline = m_search && m_search->IsMultiline();
     const wxColour highlight = StateColor::semantic(MD3::Role::Primary);
     const size_t   count     = m_search_rows.size();
-    SearchField::MatchPass match_pass(query, regex, case_sens, whole, multiline);
+    std::optional<SearchField::MatchPass> match_pass;
+    if (!query.empty()) match_pass.emplace(query, regex, case_sens, whole, multiline);
 
     // Pass 1: per-row match against the label haystack. Baseline-hidden rows
     // (e.g. model-mall entries without a mall) never participate. Matching runs
@@ -2112,7 +2522,7 @@ void PreferencesDialog::apply_search_filter(const wxString &raw_query)
     for (size_t i = 0; i < count; ++i) {
         const SearchRow &row = m_search_rows[i];
         if (!row.baseline_shown || row.haystack.empty()) continue;
-        matched[i] = match_pass.matches(row.haystack);
+        matched[i] = (!match_pass || match_pass->matches(row.haystack)) && (!m_changed_only || row_changed(row));
     }
 
     // Pass 2: group visibility. A group is a Head_16 title row plus the rows
@@ -2150,12 +2560,12 @@ void PreferencesDialog::apply_search_filter(const wxString &raw_query)
         label->SetForegroundColour(highlight);
         label->Refresh();
     };
-    for (size_t k = 0; k < count; ++k) {
+    for (size_t k = 0; k < count && match_pass; ++k) {
         if (!matched[k]) continue;
         const SearchRow &row      = m_search_rows[k];
         bool             any_tint = false;
         for (auto *label : row.labels) {
-            if (match_pass.matches(search_label_text(label))) {
+            if (match_pass->matches(search_label_text(label))) {
                 tint(label);
                 any_tint = true;
             }
@@ -2231,6 +2641,7 @@ PreferencesDialog::~PreferencesDialog()
     catch (...) { BOOST_LOG_TRIVIAL(warning) << "Could not save Preferences window size: " << current_exception_message(); }
     m_school_refresh_timer.Stop();
     m_narrator_inventory_timer.Stop();
+    m_change_timer.Stop();
     wxGetApp().set_preferences_dialog(nullptr);
     m_radio_group.DeleteContents(true);
     m_hash_selector.clear();
@@ -3946,6 +4357,11 @@ wxBoxSizer *PreferencesDialog::create_bottom_buttons()
     auto *btn_reset_prefs               = new Button(this, _L("Reset preferences"));
     // TRN: Opens the shared Export dialog with every preference section.
     auto *btn_export_prefs              = new Button(this, _L("Export preferences..."));
+    auto *btn_history                   = new Button(this, _L("Preferences history"));
+    btn_history->SetVariant(Button::Variant::Outlined);
+    btn_history->SetButtonSize(Button::Size::Small);
+    btn_history->SetToolTip(_L("Every change made in Preferences, with its time"));
+    btn_history->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { show_history(); });
     m_button_list[m_button_list.size()] = btn_reset_warnings;
     m_button_list[m_button_list.size()] = btn_reset_prefs;
     m_button_list[m_button_list.size()] = btn_export_prefs;
@@ -3971,6 +4387,7 @@ wxBoxSizer *PreferencesDialog::create_bottom_buttons()
 
     row->Add(btn_reset_warnings, 0, wxRIGHT, FromDIP(8));
     row->Add(btn_reset_prefs, 0, wxRIGHT, FromDIP(8));
+    row->Add(btn_history, 0, wxRIGHT, FromDIP(8));
     row->Add(btn_export_prefs, 0, 0, 0);
     return row;
 }

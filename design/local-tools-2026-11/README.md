@@ -1,14 +1,14 @@
 # Local tools design, November 2026
 
-Twelve design boards for the native Bambu Studio app: the Local tools hub, a page that lists every required feature, the Preferences remake and nine tools. They are a design specification. A board here does not mean the feature ships; the status column says what the native app has today.
+Twelve design boards for the native Bambu Studio app: the Local tools hub, a page that lists every required feature, the Preferences remake and nine tools. They are a design specification. A board here does not mean the feature ships; the status column says what the native app has at the latest commit that touched this file.
 
 Open a frame to see a board as designed. The boards themselves are in [boards](boards), with the shared tokens in [boards/kit.css](boards/kit.css) and the board layout in [boards/canvas.json](boards/canvas.json).
 
 | Board | Frame | What it designs | Native status at this commit |
 | --- | --- | --- | --- |
 | [Main](boards/Main.dc.html) | [frame](frames/Main.webp) | Local tools hub with search, filters and recent activity | The Local tools tab exists; this hub page is not built |
-| [FeatureFinder](boards/FeatureFinder.dc.html) | [frame](frames/FeatureFinder.webp) | Every feature: where each one lives, its shortcut, one click to open, and an honest Not built yet state | Being built next |
-| [InfoIcons](boards/InfoIcons.dc.html) | [frame](frames/InfoIcons.webp) | Preferences remake: sections, info icons, an explanation panel, where each value comes from, reset, history | Not built yet |
+| [FeatureFinder](boards/FeatureFinder.dc.html) | [frame](frames/FeatureFinder.webp) | Every feature: where each one lives, its shortcut, one click to open, and an honest Not built yet state | Built: Help > Every feature ([article](../../docs/features/windows/every-feature.md)) |
+| [InfoIcons](boards/InfoIcons.dc.html) | [frame](frames/InfoIcons.webp) | Preferences remake: sections, info icons, an explanation panel, where each value comes from, reset, history | Partly built: provenance lines, info buttons, the explanation panel, Changed by you, history and switch reset ([article](../../docs/features/windows/preferences-provenance.md)); regrouped sections, section reset, related settings and the playground are not built yet |
 | [Base64](boards/Base64.dc.html) | [frame](frames/Base64.webp) | Base64 toolkit: text, files beside the originals, data: URLs, preview, history | The codec is built and tested (`src/slic3r/GUI/Base64Toolkit/Base64Codec.*`); the panel is not built |
 | [Extensions](boards/Extensions.dc.html) | [frame](frames/Extensions.webp) | Extension manager: hooks, permissions, consent, runs, limits, manifest | Not built yet |
 | [Setup](boards/Setup.dc.html) | [frame](frames/Setup.webp) | Practical setup wizard with saved progress and real actions | Not built yet; the existing printer setup wizard is unchanged |

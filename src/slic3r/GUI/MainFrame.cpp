@@ -326,6 +326,7 @@ DPIFrame(NULL, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, BORDERLESS_FRAME_
 
 #ifndef __APPLE__
     m_topbar         = new BBLTopbar(this);
+    FeatureFinder::Commands::instance().add("preferences", []() { wxGetApp().open_preferences(); });
     FeatureFinder::Commands::instance().add("notification-centre", [this]() {
         if (m_topbar == nullptr) return;
         wxAuiToolBarEvent event;

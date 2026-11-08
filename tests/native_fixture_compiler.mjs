@@ -9,11 +9,13 @@ import {spawnSync} from 'node:child_process';
 import path from 'node:path';
 
 export function compileFixture({source, exe, cwd, include}) {
+  // `include` is one directory or a list of them.
+  const includes = Array.isArray(include) ? include : (include ? [include] : []);
   if (process.platform === 'win32') {
     return spawnSync('cl.exe', ['/nologo', '/std:c++17', '/EHsc', '/W4',
-      ...(include ? ['/I' + include] : []), source, '/Fe:' + exe,
+      ...includes.map((dir) => '/I' + dir), source, '/Fe:' + exe,
       '/Fo:' + path.join(cwd, 'fixture.obj')], {cwd, stdio: 'inherit'});
   }
   return spawnSync(process.env.CXX || 'c++', ['-std=c++17', '-Wall', '-Wextra',
-    ...(include ? ['-I' + include] : []), source, '-o', exe], {cwd, stdio: 'inherit'});
+    ...includes.map((dir) => '-I' + dir), source, '-o', exe], {cwd, stdio: 'inherit'});
 }
