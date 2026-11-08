@@ -12,6 +12,7 @@ on:
       - src/slic3r/GUI/Extensions/**
       - src/slic3r/GUI/SelectMachine.cpp
       - src/slic3r/GUI/Plater.cpp
+      - src/slic3r/GUI/GUI_App.cpp
       - resources/extensions/**
       - tests/extension_*
       - .github/workflows/extensions-windows.yml
@@ -48,7 +49,7 @@ jobs:
         run: |
           node tests/extension_builtins.test.mjs
           if ($LASTEXITCODE -ne 0) { throw 'The built-in extensions failed' }
-      - name: The check before a print is sent and the import hook, wired into the app
+      - name: The check before a print is sent, the import hook and the print watcher, wired into the app
         run: |
-          node --test tests/extension_before_send_wiring.test.mjs tests/extension_import_wiring.test.mjs
+          node --test tests/extension_before_send_wiring.test.mjs tests/extension_import_wiring.test.mjs tests/extension_print_watch.test.mjs
           if ($LASTEXITCODE -ne 0) { throw 'The extension wiring checks failed' }

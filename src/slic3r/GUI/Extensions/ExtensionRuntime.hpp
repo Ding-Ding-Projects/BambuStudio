@@ -49,6 +49,11 @@ public:
     std::filesystem::path folder() const;
 
     // ---- hooks the app calls
+    // print.finished: from startup, every 3 s, the printer selected on the
+    // Device page is looked at while an extension is on for the hook; a print
+    // seen running that finishes, fails or is cancelled runs it once.
+    void start_watching_prints();
+    void print_tick();
     // After files were loaded and objects arrived (indexes into the model):
     // runs model.imported with only those objects and the files' names.
     void models_imported(const std::vector<std::string> &files, const std::vector<std::size_t> &objects);
@@ -144,6 +149,10 @@ private:
     void apply(const RunResult &result, bool sample, const std::function<void(const RunResult &)> &each);
     void apply_comment_lines(const std::string &file, int extensions, bool ok, const std::string &problem);
     void stop_worker();
+
+    // print.finished
+    struct PrintWatch;
+    std::unique_ptr<PrintWatch>            m_print_watch;
 
     std::unique_ptr<Host>                  m_host;
     std::map<int, std::size_t>             m_sliced_stamp; // plate index -> slice timestamp already run

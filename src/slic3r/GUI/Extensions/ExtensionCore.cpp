@@ -163,7 +163,7 @@ const std::vector<HookInfo> &hooks()
          L("Checklist rows, a block with its reason"), true},
         {Hook::GcodeExported, "gcode.exported", L("After G-code export"), L("The file name and the slice statistics"),
          L("Comment lines to add at the start or end"), true},
-        {Hook::PrintFinished, "print.finished", L("After a print finishes"), L("Result, duration and filament used"), L("Notes"), false},
+        {Hook::PrintFinished, "print.finished", L("After a print finishes"), L("Result, how long it ran and its layers"), L("Notes"), true},
         {Hook::Command, "command", L("Its own commands"), L("A summary of the selection"), L("Notes, a text file to save"), true},
     };
     return all;
@@ -572,7 +572,8 @@ json build_request(Hook hook, const std::string &action, const json &context, co
         const std::pair<const char *, Permission> sections[] = {{"slice", Permission::SliceRead},
                                                                 {"model", Permission::ModelRead},
                                                                 {"printer", Permission::PrinterRead},
-                                                                {"send", Permission::PrinterRead}};
+                                                                {"send", Permission::PrinterRead},
+                                                                {"print", Permission::PrinterRead}};
         for (const auto &[section, permission] : sections)
             if (context.contains(section) && allowed(consent, permission)) filtered[section] = scrub(context[section]);
     }

@@ -127,9 +127,9 @@ Limits clamp_limits(Limits limits);
 
 // ---------------------------------------------------------------- request
 // The app's context is a JSON object whose top-level sections need a
-// permission: "slice" needs slice.read, "model" needs model.read, "printer"
-// and "send" (where a print is going, with which options and filaments) need
-// printer.read. Anything else is dropped. Values whose key looks like a secret
+// permission: "slice" needs slice.read, "model" needs model.read, "printer",
+// "send" (where a print is going, with which options and filaments) and
+// "print" (how a print ended) need printer.read. Anything else is dropped. Values whose key looks like a secret
 // are removed at every depth, whatever the permissions.
 nlohmann::json build_request(Hook hook, const std::string &action, const nlohmann::json &context, const Manifest &manifest,
                              const Consent &consent);

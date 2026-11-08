@@ -58756,3 +58756,8 @@ msgstr "%s 冇設定可以重設。"
 #. review-status: agent-drafted
 msgid "%1% and %2% more"
 msgstr "%1% 同另外 %2% 個"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Result, how long it ran and its layers"
+msgstr "結果、行咗幾耐同佢嘅層數"

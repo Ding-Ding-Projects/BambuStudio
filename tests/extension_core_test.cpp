@@ -201,7 +201,8 @@ static void before_send()
 {
     CHECK(info(Hook::PrintBeforeSend).built);
     CHECK(info(Hook::ModelImported).built);
-    CHECK(!info(Hook::PrintFinished).built); // declared, not run by this build yet
+    CHECK(info(Hook::PrintFinished).built);
+    for (const HookInfo &h : hooks()) CHECK(h.built); // every declared hook runs in this build
     CHECK(std::string(info(Hook::PrintBeforeSend).id) == "print.before_send");
 
     // The send section needs printer.read, like the printer section, and loses secrets at every depth.
@@ -220,6 +221,13 @@ static void before_send()
     CHECK(request["context"]["send"]["printerModel"] == "Bambu Lab X1 Carbon");
     CHECK(request["context"]["send"]["filaments"][0]["slot"] == 1);
     CHECK(request.dump().find("SECRET") == std::string::npos);
+    // print.finished's section takes printer.read too.
+    const nlohmann::json ended = {{"print", {{"result", "finished"}, {"accessCode", "SECRET-AC"}}}};
+    CHECK(build_request(Hook::PrintFinished, "", ended, m, c)["context"]["print"]["result"] == "finished");
+    CHECK(build_request(Hook::PrintFinished, "", ended, m, c).dump().find("SECRET-AC") == std::string::npos);
+    Consent no_printer = c;
+    no_printer.allowed = {Permission::SliceRead};
+    CHECK(!build_request(Hook::PrintFinished, "", ended, m, no_printer)["context"].contains("print"));
 
     auto answered = [](std::vector<ChecklistRow> rows, std::vector<std::string> notes = {}, bool block = false) {
         SendCheckRun r;

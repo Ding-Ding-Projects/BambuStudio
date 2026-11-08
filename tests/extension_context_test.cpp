@@ -71,14 +71,27 @@ static void sections()
     CHECK(imported["files"].size() == 50 && imported["files"][0] == "part0.stl");
     CHECK(imported.dump().find("someone") == std::string::npos);
 
+    // print.finished: how a print ended, never which printer it was.
+    nlohmann::json ended = print_section(PrintEndFacts{"failed", "Bambu Lab X1 Carbon", 3723.6, true, 245, 0x0300400C});
+    CHECK(ended["result"] == "failed" && ended["seconds"] == 3724 && ended["seenFromStart"] == true && ended["layers"] == 245);
+    CHECK(ended["error"] == "0300400C" && ended["printerModel"] == "Bambu Lab X1 Carbon");
+    ended = print_section(PrintEndFacts{"finished", "X", -1, true, -3, 0x0300400C});
+    CHECK(ended["seconds"].is_null() && ended["seenFromStart"] == false && ended["layers"] == 0 && !ended.contains("error"));
+    CHECK(print_section(PrintEndFacts{"exploded", "X", 1, false, 1, 0})["result"] == "");
+    std::vector<std::string> ended_keys;
+    for (auto it = ended.begin(); it != ended.end(); ++it) ended_keys.push_back(it.key());
+    CHECK(ended_keys == std::vector<std::string>({"layers", "printerModel", "result", "seconds", "seenFromStart"}));
+
     // Samples are marked in every section, so an extension can tell.
-    for (Hook h : {Hook::PlateSliced, Hook::GcodeExported, Hook::Command, Hook::PrintBeforeSend, Hook::ModelImported}) {
+    for (Hook h : {Hook::PlateSliced, Hook::GcodeExported, Hook::Command, Hook::PrintBeforeSend, Hook::ModelImported, Hook::PrintFinished}) {
         const nlohmann::json c = sample_context(h);
         CHECK(c["slice"]["sample"] == true && c["printer"]["sample"] == true && c["model"]["sample"] == true);
         CHECK((h == Hook::GcodeExported) == c["slice"].contains("file"));
         CHECK((h == Hook::PrintBeforeSend) == c.contains("send"));
         if (c.contains("send")) CHECK(c["send"]["sample"] == true && c["send"]["filaments"].size() == 2);
         CHECK((h == Hook::ModelImported) == c["model"].contains("imported"));
+        CHECK((h == Hook::PrintFinished) == c.contains("print"));
+        if (c.contains("print")) CHECK(c["print"]["sample"] == true && c["print"]["result"] == "finished");
     }
 }
 

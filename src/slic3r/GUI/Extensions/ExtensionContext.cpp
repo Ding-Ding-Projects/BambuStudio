@@ -127,6 +127,22 @@ json model_section(const std::vector<ModelObjectFacts> &objects, int plate)
     return json{{"plate", plate}, {"objects", list}, {"objectCount", objects.size()}, {"selectedCount", selected}, {"triangles", triangles}};
 }
 
+json print_section(const PrintEndFacts &facts)
+{
+    const std::string result = facts.result == "finished" || facts.result == "failed" || facts.result == "cancelled" ? facts.result : std::string();
+    json out{{"result", result},
+             {"printerModel", facts.printer_model},
+             {"seconds", facts.seconds >= 0 ? json(std::llround(facts.seconds)) : json(nullptr)},
+             {"seenFromStart", facts.seconds >= 0 && facts.seen_from_start},
+             {"layers", std::max(0, facts.layers)}};
+    if (facts.error != 0 && result == "failed") {
+        char code[16];
+        std::snprintf(code, sizeof(code), "%08X", static_cast<unsigned>(facts.error));
+        out["error"] = code;
+    }
+    return out;
+}
+
 json imported_section(const std::vector<ModelObjectFacts> &objects, int plate, const std::vector<std::string> &files)
 {
     json section        = model_section(objects, plate);
@@ -163,6 +179,10 @@ json sample_context(Hook hook)
                            imported_section({{"Sample bracket", 2, 12480, {{42.0, 18.5, 9.0}}, false}}, 1, {"Sample bracket.stl"}) :
                            model_section({{"Sample bracket", 2, 12480, {{42.0, 18.5, 9.0}}, true}, {"Sample hook", 1, 3302, {{20.0, 20.0, 35.0}}, false}}, 1);
     context["model"]["sample"] = true;
+    if (hook == Hook::PrintFinished) {
+        context["print"]           = print_section(PrintEndFacts{"finished", "Sample printer", 5025, true, 245, 0});
+        context["print"]["sample"] = true;
+    }
     if (hook == Hook::PrintBeforeSend) {
         SendFacts send;
         send.plate         = 1;

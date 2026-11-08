@@ -1625,12 +1625,12 @@
     {
       "route": "windows/extensions.md",
       "title": "Extensions",
-      "sha256": "89ffb565c99711a76621162126c38cb26a82dd90afbe718bd99de86bb5afdb17"
+      "sha256": "f12d9eb1a8623ddd224a9d0955e1be16bb7aa1734f61d2837412682ff9b2f00c"
     },
     {
       "route": "windows/extensions.yue_HK.md",
       "title": "擴充功能",
-      "sha256": "381710e9c55528c344d22fd692af60ab7ff3da11b287aea58ce6477606a9a954"
+      "sha256": "da54e9f335b226dbf17d165ec2fcbe34ef1699dae110410c0f0f2ebf5c93e932"
     },
     {
       "route": "windows/first-run-funny-level-disclosure.md",
@@ -2285,7 +2285,7 @@
       "bytes": 16430
     }
   ],
-  "bundle_sha256": "77d0100f4f569c1087077af3ec5db440ece0119dfb5c2c959479be8bd08f40d1",
+  "bundle_sha256": "0dc66445d5aa4470f0cf035fc97c98aa377490b1b762ca9fb7490f08d4d3543e",
   "unavailable_references": [
     {
       "source": "api/README.md",

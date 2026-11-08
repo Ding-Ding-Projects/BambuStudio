@@ -1,6 +1,6 @@
 ---
 translation-of: extensions.md
-source-sha256: 89ffb565c99711a76621162126c38cb26a82dd90afbe718bd99de86bb5afdb17
+source-sha256: f12d9eb1a8623ddd224a9d0955e1be16bb7aa1734f61d2837412682ff9b2f00c
 review-status: agent-drafted
 ---
 
@@ -63,7 +63,7 @@ review-status: agent-drafted
 | `command` | 你喺呢頁或者指令面板開始佢其中一個指令嘅時候 | `model`（揀咗嘅嘢）、`slice`（打印板切咗片嘅話）、`printer` | 備註、一個畀你儲存嘅文字檔 | 會行 |
 | `print.before_send` | 喺打印對話框為呢個項目切咗片嘅打印板撳**發送**嗰陣，喺應用程式自己嘅打印前檢查之前 | `slice`（一次發送所有打印板就係全部加埋）、`printer`、`send` | 清單行、連原因嘅阻止、備註 | 會行 |
 | `model.imported` | 載入檔案、有物件加入之後（匯入、拖放、項目），等成個載入做完先 | `model`（淨係加入咗嘅物件，連檔案名） | 備註 | 會行 |
-| `print.finished` | 打印完之後 | | 備註 | 未做 |
+| `print.finished` | Bambu Studio 喺裝置頁揀咗嘅打印機上見過行緊嘅打印完成、失敗或者取消嗰陣（每 3 秒睇一次，淨係有擴充功能開咗佢先睇） | `print`、`printer` | 備註 | 會行 |
 
 清單檔可以宣告呢個版本未會行嘅掛鈎；佢會照樣列出，**用樣本試吓**都仲可以試佢。
 
@@ -89,7 +89,7 @@ review-status: agent-drafted
 | --- | --- |
 | `slice.read` | `slice` 部分：時間、層數、每個槽嘅墨水、警告、打印板類型 |
 | `model.read` | `model` 部分：物件名稱、實例數量、三角形數量、尺寸、揀咗嘅嘢 |
-| `printer.read` | `printer` 部分：打印機預設、型號、噴嘴尺寸同墨水預設；發送打印之前，仲有 `send` 部分 |
+| `printer.read` | `printer` 部分：打印機預設、型號、噴嘴尺寸同墨水預設；發送打印之前，仲有 `send` 部分；打印完之後，仲有 `print` 部分 |
 | `notes.show` | 以通知顯示備註 |
 | `send.warn` | 發送打印之前嘅清單行 |
 | `send.block` | 阻止一個打印發送出去，要講原因 |
@@ -189,6 +189,7 @@ hello/
   ```
 
   `connection` 係 `cloud` 或者 `lan`。`options` 係打印對話框顯示緊嘅選項同佢用緊嘅值。每個墨水係項目嘅一個槽，有切片時嘅類型同顏色；有對應嘅話，仲有打印機對嗰個槽嘅叫法（`A1`、`HT-A`、`Ext`）、打印機喺度報告嘅嘢，同剩幾多（打印機冇講就係 `-1`）；冇對應嘅 `tray` 係空。打印機自己嘅名、序號、地址同存取碼永遠唔會喺入面。
+- `print`，畀 `print.finished` 用（要 `printer.read`）：`result`（`finished`、`failed` 或者 `cancelled`）、`printerModel`、`seconds`（Bambu Studio 見到佢行咗幾耐，或者 `null`）、`seenFromStart`（開始睇嗰陣已經行緊就係 false，即係 `seconds` 只係一部分）、`layers`（打印機報告嘅層數，唔知就係 0），失敗嘅打印仲有 `error`（打印機嘅代碼，八個十六進位數字）。開始睇之前已經完咗嘅打印永遠唔會報告，每次完結只報一次。打印機嘅身份只會用嚟比較有冇換機，永遠唔會送出。
 - `model` 有 `plate`、`objects`（最多 200 個：`name`、`instances`、`triangles`、以毫米計嘅 `size`、`selected`）、`objectCount`、`selectedCount` 同 `triangles`。`model.imported` 嘅 `model` 淨係有加入咗嘅物件，仲有 `"imported": true`、`files`（載入咗嘅檔案名，永遠冇資料夾，最多 50 個）同 `"units": "mm"`。
 - 克數同成本要靠墨水預設嘅密度同價錢；冇嘅話就係 0，成本會唔包括。
 
@@ -257,8 +258,9 @@ Windows PowerShell 5.1 會用系統嘅 ANSI 代碼頁讀冇位元組順序標記
 - `tests/extension_before_send_wiring.test.mjs`：打印對話框喺自己嘅檢查之前、而且淨係為切咗片嘅打印板問擴充功能；發送資料永遠唔讀打印機嘅序號、名、地址或者存取碼；檢查排喺所有等緊嘅執行前面，結果交畀佢嘅視窗；離開視窗會停咗啲執行；每個檢查喺壞咗嘅副本上都必須失敗。
 - `tests/extension_builtins.test.mjs`：內置清單檔同指令碼；喺 Windows 上每個內置擴充功能都會經應用程式自己嘅程式碼喺 Windows PowerShell 下真係行一次，壞咗嘅副本必須被捉到。
 - `tests/extension_import_wiring.test.mjs`：載入檔案會喺載入返嚟、有物件加入之後先行 `model.imported`，冇其他地方會叫內部嘅載入器，請求淨係有加入咗嘅嘢；每個檢查喺壞咗嘅副本上都必須失敗。
-- `.github/workflows/extensions-windows.yml` 喺託管嘅 Windows 機器上用 MSVC 行晒呢六個。
+- `tests/extension_print_watch.test.mjs`：監察器喺啟動之後開始、關程式嗰陣停；冇擴充功能開咗 `print.finished` 就乜都唔睇；經旁述功能測試過嘅轉變偵測器，每次完結只報一次；永遠唔送打印機身份；每個檢查喺壞咗嘅副本上都必須失敗。
+- `.github/workflows/extensions-windows.yml` 喺託管嘅 Windows 機器上用 MSVC 行晒呢七個。
 
 ## 未做
 
-`print.finished` 掛鈎已經宣告，但呢個版本未會行。打印隊列入面已經有嘅工作開始打印、打印機上已經有嘅檔案、同時發送去幾部打印機，同埋發送去打印機儲存空間，都唔會行 `print.before_send`。仲未有每個擴充功能自己嘅設定，亦未有簽署過嘅擴充功能。
+每個宣告咗嘅掛鈎都會行。打印隊列入面已經有嘅工作開始打印、打印機上已經有嘅檔案、同時發送去幾部打印機，同埋發送去打印機儲存空間，都唔會行 `print.before_send`。`print.finished` 淨係睇裝置頁揀咗嗰部打印機，亦講唔到一次打印用咗幾多墨水。仲未有每個擴充功能自己嘅設定，亦未有簽署過嘅擴充功能。

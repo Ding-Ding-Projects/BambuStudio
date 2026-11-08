@@ -37810,3 +37810,6 @@ msgstr ""
 #, possible-boost-format
 msgid "%1% and %2% more"
 msgstr ""
+
+msgid "Result, how long it ran and its layers"
+msgstr ""

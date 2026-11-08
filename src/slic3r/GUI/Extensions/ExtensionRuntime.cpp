@@ -9,8 +9,11 @@
 #include "libslic3r/PrintConfig.hpp"
 #include "libslic3r/Utils.hpp"
 
+#include "slic3r/GUI/DeviceCore/DevManager.h"
+#include "slic3r/GUI/DeviceManager.hpp"
 #include "slic3r/GUI/GUI.hpp"
 #include "slic3r/GUI/GUI_App.hpp"
+#include "slic3r/GUI/Narration/NarrationTransitions.hpp"
 #include "slic3r/GUI/I18N.hpp"
 #include "slic3r/GUI/MainFrame.hpp"
 #include "slic3r/GUI/NotificationManager.hpp"
@@ -22,9 +25,11 @@
 #include <boost/log/trivial.hpp>
 
 #include <wx/filedlg.h>
+#include <wx/timer.h>
 
 #include <algorithm>
 #include <cctype>
+#include <chrono>
 #include <ctime>
 #include <fstream>
 
@@ -171,6 +176,33 @@ wxString outcome_text(Outcome outcome, const std::string &problem, const Limits 
     return wxString();
 }
 
+// print.finished: what the watcher remembers about the selected printer.
+struct Runtime::PrintWatch
+{
+    Narration::PrinterTransitionDetector  detector;
+    std::string                           machine;           // the printer last looked at; compared, never sent
+    bool                                  running = false;   // a print is going and its end has not been reported
+    bool                                  seen_from_start = false;
+    std::chrono::steady_clock::time_point started;
+};
+
+namespace {
+
+class PrintWatchTimer : public wxTimer
+{
+public:
+    void Notify() override { Runtime::instance().print_tick(); }
+};
+
+// Lives as long as the app, like the narrator's timer: stopped at shutdown, never deleted under a running loop.
+PrintWatchTimer *print_watch_timer()
+{
+    static PrintWatchTimer *timer = new PrintWatchTimer();
+    return timer;
+}
+
+} // namespace
+
 Runtime &Runtime::instance()
 {
     static Runtime runtime;
@@ -183,8 +215,78 @@ void Runtime::shutdown()
 {
     Runtime &r = instance();
     r.m_shut_down = true;
+    print_watch_timer()->Stop();
     r.stop_worker();
     r.m_listeners.clear();
+}
+
+// ---------------------------------------------------------------- print.finished
+
+void Runtime::start_watching_prints()
+{
+    if (!m_shut_down) print_watch_timer()->Start(3000);
+}
+
+void Runtime::print_tick()
+{
+    if (m_shut_down) return;
+    // Nothing is looked at while no extension is on for the hook; turning one
+    // on later starts from what the printer is doing then.
+    if (host().plan(Hook::PrintFinished).empty()) {
+        m_print_watch.reset();
+        return;
+    }
+    DeviceManager *devices = wxGetApp().getDeviceManager();
+    MachineObject *obj     = devices ? devices->get_selected_machine() : nullptr;
+    if (obj == nullptr) return;
+    if (!m_print_watch) m_print_watch = std::make_unique<PrintWatch>();
+    PrintWatch &w = *m_print_watch;
+
+    Narration::PrinterSnapshot now;
+    now.machine = obj->get_dev_id();
+    now.status  = obj->print_status;
+    now.stage   = obj->mc_print_stage;
+    now.error   = obj->print_error;
+    if (now.machine != w.machine) {
+        w.machine = now.machine;
+        w.running = false;
+    }
+    const auto clock  = std::chrono::steady_clock::now();
+    const auto events = w.detector.observe(now);
+    std::string ended;
+    for (const Narration::Event &e : events) {
+        if (e.kind == Narration::EventKind::PrintStarted) {
+            w.running         = true;
+            w.seen_from_start = true;
+            w.started         = clock;
+        } else if (e.kind == Narration::EventKind::PrintFinished) ended = "finished";
+        else if (e.kind == Narration::EventKind::PrintFailed) ended = "failed";
+        else if (e.kind == Narration::EventKind::PrintCancelled) ended = "cancelled";
+    }
+    // Already printing when watching began: the time it ran is only known from here.
+    if (!w.running && ended.empty() && (now.status == "RUNNING" || now.status == "PAUSE")) {
+        w.running         = true;
+        w.seen_from_start = false;
+        w.started         = clock;
+    }
+    if (ended.empty() || !w.running) return;
+    w.running = false;
+
+    std::vector<PlannedRun> runs = host().plan(Hook::PrintFinished);
+    if (runs.empty()) return;
+    PrintEndFacts facts;
+    facts.result          = ended;
+    facts.printer_model   = into_u8(obj->get_printer_type_display_str());
+    facts.seconds         = std::chrono::duration<double>(clock - w.started).count();
+    facts.seen_from_start = w.seen_from_start;
+    facts.layers          = obj->total_layers;
+    facts.error           = ended == "failed" ? obj->print_error : 0;
+    Job job;
+    job.hook    = Hook::PrintFinished;
+    job.runs    = std::move(runs);
+    job.context = json{{"print", print_section(facts)}, {"printer", printer_section(printer_facts())}};
+    job.subject = facts.printer_model;
+    submit(std::move(job));
 }
 
 fs::path Runtime::folder() const { return fs::u8path(data_dir()) / "extensions"; }

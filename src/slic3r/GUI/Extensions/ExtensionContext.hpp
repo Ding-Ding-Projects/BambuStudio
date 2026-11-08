@@ -87,6 +87,20 @@ nlohmann::json imported_section(const std::vector<ModelObjectFacts> &objects, in
 // section, for trying an extension without slicing anything.
 nlohmann::json sample_context(Hook hook);
 
+// ---------------------------------------------------------------- after a print ends
+struct PrintEndFacts
+{
+    std::string result;               // finished, failed or cancelled
+    std::string printer_model;        // the model, as the app names it; never the printer's own name
+    double      seconds        = -1;  // how long Bambu Studio saw it run; < 0 when unknown
+    bool        seen_from_start = false; // false: it was already running when Bambu Studio started watching
+    int         layers         = 0;   // the job's layers, as the printer reports them; 0 when unknown
+    int         error          = 0;   // the printer's error code for a failed print; 0 when none
+};
+
+// The "print" section of a print.finished request (needs printer.read).
+nlohmann::json print_section(const PrintEndFacts &facts);
+
 // ---------------------------------------------------------------- before a print is sent
 struct SendFilamentFacts
 {

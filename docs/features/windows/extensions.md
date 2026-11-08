@@ -97,7 +97,7 @@ fail, and the page shows the exit code.
 | `command` | When you start one of its commands: from the page or the command palette | `model` (the selection), `slice` (when the plate is sliced), `printer` | Notes, a text file for you to save | Runs |
 | `print.before_send` | When **Send** is pressed in the print dialog for a plate sliced in this project, before the app's own pre-print check | `slice` (every plate added up when all plates are sent), `printer`, `send` | Checklist rows, a block with its reason, notes | Runs |
 | `model.imported` | After files are loaded and objects arrive (an import, a drop, a project), once the whole load is done | `model` (only the objects that arrived, with the files' names) | Notes | Runs |
-| `print.finished` | After a print finishes | | Notes | Not yet |
+| `print.finished` | When a print Bambu Studio saw running on the printer selected on the Device page finishes, fails or is cancelled (looked at every 3 s, only while an extension is on for it) | `print`, `printer` | Notes | Runs |
 
 A manifest may declare a hook this build does not run yet; it is listed as such
 and **Try with a sample** can still exercise it.
@@ -138,7 +138,7 @@ run is on the Runs tab as `Before sending a print` with the plate.
 | --- | --- |
 | `slice.read` | The `slice` section: time, layers, filament per slot, warnings, plate type |
 | `model.read` | The `model` section: object names, instance counts, triangle counts, sizes, the selection |
-| `printer.read` | The `printer` section: the printer preset, model, nozzle sizes and filament presets; before a print is sent, also the `send` section |
+| `printer.read` | The `printer` section: the printer preset, model, nozzle sizes and filament presets; before a print is sent, also the `send` section; after a print ends, the `print` section |
 | `notes.show` | Showing notes as notifications |
 | `send.warn` | Checklist rows before a print is sent |
 | `send.block` | Stopping a print from being sent, with a reason |
@@ -265,6 +265,14 @@ invalid, and the page shows which. A manifest is at most 64 KB.
   is left (`-1` when the printer does not say); an unmapped one has an empty
   `tray`. The printer's own name, serial number, address and access code are
   never part of it.
+- `print`, for `print.finished` (with `printer.read`): `result` (`finished`,
+  `failed` or `cancelled`), `printerModel`, `seconds` (how long Bambu Studio
+  saw it run, or `null`), `seenFromStart` (false when it was already running
+  when watching began, so `seconds` is only part of the print), `layers` (as
+  the printer reports them, 0 when unknown) and, for a failed print, `error`
+  (the printer's code as eight hex digits). A print that was already over when
+  watching began is never reported, and each ending is reported once. The
+  printer's identity is only compared to notice a switch, never sent.
 - `model` holds `plate`, `objects` (up to 200: `name`, `instances`,
   `triangles`, `size` in millimetres, `selected`), `objectCount`,
   `selectedCount` and `triangles`. For `model.imported` it holds only the
@@ -363,6 +371,11 @@ turning it on again starts the count over.
   `model.imported` once the load has returned and objects arrived, nothing
   else calls the inner loader, and the request holds only what arrived; each
   checker must fail on a broken copy.
+- `tests/extension_print_watch.test.mjs`: the watcher starts after startup
+  and stops at shutdown, looks at nothing while no extension is on for
+  `print.finished`, reports each ending once through the narrator's tested
+  transition detector, and never sends the printer's identity; each checker
+  must fail on a broken copy.
 - `tests/extension_before_send_wiring.test.mjs`: the print dialog asks the
   extensions before its own check and only for a sliced plate, the send facts
   never read the printer's serial number, name, address or access code, the
@@ -371,12 +384,14 @@ turning it on again starts the count over.
 - `tests/extension_builtins.test.mjs`: the built-in manifests and scripts; on
   Windows every built-in really runs under Windows PowerShell through the
   app's own code, and a broken copy must be caught.
-- `.github/workflows/extensions-windows.yml` runs all six on a hosted Windows
+- `.github/workflows/extensions-windows.yml` runs all seven on a hosted Windows
   machine with MSVC.
 
 ## Not done yet
 
-The `print.finished` hook is declared but not run by this build. `print.before_send` does not run when a job already in the print
-queue is printed, for a file already on the printer, when sending to several
-printers at once, or for Send to the printer's storage. There are no per-extension settings and no signed
-extensions.
+Every declared hook runs. `print.before_send` does not run when a job already
+in the print queue is printed, for a file already on the printer, when
+sending to several printers at once, or for Send to the printer's storage.
+`print.finished` watches only the printer selected on the Device page and
+cannot report the filament a print used. There are no per-extension settings
+and no signed extensions.
