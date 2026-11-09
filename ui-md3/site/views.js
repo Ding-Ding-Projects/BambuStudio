@@ -97,7 +97,7 @@
             '<a class="btn btn-filled btn-big" href="' + APP_HREF + '">' +
               '<span data-icon aria-hidden="true">rocket_launch</span>' +
               '<span data-copy="hero.cta.launch"></span></a>' +
-            '<a class="btn btn-tonal btn-big" href="' + REPO + '/releases/latest/download/BambuStudioMD3-Setup.exe">' +
+            '<a class="btn btn-tonal btn-big" href="' + REPO + '/releases/latest/download/Setup.exe">' +
               '<span data-icon aria-hidden="true">download</span>' +
               '<span data-copy="hero.cta.download"></span></a>' +
             '<a class="btn btn-outline btn-big" href="' + REPO + '/tree/master/ui-md3" target="_blank" rel="noopener">' +
@@ -124,7 +124,7 @@
       '</div>' +
       '<p class="hint stage-hint"><span data-icon aria-hidden="true">warning</span>' +
         '<span data-copy="hero.integrity"></span> ' +
-        '<a href="' + REPO + '/releases/latest/download/BambuStudioMD3-Setup.exe.sha256" data-copy="hero.checksum"></a> · ' +
+        '<a href="' + REPO + '/releases/latest/download/Setup.exe.sha256" data-copy="hero.checksum"></a> · ' +
         '<a href="' + REPO + '/releases/latest" data-copy="hero.releaseDetails"></a></p>' +
       '<nav class="rail" data-copy-attr="aria-label:rail.heading">' +
         (global.BambuFeatures ? global.BambuFeatures.FEATURES.map(function (feature, index) {

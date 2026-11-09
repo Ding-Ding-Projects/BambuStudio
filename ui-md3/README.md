@@ -21,11 +21,11 @@ MD3 — no invented features. Runs in any browser with **zero dependencies and n
   CI does with `node scripts/compose-site.mjs _site`. Documented in
   [`../docs/features/pages/`](../docs/features/pages/README.md).
 - **Native Windows app:** use the
-  [latest installer](https://github.com/Ding-Ding-Projects/BambuStudio/releases/latest/download/BambuStudioMD3-Setup.exe).
+  [latest installer](https://github.com/Ding-Ding-Projects/BambuStudio/releases/latest/download/Setup.exe).
   It is built from the C++ application by the
   [`Windows build and release`](../.github/workflows/build_all.yml) workflow. The installer is
   unsigned; verify the accompanying
-  [SHA-256 file](https://github.com/Ding-Ding-Projects/BambuStudio/releases/latest/download/BambuStudioMD3-Setup.exe.sha256),
+  [SHA-256 file](https://github.com/Ding-Ding-Projects/BambuStudio/releases/latest/download/Setup.exe.sha256),
   which confirms integrity but not publisher identity.
 - **Legacy concept wrapper:** [`desktop/`](desktop/) retains the earlier Electron prototype for
   reference; it is not the published installer.
