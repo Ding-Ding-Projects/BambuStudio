@@ -10,6 +10,7 @@
 #include "../Widgets/Button.hpp"
 #include "../Widgets/CheckBox.hpp"
 #include "../Widgets/Label.hpp"
+#include "../Widgets/LabelGrowWithWrap.hpp"
 #include "../Widgets/MD3ScrolledWindow.hpp"
 #include "../Widgets/MD3Tokens.hpp"
 #include "../Widgets/SearchField.hpp"
@@ -19,6 +20,8 @@
 
 #include <boost/filesystem.hpp>
 #include <boost/log/trivial.hpp>
+
+#include <algorithm>
 
 #include <wx/dirdlg.h>
 #include <wx/sizer.h>
@@ -103,11 +106,23 @@ void MultiSliceDialog::build()
     m_list->SetScrollRate(0, FromDIP(12));
     m_list_sizer = new wxBoxSizer(wxVERTICAL);
 
+    // The same inks the ink list offers: the shown ones that fit this printer,
+    // and every ink a slot uses now. A profile that has not picked its shown
+    // inks yet lists every ink that fits instead, so there is always a choice.
     PresetBundle *bundle = wxGetApp().preset_bundle;
-    for (const Preset &preset : bundle->filaments.get_presets()) {
-        if (preset.is_default || !preset.is_visible || !preset.is_compatible) continue;
+    std::set<std::string> listed;
+    auto add = [this, &listed](const Preset &preset) {
+        if (preset.is_default || !listed.insert(preset.name).second) return;
         m_inks.push_back({preset.name, ink_type(preset)});
+    };
+    for (const Preset &preset : bundle->filaments.get_presets()) {
+        const bool in_use = std::find(bundle->filament_presets.begin(), bundle->filament_presets.end(), preset.name) !=
+                            bundle->filament_presets.end();
+        if (in_use || (preset.is_visible && preset.is_compatible)) add(preset);
     }
+    if (m_inks.size() < 2)
+        for (const Preset &preset : bundle->filaments.get_presets())
+            if (preset.is_compatible) add(preset);
     for (Ink &ink : m_inks) {
         auto *row = new wxPanel(m_list);
         row->SetBackgroundColour(m_list->GetBackgroundColour());
@@ -151,13 +166,18 @@ void MultiSliceDialog::build()
     m_list->SetSizer(m_list_sizer);
     root->Add(m_list, 1, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, pad);
 
-    m_summary = new Label(this, Label::Body_13, wxString(), LB_AUTO_WRAP | wxST_NO_AUTORESIZE);
+    m_summary = new Label(this, Label::Body_13, _L("Choose at least two inks. Each one gets its own sliced file."),
+                          LB_AUTO_WRAP | wxST_NO_AUTORESIZE);
     m_summary->SetMinSize(wxSize(FromDIP(200), -1));
+    GrowWithWrap(m_summary);
     root->Add(m_summary, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, pad);
 
     auto *dest = new wxBoxSizer(wxHORIZONTAL);
-    m_destination = new Label(this, Label::Body_13, wxString(), LB_AUTO_WRAP | wxST_NO_AUTORESIZE);
+    // Created with text so its row starts one line tall; GrowWithWrap lets it
+    // take the lines a long folder path wraps onto.
+    m_destination = new Label(this, Label::Body_13, _L("No folder chosen yet."), LB_AUTO_WRAP | wxST_NO_AUTORESIZE);
     m_destination->SetMinSize(wxSize(FromDIP(200), -1));
+    GrowWithWrap(m_destination);
     dest->Add(m_destination, 1, wxALIGN_CENTER_VERTICAL | wxRIGHT, gap);
     m_change = new Button(this, _L("Change folder"));
     m_change->SetVariant(Button::Variant::Outlined);
@@ -238,6 +258,7 @@ void MultiSliceDialog::set_destination(const boost::filesystem::path &folder, bo
     else
         m_destination->SetLabel(wxString::Format(removable ? _L("Saving to the USB drive %s") : _L("Saving to %s"),
                                                  from_path(folder)));
+    m_destination->InvalidateBestSize();
     Layout();
 }
 
