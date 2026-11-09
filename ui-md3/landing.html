@@ -7,8 +7,8 @@
      the checkout it is the sibling index.html; compose-site.mjs rewrites this
      to "app/" for the published tree. -->
 <meta name="bambu-app-base" content="index.html">
-<title>Bambu Studio — Material Design 3 concept</title>
-<meta name="description" content="An independent Material Design 3 (Material You) concept redesign of the Bambu Studio slicer UI. Tabbed, bilingual, self-contained: light and dark themes, density, a customizable accent seed colour, a full regex builder and every published release.">
+<title>Bambu Studio, Material You, layer by layer</title>
+<meta name="description" content="An independent Material Design 3 fork of Bambu Studio for Windows: sixteen features, every documentation article and the wiki inside the site, a live browser demo, English, Hong Kong Cantonese or both, light and dark themes, a regex builder and every published release.">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Bambu Studio, reimagined in Material You.">
 <meta property="og:description" content="Explore an image-rich Material Design 3 concept for Bambu Studio, browse every release, then launch the interactive slicer prototype.">
@@ -38,6 +38,14 @@
       <option value="yue_HK">廣東話（香港）</option>
       <option value="bilingual_en_yue_HK">English + 廣東話</option>
     </select>
+    <button class="iconbtn" id="paletteButton" type="button"
+      data-copy-attr="aria-label:shell.palette;title:shell.palette">
+      <span data-icon aria-hidden="true">search</span>
+    </button>
+    <button class="iconbtn" id="accessButton" type="button"
+      data-copy-attr="aria-label:shell.access;title:shell.access">
+      <span data-icon aria-hidden="true">accessibility_new</span>
+    </button>
     <button class="iconbtn" id="notifyButton" type="button" aria-expanded="false"
       data-copy-attr="aria-label:shell.notifications;title:shell.notifications">
       <span data-icon aria-hidden="true">notifications</span>
@@ -118,6 +126,10 @@
 <script src="./site/confirmation.js"></script>
 <script src="./site/schedule.js"></script>
 <script src="./site/settings.js"></script>
+<script src="./site/motion.js"></script>
+<script src="./site/features.js"></script>
+<script src="./site/docs.js"></script>
+<script src="./site/tools.js"></script>
 <script src="./site/views.js"></script>
 <script src="./site/changelog.js"></script>
 <script src="./site/tabs.js"></script>

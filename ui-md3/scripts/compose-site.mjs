@@ -64,6 +64,29 @@ for (const name of ['i18n.resources.js', 'i18n.js']) {
   await copyFile(path.join(uiDir, 'app', name), path.join(outDir, 'app', name));
 }
 
+// The Docs tab reads every feature article and the wiki from one generated
+// bundle. The wiki is a separate checkout: BAMBU_WIKI_DIR names one, otherwise
+// a shallow clone is attempted and skipped quietly when the network is cut,
+// so an offline compose still produces a complete site without wiki pages.
+let wikiDir = process.env.BAMBU_WIKI_DIR || '';
+if (!wikiDir && process.env.BAMBU_SKIP_WIKI !== '1') {
+  const { spawnSync } = await import('node:child_process');
+  const { mkdtempSync } = await import('node:fs');
+  const { tmpdir } = await import('node:os');
+  const scratch = mkdtempSync(path.join(tmpdir(), 'bambu-wiki-'));
+  const clone = spawnSync('git', ['clone', '-q', '--depth', '1',
+    'https://github.com/Ding-Ding-Projects/BambuStudio.wiki.git', scratch], { stdio: 'ignore', timeout: 60_000 });
+  wikiDir = clone.status === 0 ? scratch : '';
+  if (!wikiDir) console.warn('wiki clone unavailable; composing without wiki pages');
+}
+{
+  const { spawnSync } = await import('node:child_process');
+  const args = [path.join(scriptDir, 'build-docs-data.mjs'), path.join(outDir, 'site', 'docs.data.js')];
+  if (wikiDir) args.push(wikiDir);
+  const built = spawnSync(process.execPath, args, { stdio: 'inherit' });
+  if (built.status !== 0) throw new Error('build-docs-data.mjs failed');
+}
+
 const files = [];
 async function walk(directory, prefix) {
   for (const entry of await readdir(directory, { withFileTypes: true })) {

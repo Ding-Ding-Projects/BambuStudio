@@ -49,6 +49,15 @@
     tabPinned: [],
     tabGroups: {},
     activeTab: '',
+    reducedMotion: 'system',
+    motionReveal: 320,
+    motionTab: 'fade',
+    motionHero: true,
+    motionHover: true,
+    highContrast: false,
+    focusAlways: false,
+    largerTargets: false,
+    base64History: [],
     elementStyles: {}
   };
 

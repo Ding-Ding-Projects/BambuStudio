@@ -131,7 +131,7 @@
   function mount(host) {
     var site = global.BambuSite;
     var doc = global.document;
-    host.innerHTML = '<div class="setting"><div class="setting-copy"><p class="setting-label" data-copy="wording.upload"></p><p class="setting-desc" data-copy="wording.explanation"></p><p class="hint" role="status" aria-live="polite"></p></div><div class="setting-control"><input type="file" accept="application/json,.json" data-copy-attr="aria-label:wording.upload"><button type="button" class="btn btn-outline" data-copy="wording.clear"></button></div></div>';
+    host.innerHTML = '<div class="setting"><div class="setting-copy"><p class="setting-label" data-copy="wording.upload"></p><p class="setting-desc" data-copy="wording.explanation"></p><p class="hint" role="status" aria-live="polite"></p></div><div class="setting-control"><label class="btn btn-outline" for="wordingFile"><span data-icon aria-hidden="true">upload_file</span><span data-copy="wording.upload"></span></label><input type="file" id="wordingFile" accept="application/json,.json" hidden data-copy-attr="aria-label:wording.upload"><button type="button" class="btn btn-outline" data-copy="wording.clear"></button></div></div>';
     var picker = host.querySelector('input');
     var clearButton = host.querySelector('button');
     var status = host.querySelector('[role="status"]');

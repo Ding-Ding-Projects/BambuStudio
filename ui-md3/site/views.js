@@ -76,10 +76,10 @@
 
   function renderOverview(panel) {
     panel.innerHTML =
-      '<div class="hero">' +
+      '<div class="hero reveal">' +
         '<div class="hero-grid">' +
           '<div class="hero-copy">' +
-            '<p class="eyebrow"><span data-icon aria-hidden="true">auto_awesome</span>' +
+            '<p class="eyebrow"><span class="hero-layer" aria-hidden="true"></span>' +
               '<span data-copy="overview.eyebrow"></span></p>' +
             '<h1 class="hero-title" data-copy="hero.headline"></h1>' +
             '<p class="lede" data-copy="hero.lede"></p>' +
@@ -98,29 +98,86 @@
               '<span data-copy="hero.integrity"></span> ' +
               '<a href="' + REPO + '/releases/latest/download/BambuStudioMD3-Setup.exe.sha256" data-copy="hero.checksum"></a> · ' +
               '<a href="' + REPO + '/releases/latest" data-copy="hero.releaseDetails"></a></p>' +
+            '<div class="hero-badges">' +
+              badge('overview.stat.releases', String(changelog.releaseCount || 0)) +
+              badge('tab.features', String(global.BambuFeatures ? global.BambuFeatures.FEATURES.length : 16)) +
+              badge('overview.stat.cases', '555') +
+              badge('overview.stat.trackers', '0') +
+            '</div>' +
           '</div>' +
           '<div class="stage">' +
-            '<img class="hero-art" src="./assets/showcase/hero-studio.webp" width="1536" height="1024" ' +
-              'fetchpriority="high" data-copy-attr="alt:hero.art.alt">' +
-            '<span class="chip c1"><span data-icon aria-hidden="true">layers</span>' +
-              '<span data-copy="hero.chip.layers"></span></span>' +
-            '<span class="chip c2"><span data-icon aria-hidden="true">palette</span>' +
-              '<span data-copy="hero.chip.accent"></span></span>' +
-            '<span class="chip c3"><span data-icon aria-hidden="true">schedule</span>' +
-              '<span data-copy="hero.chip.time"></span></span>' +
+            '<div class="hero-art-frame">' +
+              '<img class="hero-art" src="./assets/showcase/hero-studio.webp" width="1536" height="1024" ' +
+                'fetchpriority="high" data-copy-attr="alt:hero.art.alt">' +
+              // The toolpaths draw themselves over the printer; with reduced
+              // motion they are complete and share the one primary hue.
+              '<svg class="hero-paths" viewBox="0 0 600 400" preserveAspectRatio="none" aria-hidden="true" focusable="false">' +
+                '<path class="p1" d="M40 352 C 150 300, 230 384, 330 330 S 520 300, 575 342"/>' +
+                '<path class="p2" d="M60 322 C 170 280, 240 352, 340 300 S 500 270, 560 312"/>' +
+                '<path class="p3" d="M80 292 C 180 256, 250 318, 350 272 S 490 244, 545 284"/>' +
+                '<circle class="nozzle" cx="575" cy="342" r="7"/>' +
+              '</svg>' +
+              '<span class="chip c1"><span data-icon aria-hidden="true">layers</span>' +
+                '<span data-copy="hero.chip.layers"></span></span>' +
+              '<span class="chip c2"><span data-icon aria-hidden="true">palette</span>' +
+                '<span data-copy="hero.chip.accent"></span></span>' +
+              '<span class="chip c3"><span data-icon aria-hidden="true">schedule</span>' +
+                '<span data-copy="hero.chip.time"></span></span>' +
+            '</div>' +
+            '<p class="hint"><span data-icon aria-hidden="true">timeline</span><span data-copy="hero.toolpath"></span></p>' +
           '</div>' +
         '</div>' +
       '</div>' +
-      '<div class="stats">' +
+      '<section class="demo reveal">' +
+        '<a class="demo-window" href="' + APP_HREF + '" data-copy-attr="aria-label:hero.cta.launch">' +
+          '<span class="demo-bar"><span class="demo-dot"></span><span class="demo-dot"></span><span class="demo-dot live"></span>' +
+            '<span class="demo-url mono">ding-ding-projects.github.io/BambuStudio/app/</span></span>' +
+          '<img class="demo-shot" src="./assets/showcase/device.webp" width="900" height="900" loading="lazy" decoding="async" ' +
+            'alt="An enclosed printer monitored by abstract status indicators, the Device page of the prototype.">' +
+        '</a>' +
+        '<div class="demo-copy">' +
+          '<h2><span data-icon aria-hidden="true">play_circle</span> <span data-copy="hero.demo"></span></h2>' +
+          '<p data-copy="hero.demo.body"></p>' +
+          '<div class="demo-modes" aria-hidden="true">' +
+            '<span class="mode on">English</span><span class="mode" lang="yue-Hant-HK">廣東話（香港）</span><span class="mode">English + 廣東話</span>' +
+          '</div>' +
+          '<label class="demo-funny"><span data-copy="settings.funny.en"></span>' +
+            '<input type="range" min="1" max="5" value="' + site.get('funnyEn') + '" data-funny="funnyEn"></label>' +
+          '<a class="btn btn-filled" href="' + APP_HREF + '"><span data-icon aria-hidden="true">rocket_launch</span>' +
+            '<span data-copy="hero.cta.launch"></span></a>' +
+        '</div>' +
+      '</section>' +
+      '<div class="stats reveal">' +
         stat('overview.stat.releases', String(changelog.releaseCount || 0)) +
         stat('overview.stat.screens', String(SCREENS.length)) +
-        stat('overview.stat.cases', '447') +
+        stat('overview.stat.cases', '555') +
         stat('overview.stat.trackers', '0') +
       '</div>' +
-      '<div class="prose-card">' +
+      (global.BambuFeatures ? global.BambuFeatures.teaser() : '') +
+      '<div class="prose-card reveal">' +
         '<h2 data-copy="overview.facts.heading"></h2>' +
         '<p data-copy="overview.facts.body"></p>' +
       '</div>';
+    var funny = panel.querySelector('[data-funny]');
+    if (funny) {
+      funny.addEventListener('input', function () {
+        site.set('funnyEn', Number(funny.value));
+        site.set('funnyYue', Number(funny.value));
+        site.applyCopy(doc.body);
+      });
+      site.subscribe(function (keys) { if (keys.indexOf('funnyEn') !== -1) funny.value = site.get('funnyEn'); });
+    }
+    panel.addEventListener('click', function (event) {
+      var link = event.target.closest('[data-tab-link]');
+      if (link && global.BambuSiteTabs) { event.preventDefault(); global.BambuSiteTabs.activate(link.dataset.tabLink, { focus: true }); }
+    });
+    if (global.BambuFeatures) global.BambuFeatures.wire(panel);
+    if (global.BambuMotion) global.BambuMotion.watch(panel);
+  }
+
+  function badge(labelKey, value) {
+    return '<span class="hero-badge"><span class="mono">' + value + '</span>' +
+      '<span data-copy="' + labelKey + '"></span></span>';
   }
 
   function stat(labelKey, value) {

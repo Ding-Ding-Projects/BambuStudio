@@ -14,10 +14,13 @@
 
   var TABS = [
     { id: 'overview', copy: 'tab.overview', icon: 'home', group: 'group.product', render: global.BambuViews.renderOverview },
+    { id: 'features', copy: 'tab.features', icon: 'apps', group: 'group.product', render: global.BambuFeatures.renderFeatures },
     { id: 'screens', copy: 'tab.screens', icon: 'grid_view', group: 'group.product', render: global.BambuViews.renderScreens },
+    { id: 'docs', copy: 'tab.docs', icon: 'menu_book', group: 'group.product', render: global.BambuDocs.renderDocs },
     { id: 'materialyou', copy: 'tab.materialyou', icon: 'palette', group: 'group.product', render: global.BambuViews.renderMaterialYou },
     { id: 'download', copy: 'tab.download', icon: 'download', group: 'group.product', render: global.BambuViews.renderDownload },
     { id: 'changelog', copy: 'tab.changelog', icon: 'history', group: 'group.project', render: global.BambuChangelog.render },
+    { id: 'tools', copy: 'tab.tools', icon: 'handyman', group: 'group.tools', render: global.BambuTools.renderTools },
     { id: 'regex', copy: 'tab.regex', icon: 'regular_expression', group: 'group.tools', render: renderRegexLab },
     { id: 'settings', copy: 'tab.settings', icon: 'settings', group: 'group.tools', render: global.BambuControls.renderSettings },
     { id: 'build', copy: 'tab.build', icon: 'construction', group: 'group.project', render: global.BambuViews.renderBuild }
@@ -63,6 +66,21 @@
       paintTheme();
     });
     paintTheme();
+
+    // The command palette and the accessibility tools sit in the header on
+    // every tab; the tools button opens the Tools tab at its section.
+    doc.getElementById('paletteButton').addEventListener('click', function () {
+      if (global.BambuTools) global.BambuTools.openPalette();
+    });
+    doc.getElementById('accessButton').addEventListener('click', function () {
+      tabs.activate('tools');
+      var section = doc.getElementById('access');
+      if (section) {
+        section.scrollIntoView({ block: 'start', behavior: global.BambuMotion && global.BambuMotion.reduced() ? 'auto' : 'smooth' });
+        var first = section.querySelector('button, input');
+        if (first) first.focus();
+      }
+    });
 
     var bell = doc.getElementById('notifyButton');
     var centre = doc.getElementById('notifyCentre');

@@ -1,5 +1,30 @@
 # Bambu Studio handoff
 
+## The Pages site redesigned layer by layer, 9 November 2026
+
+The landing site at ding-ding-projects.github.io/BambuStudio was rebuilt around the hero graphic
+and the live prototype: a build-plate grid ground, nozzle-cut corners, toolpaths that draw
+themselves over the hero image, a demo window on the Overview with the language modes and a funny
+slider, and three new tabs. Every feature (`ui-md3/site/features.js`): sixteen cards, each with an
+animated inline drawing, where it lives in the app and its article. Docs (`ui-md3/site/docs.js`):
+all 238 feature articles and the 12 wiki pages inside the site, bundled at compose time by
+`ui-md3/scripts/build-docs-data.mjs` (the wiki is shallow-cloned by `compose-site.mjs`; a cut
+network skips it quietly), searched in both languages with the regex builder, read in English or
+the Cantonese twin, read aloud, linked by `?article=<id>`. Tools (`ui-md3/site/tools.js`): the
+command palette on Ctrl+Shift+F with live setting switches and teleport, the Base64 toolkit for
+text and files with previews and history, the accessibility tools (text size, contrast, reduced
+motion, focus ring, larger targets, read aloud) and the Animation and transition tab. Motion
+(`ui-md3/site/motion.js`): scroll reveals, tab enter animation, and reduced motion as its own
+design (hero settles on one hue, everything shown at once, automated browsers see everything).
+The design boards are in the private Pages redesign canvas of 9 November (not in the repository).
+
+Checked: `ui-md3/tests/site-redesign.test.mjs` (with broken copies), the site suites, the static
+Pages gate on the composed tree, and the runtime layout gate at all 555 cases (156 landing, 396 per
+tab, 3 corner surfaces) with a local Chromium. The per-tab gate also found two file inputs and the
+narrator ranges under 44 px that predate this work; they are fixed (label buttons, min-height).
+Not done: the light, phone, docs and tools design boards still show the first draft look; the
+docs reader has no table of contents; screenshots for docs/screenshots/pages are not regenerated.
+
 ## LAN model drop: no station key, 9 November 2026
 
 The owner decided the drop box needs no key, because the person at the Bambu Studio

@@ -358,9 +358,9 @@ test('the site states its real layout-case count, computed from the harness', as
   const compactCorners = countArrayFor('compact notification and dim-sum corner surfaces', 'widths');
   const total = landing + perTab + compactCorners;
   assert.equal(landing, 156);
-  assert.equal(perTab, 288);
+  assert.equal(perTab, 396);
   assert.equal(compactCorners, 3);
-  assert.equal(total, 447);
+  assert.equal(total, 555);
 
   const views = await readFile(path.join(siteDir, 'views.js'), 'utf8');
   assert.match(views, new RegExp(`stat\\('overview\\.stat\\.cases', '${total}'\\)`),
@@ -374,7 +374,7 @@ test('the site states its real layout-case count, computed from the harness', as
   for (const language of ['en', 'yue']) {
     assert.ok(body[language].join(' ').includes('156'),
       `build.step4.body (${language}) must still break the total down`);
-    assert.ok(body[language].join(' ').includes('288'),
+    assert.ok(body[language].join(' ').includes('396'),
       `build.step4.body (${language}) must name the per-tab half`);
     assert.ok(body[language].join(' ').includes('3'),
       `build.step4.body (${language}) must name the compact corner-surface cases`);

@@ -240,6 +240,16 @@
 
     function activate(id, options) {
       if (ids.indexOf(id) === -1) return;
+      // The switch itself runs synchronously (the layout gate and the capture
+      // call activate() and measure at once); only the paint is transitioned.
+      if (global.BambuMotion && active !== id && !(options && options.silent)) {
+        global.BambuMotion.transition(function () { switchTo(id, options); });
+      } else {
+        switchTo(id, options);
+      }
+    }
+
+    function switchTo(id, options) {
       active = id;
       site.set('activeTab', id);
       sortedIds().forEach(function (candidate) {
@@ -259,6 +269,7 @@
         if (refresh) refresh(panels[id]);
       }
       site.applyCopy(panels[id]);
+      if (global.BambuMotion) global.BambuMotion.watch(panels[id]);
       closeMenus({ restoreFocus: false });
       // The newly active tab may have been sitting in the overflow menu, where
       // it is display:none. Un-hide it and re-run layout synchronously, because

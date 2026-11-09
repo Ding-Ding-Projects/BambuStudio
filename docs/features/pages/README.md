@@ -52,7 +52,47 @@ work.
 - [Dim sum surprise](dim-sum-surprise.md) — the 10% startup delight, its public catalog photo, and
   the conditions under which it stays quiet.
 - [Deployment and the layout gate](deployment-and-layout-gate.md) — how the site is composed,
-  published, and held to 447 measured layout cases before a deploy is allowed.
+  published, and held to 555 measured layout cases before a deploy is allowed.
+
+## The redesign: layer by layer
+
+Rebuilt on 9 November 2026 around the two things the site already had and people liked: the hero
+graphic of the printer and the live prototype under `/app/`. The ground is a faint build-plate
+grid, the big surfaces are cut like a nozzle (one long corner radius against one short), and the
+toolpaths over the hero image draw themselves while the printer chip reports the nozzle holding
+near its target. The Overview shows the prototype in a window frame with the three language modes
+and a funny-level slider beside it, so the demo is the first thing after the hero.
+
+- **Every feature** (`ui-md3/site/features.js`): one card per feature of the Windows app, sixteen
+  in all, each with an inline animated drawing in the accent colour, an info icon, where it lives
+  in the app and a link that opens its article in the Docs tab. The first six are on the
+  Overview as a teaser.
+- **Docs** (`ui-md3/site/docs.js`): every feature article under `docs/features` and every page of
+  the GitHub wiki, inside the site. `scripts/build-docs-data.mjs` bundles them at compose time
+  (the wiki is shallow-cloned when the network allows and skipped quietly when it does not), and
+  the bundle loads the first time anything needs it. Start from a task or an area, search with
+  the shared search field and its regex builder over both languages, read the English article or
+  its Cantonese twin, have it read aloud with the narrator's voice and rate, copy a link
+  (`?article=<id>`) or jump to the source. The markdown is rendered in the browser with an
+  escaping converter: nothing in an article can run.
+- **Tools** (`ui-md3/site/tools.js`): the command palette (`Ctrl+Shift+F` anywhere on the site,
+  also the search button in the header), listing tabs, settings as live switches, features,
+  articles and the headings of the open panel, with Enter, Up, Down and Esc, and a teleport to the
+  exact element; the Base64 toolkit for text and files (images and PDFs preview inline, files stay
+  in the browser, over 8 MB is refused, the last ten results are kept); the accessibility tools
+  (text size, high contrast, reduced motion with system, on and off, always-visible focus ring,
+  larger targets, read the page aloud), also behind the header's accessibility button; and the
+  Animation and transition tab (reveal duration, cross fade, slide or none between tabs, the hero
+  toolpaths, cards lifting on hover, and a preview of reduced motion).
+- **Motion** (`ui-md3/site/motion.js`): sections rise into view as you scroll, tabs enter with a
+  short cross fade or slide, and the feature drawings animate. Reduced motion is a design of its
+  own, not a slower one: it follows the system until chosen, every section is simply there, the
+  tabs switch at once, the drawings are complete, and the hero toolpaths settle on the one
+  primary hue. An automated browser (the layout gate, the capture) sees everything at once.
+
+The three new tabs raise the layout gate to 555 cases (156 landing, 396 per tab, 3 corner
+surfaces). `tests/site-redesign.test.mjs` checks the sources, with a broken copy of each that
+must fail.
 
 ## The prototype at `/app`
 

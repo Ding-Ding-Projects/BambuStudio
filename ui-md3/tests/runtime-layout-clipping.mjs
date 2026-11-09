@@ -252,7 +252,7 @@ test('every tab renders inside the viewport at each supported width, zoom and la
     await stopChrome(chrome);
   }
 
-  assert.equal(cases, 4 * 3 * 3 * 8);
+  assert.equal(cases, 4 * 3 * 3 * 11);
   assert.deepEqual(failures, []);
 });
 
