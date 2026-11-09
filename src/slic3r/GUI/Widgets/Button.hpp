@@ -70,6 +70,7 @@ private:
     IconShape m_icon_shape        = IconShape::Square;
     bool      m_icon_filled       = false;
     bool      m_icon_danger       = false;
+    wxColour  m_icon_rest_bg;       // parent surface the ghost rest fill was resolved against
     int       m_icon_container_px = 36; // square touch-target edge (design px)
 
     bool pressedDown = false;

@@ -489,6 +489,7 @@ void Button::applyMD3Style()
         // dark mode that left a light system-#F0F0F0 square behind the circular
         // icon button (Prepare action bar). Rescale()/theme rebuild re-runs this.
         SetBackgroundColour(parentBg);
+        m_icon_rest_bg = parentBg;
 
         StateColor bg, fg;
         if (m_icon_danger) {
@@ -750,6 +751,15 @@ void Button::Rescale()
 
 void Button::paintEvent(wxPaintEvent& evt)
 {
+    // A ghost icon button rests on its parent surface. That colour is resolved
+    // when the style is applied, which can be before the parent is themed, so
+    // a soft-square button would show a stale light tile in dark mode. Resolve
+    // it again whenever the parent surface has changed since.
+    if (m_md3_variant && m_variant == Variant::IconButton && !m_icon_filled && !m_applying_md3) {
+        const wxColour live = StaticBox::GetParentBackgroundColor(GetParent());
+        if (live.IsOk() && live != m_icon_rest_bg)
+            applyMD3Style();
+    }
     // MD3 is the default: a Button that reaches its first paint with neither a
     // variant nor caller styling becomes an Outlined action button. Callers
     // that styled it by hand keep their styling; callers that chose a variant
