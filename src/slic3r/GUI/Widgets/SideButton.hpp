@@ -37,6 +37,9 @@ public:
 
     void SetTextLayout(EHorizontalOrientation orient, int margin = 15);
 
+    // 0: legacy flat-seam split, 1: full pill, 2: leading half of a split
+    // button (pill on the left, small radius on the right), 3: trailing half
+    // (small radius on the left, pill on the right).
     void SetLayoutStyle(int style);
 
     void SetLabel(const wxString& label);

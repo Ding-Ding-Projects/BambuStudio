@@ -388,6 +388,42 @@ int SideButton::leadingGlyphPx() const
     return leading_glyph_px > 0 ? leading_glyph_px : 20;
 }
 
+namespace {
+// One half of a split button: the outer side is a pill, the side that meets
+// the other half has a small radius, so the pair reads as one control with a
+// seam rather than two separate pills of different shapes.
+void draw_split_segment(wxDC &dc, const wxSize &size, double outer, double inner, bool leading)
+{
+    wxGraphicsContext *gc = nullptr;
+#ifdef __WXMSW__
+    if (auto *gcdc = dynamic_cast<wxGCDC *>(&dc))
+        gc = gcdc->GetGraphicsContext();
+#endif
+    if (gc == nullptr) {
+        dc.DrawRoundedRectangle(0, 0, size.x, size.y, outer);
+        return;
+    }
+    // The 1 px outline is centred on the path, so the path keeps it inside the window.
+    const double w = size.x - 1.0, h = size.y - 1.0;
+    const double left = std::min(leading ? outer : inner, h / 2.0);
+    const double right = std::min(leading ? inner : outer, h / 2.0);
+    wxGraphicsPath path = gc->CreatePath();
+    path.MoveToPoint(left, 0);
+    path.AddLineToPoint(w - right, 0);
+    path.AddArcToPoint(w, 0, w, right, right);
+    path.AddLineToPoint(w, h - right);
+    path.AddArcToPoint(w, h, w - right, h, right);
+    path.AddLineToPoint(left, h);
+    path.AddArcToPoint(0, h, 0, h - left, left);
+    path.AddLineToPoint(0, left);
+    path.AddArcToPoint(0, 0, left, 0, left);
+    path.CloseSubpath();
+    gc->SetBrush(dc.GetBrush());
+    gc->SetPen(dc.GetPen());
+    gc->DrawPath(path);
+}
+} // namespace
+
 void SideButton::paintEvent(wxPaintEvent& evt)
 {
     // depending on your system you may need to look at double-buffered dcs
@@ -449,6 +485,9 @@ void SideButton::dorender(wxDC& dc, wxDC& text_dc)
         if (radius > 1e-5) {
             if (layout_style == 1) {
                 dc.DrawRoundedRectangle(0, 0, size.x, size.y, radius);
+                dc.SetPen(wxNullPen);
+            } else if (layout_style == 2 || layout_style == 3) {
+                draw_split_segment(dc, size, this->radius, FromDIP(4), layout_style == 2);
                 dc.SetPen(wxNullPen);
             } else {
                 dc.DrawRoundedRectangle(0, 0, size.x, size.y, radius);

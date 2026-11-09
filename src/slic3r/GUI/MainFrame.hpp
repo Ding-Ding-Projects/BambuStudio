@@ -491,6 +491,15 @@ public:
     //wxBookCtrlBase*       m_tabpanel { nullptr };
     Notebook*             m_tabpanel{ nullptr };
     wxSizer*              m_side_tools{ nullptr };
+    // The action bar is two rows: plate and estimate on top, the Slice/Print
+    // action group either at the end of the top row (when the bar is wide
+    // enough for both) or alone, right-aligned, on the second row. The group
+    // moves as one, so it never splits across rows.
+    wxBoxSizer*           m_side_row_top{ nullptr };
+    wxBoxSizer*           m_side_row_bottom{ nullptr };
+    wxBoxSizer*           m_side_actions{ nullptr };
+    bool                  m_side_actions_on_top{ true };
+    void                  place_side_actions();
     wxPanel*              m_prepare_action_bar{ nullptr };
     wxPanel*              m_prepare_action_bar_divider{ nullptr };
     wxSizerItem*          m_prepare_left_sidebar_spacer{ nullptr };

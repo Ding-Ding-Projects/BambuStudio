@@ -2,6 +2,9 @@
 #include "slic3r/GUI/PreviewLayout.hpp"
 #include "slic3r/GUI/IMSlider.hpp"
 #include "slic3r/GUI/GUI_App.hpp"
+#include "slic3r/GUI/BilingualDecorator.hpp"
+#include "slic3r/GUI/LanguageMode.hpp"
+#include "slic3r/GUI/PersonalVocabulary.hpp"
 #include "slic3r/GUI/Plater.hpp"
 #include "slic3r/GUI/GLCanvas3D.hpp"
 #include "slic3r/GUI/GUI_Utils.hpp"
@@ -79,6 +82,45 @@ namespace
         else
             imgui.bold_text(label);
         ImGui::PopStyleColor();
+    }
+
+    // One statistic in the Preview dock, laid out as a table row: the label on
+    // the left, its value right-aligned at `right_edge` in the monospace number
+    // face, and in bilingual mode the label's Cantonese as a smaller muted
+    // caption under the label. Before, the bilingual label stacked its
+    // Cantonese on a line of its own while the value sat on the English line at
+    // a column measured from the English alone, so a long label ran into its
+    // value and every Cantonese line stood next to nothing. `right_edge` and
+    // `indent` are window-local x positions.
+    void imgui_stat_row(Slic3r::GUI::ImGuiWrapper &imgui, bool dark, const std::string &label, const std::string &value,
+                        float indent, float right_edge)
+    {
+        using namespace Slic3r::GUI;
+        const wxString    original = wxString::FromUTF8(label.c_str());
+        const std::string primary  = into_u8(PersonalVocabulary::display(original));
+        std::string       secondary;
+        if (I18N::language_mode_profile().is_bilingual())
+            if (const wxString cantonese = I18N::bilingual_secondary(original); !cantonese.empty() && cantonese != original)
+                secondary = into_u8(PersonalVocabulary::display(cantonese));
+
+        ImGui::Dummy({indent, 0.0f});
+        ImGui::SameLine();
+        ImGui::TextUnformatted(primary.c_str());
+        const float label_end = ImGui::GetItemRectMax().x - ImGui::GetWindowPos().x + ImGui::GetScrollX();
+        imgui.push_mono_font();
+        const float value_width = ImGui::CalcTextSize(value.c_str()).x;
+        ImGui::SameLine(std::max(right_edge - value_width, label_end + ImGui::GetStyle().ItemSpacing.x * 2.0f));
+        ImGui::TextUnformatted(value.c_str());
+        imgui.pop_mono_font();
+        if (!secondary.empty()) {
+            ImGui::Dummy({indent, 0.0f});
+            ImGui::SameLine();
+            ImGui::PushStyleColor(ImGuiCol_Text, md3_imgui_color(MD3::Role::OnSurfaceVariant, dark));
+            ImGui::SetWindowFontScale(0.86f);
+            ImGui::TextUnformatted(secondary.c_str());
+            ImGui::SetWindowFontScale(1.0f);
+            ImGui::PopStyleColor();
+        }
     }
 
     std::string get_view_type_string(Slic3r::GUI::gcode::EViewType view_type)
@@ -2728,19 +2770,15 @@ namespace Slic3r
                     // per-filament value rows above them.
                     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(ImGui::GetStyle().ItemSpacing.x, 6.0f * m_scale));
                     ImGui::Dummy({ window_padding, window_padding });
-                    ImGui::Dummy({ window_padding, window_padding });
-                    ImGui::SameLine();
-                    imgui.text(_u8L("Filament change times") + ":");
-                    ImGui::SameLine();
-                    ::sprintf(buf, "%d", m_print_statistics.total_filament_changes);
-                    imgui.text(buf);
-                    //BBS display cost
-                    ImGui::Dummy({ window_padding, window_padding });
-                    ImGui::SameLine();
-                    imgui.text(_u8L("Cost") + ":");
-                    ImGui::SameLine();
-                    ::sprintf(buf, "%.2f", ps.total_cost);
-                    imgui.text(buf);
+                    {
+                        // Same table rows as the time estimation card below.
+                        const float right_edge = ImGui::GetWindowContentRegionMax().x - window_padding * 2.0f;
+                        ::sprintf(buf, "%d", m_print_statistics.total_filament_changes);
+                        imgui_stat_row(imgui, m_is_dark, _u8L("Filament change times"), buf, window_padding, right_edge);
+                        //BBS display cost
+                        ::sprintf(buf, "%.2f", ps.total_cost);
+                        imgui_stat_row(imgui, m_is_dark, _u8L("Cost"), buf, window_padding, right_edge);
+                    }
                     ImGui::PopStyleVar(1);
                     break;
                 }
@@ -3104,13 +3142,6 @@ namespace Slic3r
                     if (auto timelapse_time_iter = m_gcode_result->skippable_part_time.find(SkipType::stTimelapse); timelapse_time_iter != m_gcode_result->skippable_part_time.end()) {
                         timelapse_time = timelapse_time_iter->second;
                     }
-                    // Statistics numeric values render in Roboto Mono 500 (kit
-                    // Preview statistics values); labels stay in the prose face.
-                    auto mono_value = [&imgui](const std::string &value) {
-                        imgui.push_mono_font();
-                        imgui.text(value);
-                        imgui.pop_mono_font();
-                    };
                     ImGui::Dummy(ImVec2(0.0f, ImGui::GetFontSize() * 0.1));
                     ImGui::Dummy({ window_padding, window_padding });
                     ImGui::SameLine();
@@ -3126,77 +3157,39 @@ namespace Slic3r
                         prepare_str = _u8L("Prepare time");
                     std::string print_str = _u8L("Model printing time");
                     std::string total_str = _u8L("Total time");
-                    float max_len = window_padding + 2 * ImGui::GetStyle().ItemSpacing.x;
-                    if (time_mode.layers_times.empty())
-                        max_len += ImGui::CalcTextSize(total_str.c_str()).x;
-                    else {
-                        if (m_view_type == EViewType::FeatureType)
-                            max_len += std::max(ImGui::CalcTextSize(cost_str.c_str()).x,
-                                std::max(ImGui::CalcTextSize(print_str.c_str()).x,
-                                    std::max(std::max(ImGui::CalcTextSize(prepare_str.c_str()).x, ImGui::CalcTextSize(total_str.c_str()).x),
-                                        std::max(ImGui::CalcTextSize(total_filament_str.c_str()).x, ImGui::CalcTextSize(model_filament_str.c_str()).x))));
-                        else
-                            max_len += std::max(ImGui::CalcTextSize(print_str.c_str()).x,
-                                (std::max(ImGui::CalcTextSize(prepare_str.c_str()).x, ImGui::CalcTextSize(total_str.c_str()).x)));
-                    }
+                    // Every statistic is one table row (imgui_stat_row): label on the
+                    // left, value right-aligned at the card's right edge, Cantonese
+                    // caption under the label in bilingual mode.
+                    const float row_indent = window_padding;
+                    const float right_edge = ImGui::GetWindowContentRegionMax().x - window_padding * 2.0f;
+                    auto stat = [&](const std::string &label, const std::string &value) {
+                        imgui_stat_row(imgui, m_is_dark, label, value, row_indent, right_edge);
+                    };
                     if (m_view_type == EViewType::FeatureType) {
                         //BBS display filament cost
-                        ImGui::Dummy({ window_padding, window_padding });
-                        ImGui::SameLine();
-                        imgui.text(total_filament_str + ":");
-                        ImGui::SameLine(max_len);
-                        //BBS: use current plater's print statistics
                         bool imperial_units = wxGetApp().app_config->get("use_inches") == "1";
-                        char buf[64];
-                        ::sprintf(buf, imperial_units ? "%.2f in" : "%.2f m", ps.total_used_filament / koef);
-                        mono_value(buf);
-                        ImGui::SameLine();
-                        ::sprintf(buf, imperial_units ? "  %.2f oz" : "  %.2f g", ps.total_weight / unit_conver);
-                        mono_value(buf);
-                        ImGui::Dummy({ window_padding, window_padding });
-                        ImGui::SameLine();
-                        imgui.text(model_filament_str + ":");
-                        ImGui::SameLine(max_len);
+                        char buf[96];
+                        ::sprintf(buf, imperial_units ? "%.2f in  %.2f oz" : "%.2f m  %.2f g", ps.total_used_filament / koef,
+                                  ps.total_weight / unit_conver);
+                        stat(total_filament_str, buf);
                         auto exlude_m = total_support_used_filament_m + total_flushed_filament_m + total_wipe_tower_used_filament_m;
                         auto exlude_g = total_support_used_filament_g + total_flushed_filament_g + total_wipe_tower_used_filament_g;
-                        ::sprintf(buf, imperial_units ? "%.2f in" : "%.2f m", ps.total_used_filament / koef - exlude_m);
-                        mono_value(buf);
-                        ImGui::SameLine();
-                        ::sprintf(buf, imperial_units ? "  %.2f oz" : "  %.2f g", (ps.total_weight - exlude_g) / unit_conver);
-                        mono_value(buf);
+                        ::sprintf(buf, imperial_units ? "%.2f in  %.2f oz" : "%.2f m  %.2f g", ps.total_used_filament / koef - exlude_m,
+                                  (ps.total_weight - exlude_g) / unit_conver);
+                        stat(model_filament_str, buf);
                         //BBS: display cost of filaments
-                        ImGui::Dummy({ window_padding, window_padding });
-                        ImGui::SameLine();
-                        imgui.text(cost_str + ":");
-                        ImGui::SameLine(max_len);
                         ::sprintf(buf, "%.2f", ps.total_cost);
-                        mono_value(buf);
+                        stat(cost_str, buf);
                     }
-                    auto role_time = [time_mode](ExtrusionRole role) {
-                        auto it = std::find_if(time_mode.roles_times.begin(), time_mode.roles_times.end(), [role](const std::pair<ExtrusionRole, float>& item) { return role == item.first; });
-                        return (it != time_mode.roles_times.end()) ? it->second : 0.0f;
-                        };
                     //BBS: start gcode is mostly same with prepeare time
                     if (time_mode.prepare_time != 0.0f) {
-                        ImGui::Dummy({ window_padding, window_padding });
-                        ImGui::SameLine();
-                        imgui.text(prepare_str + ":");
-                        ImGui::SameLine(max_len);
                         if (timelapse_time != 0.0f)
-                            mono_value(short_time(get_time_dhms(time_mode.prepare_time)) + " + " + short_time(get_time_dhms(timelapse_time)));
+                            stat(prepare_str, short_time(get_time_dhms(time_mode.prepare_time)) + " + " + short_time(get_time_dhms(timelapse_time)));
                         else
-                            mono_value(short_time(get_time_dhms(time_mode.prepare_time)));
+                            stat(prepare_str, short_time(get_time_dhms(time_mode.prepare_time)));
                     }
-                    ImGui::Dummy({ window_padding, window_padding });
-                    ImGui::SameLine();
-                    imgui.text(print_str + ":");
-                    ImGui::SameLine(max_len);
-                    mono_value(short_time(get_time_dhms(time_mode.time - time_mode.prepare_time - timelapse_time)));
-                    ImGui::Dummy({ window_padding, window_padding });
-                    ImGui::SameLine();
-                    imgui.text(total_str + ":");
-                    ImGui::SameLine(max_len);
-                    mono_value(short_time(get_time_dhms(time_mode.time)));
+                    stat(print_str, short_time(get_time_dhms(time_mode.time - time_mode.prepare_time - timelapse_time)));
+                    stat(total_str, short_time(get_time_dhms(time_mode.time)));
                     auto show_mode_button = [this, &imgui, can_show_mode_button](const wxString& label, PrintEstimatedStatistics::ETimeMode mode) {
                         if (can_show_mode_button(mode)) {
                             if (imgui.button(label)) {

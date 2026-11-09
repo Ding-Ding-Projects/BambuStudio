@@ -2309,6 +2309,29 @@ void style_prepare_estimate(wxStaticText *time_line, wxStaticText *detail_line)
 
 } // namespace
 
+void MainFrame::place_side_actions()
+{
+    if (!m_side_tools || !m_side_row_top || !m_side_row_bottom || !m_side_actions || !m_prepare_action_bar)
+        return;
+    const int width = m_prepare_action_bar->GetClientSize().GetWidth() - 2 * FromDIP(MD3::Metrics::active().padding);
+    if (width <= 0)
+        return;
+    const int actions = m_side_actions->CalcMin().GetWidth();
+    int       info    = m_side_row_top->CalcMin().GetWidth();
+    if (m_side_actions_on_top)
+        info -= actions;
+    // The group stays on the top row while the plate, estimate and group fit
+    // side by side with a little air; otherwise the whole group moves to a
+    // second row, right-aligned, so Slice and Print stay together.
+    const bool fits = info + FromDIP(24) + actions <= width;
+    if (fits == m_side_actions_on_top)
+        return;
+    (m_side_actions_on_top ? m_side_row_top : m_side_row_bottom)->Detach(m_side_actions);
+    (fits ? m_side_row_top : m_side_row_bottom)->Add(m_side_actions, 0, wxALIGN_CENTER_VERTICAL);
+    m_side_tools->Show(m_side_row_bottom, !fits);
+    m_side_actions_on_top = fits;
+}
+
 void MainFrame::update_prepare_action_bar_content()
 {
     update_workflow_print_summary();
@@ -2381,10 +2404,18 @@ void MainFrame::update_prepare_action_bar_content()
                 }
             }
         }
+        // A duration is a number and keeps the monospace face; "Not sliced" is
+        // a sentence, so it uses the body face in the muted colour.
+        const bool has_time = !detail_text.empty() || time_text != _L("Not sliced");
+        m_prepare_estimate_label->SetFont(has_time ? prepare_estimate_time_font() : ::Label::Body_14);
+        m_prepare_estimate_label->SetForegroundColour(
+            StateColor::semantic(has_time ? MD3::Role::OnSurface : MD3::Role::OnSurfaceVariant));
         m_prepare_estimate_label->SetLabel(time_text);
         if (wxWindow *detail = m_prepare_action_bar->FindWindow(PREPARE_ESTIMATE_DETAIL_NAME))
             static_cast<wxStaticText *>(detail)->SetLabel(detail_text);
     }
+
+    place_side_actions();
 
     // The canvas-alignment spacers are proportion-0 sizer items and the tool row
     // is proportion 1. Once a row cannot fit every minimum, wxBoxSizer stops
@@ -3446,7 +3477,13 @@ wxSizer* MainFrame::create_side_tools(wxWindow* parent)
 {
     enable_multi_machine = wxGetApp().is_enable_multi_machine();
     int em = em_unit();
-    wxSizer* sizer = new wxWrapSizer(wxHORIZONTAL, wxREMOVE_LEADING_SPACES);
+    // Two rows instead of a wrap sizer: a wrap sizer broke the bar at whatever
+    // control no longer fit, leaving Slice on one row and Print on the next,
+    // left-aligned under the plate chip. See place_side_actions().
+    auto *sizer = new wxBoxSizer(wxVERTICAL);
+    m_side_row_top    = new wxBoxSizer(wxHORIZONTAL);
+    m_side_row_bottom = new wxBoxSizer(wxHORIZONTAL);
+    m_side_actions    = new wxBoxSizer(wxHORIZONTAL);
 
     m_prepare_plate_button = new Button(parent, _L("Plate 1"), "", wxNO_BORDER);
     m_prepare_add_plate_button = new Button(parent, "+", "", wxNO_BORDER);
@@ -3635,13 +3672,13 @@ wxSizer* MainFrame::create_side_tools(wxWindow* parent)
     print_panel->MoveAfterInTabOrder(m_slice_send_btn);
 
     auto slice_sizer = new wxBoxSizer(wxHORIZONTAL);
-    slice_sizer->Add(m_slice_btn, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, FromDIP(1));
-    slice_sizer->Add(m_slice_option_btn, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, FromDIP(1));
+    slice_sizer->Add(m_slice_btn, 0, wxALIGN_CENTER_VERTICAL);
+    slice_sizer->Add(m_slice_option_btn, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, FromDIP(2));
     slice_panel->SetSizer(slice_sizer);
 
     auto print_sizer = new wxBoxSizer(wxHORIZONTAL);
-    print_sizer->Add(m_print_btn, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, FromDIP(1));
-    print_sizer->Add(m_print_option_btn, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, FromDIP(1));
+    print_sizer->Add(m_print_btn, 0, wxALIGN_CENTER_VERTICAL);
+    print_sizer->Add(m_print_option_btn, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, FromDIP(2));
     print_panel->SetSizer(print_sizer);
 
     update_side_button_style();
@@ -3658,23 +3695,33 @@ wxSizer* MainFrame::create_side_tools(wxWindow* parent)
 
     m_slice_option_btn->Enable();
     m_print_option_btn->Enable();
-    sizer->Add(m_prepare_plate_button, 0, wxALIGN_CENTER_VERTICAL);
-    sizer->Add(FromDIP(8), 0, 0, 0, 0);
-    sizer->Add(m_prepare_add_plate_button, 0, wxALIGN_CENTER_VERTICAL);
-    sizer->Add(0, 0, 1, wxEXPAND, 0);
-    sizer->Add(estimate_col, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(12));
-    sizer->Add(expand_program_holder, 0, wxALIGN_CENTER, 0);
+    m_side_row_top->Add(m_prepare_plate_button, 0, wxALIGN_CENTER_VERTICAL);
+    m_side_row_top->Add(FromDIP(8), 0, 0, 0, 0);
+    m_side_row_top->Add(m_prepare_add_plate_button, 0, wxALIGN_CENTER_VERTICAL);
+    m_side_row_top->Add(0, 0, 1, wxEXPAND, 0);
+    m_side_row_top->Add(estimate_col, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(12));
+    m_side_row_top->Add(expand_program_holder, 0, wxALIGN_CENTER, 0);
     if (m_prepare_expand_btn)
-        sizer->Add(m_prepare_expand_btn, 0, wxALIGN_CENTER_VERTICAL);
-    sizer->Add(FromDIP(4), 0, 0, 0, 0);
-    sizer->Add(m_prepare_split_line, 0, wxALIGN_CENTER, 0);
-    sizer->Add(FromDIP(6), 0, 0, 0, 0);
-    sizer->Add(slice_panel, 0, wxALIGN_CENTER_VERTICAL);
-    sizer->Add(FromDIP(8), 0, 0, 0, 0);
-    sizer->Add(m_slice_print_btn, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(8));
-    sizer->Add(m_slice_send_btn, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(8));
-    sizer->Add(print_panel, 0, wxALIGN_CENTER_VERTICAL);
-    sizer->Add(FromDIP(4), 0, 0, 0, 0);
+        m_side_row_top->Add(m_prepare_expand_btn, 0, wxALIGN_CENTER_VERTICAL);
+
+    // The action group: Slice (with its options) | Slice and Print | Slice and
+    // Send | Print (with its options), with the divider in front of it.
+    m_side_actions->Add(FromDIP(4), 0, 0, 0, 0);
+    m_side_actions->Add(m_prepare_split_line, 0, wxALIGN_CENTER, 0);
+    m_side_actions->Add(FromDIP(8), 0, 0, 0, 0);
+    m_side_actions->Add(slice_panel, 0, wxALIGN_CENTER_VERTICAL);
+    m_side_actions->Add(FromDIP(8), 0, 0, 0, 0);
+    m_side_actions->Add(m_slice_print_btn, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(8));
+    m_side_actions->Add(m_slice_send_btn, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(8));
+    m_side_actions->Add(print_panel, 0, wxALIGN_CENTER_VERTICAL);
+    m_side_actions->Add(FromDIP(4), 0, 0, 0, 0);
+
+    m_side_row_top->Add(m_side_actions, 0, wxALIGN_CENTER_VERTICAL);
+    m_side_actions_on_top = true;
+    m_side_row_bottom->Add(0, 0, 1, wxEXPAND, 0);
+    sizer->Add(m_side_row_top, 0, wxEXPAND);
+    sizer->Add(m_side_row_bottom, 0, wxEXPAND | wxTOP, FromDIP(8));
+    sizer->Show(m_side_row_bottom, false);
 
     sizer->Layout();
 
@@ -4342,26 +4389,34 @@ void MainFrame::update_side_button_style()
         btn->SetExtraSize(wxSize(FromDIP(38), FromDIP(10)));
         btn->SetMinSize(wxSize(-1, btn_height));
     };
+    // A split button (Slice, Print) is two halves joined by a 2 px seam:
+    // the main half is pill-shaped on the left and nearly square where it
+    // meets its options half, which mirrors it. Both are the same height, so
+    // the pair reads as one control.
+    auto layout_split_main = [&](SideButton *btn) {
+        layout_main(btn);
+        btn->SetLayoutStyle(2);
+    };
     auto layout_option = [&](SideButton *btn) {
-        btn->SetLayoutStyle(1);
+        btn->SetLayoutStyle(3);
         btn->SetTextLayout(SideButton::EHorizontalOrientation::HO_Center);
         btn->SetCornerRadius(pill);
         btn->SetExtraSize(wxSize(FromDIP(10), FromDIP(10)));
-        btn->SetMinSize(wxSize(FromDIP(24), btn_height));
+        btn->SetMinSize(wxSize(FromDIP(40), btn_height));
     };
 
     style_outlined(m_slice_btn);
     style_outlined(m_slice_print_btn);
     style_outlined(m_slice_send_btn);
     style_outlined(m_slice_option_btn);
-    layout_main(m_slice_btn);
+    layout_split_main(m_slice_btn);
     layout_main(m_slice_print_btn);
     layout_main(m_slice_send_btn);
     layout_option(m_slice_option_btn);
 
     style_filled(m_print_btn);
     style_filled(m_print_option_btn);
-    layout_main(m_print_btn);
+    layout_split_main(m_print_btn);
     layout_option(m_print_option_btn);
 }
 
