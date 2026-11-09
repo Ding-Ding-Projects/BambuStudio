@@ -24,6 +24,7 @@
 #include <algorithm>
 
 #include <wx/dirdlg.h>
+#include <wx/stdpaths.h>
 #include <wx/sizer.h>
 
 namespace Slic3r::GUI {
@@ -93,6 +94,7 @@ void MultiSliceDialog::build()
            "For each file every ink slot uses the chosen ink; slot colours stay. Your current inks come back when it is done."),
         LB_AUTO_WRAP | wxST_NO_AUTORESIZE);
     intro->SetMinSize(wxSize(FromDIP(200), -1));
+    GrowWithWrap(intro);
     intro->SetForegroundColour(role(MD3::Role::OnSurfaceVariant));
     root->Add(intro, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, pad);
 
@@ -204,9 +206,13 @@ void MultiSliceDialog::build()
 
     SetSizer(root);
 
-    // The printer's USB drive when one is plugged in, else the last folder used.
+    // The printer's USB drive when one is plugged in, else the last folder
+    // used, else the Documents folder, so there is always somewhere to save.
     AppConfig &config = *wxGetApp().app_config;
-    const std::string last = config.get_last_output_dir("", false);
+    std::string last = config.get_last_output_dir("", false);
+    boost::system::error_code ec;
+    if (last.empty() || !boost::filesystem::is_directory(boost::filesystem::path(last), ec))
+        last = into_u8(wxStandardPaths::Get().GetDocumentsDir());
     const std::string usb  = wxGetApp().removable_drive_manager()->get_removable_drive_path(last);
     if (!usb.empty()) set_destination(boost::filesystem::path(usb), true);
     else set_destination(boost::filesystem::path(last), false);
