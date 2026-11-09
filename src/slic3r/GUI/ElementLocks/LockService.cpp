@@ -179,6 +179,14 @@ public:
         MD3DialogCaption::FinishChrome(this);
         CenterOnParent();
         wxGetApp().UpdateDlgDarkUI(this);
+        // Wrapping labels learn their real width only after the first layout, so the
+        // first Fit can measure them far too tall. Fit again once the dialog is up.
+        CallAfter([this]() {
+            if (IsBeingDeleted()) return;
+            Layout();
+            Fit();
+            CenterOnParent();
+        });
     }
 
 protected:

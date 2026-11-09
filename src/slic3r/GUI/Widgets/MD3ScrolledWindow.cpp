@@ -27,6 +27,23 @@ bool MD3ScrolledWindow::Create(wxWindow *parent, wxWindowID id, const wxPoint &p
     return true;
 }
 
+void MD3ScrolledWindow::DoSetVirtualSize(int x, int y)
+{
+    const int view = GetClientSize().x;
+    if (!HasFlag(wxHSCROLL) && !m_fitting_width && view > 0 && x > view) {
+        x = view;
+        if (wxSizer *sizer = GetSizer()) {
+            // Lay the content out at the view width once, so wrapping sizers wrap,
+            // then take the height that layout needs.
+            m_fitting_width = true;
+            sizer->SetDimension(wxPoint(0, 0), wxSize(x, std::max(y, 1)));
+            y = std::max(y, sizer->CalcMin().y);
+            m_fitting_width = false;
+        }
+    }
+    wxScrolledWindow::DoSetVirtualSize(x, y);
+}
+
 void MD3ScrolledWindow::OnMouseWheel(wxMouseEvent &event)
 {
     if (m_reveal_owner && !m_reveal_owner->IsBeingDeleted()) {

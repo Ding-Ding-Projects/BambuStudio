@@ -64,8 +64,16 @@ public:
     void RevealChild(wxWindow *child);
     bool ShouldScrollToChildOnFocus(wxWindow *child) override;
 
+protected:
+    // A window that scrolls only vertically never gets a virtual width wider
+    // than its view. Wrapping sizers report a single-row minimum width until
+    // they know the width they get, which otherwise made whole pages wider than
+    // the window and cut everything on the right.
+    void DoSetVirtualSize(int x, int y) override;
+
 private:
     void OnMouseWheel(wxMouseEvent &event);
+    bool m_fitting_width = false;
     void OnChar(wxKeyEvent &event);
     wxWeakRef<MD3ScrolledWindow> m_reveal_owner;
     MD3ScrollBars m_bars { this };

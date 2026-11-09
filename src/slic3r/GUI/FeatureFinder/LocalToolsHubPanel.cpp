@@ -32,6 +32,7 @@
 #include "libslic3r/libslic3r.h"
 #include "libslic3r/Utils.hpp"
 
+#include <wx/wrapsizer.h>
 #include <wx/datetime.h>
 #include <wx/dcclient.h>
 #include <wx/dialog.h>
@@ -304,7 +305,8 @@ int LocalToolsHubPanel::columns_for(int width) const
 
 void LocalToolsHubPanel::build_filters(wxBoxSizer *root)
 {
-    auto *row = new wxBoxSizer(wxHORIZONTAL);
+    // Filters wrap onto more lines instead of running past the window edge.
+    auto *row = new wxWrapSizer(wxHORIZONTAL);
     const auto add_filter = [&](const std::string &id) {
         auto *button = new Button(this, wxString());
         m_filter_buttons.emplace_back(id, button);

@@ -21,6 +21,7 @@
 
 #include "libslic3r/AppConfig.hpp"
 
+#include <wx/wrapsizer.h>
 #include <wx/dcclient.h>
 #include <wx/sizer.h>
 
@@ -154,12 +155,13 @@ void FeatureFinderPanel::style_toggle(Button *button, bool on)
 
 void FeatureFinderPanel::build_filters(wxBoxSizer *root)
 {
-    auto *row = new wxBoxSizer(wxHORIZONTAL);
+    // Filters wrap onto more lines instead of running past the window edge.
+    auto *row = new wxWrapSizer(wxHORIZONTAL);
     const auto add_filter = [&](const std::string &id, const wxString &label) {
         auto *button = new Button(this, label);
         m_filter_buttons.emplace_back(id, button);
         button->Bind(wxEVT_BUTTON, [this, id](wxCommandEvent &) { set_filter(id); });
-        row->Add(button, 0, wxRIGHT, FromDIP(8));
+        row->Add(button, 0, wxRIGHT | wxBOTTOM, FromDIP(8));
     };
     add_filter("", wxString::Format(_L("All %d"), int(FeatureFinder::features().size())));
     for (const FeatureFinder::Category &c : FeatureFinder::categories())
@@ -168,11 +170,13 @@ void FeatureFinderPanel::build_filters(wxBoxSizer *root)
     if (FeatureFinder::count_state(State::NotBuilt) > 0)
         add_filter(FeatureFinder::kNotBuiltFilter,
                    wxString::Format(_L("Not built yet %d"), int(FeatureFinder::count_state(State::NotBuilt))));
-    row->AddStretchSpacer(1);
+    root->Add(row, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(MD3::Metrics::active().padding));
 
+    // Sorting gets its own line so it never shares width with the filters.
+    auto *sort_row = new wxBoxSizer(wxHORIZONTAL);
     auto *sort_label = new Label(this, Label::Body_13, _L("Sort"));
     sort_label->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
-    row->Add(sort_label, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(8));
+    sort_row->Add(sort_label, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(8));
     const std::pair<SortOrder, wxString> sorts[] = {
         {SortOrder::Group, _L("Group")}, {SortOrder::AToZ, _L("A to Z")}, {SortOrder::Recent, _L("Recently used")}};
     for (const auto &[order, label] : sorts) {
@@ -180,9 +184,9 @@ void FeatureFinderPanel::build_filters(wxBoxSizer *root)
         m_sort_buttons.emplace_back(order, button);
         const SortOrder value = order;
         button->Bind(wxEVT_BUTTON, [this, value](wxCommandEvent &) { set_sort(value); });
-        row->Add(button, 0, wxLEFT, FromDIP(4));
+        sort_row->Add(button, 0, wxLEFT, FromDIP(4));
     }
-    root->Add(row, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(MD3::Metrics::active().padding));
+    root->Add(sort_row, 0, wxLEFT | wxRIGHT, FromDIP(MD3::Metrics::active().padding));
 
     for (auto &[id, button] : m_filter_buttons) style_toggle(button, id == m_filter);
     for (auto &[order, button] : m_sort_buttons) style_toggle(button, order == m_sort);
