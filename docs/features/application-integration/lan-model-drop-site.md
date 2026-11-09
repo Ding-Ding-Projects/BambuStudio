@@ -215,6 +215,13 @@ keeps checking at a slower pace.
 - **No station key.** Anyone who can reach the port can list, download and
   remove waiting models, so keep it on a trusted network and never share your
   `.env`.
+- **Your wording stays in your browser.** A personal wording file (`.json`,
+  the same version 1 file Bambu Studio accepts) can be dropped anywhere on the
+  page or chosen in its **Your wording** card. It is checked in full first; a
+  file that is not valid changes nothing. The page then shows its own text in
+  that wording, keeps the entries in that browser's storage, and never sends
+  the file or its entries to the drop box. **Use the original wording** clears
+  it. Other people using the page see the original wording.
 - **What is accepted.** Only 3MF, STL, STEP, OBJ and AMF, checked by file
   name and by content, up to the size limits. File names are cleaned (control
   characters, characters that reorder or hide text, and `<>:"/\|?*` are

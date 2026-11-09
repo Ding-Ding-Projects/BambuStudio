@@ -4,11 +4,13 @@
 import { createTranslator, modeFromLanguages, normalizeMode, sizeParts } from './i18n.js';
 import { clearLegacyInviteCode } from './invite.js';
 import { outcomeFor, precheck } from './outcome.js';
+import { createWording, validateWording } from './wording.js';
 
 // Remove obsolete credentials from old shared URLs without consuming them.
 clearLegacyInviteCode(window);
 
 const LANGUAGE_KEY = 'lan-model-drop.language';
+const WORDING_KEY = 'lan-model-drop.wording';
 const $ = (id) => document.getElementById(id);
 
 function meta(name) {
@@ -27,8 +29,9 @@ const settings = {
   protocol: metaNumber('drop-protocol', 1),
 };
 
-// Browser storage holds only the language choice, and the page works the
-// same without it (private windows, blocked storage).
+// Browser storage holds the language choice and, when one is added, the
+// personal wording file's entries; the page works the same without it
+// (private windows, blocked storage). Neither ever leaves this browser.
 function storedMode() {
   try {
     return normalizeMode(window.localStorage.getItem(LANGUAGE_KEY));
@@ -45,7 +48,28 @@ function storeMode(mode) {
   }
 }
 
+// The stored entries are the already validated list; anything else is ignored.
+function storedWording() {
+  try {
+    const entries = JSON.parse(window.localStorage.getItem(WORDING_KEY) ?? '[]');
+    const valid = Array.isArray(entries) && entries.every((e) => Array.isArray(e) && e.length === 2
+      && typeof e[0] === 'string' && typeof e[1] === 'string');
+    return valid ? entries : [];
+  } catch {
+    return [];
+  }
+}
+
+function storeWording(entries) {
+  try {
+    window.localStorage.setItem(WORDING_KEY, JSON.stringify(entries));
+  } catch {
+    // Not remembered; the wording still applies until the page is closed.
+  }
+}
+
 const state = {
+  wording: createWording(storedWording()),
   t: createTranslator(storedMode() ?? modeFromLanguages(navigator.languages ?? [navigator.language])),
   files: [],
   sending: false,
@@ -70,7 +94,10 @@ function valuesOf(message) {
 // Writes a message into an element. In bilingual mode the Cantonese line
 // follows the English one in its own span, marked as Cantonese.
 function render(element, message) {
-  const { primary, primaryLang, secondary, secondaryLang } = state.t.parts(message.key, valuesOf(message));
+  const parts = state.t.parts(message.key, valuesOf(message));
+  const primary = state.wording.apply(parts.primary);
+  const secondary = parts.secondary && state.wording.apply(parts.secondary);
+  const { primaryLang, secondaryLang } = parts;
   element.textContent = primary;
   if (state.t.mode === 'yue_HK') element.setAttribute('lang', primaryLang);
   else element.removeAttribute('lang');
@@ -84,7 +111,7 @@ function render(element, message) {
 }
 
 function text(message) {
-  return state.t.text(message.key, valuesOf(message));
+  return state.wording.apply(state.t.text(message.key, valuesOf(message)));
 }
 
 function icon(name) {
@@ -221,7 +248,7 @@ function renderLive() {
 function renderStatic() {
   const { t } = state;
   document.documentElement.lang = t.htmlLang;
-  document.title = t.text('pageTitle');
+  document.title = state.wording.apply(t.text('pageTitle'));
   for (const element of document.querySelectorAll('[data-i18n]')) render(element, { key: element.dataset.i18n });
   render($('station-line'), { key: 'stationLine', values: [settings.stationName] });
   render($('drop-hint'), { key: 'dropHint', values: [sizeValue(settings.maxBytes)] });
@@ -230,6 +257,7 @@ function renderStatic() {
   for (const button of document.querySelectorAll('.segmented button')) {
     button.setAttribute('aria-pressed', String(button.dataset.mode === t.mode));
   }
+  renderWordingCard();
   renderList();
   renderLive();
 }
@@ -353,6 +381,62 @@ async function sendAll(event) {
   }
 }
 
+// ---------------------------------------------------------- your wording
+
+// A wording file dropped on the page or chosen in its card. It is checked in
+// full before anything changes; a refused file leaves the page as it was.
+async function addWording(file) {
+  let bytes;
+  try {
+    bytes = new Uint8Array(await file.arrayBuffer());
+  } catch {
+    bytes = null;
+  }
+  const result = bytes ? validateWording(bytes) : { ok: false, reason: 'unreadable' };
+  if (!result.ok) {
+    setLive({ key: 'wordingRefused' }, 'error');
+    return;
+  }
+  state.wording = createWording(result.entries);
+  storeWording(result.entries);
+  renderStatic();
+  celebrate();
+}
+
+function clearWording() {
+  state.wording = createWording([]);
+  storeWording([]);
+  renderStatic();
+  setLive({ key: 'wordingCleared' });
+}
+
+// A short level-up headline: the file's own name for its wording when it
+// gives one, otherwise "Personal wording applied". It never blocks the page.
+let celebrationTimer = 0;
+function celebrate() {
+  const banner = $('wording-banner');
+  const own = state.wording.apply('private vocabulary');
+  const headline = own !== 'private vocabulary' ? own : text({ key: 'wordingApplied' });
+  banner.textContent = headline;
+  banner.hidden = false;
+  banner.classList.remove('show');
+  void banner.offsetWidth; // restart the animation
+  banner.classList.add('show');
+  setLive({ key: 'wordingAppliedLive', values: [headline] });
+  window.clearTimeout(celebrationTimer);
+  celebrationTimer = window.setTimeout(() => {
+    banner.classList.remove('show');
+    banner.hidden = true;
+  }, 3400);
+}
+
+function renderWordingCard() {
+  const active = state.wording.active;
+  if (active) render($('wording-state'), { key: 'wordingOn' });
+  else render($('wording-state'), { key: 'wordingOff' });
+  $('wording-clear').disabled = !active;
+}
+
 // --------------------------------------------------------------- wiring
 
 function setUp() {
@@ -384,6 +468,15 @@ function setUp() {
     $('choose').focus();
   });
   $('drop-form').addEventListener('submit', sendAll);
+
+  const wordingPicker = $('wording-file');
+  $('wording-choose').addEventListener('click', () => wordingPicker.click());
+  wordingPicker.addEventListener('change', () => {
+    const file = wordingPicker.files?.[0];
+    wordingPicker.value = '';
+    if (file) addWording(file);
+  });
+  $('wording-clear').addEventListener('click', clearWording);
   // The whole page accepts dropped files, so a near miss does not make the
   // browser open the model instead.
   const zone = $('drop-zone');
@@ -409,7 +502,12 @@ function setUp() {
     event.preventDefault();
     depth = 0;
     zone.classList.remove('dragging');
-    addFiles(event.dataTransfer.files);
+    // A .json file is a wording file, never a model; everything else is a model.
+    const dropped = Array.from(event.dataTransfer.files ?? []);
+    const wording = dropped.find((file) => /\.json$/i.test(file.name));
+    if (wording) addWording(wording);
+    const models = dropped.filter((file) => !/\.json$/i.test(file.name));
+    if (models.length) addFiles(models);
   });
 
   // An invite link opened while the page is already showing.

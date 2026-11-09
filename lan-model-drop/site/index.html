@@ -85,12 +85,29 @@
         </ol>
       </section>
 
+      <section class="card" aria-labelledby="wording-heading">
+        <h2 id="wording-heading" class="card-title"><span data-icon aria-hidden="true">person</span><span data-i18n="wordingHeading">Your wording</span></h2>
+        <p class="body" data-i18n="wordingText">Drop your personal wording file anywhere on this page.</p>
+        <p class="body" id="wording-state">Original wording.</p>
+        <div class="actions">
+          <button type="button" id="wording-choose" class="button text">
+            <span data-icon aria-hidden="true">upload_file</span><span data-i18n="wordingChoose">Choose wording file</span>
+          </button>
+          <button type="button" id="wording-clear" class="button text">
+            <span data-icon aria-hidden="true">close</span><span data-i18n="wordingClear">Use the original wording</span>
+          </button>
+        </div>
+        <input type="file" id="wording-file" accept=".json,application/json" hidden>
+      </section>
+
       <section class="card" aria-labelledby="privacy-heading">
         <h2 id="privacy-heading" class="card-title"><span data-icon aria-hidden="true">lock</span><span data-i18n="privacyHeading">Privacy</span></h2>
         <p class="body" id="privacy-text">Models go only to this drop box on your local network.</p>
       </section>
     </div>
   </main>
+
+  <p id="wording-banner" class="wording-banner" aria-hidden="true" hidden></p>
 
   <footer class="footer"><p id="footer">Bambu Studio MD3 · LAN model drop</p></footer>
 </body>

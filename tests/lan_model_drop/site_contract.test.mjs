@@ -250,7 +250,12 @@ test('the page has visible labels, a live region and a keyboard way to choose fi
   const app = read('app.js');
   assert.match(app, /track\.setAttribute\('role', 'progressbar'\)/);
   assert.match(app, /remove\.setAttribute\('aria-label', text\(\{ key: 'removeFile'/);
-  // Browser storage is optional and only holds the language.
-  assert.deepEqual([...app.matchAll(/localStorage\.(\w+)\(/g)].map((m) => m[1]).sort(), ['getItem', 'setItem']);
+  // Browser storage is optional and holds only the language and the validated
+  // entries of a personal wording file, each read and written in one place.
+  assert.deepEqual([...app.matchAll(/localStorage\.(\w+)\(/g)].map((m) => m[1]).sort(), ['getItem', 'getItem', 'setItem', 'setItem']);
   assert.match(app, /const LANGUAGE_KEY = 'lan-model-drop\.language';/);
+  assert.match(app, /const WORDING_KEY = 'lan-model-drop\.wording';/);
+  // The wording file is only ever read in the browser, never sent anywhere.
+  assert.match(html, /<input type="file" id="wording-file" accept="\.json,application\/json" hidden>/);
+  assert.match(html, /<p id="wording-banner" class="wording-banner" aria-hidden="true" hidden><\/p>/);
 });
