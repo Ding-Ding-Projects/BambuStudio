@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-09 12:37-0500\n"
+"POT-Creation-Date: 2026-11-09 12:42-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -30860,6 +30860,12 @@ msgstr ""
 msgid "Clear finished"
 msgstr ""
 
+msgid "Pause this file"
+msgstr ""
+
+msgid "Cancel this file"
+msgstr ""
+
 msgid "Large files stream in 1 MB chunks with pause, resume and cancel. Each written file is checked before it counts as done: an encoded file is decoded again and its SHA-256 compared with the source. A clash gets a numbered name, so nothing is ever overwritten, and a failed or cancelled file leaves nothing behind."
 msgstr ""
 
@@ -30876,6 +30882,9 @@ msgid "Decoding %s files beside the originals."
 msgstr ""
 
 msgid "Named when done"
+msgstr ""
+
+msgid "Paused, this file"
 msgstr ""
 
 msgid "Waiting"
@@ -30924,7 +30933,22 @@ msgstr ""
 msgid "Cancelled. Partly written files are removed."
 msgstr ""
 
+msgid "Resume this file"
+msgstr ""
+
 msgid "Select a file in the list first."
+msgstr ""
+
+msgid "This file waits where it is; the others go on."
+msgstr ""
+
+msgid "This file goes on."
+msgstr ""
+
+msgid "This file is cancelled; anything partly written is removed. The others go on."
+msgstr ""
+
+msgid "Show the written file in its folder"
 msgstr ""
 
 msgid "Build a URL"

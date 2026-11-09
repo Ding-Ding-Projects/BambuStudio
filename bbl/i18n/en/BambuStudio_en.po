@@ -38527,3 +38527,27 @@ msgstr ""
 
 msgid "An existing remote station is configured. Its address has not been changed."
 msgstr ""
+
+msgid "Pause this file"
+msgstr ""
+
+msgid "Cancel this file"
+msgstr ""
+
+msgid "Paused, this file"
+msgstr ""
+
+msgid "Resume this file"
+msgstr ""
+
+msgid "This file waits where it is; the others go on."
+msgstr ""
+
+msgid "This file goes on."
+msgstr ""
+
+msgid "This file is cancelled; anything partly written is removed. The others go on."
+msgstr ""
+
+msgid "Show the written file in its folder"
+msgstr ""

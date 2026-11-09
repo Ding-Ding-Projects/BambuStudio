@@ -56,6 +56,12 @@ back into `report.pdf`. Pick files or drop them on either card.
 
 - Files stream in 1 MB chunks, so there is no size limit. **Pause all**,
   **Resume all** and **Cancel all** act at the next chunk.
+- One file alone: select its row and press **Pause this file**, **Resume this
+  file** or **Cancel this file**, or right-click the row (or `Shift+F10`) for
+  the same. A paused file waits where it is, queued or mid-file, while the
+  others go on, and its time left leaves the pause out; a cancelled file
+  leaves nothing behind. The row says **Paused, this file** to tell it from a
+  pause of everything.
 - Every file is checked before it counts as done. An encoded file is decoded
   again and its SHA-256 compared with the source. A decoded file is written to
   a temporary name, read back and hashed before it gets its real name.
@@ -117,6 +123,10 @@ stored in `base64-toolkit-history.jsonl` in the data folder, keeps the newest
   names, cancelling, a bad character in the second chunk with its exact offset,
   data: URLs, byte order marks, empty and missing files, and names outside
   ASCII. A negative build drops the encoder's last group and must fail.
+- `tests/base64_per_file.test.mjs`: the sources of pausing and cancelling one
+  file: the worker skips a paused queued file and waits inside a paused
+  running one, a cancel wakes a paused file, and the buttons and the row menu
+  act on the selected row. Each check fails on a broken copy.
 - `tests/base64_workbench.test.mjs`: the board's sample text and error, text
   encodings, canonical form, previews, sizes, undo, history with and without
   payloads, and the exported record. A negative build keeps a payload without
@@ -124,6 +134,6 @@ stored in `base64-toolkit-history.jsonl` in the data folder, keeps the newest
 
 ## Not done yet
 
-Pausing or cancelling one file alone (the buttons act on all), audio and video
-preview, and opening a Text tab session in a second tab are designed but not
-built.
+Audio and video preview, and opening a Text tab session in a second tab, are
+designed but not built. Pausing or cancelling one file alone was built on 9
+November 2026 and has not yet been run on Windows.

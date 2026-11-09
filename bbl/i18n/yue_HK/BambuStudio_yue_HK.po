@@ -59871,3 +59871,43 @@ msgstr "回復預設值，%s"
 #. review-status: agent-drafted
 msgid "An existing remote station is configured. Its address has not been changed."
 msgstr "已經設定咗一個遠端工作站，佢嘅地址冇改變。"
+
+#. reviewed-category: button
+#. review-status: agent-drafted
+msgid "Pause this file"
+msgstr "暫停呢個檔案"
+
+#. reviewed-category: button
+#. review-status: agent-drafted
+msgid "Resume this file"
+msgstr "繼續呢個檔案"
+
+#. reviewed-category: button
+#. review-status: agent-drafted
+msgid "Cancel this file"
+msgstr "取消呢個檔案"
+
+#. reviewed-category: status
+#. review-status: agent-drafted
+msgid "Paused, this file"
+msgstr "已暫停，呢個檔案"
+
+#. reviewed-category: status
+#. review-status: agent-drafted
+msgid "This file waits where it is; the others go on."
+msgstr "呢個檔案停喺原位，其他檔案照做。"
+
+#. reviewed-category: status
+#. review-status: agent-drafted
+msgid "This file goes on."
+msgstr "呢個檔案繼續。"
+
+#. reviewed-category: status
+#. review-status: agent-drafted
+msgid "This file is cancelled; anything partly written is removed. The others go on."
+msgstr "呢個檔案已取消，寫咗一半嘅嘢會移除，其他檔案照做。"
+
+#. reviewed-category: menu
+#. review-status: agent-drafted
+msgid "Show the written file in its folder"
+msgstr "喺資料夾顯示寫出嘅檔案"

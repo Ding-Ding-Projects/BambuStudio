@@ -1,4 +1,5 @@
 #include "Base64ToolkitPanel.hpp"
+#include "../Widgets/MD3Menu.hpp"
 
 #include "../FeatureFinder/LocalToolsActivity.hpp"
 #include "../GUI.hpp"
@@ -283,6 +284,10 @@ struct Base64ToolkitPanel::FileJob
     B64::FileResult                       result;
     bool                                  cancel   = false;
     bool                                  recorded = false;
+    // This file alone, on top of the queue's pause: it waits where it is
+    // (queued or mid-file) while the other files go on.
+    bool                                  paused   = false;
+    std::chrono::steady_clock::time_point paused_at;
 };
 
 struct Base64ToolkitPanel::FileQueue
@@ -314,11 +319,11 @@ void Base64ToolkitPanel::worker_loop(std::shared_ptr<FileQueue> q)
             q->wake.wait(lock, [&] {
                 if (q->stop) return true;
                 if (q->paused) return false;
-                return std::any_of(q->jobs.begin(), q->jobs.end(), [](const FileJob &j) { return j.status == FileJob::Status::Queued; });
+                return std::any_of(q->jobs.begin(), q->jobs.end(), [](const FileJob &j) { return j.status == FileJob::Status::Queued && !j.paused; });
             });
             if (q->stop) return;
             for (FileJob &job : q->jobs) {
-                if (job.status != FileJob::Status::Queued) continue;
+                if (job.status != FileJob::Status::Queued || job.paused) continue;
                 job.status  = FileJob::Status::Running;
                 job.started = std::chrono::steady_clock::now();
                 id          = job.id;
@@ -337,7 +342,7 @@ void Base64ToolkitPanel::worker_loop(std::shared_ptr<FileQueue> q)
             }
             q->wake.wait(lock, [&] {
                 const FileJob *job = find(id);
-                return q->stop || job == nullptr || job->cancel || !q->paused;
+                return q->stop || job == nullptr || job->cancel || (!q->paused && !job->paused);
             });
             const FileJob *job = find(id);
             return !(q->stop || job == nullptr || job->cancel);
@@ -1130,13 +1135,36 @@ wxWindow *Base64ToolkitPanel::build_files_page(wxWindow *parent)
     m_files_empty = make_label(page, Label::Body_13, _L("No files yet. Pick or drop files above; each one is written beside its original."), true, true);
     sizer->Add(m_files_empty, 0, wxEXPAND | wxTOP, FromDIP(6));
 
+    m_jobs->Bind(wxEVT_DATAVIEW_SELECTION_CHANGED, [this](wxDataViewEvent &) { refresh_selection_buttons(); });
+    m_jobs->Bind(wxEVT_DATAVIEW_ITEM_CONTEXT_MENU, [this](wxDataViewEvent &) { show_jobs_menu(wxGetMousePosition()); });
+    m_jobs->Bind(wxEVT_CONTEXT_MENU, [this](wxContextMenuEvent &e) {
+        // Shift+F10 and the Menu key arrive with no position; open the menu by the list.
+        const wxPoint at = e.GetPosition() == wxDefaultPosition ? m_jobs->ClientToScreen(wxPoint(FromDIP(24), FromDIP(24))) : e.GetPosition();
+        show_jobs_menu(at);
+    });
+
     auto *rows = new wxBoxSizer(wxHORIZONTAL);
     auto *folder = make_button(page, _L("Show in folder"), GlyphFolder);
     folder->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { show_selected_in_folder(); });
     auto *clear = make_button(page, _L("Clear finished"), GlyphClearAll);
     clear->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { clear_finished(); });
+    // One file alone, the selected row; the row's right-click menu offers the same.
+    m_pause_one = make_button(page, _L("Pause this file"), GlyphPause);
+    m_pause_one->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) {
+        bool paused = false;
+        if (m_queue) {
+            std::lock_guard<std::mutex> lock(m_queue->mutex);
+            const int row = m_jobs->GetSelectedRow();
+            if (row != wxNOT_FOUND && std::size_t(row) < m_queue->jobs.size()) paused = m_queue->jobs[std::size_t(row)].paused;
+        }
+        pause_selected(!paused);
+    });
+    m_cancel_one = make_button(page, _L("Cancel this file"), GlyphCancel);
+    m_cancel_one->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { cancel_selected(); });
     rows->Add(folder, 0, wxRIGHT, FromDIP(6));
-    rows->Add(clear, 0);
+    rows->Add(clear, 0, wxRIGHT, FromDIP(6));
+    rows->Add(m_pause_one, 0, wxRIGHT, FromDIP(6));
+    rows->Add(m_cancel_one, 0);
     sizer->Add(rows, 0, wxTOP, FromDIP(8));
 
     sizer->Add(make_label(page, Label::Body_12,
@@ -1243,16 +1271,16 @@ void Base64ToolkitPanel::poll_jobs()
         case FileJob::Status::Queued:
             active   = true;
             writes   = job.encode ? from_u8(B64::encoded_path_for(job.source).filename().u8string()) : _L("Named when done");
-            progress = paused ? _L("Paused") : _L("Waiting");
+            progress = paused ? _L("Paused") : job.paused ? _L("Paused, this file") : _L("Waiting");
             state    = job.encode ? _L("Encode") : _L("Decode");
             break;
         case FileJob::Status::Running: {
             active   = true;
             writes   = job.encode ? from_u8(B64::encoded_path_for(job.source).filename().u8string()) : _L("Named when done");
             const int pct = B64::percent(job.done, job.total);
-            if (paused) {
+            if (paused || job.paused) {
                 progress = wxString::Format(_L("Paused at %d %%"), pct);
-                state    = _L("Paused");
+                state    = paused ? _L("Paused") : _L("Paused, this file");
             } else {
                 const double elapsed = std::chrono::duration<double>(now - job.started).count() - job.paused_seconds;
                 const auto   left    = B64::seconds_left(job.done, job.total, elapsed);
@@ -1298,6 +1326,7 @@ void Base64ToolkitPanel::poll_jobs()
     m_cancel->Enable(active);
     m_pause->SetLabel(paused ? _L("Resume all") : _L("Pause all"));
     m_pause->SetGlyph(paused ? GlyphPlay : GlyphPause);
+    refresh_selection_buttons();
     m_files_rules->SetLabel(wxString::Format(
         _L("Files use the Text tab's alphabet (%s), lines (%s) and padding (%s). Files are always decoded leniently: line breaks and missing padding are accepted, any other character stops that file."),
         m_options.alphabet == B64::Alphabet::UrlSafe ? _L("URL-safe") : _L("Standard"),
@@ -1345,6 +1374,111 @@ void Base64ToolkitPanel::cancel_all()
     set_status(_L("Cancelled. Partly written files are removed."));
     poll_jobs();
     m_job_timer.Start(250);
+}
+
+void Base64ToolkitPanel::refresh_selection_buttons()
+{
+    if (!m_pause_one || !m_cancel_one || !m_queue) return;
+    bool live = false, paused = false;
+    {
+        std::lock_guard<std::mutex> lock(m_queue->mutex);
+        const int row = m_jobs->GetSelectedRow();
+        if (row != wxNOT_FOUND && std::size_t(row) < m_queue->jobs.size()) {
+            const FileJob &job = m_queue->jobs[std::size_t(row)];
+            live   = job.status == FileJob::Status::Queued || job.status == FileJob::Status::Running;
+            paused = job.paused;
+        }
+    }
+    m_pause_one->Enable(live);
+    m_cancel_one->Enable(live);
+    m_pause_one->SetLabel(paused ? _L("Resume this file") : _L("Pause this file"));
+    m_pause_one->SetGlyph(paused ? GlyphPlay : GlyphPause);
+}
+
+void Base64ToolkitPanel::pause_selected(bool pause)
+{
+    if (!m_queue) return;
+    const int row = m_jobs->GetSelectedRow();
+    if (row == wxNOT_FOUND) {
+        set_status(_L("Select a file in the list first."));
+        return;
+    }
+    {
+        std::lock_guard<std::mutex> lock(m_queue->mutex);
+        if (std::size_t(row) >= m_queue->jobs.size()) return;
+        FileJob &job = m_queue->jobs[std::size_t(row)];
+        if (job.status != FileJob::Status::Queued && job.status != FileJob::Status::Running) return;
+        if (job.paused == pause) return;
+        const auto now = std::chrono::steady_clock::now();
+        if (pause) job.paused_at = now;
+        else if (job.status == FileJob::Status::Running && !m_queue->paused)
+            job.paused_seconds += std::chrono::duration<double>(now - job.paused_at).count();
+        job.paused = pause;
+    }
+    m_queue->wake.notify_all();
+    set_status(pause ? _L("This file waits where it is; the others go on.") : _L("This file goes on."));
+    poll_jobs();
+    m_job_timer.Start(250);
+}
+
+void Base64ToolkitPanel::cancel_selected()
+{
+    if (!m_queue) return;
+    const int row = m_jobs->GetSelectedRow();
+    if (row == wxNOT_FOUND) {
+        set_status(_L("Select a file in the list first."));
+        return;
+    }
+    {
+        std::lock_guard<std::mutex> lock(m_queue->mutex);
+        if (std::size_t(row) >= m_queue->jobs.size()) return;
+        FileJob &job = m_queue->jobs[std::size_t(row)];
+        if (job.status == FileJob::Status::Queued) {
+            job.status           = FileJob::Status::Cancelled;
+            job.result.problem   = "cancelled";
+            job.result.cancelled = true;
+        } else if (job.status == FileJob::Status::Running) {
+            job.cancel = true;
+            job.paused = false; // a paused file must wake to notice the cancel
+        } else {
+            return;
+        }
+    }
+    m_queue->wake.notify_all();
+    set_status(_L("This file is cancelled; anything partly written is removed. The others go on."));
+    poll_jobs();
+    m_job_timer.Start(250);
+}
+
+void Base64ToolkitPanel::show_jobs_menu(const wxPoint &screen)
+{
+    if (!m_queue) return;
+    bool live = false, paused = false, done = false;
+    {
+        std::lock_guard<std::mutex> lock(m_queue->mutex);
+        const int row = m_jobs->GetSelectedRow();
+        if (row != wxNOT_FOUND && std::size_t(row) < m_queue->jobs.size()) {
+            const FileJob &job = m_queue->jobs[std::size_t(row)];
+            live   = job.status == FileJob::Status::Queued || job.status == FileJob::Status::Running;
+            paused = job.paused;
+            done   = job.status == FileJob::Status::Done;
+        }
+    }
+    wxMenu    menu;
+    const int pause_id  = wxWindow::NewControlId();
+    const int cancel_id = wxWindow::NewControlId();
+    const int folder_id = wxWindow::NewControlId();
+    const int clear_id  = wxWindow::NewControlId();
+    menu.Append(pause_id, paused ? _L("Resume this file") : _L("Pause this file"))->Enable(live);
+    menu.Append(cancel_id, _L("Cancel this file"))->Enable(live);
+    menu.AppendSeparator();
+    menu.Append(folder_id, done ? _L("Show the written file in its folder") : _L("Show in folder"));
+    menu.Append(clear_id, _L("Clear finished"));
+    const int chosen = MD3::PopupMenuSelection(this, menu, screen);
+    if (chosen == pause_id) pause_selected(!paused);
+    else if (chosen == cancel_id) cancel_selected();
+    else if (chosen == folder_id) show_selected_in_folder();
+    else if (chosen == clear_id) clear_finished();
 }
 
 void Base64ToolkitPanel::clear_finished()

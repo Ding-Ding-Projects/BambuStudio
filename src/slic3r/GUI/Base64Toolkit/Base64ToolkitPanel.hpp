@@ -109,6 +109,12 @@ private:
     void poll_jobs();
     void pause_all(bool pause);
     void cancel_all();
+    // One file alone: the selected row. A paused file waits where it is while
+    // the others go on; a cancelled file leaves nothing behind.
+    void pause_selected(bool pause);
+    void cancel_selected();
+    void show_jobs_menu(const wxPoint &screen);
+    void refresh_selection_buttons();
     void clear_finished();
     void show_selected_in_folder();
     static void worker_loop(std::shared_ptr<FileQueue> queue);
@@ -184,6 +190,8 @@ private:
     MD3DataViewListCtrl       *m_jobs        = nullptr;
     Button                    *m_pause       = nullptr;
     Button                    *m_cancel      = nullptr;
+    Button                    *m_pause_one   = nullptr;
+    Button                    *m_cancel_one  = nullptr;
     Label                     *m_files_rules = nullptr;
     Label                     *m_files_empty = nullptr;
 
