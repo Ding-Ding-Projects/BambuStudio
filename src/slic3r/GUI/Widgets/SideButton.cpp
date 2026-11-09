@@ -372,6 +372,45 @@ void SideButton::SetIconOffset(const int offset)
     messureSize();
 }
 
+void SideButton::SetSplitSeam(StateColor const &colour, int inset_dip)
+{
+    seam_color     = colour;
+    seam_inset_dip = std::max(0, inset_dip);
+    // Attach once: the bar restyles on every DPI and theme change.
+    if (!has_seam)
+        state_handler.attach(seam_color);
+    has_seam = true;
+    state_handler.update_binds();
+    Refresh();
+}
+
+void SideButton::SetGlyphGap(int dip)
+{
+    glyph_gap_dip = std::max(0, dip);
+    messureSize();
+    Refresh();
+}
+
+void SideButton::SetFocusInset(int dip)
+{
+    focus_inset_dip = std::max(0, dip);
+    Refresh();
+}
+
+void SideButton::SetHeldPressed(bool held)
+{
+    if (held_pressed == held)
+        return;
+    held_pressed = held;
+    Refresh();
+}
+
+void SideButton::SetEnglishOnly(bool only)
+{
+    english_only = only;
+    Refresh();
+}
+
 void SideButton::SetLeadingGlyph(uint32_t codepoint, int px)
 {
     leading_glyph_cp = codepoint;
@@ -389,9 +428,20 @@ int SideButton::leadingGlyphPx() const
 }
 
 namespace {
-// One half of a split button: the outer side is a pill, the side that meets
-// the other half has a small radius, so the pair reads as one control with a
-// seam rather than two separate pills of different shapes.
+// Add one corner to a path: an arc when the radius is real, a plain corner when
+// it is zero (a zero-radius arc is degenerate in the wx graphics path).
+void add_corner(wxGraphicsPath &path, double cx, double cy, double ex, double ey, double r)
+{
+    if (r > 1e-5)
+        path.AddArcToPoint(cx, cy, ex, ey, r);
+    else
+        path.AddLineToPoint(cx, cy);
+}
+
+// One half of a split button: the outer side is rounded and the side that
+// meets the other half is square, so the pair reads as one shape with a seam.
+// The fill covers the whole half; the outline is stroked only around the outer
+// silhouette, never along the seam side (the seam line replaces it).
 void draw_split_segment(wxDC &dc, const wxSize &size, double outer, double inner, bool leading)
 {
     wxGraphicsContext *gc = nullptr;
@@ -407,20 +457,44 @@ void draw_split_segment(wxDC &dc, const wxSize &size, double outer, double inner
     const double w = size.x - 1.0, h = size.y - 1.0;
     const double left = std::min(leading ? outer : inner, h / 2.0);
     const double right = std::min(leading ? inner : outer, h / 2.0);
-    wxGraphicsPath path = gc->CreatePath();
-    path.MoveToPoint(left, 0);
-    path.AddLineToPoint(w - right, 0);
-    path.AddArcToPoint(w, 0, w, right, right);
-    path.AddLineToPoint(w, h - right);
-    path.AddArcToPoint(w, h, w - right, h, right);
-    path.AddLineToPoint(left, h);
-    path.AddArcToPoint(0, h, 0, h - left, left);
-    path.AddLineToPoint(0, left);
-    path.AddArcToPoint(0, 0, left, 0, left);
-    path.CloseSubpath();
+    // The seam side reaches past the window edge so the two halves touch.
+    const double x0 = leading ? 0.0 : -1.0;
+    const double x1 = leading ? w + 1.0 : w;
+    wxGraphicsPath fill = gc->CreatePath();
+    fill.MoveToPoint(x0 + left, 0);
+    fill.AddLineToPoint(x1 - right, 0);
+    add_corner(fill, x1, 0, x1, right, right);
+    fill.AddLineToPoint(x1, h - right);
+    add_corner(fill, x1, h, x1 - right, h, right);
+    fill.AddLineToPoint(x0 + left, h);
+    add_corner(fill, x0, h, x0, h - left, left);
+    fill.AddLineToPoint(x0, left);
+    add_corner(fill, x0, 0, x0 + left, 0, left);
+    fill.CloseSubpath();
     gc->SetBrush(dc.GetBrush());
+    gc->SetPen(*wxTRANSPARENT_PEN);
+    gc->FillPath(fill);
+
+    // Open outline: top edge, the outer end, bottom edge; the seam side is not stroked.
+    wxGraphicsPath outline = gc->CreatePath();
+    if (leading) {
+        outline.MoveToPoint(x1, 0);
+        outline.AddLineToPoint(left, 0);
+        add_corner(outline, 0, 0, 0, left, left);
+        outline.AddLineToPoint(0, h - left);
+        add_corner(outline, 0, h, left, h, left);
+        outline.AddLineToPoint(x1, h);
+    } else {
+        outline.MoveToPoint(x0, 0);
+        outline.AddLineToPoint(w - right, 0);
+        add_corner(outline, w, 0, w, right, right);
+        outline.AddLineToPoint(w, h - right);
+        add_corner(outline, w, h, w - right, h, right);
+        outline.AddLineToPoint(x0, h);
+    }
+    gc->SetBrush(*wxTRANSPARENT_BRUSH);
     gc->SetPen(dc.GetPen());
-    gc->DrawPath(path);
+    gc->StrokePath(outline);
 }
 } // namespace
 
@@ -453,6 +527,9 @@ void SideButton::dorender(wxDC& dc, wxDC& text_dc)
     dc.DrawRectangle(0, 0, size.x, size.y);
 
     int states = state_handler.states();
+    // A half whose menu is open holds the pressed fill until the menu closes.
+    if (held_pressed)
+        states |= StateHandler::Pressed;
     dc.SetBrush(wxBrush(background_color.colorForStates(states)));
 
     dc.SetPen(wxPen(border_color.colorForStates(states)));
@@ -487,7 +564,13 @@ void SideButton::dorender(wxDC& dc, wxDC& text_dc)
                 dc.DrawRoundedRectangle(0, 0, size.x, size.y, radius);
                 dc.SetPen(wxNullPen);
             } else if (layout_style == 2 || layout_style == 3) {
-                draw_split_segment(dc, size, this->radius, FromDIP(6), layout_style == 2);
+                draw_split_segment(dc, size, this->radius, 0.0, layout_style == 2);
+                if (has_seam && layout_style == 2) {
+                    // The hairline seam sits on the leading half's seam edge.
+                    const int inset = FromDIP(seam_inset_dip);
+                    dc.SetPen(wxPen(seam_color.colorForStates(states), 1));
+                    dc.DrawLine(size.x - 1, inset, size.x - 1, std::max(inset, size.y - inset));
+                }
                 dc.SetPen(wxNullPen);
             } else {
                 dc.DrawRoundedRectangle(0, 0, size.x, size.y, radius);
@@ -508,7 +591,7 @@ void SideButton::dorender(wxDC& dc, wxDC& text_dc)
     // measured/drawn through the plain paint DC (text_dc), matching how the label
     // and the shared Button widget render glyphs.
     const bool draw_glyph = leading_glyph_cp != 0 && MaterialIcon::available();
-    const int  glyph_gap  = FromDIP(6);
+    const int  glyph_gap  = FromDIP(glyph_gap_dip);
     wxSize     szGlyph;
     if (draw_glyph)
         szGlyph = MaterialIcon::measure(text_dc, leading_glyph_cp, leadingGlyphPx());
@@ -581,7 +664,9 @@ void SideButton::dorender(wxDC& dc, wxDC& text_dc)
         // the English alone); otherwise the label stays English and the note
         // joins whatever tooltip the caller set (see SetToolTip above).
         wxString note;
-        const int avail = std::max(0, rcContent.GetRight() - pt.x + 1);
+        // English-only buttons pass no room, so the inline form never fits and
+        // the Cantonese always goes to the tooltip note.
+        const int avail = english_only ? 0 : std::max(0, rcContent.GetRight() - pt.x + 1);
         const wxString shown = Slic3r::GUI::I18N::fit_bilingual(text_dc, text, avail, &note);
         if (note != bilingual_note) {
             bilingual_note = note;
@@ -592,14 +677,42 @@ void SideButton::dorender(wxDC& dc, wxDC& text_dc)
     }
 
     if (HasFocus() && IsEnabled()) {
-        const int inset = std::max(FromDIP(3), 1);
-        wxRect    focus_rect(inset, inset, std::max(0, size.x - inset * 2),
-                             std::max(0, size.y - inset * 2));
+        const int inset = std::max(FromDIP(focus_inset_dip), 1);
         const wxColour interior = background_color.colorForStates(states);
         dc.SetBrush(*wxTRANSPARENT_BRUSH);
         dc.SetPen(wxPen(focus_ring_colour(interior, text_color.colorForStates(states)),
                         std::max(FromDIP(2), 1)));
-        dc.DrawRoundedRectangle(focus_rect, std::max(0.0, radius - inset));
+        const wxSize inner_size(std::max(0, size.x - inset * 2), std::max(0, size.y - inset * 2));
+        wxGraphicsContext *gc = nullptr;
+#ifdef __WXMSW__
+        if (auto *gcdc = dynamic_cast<wxGCDC *>(&dc))
+            gc = gcdc->GetGraphicsContext();
+#endif
+        if ((layout_style == 2 || layout_style == 3) && gc != nullptr) {
+            // Split halves: the ring outlines only the focused half, rounded on
+            // its outer end and square on the seam side.
+            const double r  = std::max(0.0, std::min(this->radius - inset, inner_size.y / 2.0));
+            const double x0 = inset, y0 = inset;
+            const double x1 = inset + inner_size.x - 1.0, y1 = inset + inner_size.y - 1.0;
+            const double lr = layout_style == 2 ? r : 0.0;
+            const double rr = layout_style == 2 ? 0.0 : r;
+            wxGraphicsPath ring = gc->CreatePath();
+            ring.MoveToPoint(x0 + lr, y0);
+            ring.AddLineToPoint(x1 - rr, y0);
+            add_corner(ring, x1, y0, x1, y0 + rr, rr);
+            ring.AddLineToPoint(x1, y1 - rr);
+            add_corner(ring, x1, y1, x1 - rr, y1, rr);
+            ring.AddLineToPoint(x0 + lr, y1);
+            add_corner(ring, x0, y1, x0, y1 - lr, lr);
+            ring.AddLineToPoint(x0, y0 + lr);
+            add_corner(ring, x0, y0, x0 + lr, y0, lr);
+            ring.CloseSubpath();
+            gc->SetBrush(*wxTRANSPARENT_BRUSH);
+            gc->SetPen(dc.GetPen());
+            gc->StrokePath(ring);
+        } else {
+            dc.DrawRoundedRectangle(wxRect(wxPoint(inset, inset), inner_size), std::max(0.0, radius - inset));
+        }
     }
 }
 
@@ -621,7 +734,7 @@ void SideButton::messureSize()
         wxClientDC dc(this);
         wxSize szGlyph = MaterialIcon::measure(dc, leading_glyph_cp, leadingGlyphPx());
         if (szContent.x > 0)
-            szContent.x += FromDIP(6);
+            szContent.x += FromDIP(glyph_gap_dip);
         szContent.x += szGlyph.x;
         if (szGlyph.y > szContent.y)
             szContent.y = szGlyph.y;

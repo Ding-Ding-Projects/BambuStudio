@@ -353,4 +353,11 @@ private:
     int             m_px_cnt{ 16 };
 };
 
+namespace MD3 {
+// Material state layer: foreground laid over surface at opacity, reduced when
+// needed so the label keeps its contrast. Shared by Button and by controls that
+// draw their own states (the action bar and its plate chip).
+wxColour stateLayer(const wxColour &surface, const wxColour &foreground, double opacity);
+} // namespace MD3
+
 #endif // !slic3r_GUI_Button_hpp_

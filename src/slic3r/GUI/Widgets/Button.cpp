@@ -157,6 +157,12 @@ private:
 #endif
 
 } // namespace
+
+wxColour MD3::stateLayer(const wxColour &surface, const wxColour &foreground, double opacity)
+{
+    return buttonStateLayer(surface, foreground, opacity);
+}
+
 BEGIN_EVENT_TABLE(Button, StaticBox)
 
 EVT_LEFT_DOWN(Button::mouseDown)

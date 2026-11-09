@@ -2295,6 +2295,33 @@ wxFont prepare_estimate_time_font()
 // Two-tier estimate styling (MD3 Prepare kit §67-70): line 1 = print time in
 // Roboto Mono 15/500 OnSurface; line 2 = weight / length in 11px
 // OnSurfaceVariant. Applied both at build time and on Rescale/theme rebuild.
+// Active-plate chip, board .chip: SecondaryContainer with no border, a 500
+// weight 13 px label and a 20 px GridView glyph, 12 / 8 / 14 padding, 12 px
+// radius; hover is an 8 % OnSecondaryContainer state layer.
+void style_plate_chip(Button *chip)
+{
+    using R = MD3::Role;
+    const wxColour fill = StateColor::semantic(R::SecondaryContainer);
+    const wxColour on   = StateColor::semantic(R::OnSecondaryContainer);
+    const StateColor background(
+        std::pair{prepare_bar_surface(), (int) StateColor::Disabled},
+        std::pair{MD3::stateLayer(fill, on, 0.12), (int) StateColor::Pressed},
+        std::pair{MD3::stateLayer(fill, on, 0.08), (int) StateColor::Hovered},
+        std::pair{fill, (int) StateColor::Normal});
+    chip->SetBackgroundColor(background);
+    chip->SetBorderColor(StateColor(std::pair{StateColor::semantic(R::SurfaceContainerHighest), (int) StateColor::Disabled},
+                                    std::pair{fill, (int) StateColor::Normal}));
+    chip->SetBorderWidth(0);
+    chip->SetTextColor(StateColor(std::pair{StateColor::semantic(R::Outline), (int) StateColor::Disabled},
+                                  std::pair{on, (int) StateColor::Normal}));
+    wxFont font = ::Label::Body_13;
+    font.SetNumericWeight(500);
+    chip->SetFont(font);
+    chip->SetPaddingSize(wxSize(chip->FromDIP(12), chip->FromDIP(8)));
+    chip->SetCornerRadius(chip->FromDIP(12));
+    chip->SetMinSize(chip->FromDIP(wxSize(96, 40)));
+}
+
 void style_prepare_estimate(wxStaticText *time_line, wxStaticText *detail_line)
 {
     if (time_line) {
@@ -2302,7 +2329,7 @@ void style_prepare_estimate(wxStaticText *time_line, wxStaticText *detail_line)
         time_line->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     }
     if (detail_line) {
-        detail_line->SetFont(::Label::Body_11);
+        detail_line->SetFont(::Label::Mono_12); // a number line takes the number face
         detail_line->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     }
 }
@@ -2407,7 +2434,7 @@ void MainFrame::update_prepare_action_bar_content()
         // A duration is a number and keeps the monospace face; "Not sliced" is
         // a sentence, so it uses the body face in the muted colour.
         const bool has_time = !detail_text.empty() || time_text != _L("Not sliced");
-        m_prepare_estimate_label->SetFont(has_time ? prepare_estimate_time_font() : ::Label::Body_14);
+        m_prepare_estimate_label->SetFont(has_time ? prepare_estimate_time_font() : ::Label::Body_13);
         m_prepare_estimate_label->SetForegroundColour(
             StateColor::semantic(has_time ? MD3::Role::OnSurface : MD3::Role::OnSurfaceVariant));
         m_prepare_estimate_label->SetLabel(time_text);
@@ -2528,18 +2555,7 @@ void MainFrame::update_prepare_action_bar_style()
     }
 
     if (m_prepare_plate_button) {
-        const wxColour primary = StateColor::semantic(MD3::Role::Primary);
-        // Active-plate chip (MD3 digest 3.2): SecondaryContainer fill,
-        // OnSecondaryContainer text, 2px Primary border, 12px radius.
-        const StateColor background(
-            std::pair{StateColor::semantic(MD3::Role::PrimaryContainer), (int) StateColor::Hovered},
-            std::pair{StateColor::semantic(MD3::Role::SecondaryContainer), (int) StateColor::Normal});
-        m_prepare_plate_button->SetBackgroundColor(background);
-        m_prepare_plate_button->SetBorderColor(StateColor(primary));
-        m_prepare_plate_button->SetBorderWidth(FromDIP(2));
-        m_prepare_plate_button->SetTextColor(StateColor(StateColor::semantic(MD3::Role::OnSecondaryContainer)));
-        m_prepare_plate_button->SetCornerRadius(FromDIP(12));
-        m_prepare_plate_button->SetMinSize(FromDIP(wxSize(96, 40)));
+        style_plate_chip(m_prepare_plate_button);
         m_prepare_plate_button->Rescale();
     }
     if (m_prepare_add_plate_button) {
@@ -3494,20 +3510,10 @@ wxSizer* MainFrame::create_side_tools(wxWindow* parent)
     wxStaticText *m_prepare_estimate_detail = new Label(parent, wxEmptyString, wxALIGN_RIGHT);
     m_prepare_estimate_detail->SetName(PREPARE_ESTIMATE_DETAIL_NAME);
 
-    const wxColour primary = StateColor::semantic(MD3::Role::Primary);
     const wxColour outline = StateColor::semantic(MD3::Role::Outline);
-    // Active-plate chip (MD3 digest 3.2): SecondaryContainer fill,
-    // OnSecondaryContainer text, 2px Primary border, 12px radius. Restyled
-    // authoritatively in update_prepare_action_bar_style(); mirrored here.
-    const StateColor plate_background(
-        std::pair{StateColor::semantic(MD3::Role::PrimaryContainer), (int) StateColor::Hovered},
-        std::pair{StateColor::semantic(MD3::Role::SecondaryContainer), (int) StateColor::Normal});
-    m_prepare_plate_button->SetBackgroundColor(plate_background);
-    m_prepare_plate_button->SetBorderColor(StateColor(primary));
-    m_prepare_plate_button->SetBorderWidth(FromDIP(2));
-    m_prepare_plate_button->SetTextColor(StateColor(StateColor::semantic(MD3::Role::OnSecondaryContainer)));
-    m_prepare_plate_button->SetCornerRadius(FromDIP(12));
-    m_prepare_plate_button->SetMinSize(FromDIP(wxSize(96, 40)));
+    // Active-plate chip: styled by style_plate_chip() here and again on every
+    // style pass in update_prepare_action_bar_style().
+    style_plate_chip(m_prepare_plate_button);
     // Leading grid_view glyph (MD3 Prepare kit §62-63), coloured by the chip's
     // OnSecondaryContainer text role. Button self-gates on MaterialIcon::available():
     // no glyph (label-only chip) when the Material Symbols face is unavailable.
@@ -3673,12 +3679,12 @@ wxSizer* MainFrame::create_side_tools(wxWindow* parent)
 
     auto slice_sizer = new wxBoxSizer(wxHORIZONTAL);
     slice_sizer->Add(m_slice_btn, 0, wxALIGN_CENTER_VERTICAL);
-    slice_sizer->Add(m_slice_option_btn, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, FromDIP(2));
+    slice_sizer->Add(m_slice_option_btn, 0, wxALIGN_CENTER_VERTICAL); // halves meet; the seam line divides them
     slice_panel->SetSizer(slice_sizer);
 
     auto print_sizer = new wxBoxSizer(wxHORIZONTAL);
     print_sizer->Add(m_print_btn, 0, wxALIGN_CENTER_VERTICAL);
-    print_sizer->Add(m_print_option_btn, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, FromDIP(2));
+    print_sizer->Add(m_print_option_btn, 0, wxALIGN_CENTER_VERTICAL); // halves meet; the seam line divides them
     print_panel->SetSizer(print_sizer);
 
     update_side_button_style();
@@ -3706,15 +3712,14 @@ wxSizer* MainFrame::create_side_tools(wxWindow* parent)
 
     // The action group: Slice (with its options) | Slice and Print | Slice and
     // Send | Print (with its options), with the divider in front of it.
-    m_side_actions->Add(FromDIP(4), 0, 0, 0, 0);
+    m_side_actions->Add(FromDIP(12), 0, 0, 0, 0);
     m_side_actions->Add(m_prepare_split_line, 0, wxALIGN_CENTER, 0);
-    m_side_actions->Add(FromDIP(8), 0, 0, 0, 0);
+    m_side_actions->Add(FromDIP(12), 0, 0, 0, 0);
     m_side_actions->Add(slice_panel, 0, wxALIGN_CENTER_VERTICAL);
     m_side_actions->Add(FromDIP(8), 0, 0, 0, 0);
     m_side_actions->Add(m_slice_print_btn, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(8));
     m_side_actions->Add(m_slice_send_btn, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(8));
     m_side_actions->Add(print_panel, 0, wxALIGN_CENTER_VERTICAL);
-    m_side_actions->Add(FromDIP(4), 0, 0, 0, 0);
 
     m_side_row_top->Add(m_side_actions, 0, wxALIGN_CENTER_VERTICAL);
     m_side_actions_on_top = true;
@@ -3925,6 +3930,7 @@ wxSizer* MainFrame::create_side_tools(wxWindow* parent)
 
             m_slice_option_pop_up->append_button(slice_all_btn);
             m_slice_option_pop_up->append_button(slice_plate_btn);
+            hold_option_menu(m_slice_option_btn, m_slice_option_pop_up);
             m_slice_option_pop_up->Popup(m_slice_option_btn);
         }
     );
@@ -4098,6 +4104,7 @@ wxSizer* MainFrame::create_side_tools(wxWindow* parent)
             }
 
             auto* anchor = dynamic_cast<wxWindow*>(event.GetEventObject());
+            hold_option_menu(m_print_option_btn, p);
             p->Popup(anchor ? anchor : m_print_option_btn);
         }
     );
@@ -4304,120 +4311,139 @@ void MainFrame::update_side_button_style()
 {
     using R = MD3::Role;
 
-    // MD3 pill geometry: the Slice/Print action buttons are 44px tall with a
-    // corner radius of height/2. Both are derived here (never cached) from the
-    // current DPI so the on_dpi_changed -> update_side_button_style path
-    // re-computes them after a monitor/DPI change instead of reusing a stale
-    // radius.
-    const int      btn_height = FromDIP(44);
-    const double   pill       = MD3::Metrics::pill_radius(btn_height);
-    const wxColour bar_bg     = prepare_bar_surface(); // the action bar's own ground behind the pill corners
+    // Board action buttons (surface restyle handoff, section 5): 40 px tall
+    // with the board soft radius, re-derived on every DPI and theme pass.
+    const int      btn_height = FromDIP(MD3::Metrics::action_height);
+    const double   radius     = MD3::Metrics::soft_radius(btn_height);
+    const wxColour bar_bg     = prepare_bar_surface(); // the action bar's own ground behind the corners
 
-    const wxColour disabled_bg  = StateColor::semantic(R::SurfaceContainerHigh);
-    // Disabled label tone: OnSurface blended ~45% over the ACTUAL disabled fill
-    // (SurfaceContainerHigh), theme-aware. The previous ThemeColor::TextDisabled
-    // pair rendered #6a6b73 on #2f3036 in dark mode (~1.7:1) — the "Slice plate"
-    // / "Print plate" labels were unreadable when the plate was empty.
-    auto blend = [](const wxColour &fg_c, const wxColour &bg_c, double t) -> wxColour {
-        auto mix = [t](int f, int b) {
-            int v = (int) (f * t + b * (1.0 - t) + 0.5);
-            return (unsigned char) std::max(0, std::min(255, v));
-        };
-        return wxColour(mix(fg_c.Red(), bg_c.Red()), mix(fg_c.Green(), bg_c.Green()),
-                        mix(fg_c.Blue(), bg_c.Blue()));
-    };
-    const wxColour disabled_txt = blend(StateColor::semantic(R::OnSurface), disabled_bg, 0.45);
+    // Disabled, for every control in the group: no fill (the bar shows), a
+    // SurfaceContainerHighest border, an Outline label. A disabled Print looks
+    // exactly like a disabled Slice; Outline on the bar ground is 4.49:1 light
+    // and 5.19:1 dark.
+    const wxColour disabled_line = StateColor::semantic(R::SurfaceContainerHighest);
+    const wxColour disabled_txt  = StateColor::semantic(R::Outline);
 
-    // Filled hover state layer: a subtle brighten of the Primary fill, matching
-    // Widgets/Button.cpp applyMD3Style() (filled x1.06). Kept local so this file
-    // does not depend on Button.cpp's internal linkage.
-    auto brighten = [](const wxColour &c, double factor) -> wxColour {
-        auto ch = [factor](unsigned char v) -> unsigned char {
-            int r = (int) (v * factor + 0.5);
-            if (r > 255) r = 255;
-            if (r < 0)   r = 0;
-            return (unsigned char) r;
-        };
-        return wxColour(ch(c.Red()), ch(c.Green()), ch(c.Blue()), c.Alpha());
-    };
-
-    // Slice -> MD3 outlined: SurfaceContainerHigh fill, 1px Outline ring,
-    // OnSurface label (per ui-md3 Prepare.jsx: an outlined Button whose rest
-    // background is sc-high). Hover lifts the fill to SurfaceContainerHighest.
-    auto style_outlined = [&](SideButton *btn) {
-        btn->SetBackgroundColor(StateColor(
-            std::make_pair(StateColor::semantic(R::SurfaceContainerHigh),    (int) StateColor::Disabled),
-            std::make_pair(StateColor::semantic(R::SurfaceContainerHighest), (int) StateColor::Hovered),
-            std::make_pair(StateColor::semantic(R::SurfaceContainerHigh),    (int) StateColor::Normal)));
-        btn->SetBorderColor(StateColor(
-            std::make_pair(StateColor::semantic(R::OutlineVariant), (int) StateColor::Disabled),
-            std::make_pair(StateColor::semantic(R::Outline),        (int) StateColor::Normal)));
-        btn->SetForegroundColor(StateColor(
-            std::make_pair(disabled_txt,                       (int) StateColor::Disabled),
-            std::make_pair(StateColor::semantic(R::OnSurface), (int) StateColor::Normal)));
+    // One helper styles every action button, so the bar ground behind the
+    // rounded corners is set in exactly one place.
+    auto style_action = [&](SideButton *btn, const StateColor &fill, const StateColor &border, const StateColor &label) {
+        btn->SetBackgroundColor(fill);
+        btn->SetBorderColor(border);
+        btn->SetForegroundColor(label);
         btn->SetBottomColour(bar_bg);
+        btn->SetEnglishOnly(true);
+        btn->SetGlyphGap(8);
+        btn->SetFocusInset(2);
     };
 
-    // Print -> MD3 filled: Primary fill, OnPrimary label; the border tracks the
-    // fill so no contrasting ring shows. The kit marks this button "elevated"
-    // (elev-2); SideButton cannot draw the drop-shadow, tracked as a follow-up.
-    auto style_filled = [&](SideButton *btn) {
-        const wxColour fill  = StateColor::semantic(R::Primary);
-        const wxColour hover = brighten(fill, 1.06);
-        btn->SetBackgroundColor(StateColor(
-            std::make_pair(disabled_bg, (int) StateColor::Disabled),
-            std::make_pair(hover,       (int) StateColor::Hovered),
-            std::make_pair(fill,        (int) StateColor::Normal)));
-        btn->SetBorderColor(StateColor(
-            std::make_pair(disabled_bg, (int) StateColor::Disabled),
-            std::make_pair(hover,       (int) StateColor::Hovered),
-            std::make_pair(fill,        (int) StateColor::Normal)));
-        btn->SetForegroundColor(StateColor(
-            std::make_pair(disabled_txt,                       (int) StateColor::Disabled),
-            std::make_pair(StateColor::semantic(R::OnPrimary), (int) StateColor::Normal)));
-        btn->SetBottomColour(bar_bg);
+    // Tonal and Filled split buttons: hover and pressed are 8 % and 12 % state
+    // layers of the label colour, through the same function Button uses.
+    auto container_fill = [&](const wxColour &rest, const wxColour &on) {
+        return StateColor(std::make_pair(bar_bg, (int) StateColor::Disabled),
+                          std::make_pair(MD3::stateLayer(rest, on, 0.12), (int) StateColor::Pressed),
+                          std::make_pair(MD3::stateLayer(rest, on, 0.08), (int) StateColor::Hovered),
+                          std::make_pair(rest, (int) StateColor::Normal));
+    };
+    auto container_border = [&](const wxColour &rest, const wxColour &on) {
+        return StateColor(std::make_pair(disabled_line, (int) StateColor::Disabled),
+                          std::make_pair(MD3::stateLayer(rest, on, 0.12), (int) StateColor::Pressed),
+                          std::make_pair(MD3::stateLayer(rest, on, 0.08), (int) StateColor::Hovered),
+                          std::make_pair(rest, (int) StateColor::Normal));
+    };
+    auto label_colour = [&](const wxColour &on) {
+        return StateColor(std::make_pair(disabled_txt, (int) StateColor::Disabled),
+                          std::make_pair(on, (int) StateColor::Normal));
+    };
+    auto mix = [](const wxColour &over, const wxColour &under, double t) {
+        auto ch = [t](int o, int u) { return (unsigned char) std::clamp((int) std::lround(o * t + u * (1.0 - t)), 0, 255); };
+        return wxColour(ch(over.Red(), under.Red()), ch(over.Green(), under.Green()), ch(over.Blue(), under.Blue()));
     };
 
-    // The main action button and its options segment share one scheme so the
-    // pair reads as a single split control. Both are fully-rounded pills
-    // (layout_style 1) rather than the legacy flat-seam split; the former
-    // 'sidebutton_dropdown' caret is gone (see the constructor above).
-    auto layout_main = [&](SideButton *btn) {
-        btn->SetLayoutStyle(1);
-        btn->SetTextLayout(SideButton::EHorizontalOrientation::HO_Left, FromDIP(15));
-        btn->SetCornerRadius(pill);
-        btn->SetExtraSize(wxSize(FromDIP(38), FromDIP(10)));
+    const wxColour tonal    = StateColor::semantic(R::SecondaryContainer);
+    const wxColour on_tonal = StateColor::semantic(R::OnSecondaryContainer);
+    const wxColour filled    = StateColor::semantic(R::Primary);
+    const wxColour on_filled = StateColor::semantic(R::OnPrimary);
+
+    // Slice plate: Tonal, the next step before a print but never the commit.
+    for (SideButton *btn : {m_slice_btn, m_slice_option_btn})
+        style_action(btn, container_fill(tonal, on_tonal), container_border(tonal, on_tonal), label_colour(on_tonal));
+    m_slice_btn->SetSplitSeam(StateColor(std::make_pair(disabled_line, (int) StateColor::Disabled),
+                                         std::make_pair(mix(on_tonal, tonal, 0.20), (int) StateColor::Normal)),
+                              MD3::Metrics::seam_inset);
+
+    // Print plate: Filled, the one committing action, last in the row.
+    for (SideButton *btn : {m_print_btn, m_print_option_btn})
+        style_action(btn, container_fill(filled, on_filled), container_border(filled, on_filled), label_colour(on_filled));
+    m_print_btn->SetSplitSeam(StateColor(std::make_pair(disabled_line, (int) StateColor::Disabled),
+                                         std::make_pair(mix(on_filled, filled, 0.28), (int) StateColor::Normal)),
+                              MD3::Metrics::seam_inset);
+
+    // Slice and Print, Slice and Send: Outlined shortcuts on the bar ground.
+    for (SideButton *btn : {m_slice_print_btn, m_slice_send_btn})
+        style_action(btn,
+                     StateColor(std::make_pair(bar_bg, (int) StateColor::Disabled),
+                                std::make_pair(StateColor::semantic(R::SurfaceContainerHighest), (int) StateColor::Pressed),
+                                std::make_pair(StateColor::semantic(R::SurfaceContainerHigh), (int) StateColor::Hovered),
+                                std::make_pair(bar_bg, (int) StateColor::Normal)),
+                     StateColor(std::make_pair(disabled_line, (int) StateColor::Disabled),
+                                std::make_pair(StateColor::semantic(R::Outline), (int) StateColor::Pressed),
+                                std::make_pair(StateColor::semantic(R::Outline), (int) StateColor::Hovered),
+                                std::make_pair(StateColor::semantic(R::OutlineVariant), (int) StateColor::Normal)),
+                     label_colour(StateColor::semantic(R::OnSurface)));
+
+    // Labels: 13 px; Filled 700, Tonal 500, Outlined 400 (board .btn).
+    auto label_font = [](int weight) {
+        wxFont font = ::Label::Body_13;
+        font.SetNumericWeight(weight);
+        return font;
+    };
+    m_print_btn->SetFont(label_font(700));
+    m_slice_btn->SetFont(label_font(500));
+    m_slice_print_btn->SetFont(label_font(400));
+    m_slice_send_btn->SetFont(label_font(400));
+
+    // Geometry: 16 before the glyph, 20 px glyph, 8 gap, label, 16 after.
+    auto layout_main = [&](SideButton *btn, int style) {
+        btn->SetLayoutStyle(style);
+        btn->SetTextLayout(SideButton::EHorizontalOrientation::HO_Left, FromDIP(16));
+        btn->SetCornerRadius(radius);
+        btn->SetExtraSize(wxSize(FromDIP(32), 0));
         btn->SetMinSize(wxSize(-1, btn_height));
     };
-    // A split button (Slice, Print) is two halves joined by a 2 px seam:
-    // the main half is pill-shaped on the left and nearly square where it
-    // meets its options half, which mirrors it. Both are the same height, so
-    // the pair reads as one control.
-    auto layout_split_main = [&](SideButton *btn) {
-        layout_main(btn);
-        btn->SetLayoutStyle(2);
-    };
+    // The options half of a split button: 36 wide, the chevron centred.
     auto layout_option = [&](SideButton *btn) {
         btn->SetLayoutStyle(3);
         btn->SetTextLayout(SideButton::EHorizontalOrientation::HO_Center);
-        btn->SetCornerRadius(pill);
-        btn->SetExtraSize(wxSize(FromDIP(10), FromDIP(10)));
-        btn->SetMinSize(wxSize(FromDIP(48), btn_height));
+        btn->SetCornerRadius(radius);
+        btn->SetExtraSize(wxSize(0, 0));
+        btn->SetMinSize(wxSize(FromDIP(36), btn_height));
     };
 
-    style_outlined(m_slice_btn);
-    style_outlined(m_slice_print_btn);
-    style_outlined(m_slice_send_btn);
-    style_outlined(m_slice_option_btn);
-    layout_split_main(m_slice_btn);
-    layout_main(m_slice_print_btn);
-    layout_main(m_slice_send_btn);
+    layout_main(m_slice_btn, 2);
     layout_option(m_slice_option_btn);
-
-    style_filled(m_print_btn);
-    style_filled(m_print_option_btn);
-    layout_split_main(m_print_btn);
+    layout_main(m_slice_print_btn, 1);
+    layout_main(m_slice_send_btn, 1);
+    layout_main(m_print_btn, 2);
     layout_option(m_print_option_btn);
+}
+
+void MainFrame::hold_option_menu(SideButton *option, SidePopup *popup)
+{
+    if (!option || !popup)
+        return;
+    // The options half holds its pressed fill and shows ExpandLess while its
+    // menu is open; the popup reports its close, which releases both.
+    option->SetHeldPressed(true);
+    if (MaterialIcon::available())
+        option->SetLeadingGlyph(MaterialIcon::ExpandLess);
+    wxWeakRef<SideButton> weak(option);
+    popup->SetOnDismiss([weak]() {
+        if (!weak)
+            return;
+        weak->SetHeldPressed(false);
+        if (MaterialIcon::available())
+            weak->SetLeadingGlyph(MaterialIcon::ExpandMore);
+    });
 }
 
 void MainFrame::update_slice_print_status(SlicePrintEventType event, bool can_slice, bool can_print)

@@ -551,6 +551,8 @@ public:
     bool get_enable_print_status(wxString &reason);
     //BBS
     void update_side_button_style();
+    // Hold an options half pressed, with ExpandLess, until its menu closes.
+    void hold_option_menu(SideButton *option, SidePopup *popup);
     void update_slice_print_status(SlicePrintEventType event, bool can_slice = true, bool can_print = true);
     void update_helio_button_state();
 
