@@ -27,8 +27,12 @@
 #include <imgui/imgui_internal.h>
 #include <GL/glew.h>
 #include <wx/glcanvas.h>
+#include <array>
 #include <cfloat>
 #include <chrono>
+#include <cmath>
+#include <functional>
+#include <vector>
 #include "libslic3r/Log.hpp"
 namespace
 {
@@ -62,64 +66,538 @@ namespace
         return ImVec4(color.Red() / 255.0f, color.Green() / 255.0f, color.Blue() / 255.0f, color.Alpha() / 255.0f);
     }
 
-    // Render an MD3 SectionHeader line into the current ImGui overlay: an optional
-    // leading Material Symbol glyph followed by the label, uppercased, in the
-    // semibold face tinted OnSurfaceVariant. Mirrors containment/SectionHeader.jsx
-    // (11px / 600 / +.6px / UPPERCASE). The ImGui atlas is a single fixed-size
-    // face, so the 11px size and letter-spacing are not expressible here; the
-    // weight, colour, uppercase transform and leading glyph carry the identity.
-    // The glyph resolves through the merged Material Symbols overlay in the bold
-    // face and is only emitted when the atlas actually registered it.
-    void imgui_section_header(Slic3r::GUI::ImGuiWrapper &imgui, bool dark, const std::string &text, unsigned int glyph = 0)
+    std::string uppercase_ascii(const std::string &text)
     {
         std::string label;
         label.reserve(text.size());
         for (char ch : text)
             label.push_back((ch >= 'a' && ch <= 'z') ? static_cast<char>(ch - 'a' + 'A') : ch);
-        ImGui::PushStyleColor(ImGuiCol_Text, md3_imgui_color(MD3::Role::OnSurfaceVariant, dark));
-        if (glyph != 0 && imgui.material_icons_available())
-            imgui.bold_text(Slic3r::GUI::ImGuiWrapper::material_icon(glyph) + "  " + label);
-        else
-            imgui.bold_text(label);
-        ImGui::PopStyleColor();
+        return label;
     }
 
-    // One statistic in the Preview dock, laid out as a table row: the label on
-    // the left, its value right-aligned at `right_edge` in the monospace number
-    // face, and in bilingual mode the label's Cantonese as a smaller muted
-    // caption under the label. Before, the bilingual label stacked its
-    // Cantonese on a line of its own while the value sat on the English line at
-    // a column measured from the English alone, so a long label ran into its
-    // value and every Cantonese line stood next to nothing. `right_edge` and
-    // `indent` are window-local x positions.
-    void imgui_stat_row(Slic3r::GUI::ImGuiWrapper &imgui, bool dark, const std::string &label, const std::string &value,
-                        float indent, float right_edge)
+    // WCAG relative luminance of a colour, used to decide at run time whether an
+    // accent role is readable on the summary well (4.5:1) or must fall back to
+    // the neutral text role.
+    float md3_relative_luminance(const wxColour &color)
+    {
+        const auto linear = [](unsigned char channel) {
+            const float s = static_cast<float>(channel) / 255.0f;
+            return s <= 0.03928f ? s / 12.92f : std::pow((s + 0.055f) / 1.055f, 2.4f);
+        };
+        return 0.2126f * linear(color.Red()) + 0.7152f * linear(color.Green()) + 0.0722f * linear(color.Blue());
+    }
+
+    bool md3_accent_readable(MD3::Role accent, MD3::Role ground, bool dark)
+    {
+        const float a  = md3_relative_luminance(MD3::resolve(accent, dark, MD3::ColorScheme::Preview));
+        const float b  = md3_relative_luminance(MD3::resolve(ground, dark, MD3::ColorScheme::Preview));
+        const float hi = std::max(a, b);
+        const float lo = std::min(a, b);
+        return (hi + 0.05f) / (lo + 0.05f) >= 4.5f;
+    }
+
+    // Group label of the Preview dock (COLOR SCHEME, OPTIONS, the line-type
+    // name): no glyph, bold face, uppercase, OnSurfaceVariant, drawn at 0.80 of
+    // the text scale, with `space_above` design pixels above and 8 below. The
+    // ImGui atlas is a single fixed face, so letter spacing is not expressible;
+    // weight, size, colour and case carry the style. The caller has already
+    // positioned the cursor on the label line (a Dummy followed by SameLine).
+    void imgui_group_label(Slic3r::GUI::ImGuiWrapper &imgui, bool dark, float scale, const std::string &text, float space_above = 0.0f)
+    {
+        if (space_above > 0.0f)
+            ImGui::SetCursorPosY(ImGui::GetCursorPosY() + space_above * scale);
+        ImGui::PushStyleColor(ImGuiCol_Text, md3_imgui_color(MD3::Role::OnSurfaceVariant, dark));
+        ImGui::SetWindowFontScale(0.80f);
+        imgui.bold_text(uppercase_ascii(text));
+        ImGui::SetWindowFontScale(1.0f);
+        ImGui::PopStyleColor();
+        const float below = 8.0f * scale - ImGui::GetStyle().ItemSpacing.y;
+        if (below > 0.0f)
+            ImGui::SetCursorPosY(ImGui::GetCursorPosY() + below);
+    }
+
+    // ---------------------------------------------------------------------
+    // The summary well: one SurfaceContainerLowest container that holds every
+    // statistic of the Preview dock (and of the all-plates statistics window).
+    // Everything inside is laid out in screen space with an explicit running y,
+    // drawn through the window draw list on channel 1; the well itself is drawn
+    // on channel 0 once its height is known. Positioning through screen
+    // coordinates keeps the value edge on the well even when the dock is
+    // scrolled horizontally, which a window-local SameLine offset would not.
+    // ---------------------------------------------------------------------
+    struct SummaryWell
+    {
+        Slic3r::GUI::ImGuiWrapper *imgui = nullptr;
+        bool  dark        = false;
+        float scale       = 1.0f;
+        float left        = 0.0f; // screen x of the well's left edge
+        float right       = 0.0f; // screen x of the well's right edge
+        float top         = 0.0f; // screen y of the well's top edge
+        float line_x      = 0.0f; // screen x where the layout cursor started
+        float y           = 0.0f; // running layout position (screen y)
+        bool  gap_pending = false;
+
+        float pad() const { return 12.0f * scale; }
+        float label_x() const { return left + pad(); }
+        float value_right() const { return right - pad(); }
+        float row_gap() const { return 6.0f * scale; }
+        // Reserve a row of `height`; the standard row gap is inserted between two rows.
+        float place_row(float height)
+        {
+            if (gap_pending)
+                y += row_gap();
+            gap_pending = true;
+            const float row_top = y;
+            y += height;
+            return row_top;
+        }
+        // An explicit gap in design pixels; the next row does not add its own.
+        void gap(float px)
+        {
+            y += px * scale;
+            gap_pending = false;
+        }
+    };
+
+    struct WellInkRow
+    {
+        std::array<float, 4>     color{ 0.0f, 0.0f, 0.0f, 1.0f };
+        std::string              index; // ink number, or the label of a total row
+        std::vector<std::string> cells; // one entry per column header; "\n" splits lines
+        bool                     visible  = true;
+        bool                     is_total = false;
+        std::function<void()>    on_click;
+    };
+
+    void well_text(const std::string &text, float x, float y, ImU32 color, float wrap_width = 0.0f)
+    {
+        if (text.empty())
+            return;
+        ImGui::GetWindowDrawList()->AddText(ImGui::GetFont(), ImGui::GetFontSize(), ImVec2(x, y), color, text.c_str(), nullptr, wrap_width);
+    }
+
+    // Personal vocabulary applies to every label the well draws itself.
+    std::string well_display(const std::string &text)
     {
         using namespace Slic3r::GUI;
+        return into_u8(PersonalVocabulary::display(wxString::FromUTF8(text.c_str())));
+    }
+
+    // Dock-relative label with its Cantonese counterpart when the language mode is bilingual.
+    std::string well_bilingual_link_text(const wxString &label, float max_width_px)
+    {
+        std::string text = Slic3r::GUI::ImGuiWrapper::bilingual_compact(Slic3r::GUI::into_u8(label), max_width_px);
+        const std::size_t id_pos = text.find("###");
+        if (id_pos != std::string::npos)
+            text.resize(id_pos);
+        return text;
+    }
+
+    void well_begin(SummaryWell &w, Slic3r::GUI::ImGuiWrapper &imgui, bool dark, float scale, float left, float right)
+    {
+        w.imgui       = &imgui;
+        w.dark        = dark;
+        w.scale       = scale;
+        w.left        = left;
+        w.right       = right;
+        w.line_x      = ImGui::GetCursorScreenPos().x;
+        w.top         = ImGui::GetCursorScreenPos().y;
+        w.y           = w.top + 10.0f * scale; // top padding
+        w.gap_pending = false;
+        ImDrawList *draw_list = ImGui::GetWindowDrawList();
+        draw_list->ChannelsSplit(2);
+        draw_list->ChannelsSetCurrent(1);
+    }
+
+    void well_end(SummaryWell &w)
+    {
+        w.y += 12.0f * w.scale; // bottom padding
+        ImDrawList *draw_list = ImGui::GetWindowDrawList();
+        draw_list->ChannelsSetCurrent(0);
+        draw_list->AddRectFilled(ImVec2(w.left, w.top), ImVec2(w.right, w.y),
+                                 md3_imgui_col32(MD3::Role::SurfaceContainerLowest, w.dark),
+                                 float(MD3::Metrics::radius_well) * w.scale);
+        draw_list->ChannelsMerge();
+        // One item covering the well advances the layout cursor past it.
+        ImGui::SetCursorScreenPos(ImVec2(w.line_x, w.top));
+        ImGui::Dummy(ImVec2(std::max(1.0f, w.right - w.left), std::max(1.0f, w.y - w.top)));
+    }
+
+    void well_hairline(SummaryWell &w)
+    {
+        const float thickness = std::max(1.0f, w.scale);
+        const float row_top   = w.place_row(thickness);
+        ImGui::GetWindowDrawList()->AddLine(ImVec2(w.label_x(), row_top + 0.5f * thickness), ImVec2(w.value_right(), row_top + 0.5f * thickness),
+                                            md3_imgui_col32(MD3::Role::OutlineVariant, w.dark), thickness);
+    }
+
+    // Group gap: 10 px, a hairline, 10 px.
+    void well_group_break(SummaryWell &w)
+    {
+        w.gap(10.0f);
+        well_hairline(w);
+        w.gap(10.0f);
+    }
+
+    // Rule above a total row: the normal row gap plus 6 px of extra space with a
+    // 1 px hairline drawn in it.
+    void well_total_rule(SummaryWell &w)
+    {
+        const float thickness = std::max(1.0f, w.scale);
+        w.y += w.row_gap();
+        const float line_y = w.y + 3.0f * w.scale;
+        ImGui::GetWindowDrawList()->AddLine(ImVec2(w.label_x(), line_y), ImVec2(w.value_right(), line_y),
+                                            md3_imgui_col32(MD3::Role::OutlineVariant, w.dark), thickness);
+        w.y += 6.0f * w.scale;
+        w.gap_pending = false;
+    }
+
+    // Text link: regular face at 0.86 scale, accent colour, underline only on
+    // hover. Returns true when it was clicked.
+    bool well_link(SummaryWell &w, const std::string &text, float x_right, float y, const char *id)
+    {
+        ImGui::SetWindowFontScale(0.86f);
+        const ImVec2 size = ImGui::CalcTextSize(text.c_str());
+        const ImVec2 pos(x_right - size.x, y);
+        ImGui::SetCursorScreenPos(pos);
+        const bool clicked = ImGui::InvisibleButton(id, ImVec2(std::max(1.0f, size.x), std::max(1.0f, size.y)));
+        const bool hovered = ImGui::IsItemHovered();
+        const MD3::Role accent = md3_accent_readable(MD3::Role::Primary, MD3::Role::SurfaceContainerLowest, w.dark) ? MD3::Role::Primary : MD3::Role::OnSurface;
+        const ImU32 color = md3_imgui_col32(accent, w.dark);
+        well_text(text, pos.x, pos.y, color);
+        if (hovered)
+            ImGui::GetWindowDrawList()->AddLine(ImVec2(pos.x, pos.y + size.y - 1.0f * w.scale), ImVec2(pos.x + size.x, pos.y + size.y - 1.0f * w.scale), color, std::max(1.0f, w.scale));
+        ImGui::SetWindowFontScale(1.0f);
+        return clicked;
+    }
+
+    // Group label row with an optional link on the same row, right-aligned to
+    // the value edge. When title and link do not fit on one row the link is
+    // left for well_link_row() to place after the group. Returns true when the
+    // link was clicked on this row; `link_pending` reports that it still needs
+    // its own row.
+    bool well_group_header(SummaryWell &w, const std::string &title, const std::string &link_text, const char *link_id, bool &link_pending)
+    {
+        const std::string label = uppercase_ascii(well_display(title));
+        ImGui::SetWindowFontScale(0.86f);
+        const ImVec2 link_size = link_text.empty() ? ImVec2(0.0f, 0.0f) : ImGui::CalcTextSize(link_text.c_str());
+        ImGui::SetWindowFontScale(0.80f);
+        w.imgui->push_bold_font();
+        const ImVec2 label_size = ImGui::CalcTextSize(label.c_str());
+        const bool   link_fits  = !link_text.empty() && w.label_x() + label_size.x + 12.0f * w.scale <= w.value_right() - link_size.x;
+        const float  row_top    = w.place_row(std::max(label_size.y, link_fits ? link_size.y : 0.0f));
+        well_text(label, w.label_x(), row_top, md3_imgui_col32(MD3::Role::OnSurfaceVariant, w.dark));
+        w.imgui->pop_bold_font();
+        ImGui::SetWindowFontScale(1.0f);
+        link_pending = !link_text.empty() && !link_fits;
+        bool clicked = false;
+        if (link_fits)
+            clicked = well_link(w, link_text, w.value_right(), row_top, link_id);
+        w.gap(8.0f);
+        return clicked;
+    }
+
+    bool well_link_row(SummaryWell &w, const std::string &text, const char *link_id)
+    {
+        ImGui::SetWindowFontScale(0.86f);
+        const float row_h = ImGui::GetTextLineHeight();
+        ImGui::SetWindowFontScale(1.0f);
+        const float row_top = w.place_row(row_h);
+        return well_link(w, text, w.value_right(), row_top, link_id);
+    }
+
+    // One statistic: label on the left (regular face, OnSurfaceVariant), value
+    // in Roboto Mono right-aligned to the value edge. In bilingual mode the
+    // Cantonese counterpart is a smaller muted caption under the label, and the
+    // caption line is reserved for every row so the pitch stays uniform. A long
+    // label wraps before the value; the value never moves left of the label
+    // column plus twice the item spacing. `total` marks the one accented row.
+    void well_stat_row(SummaryWell &w, const std::string &label, const std::string &value, bool total = false)
+    {
+        using namespace Slic3r::GUI;
+        ImGuiWrapper &imgui = *w.imgui;
         const wxString    original = wxString::FromUTF8(label.c_str());
         const std::string primary  = into_u8(PersonalVocabulary::display(original));
+        const bool        bilingual = I18N::language_mode_profile().is_bilingual();
         std::string       secondary;
-        if (I18N::language_mode_profile().is_bilingual())
+        if (bilingual)
             if (const wxString cantonese = I18N::bilingual_secondary(original); !cantonese.empty() && cantonese != original)
                 secondary = into_u8(PersonalVocabulary::display(cantonese));
 
-        ImGui::Dummy({indent, 0.0f});
-        ImGui::SameLine();
-        ImGui::TextUnformatted(primary.c_str());
-        const float label_end = ImGui::GetItemRectMax().x - ImGui::GetWindowPos().x + ImGui::GetScrollX();
-        imgui.push_mono_font();
-        const float value_width = ImGui::CalcTextSize(value.c_str()).x;
-        ImGui::SameLine(std::max(right_edge - value_width, label_end + ImGui::GetStyle().ItemSpacing.x * 2.0f));
-        ImGui::TextUnformatted(value.c_str());
-        imgui.pop_mono_font();
+        const bool accent_ok = total && md3_accent_readable(MD3::Role::Primary, MD3::Role::SurfaceContainerLowest, w.dark);
+
+        // Value measurement. In the fallback the total value is drawn in the
+        // bold face instead of Primary, so measure the face that will be drawn.
+        const bool value_bold = total && !accent_ok;
+        if (value_bold)
+            imgui.push_bold_font();
+        else
+            imgui.push_mono_font();
+        const ImVec2 value_size = ImGui::CalcTextSize(value.c_str());
+        if (value_bold)
+            imgui.pop_bold_font();
+        else
+            imgui.pop_mono_font();
+
+        const float label_x = w.label_x();
+        const float min_gap = 2.0f * ImGui::GetStyle().ItemSpacing.x;
+        const float wrap_w  = std::max(40.0f * w.scale, w.value_right() - value_size.x - min_gap - label_x);
+
+        if (total)
+            imgui.push_bold_font();
+        const ImVec2 label_size = ImGui::CalcTextSize(primary.c_str(), nullptr, false, wrap_w);
+        if (total)
+            imgui.pop_bold_font();
+
+        ImGui::SetWindowFontScale(0.86f);
+        const float caption_line = ImGui::GetTextLineHeight();
+        const float caption_h    = !secondary.empty() ? std::max(caption_line, ImGui::CalcTextSize(secondary.c_str(), nullptr, false, wrap_w).y)
+                                                      : (bilingual ? caption_line : 0.0f);
+        ImGui::SetWindowFontScale(1.0f);
+
+        const float row_h   = std::max(label_size.y + caption_h, value_size.y);
+        const float row_top = w.place_row(row_h);
+
+        if (total)
+            imgui.push_bold_font();
+        well_text(primary, label_x, row_top,
+                  md3_imgui_col32(total ? MD3::Role::OnSurface : MD3::Role::OnSurfaceVariant, w.dark), wrap_w);
+        if (total)
+            imgui.pop_bold_font();
+
         if (!secondary.empty()) {
-            ImGui::Dummy({indent, 0.0f});
-            ImGui::SameLine();
-            ImGui::PushStyleColor(ImGuiCol_Text, md3_imgui_color(MD3::Role::OnSurfaceVariant, dark));
             ImGui::SetWindowFontScale(0.86f);
-            ImGui::TextUnformatted(secondary.c_str());
+            well_text(secondary, label_x, row_top + label_size.y, md3_imgui_col32(MD3::Role::OnSurfaceVariant, w.dark, MD3::ColorScheme::Preview, 204), wrap_w);
             ImGui::SetWindowFontScale(1.0f);
+        }
+
+        const MD3::Role value_role = accent_ok ? MD3::Role::Primary : MD3::Role::OnSurface;
+        if (value_bold)
+            imgui.push_bold_font();
+        else
+            imgui.push_mono_font();
+        well_text(value, w.value_right() - value_size.x, row_top, md3_imgui_col32(value_role, w.dark));
+        if (value_bold)
+            imgui.pop_bold_font();
+        else
+            imgui.pop_mono_font();
+    }
+
+    std::vector<std::string> well_split_lines(const std::string &text)
+    {
+        std::vector<std::string> lines;
+        std::size_t              start = 0;
+        while (true) {
+            const std::size_t end = text.find('\n', start);
+            if (end == std::string::npos) {
+                lines.push_back(text.substr(start));
+                break;
+            }
+            lines.push_back(text.substr(start, end - start));
+            start = end + 1;
+        }
+        return lines;
+    }
+
+    // First pass of the ink table: the widest of each header and every value
+    // line per column, and the widest ink index. Headers are measured in the
+    // bold face at 0.80 scale and values in Roboto Mono, the faces they are
+    // drawn in.
+    void well_ink_measure(Slic3r::GUI::ImGuiWrapper &imgui, const std::vector<std::string> &headers, const std::vector<WellInkRow> &rows,
+                          std::vector<float> &widths, float &index_w)
+    {
+        widths.assign(headers.size(), 0.0f);
+        index_w = 0.0f;
+        ImGui::SetWindowFontScale(0.80f);
+        imgui.push_bold_font();
+        for (std::size_t c = 0; c < headers.size(); ++c)
+            widths[c] = ImGui::CalcTextSize(uppercase_ascii(well_display(headers[c])).c_str()).x;
+        imgui.pop_bold_font();
+        ImGui::SetWindowFontScale(1.0f);
+        imgui.push_mono_font();
+        for (const WellInkRow &row : rows) {
+            if (!row.is_total)
+                index_w = std::max(index_w, ImGui::CalcTextSize(row.index.c_str()).x);
+            for (std::size_t c = 0; c < row.cells.size() && c < widths.size(); ++c)
+                for (const std::string &line : well_split_lines(row.cells[c]))
+                    widths[c] = std::max(widths[c], ImGui::CalcTextSize(line.c_str()).x);
+        }
+        imgui.pop_mono_font();
+    }
+
+    // Left edge of the numeric columns: the swatch (14), a gap (8) and the
+    // index, then 12 of air.
+    float well_ink_columns_left(const SummaryWell &w, float index_w)
+    {
+        return w.label_x() + 22.0f * w.scale + index_w + 12.0f * w.scale;
+    }
+
+    // Right edge of every column. The last column ends on the value edge and
+    // each earlier column ends 16 px before the next one begins. When the table
+    // is wider than the well the gap shrinks to a floor of 6 px; below that the
+    // leftmost column is clipped by the dock rather than moved out of it.
+    std::vector<float> well_ink_right_edges(const SummaryWell &w, const std::vector<float> &widths, float index_w)
+    {
+        const std::size_t n = widths.size();
+        std::vector<float> right(n, w.value_right());
+        if (n == 0)
+            return right;
+        float sum = 0.0f;
+        for (float width : widths)
+            sum += width;
+        float gap = 16.0f * w.scale;
+        if (n > 1) {
+            const float room = w.value_right() - well_ink_columns_left(w, index_w) - sum;
+            gap = std::max(6.0f * w.scale, std::min(gap, room / static_cast<float>(n - 1)));
+        }
+        float edge = w.value_right();
+        for (std::size_t i = n; i-- > 0;) {
+            right[i] = edge;
+            edge -= widths[i] + gap;
+        }
+        return right;
+    }
+
+    // Width the well needs so that the ink table fits without shrinking the
+    // column gap (used by the all-plates window, which sizes itself).
+    float well_ink_min_width(float scale, const std::vector<float> &widths, float index_w)
+    {
+        float sum = 0.0f;
+        for (float width : widths)
+            sum += width;
+        const float gaps = widths.empty() ? 0.0f : 16.0f * scale * static_cast<float>(widths.size() - 1);
+        return 12.0f * scale + 22.0f * scale + index_w + 12.0f * scale + sum + gaps + 12.0f * scale;
+    }
+
+    float well_ink_row_height(Slic3r::GUI::ImGuiWrapper &imgui, float scale, const WellInkRow &row)
+    {
+        imgui.push_mono_font();
+        const float line_h = ImGui::GetTextLineHeight();
+        imgui.pop_mono_font();
+        std::size_t lines = 1;
+        for (const std::string &cell : row.cells)
+            lines = std::max(lines, well_split_lines(cell).size());
+        return std::max(14.0f * scale, static_cast<float>(lines) * line_h) + 4.0f * scale;
+    }
+
+    // Header row: the group label at the label column and every numeric column
+    // header right-aligned to its own column.
+    void well_ink_header(SummaryWell &w, const std::string &title, const std::vector<std::string> &headers, const std::vector<float> &right)
+    {
+        ImGui::SetWindowFontScale(0.80f);
+        w.imgui->push_bold_font();
+        const float row_top = w.place_row(ImGui::GetTextLineHeight());
+        const ImU32 color   = md3_imgui_col32(MD3::Role::OnSurfaceVariant, w.dark);
+        well_text(uppercase_ascii(well_display(title)), w.label_x(), row_top, color);
+        for (std::size_t c = 0; c < headers.size() && c < right.size(); ++c) {
+            const std::string text = uppercase_ascii(well_display(headers[c]));
+            well_text(text, right[c] - ImGui::CalcTextSize(text.c_str()).x, row_top, color);
+        }
+        w.imgui->pop_bold_font();
+        ImGui::SetWindowFontScale(1.0f);
+        w.gap(8.0f);
+    }
+
+    // Draw the ink rows from `y` downwards. Rows that carry a click action get a
+    // hover tile (SurfaceContainerHigh, radius 8, from well left + 4 to well
+    // right - 4); a hidden ink is muted and its swatch drawn at 40 % alpha.
+    // The click action runs after the rows are drawn.
+    void well_ink_draw_rows(SummaryWell &w, std::vector<WellInkRow> &rows, const std::vector<float> &right, float y)
+    {
+        const float scale = w.scale;
+        std::function<void()> deferred;
+        for (std::size_t r = 0; r < rows.size(); ++r) {
+            WellInkRow &row = rows[r];
+            if (r > 0)
+                y += w.row_gap();
+            if (row.is_total) {
+                const float line_y = y + 3.0f * scale;
+                ImGui::GetWindowDrawList()->AddLine(ImVec2(w.label_x(), line_y), ImVec2(w.value_right(), line_y),
+                                                    md3_imgui_col32(MD3::Role::OutlineVariant, w.dark), std::max(1.0f, scale));
+                y += 6.0f * scale;
+            }
+            const float  row_h   = well_ink_row_height(*w.imgui, scale, row);
+            const ImVec2 hit_min(w.left + 4.0f * scale, y);
+            const ImVec2 hit_max(w.right - 4.0f * scale, y + row_h);
+            ImGui::SetCursorScreenPos(hit_min);
+            ImGui::PushID(static_cast<int>(r));
+            bool hovered = false;
+            if (row.on_click) {
+                if (ImGui::InvisibleButton("##ink_row", ImVec2(hit_max.x - hit_min.x, row_h)))
+                    deferred = row.on_click;
+                hovered = ImGui::IsItemHovered();
+            } else {
+                ImGui::Dummy(ImVec2(hit_max.x - hit_min.x, row_h));
+            }
+            ImGui::PopID();
+            ImDrawList *draw_list = ImGui::GetWindowDrawList();
+            if (hovered)
+                draw_list->AddRectFilled(hit_min, hit_max, md3_imgui_col32(MD3::Role::SurfaceContainerHigh, w.dark), 8.0f * scale);
+            const ImU32 text_color = md3_imgui_col32(row.visible ? MD3::Role::OnSurface : MD3::Role::OnSurfaceVariant, w.dark);
+
+            w.imgui->push_mono_font();
+            const float line_h = ImGui::GetTextLineHeight();
+            if (row.is_total) {
+                w.imgui->pop_mono_font();
+                w.imgui->push_bold_font();
+                well_text(row.index, w.label_x(), y + 0.5f * (row_h - ImGui::GetTextLineHeight()), text_color);
+                w.imgui->pop_bold_font();
+                w.imgui->push_mono_font();
+            } else {
+                const float swatch  = 14.0f * scale;
+                const float swatch_x = w.label_x();
+                const float swatch_y = y + 0.5f * (row_h - swatch);
+                const unsigned char alpha = row.visible ? 255 : 102;
+                draw_list->AddRectFilled(ImVec2(swatch_x, swatch_y), ImVec2(swatch_x + swatch, swatch_y + swatch),
+                                         IM_COL32(int(row.color[0] * 255.0f + 0.5f), int(row.color[1] * 255.0f + 0.5f), int(row.color[2] * 255.0f + 0.5f), alpha),
+                                         4.0f * scale);
+                draw_list->AddRect(ImVec2(swatch_x, swatch_y), ImVec2(swatch_x + swatch, swatch_y + swatch),
+                                   md3_imgui_col32(MD3::Role::OutlineVariant, w.dark), 4.0f * scale, 0, 1.0f * scale);
+                well_text(row.index, swatch_x + swatch + 8.0f * scale, y + 0.5f * (row_h - line_h), text_color);
+            }
+            for (std::size_t c = 0; c < row.cells.size() && c < right.size(); ++c) {
+                const std::vector<std::string> lines = well_split_lines(row.cells[c]);
+                float line_y = y + 0.5f * (row_h - static_cast<float>(lines.size()) * line_h);
+                for (const std::string &line : lines) {
+                    well_text(line, right[c] - ImGui::CalcTextSize(line.c_str()).x, line_y, text_color);
+                    line_y += line_h;
+                }
+            }
+            w.imgui->pop_mono_font();
+            y += row_h;
+        }
+        if (deferred)
+            deferred();
+    }
+
+    // The INK group: header row, then the rows. When the rows are taller than
+    // `max_height` they scroll in a child window whose clip rect stays inside
+    // the well (well left + 4 to well right - 4); the well never grows past
+    // the dock for a long ink list. `max_height <= 0` disables scrolling.
+    void well_ink_group(SummaryWell &w, const std::string &title, const std::vector<std::string> &headers, std::vector<WellInkRow> &rows, float max_height)
+    {
+        std::vector<float> widths;
+        float              index_w = 0.0f;
+        well_ink_measure(*w.imgui, headers, rows, widths, index_w);
+        const std::vector<float> right = well_ink_right_edges(w, widths, index_w);
+        well_ink_header(w, title, headers, right);
+        float rows_h = 0.0f;
+        for (std::size_t r = 0; r < rows.size(); ++r)
+            rows_h += well_ink_row_height(*w.imgui, w.scale, rows[r]) + (r > 0 ? w.row_gap() : 0.0f) + (rows[r].is_total ? 6.0f * w.scale : 0.0f);
+        if (max_height > 0.0f && rows_h > max_height) {
+            const float child_top = w.place_row(max_height);
+            ImGui::SetCursorScreenPos(ImVec2(w.left + 4.0f * w.scale, child_top));
+            ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+            ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+            const bool open = ImGui::BeginChild("color_prints", ImVec2(std::max(1.0f, w.right - w.left - 8.0f * w.scale), max_height), false, ImGuiWindowFlags_NoBackground);
+            ImGui::PopStyleVar();
             ImGui::PopStyleColor();
+            if (open)
+                well_ink_draw_rows(w, rows, right, ImGui::GetCursorScreenPos().y);
+            ImGui::EndChild();
+        } else if (!rows.empty()) {
+            const float rows_top = w.place_row(rows_h);
+            well_ink_draw_rows(w, rows, right, rows_top);
         }
     }
 
@@ -979,7 +1457,6 @@ namespace Slic3r
                 ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, ImVec2(340.f * m_scale * imgui.scaled(1.0f / 15.0f), 0));
                 ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), 0, ImVec2(0.5f, 0.5f));
                 ImGui::Begin(_L("Statistics of All Plates").c_str(), nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
-                ImDrawList* draw_list = ImGui::GetWindowDrawList();
                 std::vector<float> filament_diameters = gcode_result_list.front()->filament_diameters;
                 std::vector<float> filament_densities = gcode_result_list.front()->filament_densities;
                 std::vector<Color> filament_colors = ::decode_colors(wxGetApp().plater()->get_extruder_colors_from_plater_config(gcode_result_list.back()));
@@ -987,10 +1464,6 @@ namespace Slic3r
                     filament_colors[i] = adjust_color_for_rendering(filament_colors[i]);
                 }
                 bool imperial_units = wxGetApp().app_config->get("use_inches") == "1";
-                float window_padding = 4.0f * m_scale;
-                const float icon_size = ImGui::GetTextLineHeight() * 0.7;
-                std::map<std::string, float> fil_table_offsets;
-                std::map<std::string, float> time_est_table_offsets;
                 std::map<int, double> model_volume_of_extruders_all_plates; // map<extruder_idx, volume>
                 std::map<int, double> flushed_volume_of_extruders_all_plates; // map<extruder_idx, flushed volume>
                 std::map<int, double> wipe_tower_volume_of_extruders_all_plates; // map<extruder_idx, flushed volume>
@@ -1016,68 +1489,13 @@ namespace Slic3r
                     };
                 };
                 int displayed_columns = 0;
-                auto max_width = [](const std::vector<std::string>& items, const std::string& title, float extra_size = 0.0f) {
-                    float ret = ImGui::CalcTextSize(title.c_str()).x;
-                    for (const std::string& item : items) {
-                        ret = std::max(ret, extra_size + ImGui::CalcTextSize(item.c_str()).x);
-                    }
-                    return ret;
-                    };
-                auto calculate_offsets = [max_width, window_padding](const std::vector<std::pair<std::string, std::vector<::string>>>& title_columns, float extra_size = 0.0f) {
-                    const ImGuiStyle& style = ImGui::GetStyle();
-                    std::vector<float> offsets;
-                    offsets.push_back(max_width(title_columns[0].second, title_columns[0].first, extra_size) + 3.0f * style.ItemSpacing.x + style.WindowPadding.x);
-                    for (size_t i = 1; i < title_columns.size() - 1; i++)
-                        offsets.push_back(offsets.back() + max_width(title_columns[i].second, title_columns[i].first) + style.ItemSpacing.x);
-                    if (title_columns.back().first == _u8L("Display"))
-                        offsets.back() = ImGui::GetWindowWidth() - ImGui::CalcTextSize(_u8L("Display").c_str()).x - ImGui::GetFrameHeight() / 2 - 2 * window_padding;
-                    float average_col_width = ImGui::GetWindowWidth() / static_cast<float>(title_columns.size());
-                    std::vector<float> ret;
-                    ret.push_back(0);
-                    for (size_t i = 1; i < title_columns.size(); i++) {
-                        ret.push_back(std::max(offsets[i - 1], i * average_col_width));
-                    }
-                    return ret;
-                    };
-                auto append_item = [icon_size, &imgui, imperial_units, &window_padding, &draw_list, this](bool draw_icon, const Color& color, const std::vector<std::pair<std::string, float>>& columns_offsets)
-                    {
-                        // render icon
-                        ImVec2 pos = ImVec2(ImGui::GetCursorScreenPos().x + window_padding * 3, ImGui::GetCursorScreenPos().y);
-                        if (draw_icon)
-                            draw_list->AddRectFilled({ pos.x + 1.0f * m_scale, pos.y + 3.0f * m_scale }, { pos.x + icon_size - 1.0f * m_scale, pos.y + icon_size + 1.0f * m_scale },
-                                ImGui::GetColorU32({ color[0], color[1], color[2], 1.0f }));
-                        ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(20.0 * m_scale, 6.0 * m_scale));
-                        // render selectable
-                        ImGui::Dummy({ 0.0, 0.0 });
-                        ImGui::SameLine();
-                        // render column item
-                        {
-                            float dummy_size = draw_icon ? ImGui::GetStyle().ItemSpacing.x + icon_size : window_padding * 3;
-                            ImGui::SameLine(dummy_size);
-                            imgui.text(columns_offsets[0].first);
-                            for (auto i = 1; i < columns_offsets.size(); i++) {
-                                ImGui::SameLine(columns_offsets[i].second);
-                                imgui.text(columns_offsets[i].first);
-                            }
-                        }
-                        ImGui::PopStyleVar(1);
-                    };
-                auto append_headers = [&imgui](const std::vector<std::pair<std::string, float>>& title_offsets) {
-                    for (size_t i = 0; i < title_offsets.size(); i++) {
-                        ImGui::SameLine(title_offsets[i].second);
-                        imgui.bold_text(title_offsets[i].first);
-                    }
-                    ImGui::Separator();
-                    };
                 auto get_used_filament_from_volume = [this, imperial_units, &filament_diameters, &filament_densities](double volume, int extruder_id) {
                     double koef = imperial_units ? 1.0 / GizmoObjectManipulation::in_to_mm : 0.001;
                     std::pair<double, double> ret = { koef * volume / (PI * sqr(0.5 * filament_diameters[extruder_id])),
                                                         volume * filament_densities[extruder_id] * 0.001 };
                     return ret;
                     };
-                ImGui::Dummy({ window_padding, window_padding });
-                ImGui::SameLine();
-                // title and item data
+                // totals gathered across every non-empty plate
                 {
                     PartPlateList& plate_list = wxGetApp().plater()->get_partplate_list();
                     for (auto plate : plate_list.get_nonempty_plate_list())
@@ -1150,205 +1568,134 @@ namespace Slic3r
                         support_used_filaments_m_all_plates.push_back(support_filament_m);
                         support_used_filaments_g_all_plates.push_back(support_filament_g);
                     }
-                    char buff[64];
-                    double longest_str = 0.0;
-                    for (auto i : model_used_filaments_g_all_plates) {
-                        longest_str += i;
-                    }
-                    ::sprintf(buff, imperial_units ? "%.2f oz" : "%.2f g", longest_str / unit_conver);
-                    std::vector<std::pair<std::string, std::vector<::string>>> title_columns;
-                    if (displayed_columns & ColumnData::Model) {
-                        title_columns.push_back({ _u8L("Filament"), {""} });
-                        title_columns.push_back({ _u8L("Model"), {buff} });
-                    }
-                    if (displayed_columns & ColumnData::Support) {
-                        title_columns.push_back({ _u8L("Support"), {buff} });
-                    }
-                    if (displayed_columns & ColumnData::Flushed) {
-                        title_columns.push_back({ _u8L("Flushed"), {buff} });
-                    }
-                    if (displayed_columns & ColumnData::WipeTower) {
-                        title_columns.push_back({ _u8L("Tower"), {buff} });
-                    }
-                    if ((displayed_columns & ~ColumnData::Model) > 0) {
-                        title_columns.push_back({ _u8L("Total"), {buff} });
-                    }
-                    auto offsets_ = calculate_offsets(title_columns, icon_size);
-                    std::vector<std::pair<std::string, float>> title_offsets;
-                    for (int i = 0; i < offsets_.size(); i++) {
-                        title_offsets.push_back({ title_columns[i].first, offsets_[i] });
-                        fil_table_offsets[title_columns[i].first] = offsets_[i];
-                    }
-                    append_headers(title_offsets);
-                }
-                // item
-                {
-                    size_t i = 0;
-                    for (auto it = model_volume_of_extruders_all_plates.begin(); it != model_volume_of_extruders_all_plates.end(); it++) {
-                        if (i < model_used_filaments_m_all_plates.size() && i < model_used_filaments_g_all_plates.size()) {
-                            std::vector<std::pair<std::string, float>> columns_offsets;
-                            columns_offsets.push_back({ std::to_string(it->first + 1), fil_table_offsets[_u8L("Filament")] });
-                            char buf[64];
-                            float column_sum_m = 0.0f;
-                            float column_sum_g = 0.0f;
-                            if (displayed_columns & ColumnData::Model) {
+                    // INK group: the same well, group label, right-aligned column headers
+                    // and mono values as the dock, built from the all-plates totals.
+                    std::vector<std::string> ink_headers;
+                    if (displayed_columns & ColumnData::Model)
+                        ink_headers.push_back(_u8L("Model"));
+                    if (displayed_columns & ColumnData::Support)
+                        ink_headers.push_back(_u8L("Support"));
+                    if (displayed_columns & ColumnData::Flushed)
+                        ink_headers.push_back(_u8L("Flushed"));
+                    if (displayed_columns & ColumnData::WipeTower)
+                        ink_headers.push_back(_u8L("Tower"));
+                    if ((displayed_columns & ~ColumnData::Model) > 0)
+                        ink_headers.push_back(_u8L("Total"));
+                    auto format_cell = [imperial_units](double meters, double grams) {
+                        char cell[64];
+                        ::sprintf(cell, imperial_units ? "%.2f in\n%.2f oz" : "%.2f m\n%.2f g", meters, grams);
+                        return std::string(cell);
+                    };
+                    std::vector<WellInkRow> ink_rows;
+                    {
+                        size_t i = 0;
+                        for (auto it = model_volume_of_extruders_all_plates.begin(); it != model_volume_of_extruders_all_plates.end(); it++) {
+                            if (i < model_used_filaments_m_all_plates.size() && i < model_used_filaments_g_all_plates.size()) {
+                                WellInkRow row;
+                                row.color = filament_colors[it->first];
+                                row.index = std::to_string(it->first + 1);
+                                char buf[64];
+                                double column_sum_m = 0.0;
+                                double column_sum_g = 0.0;
+                                if (displayed_columns & ColumnData::Model) {
+                                    if ((displayed_columns & ~ColumnData::Model) > 0)
+                                        row.cells.push_back(format_cell(model_used_filaments_m_all_plates[i], model_used_filaments_g_all_plates[i] / unit_conver));
+                                    else {
+                                        ::sprintf(buf, imperial_units ? "%.2f in    %.2f oz" : "%.2f m    %.2f g", model_used_filaments_m_all_plates[i], model_used_filaments_g_all_plates[i] / unit_conver);
+                                        row.cells.push_back(buf);
+                                    }
+                                    column_sum_m += model_used_filaments_m_all_plates[i];
+                                    column_sum_g += model_used_filaments_g_all_plates[i];
+                                }
+                                if (displayed_columns & ColumnData::Support) {
+                                    row.cells.push_back(format_cell(support_used_filaments_m_all_plates[i], support_used_filaments_g_all_plates[i] / unit_conver));
+                                    column_sum_m += support_used_filaments_m_all_plates[i];
+                                    column_sum_g += support_used_filaments_g_all_plates[i];
+                                }
+                                if (displayed_columns & ColumnData::Flushed) {
+                                    row.cells.push_back(format_cell(flushed_filaments_m_all_plates[i], flushed_filaments_g_all_plates[i] / unit_conver));
+                                    column_sum_m += flushed_filaments_m_all_plates[i];
+                                    column_sum_g += flushed_filaments_g_all_plates[i];
+                                }
+                                if (displayed_columns & ColumnData::WipeTower) {
+                                    row.cells.push_back(format_cell(wipe_tower_used_filaments_m_all_plates[i], wipe_tower_used_filaments_g_all_plates[i] / unit_conver));
+                                    column_sum_m += wipe_tower_used_filaments_m_all_plates[i];
+                                    column_sum_g += wipe_tower_used_filaments_g_all_plates[i];
+                                }
                                 if ((displayed_columns & ~ColumnData::Model) > 0)
-                                    ::sprintf(buf, imperial_units ? "%.2f in\n%.2f oz" : "%.2f m\n%.2f g", model_used_filaments_m_all_plates[i], model_used_filaments_g_all_plates[i] / unit_conver);
-                                else
-                                    ::sprintf(buf, imperial_units ? "%.2f in    %.2f oz" : "%.2f m    %.2f g", model_used_filaments_m_all_plates[i], model_used_filaments_g_all_plates[i] / unit_conver);
-                                columns_offsets.push_back({ buf, fil_table_offsets[_u8L("Model")] });
-                                column_sum_m += model_used_filaments_m_all_plates[i];
-                                column_sum_g += model_used_filaments_g_all_plates[i];
+                                    row.cells.push_back(format_cell(column_sum_m, column_sum_g / unit_conver));
+                                ink_rows.push_back(std::move(row));
                             }
-                            if (displayed_columns & ColumnData::Support) {
-                                ::sprintf(buf, imperial_units ? "%.2f in\n%.2f oz" : "%.2f m\n%.2f g", support_used_filaments_m_all_plates[i], support_used_filaments_g_all_plates[i] / unit_conver);
-                                columns_offsets.push_back({ buf, fil_table_offsets[_u8L("Support")] });
-                                column_sum_m += support_used_filaments_m_all_plates[i];
-                                column_sum_g += support_used_filaments_g_all_plates[i];
-                            }
-                            if (displayed_columns & ColumnData::Flushed) {
-                                ::sprintf(buf, imperial_units ? "%.2f in\n%.2f oz" : "%.2f m\n%.2f g", flushed_filaments_m_all_plates[i], flushed_filaments_g_all_plates[i] / unit_conver);
-                                columns_offsets.push_back({ buf, fil_table_offsets[_u8L("Flushed")] });
-                                column_sum_m += flushed_filaments_m_all_plates[i];
-                                column_sum_g += flushed_filaments_g_all_plates[i];
-                            }
-                            if (displayed_columns & ColumnData::WipeTower) {
-                                ::sprintf(buf, imperial_units ? "%.2f in\n%.2f oz" : "%.2f m\n%.2f g", wipe_tower_used_filaments_m_all_plates[i], wipe_tower_used_filaments_g_all_plates[i] / unit_conver);
-                                columns_offsets.push_back({ buf, fil_table_offsets[_u8L("Tower")] });
-                                column_sum_m += wipe_tower_used_filaments_m_all_plates[i];
-                                column_sum_g += wipe_tower_used_filaments_g_all_plates[i];
-                            }
-                            if ((displayed_columns & ~ColumnData::Model) > 0) {
-                                ::sprintf(buf, imperial_units ? "%.2f in\n%.2f oz" : "%.2f m\n%.2f g", column_sum_m, column_sum_g / unit_conver);
-                                columns_offsets.push_back({ buf, fil_table_offsets[_u8L("Total")] });
-                            }
-                            append_item(true, filament_colors[it->first], columns_offsets);
+                            i++;
                         }
-                        i++;
                     }
                     // Sum of all rows
                     char buf[64];
                     if (model_volume_of_extruders_all_plates.size() > 1) {
-                        // Separator
-                        ImGuiWindow* window = ImGui::GetCurrentWindow();
-                        const ImRect separator(ImVec2(window->Pos.x + window_padding * 3, window->DC.CursorPos.y),
-                            ImVec2(window->Pos.x + window->Size.x - window_padding * 3, window->DC.CursorPos.y + 1.0f));
-                        ImGui::ItemSize(ImVec2(0.0f, 0.0f));
-                        const bool item_visible = ImGui::ItemAdd(separator, 0);
-                        window->DrawList->AddLine(separator.Min, ImVec2(separator.Max.x, separator.Min.y), ImGui::GetColorU32(ImGuiCol_Separator));
-                        std::vector<std::pair<std::string, float>> columns_offsets;
-                        columns_offsets.push_back({ _u8L("Total"), fil_table_offsets[_u8L("Filament")] });
-                        double total_model_used_filament_m = 0;
-                        double total_model_used_filament_g = 0;
-                        double total_support_used_filament_m = 0;
-                        double total_support_used_filament_g = 0;
-                        double total_flushed_filament_m = 0;
-                        double total_flushed_filament_g = 0;
-                        double total_wipe_tower_used_filament_m = 0;
-                        double total_wipe_tower_used_filament_g = 0;
+                        WellInkRow total;
+                        total.index    = _u8L("Total");
+                        total.is_total = true;
+                        auto sum_of = [](const std::vector<double> &values) {
+                            double sum = 0.0;
+                            for (double value : values)
+                                sum += value;
+                            return sum;
+                        };
+                        const double total_model_used_filament_m = (displayed_columns & ColumnData::Model) ? sum_of(model_used_filaments_m_all_plates) : 0.0;
+                        const double total_model_used_filament_g = (displayed_columns & ColumnData::Model) ? sum_of(model_used_filaments_g_all_plates) : 0.0;
+                        const double total_support_used_filament_m = (displayed_columns & ColumnData::Support) ? sum_of(support_used_filaments_m_all_plates) : 0.0;
+                        const double total_support_used_filament_g = (displayed_columns & ColumnData::Support) ? sum_of(support_used_filaments_g_all_plates) : 0.0;
+                        const double total_flushed_filament_m = (displayed_columns & ColumnData::Flushed) ? sum_of(flushed_filaments_m_all_plates) : 0.0;
+                        const double total_flushed_filament_g = (displayed_columns & ColumnData::Flushed) ? sum_of(flushed_filaments_g_all_plates) : 0.0;
+                        const double total_wipe_tower_used_filament_m = (displayed_columns & ColumnData::WipeTower) ? sum_of(wipe_tower_used_filaments_m_all_plates) : 0.0;
+                        const double total_wipe_tower_used_filament_g = (displayed_columns & ColumnData::WipeTower) ? sum_of(wipe_tower_used_filaments_g_all_plates) : 0.0;
                         if (displayed_columns & ColumnData::Model) {
-                            std::for_each(model_used_filaments_m_all_plates.begin(), model_used_filaments_m_all_plates.end(), [&total_model_used_filament_m](double value) {
-                                total_model_used_filament_m += value;
-                                });
-                            std::for_each(model_used_filaments_g_all_plates.begin(), model_used_filaments_g_all_plates.end(), [&total_model_used_filament_g](double value) {
-                                total_model_used_filament_g += value;
-                                });
                             if ((displayed_columns & ~ColumnData::Model) > 0)
-                                ::sprintf(buf, imperial_units ? "%.2f in\n%.2f oz" : "%.2f m\n%.2f g", total_model_used_filament_m, total_model_used_filament_g / unit_conver);
-                            else
+                                total.cells.push_back(format_cell(total_model_used_filament_m, total_model_used_filament_g / unit_conver));
+                            else {
                                 ::sprintf(buf, imperial_units ? "%.2f in    %.2f oz" : "%.2f m    %.2f g", total_model_used_filament_m, total_model_used_filament_g / unit_conver);
-                            columns_offsets.push_back({ buf, fil_table_offsets[_u8L("Model")] });
+                                total.cells.push_back(buf);
+                            }
                         }
-                        if (displayed_columns & ColumnData::Support) {
-                            std::for_each(support_used_filaments_m_all_plates.begin(), support_used_filaments_m_all_plates.end(), [&total_support_used_filament_m](double value) {
-                                total_support_used_filament_m += value;
-                                });
-                            std::for_each(support_used_filaments_g_all_plates.begin(), support_used_filaments_g_all_plates.end(), [&total_support_used_filament_g](double value) {
-                                total_support_used_filament_g += value;
-                                });
-                            ::sprintf(buf, imperial_units ? "%.2f in\n%.2f oz" : "%.2f m\n%.2f g", total_support_used_filament_m, total_support_used_filament_g / unit_conver);
-                            columns_offsets.push_back({ buf, fil_table_offsets[_u8L("Support")] });
-                        }
-                        if (displayed_columns & ColumnData::Flushed) {
-                            std::for_each(flushed_filaments_m_all_plates.begin(), flushed_filaments_m_all_plates.end(), [&total_flushed_filament_m](double value) {
-                                total_flushed_filament_m += value;
-                                });
-                            std::for_each(flushed_filaments_g_all_plates.begin(), flushed_filaments_g_all_plates.end(), [&total_flushed_filament_g](double value) {
-                                total_flushed_filament_g += value;
-                                });
-                            ::sprintf(buf, imperial_units ? "%.2f in\n%.2f oz" : "%.2f m\n%.2f g", total_flushed_filament_m, total_flushed_filament_g / unit_conver);
-                            columns_offsets.push_back({ buf, fil_table_offsets[_u8L("Flushed")] });
-                        }
-                        if (displayed_columns & ColumnData::WipeTower) {
-                            std::for_each(wipe_tower_used_filaments_m_all_plates.begin(), wipe_tower_used_filaments_m_all_plates.end(), [&total_wipe_tower_used_filament_m](double value) {
-                                total_wipe_tower_used_filament_m += value;
-                                });
-                            std::for_each(wipe_tower_used_filaments_g_all_plates.begin(), wipe_tower_used_filaments_g_all_plates.end(), [&total_wipe_tower_used_filament_g](double value) {
-                                total_wipe_tower_used_filament_g += value;
-                                });
-                            ::sprintf(buf, imperial_units ? "%.2f in\n%.2f oz" : "%.2f m\n%.2f g", total_wipe_tower_used_filament_m, total_wipe_tower_used_filament_g / unit_conver);
-                            columns_offsets.push_back({ buf, fil_table_offsets[_u8L("Tower")] });
-                        }
-                        if ((displayed_columns & ~ColumnData::Model) > 0) {
-                            ::sprintf(buf, imperial_units ? "%.2f in\n%.2f oz" : "%.2f m\n%.2f g",
-                                total_model_used_filament_m + total_support_used_filament_m + total_flushed_filament_m + total_wipe_tower_used_filament_m,
-                                (total_model_used_filament_g + total_support_used_filament_g + total_flushed_filament_g + total_wipe_tower_used_filament_g) / unit_conver);
-                            columns_offsets.push_back({ buf, fil_table_offsets[_u8L("Total")] });
-                        }
-                        append_item(false, m_tools.m_tool_colors[0], columns_offsets);
+                        if (displayed_columns & ColumnData::Support)
+                            total.cells.push_back(format_cell(total_support_used_filament_m, total_support_used_filament_g / unit_conver));
+                        if (displayed_columns & ColumnData::Flushed)
+                            total.cells.push_back(format_cell(total_flushed_filament_m, total_flushed_filament_g / unit_conver));
+                        if (displayed_columns & ColumnData::WipeTower)
+                            total.cells.push_back(format_cell(total_wipe_tower_used_filament_m, total_wipe_tower_used_filament_g / unit_conver));
+                        if ((displayed_columns & ~ColumnData::Model) > 0)
+                            total.cells.push_back(format_cell(total_model_used_filament_m + total_support_used_filament_m + total_flushed_filament_m + total_wipe_tower_used_filament_m,
+                                (total_model_used_filament_g + total_support_used_filament_g + total_flushed_filament_g + total_wipe_tower_used_filament_g) / unit_conver));
+                        ink_rows.push_back(std::move(total));
                     }
-                    ImGui::Dummy({ window_padding, window_padding });
-                    ImGui::SameLine();
-                    imgui.text(_u8L("Total cost") + ":");
-                    ImGui::SameLine();
                     ::sprintf(buf, "%.2f", total_cost_all_plates);
-                    imgui.text(buf);
+                    const std::string total_cost_text = buf;
 
-                    // Calculating Column Offsets for the Time Estimation Table
-                    {
-                        std::vector<std::string>                                   time_labels;
-                        std::vector<std::string>                                   time_values;
-                        std::vector<std::pair<std::string, std::vector<::string>>> time_columns;
+                    // The window sizes itself from its items, and the well draws through
+                    // the draw list, so reserve the width the table needs explicitly.
+                    std::vector<float> ink_widths;
+                    float              ink_index_w = 0.0f;
+                    well_ink_measure(imgui, ink_headers, ink_rows, ink_widths, ink_index_w);
+                    const float min_well_width = std::max(340.0f * m_scale * imgui.scaled(1.0f / 15.0f) - 32.0f * m_scale, 1.0f);
+                    const float well_width     = std::max(min_well_width, well_ink_min_width(m_scale, ink_widths, ink_index_w));
+                    const ImVec2 well_origin   = ImGui::GetCursorScreenPos();
+                    SummaryWell  well;
+                    well_begin(well, imgui, m_is_dark, m_scale, well_origin.x, well_origin.x + well_width);
+                    well_ink_group(well, _u8L("Filament"), ink_headers, ink_rows, 0.0f);
+                    well.gap(8.0f);
+                    well_stat_row(well, _u8L("Total cost"), total_cost_text);
+                    well_group_break(well);
 
-                        for (auto it = plate_time.begin(); it != plate_time.end(); it++) {
-                            time_labels.push_back(_u8L("Plate") + " " + std::to_string(it->first + 1));
-                            time_values.push_back(short_time(get_time_dhms(it->second)));
-                        }
-                        if (plate_time.size() > 1) {
-                            time_labels.push_back(_u8L("Total"));
-                            time_values.push_back(short_time(get_time_dhms(total_time_all_plates)));
-                        }
-
-                        time_columns.push_back({_u8L("Plate"), time_labels});
-                        time_columns.push_back({_u8L("Time"), time_values});
-
-                        auto time_offsets = calculate_offsets(time_columns);
-                        for (int i = 0; i < time_offsets.size(); i++) { time_est_table_offsets[time_columns[i].first] = time_offsets[i]; }
-                    }
-
-                    ImGui::Dummy(ImVec2(0.0f, ImGui::GetFontSize() * 0.1));
-                    ImGui::Dummy({ window_padding, window_padding });
-                    ImGui::SameLine();
-                    imgui.title(_u8L("Time Estimation"));
-                    for (auto it = plate_time.begin(); it != plate_time.end(); it++) {
-                        std::vector<std::pair<std::string, float>> columns_offsets;
-                        columns_offsets.push_back({_u8L("Plate") + " " + std::to_string(it->first + 1), time_est_table_offsets[_u8L("Plate")]});
-                        columns_offsets.push_back({short_time(get_time_dhms(it->second)), time_est_table_offsets[_u8L("Time")]});
-                        append_item(false, m_tools.m_tool_colors[0], columns_offsets);
-                    }
+                    // TIME group: one row per plate and a total row.
+                    bool unused_link_pending = false;
+                    well_group_header(well, _u8L("Time Estimation"), std::string(), "##all_plates_unused_link", unused_link_pending);
+                    for (auto it = plate_time.begin(); it != plate_time.end(); it++)
+                        well_stat_row(well, _u8L("Plate") + " " + std::to_string(it->first + 1), short_time(get_time_dhms(it->second)));
                     if (plate_time.size() > 1) {
-                        // Separator
-                        ImGuiWindow* window = ImGui::GetCurrentWindow();
-                        const ImRect separator(ImVec2(window->Pos.x + window_padding * 3, window->DC.CursorPos.y),
-                            ImVec2(window->Pos.x + window->Size.x - window_padding * 3, window->DC.CursorPos.y + 1.0f));
-                        ImGui::ItemSize(ImVec2(0.0f, 0.0f));
-                        const bool item_visible = ImGui::ItemAdd(separator, 0);
-                        window->DrawList->AddLine(separator.Min, ImVec2(separator.Max.x, separator.Min.y), ImGui::GetColorU32(ImGuiCol_Separator));
-                        std::vector<std::pair<std::string, float>> columns_offsets;
-                        columns_offsets.push_back({_u8L("Total"), time_est_table_offsets[_u8L("Plate")]});
-                        columns_offsets.push_back({short_time(get_time_dhms(total_time_all_plates)), time_est_table_offsets[_u8L("Time")]});
-                        append_item(false, m_tools.m_tool_colors[0], columns_offsets);
+                        well_total_rule(well);
+                        well_stat_row(well, _u8L("Total"), short_time(get_time_dhms(total_time_all_plates)), true);
                     }
+                    well_end(well);
                 }
                 ImGui::End();
                 ImGui::PopStyleColor(8);
@@ -2144,12 +2491,10 @@ namespace Slic3r
                 ImGui::Dummy({ window_padding, window_padding });
                 ImGui::Dummy({ window_padding, window_padding });
                 ImGui::SameLine();
-                // Kit SectionHeader treatment for the "Color scheme" label:
-                // uppercase, OnSurfaceVariant, semibold, with the leading 'palette'
-                // Material Symbol now that the merged atlas covers it. (The kit's
-                // exact 11px size and +.6px tracking are not expressible in the
-                // fixed-size ImGui atlas.)
-                imgui_section_header(imgui, m_is_dark, _u8L("Color Scheme"), MaterialIcon::Palette);
+                // Group label for the scheme chips: uppercase, bold, OnSurfaceVariant at
+                // 0.80 scale and without a leading glyph. (The board's letter spacing is
+                // not expressible in the fixed-size ImGui atlas.)
+                imgui_group_label(imgui, m_is_dark, m_scale, _u8L("Color Scheme"), 12.0f);
                 auto curr_plate_index = wxGetApp().plater()->get_partplate_list().get_curr_plate_index();
                 if (wxGetApp().plater()->get_helio_process_status() != m_last_helio_process_status || m_gcode_result->update_imgui_flag) {
                     auto load_only_gcode = wxGetApp().plater()->only_gcode_mode();
@@ -2204,48 +2549,77 @@ namespace Slic3r
                 const auto is_primary_view = [&primary_view_types](EViewType type) {
                     return std::find(primary_view_types.begin(), primary_view_types.end(), type) != primary_view_types.end();
                 };
-                // Material Chip palette: selected = solid Primary fill with
-                // OnPrimary text; unselected = transparent with the outline
-                // border and on-surface-variant text.  Pill radius = height / 2.
-                const ImVec4 chip_transparent = ImVec4(0.0f, 0.0f, 0.0f, 0.0f);
-                const ImVec4 chip_on_primary = md3_imgui_color(MD3::Role::OnPrimary, m_is_dark);
-                const ImVec4 chip_on_surface_variant = md3_imgui_color(MD3::Role::OnSurfaceVariant, m_is_dark);
-                const ImVec4 chip_outline = md3_imgui_color(MD3::Role::Outline, m_is_dark);
-                const float chip_height = 30.0f * m_scale;
-                const float chip_pad_x = 13.0f * m_scale;   // kit Chip padding: 0 13px
+                // Board chip: 30 px high, radius 9, drawn as draw-list items so the
+                // glyph keeps its own slot (10 before it, 16 wide, 6 after). Rest has
+                // no fill and an OutlineVariant border; hover fills SurfaceContainerHigh
+                // and strengthens the border to Outline; pressed fills
+                // SurfaceContainerHighest; selected fills SecondaryContainer with
+                // OnSecondaryContainer text (no Primary fill).
+                const float chip_height = float(MD3::Metrics::chip_height) * m_scale;
+                const float chip_radius = float(MD3::Metrics::radius_chip) * m_scale;
                 const float chip_border = 1.0f * m_scale;
-                // Kit Chip (selection/Chip.jsx): a pill that hugs its label with an
-                // optional leading Material Symbol, laid out inline and wrapped
-                // (flex-wrap) rather than stretched into equal table columns.
+                const float chip_gap    = 6.0f * m_scale;
                 struct PreviewChip { std::string label; unsigned int glyph; bool selected; };
-                auto chip_content = [&imgui](const PreviewChip &c) -> std::string {
-                    if (c.glyph != 0 && imgui.material_icons_available())
-                        return ImGuiWrapper::material_icon(c.glyph) + "  " + c.label;
-                    return c.label;
+                struct ChipMetrics { float width; float glyph_x; float label_x; bool has_glyph; };
+                // One extent function serves both the wrap predictor and the drawing
+                // code, so a chip is never predicted at a width it is not drawn at.
+                auto chip_metrics = [&](const PreviewChip &c) -> ChipMetrics {
+                    ImGui::SetWindowFontScale(0.92f);
+                    const float label_w = ImGui::CalcTextSize(c.label.c_str()).x;
+                    ImGui::SetWindowFontScale(1.0f);
+                    ChipMetrics m;
+                    m.has_glyph = c.glyph != 0 && imgui.material_icons_available();
+                    if (m.has_glyph) {
+                        m.glyph_x = chip_border + 10.0f * m_scale;
+                        m.label_x = m.glyph_x + 16.0f * m_scale + 6.0f * m_scale;
+                    } else {
+                        m.glyph_x = 0.0f;
+                        m.label_x = chip_border + 12.0f * m_scale;
+                    }
+                    m.width = m.label_x + label_w + 12.0f * m_scale + chip_border;
+                    return m;
                 };
-                auto chip_width = [chip_pad_x, chip_border](const std::string &content) -> float {
-                    return ImGui::CalcTextSize(content.c_str()).x + chip_pad_x * 2.0f + chip_border * 2.0f;
-                };
-                auto draw_chip = [&](const std::string &content, bool selected) -> bool {
-                    ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 0.5f * chip_height);
-                    ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, chip_border);
-                    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(chip_pad_x, ImGui::GetStyle().FramePadding.y));
-                    ImGui::PushStyleColor(ImGuiCol_Button, selected ? primary : chip_transparent);
-                    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, selected ? primary : surface_container_high);
-                    ImGui::PushStyleColor(ImGuiCol_ButtonActive, selected ? primary : primary_container);
-                    ImGui::PushStyleColor(ImGuiCol_Border, selected ? primary : chip_outline);
-                    ImGui::PushStyleColor(ImGuiCol_Text, selected ? chip_on_primary : chip_on_surface_variant);
-                    const bool clicked = ImGui::Button(content.c_str(), ImVec2(0.0f, chip_height));
-                    ImGui::PopStyleColor(5);
-                    ImGui::PopStyleVar(3);
+                auto draw_chip = [&](const PreviewChip &c, const ChipMetrics &m) -> bool {
+                    const ImVec2 min = ImGui::GetCursorScreenPos();
+                    const ImVec2 max(min.x + m.width, min.y + chip_height);
+                    const bool clicked = ImGui::InvisibleButton("##chip", ImVec2(m.width, chip_height));
+                    const bool hovered = ImGui::IsItemHovered();
+                    const bool pressed = ImGui::IsItemActive();
+                    ImDrawList *chip_draw = ImGui::GetWindowDrawList();
+                    if (c.selected) {
+                        chip_draw->AddRectFilled(min, max, md3_imgui_col32(MD3::Role::SecondaryContainer, m_is_dark), chip_radius);
+                        if (hovered || pressed)
+                            chip_draw->AddRectFilled(min, max, md3_imgui_col32(MD3::Role::OnSecondaryContainer, m_is_dark, MD3::ColorScheme::Preview, pressed ? 31 : 20), chip_radius);
+                    } else if (hovered || pressed) {
+                        chip_draw->AddRectFilled(min, max, md3_imgui_col32(pressed ? MD3::Role::SurfaceContainerHighest : MD3::Role::SurfaceContainerHigh, m_is_dark), chip_radius);
+                    }
+                    const MD3::Role border_role = c.selected ? MD3::Role::SecondaryContainer : (hovered || pressed ? MD3::Role::Outline : MD3::Role::OutlineVariant);
+                    chip_draw->AddRect(ImVec2(min.x + 0.5f * chip_border, min.y + 0.5f * chip_border), ImVec2(max.x - 0.5f * chip_border, max.y - 0.5f * chip_border),
+                                       md3_imgui_col32(border_role, m_is_dark), chip_radius, 0, chip_border);
+                    ImGui::SetWindowFontScale(0.92f);
+                    const float text_y = min.y + 0.5f * (chip_height - ImGui::GetTextLineHeight());
+                    if (m.has_glyph) {
+                        const std::string glyph = ImGuiWrapper::material_icon(c.glyph);
+                        const float glyph_w = ImGui::CalcTextSize(glyph.c_str()).x;
+                        chip_draw->AddText(ImGui::GetFont(), ImGui::GetFontSize(),
+                                           ImVec2(min.x + m.glyph_x + 0.5f * (16.0f * m_scale - glyph_w), text_y),
+                                           md3_imgui_col32(c.selected ? MD3::Role::OnSecondaryContainer : MD3::Role::OnSurfaceVariant, m_is_dark),
+                                           glyph.c_str());
+                    }
+                    chip_draw->AddText(ImGui::GetFont(), ImGui::GetFontSize(), ImVec2(min.x + m.label_x, text_y),
+                                       md3_imgui_col32(c.selected ? MD3::Role::OnSecondaryContainer : MD3::Role::OnSurface, m_is_dark),
+                                       c.label.c_str());
+                    ImGui::SetWindowFontScale(1.0f);
                     return clicked;
                 };
                 // Render chips inline, hugging content, wrapping within the dock
-                // width (kit flex-wrap). Returns the index clicked this frame, or -1.
+                // width with a 6 px gap in both directions. Returns the index
+                // clicked this frame, or -1.
                 auto render_chip_row = [&](const std::vector<PreviewChip> &chips) -> int {
                     int clicked = -1;
-                    const float spacing = ImGui::GetStyle().ItemSpacing.x;
+                    const float indent_spacing = ImGui::GetStyle().ItemSpacing.x;
                     const float row_max_x = ImGui::GetWindowPos().x + ImGui::GetWindowContentRegionMax().x;
+                    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(indent_spacing, chip_gap));
                     // Each chip line starts with the same inset as the headers and
                     // text rows (a Dummy followed by SameLine); without it the first
                     // chip's outline sat flush against the card's left edge.
@@ -2253,24 +2627,25 @@ namespace Slic3r
                     for (std::size_t i = 0; i < chips.size(); ++i) {
                         if (line_start) {
                             ImGui::Dummy({ window_padding, 0.0f });
-                            ImGui::SameLine();
+                            ImGui::SameLine(0.0f, indent_spacing);
                             line_start = false;
                         }
-                        const std::string content = chip_content(chips[i]);
+                        const ChipMetrics metrics = chip_metrics(chips[i]);
                         ImGui::PushID(static_cast<int>(i));
-                        if (draw_chip(content, chips[i].selected))
+                        if (draw_chip(chips[i], metrics))
                             clicked = static_cast<int>(i);
                         if (ImGui::IsItemHovered())
                             ImGui::SetTooltip("%s", chips[i].label.c_str());
                         ImGui::PopID();
                         if (i + 1 < chips.size()) {
-                            const float next_w = chip_width(chip_content(chips[i + 1]));
-                            if (ImGui::GetItemRectMax().x + spacing + next_w < row_max_x)
-                                ImGui::SameLine();
+                            const float next_w = chip_metrics(chips[i + 1]).width;
+                            if (ImGui::GetItemRectMax().x + chip_gap + next_w < row_max_x)
+                                ImGui::SameLine(0.0f, chip_gap);
                             else
                                 line_start = true;
                         }
                     }
+                    ImGui::PopStyleVar();
                     return clicked;
                 };
                 // Options as MD3 icon chips (kit Preview.jsx:60-64): a 'tune'
@@ -2300,7 +2675,7 @@ namespace Slic3r
                         return;
                     ImGui::Dummy({ window_padding, window_padding });
                     ImGui::SameLine();
-                    imgui_section_header(imgui, m_is_dark, _u8L("Options"), MaterialIcon::Tune);
+                    imgui_group_label(imgui, m_is_dark, m_scale, _u8L("Options"), 12.0f);
                     const int clicked = render_chip_row(option_chips);
                     if (clicked >= 0) {
                         const EMoveType type = option_targets[clicked];
@@ -2393,7 +2768,12 @@ namespace Slic3r
                     };
                 };
                 int displayed_columns = 0;
-                std::map<std::string, float> color_print_offsets;
+                // Ink table collected for the summary well (ColorPrint view only).
+                bool has_ink_group = false;
+                std::vector<std::string> ink_headers;
+                std::vector<WellInkRow>  ink_rows;
+                std::string ink_change_count_text;
+                std::string ink_cost_text;
                 const PrintStatistics& ps = wxGetApp().plater()->get_partplate_list().get_current_fff_print().print_statistics();
                 double koef = imperial_units ? GizmoObjectManipulation::in_to_mm : 1000.0;
                 double unit_conver = imperial_units ? GizmoObjectManipulation::oz_to_g : 1;
@@ -2501,7 +2881,7 @@ namespace Slic3r
                     }
                     // Kit scheme-name SectionHeader above the legend list
                     // (Preview.jsx:52) — names the active colour scheme.
-                    imgui_section_header(imgui, m_is_dark, get_view_type_string(m_view_type));
+                    imgui_group_label(imgui, m_is_dark, m_scale, get_view_type_string(m_view_type), 12.0f);
                     offsets = calculate_offsets({ {_u8L("Line Type"), labels}, {_u8L("Time"), times}, {_u8L("Percent"), percents}, {_u8L("Used filament"), used_filaments_m}, {"", used_filaments_g}, {_u8L("Display"), {""}} }, icon_size);
                     append_headers({ {_u8L("Line Type"), offsets[0]}, {_u8L("Time"), offsets[1]}, {_u8L("Percent"), offsets[2]}, {_u8L("Used filament"), offsets[3]}, {"", offsets[4]}, {_u8L("Display"), offsets[5]} });
                     break;
@@ -2531,43 +2911,24 @@ namespace Slic3r
                 }
                 case EViewType::ColorPrint:
                 {
-                    std::vector<std::string> total_filaments;
-                    char buffer[64];
-                    ::sprintf(buffer, imperial_units ? "%.2f in\n%.2f oz" : "%.2f m\n%.2f g", ps.total_used_filament / /*1000*/koef, ps.total_weight / unit_conver);
-                    total_filaments.push_back(buffer);
-                    std::vector<std::pair<std::string, std::vector<::string>>> title_columns;
-                    if (displayed_columns & ColumnData::Model) {
-                        title_columns.push_back({ _u8L("Filament"), {""} });
-                        title_columns.push_back({ _u8L("Model"), total_filaments });
-                    }
-                    if (displayed_columns & ColumnData::Support) {
-                        title_columns.push_back({ _u8L("Support"), total_filaments });
-                    }
-                    if (displayed_columns & ColumnData::Flushed) {
-                        title_columns.push_back({ _u8L("Flushed"), total_filaments });
-                    }
-                    if (displayed_columns & ColumnData::WipeTower) {
-                        title_columns.push_back({ _u8L("Tower"), total_filaments });
-                    }
-                    if ((displayed_columns & ~ColumnData::Model) > 0) {
-                        title_columns.push_back({ _u8L("Total"), total_filaments });
-                    }
-                    if (is_show_left_right_result) {
-                        title_columns.push_back({ _u8L("Nozzles"), {""} });
-                    } else if (show_nozzle_col) {
-                        //来自分组结果的每根耗材喷嘴分配。提供样本使该列有足够宽度。
-                        std::vector<std::string> nozzle_samples;
-                        for (unsigned char extruder_id : m_extruder_ids)
-                            nozzle_samples.push_back(get_n1x_nozzle_label(group_result, static_cast<int>(extruder_id)));
-                        title_columns.push_back({ _u8L("Nozzle"), nozzle_samples });
-                    }
-                    auto offsets_ = calculate_offsets(title_columns, icon_size);
-                    std::vector<std::pair<std::string, float>> title_offsets;
-                    for (int i = 0; i < offsets_.size(); i++) {
-                        title_offsets.push_back({ title_columns[i].first, offsets_[i] });
-                        color_print_offsets[title_columns[i].first] = offsets_[i];
-                    }
-                    append_headers(title_offsets);
+                    // The ink table is drawn inside the summary well after the option
+                    // chips; here only its column headers are collected, in the same
+                    // order and under the same conditions as the row cells below.
+                    has_ink_group = true;
+                    if (displayed_columns & ColumnData::Model)
+                        ink_headers.push_back(_u8L("Model"));
+                    if (displayed_columns & ColumnData::Support)
+                        ink_headers.push_back(_u8L("Support"));
+                    if (displayed_columns & ColumnData::Flushed)
+                        ink_headers.push_back(_u8L("Flushed"));
+                    if (displayed_columns & ColumnData::WipeTower)
+                        ink_headers.push_back(_u8L("Tower"));
+                    if ((displayed_columns & ~ColumnData::Model) > 0)
+                        ink_headers.push_back(_u8L("Total"));
+                    if (is_show_left_right_result)
+                        ink_headers.push_back(_u8L("Nozzles"));
+                    else if (show_nozzle_col)
+                        ink_headers.push_back(_u8L("Nozzle"));
                     break;
                 }
                 // helio
@@ -2668,129 +3029,96 @@ namespace Slic3r
                 }
                 case EViewType::ColorPrint:
                 {
-                    //BBS: replace model custom gcode with current plate custom gcode
-                    const std::vector<CustomGCode::Item>& custom_gcode_per_print_z = wxGetApp().is_editor() ? wxGetApp().plater()->model().get_curr_plate_custom_gcodes().gcodes : m_custom_gcode_per_print_z;
-                    size_t total_items = 1;
-                    // BBS: no ColorChange type, use ToolChange
-                    //for (size_t extruder_id : m_extruder_ids) {
-                    //    total_items += color_print_ranges(extruder_id, custom_gcode_per_print_z).size();
-                    //}
-                    const bool need_scrollable = static_cast<float>(total_items) * (icon_size + ImGui::GetStyle().ItemSpacing.y) > child_height;
-                    // add scrollable region, if needed
-                    if (need_scrollable)
-                        ImGui::BeginChild("color_prints", { -1.0f, child_height }, false);
+                    // The rows are collected here and drawn inside the summary well
+                    // after the option chips (same column order as ink_headers).
+                    auto format_cell = [imperial_units](double meters, double grams) {
+                        char cell[64];
+                        ::sprintf(cell, imperial_units ? "%.2f in
+%.2f oz" : "%.2f m
+%.2f g", meters, grams);
+                        return std::string(cell);
+                    };
                     // shows only extruders actually used
                     size_t i = 0;
                     for (auto extruder_idx : m_extruder_ids) {
                         const bool filament_visible = m_tools.m_tool_visibles[extruder_idx];
                         if (i < model_used_filaments_m.size() && i < model_used_filaments_g.size()) {
-                            std::vector<std::pair<std::string, float>> columns_offsets;
-                            columns_offsets.push_back({ std::to_string(extruder_idx + 1), color_print_offsets[_u8L("Filament")] });
+                            WellInkRow row;
+                            row.color   = m_tools.m_tool_colors[extruder_idx];
+                            row.index   = std::to_string(extruder_idx + 1);
+                            row.visible = filament_visible;
                             char buf[64];
-                            float column_sum_m = 0.0f;
-                            float column_sum_g = 0.0f;
+                            double column_sum_m = 0.0;
+                            double column_sum_g = 0.0;
                             if (displayed_columns & ColumnData::Model) {
                                 if ((displayed_columns & ~ColumnData::Model) > 0)
-                                    ::sprintf(buf, imperial_units ? "%.2f in\n%.2f oz" : "%.2f m\n%.2f g", model_used_filaments_m[i], model_used_filaments_g[i] / unit_conver);
-                                else
+                                    row.cells.push_back(format_cell(model_used_filaments_m[i], model_used_filaments_g[i] / unit_conver));
+                                else {
                                     ::sprintf(buf, imperial_units ? "%.2f in    %.2f oz" : "%.2f m    %.2f g", model_used_filaments_m[i], model_used_filaments_g[i] / unit_conver);
-                                columns_offsets.push_back({ buf, color_print_offsets[_u8L("Model")] });
+                                    row.cells.push_back(buf);
+                                }
                                 column_sum_m += model_used_filaments_m[i];
                                 column_sum_g += model_used_filaments_g[i];
                             }
                             if (displayed_columns & ColumnData::Support) {
-                                ::sprintf(buf, imperial_units ? "%.2f in\n%.2f oz" : "%.2f m\n%.2f g", support_used_filaments_m[i], support_used_filaments_g[i] / unit_conver);
-                                columns_offsets.push_back({ buf, color_print_offsets[_u8L("Support")] });
+                                row.cells.push_back(format_cell(support_used_filaments_m[i], support_used_filaments_g[i] / unit_conver));
                                 column_sum_m += support_used_filaments_m[i];
                                 column_sum_g += support_used_filaments_g[i];
                             }
                             if (displayed_columns & ColumnData::Flushed) {
-                                ::sprintf(buf, imperial_units ? "%.2f in\n%.2f oz" : "%.2f m\n%.2f g", flushed_filaments_m[i], flushed_filaments_g[i] / unit_conver);
-                                columns_offsets.push_back({ buf, color_print_offsets[_u8L("Flushed")] });
+                                row.cells.push_back(format_cell(flushed_filaments_m[i], flushed_filaments_g[i] / unit_conver));
                                 column_sum_m += flushed_filaments_m[i];
                                 column_sum_g += flushed_filaments_g[i];
                             }
                             if (displayed_columns & ColumnData::WipeTower) {
-                                ::sprintf(buf, imperial_units ? "%.2f in\n%.2f oz" : "%.2f m\n%.2f g", wipe_tower_used_filaments_m[i], wipe_tower_used_filaments_g[i] / unit_conver);
-                                columns_offsets.push_back({ buf, color_print_offsets[_u8L("Tower")] });
+                                row.cells.push_back(format_cell(wipe_tower_used_filaments_m[i], wipe_tower_used_filaments_g[i] / unit_conver));
                                 column_sum_m += wipe_tower_used_filaments_m[i];
                                 column_sum_g += wipe_tower_used_filaments_g[i];
                             }
-                            if ((displayed_columns & ~ColumnData::Model) > 0) {
-                                ::sprintf(buf, imperial_units ? "%.2f in\n%.2f oz" : "%.2f m\n%.2f g", column_sum_m, column_sum_g / unit_conver);
-                                columns_offsets.push_back({ buf, color_print_offsets[_u8L("Total")] });
-                            }
-                            if (is_show_left_right_result) {
-                                std::string nozzle_str   = get_nozzle_label(group_result, static_cast<int>(extruder_idx));
-                                ::sprintf(buf, "%s", nozzle_str.c_str());
-                                columns_offsets.push_back({buf, color_print_offsets[_u8L("Nozzles")]});
-                            } else if (show_nozzle_col) {
-                                columns_offsets.push_back({ get_n1x_nozzle_label(group_result, static_cast<int>(extruder_idx)), color_print_offsets[_u8L("Nozzle")] });
-                            }
-                            append_item(EItemType::Rect, m_tools.m_tool_colors[extruder_idx], columns_offsets, false, filament_visible, [this, extruder_idx]() {
+                            if ((displayed_columns & ~ColumnData::Model) > 0)
+                                row.cells.push_back(format_cell(column_sum_m, column_sum_g / unit_conver));
+                            if (is_show_left_right_result)
+                                row.cells.push_back(get_nozzle_label(group_result, static_cast<int>(extruder_idx)));
+                            else if (show_nozzle_col)
+                                row.cells.push_back(get_n1x_nozzle_label(group_result, static_cast<int>(extruder_idx)));
+                            row.on_click = [this, extruder_idx]() {
                                 m_tools.m_tool_visibles[extruder_idx] = !m_tools.m_tool_visibles[extruder_idx];
                                 on_visibility_changed();
-                                });
+                            };
+                            ink_rows.push_back(std::move(row));
                         }
                         i++;
                     }
-                    if (need_scrollable)
-                        ImGui::EndChild();
                     // Sum of all rows
                     char buf[64];
                     if (m_extruder_ids.size() > 1) {
-                        // Separator
-                        ImGuiWindow* window = ImGui::GetCurrentWindow();
-                        const ImRect separator(ImVec2(window->Pos.x + window_padding * 3, window->DC.CursorPos.y), ImVec2(window->Pos.x + window->Size.x - window_padding * 3, window->DC.CursorPos.y + 1.0f));
-                        ImGui::ItemSize(ImVec2(0.0f, 0.0f));
-                        const bool item_visible = ImGui::ItemAdd(separator, 0);
-                        window->DrawList->AddLine(separator.Min, ImVec2(separator.Max.x, separator.Min.y), ImGui::GetColorU32(ImGuiCol_Separator));
-                        std::vector<std::pair<std::string, float>> columns_offsets;
-                        columns_offsets.push_back({ _u8L("Total"), color_print_offsets[_u8L("Filament")] });
+                        WellInkRow total;
+                        total.index    = _u8L("Total");
+                        total.is_total = true;
                         if (displayed_columns & ColumnData::Model) {
                             if ((displayed_columns & ~ColumnData::Model) > 0)
-                                ::sprintf(buf, imperial_units ? "%.2f in\n%.2f oz" : "%.2f m\n%.2f g", total_model_used_filament_m, total_model_used_filament_g / unit_conver);
-                            else
+                                total.cells.push_back(format_cell(total_model_used_filament_m, total_model_used_filament_g / unit_conver));
+                            else {
                                 ::sprintf(buf, imperial_units ? "%.2f in    %.2f oz" : "%.2f m    %.2f g", total_model_used_filament_m, total_model_used_filament_g / unit_conver);
-                            columns_offsets.push_back({ buf, color_print_offsets[_u8L("Model")] });
+                                total.cells.push_back(buf);
+                            }
                         }
-                        if (displayed_columns & ColumnData::Support) {
-                            ::sprintf(buf, imperial_units ? "%.2f in\n%.2f oz" : "%.2f m\n%.2f g", total_support_used_filament_m, total_support_used_filament_g / unit_conver);
-                            columns_offsets.push_back({ buf, color_print_offsets[_u8L("Support")] });
-                        }
-                        if (displayed_columns & ColumnData::Flushed) {
-                            ::sprintf(buf, imperial_units ? "%.2f in\n%.2f oz" : "%.2f m\n%.2f g", total_flushed_filament_m, total_flushed_filament_g / unit_conver);
-                            columns_offsets.push_back({ buf, color_print_offsets[_u8L("Flushed")] });
-                        }
-                        if (displayed_columns & ColumnData::WipeTower) {
-                            ::sprintf(buf, imperial_units ? "%.2f in\n%.2f oz" : "%.2f m\n%.2f g", total_wipe_tower_used_filament_m, total_wipe_tower_used_filament_g / unit_conver);
-                            columns_offsets.push_back({ buf, color_print_offsets[_u8L("Tower")] });
-                        }
-                        if ((displayed_columns & ~ColumnData::Model) > 0) {
-                            ::sprintf(buf, imperial_units ? "%.2f in\n%.2f oz" : "%.2f m\n%.2f g", total_model_used_filament_m + total_support_used_filament_m + total_flushed_filament_m + total_wipe_tower_used_filament_m,
-                                (total_model_used_filament_g + total_support_used_filament_g + total_flushed_filament_g + total_wipe_tower_used_filament_g) / unit_conver);
-                            columns_offsets.push_back({ buf, color_print_offsets[_u8L("Total")] });
-                        }
-                        append_item(EItemType::None, m_tools.m_tool_colors[0], columns_offsets);
+                        if (displayed_columns & ColumnData::Support)
+                            total.cells.push_back(format_cell(total_support_used_filament_m, total_support_used_filament_g / unit_conver));
+                        if (displayed_columns & ColumnData::Flushed)
+                            total.cells.push_back(format_cell(total_flushed_filament_m, total_flushed_filament_g / unit_conver));
+                        if (displayed_columns & ColumnData::WipeTower)
+                            total.cells.push_back(format_cell(total_wipe_tower_used_filament_m, total_wipe_tower_used_filament_g / unit_conver));
+                        if ((displayed_columns & ~ColumnData::Model) > 0)
+                            total.cells.push_back(format_cell(total_model_used_filament_m + total_support_used_filament_m + total_flushed_filament_m + total_wipe_tower_used_filament_m,
+                                (total_model_used_filament_g + total_support_used_filament_g + total_flushed_filament_g + total_wipe_tower_used_filament_g) / unit_conver));
+                        ink_rows.push_back(std::move(total));
                     }
-                    //BBS display filament change times / cost
-                    // These summary lines sit below the FILAMENT | MODEL table.
-                    // Give them a clear break from the table plus the same
-                    // vertical row advance as the table rows (append_item uses
-                    // ItemSpacing.y == 6*scale) so they no longer crowd the
-                    // per-filament value rows above them.
-                    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(ImGui::GetStyle().ItemSpacing.x, 6.0f * m_scale));
-                    ImGui::Dummy({ window_padding, window_padding });
-                    {
-                        // Same table rows as the time estimation card below.
-                        const float right_edge = ImGui::GetWindowContentRegionMax().x - window_padding * 2.0f;
-                        ::sprintf(buf, "%d", m_print_statistics.total_filament_changes);
-                        imgui_stat_row(imgui, m_is_dark, _u8L("Filament change times"), buf, window_padding, right_edge);
-                        //BBS display cost
-                        ::sprintf(buf, "%.2f", ps.total_cost);
-                        imgui_stat_row(imgui, m_is_dark, _u8L("Cost"), buf, window_padding, right_edge);
-                    }
-                    ImGui::PopStyleVar(1);
+                    // Filament change count and cost: statistic rows at the end of the INK group.
+                    ::sprintf(buf, "%d", m_print_statistics.total_filament_changes);
+                    ink_change_count_text = buf;
+                    ::sprintf(buf, "%.2f", ps.total_cost);
+                    ink_cost_text = buf;
                     break;
                 }
                 // helio
@@ -2838,6 +3166,116 @@ namespace Slic3r
                 // them as legend rows (kit Preview.jsx Options section).
                 if (m_view_type == EViewType::FeatureType || m_view_type == EViewType::ColorPrint)
                     render_options_chips();
+                // The summary well: one container for every statistic, inset 8 px
+                // from the dock edges. The ink table (ColorPrint view) is its first
+                // group and the time estimate its second; other views show only the
+                // time group. The header plate above keeps spanning the dock.
+                if (has_ink_group || show_estimated) {
+                    ImGui::Dummy({ window_padding, 2.0f * window_padding });
+                    SummaryWell well;
+                    well_begin(well, imgui, m_is_dark, m_scale, dock_x0 + 8.0f * m_scale, dock_x0 + dock_span - 8.0f * m_scale);
+                    if (has_ink_group) {
+                        well_ink_group(well, _u8L("Filament"), ink_headers, ink_rows, child_height);
+                        well.gap(8.0f);
+                        well_stat_row(well, _u8L("Filament change times"), ink_change_count_text);
+                        well_stat_row(well, _u8L("Cost"), ink_cost_text);
+                    }
+                    if (show_estimated) {
+                        if (has_ink_group)
+                            well_group_break(well);
+                        std::string time_title = m_view_type == EViewType::FeatureType ? _u8L("Total Estimation") : _u8L("Time Estimation");
+                        auto can_show_mode_button = [this](PrintEstimatedStatistics::ETimeMode mode) {
+                            bool show = false;
+                            if (m_print_statistics.modes.size() > 1 && m_print_statistics.modes[static_cast<size_t>(mode)].roles_times.size() > 0) {
+                                for (size_t i = 0; i < m_print_statistics.modes.size(); ++i) {
+                                    if (i != static_cast<size_t>(mode) &&
+                                        m_print_statistics.modes[i].time > 0.0f &&
+                                        short_time(get_time_dhms(m_print_statistics.modes[static_cast<size_t>(mode)].time)) != short_time(get_time_dhms(m_print_statistics.modes[i].time))) {
+                                        show = true;
+                                        break;
+                                    }
+                                }
+                            }
+                            return show;
+                            };
+                        if (can_show_mode_button(m_time_estimate_mode)) {
+                            switch (m_time_estimate_mode)
+                            {
+                            case PrintEstimatedStatistics::ETimeMode::Normal: { time_title += " [" + _u8L("Normal mode") + "]"; break; }
+                            default: { assert(false); break; }
+                            }
+                        }
+                        double timelapse_time = 0.f;
+                        if (auto timelapse_time_iter = m_gcode_result->skippable_part_time.find(SkipType::stTimelapse); timelapse_time_iter != m_gcode_result->skippable_part_time.end()) {
+                            timelapse_time = timelapse_time_iter->second;
+                        }
+                        // Mode switch as a text link on the title row (own row after the
+                        // last statistic when it does not fit beside the title).
+                        PrintEstimatedStatistics::ETimeMode switch_target = m_time_estimate_mode;
+                        wxString switch_label;
+                        switch (m_time_estimate_mode) {
+                        case PrintEstimatedStatistics::ETimeMode::Normal: {
+                            switch_label  = _L("Switch to silent mode");
+                            switch_target = PrintEstimatedStatistics::ETimeMode::Stealth;
+                            break;
+                        }
+                        case PrintEstimatedStatistics::ETimeMode::Stealth: {
+                            switch_label  = _L("Switch to normal mode");
+                            switch_target = PrintEstimatedStatistics::ETimeMode::Normal;
+                            break;
+                        }
+                        default: { assert(false); break; }
+                        }
+                        const bool has_switch = !switch_label.empty() && can_show_mode_button(switch_target);
+                        const std::string switch_text = has_switch ? well_bilingual_link_text(switch_label, dock_span) : std::string();
+                        bool switch_clicked = false;
+                        bool switch_pending = false;
+                        if (well_group_header(well, time_title, switch_text, "##time_mode_switch", switch_pending))
+                            switch_clicked = true;
+                        std::string prepare_str;
+                        if (timelapse_time != 0.0f)
+                            prepare_str = _u8L("Prepare and timelapse time");
+                        else
+                            prepare_str = _u8L("Prepare time");
+                        if (m_view_type == EViewType::FeatureType) {
+                            //BBS display filament cost
+                            char buf[96];
+                            ::sprintf(buf, imperial_units ? "%.2f in  %.2f oz" : "%.2f m  %.2f g", ps.total_used_filament / koef,
+                                      ps.total_weight / unit_conver);
+                            well_stat_row(well, _u8L("Total Filament"), buf);
+                            auto exlude_m = total_support_used_filament_m + total_flushed_filament_m + total_wipe_tower_used_filament_m;
+                            auto exlude_g = total_support_used_filament_g + total_flushed_filament_g + total_wipe_tower_used_filament_g;
+                            ::sprintf(buf, imperial_units ? "%.2f in  %.2f oz" : "%.2f m  %.2f g", ps.total_used_filament / koef - exlude_m,
+                                      (ps.total_weight - exlude_g) / unit_conver);
+                            well_stat_row(well, _u8L("Model Filament"), buf);
+                            //BBS: display cost of filaments
+                            ::sprintf(buf, "%.2f", ps.total_cost);
+                            well_stat_row(well, _u8L("Cost"), buf);
+                        }
+                        //BBS: start gcode is mostly same with prepeare time
+                        if (time_mode.prepare_time != 0.0f) {
+                            if (timelapse_time != 0.0f)
+                                well_stat_row(well, prepare_str, short_time(get_time_dhms(time_mode.prepare_time)) + " + " + short_time(get_time_dhms(timelapse_time)));
+                            else
+                                well_stat_row(well, prepare_str, short_time(get_time_dhms(time_mode.prepare_time)));
+                        }
+                        well_stat_row(well, _u8L("Model printing time"), short_time(get_time_dhms(time_mode.time - time_mode.prepare_time - timelapse_time)));
+                        well_total_rule(well);
+                        well_stat_row(well, _u8L("Total time"), short_time(get_time_dhms(time_mode.time)), true);
+                        if (switch_pending && well_link_row(well, switch_text, "##time_mode_switch_row"))
+                            switch_clicked = true;
+                        if (switch_clicked && has_switch) {
+                            m_time_estimate_mode = switch_target;
+#if ENABLE_ENHANCED_IMGUI_SLIDER_FLOAT
+                            imgui.set_requires_extra_frame();
+#else
+                            wxGetApp().plater()->get_current_canvas3D()->set_as_dirty();
+                            wxGetApp().plater()->get_current_canvas3D()->request_extra_frame();
+#endif // ENABLE_ENHANCED_IMGUI_SLIDER_FLOAT
+                        }
+                    }
+                    well_end(well);
+                }
                 // partial estimated printing time section
                 if (m_view_type == EViewType::ColorPrint) {
                     using Times = std::pair<float, float>;
@@ -3117,129 +3555,6 @@ namespace Slic3r
                             }
                         }
                     }
-                }
-                // total estimated printing time section
-                if (show_estimated) {
-                    ImGui::Spacing();
-                    // Render the estimate as a Material card inside the fixed
-                    // legend dock. Draw the surface on a lower channel so the
-                    // existing localized content and controls remain unchanged.
-                    draw_list->ChannelsSplit(2);
-                    draw_list->ChannelsSetCurrent(1);
-                    ImGui::BeginGroup();
-                    std::string time_title = m_view_type == EViewType::FeatureType ? _u8L("Total Estimation") : _u8L("Time Estimation");
-                    auto can_show_mode_button = [this](PrintEstimatedStatistics::ETimeMode mode) {
-                        bool show = false;
-                        if (m_print_statistics.modes.size() > 1 && m_print_statistics.modes[static_cast<size_t>(mode)].roles_times.size() > 0) {
-                            for (size_t i = 0; i < m_print_statistics.modes.size(); ++i) {
-                                if (i != static_cast<size_t>(mode) &&
-                                    m_print_statistics.modes[i].time > 0.0f &&
-                                    short_time(get_time_dhms(m_print_statistics.modes[static_cast<size_t>(mode)].time)) != short_time(get_time_dhms(m_print_statistics.modes[i].time))) {
-                                    show = true;
-                                    break;
-                                }
-                            }
-                        }
-                        return show;
-                        };
-                    if (can_show_mode_button(m_time_estimate_mode)) {
-                        switch (m_time_estimate_mode)
-                        {
-                        case PrintEstimatedStatistics::ETimeMode::Normal: { time_title += " [" + _u8L("Normal mode") + "]"; break; }
-                        default: { assert(false); break; }
-                        }
-                    }
-                    double timelapse_time = 0.f;
-                    if (auto timelapse_time_iter = m_gcode_result->skippable_part_time.find(SkipType::stTimelapse); timelapse_time_iter != m_gcode_result->skippable_part_time.end()) {
-                        timelapse_time = timelapse_time_iter->second;
-                    }
-                    ImGui::Dummy(ImVec2(0.0f, ImGui::GetFontSize() * 0.1));
-                    ImGui::Dummy({ window_padding, window_padding });
-                    ImGui::SameLine();
-                    // Card title as an MD3 SectionHeader with the kit 'insights' glyph.
-                    imgui_section_header(imgui, m_is_dark, time_title, MaterialIcon::Insights);
-                    std::string total_filament_str = _u8L("Total Filament");
-                    std::string model_filament_str = _u8L("Model Filament");
-                    std::string cost_str = _u8L("Cost");
-                    std::string prepare_str;
-                    if (timelapse_time != 0.0f)
-                        prepare_str = _u8L("Prepare and timelapse time");
-                    else
-                        prepare_str = _u8L("Prepare time");
-                    std::string print_str = _u8L("Model printing time");
-                    std::string total_str = _u8L("Total time");
-                    // Every statistic is one table row (imgui_stat_row): label on the
-                    // left, value right-aligned at the card's right edge, Cantonese
-                    // caption under the label in bilingual mode.
-                    const float row_indent = window_padding;
-                    const float right_edge = ImGui::GetWindowContentRegionMax().x - window_padding * 2.0f;
-                    auto stat = [&](const std::string &label, const std::string &value) {
-                        imgui_stat_row(imgui, m_is_dark, label, value, row_indent, right_edge);
-                    };
-                    if (m_view_type == EViewType::FeatureType) {
-                        //BBS display filament cost
-                        bool imperial_units = wxGetApp().app_config->get("use_inches") == "1";
-                        char buf[96];
-                        ::sprintf(buf, imperial_units ? "%.2f in  %.2f oz" : "%.2f m  %.2f g", ps.total_used_filament / koef,
-                                  ps.total_weight / unit_conver);
-                        stat(total_filament_str, buf);
-                        auto exlude_m = total_support_used_filament_m + total_flushed_filament_m + total_wipe_tower_used_filament_m;
-                        auto exlude_g = total_support_used_filament_g + total_flushed_filament_g + total_wipe_tower_used_filament_g;
-                        ::sprintf(buf, imperial_units ? "%.2f in  %.2f oz" : "%.2f m  %.2f g", ps.total_used_filament / koef - exlude_m,
-                                  (ps.total_weight - exlude_g) / unit_conver);
-                        stat(model_filament_str, buf);
-                        //BBS: display cost of filaments
-                        ::sprintf(buf, "%.2f", ps.total_cost);
-                        stat(cost_str, buf);
-                    }
-                    //BBS: start gcode is mostly same with prepeare time
-                    if (time_mode.prepare_time != 0.0f) {
-                        if (timelapse_time != 0.0f)
-                            stat(prepare_str, short_time(get_time_dhms(time_mode.prepare_time)) + " + " + short_time(get_time_dhms(timelapse_time)));
-                        else
-                            stat(prepare_str, short_time(get_time_dhms(time_mode.prepare_time)));
-                    }
-                    stat(print_str, short_time(get_time_dhms(time_mode.time - time_mode.prepare_time - timelapse_time)));
-                    stat(total_str, short_time(get_time_dhms(time_mode.time)));
-                    auto show_mode_button = [this, &imgui, can_show_mode_button](const wxString& label, PrintEstimatedStatistics::ETimeMode mode) {
-                        if (can_show_mode_button(mode)) {
-                            if (imgui.button(label)) {
-                                m_time_estimate_mode = mode;
-#if ENABLE_ENHANCED_IMGUI_SLIDER_FLOAT
-                                imgui.set_requires_extra_frame();
-#else
-                                wxGetApp().plater()->get_current_canvas3D()->set_as_dirty();
-                                wxGetApp().plater()->get_current_canvas3D()->request_extra_frame();
-#endif // ENABLE_ENHANCED_IMGUI_SLIDER_FLOAT
-                            }
-                        }
-                        };
-                    switch (m_time_estimate_mode) {
-                    case PrintEstimatedStatistics::ETimeMode::Normal: {
-                        show_mode_button(_L("Switch to silent mode"), PrintEstimatedStatistics::ETimeMode::Stealth);
-                        break;
-                    }
-                    case PrintEstimatedStatistics::ETimeMode::Stealth: {
-                        show_mode_button(_L("Switch to normal mode"), PrintEstimatedStatistics::ETimeMode::Normal);
-                        break;
-                    }
-                    default: { assert(false); break; }
-                    }
-                    ImGui::EndGroup();
-                    const ImVec2 stats_rect_min = ImGui::GetItemRectMin();
-                    const ImVec2 stats_rect_max = ImGui::GetItemRectMax();
-                    // The card spans the dock like the blocks around it, instead of
-                    // hugging its widest line with its left outline outside the clip
-                    // rect. It grows past the dock only for a line wider than the dock.
-                    const ImVec2 stats_min(dock_x0, stats_rect_min.y - 4.0f * m_scale);
-                    const ImVec2 stats_max(std::max(dock_x0 + dock_span, stats_rect_max.x + 6.0f * m_scale),
-                                           stats_rect_max.y + 6.0f * m_scale);
-                    draw_list->ChannelsSetCurrent(0);
-                    // A quiet statistics card separates summary values from the dock controls.
-                    const float stats_radius = float(MD3::Metrics::active().radius) * m_scale;
-                    draw_list->AddRectFilled(stats_min, stats_max, ImGui::GetColorU32(md3_imgui_color(MD3::Role::SurfaceContainerLowest, m_is_dark)), stats_radius);
-                    draw_list->AddRect(stats_min, stats_max, ImGui::GetColorU32(outline), stats_radius, 0, 1.0f * m_scale);
-                    draw_list->ChannelsMerge();
                 }
                 // ColorPrint options render as MD3 icon chips via
                 // render_options_chips() above (kit Preview.jsx Options section).
