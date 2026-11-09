@@ -60,12 +60,12 @@
     {
       "route": "application-integration/lan-model-drop-site.md",
       "title": "LAN model drop site",
-      "sha256": "7580a33947368102cc8713b009168366340d683ccaea09e9374c26b24af2134d"
+      "sha256": "8dc0affcb6e98b837128d004ae728a85bbf52afe4c1877f71962ebb4f688b7b0"
     },
     {
       "route": "application-integration/lan-model-drop-site.yue_HK.md",
       "title": "LAN 模型投遞網站",
-      "sha256": "8ef105dd892e544ed7ccd58f3022ecc45521f4bf055a3fd8e1cc2a2be441bd28"
+      "sha256": "be25fb21fbb31534cbf5ab5877360efbd925e1fb0562739d10368073c40c0bdf"
     },
     {
       "route": "application-integration/lan-model-drop.md",
@@ -1175,12 +1175,12 @@
     {
       "route": "prepare/README.md",
       "title": "Prepare workspace",
-      "sha256": "0b8d20f82cacf0279e8ad2f6ebbbb44b1a2db354e5bb2e584556c214893c7c4d"
+      "sha256": "2c44925d2cffb18852c633ec3eeeb46b47c3022883aecd86b6db2854648f9d3c"
     },
     {
       "route": "prepare/README.yue_HK.md",
       "title": "準備工作區",
-      "sha256": "5ac2ab0f22eeeb31082a848cebe8bacf58d00d6974885907cd060968abd407b8"
+      "sha256": "d564b2d083f6e50d1ad4ea431f5ba4ddfa5df6303829ea9b1abc4aa3139b7738"
     },
     {
       "route": "prepare/dockable-sidebar.md",
@@ -1191,6 +1191,16 @@
       "route": "prepare/dockable-sidebar.yue_HK.md",
       "title": "可停靠準備邊欄",
       "sha256": "c22df2a4debb439f4486752fdcc94b3a99b4b188394bb6855347f0d1980e2f34"
+    },
+    {
+      "route": "prepare/multi-slice.md",
+      "title": "Multi-slice: one sliced file per ink",
+      "sha256": "61e556b38d806b4d953eb95ecc53264f1d89ba5d0e4768d27f05cf145be6e4e3"
+    },
+    {
+      "route": "prepare/multi-slice.yue_HK.md",
+      "title": "多重切片：每款墨水一個切片檔",
+      "sha256": "d17800bfcbba2d5d6eecc6a138e5c99068be1d959ce2fe9a640e63210feb8dcc"
     },
     {
       "route": "prepare/native-lifecycle.md",
@@ -2295,7 +2305,7 @@
       "bytes": 16430
     }
   ],
-  "bundle_sha256": "1653fa475361816f164017f486fc4daa344697ddc86b556b89cdecf87495662d",
+  "bundle_sha256": "8d4d203995528ab23de8b4f72713eb82d690523e747214a2b0c69b720c6e05c3",
   "unavailable_references": [
     {
       "source": "api/README.md",

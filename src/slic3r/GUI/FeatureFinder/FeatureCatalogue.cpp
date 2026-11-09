@@ -69,6 +69,7 @@ const std::vector<Feature> &features()
         {"status-hub", "records", 0xE9F4 /* hub */, L("Status Hub"), L("Help, Status Hub"), "", "status delivery enrollment", Badge::None, State::Ready, "command:status-hub"},
         // Tools
         {"local-tools", "tools", 0xF10B /* handyman */, L("Local tools page"), L("File, Local tools"), "", "hub all tools pinned pin recent activity history status", Badge::New, State::Ready, "command:local-tools"},
+        {"multi-slice", "tools", 0xE53B /* layers */, L("Multi-slice"), L("File, Export, Multi-slice"), "", "several inks PLA ABS PETG one sliced file per ink USB drive batch variants", Badge::New, State::Ready, "command:multi-slice"},
         {"base64", "tools", 0xEAD3 /* data_object */, L("Base64 toolkit"), L("File, Base64 toolkit"), "", "encode decode data URL sha256 b64", Badge::New, State::Ready, "command:base64"},
         {"extensions", "tools", 0xE87B /* extension */, L("Extensions"), L("File, Extensions"), "", "plugins add-ons scripts hooks post-processing checklist before sending", Badge::New, State::Ready, "command:extensions"},
         {"converter", "tools", 0xE428 /* transform */, L("Local file converter"), L("File, Local file converter"), "", "convert file formats", Badge::None, State::Ready, "command:converter"},

@@ -38388,3 +38388,78 @@ msgstr ""
 #, possible-c-format, possible-boost-format
 msgid "%s is locked. Click for who locked it and why."
 msgstr ""
+
+msgid "Multi-slice"
+msgstr ""
+
+msgid "Slice the plate once for each chosen ink and save one sliced file per ink"
+msgstr ""
+
+msgid "Slice this plate once for each ink you choose and save one sliced file per ink, ready for the printer's USB drive. For each file every ink slot uses the chosen ink; slot colours stay. Your current inks come back when it is done."
+msgstr ""
+
+msgid "Search inks by name or type"
+msgstr ""
+
+msgid "No inks fit the current printer. Add or show inks in the ink list first."
+msgstr ""
+
+msgid "Change folder"
+msgstr ""
+
+msgid "Show files"
+msgstr ""
+
+msgid "Slice and save"
+msgstr ""
+
+msgid "Stopping after the ink being sliced, then putting your inks back."
+msgstr ""
+
+msgid "Slicing %d of %d. Leave the plate as it is until this finishes."
+msgstr ""
+
+msgid "Choose at least two inks. Each one gets its own sliced file."
+msgstr ""
+
+msgid "%d inks chosen: %d sliced files will be saved."
+msgstr ""
+
+msgid "No folder chosen yet."
+msgstr ""
+
+msgid "Saving to the USB drive %s"
+msgstr ""
+
+msgid "Saving to %s"
+msgstr ""
+
+msgid "Choose where to save the sliced files"
+msgstr ""
+
+msgid "Not saved"
+msgstr ""
+
+msgid "Not saved: %s"
+msgstr ""
+
+msgid "This plate has nothing to print. Put a model on it first."
+msgstr ""
+
+msgid "The folder cannot be reached. Plug the USB drive back in or choose another folder."
+msgstr ""
+
+msgid "the plate did not slice with this ink"
+msgstr ""
+
+msgid "the file could not be written"
+msgstr ""
+
+msgid "Stopped. %d of %d sliced files saved; your inks are back."
+msgstr ""
+
+msgid "Done. %d of %d sliced files saved; your inks are back."
+msgstr ""
+
+msgid "File, Export, Multi-slice"
+msgstr ""

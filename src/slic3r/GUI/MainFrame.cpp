@@ -146,6 +146,7 @@
 #include "FeatureFinder/FeatureCommands.hpp"
 #include "FeatureFinder/FeatureFinderPanel.hpp"
 #include "FeatureFinder/LocalToolsHubPanel.hpp"
+#include "MultiSlice/MultiSliceDialog.hpp"
 #include "libslic3r/Utils.hpp"
 
 
@@ -5066,6 +5067,11 @@ void MainFrame::init_menubar_as_editor()
         append_menu_item(export_menu, wxID_ANY, _L("Export plate sliced file") + dots + "\t" + ctrl + "G", _L("Export current sliced file"),
             [this](wxCommandEvent&) { if (m_plater) wxPostEvent(m_plater, SimpleEvent(EVT_GLTOOLBAR_EXPORT_SLICED_FILE)); }, "menu_export_sliced_file", nullptr,
             [this](){return can_export_gcode(); }, this);
+
+        // One sliced file per chosen ink, for the printer's USB drive.
+        append_menu_item(export_menu, wxID_ANY, _L("Multi-slice") + dots, _L("Slice the plate once for each chosen ink and save one sliced file per ink"),
+            feature_command("multi-slice", [this]() { if (m_plater) MultiSliceDialog(this).ShowModal(); }), "menu_export_sliced_file", nullptr,
+            [this]() { return can_export_model(); }, this);
 
         append_menu_item(export_menu, wxID_ANY, _L("Export all plate sliced file") + dots/* + "\tCtrl+G"*/, _L("Export all plate sliced file"),
             [this](wxCommandEvent&) { if (m_plater) wxPostEvent(m_plater, SimpleEvent(EVT_GLTOOLBAR_EXPORT_ALL_SLICED_FILE)); }, "menu_export_sliced_file", nullptr,

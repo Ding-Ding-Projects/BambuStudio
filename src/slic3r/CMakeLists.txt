@@ -994,6 +994,10 @@ list(APPEND SLIC3R_GUI_SOURCES
     GUI/FeatureFinder/FeatureCommands.hpp
     GUI/FeatureFinder/FeatureFinderPanel.cpp
     GUI/FeatureFinder/FeatureFinderPanel.hpp
+    GUI/MultiSlice/MultiSliceDialog.cpp
+    GUI/MultiSlice/MultiSliceDialog.hpp
+    GUI/MultiSlice/MultiSliceNames.cpp
+    GUI/MultiSlice/MultiSliceNames.hpp
     GUI/PreferencesRemake/PreferenceFormats.cpp
     GUI/PreferencesRemake/PreferenceFormats.hpp
     GUI/PreferencesRemake/PreferenceHistory.cpp

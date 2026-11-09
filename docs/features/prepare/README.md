@@ -14,4 +14,6 @@ This category documents native Prepare-workspace features.
 
 - [Prepare settings scrolling](scroll-ownership.md) documents scroll ownership, wheel and keyboard routing, header sizing and pending runtime verification.
 
+- [Multi-slice](multi-slice.md) slices the current plate once per chosen ink and saves one sliced file per ink, for example for a USB drive.
+
 No Postman collection is applicable: this category exposes no HTTP API.

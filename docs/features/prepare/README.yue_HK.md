@@ -1,6 +1,6 @@
 ---
 translation-of: README.md
-source-sha256: 0b8d20f82cacf0279e8ad2f6ebbbb44b1a2db354e5bb2e584556c214893c7c4d
+source-sha256: 15b3df4f100dd59d6cb92e1a2879d8a3be2c65c2cd1a516b8c7bb83d0a26d30d
 review-status: agent-drafted
 ---
 
@@ -21,3 +21,5 @@ review-status: agent-drafted
 冇 Postman 收集適用：呢個類別冇公開 HTTP API。
 
 - [準備設定捲動](scroll-ownership.yue_HK.md) 記錄捲動擁有權、滾輪與鍵盤路由、標題尺寸同待完成嘅執行驗證。
+
+- [多重切片](multi-slice.yue_HK.md) 按揀咗嘅墨水，將而家個盤每款切一次，每款墨水存一個切片檔，例如放入 USB 手指。

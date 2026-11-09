@@ -59641,3 +59641,128 @@ msgstr "%s 鎖住咗"
 #. review-status: agent-drafted
 msgid "%s is locked. Click for who locked it and why."
 msgstr "%s 鎖住咗。撳一下睇吓邊個鎖同點解。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Multi-slice"
+msgstr "多重切片"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Slice the plate once for each chosen ink and save one sliced file per ink"
+msgstr "揀幾多款墨水就切幾多次，每款墨水各自存一個切片檔"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Slice this plate once for each ink you choose and save one sliced file per ink, ready for the printer's USB drive. For each file every ink slot uses the chosen ink; slot colours stay. Your current inks come back when it is done."
+msgstr "揀幾多款墨水，呢個盤就切幾多次，每款墨水各自存一個切片檔，可以直接放入打印機嘅 USB 手指。每個檔案入面，所有墨水槽都會用返揀咗嗰款墨水，槽嘅顏色唔變。搞掂之後會換返你而家用緊嘅墨水。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Search inks by name or type"
+msgstr "用名或者類型搵墨水"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "No inks fit the current printer. Add or show inks in the ink list first."
+msgstr "冇墨水啱用呢部打印機。請先喺墨水清單加入或者顯示墨水。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Change folder"
+msgstr "換資料夾"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Show files"
+msgstr "睇吓啲檔案"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Slice and save"
+msgstr "切片同儲存"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Stopping after the ink being sliced, then putting your inks back."
+msgstr "切完而家呢款墨水就停，跟住換返你啲墨水。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Slicing %d of %d. Leave the plate as it is until this finishes."
+msgstr "切緊第 %d 個，一共 %d 個。搞掂之前唔好郁個盤。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Choose at least two inks. Each one gets its own sliced file."
+msgstr "最少揀兩款墨水，每款都會有自己嘅切片檔。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "%d inks chosen: %d sliced files will be saved."
+msgstr "揀咗 %d 款墨水：會存 %d 個切片檔。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "No folder chosen yet."
+msgstr "仲未揀資料夾。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Saving to the USB drive %s"
+msgstr "存去 USB 手指 %s"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Saving to %s"
+msgstr "存去 %s"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Choose where to save the sliced files"
+msgstr "揀切片檔存喺邊"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Not saved"
+msgstr "冇存到"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Not saved: %s"
+msgstr "冇存到：%s"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "This plate has nothing to print. Put a model on it first."
+msgstr "呢個盤冇嘢可以打印，請先放個模型上去。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The folder cannot be reached. Plug the USB drive back in or choose another folder."
+msgstr "去唔到嗰個資料夾。請插返 USB 手指，或者揀第二個資料夾。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "the plate did not slice with this ink"
+msgstr "用呢款墨水切唔到個盤"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "the file could not be written"
+msgstr "寫唔到個檔案"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Stopped. %d of %d sliced files saved; your inks are back."
+msgstr "停咗。存咗 %d 個切片檔（共 %d 個）；墨水已經換返。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Done. %d of %d sliced files saved; your inks are back."
+msgstr "搞掂。存咗 %d 個切片檔（共 %d 個）；墨水已經換返。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "File, Export, Multi-slice"
+msgstr "檔案，匯出，多重切片"
