@@ -192,7 +192,8 @@ test('the new class keeps the public names of the old one, and the wxButton bitm
 test('an empty label makes a flat icon button, a label makes a small outlined button', async () => {
   const ext = code(await read('wxExtensions.cpp'));
   const style = body(ext, 'void ScalableButton::init_style(');
-  assert.match(style, /if \(label\.IsEmpty\(\)\) \{[\s\S]*SetIconButton\(container > 36 \? Button::IconShape::Square : Button::IconShape::Circle, container\);/,
+  assert.doesNotMatch(style, /IconShape::Circle/, 'pressable icon buttons are soft squares');
+  assert.match(style, /if \(label\.IsEmpty\(\)\) \{[\s\S]*SetIconButton\(Button::IconShape::Square, container\);/,
     'icon only: the kit icon button, so the hover wash and focus ring exist');
   assert.match(style, /int container = m_px_cnt \+ 6;/, 'sized from the icon so layouts keep their footprint');
   assert.match(style, /if \(size\.x > 0 && size\.y > 0\)\s*container = std::max\(ToDIP\(size\.x\), ToDIP\(size\.y\)\);/, 'a size the caller gave wins');

@@ -212,7 +212,7 @@ void TempInput::Create(wxWindow *parent, wxString text, wxString label, wxString
     m_glyph_active_color = StateColor::semantic(MD3::Role::Primary, MD3::ColorScheme::Device);
     m_glyph_normal_color = StateColor::semantic(MD3::Role::OnSurfaceVariant);
     m_edit_btn = new Button(this, wxEmptyString, wxEmptyString, wxBORDER_NONE);
-    m_edit_btn->SetIconButton(Button::IconShape::Circle, 32, /*filled*/ true, /*danger*/ false);
+    m_edit_btn->SetIconButton(Button::IconShape::Square, 32, /*filled*/ true, /*danger*/ false);
     m_edit_btn->SetGlyph(MaterialIcon::Edit, 18);
     m_edit_btn->SetCanFocus(false);
     m_edit_btn->SetMinSize(FromDIP(wxSize(32, 32)));

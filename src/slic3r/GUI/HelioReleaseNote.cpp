@@ -131,7 +131,7 @@ namespace {
      m_button_cancel->SetFont(Label::Body_14);
      m_button_cancel->SetSize(wxSize(FromDIP(100), FromDIP(36)));
      m_button_cancel->SetMinSize(wxSize(FromDIP(100), FromDIP(36)));
-     m_button_cancel->SetCornerRadius(FromDIP(18)); // kit pill (height/2); Helio dark palette preserved
+     m_button_cancel->SetCornerRadius(MD3::Metrics::soft_radius(FromDIP(36))); // board soft radius; Helio dark palette preserved
      m_button_cancel->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent &e) { EndModal(wxID_NO); });
 
      // Bind checkbox event (checkbox is created in create_legal_page)
@@ -637,7 +637,7 @@ void HelioStatementDialog::create_legal_page()
     m_button_confirm->SetFont(Label::Body_14);
     m_button_confirm->SetSize(wxSize(FromDIP(160), FromDIP(36)));
     m_button_confirm->SetMinSize(wxSize(FromDIP(160), FromDIP(36)));
-    m_button_confirm->SetCornerRadius(FromDIP(18)); // kit pill (height/2); Helio dark palette preserved
+    m_button_confirm->SetCornerRadius(MD3::Metrics::soft_radius(FromDIP(36))); // board soft radius; Helio dark palette preserved
     m_button_confirm->Bind(wxEVT_LEFT_DOWN, &HelioStatementDialog::on_confirm, this);
     m_button_confirm->Disable(); // Disabled until checkbox is checked
     
@@ -700,7 +700,7 @@ void HelioStatementDialog::create_pat_page()
     run_optimization_button->SetFont(Label::Body_14);
     run_optimization_button->SetSize(wxSize(FromDIP(220), FromDIP(36)));
     run_optimization_button->SetMinSize(wxSize(FromDIP(220), FromDIP(36)));
-    run_optimization_button->SetCornerRadius(FromDIP(18)); // kit pill (height/2); Helio dark palette preserved
+    run_optimization_button->SetCornerRadius(MD3::Metrics::soft_radius(FromDIP(36))); // board soft radius; Helio dark palette preserved
     run_optimization_button->SetToolTip(_L("You're nearly there! Now that Helio is activated, your first optimization run for faster, more reliable printing takes only minutes! (Now referred to as 'Enhance' or 'Enhancement')"));
     run_optimization_button->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent& e) {
         EndModal(wxID_OK);
@@ -726,7 +726,7 @@ void HelioStatementDialog::create_pat_page()
     copy_pat_button->SetFont(Label::Body_13);
     copy_pat_button->SetSize(wxSize(FromDIP(120), FromDIP(32)));
     copy_pat_button->SetMinSize(wxSize(FromDIP(120), FromDIP(32)));
-    copy_pat_button->SetCornerRadius(FromDIP(16)); // kit pill (height/2); Helio dark palette preserved
+    copy_pat_button->SetCornerRadius(MD3::Metrics::soft_radius(FromDIP(32))); // board soft radius; Helio dark palette preserved
     copy_pat_button->SetToolTip(_L("Personal Access Token (PAT)\n\nA secure credential that verifies your identity with Helio services. "
         "It's automatically used by BambuStudio for optimizations and simulations.\n\n"
         "You may need to copy this to:\n"
@@ -765,7 +765,7 @@ void HelioStatementDialog::create_pat_page()
     history_button->SetFont(Label::Body_13);
     history_button->SetSize(wxSize(FromDIP(120), FromDIP(32)));
     history_button->SetMinSize(wxSize(FromDIP(120), FromDIP(32)));
-    history_button->SetCornerRadius(FromDIP(16)); // kit pill (height/2); Helio dark palette preserved
+    history_button->SetCornerRadius(MD3::Metrics::soft_radius(FromDIP(32))); // board soft radius; Helio dark palette preserved
     history_button->SetToolTip(_L("View and download recent optimizations and simulations"));
     history_button->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent& e) {
         // Use CallAfter to defer modal dialog creation until after mouse event processing
@@ -1856,7 +1856,7 @@ void HelioInputDialog::update_mode_card_styling(int selected_action)
     buy_now_button->SetSize(wxSize(-1, FromDIP(28)));
     buy_now_button->SetMinSize(wxSize(-1, FromDIP(28)));
     // Kit pill geometry (actions/Button.jsx): radius = height / 2.
-    buy_now_button->SetCornerRadius(MD3::Metrics::pill_radius(FromDIP(28)));
+    buy_now_button->SetCornerRadius(MD3::Metrics::soft_radius(FromDIP(28)));
     buy_now_button->SetToolTip(_L("Loading..."));
     buy_now_button->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent& e) {
         std::string helio_api_key = Slic3r::HelioQuery::get_helio_pat();
@@ -2138,7 +2138,7 @@ void HelioInputDialog::update_mode_card_styling(int selected_action)
     m_button_confirm->SetSize(wxSize(-1, FromDIP(56))); // Large CTA button
     m_button_confirm->SetMinSize(wxSize(-1, FromDIP(56)));
     // Kit pill geometry (actions/Button.jsx): radius = height / 2.
-    m_button_confirm->SetCornerRadius(MD3::Metrics::pill_radius(FromDIP(56)));
+    m_button_confirm->SetCornerRadius(MD3::Metrics::soft_radius(FromDIP(56)));
     m_button_confirm->SetToolTip(_L("Enhancement will only take a few minutes to complete, depending on the size of your object. (A lot of compute is happening in the background) (Formerly referred to as 'Optimize' or 'Optimization')"));
     m_button_confirm->Bind(wxEVT_LEFT_DOWN, &HelioInputDialog::on_confirm, this);
     m_button_confirm->Bind(wxEVT_ENTER_WINDOW, [this](auto& e) { SetCursor(wxCURSOR_HAND); });
@@ -3092,7 +3092,7 @@ HelioPatNotEnoughDialog::HelioPatNotEnoughDialog(wxWindow* parent /*= nullptr*/)
     m_button_ok->SetSize(wxSize(FromDIP(58), FromDIP(24)));
     m_button_ok->SetMinSize(wxSize(FromDIP(58), FromDIP(24)));
     // Kit pill geometry (actions/Button.jsx): radius = height / 2.
-    m_button_ok->SetCornerRadius(MD3::Metrics::pill_radius(FromDIP(24)));
+    m_button_ok->SetCornerRadius(MD3::Metrics::soft_radius(FromDIP(24)));
 
     m_button_ok->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent& e) {
         EndModal(wxID_OK);
@@ -3327,7 +3327,7 @@ HelioRatingDialog::HelioRatingDialog(wxWindow *parent, int original, int optimiz
     m_button_print_plate->SetSize(wxSize(FromDIP(100), FromDIP(24)));
     m_button_print_plate->SetMinSize(wxSize(FromDIP(100), FromDIP(24)));
     // Kit pill geometry (actions/Button.jsx): radius = height / 2.
-    m_button_print_plate->SetCornerRadius(MD3::Metrics::pill_radius(FromDIP(24)));
+    m_button_print_plate->SetCornerRadius(MD3::Metrics::soft_radius(FromDIP(24)));
     m_button_print_plate->SetToolTip(_L("Print the enhanced part immediately"));
     m_button_print_plate->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent& e) {
         EndModal(wxID_OK);
@@ -3348,7 +3348,7 @@ HelioRatingDialog::HelioRatingDialog(wxWindow *parent, int original, int optimiz
     m_button_view_details->SetSize(wxSize(FromDIP(100), FromDIP(24)));
     m_button_view_details->SetMinSize(wxSize(FromDIP(100), FromDIP(24)));
     // Kit pill geometry (actions/Button.jsx): radius = height / 2.
-    m_button_view_details->SetCornerRadius(MD3::Metrics::pill_radius(FromDIP(24)));
+    m_button_view_details->SetCornerRadius(MD3::Metrics::soft_radius(FromDIP(24)));
     m_button_view_details->Bind(wxEVT_LEFT_DOWN, [this](auto& e) {
         EndModal(wxID_CLOSE);
         // Switch to the Preview panel to show details
@@ -3679,7 +3679,7 @@ HelioSimulationResultsDialog::HelioSimulationResultsDialog(wxWindow *parent,
     m_button_view_details->SetSize(wxSize(FromDIP(100), FromDIP(28)));
     m_button_view_details->SetMinSize(wxSize(FromDIP(100), FromDIP(28)));
     // Kit pill geometry (actions/Button.jsx): radius = height / 2.
-    m_button_view_details->SetCornerRadius(MD3::Metrics::pill_radius(FromDIP(28)));
+    m_button_view_details->SetCornerRadius(MD3::Metrics::soft_radius(FromDIP(28)));
     m_button_view_details->Bind(wxEVT_LEFT_DOWN, &HelioSimulationResultsDialog::on_view_details, this);
     m_button_view_details->Bind(wxEVT_ENTER_WINDOW, [this](auto& e) { SetCursor(wxCURSOR_HAND); });
     m_button_view_details->Bind(wxEVT_LEAVE_WINDOW, [this](auto& e) { SetCursor(wxCURSOR_ARROW); });
@@ -3733,7 +3733,7 @@ HelioSimulationResultsDialog::HelioSimulationResultsDialog(wxWindow *parent,
     m_button_enhance->SetSize(wxSize(FromDIP(200), FromDIP(40)));
     m_button_enhance->SetMinSize(wxSize(FromDIP(200), FromDIP(40)));
     // Kit pill geometry (actions/Button.jsx): radius = height / 2.
-    m_button_enhance->SetCornerRadius(MD3::Metrics::pill_radius(FromDIP(40)));
+    m_button_enhance->SetCornerRadius(MD3::Metrics::soft_radius(FromDIP(40)));
     m_button_enhance->SetToolTip(_L("Applies Helio's optimized speed/flow/fan strategy."));
     m_button_enhance->Bind(wxEVT_LEFT_DOWN, &HelioSimulationResultsDialog::on_enhance_speed_quality, this);
     m_button_enhance->Bind(wxEVT_ENTER_WINDOW, [this](auto& e) { SetCursor(wxCURSOR_HAND); });

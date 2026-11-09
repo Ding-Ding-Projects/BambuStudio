@@ -417,7 +417,7 @@ void NozzleRackPanelGroup::StyleModePill()
 {
     if (!m_mode_pill) return;
 
-    m_mode_pill->SetCornerRadius(FromDIP(MODE_PILL_H) / 2.0);
+    m_mode_pill->SetCornerRadius(MD3::Metrics::soft_radius(FromDIP(MODE_PILL_H)));
     m_mode_pill->SetBorderColor(ThemeColor::BrandGreen); // brand colour, identical in both themes
     m_mode_pill->SetBackgroundColor(ThemeColor::White);
     m_mode_pill->SetFont(Label::Body_13);

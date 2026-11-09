@@ -50,7 +50,8 @@ test('filament field retains its Atlas radius after DPI changes and leaves input
   const radiusCalls = materials.match(/m_filament_box->SetCornerRadius\([^;]+/g);
   assert.equal(radiusCalls.length, 2);
   for (const call of radiusCalls) assert.match(call, /MD3::Metrics::active\(\).small_radius/);
-  assert.match(materials, /m_filament_arrow->SetIconButton\(Button::IconShape::Circle, 20\)/);
+  assert.match(materials, /m_filament_arrow->SetIconButton\(Button::IconShape::Square, 20\)/);
+  assert.doesNotMatch(materials, /m_filament_arrow->SetIconButton\(Button::IconShape::Circle/);
   assert.match(materials, /m_filament_arrow->Bind\(wxEVT_BUTTON, \[this\]\(wxCommandEvent&\) \{ on_open_filament_select_dialog\(\); \}\)/);
   assert.match(materials, /m_nozzle_temp_label->SetFont\(::Label::Mono_13\)/);
 });

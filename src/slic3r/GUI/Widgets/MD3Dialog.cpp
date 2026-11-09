@@ -299,11 +299,11 @@ void MD3Dialog::build_shell(const wxString &title, const wxString &subtitle, Mat
     header->Add(titles, 1, wxALIGN_CENTER_VERTICAL);
     header->AddSpacer(FromDIP(8));
 
-    // Circular 36px close IconButton (glyph), with a text fallback when the
+    // Soft-square 36px close IconButton (glyph), with a text fallback when the
     // Material Symbols face is unavailable so the affordance is never blank.
     if (MaterialIcon::available()) {
         m_close_btn = new Button(this, "", "", 0, 0, wxID_ANY);
-        m_close_btn->SetIconButton(Button::IconShape::Circle, 36);
+        m_close_btn->SetIconButton(Button::IconShape::Square, 36);
         m_close_btn->SetGlyph(MaterialIcon::Close, 20);
     } else {
         m_close_btn                = new Button(this, wxString(wxUniChar(0x2715)));
@@ -312,7 +312,7 @@ void MD3Dialog::build_shell(const wxString &title, const wxString &subtitle, Mat
         m_close_btn->SetBorderColor(StateColor(parentBg));
         m_close_btn->SetTextColor(StateColor(chrome_color(MD3::Role::OnSurfaceVariant)));
         m_close_btn->SetMinSize(wxSize(FromDIP(36), FromDIP(36)));
-        m_close_btn->SetCornerRadius(FromDIP(18));
+        m_close_btn->SetCornerRadius(MD3::Metrics::soft_radius(FromDIP(36)));
     }
     // Accessible name + tooltip so assistive tech announces the icon-only close
     // control (it is built with empty labels).

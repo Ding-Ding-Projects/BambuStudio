@@ -419,7 +419,7 @@ wxWindow* FilamentSelectDialog::build_manager_page(wxWindow* parent)
     // Chip-scroll pagination: kit icon buttons, not clickable wxStaticBitmaps
     // (a static bitmap cannot take focus or expose a role).
     m_left_arrow = new Button(page, "");
-    m_left_arrow->SetIconButton(Button::IconShape::Circle, 20);
+    m_left_arrow->SetIconButton(Button::IconShape::Square, 20);
     m_left_arrow->SetGlyph(MaterialIcon::ChevronLeft, 14);
     m_left_arrow->Enable(false);
     m_left_arrow->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) {
@@ -429,7 +429,7 @@ wxWindow* FilamentSelectDialog::build_manager_page(wxWindow* parent)
     });
 
     m_right_arrow = new Button(page, "");
-    m_right_arrow->SetIconButton(Button::IconShape::Circle, 20);
+    m_right_arrow->SetIconButton(Button::IconShape::Square, 20);
     m_right_arrow->SetGlyph(MaterialIcon::ChevronRight, 14);
     m_right_arrow->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) {
         if (!m_right_arrow->IsEnabled()) return;

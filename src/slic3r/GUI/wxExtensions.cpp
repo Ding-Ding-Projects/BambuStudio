@@ -1099,7 +1099,7 @@ void ScalableButton::init_style(const wxString& label, const wxSize& size, long 
         int container = m_px_cnt + 6;
         if (size.x > 0 && size.y > 0)
             container = std::max(ToDIP(size.x), ToDIP(size.y));
-        SetIconButton(container > 36 ? Button::IconShape::Square : Button::IconShape::Circle, container);
+        SetIconButton(Button::IconShape::Square, container);
     } else {
         SetButtonSize(Button::Size::Small);
         SetVariant(Button::Variant::Outlined);

@@ -725,7 +725,7 @@ void CameraHUD::style_zoom_percent()
                                               std::make_pair(ChipBg(), (int) StateColor::Normal)));
     m_zoom_percent->SetTextColor(StateColor(std::make_pair(GlyphMuted(), (int) StateColor::Disabled),
                                             std::make_pair(Glyph(), (int) StateColor::Normal)));
-    m_zoom_percent->SetCornerRadius(FromDIP(kChipDIP) / 2);
+    m_zoom_percent->SetCornerRadius(MD3::Metrics::soft_radius(FromDIP(kChipDIP)));
     m_zoom_percent->SetMinSize(wxSize(FromDIP(60), FromDIP(kChipDIP)));
 }
 

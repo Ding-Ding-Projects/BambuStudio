@@ -83,7 +83,7 @@ CommandPalette::CommandPalette(MainFrame *frame)
     m_search = new SearchField(this, _L("Search commands, settings and pages"));
     header->Add(m_search, 1, wxALIGN_CENTER_VERTICAL);
     m_size_button = new Button(this, wxEmptyString);
-    m_size_button->SetIconButton(Button::IconShape::Circle, FromDIP(36));
+    m_size_button->SetIconButton(Button::IconShape::Square, FromDIP(36));
     m_size_button->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) {
         apply_size(m_size == PaletteIndex::PaletteSize::Card ? PaletteIndex::PaletteSize::FullWindow
                                                              : PaletteIndex::PaletteSize::Card,

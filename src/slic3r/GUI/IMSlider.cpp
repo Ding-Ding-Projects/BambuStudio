@@ -752,8 +752,8 @@ bool IMSlider::horizontal_slider(const char* str_id, int* value, int v_min, int 
         if (show_chip) {
             const ImRect cr(ImVec2(chip_left, center_y - chip_h * 0.5f), ImVec2(chip_right, center_y + chip_h * 0.5f));
             const bool hov = ImGui::IsMouseHoveringRect(cr.Min, cr.Max);
-            if (hov) window->DrawList->AddRectFilled(cr.Min, cr.Max, ghost_hover, chip_h * 0.5f);
-            window->DrawList->AddRect(cr.Min, cr.Max, border_clr, chip_h * 0.5f);
+            if (hov) window->DrawList->AddRectFilled(cr.Min, cr.Max, ghost_hover, (float) MD3::Metrics::soft_radius((int) (chip_h + 0.5f)));
+            window->DrawList->AddRect(cr.Min, cr.Max, border_clr, (float) MD3::Metrics::soft_radius((int) (chip_h + 0.5f)));
             draw_glyph(ImVec2(chip_left + chip_pad + chip_icon_px * 0.5f, center_y), MaterialIcon::Speed, chip_icon_px, icon_idle);
             const bool mono_c = imgui.push_mono_font();
             const ImVec2 lbl_sz = ImGui::CalcTextSize(speed_label);

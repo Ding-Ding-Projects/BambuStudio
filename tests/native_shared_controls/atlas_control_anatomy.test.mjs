@@ -54,8 +54,12 @@ function checkButtonStates(button) {
         assert(part.indexOf('StateColor::Pressed') < part.indexOf('StateColor::Hovered'), variant);
     }
     assert(source.includes('StateColor::Pressed | StateColor::Checked'));
-    assert(source.includes('MD3::Metrics::active().radius'));
-    assert(source.includes('MD3::Metrics::active().small_radius'));
+    // Board radius (D1, D3): the variant path and the soft-square icon-button
+    // path both take soft_radius; a pill (/ 2.0 or pill_radius) must not return.
+    assert(source.includes('SetCornerRadius(MD3::Metrics::soft_radius(FromDIP(height)))'));
+    assert(source.includes('SetCornerRadius(MD3::Metrics::soft_radius(FromDIP(container)))'));
+    const variantRadius = source.slice(source.lastIndexOf('SetBorderWidth(bw);'));
+    assert(!/pill_radius|FromDIP\(height\) \/ 2\.0/.test(variantRadius));
 }
 test('shared variants distinguish pressed feedback and preserve checked precedence', () => checkButtonStates(sources.Button));
 test('search backing and focus paint retain existing child target dimensions', () => {

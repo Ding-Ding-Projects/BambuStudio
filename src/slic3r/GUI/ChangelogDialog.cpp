@@ -140,7 +140,7 @@ private:
 
         auto *header = new wxBoxSizer(wxHORIZONTAL);
         m_prev = new Button(this, wxEmptyString);
-        m_prev->SetIconButton(Button::IconShape::Circle, FromDIP(36));
+        m_prev->SetIconButton(Button::IconShape::Square, FromDIP(36));
         m_prev->SetGlyph(MaterialIcon::ChevronLeft);
         m_prev->SetToolTip(_L("Previous month"));
         m_prev->SetName(_L("Previous month"));
@@ -168,7 +168,7 @@ private:
         });
 
         m_next = new Button(this, wxEmptyString);
-        m_next->SetIconButton(Button::IconShape::Circle, FromDIP(36));
+        m_next->SetIconButton(Button::IconShape::Square, FromDIP(36));
         m_next->SetGlyph(MaterialIcon::ChevronRight);
         m_next->SetToolTip(_L("Next month"));
         m_next->SetName(_L("Next month"));
@@ -548,7 +548,7 @@ void ChangelogDialog::build_ui()
     m_to_field = make_date_field(_L("To date"), Bound::To);
 
     m_calendar_button = new Button(body, wxEmptyString);
-    m_calendar_button->SetIconButton(Button::IconShape::Circle, FromDIP(40));
+    m_calendar_button->SetIconButton(Button::IconShape::Square, FromDIP(40));
     m_calendar_button->SetGlyph(MaterialIcon::Schedule);
     m_calendar_button->SetToolTip(_L("Pick dates on a calendar"));
     m_calendar_button->SetName(_L("Pick dates on a calendar"));

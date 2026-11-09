@@ -284,12 +284,12 @@ TabStripButton::TabStripButton(TabStrip *strip, const std::string &id)
 
     m_close = new Button(this, "", "", 0, 0, wxID_ANY);
     if (MaterialIcon::available()) {
-        m_close->SetIconButton(Button::IconShape::Circle, close_container);
+        m_close->SetIconButton(Button::IconShape::Square, close_container);
         m_close->SetGlyph(MaterialIcon::Close, close_glyph_px);
     } else {
         m_close->SetLabel(wxString(wxUniChar(0x2715)));
         m_close->SetMinSize(wxSize(FromDIP(close_container), FromDIP(close_container)));
-        m_close->SetCornerRadius(FromDIP(close_container) / 2.0);
+        m_close->SetCornerRadius(MD3::Metrics::soft_radius(FromDIP(close_container)));
     }
     const wxString close_name = m_strip->GetOptions().close_mode == TabStrip::CloseMode::Hide ? _L("Hide tab from strip") : _L("Close tab");
     m_close->SetToolTip(close_name);
@@ -879,12 +879,12 @@ TabStrip::TabStrip(wxWindow *parent, const Options &options)
     auto make_action = [this](uint32_t glyph, const wxString &fallback, const wxString &name) {
         Button *b = new Button(this, "", "", 0, 0, wxID_ANY);
         if (MaterialIcon::available()) {
-            b->SetIconButton(Button::IconShape::Circle, action_container);
+            b->SetIconButton(Button::IconShape::Square, action_container);
             b->SetGlyph(glyph, action_glyph_px);
         } else {
             b->SetLabel(fallback);
             b->SetMinSize(wxSize(FromDIP(action_container), FromDIP(action_container)));
-            b->SetCornerRadius(FromDIP(action_container) / 2.0);
+            b->SetCornerRadius(MD3::Metrics::soft_radius(FromDIP(action_container)));
         }
         b->SetToolTip(name);
         b->SetName(name);

@@ -813,7 +813,7 @@ void CaliPASaveAutoPanel::sync_cali_result_for_multi_extruder(const std::vector<
         // that plate in both themes. SetIconButton() takes design pixels and scales them
         // itself, so it is given 20 and not FromDIP(20).
         Button *tray_title = new Button(m_multi_extruder_grid_panel, wxEmptyString, wxEmptyString, wxBORDER_NONE, 0);
-        tray_title->SetIconButton(Button::IconShape::Circle, 20);
+        tray_title->SetIconButton(Button::IconShape::Square, 20);
         tray_title->SetCanFocus(false);
         tray_title->SetIconBitmap(*get_extruder_color_icon(full_filament_ams_list[item.tray_id].opt_string("filament_colour", 0u), tray_name.ToStdString(), FromDIP(20), FromDIP(20)));
 

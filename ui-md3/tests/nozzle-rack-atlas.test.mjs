@@ -48,7 +48,8 @@ test('tile minimum uses the production measured-content expressions at all displ
 
 test('status icon containers receive logical dimensions once', () => {
   for (const source of [rack, update]) {
-    assert.match(source, /SetIconButton\(Button::IconShape::Circle, 20\)/);
+    assert.match(source, /SetIconButton\(Button::IconShape::Square, 20\)/);
+    assert.doesNotMatch(source, /IconShape::Circle/);
     assert.doesNotMatch(source, /SetIconButton\([^;]+FromDIP/);
   }
 });

@@ -129,7 +129,7 @@ Button *small_button(wxWindow *parent, const wxString &label, Button::Variant va
 Button *icon_button(wxWindow *parent, std::uint32_t glyph, const wxString &name)
 {
     auto *button = new Button(parent, wxString());
-    button->SetIconButton(Button::IconShape::Circle, parent->FromDIP(32));
+    button->SetIconButton(Button::IconShape::Square, parent->FromDIP(32));
     button->SetGlyph(glyph);
     button->SetName(name);
     button->SetToolTip(name);

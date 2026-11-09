@@ -33,7 +33,7 @@ constexpr int kSearchPx  = 20; // leading search glyph
 constexpr int kClosePx   = 18; // clear glyph
 constexpr int kActionPx  = 40; // clear / tune / regex icon buttons: 2px inside the 44px pill so they never paint over its outline
 constexpr int kTunePx    = 20; // tune glyph
-constexpr int kRadius    = 16; // rounded field container, with unchanged input geometry
+constexpr int kRadius    = MD3::Metrics::pill_radius(kHeight); // search fields stay pills on the boards (22 at 44 px); input geometry unchanged
 constexpr int kMinWidth  = 220;
 constexpr int kMaxQueryLen = static_cast<int>(Slic3r::GUI::BoundedRegex::kMaxPatternCodeUnits);
 } // namespace
@@ -89,7 +89,7 @@ void SearchField::Create(wxWindow *parent, const wxString &placeholder, const wx
     // Real child controls provide focus, accessible names and pressed state;
     // the previous painted parent regions were invisible to keyboard and AT.
     m_regex_button = new Button(this, ".*");
-    m_regex_button->SetIconButton(Button::IconShape::Circle, kActionPx);
+    m_regex_button->SetIconButton(Button::IconShape::Square, kActionPx);
     m_regex_button->SetFont(Label::Mono_13);
     m_regex_button->SetName(_L("Regex mode"));
     m_regex_button->SetToolTip(_L("Regex mode"));
@@ -98,7 +98,7 @@ void SearchField::Create(wxWindow *parent, const wxString &placeholder, const wx
     });
 
     m_tune_button = new Button(this, wxEmptyString);
-    m_tune_button->SetIconButton(Button::IconShape::Circle, kActionPx);
+    m_tune_button->SetIconButton(Button::IconShape::Square, kActionPx);
     if (MaterialIcon::available())
         m_tune_button->SetGlyph(MaterialIcon::Tune, kTunePx);
     else
@@ -108,7 +108,7 @@ void SearchField::Create(wxWindow *parent, const wxString &placeholder, const wx
     m_tune_button->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { openBuilder(); });
 
     m_clear_button = new Button(this, wxEmptyString);
-    m_clear_button->SetIconButton(Button::IconShape::Circle, kActionPx);
+    m_clear_button->SetIconButton(Button::IconShape::Square, kActionPx);
     if (MaterialIcon::available())
         m_clear_button->SetGlyph(MaterialIcon::Close, kClosePx);
     else

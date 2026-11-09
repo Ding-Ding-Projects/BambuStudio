@@ -2781,7 +2781,7 @@ ExpandCenterDialog::ExpandCenterDialog(wxWindow* parent /*= nullptr*/) :
     m_button_activate->SetFont(Label::Body_14);
     m_button_activate->SetSize(wxSize(FromDIP(300), FromDIP(36)));
     m_button_activate->SetMinSize(wxSize(FromDIP(300), FromDIP(36)));
-    m_button_activate->SetCornerRadius(FromDIP(18)); // kit pill (height/2); Helio brand palette preserved
+    m_button_activate->SetCornerRadius(MD3::Metrics::soft_radius(FromDIP(36))); // board soft radius; Helio brand palette preserved
     m_button_activate->SetToolTip(tooltip_text);
     m_button_activate->Bind(wxEVT_LEFT_DOWN, &ExpandCenterDialog::on_open_expand, this);
 
@@ -2792,7 +2792,7 @@ ExpandCenterDialog::ExpandCenterDialog(wxWindow* parent /*= nullptr*/) :
     m_button_uninstall->SetFont(Label::Body_13);
     m_button_uninstall->SetSize(wxSize(FromDIP(120), FromDIP(28)));
     m_button_uninstall->SetMinSize(wxSize(FromDIP(120), FromDIP(28)));
-    m_button_uninstall->SetCornerRadius(FromDIP(14)); // kit pill (height/2); Helio brand palette preserved
+    m_button_uninstall->SetCornerRadius(MD3::Metrics::soft_radius(FromDIP(28))); // board soft radius; Helio brand palette preserved
     m_button_uninstall->Bind(wxEVT_LEFT_DOWN, &ExpandCenterDialog::on_uninstall, this);
 
     // Only show uninstall button if Helio is already enabled

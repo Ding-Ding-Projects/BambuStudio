@@ -87,7 +87,7 @@ public:
         PlusMinusButton(wxWindow *parent, const std::string &raster, uint32_t glyph, std::pair<coordf_t, coordf_t> range)
             : ::Button(parent, wxEmptyString, wxString::FromUTF8(raster.c_str())), range(range)
         {
-            SetIconButton(::Button::IconShape::Circle, 28);
+            SetIconButton(::Button::IconShape::Square, 28);
             SetGlyph(glyph);
         }
         // updated when the text edit field loses focus for any PlusMinusButton.

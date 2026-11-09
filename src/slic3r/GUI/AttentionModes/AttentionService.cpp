@@ -215,7 +215,7 @@ public:
 
         row->AddStretchSpacer(1);
         auto *tune = new Button(this, wxString());
-        tune->SetIconButton(Button::IconShape::Circle, FromDIP(30));
+        tune->SetIconButton(Button::IconShape::Square, FromDIP(30));
         tune->SetGlyph(GlyphTune);
         tune->SetToolTip(_L("Attention modes in Preferences"));
         tune->SetName(_L("Attention modes in Preferences"));

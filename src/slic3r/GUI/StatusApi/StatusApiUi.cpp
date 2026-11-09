@@ -114,7 +114,7 @@ public:
         }
         m_plain->Hide();
         m_toggle = new Button(this, wxEmptyString);
-        m_toggle->SetIconButton(Button::IconShape::Circle);
+        m_toggle->SetIconButton(Button::IconShape::Square);
         m_toggle->SetGlyph(MaterialIcon::Visibility);
         m_toggle->SetName(_L("Show token"));
         m_toggle->SetToolTip(_L("Show token"));

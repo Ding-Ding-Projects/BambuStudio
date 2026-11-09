@@ -361,7 +361,7 @@ void style_button(Button *button)
     const wxSize size(button->FromDIP(BUTTON_WIDTH), button->FromDIP(BUTTON_HEIGHT));
     button->SetSize(size);
     button->SetMinSize(size);
-    button->SetCornerRadius(button->FromDIP(BUTTON_HEIGHT / 2));
+    button->SetCornerRadius(MD3::Metrics::soft_radius(button->FromDIP(BUTTON_HEIGHT)));
 }
 
 } // namespace

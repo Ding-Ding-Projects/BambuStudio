@@ -775,7 +775,7 @@ void wgtDeviceNozzleRackNozzleItem::CreateGui()
 
     // Kit icon Button with the Error glyph in the Error role; focusable, with a role.
     m_nozzle_status_icon = new Button(this, "", "", 0, 0);
-    m_nozzle_status_icon->SetIconButton(Button::IconShape::Circle, 20);
+    m_nozzle_status_icon->SetIconButton(Button::IconShape::Square, 20);
     m_nozzle_status_icon->SetGlyph(MaterialIcon::Error, FromDIP(14));
     m_nozzle_status_icon->SetGlyphColor(StateColor(std::make_pair(StateColor::semantic(MD3::Role::Error), (int) StateColor::Normal)));
     m_nozzle_status_icon->Bind(wxEVT_BUTTON, &wgtDeviceNozzleRackNozzleItem::OnBtnNozzleStatus, this);

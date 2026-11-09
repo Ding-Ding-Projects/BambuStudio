@@ -511,7 +511,7 @@ void WikiPanel::init_components()
 
     // Kit icon Button carrying the help glyph; the Button paints its own hover tone.
     m_wiki_bmp = new Button(this, "", "", 0, 0);
-    m_wiki_bmp->SetIconButton(Button::IconShape::Circle, FromDIP(24));
+    m_wiki_bmp->SetIconButton(Button::IconShape::Square, FromDIP(24));
     m_wiki_bmp->SetGlyph(MaterialIcon::Help, FromDIP(16));
 
     // Create text label

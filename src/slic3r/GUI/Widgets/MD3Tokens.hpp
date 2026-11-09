@@ -508,8 +508,9 @@ inline constexpr int tab_active_indicator = 3; // tab-bar active underline
 
 // Fixed shape radii (density-independent). 12/8 also appear via the compact
 // density branch, but rail/snackbar (12) and tiny controls (8) need them at
-// any density. Standalone buttons and chips use a pill radius = height / 2,
-// computed at the call site.
+// any density. Standalone buttons, chips, icon buttons and steppers use
+// soft_radius(height), computed at the call site; pill_radius(height) remains
+// only for switches, search fields, navigation indicators and count badges.
 inline constexpr int radius_dialog    = 28; // dialogs, hero cards
 inline constexpr int radius_panel     = 24; // floating panels and the 3D canvas frame
 inline constexpr int radius_home      = 20; // home cards
@@ -517,15 +518,32 @@ inline constexpr int radius_icon_tile = 14; // icon tiles
 inline constexpr int radius_rail      = 12; // rail buttons, snackbars
 inline constexpr int radius_tiny      = 8;  // tiny controls
 
-// Pill (stadium) radius for the fully-rounded controls the kit calls pills:
-// standalone buttons, chips, switches, the search field, and nav items. Their
-// corner radius is always half the control's height, not a fixed token, so it
-// is computed at the call site. Pass the CURRENT, DPI-scaled height at
-// paint/layout time (e.g. FromDIP(height)); a value cached at construction goes
-// stale on a monitor-DPI or density change. Button::applyMD3Style() re-derives
-// this on Rescale(), and the switch/thumb paths recompute it every paint.
-// Segmented controls are NOT pills — they keep the fixed radius_rail / radius_tiny.
+// Pill (stadium) radius, height / 2, for the controls the November 2026
+// design boards still draw as stadiums: switches, the search field, navigation
+// indicators and non-interactive count badges. Every pressable button, chip,
+// icon button and stepper uses soft_radius() instead. Pass the CURRENT,
+// DPI-scaled height at paint/layout time (e.g. FromDIP(height)); a value cached
+// at construction goes stale on a monitor-DPI or density change.
+// Segmented controls are NOT pills; they keep the fixed radius_rail / radius_tiny.
 inline constexpr int pill_radius(int height) { return height / 2; }
+
+// Board radius for pressable controls: a rounded rectangle whose radius is about
+// 0.3 of the height (40 -> 12, 38 -> 11, 36 -> 11, 34 -> 10, 32 -> 10, 30 -> 9,
+// 24 -> 7). Used by buttons, chips, soft-square icon buttons and steppers. Pass
+// the current DPI-scaled height, exactly like pill_radius().
+inline constexpr int soft_radius(int height) { return (3 * height + 5) / 10; }
+
+// Board control sizes and container radii (design pixels).
+inline constexpr int action_height = 40; // board .btn and .ib
+inline constexpr int chip_height   = 30; // board .chip
+inline constexpr int seam_inset    = 8;  // vertical inset of a split button's seam
+inline constexpr int radius_card   = radius_home;      // board card
+inline constexpr int radius_well   = radius_icon_tile; // board well inside a card
+inline constexpr int radius_tag    = radius_tiny;      // status tag
+inline constexpr int radius_chip   = soft_radius(chip_height); // 9, for ImGui call sites
+
+static_assert(soft_radius(40) == 12 && soft_radius(30) == 9 && soft_radius(36) == 11 && soft_radius(34) == 10,
+              "soft_radius must match the board radii");
 
 } // namespace Metrics
 

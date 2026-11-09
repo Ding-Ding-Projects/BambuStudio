@@ -9,7 +9,7 @@ export function Chip({ label, icon, selected = false, tonal = false, mono = fals
   return (
     <button onClick={onClick} onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
       style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: h, padding: '0 ' + (size === 'md' ? 12 : 13) + 'px',
-        borderRadius: h / 2, cursor: 'pointer', fontSize: 12, fontWeight: 500, transition: '.15s',
+        borderRadius: Math.round(h * 0.3), cursor: 'pointer', fontSize: 12, fontWeight: 500, transition: '.15s',
         fontFamily: mono ? 'var(--md-font-mono)' : 'var(--md-font)', ...sel, ...style }}>
       {icon && <span data-icon style={{ fontSize: 16 }}>{icon}</span>}
       {label}

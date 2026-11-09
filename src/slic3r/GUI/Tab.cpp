@@ -767,7 +767,7 @@ void Tab::add_md3_icon_button(wxWindow* parent,
     *btn = new Button(parent, wxEmptyString, wxString::FromUTF8(fallback_icon.c_str()));
     // Circular ghost target: 32px edge (fits the 30px toolbar row), rest
     // transparent + OnSurfaceVariant, hover SurfaceContainerHigh (per the kit).
-    (*btn)->SetIconButton(Button::IconShape::Circle, 32);
+    (*btn)->SetIconButton(Button::IconShape::Square, 32);
     (*btn)->SetGlyph(glyph);
     m_md3_icon_buttons.push_back(*btn);
 }

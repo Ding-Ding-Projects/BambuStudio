@@ -95,7 +95,7 @@ BBLStatusBarPrint::BBLStatusBarPrint(wxWindow *parent, int id)
     // Kit icon Button: the error-details expander is focusable and exposes a role;
     // its chevron flips by glyph instead of by swapping two 7 px bitmaps.
     m_static_bitmap_show_error = new Button(top_panel, "", "", 0, 0);
-    m_static_bitmap_show_error->SetIconButton(Button::IconShape::Circle, m_self->FromDIP(20));
+    m_static_bitmap_show_error->SetIconButton(Button::IconShape::Square, m_self->FromDIP(20));
     m_static_bitmap_show_error->SetGlyph(MaterialIcon::ExpandMore, m_self->FromDIP(14));
     m_static_bitmap_show_error->SetToolTip(_L("Show details"));
 

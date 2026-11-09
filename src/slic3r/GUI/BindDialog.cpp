@@ -444,7 +444,7 @@ PingCodeBindDialog::~PingCodeBindDialog() {
      // Kit icon Button: the error-details expander is focusable and exposes a role;
      // its chevron flips by glyph instead of by swapping two 7 px bitmaps.
      m_static_bitmap_show_error = new Button(this, "", "", 0, 0);
-     m_static_bitmap_show_error->SetIconButton(Button::IconShape::Circle, FromDIP(20));
+     m_static_bitmap_show_error->SetIconButton(Button::IconShape::Square, FromDIP(20));
      m_static_bitmap_show_error->SetGlyph(MaterialIcon::ExpandMore, FromDIP(14));
      m_static_bitmap_show_error->SetToolTip(_L("Show details"));
 

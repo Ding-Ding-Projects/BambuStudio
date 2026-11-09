@@ -278,7 +278,7 @@ int paint_live(wxDC &dc, const wxWindow *w, const MD3::Menu::LiveControl &c, con
             const bool active = enabled && can[i];
             dc.SetPen(wxPen(active ? tone(MD3::Role::Outline) : blend(StateColor::semantic(MD3::Role::Outline), under, 0.38)));
             dc.SetBrush(*wxTRANSPARENT_BRUSH);
-            dc.DrawRoundedRectangle(g.parts[i], g.parts[i].height / 2);
+            dc.DrawRoundedRectangle(g.parts[i], MD3::Metrics::soft_radius(g.parts[i].height));
             dc.SetTextForeground(active ? fg : blend(fg, under, 0.38));
             dc.DrawLabel(signs[i], g.parts[i], wxALIGN_CENTER);
         }

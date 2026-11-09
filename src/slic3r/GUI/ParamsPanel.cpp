@@ -172,7 +172,7 @@ Button *TipsDialog::add_button(wxWindowID btn_id, const wxString &label, bool se
 
     btn->SetSize(TIPS_DIALOG_BUTTON_SIZE);
     btn->SetMinSize(TIPS_DIALOG_BUTTON_SIZE);
-    btn->SetCornerRadius(MD3::Metrics::pill_radius(TIPS_DIALOG_BUTTON_SIZE.GetHeight()));
+    btn->SetCornerRadius(MD3::Metrics::soft_radius(TIPS_DIALOG_BUTTON_SIZE.GetHeight()));
     btn->Bind(wxEVT_BUTTON, [this, btn_id](wxCommandEvent &) {
         if (m_show_again) {
             if (!m_app_key.empty()) {
@@ -285,7 +285,7 @@ ParamsPanel::ParamsPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, c
         // SurfaceContainerHigh, OnSurfaceVariant) drawing the Tune glyph; the
         // "process" raster is kept as a capability-gated fallback.
         m_process_icon = new Button(m_top_panel, wxEmptyString, "process");
-        m_process_icon->SetIconButton(Button::IconShape::Circle, 32);
+        m_process_icon->SetIconButton(Button::IconShape::Square, 32);
         m_process_icon->SetGlyph(MaterialIcon::Tune);
 
         // A fixed header item (proportion 0 since CJ-012, see create_layout), so
@@ -320,7 +320,7 @@ ParamsPanel::ParamsPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, c
         // frozen Material Symbols font, so draw the nearest available glyph
         // (SwapHoriz); the "compare" raster stays as a capability-gated fallback.
         m_compare_btn = new Button(m_top_panel, wxEmptyString, "compare");
-        m_compare_btn->SetIconButton(Button::IconShape::Circle, 32);
+        m_compare_btn->SetIconButton(Button::IconShape::Square, 32);
         m_compare_btn->SetGlyph(MaterialIcon::SwapHoriz);
         m_compare_btn->SetToolTip(_L("Compare presets"));
         // a11y: icon-only control needs an accessible name for assistive tech.
@@ -331,7 +331,7 @@ ParamsPanel::ParamsPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, c
         // font, so draw the nearest available glyph (GridView); the "table" raster
         // stays as a capability-gated fallback.
         m_setting_btn = new Button(m_top_panel, wxEmptyString, "table");
-        m_setting_btn->SetIconButton(Button::IconShape::Circle, 32);
+        m_setting_btn->SetIconButton(Button::IconShape::Square, 32);
         m_setting_btn->SetGlyph(MaterialIcon::GridView);
         m_setting_btn->SetToolTip(_L("View all object's settings"));
         // a11y: icon-only control needs an accessible name for assistive tech.

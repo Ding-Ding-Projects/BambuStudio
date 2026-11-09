@@ -2311,7 +2311,7 @@ void PreferencesDialog::decorate_row(const std::string &key, wxSizer *row)
     info.provenance = line;
 
     auto *about = new ::Button(parent, wxEmptyString);
-    about->SetIconButton(::Button::IconShape::Circle, 32);
+    about->SetIconButton(::Button::IconShape::Square, 32);
     about->SetGlyph(MaterialIcon::Info);
     about->SetName(wxString::Format(_L("About %s"), info.title));
     about->SetToolTip(_L("What this setting does and where its value comes from"));
@@ -2587,7 +2587,7 @@ void PreferencesDialog::show_info(const std::string &key)
     title->Wrap(FromDIP(240));
     head->Add(title, 1, wxALIGN_CENTER_VERTICAL);
     auto *close = new ::Button(m_info_panel, wxEmptyString);
-    close->SetIconButton(::Button::IconShape::Circle, 32);
+    close->SetIconButton(::Button::IconShape::Square, 32);
     close->SetGlyph(MaterialIcon::Close);
     close->SetName(_L("Close the explanation"));
     close->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { hide_info(); });
@@ -3526,7 +3526,7 @@ private:
         const int      pill_y      = card.y + (card.height - pill_h) / 2;
         dc.SetPen(*wxTRANSPARENT_PEN);
         dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::Primary)));
-        dc.DrawRoundedRectangle(pill_x, pill_y, pill_w, pill_h, MD3::Metrics::pill_radius(pill_h));
+        dc.DrawRoundedRectangle(pill_x, pill_y, pill_w, pill_h, MD3::Metrics::soft_radius(pill_h));
         dc.SetTextForeground(StateColor::semantic(MD3::Role::OnPrimary));
         dc.DrawText(pill_text, pill_x + (pill_w - pill_extent.x) / 2, pill_y + (pill_h - pill_extent.y) / 2);
 

@@ -6023,8 +6023,8 @@ bool AssemblyStepsUtils::render_footer_button(const char* id, const std::string&
         (primary ? bg : (hovered ? md3_u32(MD3::Role::Primary, m_is_dark) : sec_border));
     const ImU32 text = disabled ? md3_u32(MD3::Role::Outline, m_is_dark) :
         (primary ? md3_u32(MD3::Role::OnPrimary, m_is_dark) : sec_text);
-    draw_list->AddRectFilled(pos, ImVec2(pos.x + draw_size.x, pos.y + draw_size.y), bg, draw_size.y * 0.5f);
-    draw_list->AddRect(pos, ImVec2(pos.x + draw_size.x, pos.y + draw_size.y), border, draw_size.y * 0.5f, 0, 2.0f * sc);
+    draw_list->AddRectFilled(pos, ImVec2(pos.x + draw_size.x, pos.y + draw_size.y), bg, (float) MD3::Metrics::soft_radius((int) (draw_size.y + 0.5f)));
+    draw_list->AddRect(pos, ImVec2(pos.x + draw_size.x, pos.y + draw_size.y), border, (float) MD3::Metrics::soft_radius((int) (draw_size.y + 0.5f)), 0, 2.0f * sc);
 
     const ImVec2 text_pos(pos.x + (draw_size.x - text_size.x) * 0.5f, pos.y + (draw_size.y - text_size.y) * 0.5f);
     draw_list->AddText(text_pos, text, label.c_str());
@@ -6352,7 +6352,7 @@ void AssemblyStepsUtils::render_assembly_label_settings_section(
         const bool  pill_enabled = m_guide_show_part_numbers;
         const ImU32 pill_col     = pill_enabled ? grey700
                                                 : md3_u32(MD3::Role::OutlineVariant, m_is_dark);
-        draw_list->AddRect(pill_min, pill_max, pill_col, pill_h * 0.5f, 0, 1.0f);
+        draw_list->AddRect(pill_min, pill_max, pill_col, (float) MD3::Metrics::soft_radius((int) (pill_h + 0.5f)), 0, 1.0f);
         draw_list->AddText(ImGui::GetFont(), pill_fs,
             ImVec2(pill_x + (pill_w - lbl_sz.x) * 0.5f, pill_y + (pill_h - lbl_sz.y) * 0.5f),
             pill_col, pill_label.c_str());
@@ -7617,7 +7617,7 @@ void AssemblyStepsUtils::render_assembly_guide_panel(float panel_x, float panel_
             ImGui::PopID();
 
             const ImU32 pill_col    = save_enabled ? grey900 : grey500;
-            const float pill_radius = pill_h * 0.5f;
+            const float pill_radius = (float) MD3::Metrics::soft_radius((int) (pill_h + 0.5f));
             draw_list->AddRect(pill_min, pill_max, pill_col, pill_radius, 0, 1.0f);
             draw_list->AddText(ImGui::GetFont(), pill_fs,
                 ImVec2(pill_x + (pill_w - lbl_sz.x) * 0.5f,

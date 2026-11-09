@@ -598,7 +598,7 @@ wxWindow *ParamTooltip::build_optkey_row()
     // click target). SetIconBitmap() keeps the very same raster copy-icon art -- and the
     // hover / "copied!" crossfade below -- instead of switching to a Material Symbols glyph.
     m_copy = new Button(m_optkey_pill, wxEmptyString);
-    m_copy->SetIconButton(Button::IconShape::Circle, COPY_ICON_PX);
+    m_copy->SetIconButton(Button::IconShape::Square, COPY_ICON_PX);
     // The real theme is applied moments later by the first Rebuild()->update_optkey_row(), before
     // the popup is ever shown, so the momentary default background here is never visible.
     set_copy_icon(create_scaled_bitmap("tooltip_copy", this, COPY_ICON_PX));

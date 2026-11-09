@@ -34,7 +34,7 @@ test('camera icon uses one DPI conversion and fits the actual footer with margin
     const FromDIP = n => Math.round(n * scale);
     const container = new Function('FromDIP', `return ${argument};`)(FromDIP);
     const width = new Function('container', `return ${widthExpression};`)(container);
-    assert.equal(FromDIP(width), FromDIP(36));
+    assert.equal(FromDIP(width), FromDIP(32)); // a true square: width = container (D3)
     assert.equal(FromDIP(container), FromDIP(32));
     assert.ok(FromDIP(container) + 2 * FromDIP(margin) <= FromDIP(footer));
   }

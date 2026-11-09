@@ -2907,7 +2907,7 @@ wxBoxSizer *StatusBasePanel::create_machine_control_page(wxWindow *parent)
     // borderless circular ghost target; degrades to a bordered '...' label button
     // when the icon face is unavailable.
     m_more_btn = new Button(m_panel_control_title, MaterialIcon::available() ? wxString() : wxString("..."));
-    m_more_btn->SetIconButton(Button::IconShape::Circle, FromDIP(32));
+    m_more_btn->SetIconButton(Button::IconShape::Square, FromDIP(32));
     if (MaterialIcon::available()) m_more_btn->SetGlyph(MaterialIcon::MoreHoriz, 20);
     m_more_btn->SetToolTip(_L("More options"));
 

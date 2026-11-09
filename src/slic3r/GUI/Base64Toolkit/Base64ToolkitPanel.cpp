@@ -445,7 +445,7 @@ Button *Base64ToolkitPanel::make_button(wxWindow *parent, const wxString &label,
 Button *Base64ToolkitPanel::make_icon_button(wxWindow *parent, std::uint32_t glyph, const wxString &tip)
 {
     auto *button = new Button(parent, wxString());
-    button->SetIconButton(Button::IconShape::Circle, FromDIP(32));
+    button->SetIconButton(Button::IconShape::Square, FromDIP(32));
     button->SetGlyph(glyph);
     button->SetToolTip(tip);
     button->SetName(tip);

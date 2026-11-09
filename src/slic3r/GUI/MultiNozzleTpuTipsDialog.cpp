@@ -157,7 +157,7 @@ MultiNozzleTpuTipsDialog::MultiNozzleTpuTipsDialog(wxWindow *parent)
     m_guide_btn->SetFont(Label::Body_14);
     m_guide_btn->SetPaddingSize(wxSize(FromDIP(18), FromDIP(4)));
     m_guide_btn->SetMinSize(wxSize(-1, FromDIP(BUTTON_HEIGHT_DIP)));
-    m_guide_btn->SetCornerRadius(FromDIP(BUTTON_HEIGHT_DIP / 2));
+    m_guide_btn->SetCornerRadius(MD3::Metrics::soft_radius(FromDIP(BUTTON_HEIGHT_DIP)));
     m_guide_btn->Bind(wxEVT_BUTTON, [](wxCommandEvent &) {
         if (!TPU_GUIDE_URL.empty())
             wxLaunchDefaultBrowser(wxString::FromUTF8(TPU_GUIDE_URL));
@@ -169,7 +169,7 @@ MultiNozzleTpuTipsDialog::MultiNozzleTpuTipsDialog(wxWindow *parent)
     m_confirm_btn->SetFont(Label::Body_14);
     m_confirm_btn->SetPaddingSize(wxSize(FromDIP(18), FromDIP(4)));
     m_confirm_btn->SetMinSize(wxSize(-1, FromDIP(BUTTON_HEIGHT_DIP)));
-    m_confirm_btn->SetCornerRadius(FromDIP(BUTTON_HEIGHT_DIP / 2));
+    m_confirm_btn->SetCornerRadius(MD3::Metrics::soft_radius(FromDIP(BUTTON_HEIGHT_DIP)));
     m_confirm_btn->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) {
         save_dont_show_choice();
         EndModal(wxID_OK);

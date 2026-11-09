@@ -72,7 +72,8 @@ test('the Record Factor tray swatch is a kit icon button that follows the plate 
   const body = fn(cpp, 'void CaliPASaveAutoPanel::sync_cali_result_for_multi_extruder(');
   assert.match(body, /Button\s*\*\s*tray_title\s*=\s*new Button\(m_multi_extruder_grid_panel, wxEmptyString, wxEmptyString, wxBORDER_NONE, 0\);/);
   // SetIconButton takes design pixels and scales them itself: 20, not FromDIP(20).
-  assert.match(body, /tray_title->SetIconButton\(Button::IconShape::Circle, 20\);/);
+  assert.match(body, /tray_title->SetIconButton\(Button::IconShape::Square, 20\);/);
+  assert.doesNotMatch(body, /IconShape::Circle/);
   assert.match(body, /tray_title->SetCanFocus\(false\);/);
   assert.match(body, /tray_title->SetIconBitmap\(\*get_extruder_color_icon\(full_filament_ams_list\[item\.tray_id\]\.opt_string\("filament_colour", 0u\), tray_name\.ToStdString\(\), FromDIP\(20\), FromDIP\(20\)\)\);/);
   // No colour of its own: the plate is the literal white that the dark-mode pass remaps,

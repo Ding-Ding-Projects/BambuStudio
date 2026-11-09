@@ -403,7 +403,7 @@ void wgtDeviceNozzleRackHotendUpdate::CreateGui()
     m_error_icon = new ScalableBitmap(this, "error", 14);
     // Kit icon Button: Refresh glyph at rest, Error glyph when the update failed.
     m_status_bitmap = new Button(this, "", "", 0, 0);
-    m_status_bitmap->SetIconButton(Button::IconShape::Circle, 20);
+    m_status_bitmap->SetIconButton(Button::IconShape::Square, 20);
     m_status_bitmap->SetGlyph(MaterialIcon::Refresh, FromDIP(14));
     m_status_bitmap->Bind(wxEVT_BUTTON, &wgtDeviceNozzleRackHotendUpdate::OnStatusIconClick, this);
 

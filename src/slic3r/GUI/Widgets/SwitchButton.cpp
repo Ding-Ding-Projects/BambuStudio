@@ -1006,7 +1006,7 @@ void CustomToggleButton::doRender(wxDC& dc)
         dc.SetPen(wxPen(StateColor::semantic(MD3::Role::Outline)));
     }
 
-    dc.DrawRoundedRectangle(rect, rect.GetHeight() / 2.0);
+    dc.DrawRoundedRectangle(rect, MD3::Metrics::soft_radius(rect.GetHeight()));
 
     // Draw the leading glyph: a live 16px Material Symbol (Send = the send-mode
     // tag). Degrade to the raster PNG when the icon font is unavailable.

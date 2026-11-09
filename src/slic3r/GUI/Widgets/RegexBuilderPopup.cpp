@@ -332,7 +332,7 @@ void RegexBuilderPopup::build()
     pat_row->Add(pattern_field, 1, wxALIGN_CENTER_VERTICAL);
 
     m_copy = new Button(m_scroll, wxEmptyString);
-    m_copy->SetIconButton(Button::IconShape::Circle, kTargetH);
+    m_copy->SetIconButton(Button::IconShape::Square, kTargetH);
     m_copy->SetGlyph(MaterialIcon::ContentCopy, 18);
     m_copy->SetToolTip(_L("Copy pattern"));
     m_copy->SetName(_L("Copy pattern"));

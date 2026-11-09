@@ -106,7 +106,8 @@ test('the Height range rows are kit fields and kit icon buttons', async () => {
   assert.match(header, /class LayerRangeEditor : public ::TextInput\b/);
   assert.match(header, /class PlusMinusButton : public ::Button\b/);
   assert.doesNotMatch(header, /ScalableButton|ScalableBitmap/);
-  assert.match(header, /SetIconButton\(::Button::IconShape::Circle, 28\);\s*SetGlyph\(glyph\);/);
+  assert.match(header, /SetIconButton\(::Button::IconShape::Square, 28\);\s*SetGlyph\(glyph\);/);
+  assert.doesNotMatch(header, /IconShape::Circle/);
   assert.match(header, /#include "Widgets\/Button\.hpp"/);
   assert.match(header, /#include "Widgets\/TextInput\.hpp"/);
 

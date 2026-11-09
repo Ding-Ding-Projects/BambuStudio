@@ -1962,7 +1962,7 @@ private:
         // own trailing chevron (CB_NO_DROP_ICON) so this one can be positioned
         // as a custom overlay, but it must stay a focusable, clickable control.
         m_combo_arrow = new Button(m_type_combo, "");
-        m_combo_arrow->SetIconButton(Button::IconShape::Circle, 18);
+        m_combo_arrow->SetIconButton(Button::IconShape::Square, 18);
         m_combo_arrow->SetGlyph(MaterialIcon::ExpandMore, 14);
         m_combo_arrow->SetCursor(wxCursor(wxCURSOR_HAND));
         m_combo_arrow->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) {

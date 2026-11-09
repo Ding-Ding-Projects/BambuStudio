@@ -177,10 +177,10 @@ void CapsuleButton::OnPaint(wxPaintEvent &event)
         border_color = StateColor::darkModeColorFor(border_color);
         gc->SetBrush(wxBrush(bg_color));
         gc->SetPen(wxPen(border_color, HasFocus() ? std::max(FromDIP(2), 1) : 1));
-        // Chips are pills (components/selection/Chip): corner radius is half the
-        // paint-time height, derived from the inset border rect so it stays a
-        // stadium at any DPI/density rather than a fixed 5px corner.
-        gc->DrawRoundedRectangle(1, 1, rect.width - 2, rect.height - 2, MD3::Metrics::pill_radius(rect.height - 2));
+        // Chips take the board soft radius (about 0.3 of the paint-time
+        // height), derived from the inset border rect so it tracks DPI and
+        // density rather than a fixed 5px corner.
+        gc->DrawRoundedRectangle(1, 1, rect.width - 2, rect.height - 2, MD3::Metrics::soft_radius(rect.height - 2));
         delete gc;
     }
 }

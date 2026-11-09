@@ -308,7 +308,7 @@ void AMSMaterialsSetting::create_panel_normal(wxWindow* parent)
     // Kit icon button carrying the jump chevron; a wxStaticBitmap cannot take
     // focus or expose a role, so the click target is a real control.
     m_filament_arrow = new Button(m_filament_box, "");
-    m_filament_arrow->SetIconButton(Button::IconShape::Circle, 20);
+    m_filament_arrow->SetIconButton(Button::IconShape::Square, 20);
     m_filament_arrow->SetGlyph(MaterialIcon::ExpandMore, 14);
     m_filament_arrow->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLow));
     box_sizer->Add(m_filament_arrow, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(8));
@@ -3280,7 +3280,7 @@ ColorPickerPopup::ColorPickerPopup(wxWindow* parent, wxWindow* evt_target)
     });
 
     m_custom_plus = new Button(m_custom_cp, "", "", 0, 0);
-    m_custom_plus->SetIconButton(Button::IconShape::Circle, FromDIP(25));
+    m_custom_plus->SetIconButton(Button::IconShape::Square, FromDIP(25));
     m_custom_plus->SetGlyph(MaterialIcon::Palette, FromDIP(18));
     m_custom_plus->SetToolTip(_L("Custom color"));
     m_custom_plus->Bind(wxEVT_BUTTON, &ColorPickerPopup::on_custom_clr_picker, this);

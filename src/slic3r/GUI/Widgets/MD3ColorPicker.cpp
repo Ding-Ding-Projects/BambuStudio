@@ -397,7 +397,7 @@ void MD3ColorPickerDialog::build(wxWindow * /*parent*/, const wxColour &initial)
         row.value->SetName(_L(space));
         line->Add(value_field, 1, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(6));
         row.copy = new Button(this, wxEmptyString);
-        row.copy->SetIconButton(Button::IconShape::Circle, FromDIP(kRowH));
+        row.copy->SetIconButton(Button::IconShape::Square, FromDIP(kRowH));
         row.copy->SetGlyph(MaterialIcon::ContentCopy, 16);
         const wxString copy_name = wxString::Format(_L("Copy %s"), _L(space));
         row.copy->SetToolTip(copy_name);

@@ -18,7 +18,7 @@ const expected = {
     "void AppearanceEditorPopover::close_and_return_focus(": "7ddddfd74553b39232bcbc4c033af5cdfe84ec3d793193299477c9220a1cef0d",
     "void AppearanceEditorPopover::show_section(": "4322cd16ccc6d38feeb3741c6700d0b42d70906d12db8771ca02a4639ee5fec2",
     "void AppearanceEditorPopover::refresh_from_registry(": "a8d9877438796260fc8703f4b7d5145d1f005185813321e655728285855d5664",
-    "Button *AppearanceEditorPopover::make_reset(": "145a9c0ee01ec9c09890bbaff27e4708e745797171ed06627478b3dba41af5c7",
+    "Button *AppearanceEditorPopover::make_reset(": "cf813aa294437d06b72ee1240a8c1f3ecb6e4905f4bd6e65351aa7a0f11a9dec",
     "Button *AppearanceEditorPopover::make_swatch(": "a91165601cbcc691ce3c3881c35416dabd693589192939ddf41eab38a6eafbd5"
   },
   "declarations": "c5a09d7990da6e5c1a69c083cf7c81e0445f3558dde95120f5499811efb36b2f",

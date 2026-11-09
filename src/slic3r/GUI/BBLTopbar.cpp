@@ -387,7 +387,7 @@ static wxBitmap topbar_update_chip_bitmap(wxWindow *ref, bool hover)
     return topbar_make_canvas(ref, wxSize(W, H), [&](wxGraphicsContext *gc) {
         gc->SetPen(*wxTRANSPARENT_PEN);
         gc->SetBrush(wxBrush(StateColor::semantic(hover ? MD3::Role::Primary : MD3::Role::PrimaryContainer)));
-        gc->DrawRoundedRectangle(0, 0, W, H, H / 2.0);
+        gc->DrawRoundedRectangle(0, 0, W, H, MD3::Metrics::soft_radius(H));
         double x = padx;
         if (icons_ok) {
             // Private icon face: pre-rendered with plain GDI, composited as a bitmap.

@@ -901,7 +901,7 @@ public:
         m_brace_right->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
 
         m_hover_btn = new Button(this, "", "", 0, 0);
-        m_hover_btn->SetIconButton(Button::IconShape::Circle, FromDIP(24));
+        m_hover_btn->SetIconButton(Button::IconShape::Square, FromDIP(24));
         m_hover_btn->SetGlyph(MaterialIcon::FiberManualRecord, FromDIP(16));
         m_hover_btn->SetMinSize(wxSize(FromDIP(25), -1));
 #ifdef __WXOSX__
@@ -3500,7 +3500,7 @@ void Sidebar::priv::create_dual_extruder_groups()
     // raster stays a small centered glyph. Absolutely positioned + raised
     // between the two extruder columns (see update_extruder_separator_icon).
     extruder_separator_icon = new Button(m_panel_printer_content, wxEmptyString, "fila_switch");
-    extruder_separator_icon->SetIconButton(Button::IconShape::Circle, 24);
+    extruder_separator_icon->SetIconButton(Button::IconShape::Square, 24);
     extruder_separator_icon->SetToolTip(_L("Filament switch status"));
     extruder_separator_icon->SetName(_L("Filament switch status"));
     extruder_separator_icon->SetSize(wxSize(FromDIP(24), FromDIP(24)));
@@ -4462,7 +4462,7 @@ Sidebar::Sidebar(Plater *parent)
         p->text_printer_status->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
 
         Button *edit_btn = new Button(p->panel_printer_preset, wxEmptyString);
-        edit_btn->SetIconButton(Button::IconShape::Circle, 34);
+        edit_btn->SetIconButton(Button::IconShape::Square, 34);
         edit_btn->SetGlyph(MaterialIcon::Edit);
         edit_btn->SetToolTip(_L("Click to edit preset"));
         // a11y: icon-only pencil needs an accessible name for assistive tech.
@@ -4506,7 +4506,7 @@ Sidebar::Sidebar(Plater *parent)
 
         // MD3: help affordance as a borderless IconButton in the caption row.
         Button *wiki_bed = new Button(p->panel_printer_bed, wxEmptyString);
-        wiki_bed->SetIconButton(Button::IconShape::Circle, 22);
+        wiki_bed->SetIconButton(Button::IconShape::Square, 22);
         wiki_bed->SetGlyph(MaterialIcon::Help, 16);
         wiki_bed->SetCanFocus(false);
         wiki_bed->SetToolTip(_L("Click to view the wiki of the current plate type"));
@@ -4591,7 +4591,7 @@ Sidebar::Sidebar(Plater *parent)
         btn_sync = new Button(p->m_panel_printer_content, _L("Sync info"), "printer_sync", 0, 32);
         //btn_sync->SetFont(Label::Body_8);
         btn_sync->SetToolTip(_L("Synchronize nozzle information and the number of AMS"));
-        btn_sync->SetCornerRadius(FromDIP(MD3::Metrics::active().row_height / 2));
+        btn_sync->SetCornerRadius(MD3::Metrics::soft_radius(FromDIP(MD3::Metrics::active().row_height)));
         // MD3 kit button anatomy: draw the leading icon as a Material Symbols
         // 'sync' glyph (Button::SetGlyph is live-recoloured by the text colour and
         // falls back to the raster 'printer_sync' bitmap when the face is absent).
@@ -5046,7 +5046,7 @@ Sidebar::Sidebar(Plater *parent)
         add_filament_font.SetNumericWeight(500);
         p->btn_add_filament_row->SetFont(add_filament_font);
     }
-    p->btn_add_filament_row->SetCornerRadius(FromDIP(MD3::Metrics::active().row_height / 2));
+    p->btn_add_filament_row->SetCornerRadius(MD3::Metrics::soft_radius(FromDIP(MD3::Metrics::active().row_height)));
     p->btn_add_filament_row->SetPaddingSize({FromDIP(12), FromDIP(8)});
     p->btn_add_filament_row->SetMinSize({-1, FromDIP(MD3::Metrics::active().row_height)});
     p->btn_add_filament_row->SetMaxSize({-1, FromDIP(MD3::Metrics::active().row_height)});
@@ -7668,7 +7668,7 @@ void Sidebar::msw_rescale()
         apply_scalable_glyph(p->m_printer_setting, MaterialIcon::Settings, 16, glyph_col);
         apply_scalable_glyph(p->btn_connect_printer, MaterialIcon::Lan, 16, glyph_col);
     }
-    p->btn_add_filament_row->SetCornerRadius(FromDIP(MD3::Metrics::active().row_height / 2));
+    p->btn_add_filament_row->SetCornerRadius(MD3::Metrics::soft_radius(FromDIP(MD3::Metrics::active().row_height)));
     p->btn_add_filament_row->SetPaddingSize({FromDIP(10), FromDIP(6)});
     p->btn_add_filament_row->SetMinSize({-1, FromDIP(MD3::Metrics::active().row_height)});
     p->btn_add_filament_row->SetMaxSize({-1, FromDIP(MD3::Metrics::active().row_height)});

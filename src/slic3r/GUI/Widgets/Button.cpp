@@ -179,11 +179,11 @@ END_EVENT_TABLE()
 Button::Button()
     : paddingSize(10, 8)
 {
-    // Legacy (non-variant) pill default: half the active-density row height, so
-    // buttons sized to Metrics::active().row_height read as pills at either
-    // density. Variant buttons re-derive their radius in applyMD3Style(), and
-    // any explicit SetCornerRadius() still overrides this default.
-    SetDefaultCornerRadius(MD3::Metrics::active().row_height / 2);
+    // Legacy (non-variant) default: the board soft radius of the active-density
+    // row height, so buttons sized to Metrics::active().row_height read as soft
+    // rectangles at either density. Variant buttons re-derive their radius in
+    // applyMD3Style(), and any explicit SetCornerRadius() still overrides this.
+    SetDefaultCornerRadius(MD3::Metrics::soft_radius(MD3::Metrics::active().row_height));
     // Neutral MD3 seed only. The legacy white/green palette is gone: a Button
     // that reaches its first paint without SetVariant()/SetIconButton() and
     // without caller styling adopts the Outlined variant (see paintEvent).
@@ -520,15 +520,16 @@ void Button::applyMD3Style()
         background_color = bg;
         text_color       = fg;
         SetBorderWidth(0);
-        // Circle => pill radius (half the DPI-scaled edge); square => r8.
+        // Square => board soft square (soft_radius of the DPI-scaled edge);
+        // Circle => half the edge, kept only for callers not yet migrated.
         if (m_icon_shape == IconShape::Circle)
             SetCornerRadius(FromDIP(container) / 2.0);
         else
-            SetCornerRadius(FromDIP(MD3::Metrics::active().small_radius));
+            SetCornerRadius(MD3::Metrics::soft_radius(FromDIP(container)));
 
-        // Square adds 4px of width (matches the kit window-control shape); the
-        // glyph stays centered via render()'s isCenter path.
-        const int wpx = container + (m_icon_shape == IconShape::Square ? 4 : 0);
+        // A true square like the board .ib; the glyph stays centered via
+        // render()'s isCenter path.
+        const int wpx = container;
         paddingSize    = wxSize(0, 0);
         minSize        = wxSize(FromDIP(wpx), FromDIP(container));
 
@@ -547,6 +548,7 @@ void Button::applyMD3Style()
     switch (m_button_size) {
     case Size::Small: height = 36; hpad = 16; icon_px = 18; break;
     case Size::Large: height = 44; hpad = 22; icon_px = 20; break;
+    case Size::Action: height = MD3::Metrics::action_height; hpad = 16; icon_px = 20; break;
     case Size::Medium:
     default:          height = 42; hpad = 18; icon_px = 20; break;
     }
@@ -558,7 +560,11 @@ void Button::applyMD3Style()
     wxFont font = m_button_size == Size::Small ? Label::Head_12
                 : m_button_size == Size::Large ? Label::Head_14
                                                : Label::Head_13;
-    if (m_variant == Variant::Outlined) {
+    if (m_button_size == Size::Action) {
+        // Board .btn: 13 px label, Filled 700, Tonal 500, everything else 400.
+        const int weight = m_variant == Variant::Filled ? 700 : m_variant == Variant::Tonal ? 500 : 400;
+        font.SetNumericWeight(weight);
+    } else if (m_variant == Variant::Outlined) {
         font.SetWeight(wxFONTWEIGHT_MEDIUM);
         font.SetNumericWeight(500);
     }
@@ -658,8 +664,8 @@ void Button::applyMD3Style()
         border_color = bd;
 
     SetBorderWidth(bw);
-    // Atlas uses a density-aware rounded rectangle; target dimensions stay intact.
-    SetCornerRadius(std::min(FromDIP(height) / 2.0, double(FromDIP(MD3::Metrics::active().radius))));
+    // Board soft rectangle (about 0.3 of the height) at every size tier.
+    SetCornerRadius(MD3::Metrics::soft_radius(FromDIP(height)));
 
     paddingSize = wxSize(FromDIP(hpad), paddingSize.y);
     minSize.SetHeight(FromDIP(height));

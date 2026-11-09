@@ -22,7 +22,7 @@ public:
 
     // MD3 size tiers. Map to fixed heights 36/42/44, per-side h-padding
     // 16/18/22, label sizes 12.5/13.5/14 and icon glyphs 18/20/20.
-    enum class Size { Small, Medium, Large };
+    enum class Size { Small, Medium, Large, Action };
 
     // IconButton shape: circle (radius = half the container) or square (r8).
     enum class IconShape { Circle, Square };
@@ -67,7 +67,7 @@ private:
     int      m_glyph_px  = 0; // 0 => derive from the size tier / IconButton size
 
     // IconButton geometry (only meaningful when m_variant == Variant::IconButton).
-    IconShape m_icon_shape        = IconShape::Circle;
+    IconShape m_icon_shape        = IconShape::Square;
     bool      m_icon_filled       = false;
     bool      m_icon_danger       = false;
     int       m_icon_container_px = 36; // square touch-target edge (design px)
@@ -159,13 +159,15 @@ public:
     // Pass a default-empty StateColor() to revert to the follow-text behaviour.
     void SetGlyphColor(StateColor const &color);
 
-    // Switch the Button into borderless IconButton mode: a circle (radius =
-    // half the container) or square (r8) ghost target that is transparent +
-    // OnSurfaceVariant at rest, SurfaceContainerHigh on hover, optionally a
-    // resting SurfaceContainerHighest disc (filled), and Error / OnError on
-    // hover when danger. Supply the glyph via SetGlyph(); container_px <= 0
-    // keeps the current/default 36px edge (square adds 4px of width).
-    void SetIconButton(IconShape shape = IconShape::Circle, int container_px = 0,
+    // Switch the Button into borderless IconButton mode: a soft square
+    // (radius = MD3::Metrics::soft_radius(container), width = container) ghost
+    // target that is transparent + OnSurfaceVariant at rest,
+    // SurfaceContainerHigh on hover, optionally a resting
+    // SurfaceContainerHighest fill (filled), and Error / OnError on hover when
+    // danger. Pressable icon buttons are soft squares; Circle remains only until
+    // no pressable caller uses it. Supply the glyph via SetGlyph(); container_px
+    // <= 0 keeps the current/default 36px edge.
+    void SetIconButton(IconShape shape = IconShape::Square, int container_px = 0,
                        bool filled = false, bool danger = false);
 
     void SetSelected(bool selected = true) { m_selected = selected; }

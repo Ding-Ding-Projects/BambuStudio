@@ -365,7 +365,7 @@ MachineInfoPanel::MachineInfoPanel(wxWindow* parent, wxWindowID id, const wxPoin
     // Was a wxStaticBitmap holding wxNullBitmap that never received an image: an
     // invisible click target. It is a visible kit icon Button now.
     m_upgrade_retry_img = new Button(this, "", "", 0, 0);
-    m_upgrade_retry_img->SetIconButton(Button::IconShape::Circle, FromDIP(28));
+    m_upgrade_retry_img->SetIconButton(Button::IconShape::Square, FromDIP(28));
     m_upgrade_retry_img->SetGlyph(MaterialIcon::Refresh, FromDIP(20));
     m_upgrade_retry_img->SetToolTip(_L("Retry"));
     m_upgrading_sizer->Add(m_upgrade_retry_img, 0, wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(5));
@@ -472,7 +472,7 @@ wxPanel *MachineInfoPanel::create_caption_panel(wxWindow *parent)
     // target). SetIconBitmap() keeps the very same raster copy-icon art -- and the hover /
     // "copied!" crossfade below -- instead of switching to a Material Symbols glyph.
     m_copy_info = new Button(caption_panel, wxEmptyString);
-    m_copy_info->SetIconButton(Button::IconShape::Circle, COPY_ICON_PX);
+    m_copy_info->SetIconButton(Button::IconShape::Square, COPY_ICON_PX);
     m_copy_info->SetIconBitmap(create_scaled_bitmap("tooltip_copy", this, COPY_ICON_PX));
     // Same MD3 role the caption bar itself is seeded with a few lines up, so the two stay in
     // sync under a runtime theme switch instead of freezing a read-back snapshot.

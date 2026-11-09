@@ -77,7 +77,7 @@ Button *reset_button(wxWindow *parent, const wxString &what)
 {
     auto *b = new Button(parent, "", "", 0, 0, wxID_ANY);
     if (MaterialIcon::available()) {
-        b->SetIconButton(Button::IconShape::Circle, 28);
+        b->SetIconButton(Button::IconShape::Square, 28);
         b->SetGlyph(MaterialIcon::Undo, 16);
     } else {
         b->SetLabel(wxString(wxUniChar(0x21BA)));

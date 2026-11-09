@@ -17,7 +17,7 @@ export function Button({ variant = 'filled', size = 'md', icon, iconFill = false
   return (
     <button title={title} onClick={onClick} onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
       style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, height: h, padding: '0 ' + pad + 'px',
-        borderRadius: h / 2, cursor: 'pointer', fontFamily: 'var(--md-font)', fontSize: size === 'sm' ? 12.5 : (size === 'lg' ? 14 : 13.5),
+        borderRadius: Math.round(h * 0.3), cursor: 'pointer', fontFamily: 'var(--md-font)', fontSize: size === 'sm' ? 12.5 : (size === 'lg' ? 14 : 13.5),
         boxShadow: elevated ? 'var(--md-elev-2)' : 'none', transition: '.15s', ...v, ...hover, ...style }}>
       {icon && <span data-icon style={{ fontSize: iconSz, fontVariationSettings: iconFill ? "'FILL' 1" : undefined }}>{icon}</span>}
       {children}

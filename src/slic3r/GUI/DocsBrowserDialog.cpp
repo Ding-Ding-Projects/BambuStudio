@@ -292,13 +292,13 @@ void DocsBrowserDialog::create_ui()
     auto *article_sizer = new wxBoxSizer(wxVERTICAL);
     auto *toolbar = new wxBoxSizer(wxHORIZONTAL);
     m_back_button = new Button(this, wxEmptyString);
-    m_back_button->SetIconButton(Button::IconShape::Circle, FromDIP(40));
+    m_back_button->SetIconButton(Button::IconShape::Square, FromDIP(40));
     m_back_button->SetGlyph(MaterialIcon::ArrowBack, FromDIP(20));
     m_back_button->SetName(_L("Back"));
     m_back_button->SetToolTip(_L("Back") + " (Alt+Left)");
     m_back_button->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { go_back(); });
     m_forward_button = new Button(this, wxEmptyString);
-    m_forward_button->SetIconButton(Button::IconShape::Circle, FromDIP(40));
+    m_forward_button->SetIconButton(Button::IconShape::Square, FromDIP(40));
     m_forward_button->SetGlyph(MaterialIcon::ArrowForward, FromDIP(20));
     m_forward_button->SetName(_L("Forward"));
     m_forward_button->SetToolTip(_L("Forward") + " (Alt+Right)");

@@ -92,7 +92,7 @@ public:
         action->SetName(action_label);
         row->Add(action, 0, wxALIGN_CENTER_VERTICAL);
         auto *close = new Button(this, wxEmptyString);
-        close->SetIconButton(Button::IconShape::Circle, FromDIP(36));
+        close->SetIconButton(Button::IconShape::Square, FromDIP(36));
         close->SetGlyph(MaterialIcon::Close, 18);
         close->SetToolTip(_L("Close"));
         close->SetName(_L("Close"));

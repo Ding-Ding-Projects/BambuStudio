@@ -3625,7 +3625,7 @@ wxSizer* MainFrame::create_side_tools(wxWindow* parent)
     // the same ExpandCenterDialog. Replaces the raster 'expand_program' chrome.
     if (action_icons_ok) {
         m_prepare_expand_btn = new Button(parent, wxEmptyString);
-        m_prepare_expand_btn->SetIconButton(Button::IconShape::Circle, 34);
+        m_prepare_expand_btn->SetIconButton(Button::IconShape::Square, 34);
         m_prepare_expand_btn->SetGlyph(MaterialIcon::ExpandLess);
         m_prepare_expand_btn->SetToolTip(_L("Unlock faster, more reliable, warp-free prints with Helio Additive."));
         m_prepare_expand_btn->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) {

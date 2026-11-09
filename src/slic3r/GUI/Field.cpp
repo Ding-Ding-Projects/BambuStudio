@@ -2024,7 +2024,7 @@ void ColourPicker::refresh_clear_button_style()
     // change only needs the parent-surface snapshot it caches behind its
     // circular shape re-taken -- no clear_color_dark / clear_color_light pair,
     // and no legacy dark swap.
-    m_clear_button->SetIconButton(::Button::IconShape::Circle, COLOUR_CLEAR_BUTTON_PX);
+    m_clear_button->SetIconButton(::Button::IconShape::Square, COLOUR_CLEAR_BUTTON_PX);
     m_clear_button->Refresh();
 }
 

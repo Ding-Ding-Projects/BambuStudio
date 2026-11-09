@@ -417,7 +417,7 @@ Button *AppearanceEditorPopover::make_reset(wxWindow *parent, const char *key, c
 {
     auto *b = new Button(parent, "", "", 0, 0, wxID_ANY);
     if (MaterialIcon::available()) {
-        b->SetIconButton(Button::IconShape::Circle, 28);
+        b->SetIconButton(Button::IconShape::Square, 28);
         b->SetGlyph(MaterialIcon::Undo, 16);
     } else {
         b->SetLabel(wxString(wxUniChar(0x21BA)));
@@ -479,7 +479,7 @@ void AppearanceEditorPopover::build()
     head->Add(titles, 1, wxALIGN_CENTER_VERTICAL);
     auto *close = new Button(this, "", "", 0, 0, wxID_ANY);
     if (MaterialIcon::available()) {
-        close->SetIconButton(Button::IconShape::Circle, 32);
+        close->SetIconButton(Button::IconShape::Square, 32);
         close->SetGlyph(MaterialIcon::Close, 18);
     } else {
         close->SetLabel(wxString(wxUniChar(0x2715)));

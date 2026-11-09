@@ -11455,7 +11455,7 @@ void GLCanvas3D::_render_return_toolbar()
     // of sitting at the 18px literal. The container tones now RISE with
     // interaction - the old triple faded out on hover, because its alpha dropped
     // from .3 at rest to .15 hovered.
-    ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 0.5f * real_size.y);
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, (float) MD3::Metrics::soft_radius((int) (real_size.y + 0.5f)));
     ImGui::PushStyleColor(ImGuiCol_Button, md3_imvec4(MD3::Role::SurfaceContainer));
     ImGui::PushStyleColor(ImGuiCol_ButtonHovered, md3_imvec4(MD3::Role::SurfaceContainerHigh));
     ImGui::PushStyleColor(ImGuiCol_ButtonActive, md3_imvec4(MD3::Role::SurfaceContainerHighest));
