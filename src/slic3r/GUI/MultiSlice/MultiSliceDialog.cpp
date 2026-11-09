@@ -326,7 +326,7 @@ void MultiSliceDialog::show_status(Ink &ink, Status state, const wxString &detai
     case Status::Idle:    text = wxString(); break;
     case Status::Waiting: text = _L("Waiting"); break;
     case Status::Slicing: text = _L("Slicing"); break;
-    case Status::Saved:   text = _L("Saved"); break;
+    case Status::Saved:   text = _L("File saved"); break;
     case Status::Failed:  text = detail.empty() ? _L("Not saved") : wxString::Format(_L("Not saved: %s"), detail); break;
     case Status::Skipped: text = _L("Stopped"); break;
     }

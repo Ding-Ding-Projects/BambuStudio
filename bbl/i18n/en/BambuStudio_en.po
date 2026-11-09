@@ -38463,3 +38463,6 @@ msgstr ""
 
 msgid "File, Export, Multi-slice"
 msgstr ""
+
+msgid "File saved"
+msgstr ""

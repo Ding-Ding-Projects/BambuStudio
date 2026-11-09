@@ -59766,3 +59766,8 @@ msgstr "搞掂。存咗 %d 個切片檔（共 %d 個）；墨水已經換返。"
 #. review-status: agent-drafted
 msgid "File, Export, Multi-slice"
 msgstr "檔案，匯出，多重切片"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "File saved"
+msgstr "已經存咗"

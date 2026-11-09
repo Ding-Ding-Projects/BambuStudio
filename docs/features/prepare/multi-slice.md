@@ -15,17 +15,17 @@ command palette (search for "Multi-slice").
    by ink name or type, and offers the regular-expression builder like every
    other search.
 3. Check where the files go. When a USB drive is plugged in it is chosen
-   automatically; otherwise the last folder you saved to is used. **Change folder**
-   picks another one.
-4. Select **Slice and save**. Each ink shows **Waiting**, **Slicing**, **Saved**
+   automatically; otherwise the last folder you saved to is used, or the Documents
+   folder when there is none yet. **Change folder** picks another one.
+4. Select **Slice and save**. Each ink shows **Waiting**, **Slicing**, **File saved**
    or **Not saved** with the reason.
 5. When it finishes, **Show files** opens the folder. If it was a USB drive, the
    usual eject button appears.
 
 The files are named after the project and the ink, for example
-`bracket_Bambu PLA Basic.gcode.3mf` and `bracket_Generic ABS.gcode.3mf`. Spaces
-and characters that some file systems refuse become `_`; a name already used in
-the same run gets `(2)`, `(3)` and so on.
+`bracket_Bambu_PLA_Basic_BBL_X1C.gcode.3mf` and `bracket_Bambu_ABS_BBL_X1C.gcode.3mf`.
+Spaces and characters that some file systems refuse become `_`; a name already
+used in the same run gets `(2)`, `(3)` and so on.
 
 ## What changes for each file
 
@@ -44,6 +44,11 @@ after that ink was applied and then become valid again. A result from the
 previous ink can therefore never be saved under the next ink's name. If the
 chosen ink is the one already in use, the result is marked out of date anyway so
 that file is sliced fresh.
+
+Before a file is kept, Multi-slice opens it and reads back the ink its settings
+were sliced with. A file sliced with any other ink is removed and that ink is
+reported as **Not saved**, so a file never carries the wrong ink under an ink's
+name.
 
 If a slice does not start within 10 seconds, stops without a result, or the
 plate cannot be printed with that ink (for example the ink does not fit the
@@ -69,5 +74,6 @@ put back.
 
 - `tests/multi_slice_names_test.cpp` checks file names: unsafe characters,
   trailing dots, non-ASCII ink names and repeated names.
-- The run itself is checked in the built application on a sample model with two
-  inks.
+- The run is checked in the built application on a 20 mm cube with an X1 Carbon
+  profile, PLA and ABS: two files, each read back with its own ink (PLA at
+  220 °C, ABS at 270 °C).

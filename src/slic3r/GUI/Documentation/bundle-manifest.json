@@ -1195,12 +1195,12 @@
     {
       "route": "prepare/multi-slice.md",
       "title": "Multi-slice: one sliced file per ink",
-      "sha256": "61e556b38d806b4d953eb95ecc53264f1d89ba5d0e4768d27f05cf145be6e4e3"
+      "sha256": "ed759076f8edf8e56b910928a39c6c14b8b8d77531121042113a2cc64755ee6b"
     },
     {
       "route": "prepare/multi-slice.yue_HK.md",
       "title": "多重切片：每款墨水一個切片檔",
-      "sha256": "d17800bfcbba2d5d6eecc6a138e5c99068be1d959ce2fe9a640e63210feb8dcc"
+      "sha256": "3f250923133a4ee548b2e92e9a78432609d8d8133b311ddf1ef92a04e74ad4a7"
     },
     {
       "route": "prepare/native-lifecycle.md",
@@ -2305,7 +2305,7 @@
       "bytes": 16430
     }
   ],
-  "bundle_sha256": "8d4d203995528ab23de8b4f72713eb82d690523e747214a2b0c69b720c6e05c3",
+  "bundle_sha256": "88d9cadd2de78a17a8c703b898e4bf9e0cd80e2a5b2b5911078d32966504e3fa",
   "unavailable_references": [
     {
       "source": "api/README.md",
