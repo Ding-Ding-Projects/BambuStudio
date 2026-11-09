@@ -36,8 +36,8 @@ test('every kind of response carries the security headers', async (t) => {
     ['drop refused', await drop(service.port, { code: 'nope', fileName: 'cube.obj', body: OBJ })],
     ['drop accepted', await drop(service.port, { fileName: 'cube.obj', body: OBJ })],
     ['wrong method', await request(service.port, { method: 'PUT', path: '/' })],
-    ['station refused', await request(service.port, { path: '/api/station/inbox' })],
-    ['station inbox', await station(service.port, service.key, 'GET', '/api/station/inbox')],
+    ['station inbox', await station(service.port, 'GET', '/api/station/inbox')],
+    ['station unknown route', await station(service.port, 'GET', '/api/station/nothing')],
   ];
   for (const [label, response] of responses) assertSecurityHeaders(response, label);
   assert.equal(responses[0][1].status, 200);
@@ -94,7 +94,7 @@ test('an upload that stalls is cut off by the request time limit and leaves noth
   const queueDir = path.join(service.dataDir, 'queue');
   for (let wait = 0; wait < 50 && fs.readdirSync(queueDir).length; wait += 1) await new Promise((r) => setTimeout(r, 20));
   assert.deepEqual(fs.readdirSync(queueDir), []);
-  assert.deepEqual((await station(service.port, service.key, 'GET', '/api/station/inbox')).json.items, []);
+  assert.deepEqual((await station(service.port, 'GET', '/api/station/inbox')).json.items, []);
 });
 
 test('the running size check stops a body that grows past its limit while it streams', async (t) => {
@@ -135,14 +135,12 @@ test('invalid settings stop the service with a message instead of being guessed'
     [{ DROP_TTL_HOURS: '-3' }, /DROP_TTL_HOURS/],
     [{ DROP_QUEUE_MAX_FILES: '1.5' }, /DROP_QUEUE_MAX_FILES/],
     [{ DROP_MAX_BYTES: '5000', DROP_QUEUE_MAX_BYTES: '4000' }, /DROP_QUEUE_MAX_BYTES/],
-    [{ DROP_STATION_KEY: 'too-short' }, /DROP_STATION_KEY/],
-    [{ DROP_STATION_KEY: 'has a space in the middle of it' }, /DROP_STATION_KEY/],
   ];
   for (const [env, message] of invalid) {
     assert.throws(() => readConfig(env), (error) => error instanceof ConfigError && message.test(error.message), JSON.stringify(env));
   }
-  // The key is never repeated in the message.
-  assert.throws(() => readConfig({ DROP_STATION_KEY: 'secret value' }), (error) => !error.message.includes('secret value'));
+  // A DROP_STATION_KEY left in an old .env is ignored, never validated and never part of the settings.
+  assert.equal(Object.hasOwn(readConfig({ DROP_STATION_KEY: 'too-short' }), 'stationKey'), false);
 
   const defaults = readConfig({});
   assert.deepEqual({ ...defaults }, {
@@ -152,7 +150,6 @@ test('invalid settings stop the service with a message instead of being guessed'
     ttlHours: 24,
     queueMaxFiles: 50,
     queueMaxBytes: 2147483648,
-    stationKey: null,
     publicUrl: null,
   });
   // Empty values, as compose passes unset variables, mean the default.

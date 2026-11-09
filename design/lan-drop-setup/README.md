@@ -10,11 +10,11 @@ The six steps are Discover, Check requirements, Configure, Review, Start and Rea
 
 ## Existing setup comes first
 
-Discover the exact existing Compose project, service, published port, storage and health without displaying its credential. Existing storage and credential are retained by default and cannot be changed by this initial wizard. Never adopt an unrelated container or migrate an existing volume implicitly. A configured remote desktop station is not replaced.
+Discover the exact existing Compose project, service, published port, storage and health without displaying private values. Existing storage is retained by default and cannot be changed by this initial wizard. Never adopt an unrelated container or migrate an existing volume implicitly. A configured remote desktop station is not replaced.
 
 Fresh setup may select the standard new named volume or an empty, newly dedicated folder. Validate its resolved destination, ownership, emptiness, write access and overlap with existing data before proceeding. A nonempty folder is rejected without deletion. File-picker selection is required in production; the prototype uses descriptive sample text only.
 
-A fresh station credential is generated securely by default. An optional custom credential uses a masked, explicitly labelled input and a protected configuration channel, never a plaintext environment file, command argument, URL or log. It is never saved in resumable drafts. The prototype intentionally accepts no credential value. Reuse the native local pairing protocol without changing its owner-only pipe access, bounded output or protected persistence requirements.
+The drop box needs no key or credential, so the wizard asks for none and the pairing step transfers only the service address. The prototype accepts no secret values. Reuse the native local pairing protocol without changing its owner-only pipe access or bounded output requirements.
 
 ## Backend contract proposal
 

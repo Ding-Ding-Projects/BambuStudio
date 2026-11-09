@@ -307,18 +307,18 @@ void scenario(const json &manifest, const json &s, const Fixtures &fixtures, con
         tracker.take(item.id);
     }
 
-    // Wrong and missing keys, an unknown id.
+    // An older container that still asks for a key, and an unknown id.
     if (s.contains("statusWrongKey")) {
         const Captured wrong = fixtures.load(s.at("statusWrongKey"));
         security_headers(wrong);
-        require(classify_status(wrong.exchange) == LinkState::WrongStationKey, name + ": a wrong key reads as Wrong station key");
+        require(classify_status(wrong.exchange) == LinkState::StationAsksForKey, name + ": a wrong key from an older container reads as needing an update");
         require(body_json(wrong).at("error") == "unauthorized", name + ": unauthorized");
         require(header_value(wrong.head, "WWW-Authenticate").rfind("Bearer", 0) == 0, name + ": WWW-Authenticate: Bearer");
         const Captured no_key = fixtures.load(s.at("inboxNoKey"));
-        require(classify_failure(no_key.exchange) == LinkState::WrongStationKey, name + ": no key reads as Wrong station key");
+        require(classify_failure(no_key.exchange) == LinkState::StationAsksForKey, name + ": a missing key from an older container reads as needing an update");
         const Captured file_no_key = fixtures.load(s.at("fileNoKey"));
-        require(judge_download(listing.items.front(), file_no_key.exchange, file_no_key.head, "") == DownloadVerdict::Unauthorized,
-                name + ": a download without the key");
+        require(judge_download(listing.items.front(), file_no_key.exchange, file_no_key.head, "") == DownloadVerdict::AsksForKey,
+                name + ": a download refused by an older container");
         const Captured unknown = fixtures.load(s.at("fileUnknown"));
         require(judge_download(listing.items.front(), unknown.exchange, unknown.head, "") == DownloadVerdict::Gone, name + ": gone");
         require(body_json(unknown).at("error") == "not_found", name + ": not_found");

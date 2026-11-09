@@ -440,8 +440,7 @@
       },
       "configurationKeys": [
         "lan_drop_enabled",
-        "lan_drop_address",
-        "lan_drop_station_key"
+        "lan_drop_address"
       ],
       "consumer": {
         "path": "src/slic3r/GUI/LanModelDrop/LanModelDropUi.cpp",

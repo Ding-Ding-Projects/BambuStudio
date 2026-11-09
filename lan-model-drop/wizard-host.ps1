@@ -91,7 +91,6 @@ try {
             # No inherited credential or unrelated .env settings enter fresh setup.
             $env:DROP_PORT = [string]$request.port
             $env:DROP_STATION_NAME = [string]$request.stationName
-            $env:DROP_STATION_KEY = ''
             $env:DROP_PUBLIC_URL = ''
             $env:DROP_MAX_BYTES = '268435456'
             $env:DROP_TTL_HOURS = '24'

@@ -25144,6 +25144,9 @@ msgstr ""
 msgid "Receive models from the LAN drop site: switch, address, station key and status"
 msgstr ""
 
+msgid "Receive models from the LAN drop site: switch, address and status"
+msgstr ""
+
 msgid "Restore unchanged meshes reduced by automatic model import simplification"
 msgstr ""
 
@@ -35793,6 +35796,9 @@ msgid "Not reachable"
 msgstr ""
 
 msgid "Wrong station key"
+msgstr ""
+
+msgid "Drop box needs an update"
 msgstr ""
 
 msgid "Protocol not supported"

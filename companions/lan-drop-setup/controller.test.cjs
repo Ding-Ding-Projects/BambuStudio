@@ -9,13 +9,13 @@ const fixture = { ownership: 'existing-owned', containerId: 'a'.repeat(64), port
 async function prepared(controller) {
   const snapshot = await controller.dispatch(envelope('inspect'));
   return controller.dispatch(envelope('configure', { snapshotId: snapshot.snapshotId, port: snapshot.port,
-    stationName: 'Preserved station', storage: 'existing', credentialMode: 'preserve' }));
+    stationName: 'Preserved station', storage: 'existing' }));
 }
 async function settle(controller) {
   for (let i = 0; i < 30 && !controller.ledger.current.terminal; ++i) await new Promise(resolve => setImmediate(resolve));
 }
 
-test('existing service starts in place without pull or credential transport', async () => {
+test('existing service starts in place without pull', async () => {
   const calls = [];
   const controller = new Controller('unused', async (_script, request) => {
     calls.push(request);
@@ -50,12 +50,12 @@ test('cancel waits for the owned phase then reconciles retained service', async 
   assert.equal(controller.ledger.view().terminal.serviceState, 'running');
 });
 
-test('configuration cannot change existing port or pass custom credentials', async () => {
+test('configuration cannot change existing port or accept unknown fields', async () => {
   const controller = new Controller('unused', async () => fixture);
   const config = await prepared(controller);
-  const params = { snapshotId: config.snapshotId, port: 8833, stationName: 'Other', storage: 'existing', credentialMode: 'preserve' };
+  const params = { snapshotId: config.snapshotId, port: 8833, stationName: 'Other', storage: 'existing' };
   await assert.rejects(controller.dispatch(envelope('configure', params)), /existing_settings_preserved/);
-  await assert.rejects(controller.dispatch(envelope('configure', { ...params, port: fixture.port, stationKey: 'not accepted' })), /invalid_configuration/);
+  await assert.rejects(controller.dispatch(envelope('configure', { ...params, port: fixture.port, unexpectedField: 'not accepted' })), /invalid_configuration/);
 });
 
 test('an existing low-numbered port remains preservable', async () => {
@@ -84,7 +84,7 @@ test('fresh preflight rejection reconciles verified absence and permits a new re
   const port = probe.address().port;
   await new Promise(resolve => probe.close(resolve));
   const snapshot = await controller.dispatch(envelope('inspect'));
-  const params = { snapshotId: snapshot.snapshotId, port, stationName: 'Fixture', storage: 'new-volume', credentialMode: 'generate' };
+  const params = { snapshotId: snapshot.snapshotId, port, stationName: 'Fixture', storage: 'new-volume' };
   const config = await controller.dispatch(envelope('configure', params));
   const first = await controller.dispatch(envelope('start', { configurationId: config.configurationId, snapshotId: config.snapshotId }));
   await settle(controller);

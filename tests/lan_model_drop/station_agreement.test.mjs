@@ -84,7 +84,7 @@ test('a name the station would refuse is refused by the drop box, where the send
     const res = await drop(d.port, { fileName, body: ASCII_STL, sender });
     assert.equal(res.status, 201, `${JSON.stringify(fileName)}: ${res.body}`);
   }
-  const inbox = await station(d.port, d.key, 'GET', '/api/station/inbox');
+  const inbox = await station(d.port, 'GET', '/api/station/inbox');
   assert.deepEqual(inbox.json.items.map(({ fileName, sender }) => [fileName, sender]), kept.map(([, , name, sender]) => [name, sender]));
   const listed = probe('inbox', file(inbox.body));
   assert.deepEqual(listed.invalid, [], 'the station refuses nothing the drop box accepted');
@@ -162,7 +162,7 @@ test('the station shows the station name the drop box reports, all of its charac
   const seventy = `${'Workshop computer number one '.repeat(3)}`.slice(0, 70);
   for (const name of [sixty, seventy]) {
     const d = await startDrop(t, { env: { DROP_STATION_NAME: name } });
-    const status = await station(d.port, d.key, 'GET', '/api/station/status');
+    const status = await station(d.port, 'GET', '/api/station/status');
     const reported = status.json.stationName;
     assert.equal(reported, cleanStationName(name));
     assert.ok([...reported].length > 40 && [...reported].length <= 60, `${[...reported].length} characters`);

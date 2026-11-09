@@ -45462,6 +45462,11 @@ msgstr "LAN 模型投遞設定"
 msgid "Receive models from the LAN drop site: switch, address, station key and status"
 msgstr "接收 LAN 投遞網站傳嚟嘅模型：開關、地址、接收站金鑰同狀態"
 
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Receive models from the LAN drop site: switch, address and status"
+msgstr "接收 LAN 投遞網站傳嚟嘅模型：開關、地址同狀態"
+
 #. reviewed-category: preferences
 #. review-status: agent-drafted
 msgid "LAN model drop, off by default"
@@ -45576,6 +45581,11 @@ msgstr "連唔到"
 #. review-status: agent-drafted
 msgid "Wrong station key"
 msgstr "接收站金鑰唔啱"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Drop box needs an update"
+msgstr "投遞箱需要更新"
 
 #. reviewed-category: connection-offline
 #. review-status: agent-drafted

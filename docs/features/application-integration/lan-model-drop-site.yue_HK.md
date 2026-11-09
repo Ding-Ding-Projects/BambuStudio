@@ -8,9 +8,9 @@ review-status: agent-drafted
 
 ## 直接傳送更新（1.0.1）
 
-邀請連結只包含地址，唔包含金鑰或查詢參數。已移除更新投遞碼嘅控制。舊版 DROP_CODE 設定同資料卷內嘅 drop-code 檔案會保留但唔再使用。升級保留同一個資料卷、接收站金鑰同等候中模型。檔案格式、大小、佇列同到期限制維持不變。
+邀請連結只包含地址，唔包含金鑰或查詢參數。已移除更新投遞碼嘅控制。舊版 DROP_CODE 設定同資料卷內嘅 drop-code 檔案會保留但唔再使用。升級保留同一個資料卷同等候中模型。檔案格式、大小、佇列同到期限制維持不變。
 
-任何連得到服務嘅人都可以傳送；收件箱、下載同管理仍然需要接收站金鑰。每個來源地址一分鐘最多嘗試傳送 60 次，之後要等五分鐘。只限可信任嘅區域網絡使用，切勿公開到互聯網。容器 1.0.1 已由 run 42418444721 成功發佈，來源為 `601003f9b97d8945732d5a166f8dbe2b061d040f`。映像摘要為 `sha256:9382599181a32a5d78730c82b315612fcadc51beacea0ad3b831500e122ce51a`，建置內容 SHA-256 為 `4fb31a53d02699892ba4669a012900b13b7549040bba6e9d1f8cbf3a4424a389`。已拉取指定摘要，隔離 Compose 專案通過 `up --wait`、本機健康同第二部 LAN 主機健康檢查。真實瀏覽器已成功傳送測試 STL，回應 HTTP 201，冇附加投遞碼標頭。桌面同手機尺寸配合英文、粵語及雙語六個組合，通過無投遞碼欄位、無障礙名稱、鍵盤焦點及水平溢出檢查。Edge 喺 HTTP LAN 來源忽略 Cross-Origin-Opener-Policy 標頭，因此零主控台錯誤條件仍未達成。之後已透過 host.bat --detached 更新現有服務；原有接收站金鑰仍然有效，資料卷同等候模型完整保留，本機同第二部 LAN 主機健康檢查通過。原生桌面驗證仍須獨立完成。
+任何連得到服務嘅人都可以傳送，而且接收站唔需要金鑰：同一個網絡入面嘅人都可以讀取收件箱、下載同移除，不過用緊 Bambu Studio 嗰部電腦會睇到每個模型，再問你開啟定棄置。舊版 Bambu Studio 傳嚟嘅 Authorization 標頭會被忽略。每個來源地址一分鐘最多嘗試傳送 60 次，之後要等五分鐘。只限可信任嘅區域網絡使用，切勿公開到互聯網。容器 1.0.1 已由 run 42418444721 成功發佈，來源為 `601003f9b97d8945732d5a166f8dbe2b061d040f`。映像摘要為 `sha256:9382599181a32a5d78730c82b315612fcadc51beacea0ad3b831500e122ce51a`，建置內容 SHA-256 為 `4fb31a53d02699892ba4669a012900b13b7549040bba6e9d1f8cbf3a4424a389`。已拉取指定摘要，隔離 Compose 專案通過 `up --wait`、本機健康同第二部 LAN 主機健康檢查。真實瀏覽器已成功傳送測試 STL，回應 HTTP 201，冇附加投遞碼標頭。桌面同手機尺寸配合英文、粵語及雙語六個組合，通過無投遞碼欄位、無障礙名稱、鍵盤焦點及水平溢出檢查。Edge 喺 HTTP LAN 來源忽略 Cross-Origin-Opener-Policy 標頭，因此零主控台錯誤條件仍未達成。之後已透過 host.bat --detached 更新現有服務；原有接收站金鑰仍然有效，資料卷同等候模型完整保留，本機同第二部 LAN 主機健康檢查通過。原生桌面驗證仍須獨立完成。
 
 > 英文原文：[LAN model drop site](lan-model-drop-site.md)
 
@@ -21,7 +21,7 @@ LAN 模型投遞網站係一個喺你本地網絡上面、喺 Docker 容器入�
 Bambu Studio 會攞走每個模型，顯示係邊個傳嘅，再問你要開啟定棄置。唔會自動開啟、
 切片或者打印任何嘢。
 
-呢篇文講容器本身：點樣啟動、其他裝置點樣連到、接收站金鑰、設定、更新同保安。
+呢篇文講容器本身：點樣啟動、其他裝置點樣連到、設定、更新同保安。
 Bambu Studio 入面接收嗰邊喺 **偏好設定 > LAN 模型投遞** 同 **檔案 > LAN 模型投遞...**，
 嗰度亦會整你交俾對方嘅邀請連結同 QR 碼。
 
@@ -102,13 +102,7 @@ Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $_.PrefixOrigin -in 'Dhcp'
 
 ## 連接 Bambu Studio
 
-1. 喺 `lan-model-drop` 資料夾顯示接收站金鑰：
-
-   ```powershell
-   docker compose exec lan-model-drop node server/station-key.mjs
-   ```
-
-2. 喺 Bambu Studio 打開 **偏好設定 > LAN 模型投遞**，將金鑰貼入 **接收站金鑰**，
+1. 喺 Bambu Studio 打開 **偏好設定 > LAN 模型投遞**，
    網站地址保持 `http://localhost:8833`，再揀 **測試連線**。狀態會顯示 **已連接**。
 
 ## 喺網絡上面另一部 Docker 主機運行
@@ -117,35 +111,21 @@ Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $_.PrefixOrigin -in 'Dhcp'
 
 1. 將 `lan-model-drop` 資料夾複製去另一部主機。
 2. 喺嗰部主機嘅資料夾執行 `docker compose up -d`；如果佢有防火牆，開放 8833 埠。
-3. 喺嗰度用 `docker compose exec lan-model-drop node server/station-key.mjs`
-   顯示接收站金鑰。
-4. 喺 Bambu Studio 將網站地址設做 `http://<主機嘅地址>:8833`，再貼入金鑰。之後
+3. 喺 Bambu Studio 將網站地址設做 `http://<主機嘅地址>:8833`。之後
    邀請連結就會用呢個地址。
 
 如果個網頁放咗喺反向代理後面，或者想人哋用固定名稱，就設定 `DROP_PUBLIC_URL`
 （睇[設定](#設定)）；Bambu Studio 會用呢個地址整邀請連結同 QR 碼。
 
-## 顯示或者更換接收站金鑰
+## 唔需要接收站金鑰
 
-Bambu Studio 要用接收站金鑰先可以列出、下載同移除收到嘅模型。容器第一次啟動
-嗰陣會整一條，係 32 個隨機位元組，寫成 43 個字元，存喺佢嘅資料卷入面。隨時都
-可以顯示：
+接收站唔需要金鑰。Bambu Studio 只用網站地址就可以列出、下載同移除等緊嘅模型，所以任何連得到
+個埠嘅人都可以讀取同移除等緊嘅模型。用緊 Bambu Studio 嗰部電腦會喺開啟之前睇到每個模型，
+所以投遞網站唔會要求金鑰。請將個埠留喺你信任嘅網絡。
 
-```powershell
-docker compose exec lan-model-drop node server/station-key.mjs
-```
-
-金鑰永遠唔會寫入容器記錄。要更換（例如畀人睇咗之後），移除存起嘅金鑰再重新
-啟動：
-
-```powershell
-docker compose exec lan-model-drop rm /data/station-key
-docker compose restart
-docker compose exec lan-model-drop node server/station-key.mjs
-```
-
-然後將新金鑰貼入 Bambu Studio。你亦可以喺 `.env` 檔用 `DROP_STATION_KEY` 自己揀
-金鑰。
+今次改動之前嘅容器會喺 `/data/station-key` 產生金鑰，而且拒絕冇金鑰嘅請求。更新容器之後，
+嗰個檔案唔會再被讀取，可以留喺資料卷或者移除。舊 `.env` 檔入面嘅 `DROP_STATION_KEY` 會被忽略。
+如果舊版容器仍然要求金鑰，Bambu Studio 會顯示 **投遞箱需要更新**：用 `host.bat --detached` 更新容器。
 
 ## 設定
 
@@ -160,7 +140,6 @@ docker compose exec lan-model-drop node server/station-key.mjs
 | `DROP_TTL_HOURS` | 24 | 模型等 Bambu Studio 攞走嘅鐘數，過咗就移除（最多 720） |
 | `DROP_QUEUE_MAX_FILES` | 50 | 同一時間最多等緊嘅模型數目，最多 1000 個，即係 Bambu Studio 一次列得出嘅最多數目 |
 | `DROP_QUEUE_MAX_BYTES` | 2147483648（2 GB） | 同一時間最多等緊嘅位元組 |
-| `DROP_STATION_KEY` | 自動產生 | 接收站金鑰，16 至 512 個可見字元，唔可以有空格 |
 | `DROP_PUBLIC_URL` | 冇 | 反向代理後面用嚟整邀請連結嘅地址，例如 `https://drop.example.org` |
 
 數值唔啱嘅話，容器會停止，並喺 `docker compose logs` 留低訊息，唔會估你想點。
@@ -196,8 +175,8 @@ docker compose exec lan-model-drop node server/station-key.mjs
 | --- | --- |
 | 暫停，直到你再啟動 | `docker compose stop` |
 | 再啟動 | `docker compose start` |
-| 移除容器，保留金鑰同等緊嘅模型 | `docker compose down` |
-| 全部移除，包括金鑰同等緊嘅模型 | `docker compose down -v` |
+| 移除容器，保留等緊嘅模型 | `docker compose down` |
+| 全部移除，包括等緊嘅模型 | `docker compose down -v` |
 
 容器停咗嘅時候，Bambu Studio 會顯示 **連唔到**，並會慢慢咁繼續檢查。
 
@@ -206,12 +185,11 @@ docker compose exec lan-model-drop node server/station-key.mjs
 歷史版本驗證（唔代表 1.0.1 已完成執行驗證）：
 - **會保留乜嘢。** 每個等緊嘅模型會連同整理過嘅檔名、可以唔填嘅寄件人名、大小、
   SHA-256 同收到嘅時間一齊存起。Bambu Studio 攞走之後，或者過咗
-  `DROP_TTL_HOURS`，就會移除。接收站金鑰係只有服務先讀到嘅檔案。
+  `DROP_TTL_HOURS`，就會移除。
 - **乜嘢都唔會離開你嘅網絡。** 個網頁唔會由互聯網載入任何嘢：字型同圖示都係內置嘅，
   亦冇分析追蹤。映像建立好之後，容器唔需要連互聯網。
-- **接收站金鑰。** 只有 Bambu Studio 需要佢。有金鑰嘅人可以列出、下載同移除等緊嘅
-  模型，所以千祈唔好放入邀請，亦唔好分享你嘅 `.env`。Bambu Studio 會為你嘅 Windows
-  用戶帳戶加密保存佢。
+- **冇接收站金鑰。** 任何連得到個埠嘅人都可以列出、下載同移除等緊嘅模型，所以請將佢留喺
+  信任嘅網絡，亦唔好分享你嘅 `.env`。
 - **接受乜嘢。** 只接受 3MF、STL、STEP、OBJ 同 AMF，按檔名同內容檢查，而且唔可以
   超過大小上限。檔名會整理過（移除控制字元、會調轉或者收埋文字嘅字元，同埋
   `<>:"/\|?*`），只用嚟顯示；模型用隨機名稱儲存。整理之後乜都唔剩嘅檔名，會喺寄件人
@@ -228,7 +206,7 @@ docker compose exec lan-model-drop node server/station-key.mjs
 | 手機打唔開個網頁 | 手機喺同一個網絡，唔係訪客網絡；防火牆規則存在；`docker compose ps` 顯示 `healthy` |
 | 傳送太頻密 | 等五分鐘再試 |
 | 「投遞箱滿咗」 | 喺 Bambu Studio 開啟或者棄置等緊嘅模型 |
-| Bambu Studio 顯示 **接收站金鑰錯誤** | 再顯示一次金鑰，然後貼入 |
+| Bambu Studio 顯示 **投遞箱需要更新** | 容器比 Bambu Studio 舊，仍然要求金鑰。執行 `host.bat --detached` 更新 |
 | Bambu Studio 顯示 **連唔到** | Docker Desktop 運行緊，而且容器已經啟動 |
 
 ## 已經檢查咗乜嘢

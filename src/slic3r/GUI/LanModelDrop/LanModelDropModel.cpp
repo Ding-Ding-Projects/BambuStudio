@@ -461,8 +461,6 @@ bool is_utc_stamp(std::string_view stamp)
     return AppUpdateCheckPolicy::parse_utc(std::string(stamp), seconds);
 }
 
-bool is_station_key(std::string_view key) { return key.size() >= 16 && key.size() <= 512 && visible_ascii(key); }
-
 std::string to_hex(const unsigned char *bytes, std::size_t size)
 {
     static const char digits[] = "0123456789abcdef";
@@ -585,7 +583,7 @@ bool parse_health(std::string_view body)
 LinkState classify_failure(const Exchange &exchange)
 {
     if (!exchange.completed) return LinkState::NotReachable;
-    if (exchange.http_status == 401 || exchange.http_status == 403) return LinkState::WrongStationKey;
+    if (exchange.http_status == 401 || exchange.http_status == 403) return LinkState::StationAsksForKey;
     if (exchange.http_status >= 500) return LinkState::NotReachable;
     return LinkState::ProtocolNotSupported;
 }
@@ -604,7 +602,7 @@ DownloadVerdict judge_download(const InboxItem &item, const Exchange &exchange, 
 {
     if (!exchange.completed) return DownloadVerdict::Retry; // network failure or cancelled
     if (exchange.http_status == 404) return DownloadVerdict::Gone;
-    if (exchange.http_status == 401 || exchange.http_status == 403) return DownloadVerdict::Unauthorized;
+    if (exchange.http_status == 401 || exchange.http_status == 403) return DownloadVerdict::AsksForKey;
     if (exchange.http_status < 200 || exchange.http_status >= 300) return DownloadVerdict::Retry;
     if (exchange.body.size() != item.bytes) return DownloadVerdict::RefuseSize;
     std::string announced = header_value(raw_headers, "X-Content-SHA256");
@@ -624,11 +622,9 @@ bool is_error_state(LinkState state)
 {
     switch (state) {
     case LinkState::NotReachable:
-    case LinkState::WrongStationKey:
+    case LinkState::StationAsksForKey:
     case LinkState::ProtocolNotSupported:
-    case LinkState::NeedsStationKey:
-    case LinkState::InvalidAddress:
-    case LinkState::KeyStorageUnavailable: return true;
+    case LinkState::InvalidAddress: return true;
     case LinkState::Off:
     case LinkState::Checking:
     case LinkState::Connected: return false;

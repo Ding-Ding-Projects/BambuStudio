@@ -11,7 +11,7 @@ Transport is a narrow renderer-to-main IPC allowlist plus a separately authentic
 | Method | Parameters | Successful result |
 | --- | --- | --- |
 | inspect | optional `operationId` belonging to the current main-process session | `snapshotId`, `ownership` (existing-owned/fresh/conflict), prerequisite enum states, safe configuration summary and capabilities; operation-aware inspection additionally returns the same operation's reconciliation result |
-| configure | `snapshotId`, station name, validated integer port, storage enum existing/new-volume/new-empty-folder, optional folder selection handle, credential mode preserve/generate/custom; custom bytes use protected input only | opaque `configurationId`, safe review summary, expiry time; never credential bytes |
+| configure | `snapshotId`, station name, validated integer port, storage enum existing/new-volume/new-empty-folder, optional folder selection handle. No credential fields exist | opaque `configurationId`, safe review summary, expiry time |
 | start | `configurationId`, `snapshotId` | `operationId`, accepted phase; rejects stale snapshots or an existing unresolved operation |
 | progress | `operationId`, `afterSequence` | bounded ordered events and latest terminal result if present; read-only and repeatable |
 | cancel | `operationId` | `accepted: true`, current phase; acceptance is not terminal cancellation |
@@ -26,10 +26,10 @@ Events contain `schema`, `operationId`, increasing `sequence`, `phase` (inspect/
 
 ## Confidential configuration lifetime
 
-For fresh custom credentials, the masked renderer input transfers once through the approved typed channel to main-process memory. Clear the renderer field and references immediately after accepted transfer, before Review. Review displays only custom/generated/preserved mode. JavaScript cannot guarantee erasure of immutable string copies; minimize copies, prefer bounded byte buffers in the protected backend and do not claim cryptographic memory erasure from clearing a field.
+The drop box needs no key or credential. The configure method accepts no secret fields and rejects any unknown field, so a renderer cannot supply one.
 
-Main retains the value only in owned memory during the pending Review lifetime. It never serializes it into drafts, logs, telemetry, environment files, argv, URLs or ordinary progress. Returning to Configure invalidates and clears the pending value and requires re-entry. Timeout, cancellation, terminal failure, successful protected transfer and window/session exit release it and wipe mutable owned buffers. Resume never restores it. Backend handoff uses the authenticated owner-only pipe, and persistence uses protected storage, not plaintext configuration. Preserve mode never reads a credential into the renderer.
+Main holds no secret for this wizard. Nothing confidential is serialized into drafts, logs, telemetry, environment files, argv, URLs or ordinary progress. Backend handoff uses the authenticated owner-only pipe.
 
-Review can retain nonconfidential configuration while its credential expires; Start then reports a fixed credential-required state and returns to Configure. A renderer crash does not orphan active work: main retains operation ownership and reconciles before allowing another Start. A main-process restart performs inspection and explicit recovery, never treats an old operation identifier as current process authority.
+A renderer crash does not orphan active work: main retains operation ownership and reconciles before allowing another Start. A main-process restart performs inspection and explicit recovery, never treats an old operation identifier as current process authority.
 
-The existing service-owned `/data/station-key` persistence is permitted inside its protected data volume. This is distinct from forbidden host configuration, environment, draft, argument or log persistence. A future fixed custom-input entrypoint must accept bounded protected stdin/pipe input and create the file atomically with owner-only mode 0600 in a fresh owned volume, never overwrite an existing key or data. Published version 1.0.1 has no fixed custom stdin entrypoint; custom mode remains unavailable until that extension is separately reviewed. The wizard never supplies a credential through Docker environment variables or generic executable code.
+The service keeps no station key. Station routes answer without an Authorization header, and the wizard never supplies a credential through Docker environment variables or generic executable code.

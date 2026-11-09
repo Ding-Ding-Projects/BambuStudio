@@ -87,8 +87,7 @@ class Controller {
   async configure(params) {
     if (!this.snapshot || params.snapshotId !== this.snapshot.snapshotId) throw new Error('stale_snapshot');
     if (this.ledger.current && !this.ledger.current.terminal) throw new Error('operation_unresolved');
-    if (Object.keys(params).some(k => !['snapshotId', 'port', 'stationName', 'storage', 'credentialMode'].includes(k))) throw new Error('invalid_configuration');
-    if (params.credentialMode !== (this.snapshot.containerId ? 'preserve' : 'generate')) throw new Error('custom_credential_unavailable');
+    if (Object.keys(params).some(k => !['snapshotId', 'port', 'stationName', 'storage'].includes(k))) throw new Error('invalid_configuration');
     if (params.storage !== (this.snapshot.containerId ? 'existing' : 'new-volume')) throw new Error('folder_storage_unavailable');
     if (!Number.isInteger(params.port) || params.port < (this.snapshot.containerId ? 1 : 1024) || params.port > 65535 ||
         typeof params.stationName !== 'string' || !params.stationName.trim() || params.stationName.length > 80 || /[\x00-\x1f\x7f]/.test(params.stationName)) throw new Error('invalid_configuration');

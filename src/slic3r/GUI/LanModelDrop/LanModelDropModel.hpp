@@ -80,8 +80,6 @@ std::string sanitize_station_name(std::string_view raw);
 bool is_item_id(std::string_view id);        // exactly 32 lowercase hexadecimal digits
 bool is_sha256_hex(std::string_view digest); // exactly 64 lowercase hexadecimal digits
 bool is_utc_stamp(std::string_view stamp);   // exactly YYYY-MM-DDTHH:MM:SSZ, a real date and time
-// The station key travels in an Authorization header: 16 to 512 visible ASCII characters, no spaces.
-bool is_station_key(std::string_view key);
 // Lowercase hexadecimal of raw digest bytes.
 std::string to_hex(const unsigned char *bytes, std::size_t size);
 // The value of the last `name:` field in raw HTTP response header lines, matched without regard to
@@ -139,11 +137,9 @@ enum class LinkState {
     Checking,             // on, no answer yet
     Connected,
     NotReachable,
-    WrongStationKey,
+    StationAsksForKey,    // an older drop box still asks for a key (401 or 403): update its container
     ProtocolNotSupported,
-    NeedsStationKey,      // on, but no station key is stored
-    InvalidAddress,       // on, but the address cannot be used
-    KeyStorageUnavailable // the protected key store cannot be read on this system
+    InvalidAddress        // on, but the address cannot be used
 };
 
 // What one HTTP exchange produced. `completed` is false when no HTTP answer arrived at all.
@@ -166,7 +162,7 @@ enum class DownloadVerdict {
     Accept,         // every check passed: save it and offer it to the user
     Retry,          // no answer, or one that says nothing about the file: try again on a later poll
     Gone,           // 404: the drop site no longer holds it (expired or removed meanwhile)
-    Unauthorized,   // 401 or 403: the station key is not accepted
+    AsksForKey,     // 401 or 403: an older drop box still asks for a key
     RefuseSize,     // not as many bytes as the inbox listed
     RefuseChecksum, // the SHA-256 differs from the inbox listing or from X-Content-SHA256
     RefuseType      // the listed name or the content is not the listed model type

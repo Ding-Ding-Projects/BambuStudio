@@ -55,37 +55,37 @@
     {
       "route": "application-integration/README.md",
       "title": "Native service integration",
-      "sha256": "9df34ae582f612692ee1819748fb1677eb4927929f5b85618e1215dd0a686b1e"
+      "sha256": "1fd998943e0d0035f36f6a281ca086d8bc183278b0033f721907addcee32106d"
     },
     {
       "route": "application-integration/lan-model-drop-site.md",
       "title": "LAN model drop site",
-      "sha256": "566f12816ca36b03de86e2d4d2398c4987d44809907e5b0b616a7c99ee77cc6e"
+      "sha256": "7580a33947368102cc8713b009168366340d683ccaea09e9374c26b24af2134d"
     },
     {
       "route": "application-integration/lan-model-drop-site.yue_HK.md",
       "title": "LAN 模型投遞網站",
-      "sha256": "0e98bd23642625b5c327638e89f52ae815e3456909411cf74a3a03a5adcb0f46"
+      "sha256": "8ef105dd892e544ed7ccd58f3022ecc45521f4bf055a3fd8e1cc2a2be441bd28"
     },
     {
       "route": "application-integration/lan-model-drop.md",
       "title": "LAN model drop",
-      "sha256": "2947e0e1d62ff83514a923ebdeed41d8763e50fa0b9840131064d035a6cf4bb9"
+      "sha256": "08539c24c34ac0b503e033271cd9ab97b4e6ea797c1b271ae7624a0b4f8e3a25"
     },
     {
       "route": "application-integration/lan-model-drop.yue_HK.md",
       "title": "LAN 模型投遞",
-      "sha256": "473aff42695b8e161168809bddf0aba0fd0b7c09184fe50714f50314eecbb91e"
+      "sha256": "cc363b83ca116c50762d851c2c154012da7d1cbd09d42422f531a928740e7c11"
     },
     {
       "route": "application-integration/local-drop-hosting.md",
       "title": "Start a local model drop server",
-      "sha256": "7e8cc9b8b96fc92189b130533f9c41cf469eeca1fbca61c90e7b0af4992c5acd"
+      "sha256": "d17f93c09d1d7e0591b94886acdec7d3428783d0ab20d1ff5881f2b775dade49"
     },
     {
       "route": "application-integration/local-drop-hosting.yue_HK.md",
       "title": "啟動本機模型投遞伺服器",
-      "sha256": "595bfd3f1ddc356a1e6717d3d7ff04000fe54caa965ed29d937d06251b5c1dcc"
+      "sha256": "a598e5004a8edbefd4dfd944514fa54758c39a51e2f8f48b1fdaab1bf4538f9f"
     },
     {
       "route": "application-integration/surface-registry.md",
@@ -865,12 +865,12 @@
     {
       "route": "lan-drop-setup/README.md",
       "title": "Portable LAN hosting setup companion",
-      "sha256": "45e772dcf00467595c55faf6ae5311f157a9b7419a63b68d1119661c9618ad3a"
+      "sha256": "3fe26c64ba321509f76d46b96118c9d2010462c0d3a62842c5f70bc72830a591"
     },
     {
       "route": "lan-drop-setup/README.yue_HK.md",
       "title": "可攜式區域網絡託管設定工具",
-      "sha256": "9d56de0e7961822465ad17026478422666e373a9ec8fb9fa074b45cab40c42d2"
+      "sha256": "5b7a9467b8a41050dcf9da4246120f7d96a6854c989889059cbe95c95398d889"
     },
     {
       "route": "lan-drop-setup/publication.md",
@@ -2295,7 +2295,7 @@
       "bytes": 16430
     }
   ],
-  "bundle_sha256": "1601ac307f2b456f6fb1db42343fae224a2517c43a833c468d80aea39972ecfb",
+  "bundle_sha256": "1653fa475361816f164017f486fc4daa344697ddc86b556b89cdecf87495662d",
   "unavailable_references": [
     {
       "source": "api/README.md",

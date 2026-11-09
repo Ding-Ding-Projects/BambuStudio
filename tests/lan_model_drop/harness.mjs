@@ -45,14 +45,11 @@ export async function startDrop(t, { env = {}, dataDir, clock, serverOptions = {
     await drop.close();
   };
   t.after(close);
-  const keyFile = path.join(dir, 'station-key');
-  const key = settings.stationKey ?? fs.readFileSync(keyFile, 'utf8').trim();
   return {
     port: address.port,
     dataDir: dir,
     drop,
     logs,
-    key,
     close,
   };
 }
@@ -89,8 +86,9 @@ export function drop(port, { code, fileName, body, sender, headers = {}, localAd
   return request(port, { method: 'POST', path: '/api/drop', headers: all, body, localAddress });
 }
 
-export function station(port, key, method, target) {
-  return request(port, { method, path: target, headers: { Authorization: `Bearer ${key}` } });
+// The station API needs no key and no Authorization header.
+export function station(port, method, target) {
+  return request(port, { method, path: target });
 }
 
 // ------------------------------------------------------------ sample models

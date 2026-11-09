@@ -1,8 +1,8 @@
 // Source contracts for the station side of the LAN model drop
 // (docs/features/application-integration/lan-model-drop.md). They read the C++ sources as text, so
 // they run without a build: the option is visible (its own Preferences section, a File menu item,
-// command palette rows, a title-bar indicator), the station key is protected with DPAPI and never
-// logged, all HTTP happens on the worker thread and reaches windows only through CallAfter, the
+// command palette rows, a title-bar indicator), the station sends no key and no Authorization
+// header, all HTTP happens on the worker thread and reaches windows only through CallAfter, the
 // worker stops in shutdown before windows are destroyed, and nothing is opened, sliced or printed
 // automatically. Every contract is also run against a mutated source to prove it can fail.
 import {test} from 'node:test';
@@ -18,7 +18,6 @@ const src = {
   station: read('src/slic3r/GUI/LanModelDrop/LanModelDropStation.cpp'),
   stationHpp: read('src/slic3r/GUI/LanModelDrop/LanModelDropStation.hpp'),
   ui: read('src/slic3r/GUI/LanModelDrop/LanModelDropUi.cpp'),
-  keyStore: read('src/slic3r/GUI/LanModelDrop/LanModelDropKeyStore.cpp'),
   model: read('src/slic3r/GUI/LanModelDrop/LanModelDropModel.cpp'),
   files: read('src/slic3r/GUI/LanModelDrop/LanModelDropFiles.cpp'),
   prefs: read('src/slic3r/GUI/Preferences.cpp'),
@@ -66,7 +65,7 @@ function visibleSection(prefs) {
   // The invite comes right after the switch, before the connection rows.
   assert.ok(tab.indexOf('"lan_drop_enabled"') < tab.indexOf('LanModelDrop::InvitePanel'));
   assert.ok(tab.indexOf('LanModelDrop::InvitePanel') < tab.indexOf('create_status_row'));
-  for (const key of ['lan_drop_invite', 'lan_drop_status', 'lan_drop_address', 'lan_drop_station_key'])
+  for (const key of ['lan_drop_invite', 'lan_drop_status', 'lan_drop_address'])
     assert.match(tab, new RegExp(`register_option_row\\("${key}", nullptr, \\w+\\);`));
   // Not hidden behind a developer, advanced or release gate.
   assert.doesNotMatch(tab, /developer_mode|BBL_RELEASE_TO_PUBLIC|advanced/i);
@@ -84,7 +83,7 @@ function menuItems(mainFrame) {
 function paletteEntries(index, palette) {
   assert.match(index, /PageLanDrop/);
   assert.match(index, /L\("Developer Tools"\), L\("LAN model drop"\),/);
-  for (const key of ['lan_drop_enabled', 'lan_drop_invite', 'lan_drop_status', 'lan_drop_address', 'lan_drop_station_key'])
+  for (const key of ['lan_drop_enabled', 'lan_drop_invite', 'lan_drop_status', 'lan_drop_address'])
     assert.match(index, new RegExp(`\\{"${key}", L\\("[^"]+"\\), L\\("[^"]+"\\), PageLanDrop\\}`));
   assert.match(index, /\{"docs\/features\/application-integration\/lan-model-drop\.md", L\("LAN model drop"\)\}/);
   assert.match(palette, /_L\("Invite someone to send a model"\)[\s\S]{0,400}?LanModelDrop::open_invite_dialog\(frame\)/);
@@ -103,37 +102,27 @@ function indicator(topbar) {
   assert.match(body(topbar, 'BBLTopbar::~BBLTopbar()'), /LanModelDrop::remove_listener\(m_lan_drop_listener\)/);
 }
 
-function protectedKey(keyStore, station, cmake, ui) {
-  const windows = keyStore.slice(keyStore.indexOf('#ifdef _WIN32\n\nbool key_store_available'), keyStore.indexOf('#else'));
-  assert.match(windows, /::CryptProtectData\(&input, [^,]+, &entropy, nullptr, nullptr, CRYPTPROTECT_UI_FORBIDDEN, &output\)/);
-  assert.match(windows, /::CryptUnprotectData\(&input, nullptr, &entropy, nullptr, nullptr, CRYPTPROTECT_UI_FORBIDDEN, &output\)/);
-  assert.doesNotMatch(windows, /CRYPTPROTECT_LOCAL_MACHINE/);
-  assert.match(windows, /::SecureZeroMemory\(output\.pbData, output\.cbData\);/);
-  assert.match(keyStore, /#pragma comment\(lib, "Crypt32\.lib"\)/);
-  assert.match(cmake, /iphlpapi\.lib user32\.lib version\.lib Crypt32\.lib\)/);
-  // Elsewhere there is no plain-text fallback.
-  const other = keyStore.slice(keyStore.indexOf('#else'));
-  assert.match(other, /KeyStoreResult save_station_key\(const std::filesystem::path &, const std::string &\) \{ return KeyStoreResult::Unavailable; \}/);
-  // The key never goes into the application settings: only the three settings keys are written.
-  for (const s of [station, keyStore, ui]) {
+function noKey(station, stationHpp, ui, model, cmake) {
+  // The station needs no key: nothing stores one, no Authorization header is built, and the Preferences
+  // section has no key row.
+  for (const text of [station, stationHpp, ui, model]) assert.doesNotMatch(text, /Authorization|Bearer|station_key|StationKey|key_store|KeyStore/i);
+  assert.doesNotMatch(cmake, /LanModelDropKeyStore/);
+  // Only the three settings keys are written to the application settings.
+  for (const s of [station, ui]) {
     for (const call of code(s).matchAll(/->set(?:_bool)?\(([^,]+),/g))
       assert.match(call[1].trim(), /^(kEnabledConfigKey|kAddressConfigKey|kInviteIpv4ConfigKey)$/, call[0]);
   }
   assert.doesNotMatch(station, /"lan_drop_station_key"/);
+  const exchange = body(station, 'Exchange exchange(const WorkerConfig &cfg');
+  assert.match(exchange, /\.clear_headers\(\)\s*\.header\("Accept", "application\/json"\)/);
 }
 
-function keyNeverLogged(sources) {
-  for (const s of sources) {
-    for (const line of s.split('\n').filter((l) => /BOOST_LOG|wxLog|printf|std::cerr|std::cout/.test(l)))
-      assert.doesNotMatch(line, /key|authorization|Bearer|secret/i, line.trim());
-  }
-  const exchange = body(sources[0], 'Exchange exchange(const WorkerConfig &cfg');
+function requestsStayLocal(station) {
+  const exchange = body(station, 'Exchange exchange(const WorkerConfig &cfg');
   assert.match(exchange, /\.verbose\(false\)/);
   assert.match(exchange, /\.follow_redirects\(false\)/);
   // Straight to the drop site, never through a proxy named in the environment.
   assert.match(exchange, /\.no_proxy\(\)/);
-  assert.match(exchange, /\.clear_headers\(\)\s*\.header\("Authorization", authorization\)/);
-  assert.match(exchange, /wipe\(authorization\);/);
 }
 
 function workerThreadHttp(station) {
@@ -254,11 +243,6 @@ function liveLabels(ui, station) {
   assert.doesNotMatch(plain, /\bset_wrapped\(/);
   for (const name of ['m_pending_note', 'm_manual', 'm_source_note', 'm_live', 'm_waiting_label'])
     assert.match(read('src/slic3r/GUI/LanModelDrop/LanModelDropUi.hpp'), new RegExp(`LiveText\\s+${name};`));
-  // Each live label holds one catalogue message: the outcome of Save key is not joined to the note.
-  const keyRow = body(ui, 'class KeyRow');
-  assert.match(keyRow, /m_outcome\.set\(m_message\)/);
-  assert.match(keyRow, /m_note\.set\(note\)/);
-  assert.doesNotMatch(keyRow, /m_message \+/);
   // A tooltip the decorator extends is set only when its English changes.
   const link = body(station, 'void on_link_state(std::uint64_t generation');
   assert.match(link, /const View before = v;/);
@@ -285,10 +269,10 @@ function invite(ui, station) {
 const contracts = [
   ['the option has its own visible Preferences section', () => visibleSection(src.prefs), () => visibleSection(src.prefs.replace('add_tab("lan_drop"', 'if (developer_mode) add_tab("lan_drop"'))],
   ['the File menu opens the section and the invite', () => menuItems(src.mainFrame), () => menuItems(src.mainFrame.replace('_L("Invite someone to send a model") + dots', '_L("Invite") + dots'))],
-  ['the command palette lists the section, every row and the invite', () => paletteEntries(src.paletteIndex, src.palette), () => paletteEntries(src.paletteIndex.replace('"lan_drop_station_key"', '"lan_drop_key"'), src.palette)],
+  ['the command palette lists the section, every row and the invite', () => paletteEntries(src.paletteIndex, src.palette), () => paletteEntries(src.paletteIndex.replace('"lan_drop_address"', '"lan_drop_addr"'), src.palette)],
   ['the title bar shows an indicator only while the option is on', () => indicator(src.topbar), () => indicator(src.topbar.replace('void BBLTopbar::SetHistoryInfo(const wxString& branch, const wxString& head)\n{', 'void BBLTopbar::SetHistoryInfo(const wxString& branch, const wxString& head)\n{\n    Realize();'))],
-  ['the station key is protected with DPAPI and never stored in plain text', () => protectedKey(src.keyStore, src.station, src.cmake, src.ui), () => protectedKey(src.keyStore.replace('CRYPTPROTECT_UI_FORBIDDEN, &output))\n        return KeyStoreResult::Failed;\n    std::vector', 'CRYPTPROTECT_LOCAL_MACHINE, &output))\n        return KeyStoreResult::Failed;\n    std::vector'), src.station, src.cmake, src.ui)],
-  ['the station key is never logged', () => keyNeverLogged([src.station, src.keyStore, src.ui, src.model]), () => keyNeverLogged([src.station.replace('BOOST_LOG_TRIVIAL(info) << "LAN model drop: received item "', 'BOOST_LOG_TRIVIAL(info) << cfg.key << "LAN model drop: received item "'), src.keyStore, src.ui, src.model])],
+  ['the station sends no key and no Authorization header', () => noKey(src.station, src.stationHpp, src.ui, src.model, src.cmake), () => noKey(src.station.replace('.clear_headers()\n        .header("Accept", "application/json")', '.clear_headers()\n        .header("Authorization", "Bearer x")\n        .header("Accept", "application/json")'), src.stationHpp, src.ui, src.model, src.cmake)],
+  ['requests go straight to the drop site, quietly and without redirects', () => requestsStayLocal(src.station), () => requestsStayLocal(src.station.replace('.no_proxy()', ''))],
   ['all HTTP runs on the worker thread and reaches windows through CallAfter', () => workerThreadHttp(src.station), () => workerThreadHttp(src.station.replace('void test_connection()\n{', 'void test_connection()\n{\n    exchange(cfg, Method::Get, std::string(), 0, 0, CancelWhen{});'))],
   ['shutdown cancels, wakes and joins the worker before windows go', () => shutdownStops(src.station, src.app), () => shutdownStops(src.station, src.station.replace('g_thread.join();', ''))],
   ['nothing is opened, sliced or printed automatically', () => nothingAutomatic(src.station), () => nothingAutomatic(src.station.replace('post([item, file = d.file, base] { on_received(item, file, base); });', 'post([item, file = d.file, base] { on_received(item, file, base); open_item(item.id); });'))],
@@ -299,7 +283,6 @@ const contracts = [
   ['deletes go only to the site that listed the item', () => receivedFolders(src.station, src.files), () => receivedFolders(src.station.replace('tracker.pending_deletes(base)', 'tracker.pending_deletes(tracker.all_pending_deletes().front().base)'), src.files)],
   ['live labels keep their English, so bilingual text holds between polls', () => liveLabels(src.ui, src.station), () => liveLabels(src.ui.replace('if (m_label == nullptr || english == m_english) return false;', 'if (m_label == nullptr || m_label->GetUnwrappedLabel() == english) return false;'), src.station)],
   ['an unchanged poll does not refresh the windows', () => liveLabels(src.ui, src.station), () => liveLabels(src.ui, src.station.replace('if (!same_poll_view(before, v)) notify_listeners();', 'notify_listeners();'))],
-  ['the outcome of Save key keeps its own label, so both messages show their Cantonese', () => liveLabels(src.ui, src.station), () => liveLabels(src.ui.replace('bool changed = m_outcome.set(m_message);', 'bool changed = m_outcome.set(wxString());\n        if (!m_message.empty()) note = m_message + "\\n" + note;'), src.station)],
 ];
 
 for (const [name, check, mutant] of contracts) {

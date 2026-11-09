@@ -8,16 +8,17 @@ then:
   through it (container_page.test.mjs records each request the page really makes);
 * sends every sample model again with curl, with exactly the protocol headers the page sent, and
   sends the sender-side mistakes the page guards against (wrong code, wrong type, no length ...);
-* drives the station API the way Bambu Studio does (the station key as a Bearer header, Accept:
-  application/json, no proxy): status, inbox, every file, wrong and missing keys, a new drop code,
-  DELETE twice, and the empty inbox;
+* drives the station API the way Bambu Studio does (no key, Accept: application/json, no proxy):
+  status, inbox, every file, a new drop code, DELETE twice, and the empty inbox;
 * starts the container a second time with every setting changed (fixed code, public URL, a 60
   character station name, a fraction of an hour, tiny limits), and runs the service with settings
   it must refuse;
 
 and writes every answer (raw header lines as libcurl hands them to the station, and the body) with
 a manifest into tests/lan_model_drop/container_fixtures/. The container and its volume are removed
-at the end. The station key is read with `docker compose exec` and never written anywhere.
+at the end. The station needs no key. The committed answers 44 to 46 under container_fixtures/default
+were captured from container 1.0.1, which still asked for one; they stay as the record of what an older
+container answers a station that sends no accepted key.
 
     python3 tests/lan_model_drop/container_capture.py [--port 18851] [--project lan-drop-capture]
         [--out tests/lan_model_drop/container_fixtures] [--chromium PATH]
@@ -175,7 +176,6 @@ class Capture:
         self.args = args
         self.out = Path(args.out).resolve()
         self.base = f"http://127.0.0.1:{args.port}"
-        self.key = None
         self.manifest = {
             "about": "Answers of a real lan-model-drop container (docker compose), captured by "
                      "tests/lan_model_drop/container_capture.py and read by container_fixtures.test.mjs "
@@ -189,7 +189,6 @@ class Capture:
         self.override = None
         self.scenario = None
         self.counter = 0
-        self.keys = []
 
     # --------------------------------------------------------------------------- docker compose
 
@@ -204,30 +203,21 @@ class Capture:
 
     def up(self, env):
         self.compose("up", "-d", "--build", "--wait", "--wait-timeout", "120", env=env)
-        key = self.compose("exec", "-T", "lan-model-drop", "node", "server/station-key.mjs", env=env, capture=True)
-        self.key = key.stdout.decode("ascii").strip()
-        assert 16 <= len(self.key) <= 512, "the station key is read"
-        self.keys.append(self.key)
 
     def down(self):
         self.compose("down", "-v", "--remove-orphans", check=False)
-        self.key = None
 
     # ---------------------------------------------------------------------------------- requests
 
     def file(self, label, suffix):
         return self.out / self.scenario["name"] / f"{label}{suffix}"
 
-    def curl(self, label, path, *, method="GET", key=None, headers=(), data=None, verbose=False, record_request=False):
-        """One request; returns the exchange record. `key`: 'station', 'wrong' or None."""
+    def curl(self, label, path, *, method="GET", headers=(), data=None, verbose=False, record_request=False):
+        """One request; returns the exchange record."""
         self.counter += 1
         label = f"{self.counter:02d}-{label}"
         head, body = self.file(label, ".head"), self.file(label, ".body")
         command = ["curl", "-sS", "--noproxy", "*", "--max-time", "60", "-o", str(body), "-D", str(head), "-X", method]
-        if key == "station":
-            command += ["-H", f"Authorization: Bearer {self.key}"]
-        elif key == "wrong":
-            command += ["-H", "Authorization: Bearer not-the-station-key-0123456789"]
         for header in headers:
             command += ["-H", header]
         if data is not None:
@@ -253,13 +243,13 @@ class Capture:
             record["requestLines"] = [line for line in lines if line]
         return record
 
-    def station(self, label, path, method="GET", key="station"):
+    def station(self, label, path, method="GET"):
         headers = ["Accept: application/json"]
         data = None
         if method == "POST":
             headers.append("Content-Type: application/json")
             data = "{}"
-        return self.curl(label, path, method=method, key=key, headers=headers, data=data)
+        return self.curl(label, path, method=method, headers=headers, data=data)
 
     def drop(self, label, *, code, name, data_file, sender="", content_type="", extra=(), expect=None):
         """POST /api/drop exactly as the sender page does: the raw bytes, X-Drop-Code, X-Drop-Filename
@@ -413,9 +403,6 @@ class Capture:
         s["inbox"] = self.station("inbox", "/api/station/inbox")
         items = self.status_body(s["inbox"])["items"]
         s["files"] = [self.station("file", f"/api/station/files/{item['id']}") for item in items]
-        s["statusWrongKey"] = self.station("status-wrong-key", "/api/station/status", key="wrong")
-        s["inboxNoKey"] = self.station("inbox-no-key", "/api/station/inbox", key=None)
-        s["fileNoKey"] = self.station("file-no-key", f"/api/station/files/{items[0]['id']}", key=None)
         s["fileUnknown"] = self.station("file-unknown", "/api/station/files/" + "0" * 32)
         # 6. A new drop code; the old one stops working.
         s["newCode"] = self.station("new-code", "/api/station/drop-code", method="POST")
@@ -535,10 +522,6 @@ class Capture:
                 self.down()
         manifest = json.dumps(self.manifest, indent=1, ensure_ascii=True) + "\n"
         (self.out / "manifest.json").write_text(manifest, "utf-8")
-        # The station key never leaves the container's volume.
-        for path in self.out.rglob("*"):
-            if path.is_file() and any(key.encode() in path.read_bytes() for key in self.keys):
-                raise SystemExit(f"{path} holds the station key")
         print(f"captured {sum(1 for p in self.out.rglob('*') if p.is_file())} files into {self.out}")
 
 

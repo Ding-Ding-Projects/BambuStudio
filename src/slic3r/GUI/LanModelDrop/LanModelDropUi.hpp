@@ -105,7 +105,6 @@ private:
     std::unique_ptr<LocalHost> m_local_host;
     std::string m_local_address_snapshot;
     std::string m_local_enabled_snapshot;
-    std::string m_local_key_snapshot;
     std::string m_local_lan_url;
     std::string m_local_pair_address;
 };
@@ -115,6 +114,5 @@ private:
 wxWindow *create_intro_row(wxWindow *parent);
 wxWindow *create_status_row(wxWindow *parent);
 wxWindow *create_address_row(wxWindow *parent);
-wxWindow *create_key_row(wxWindow *parent);
 
 }}} // namespace Slic3r::GUI::LanModelDrop

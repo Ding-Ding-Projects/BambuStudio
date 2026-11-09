@@ -2,7 +2,7 @@
 
 The local hosting entrypoint pulls the versioned container image, starts the existing
 Compose project and checks application health. It preserves the `drop-data` volume,
-queued models and station identity. It never starts slicing or printing.
+queued models. It never starts slicing or printing.
 
 ## Start from the command line
 
@@ -20,8 +20,8 @@ does not change firewall rules, operating-system settings or unrelated container
 
 The native setup integration adds **Start local drop server** and **Open drop page**
 to the invite surface, reachable from File and Preferences. Automatic pairing uses
-a current-account-only local named pipe and protected station storage. It does not
-print the station credential or replace a configured remote station. Settings changed
+a current-account-only local named pipe that carries only the service address. It does not
+replace a configured remote station. Settings changed
 while setup runs take precedence over the pending result.
 
 ## Recovery and development

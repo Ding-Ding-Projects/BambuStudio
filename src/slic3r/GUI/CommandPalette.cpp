@@ -292,7 +292,7 @@ void CommandPalette::collect_entries()
                              frame->CallAfter([frame]() { LanModelDrop::open_invite_dialog(frame); });
                          }});
     m_entries.push_back({MaterialIcon::Lan, _L("LAN model drop settings"),
-                         _L("Receive models from the LAN drop site: switch, address, station key and status"),
+                         _L("Receive models from the LAN drop site: switch, address and status"),
                          []() { LanModelDrop::open_preferences_section(); }});
 
     m_entries.push_back({MaterialIcon::Undo, _L("Restore original imported geometry"),

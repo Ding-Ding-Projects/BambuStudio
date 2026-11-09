@@ -1,8 +1,7 @@
 import { pathToFileURL } from 'node:url';
 // The station against the real drop service. The application's pure model (parsing, checks and the
 // invite link, through tests/lan_model_drop/lan_model_drop_station_probe.cpp) reads what
-// lan-model-drop/server answers when it is driven the way the station drives it: the station key in
-// a Bearer header, status, inbox, each file with its SHA-256, DELETE after the decision, a new drop
+// lan-model-drop/server answers when it is driven the way the station drives it: status, inbox, each file with its SHA-256, DELETE after the decision, a new drop
 // code, and the invite link. Runs where both the drop service and g++ are present; skipped
 // otherwise (the service lives in lan-model-drop/, delivered separately).
 import {test, before} from 'node:test';
@@ -60,9 +59,9 @@ function rawHeaders(res) {
   return `${lines.join('\r\n')}\r\n\r\n`;
 }
 
-// The station's requests: the key in a Bearer header, JSON accepted; POST carries "{}".
-function stationRequest(port, key, method, target) {
-  const headers = {Authorization: `Bearer ${key}`, Accept: 'application/json'};
+// The station's requests: JSON accepted, no key; POST carries "{}".
+function stationRequest(port, method, target) {
+  const headers = {Accept: 'application/json'};
   const options = {method, path: target, headers};
   if (method === 'POST') {
     headers['Content-Type'] = 'application/json';
@@ -72,11 +71,11 @@ function stationRequest(port, key, method, target) {
 }
 
 // h.request keeps parsed headers only; the raw list is fetched with a second, identical request.
-async function download(port, key, id) {
+async function download(port, id) {
   const {request: rawRequest} = await import('node:http');
   return new Promise((resolve, reject) => {
     const req = rawRequest({host: '127.0.0.1', port, method: 'GET', path: `/api/station/files/${id}`, agent: false,
-      headers: {Authorization: `Bearer ${key}`, Accept: 'application/json'}}, (res) => {
+      headers: {Accept: 'application/json'}}, (res) => {
       const parts = [];
       res.on('data', (chunk) => parts.push(chunk));
       res.on('end', () => resolve({status: res.statusCode, raw: res.rawHeaders, body: Buffer.concat(parts)}));
@@ -123,14 +122,14 @@ test('the station reads the real service: status, inbox, each file with its SHA-
     assert.equal(res.status, 201, `${s.name}: ${res.body}`);
   }
 
-  const status = await stationRequest(d.port, d.key, 'GET', '/api/station/status');
+  const status = await stationRequest(d.port, 'GET', '/api/station/status');
   const seen = probe('status', status.status, file(status.body));
   assert.equal(seen.state, 'Connected');
   assert.equal(Object.hasOwn(seen, 'dropCode'), false);
   assert.equal(seen.queued, sent.length);
   assert.equal(seen.publicUrl, '');
 
-  const inbox = await stationRequest(d.port, d.key, 'GET', '/api/station/inbox');
+  const inbox = await stationRequest(d.port, 'GET', '/api/station/inbox');
   assert.equal(inbox.status, 200);
   const listed = probe('inbox', file(inbox.body));
   assert.equal(listed.ok, true);
@@ -148,22 +147,22 @@ test('the station reads the real service: status, inbox, each file with its SHA-
   assert.ok(names.includes('spaced name .stl'), names.join(', '));
 
   for (const item of listed.items) {
-    const res = await download(d.port, d.key, item.id);
+    const res = await download(d.port, item.id);
     assert.equal(res.status, 200);
     assert.equal(res.body.length, item.bytes);
     assert.equal(createHash('sha256').update(res.body).digest('hex'), item.sha256);
     assert.equal(probe('header', file(rawHeaders(res)), 'X-Content-SHA256').value, item.sha256);
     assert.deepEqual(probe('content', item.type, file(res.body)), {matches: true}, item.fileName);
 
-    const removed = await stationRequest(d.port, d.key, 'DELETE', `/api/station/files/${item.id}`);
+    const removed = await stationRequest(d.port, 'DELETE', `/api/station/files/${item.id}`);
     assert.equal(removed.status, 204);
-    const again = await stationRequest(d.port, d.key, 'DELETE', `/api/station/files/${item.id}`);
+    const again = await stationRequest(d.port, 'DELETE', `/api/station/files/${item.id}`);
     assert.equal(again.status, 204);
-    const gone = await download(d.port, d.key, item.id);
+    const gone = await download(d.port, item.id);
     assert.equal(gone.status, 404);
   }
 
-  const empty = await stationRequest(d.port, d.key, 'GET', '/api/station/inbox');
+  const empty = await stationRequest(d.port, 'GET', '/api/station/inbox');
   assert.deepEqual(probe('inbox', file(empty.body)), {ok: true, items: [], invalid: [], unusable: 0});
 });
 
@@ -180,7 +179,7 @@ test('a name Windows takes for a device is never the name a received file is wri
     const res = await h.drop(d.port, {fileName: name, body: h.ASCII_STL});
     assert.equal(res.status, 201, `${name}: ${res.body}`);
   }
-  const inbox = await stationRequest(d.port, d.key, 'GET', '/api/station/inbox');
+  const inbox = await stationRequest(d.port, 'GET', '/api/station/inbox');
   const listed = probe('inbox', file(inbox.body));
   assert.equal(listed.items.length, devices.length);
   assert.deepEqual(listed.invalid, []);
@@ -189,7 +188,7 @@ test('a name Windows takes for a device is never the name a received file is wri
   for (const [i, item] of listed.items.entries()) {
     const raw = inbox.json.items[i].fileName;
     assert.deepEqual(probe('reserved', item.fileName), {reserved: false}, `${raw} -> ${item.fileName}`);
-    const res = await download(d.port, d.key, item.id);
+    const res = await download(d.port, item.id);
     assert.equal(res.status, 200);
     const saved = probe('save', received, item.id, item.fileName, item.type, file(res.body));
     assert.equal(saved.result, 'Written', raw);
@@ -231,20 +230,22 @@ test('every model the service accepts passes the station checks', {skip}, async 
   assert.ok(accepted >= variants.length - 2, `the service accepted only ${accepted} of ${variants.length}`);
 });
 
-test('a wrong or missing station key reads as Wrong station key', {skip}, async (t) => {
+test('the service answers the station without a key, and an older container that still asks for one reads as needing an update', {skip}, async (t) => {
   const d = await h.startDrop(t);
-  const wrong = await stationRequest(d.port, 'not-the-station-key-0123456789', 'GET', '/api/station/status');
-  assert.equal(wrong.status, 401);
-  assert.equal(probe('status', wrong.status, file(wrong.body)).state, 'WrongStationKey');
-  const missing = await h.request(d.port, {path: '/api/station/inbox'});
-  assert.equal(missing.status, 401);
-  assert.equal(probe('failure', missing.status).state, 'WrongStationKey');
+  const open = await h.request(d.port, {path: '/api/station/status'});
+  assert.equal(open.status, 200);
+  assert.equal(probe('status', open.status, file(open.body)).state, 'Connected');
+  const inbox = await h.request(d.port, {path: '/api/station/inbox'});
+  assert.equal(inbox.status, 200);
+  // What an older container answers when a request carries no accepted key.
+  assert.equal(probe('status', 401, file(Buffer.from('{"ok":false,"error":"unauthorized"}'))).state, 'StationAsksForKey');
+  assert.equal(probe('failure', 403).state, 'StationAsksForKey');
   assert.equal(probe('failure', 0).state, 'NotReachable');
 });
 
 test('the invite link: DROP_PUBLIC_URL first, else this computer\'s LAN address, without credentials', {skip}, async (t) => {
   const d = await h.startDrop(t, {env: {DROP_PUBLIC_URL: 'https://print.example.test/drop/'}});
-  const status = await stationRequest(d.port, d.key, 'GET', '/api/station/status');
+  const status = await stationRequest(d.port, 'GET', '/api/station/status');
   const seen = probe('status', status.status, file(status.body));
   assert.equal(seen.publicUrl, 'https://print.example.test/drop');
   const pub = probe('invite', seen.publicUrl, `http://localhost:${d.port}`, LAN_A, '');
@@ -252,7 +253,7 @@ test('the invite link: DROP_PUBLIC_URL first, else this computer\'s LAN address,
   assert.equal(pub.link, `https://print.example.test/drop/`);
 
   const plain = await h.startDrop(t);
-  const plainStatus = probe('status', 200, file((await stationRequest(plain.port, plain.key, 'GET', '/api/station/status')).body));
+  const plainStatus = probe('status', 200, file((await stationRequest(plain.port, 'GET', '/api/station/status')).body));
   assert.equal(plainStatus.publicUrl, '');
   const lan = probe('invite', plainStatus.publicUrl, `http://localhost:${plain.port}`, `${LAN_A},${LAN_B}`, LAN_B);
   assert.equal(lan.source, 'LanAddress');

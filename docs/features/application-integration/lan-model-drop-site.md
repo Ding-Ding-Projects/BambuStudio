@@ -4,9 +4,9 @@
 
 Mixed-version compatibility: protocol-1 status includes directSend:true and an inert dropCode value of not-required for older receivers. The authenticated legacy renewal endpoint returns 410 retired, never a successful rotation or revocation. An older desktop may briefly show a connection error after trying renewal; a later status poll can restore collection, but an in-flight poll can still trigger misleading renewal wording in that older binary; update the desktop to remove the obsolete control. The inert status value is never an upload credential. New receivers keep collecting from older services but hide direct invite links until the service advertises the capability, and show an upgrade instruction. Older desktop versions retain their old code labels until updated.
 
-Invite links contain only the address, with no credentials or query parameters. Code-renewal controls are removed. Legacy DROP_CODE configuration and the existing drop-code file are ignored without deleting either. Upgrades retain the same volume, station key and waiting models. Model-format, size, queue and expiry limits remain enforced.
+Invite links contain only the address, with no credentials or query parameters. Code-renewal controls are removed. Legacy DROP_CODE configuration and the existing drop-code file are ignored without deleting either. Upgrades retain the same volume and waiting models. Model-format, size, queue and expiry limits remain enforced.
 
-Anyone who can reach the service can send; inbox access, downloads and management still require the station key. Each source address allows 60 upload attempts per minute, followed by a five-minute cooldown. Use a trusted local network and never expose the service to the internet. Container 1.0.1 was published successfully by [run 42418444721](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/42418444721) from source `601003f9b97d8945732d5a166f8dbe2b061d040f`. The verified image digest is `sha256:9382599181a32a5d78730c82b315612fcadc51beacea0ad3b831500e122ce51a`; build-context SHA-256 is `4fb31a53d02699892ba4669a012900b13b7549040bba6e9d1f8cbf3a4424a389`. The exact digest was pulled and an isolated Compose project passed `up --wait`, local health and second-host LAN health checks. A real browser sent a synthetic STL with HTTP 201 and no sender-code header. Six desktop/mobile language tuples passed code-field absence, named accessibility controls, keyboard focus and horizontal-overflow checks. Edge reported an ignored Cross-Origin-Opener-Policy header on the HTTP LAN origin, so the zero-console-error criterion remains unmet. The existing service was then updated through host.bat --detached: its original station key still authenticated, its data volume and queued models were preserved, and health passed locally and from a second LAN host. Native desktop acceptance remains separate.
+Anyone who can reach the service can send, and the station needs no key: inbox access, downloads and removal are open to anyone on the network, while the computer running Bambu Studio shows every model and asks whether to open or discard it. An Authorization header sent by an older Bambu Studio is ignored. Each source address allows 60 upload attempts per minute, followed by a five-minute cooldown. Use a trusted local network and never expose the service to the internet. Container 1.0.1 was published successfully by [run 42418444721](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/42418444721) from source `601003f9b97d8945732d5a166f8dbe2b061d040f`. The verified image digest is `sha256:9382599181a32a5d78730c82b315612fcadc51beacea0ad3b831500e122ce51a`; build-context SHA-256 is `4fb31a53d02699892ba4669a012900b13b7549040bba6e9d1f8cbf3a4424a389`. The exact digest was pulled and an isolated Compose project passed `up --wait`, local health and second-host LAN health checks. A real browser sent a synthetic STL with HTTP 201 and no sender-code header. Six desktop/mobile language tuples passed code-field absence, named accessibility controls, keyboard focus and horizontal-overflow checks. Edge reported an ignored Cross-Origin-Opener-Policy header on the HTTP LAN origin, so the zero-console-error criterion remains unmet. The existing service was then updated through host.bat --detached: its original station key still authenticated, its data volume and queued models were preserved, and health passed locally and from a second LAN host. Native desktop acceptance remains separate.
 
 The LAN model drop site is a small web page that runs in a Docker container
 on your local network. Other people open it on a phone, tablet or laptop and
@@ -15,7 +15,7 @@ each model, shows who sent it and asks you to open or discard it. Nothing is
 opened, sliced or printed by itself.
 
 This article covers the container: starting it, reaching it from other
-devices, the station key, settings, updates and security. In Bambu Studio the
+devices, settings, updates and security. In Bambu Studio the
 receiving side lives in **Preferences > LAN model drop** and **File > LAN
 model drop...**, which also make the invite link and QR code you hand to the
 other person.
@@ -104,17 +104,11 @@ Ethernet), not one that belongs to a virtual adapter such as `vEthernet
 
 ## Connect Bambu Studio
 
-1. Print the station key in the `lan-model-drop` folder:
+1. In Bambu Studio open **Preferences > LAN model drop**, keep the site
+   address `http://localhost:8833` and choose **Test connection**. The status
+   reads **Connected**. No key is needed.
 
-   ```powershell
-   docker compose exec lan-model-drop node server/station-key.mjs
-   ```
-
-2. In Bambu Studio open **Preferences > LAN model drop**, paste the key into
-   **Station key**, keep the site address `http://localhost:8833` and choose
-   **Test connection**. The status reads **Connected**.
-
-3. Switch on **Receive models from the LAN drop site**. Share the displayed LAN link or QR code. The sender chooses models and sends directly.
+2. Switch on **Receive models from the LAN drop site**. Share the displayed LAN link or QR code. The sender chooses models and sends directly.
 
 ## Run it on another Docker host on the network
 
@@ -123,36 +117,27 @@ The container does not have to run on the computer with Bambu Studio.
 1. Copy the `lan-model-drop` folder to the other host.
 2. On that host, run `docker compose up -d` in the folder, and open its
    firewall for port 8833 if it has one.
-3. Read the station key there with
-   `docker compose exec lan-model-drop node server/station-key.mjs`.
-4. In Bambu Studio, set the site address to `http://<the host's address>:8833`
-   and paste the key. Invite links then use that address.
+3. In Bambu Studio, set the site address to `http://<the host's address>:8833`.
+   Invite links then use that address.
 
 When the page sits behind a reverse proxy, or people should use a fixed name,
 set `DROP_PUBLIC_URL` (see [Settings](#settings)); Bambu Studio then uses that
 address for invite links and QR codes.
 
-## Read or replace the station key
+## No station key
 
-The station key lets Bambu Studio list, download and remove the models that
-arrive. The container makes one on its first start, 32 random bytes written
-as 43 characters, and keeps it in its data volume. Print it at any time:
+The station needs no key. Bambu Studio lists, downloads and removes waiting
+models with the site address alone, so anyone who can reach the port can also
+read the waiting models and remove them. The person at the Bambu Studio
+computer sees every model before it is opened, which is why the drop site does
+not ask for a key. Keep the port on a network you trust.
 
-```powershell
-docker compose exec lan-model-drop node server/station-key.mjs
-```
-
-The key is never written to the container log. To replace it, for example
-after it was shown to someone, remove the stored key and restart:
-
-```powershell
-docker compose exec lan-model-drop rm /data/station-key
-docker compose restart
-docker compose exec lan-model-drop node server/station-key.mjs
-```
-
-Then paste the new key into Bambu Studio. You can also choose the key
-yourself with `DROP_STATION_KEY` in a `.env` file.
+Containers older than this change generated a key in `/data/station-key` and
+refused requests without it. After you update the container, that file is no
+longer read and can stay in the data volume or be removed. A `DROP_STATION_KEY`
+left in an old `.env` file is ignored. An older container that still asks for
+a key makes Bambu Studio report **Drop box needs an update**: update the
+container with `host.bat --detached`.
 
 ## Settings
 
@@ -167,7 +152,6 @@ need and run `docker compose up -d` again. Every setting is optional.
 | `DROP_TTL_HOURS` | 24 | Hours a model waits for Bambu Studio before it is removed (at most 720) |
 | `DROP_QUEUE_MAX_FILES` | 50 | Most models waiting at once, at most 1000, the most Bambu Studio lists |
 | `DROP_QUEUE_MAX_BYTES` | 2147483648 (2 GB) | Most bytes waiting at once |
-| `DROP_STATION_KEY` | generated | Station key, 16 to 512 visible characters without spaces |
 | `DROP_PUBLIC_URL` | none | Address for invite links behind a reverse proxy, such as `https://drop.example.org` |
 
 An invalid value stops the container with a message in
@@ -212,8 +196,8 @@ The Compose project remains named lan-model-drop and retains its existing data v
 | --- | --- |
 | Pause it until you start it again | `docker compose stop` |
 | Start it again | `docker compose start` |
-| Remove the container, keep the key and waiting models | `docker compose down` |
-| Remove everything, including the key and waiting models | `docker compose down -v` |
+| Remove the container, keep the waiting models | `docker compose down` |
+| Remove everything, including the waiting models | `docker compose down -v` |
 
 Bambu Studio reports **Not reachable** while the container is stopped and
 keeps checking at a slower pace.
@@ -222,17 +206,15 @@ keeps checking at a slower pace.
 
 - **What is kept.** Each waiting model is stored with its cleaned file name,
   the optional sender name, its size, its SHA-256 and the time it arrived. It
-  is removed when Bambu Studio collects it or after `DROP_TTL_HOURS`. The
-  station key is readable only by the service.
-- **What is logged.** Random item ids, model types and sizes, and removals. Never file names, sender names or the station key.
+  is removed when Bambu Studio collects it or after `DROP_TTL_HOURS`.
+- **What is logged.** Random item ids, model types and sizes, and removals. Never file names or sender names.
 - **Plain HTTP.** Other people on the network can observe traffic. Use only a trusted LAN, or an authenticated HTTPS reverse proxy within that LAN. Never forward the port to the internet.
 - **Nothing leaves your network.** The page loads nothing from the internet:
   its fonts and icons are bundled, and it has no analytics. The container
   needs no internet access once the image is built.
-- **The station key.** Only Bambu Studio needs it. Anyone with the key can
-  list, download and remove waiting models, so never put it in an invite or
-  share your `.env`. Bambu Studio stores it protected for your Windows user
-  account.
+- **No station key.** Anyone who can reach the port can list, download and
+  remove waiting models, so keep it on a trusted network and never share your
+  `.env`.
 - **What is accepted.** Only 3MF, STL, STEP, OBJ and AMF, checked by file
   name and by content, up to the size limits. File names are cleaned (control
   characters, characters that reorder or hide text, and `<>:"/\|?*` are
@@ -253,7 +235,7 @@ keeps checking at a slower pace.
 | The page does not open on the phone | The phone is on the same network, not a guest network; the firewall rule exists; `docker compose ps` shows `healthy` |
 | Too many upload attempts | Wait five minutes before retrying |
 | "The drop box is full" | Open or discard the waiting models in Bambu Studio |
-| Bambu Studio says **Wrong station key** | Print the key again and paste it |
+| Bambu Studio says **Drop box needs an update** | The container is older than Bambu Studio and still asks for a key. Run `host.bat --detached` to update it |
 | Bambu Studio says **Not reachable** | Docker Desktop is running and the container is started |
 
 ## What has been checked

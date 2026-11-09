@@ -2,12 +2,11 @@
 // LAN model drop, station side (docs/features/application-integration/lan-model-drop.md).
 //
 // While the Preferences switch is on, a worker thread polls the drop container on the local network
-// with the station key, downloads each received model into the data folder, checks its size,
+// downloads each received model into the data folder, checks its size,
 // SHA-256 and type, and hands it to the GUI thread, which shows a non-blocking notification with
 // Open and Discard. Nothing is opened, sliced or printed automatically. Every function below is
 // called on the GUI thread.
 
-#include "LanModelDropKeyStore.hpp"
 #include "LanModelDropModel.hpp"
 
 #include <cstdint>
@@ -21,7 +20,7 @@ class wxWindow;
 
 namespace Slic3r { namespace GUI { namespace LanModelDrop {
 
-// Application settings keys. The station key is not one of them (see LanModelDropKeyStore.hpp).
+// Application settings keys.
 constexpr const char *kEnabledConfigKey    = "lan_drop_enabled";
 constexpr const char *kAddressConfigKey    = "lan_drop_address";
 // The LAN address the user picked for the invite link when this computer has several.
@@ -37,7 +36,6 @@ struct View
     bool          address_valid = true;
     std::string   station_name;
     std::string   public_url;    // the container's DROP_PUBLIC_URL, normalized; may be empty
-    bool          has_key    = false;
     bool          busy_test  = false; // a Test connection is in flight
     bool          tested     = false; // a Test connection finished since the view was opened
     LinkState     test_state = LinkState::Off;
@@ -50,7 +48,7 @@ struct View
 // Starts polling after startup when the switch is on (GUI_App::post_init). Removes received files
 // that were never opened in an earlier session; the container still holds them, so they arrive again.
 void start_after_startup();
-// Re-reads the switch, the address and the protected key, and starts or stops polling.
+// Re-reads the switch and the address, and starts or stops polling.
 void apply_settings();
 // Stops the worker before the windows are destroyed: sets the cancel flag, wakes it, aborts any
 // transfer in flight and joins it. Callbacks still queued for the GUI thread are dropped.
@@ -71,11 +69,6 @@ void show_waiting_again();
 void refresh_lan_addresses();
 // The LAN address the invite link uses when there are several.
 void choose_invite_ipv4(const std::string &ipv4);
-
-// Saves the key protected with DPAPI (an empty key forgets it) and applies it.
-KeyStoreResult store_station_key(const std::string &key);
-// The stored key, for the masked Preferences field. The caller wipes it.
-std::string    stored_station_key();
 
 // File > LAN model drop..., the palette and the indicator land here: Preferences on the section.
 void open_preferences_section();

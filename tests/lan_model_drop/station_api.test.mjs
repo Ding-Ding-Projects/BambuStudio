@@ -1,8 +1,7 @@
-// The station side of the LAN model drop protocol (version 1): the station
-// key, status, inbox, file download and removal, the drop code, expiry and
-// the secret files in the data volume.
+// The station side of the LAN model drop protocol (version 1): status, inbox,
+// file download and removal, the retired drop code and expiry. The station
+// needs no key.
 import assert from 'node:assert/strict';
-import { execFileSync, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -11,7 +10,6 @@ import {
   ASCII_STL, binaryStl, drop, dropRoot, manualClock, OBJ, request, startDrop, station, STEP, tempDir, zipLike,
 } from './harness.mjs';
 
-const isWindows = process.platform === 'win32';
 const sha256 = (buffer) => createHash('sha256').update(buffer).digest('hex');
 
 test('/healthz answers without a key', async (t) => {
@@ -21,65 +19,41 @@ test('/healthz answers without a key', async (t) => {
   assert.deepEqual(response.json, { ok: true, service: 'lan-model-drop', protocol: 1 });
 });
 
-test('station endpoints need the station key in a Bearer header', async (t) => {
+test('station endpoints answer without a key and ignore an Authorization header', async (t) => {
   const service = await startDrop(t);
+  const id = 'a'.repeat(32);
   const targets = [
-    ['GET', '/api/station/status'],
-    ['GET', '/api/station/inbox'],
-    ['GET', `/api/station/files/${'a'.repeat(32)}`],
-    ['DELETE', `/api/station/files/${'a'.repeat(32)}`],
-    ['POST', '/api/station/drop-code'],
-    ['GET', '/api/station/unknown'],
+    ['GET', '/api/station/status', 200],
+    ['GET', '/api/station/inbox', 200],
+    ['GET', `/api/station/files/${id}`, 404],
+    ['DELETE', `/api/station/files/${id}`, 204],
+    ['POST', '/api/station/drop-code', 410],
+    ['GET', '/api/station/unknown', 404],
   ];
-  const wrongKeys = [
-    null,
-    '',
-    'x',
-    service.key.slice(0, -1),
-    `${service.key}x`,
-    service.key.replace(/^./, (c) => (c === 'A' ? 'B' : 'A')),
-    'k'.repeat(500),
+  // An older Bambu Studio still sends a Bearer header, and anything else may arrive too: none of it matters.
+  const headerSets = [
+    {},
+    { Authorization: 'Bearer ' + 'k'.repeat(43) },
+    { Authorization: 'Bearer x' },
+    { Authorization: 'Basic abc' },
+    { Authorization: '' },
   ];
-  for (const [method, target] of targets) {
-    for (const key of wrongKeys) {
-      const headers = key === null ? {} : { Authorization: `Bearer ${key}` };
+  for (const [method, target, expected] of targets) {
+    for (const headers of headerSets) {
       const response = await request(service.port, { method, path: target, headers });
-      assert.equal(response.status, 401, `${method} ${target} with ${key === null ? 'no key' : 'a wrong key'}`);
-      assert.equal(response.json.error, 'unauthorized');
-      assert.match(response.headers['www-authenticate'], /^Bearer /);
+      assert.equal(response.status, expected, `${method} ${target} with ${JSON.stringify(headers)}`);
+      assert.notEqual(response.json?.error, 'unauthorized');
+      assert.equal(response.headers['www-authenticate'], undefined);
     }
-    // The right key in another scheme is still refused.
-    const basic = await request(service.port, { method, path: target, headers: { Authorization: `Basic ${service.key}` } });
-    assert.equal(basic.status, 401);
   }
-  const right = await station(service.port, service.key, 'GET', '/api/station/status');
-  assert.equal(right.status, 200);
-  const lowerCase = await request(service.port, { path: '/api/station/status', headers: { Authorization: `bearer ${service.key}` } });
-  assert.equal(lowerCase.status, 200, 'the scheme name is case-insensitive');
-  // The drop code is not a station key.
-  assert.equal((await station(service.port, '123456', 'GET', '/api/station/status')).status, 401);
-});
-
-test('the station key is compared in constant time', () => {
-  const secrets = fs.readFileSync(path.join(dropRoot, 'server', 'secrets.mjs'), 'utf8');
-  const app = fs.readFileSync(path.join(dropRoot, 'server', 'app.mjs'), 'utf8');
-  const compare = /export function secretsEqual\([^)]*\) \{([\s\S]*?)\n\}/.exec(secrets)?.[1] ?? '';
-  assert.match(compare, /createHash\('sha256'\)[\s\S]*createHash\('sha256'\)/, 'both sides are hashed to equal length');
-  assert.match(compare, /timingSafeEqual\(/);
-  // No early-exit comparison of the values themselves.
-  assert.doesNotMatch(compare, /candidate\s*[!=]==?\s*secret|secret\s*[!=]==?\s*candidate|\.equals\(|\.length\s*[!=]==?|\ba\s*[!=]==?\s*b\b/);
-  // Station requests go through it, and nothing else
-  // compares a secret.
-  assert.match(app, /secretsEqual\(match \? match\[1\] : '', stationKey\.key\)/);
-  assert.doesNotMatch(app, /stationKey\.key\s*[!=]==?|[!=]==?\s*stationKey\.key/);
-  assert.doesNotMatch(app, /dropCode\.code\s*[!=]==?|[!=]==?\s*dropCode\.code/);
+  assert.equal((await station(service.port, 'GET', '/api/station/status')).status, 200);
 });
 
 test('status reports the protocol, station and drop box', async (t) => {
   const service = await startDrop(t, { env: { DROP_STATION_NAME: 'Workshop PC', DROP_MAX_BYTES: '5000', DROP_QUEUE_MAX_BYTES: '50000', DROP_TTL_HOURS: '6' } });
   assert.equal((await drop(service.port, { fileName: 'a.3mf', body: zipLike(300) })).status, 201);
   assert.equal((await drop(service.port, { fileName: 'b.obj', body: OBJ })).status, 201);
-  const response = await station(service.port, service.key, 'GET', '/api/station/status');
+  const response = await station(service.port, 'GET', '/api/station/status');
   assert.equal(response.status, 200);
   assert.deepEqual(response.json, {
     protocol: 1,
@@ -104,7 +78,7 @@ test('status reports DROP_PUBLIC_URL as publicUrl, without a trailing slash', as
   ];
   for (const [configured, expected] of cases) {
     const service = await startDrop(t, { env: { DROP_PUBLIC_URL: configured } });
-    const response = await station(service.port, service.key, 'GET', '/api/station/status');
+    const response = await station(service.port, 'GET', '/api/station/status');
     assert.equal(response.status, 200);
     assert.equal(response.json.publicUrl, expected, configured);
     // The invite link the station builds from it reaches the sender page.
@@ -114,7 +88,7 @@ test('status reports DROP_PUBLIC_URL as publicUrl, without a trailing slash', as
     await service.close();
   }
   const unset = await startDrop(t, { env: { DROP_PUBLIC_URL: '' } });
-  assert.equal((await station(unset.port, unset.key, 'GET', '/api/station/status')).json.publicUrl, null);
+  assert.equal((await station(unset.port, 'GET', '/api/station/status')).json.publicUrl, null);
 });
 
 test('the inbox lists items oldest first with exactly the protocol fields', async (t) => {
@@ -133,7 +107,7 @@ test('the inbox lists items oldest first with exactly the protocol fields', asyn
     assert.equal(response.status, 201);
     ids.push(response.json.id);
   }
-  const response = await station(service.port, service.key, 'GET', '/api/station/inbox');
+  const response = await station(service.port, 'GET', '/api/station/inbox');
   assert.equal(response.status, 200);
   assert.deepEqual(Object.keys(response.json), ['items']);
   const { items } = response.json;
@@ -159,7 +133,7 @@ test('a file downloads with its length and SHA-256, and removing it is idempoten
   assert.equal(created.status, 201);
   const { id } = created.json;
 
-  const download = await station(service.port, service.key, 'GET', `/api/station/files/${id}`);
+  const download = await station(service.port, 'GET', `/api/station/files/${id}`);
   assert.equal(download.status, 200);
   assert.equal(download.headers['content-type'], 'application/octet-stream');
   assert.equal(download.headers['content-length'], String(body.length));
@@ -167,7 +141,7 @@ test('a file downloads with its length and SHA-256, and removing it is idempoten
   assert.match(download.headers['content-disposition'], /^attachment; filename\*=UTF-8''it%27s%20%28final%29%20\.stl$/);
   assert.ok(download.body.equals(body));
 
-  const head = await station(service.port, service.key, 'HEAD', `/api/station/files/${id}`);
+  const head = await station(service.port, 'HEAD', `/api/station/files/${id}`);
   assert.equal(head.status, 200);
   assert.equal(head.headers['x-content-sha256'], sha256(body));
   assert.equal(head.body.length, 0);
@@ -175,19 +149,19 @@ test('a file downloads with its length and SHA-256, and removing it is idempoten
   const queueDir = path.join(service.dataDir, 'queue');
   assert.deepEqual(fs.readdirSync(queueDir).sort(), [`${id}.bin`, `${id}.json`]);
   for (let attempt = 0; attempt < 2; attempt += 1) {
-    const removed = await station(service.port, service.key, 'DELETE', `/api/station/files/${id}`);
+    const removed = await station(service.port, 'DELETE', `/api/station/files/${id}`);
     assert.equal(removed.status, 204, `delete ${attempt + 1}`);
     assert.equal(removed.body.length, 0);
   }
   assert.deepEqual(fs.readdirSync(queueDir), []);
-  const gone = await station(service.port, service.key, 'GET', `/api/station/files/${id}`);
+  const gone = await station(service.port, 'GET', `/api/station/files/${id}`);
   assert.equal(gone.status, 404);
   assert.equal(gone.json.ok, false);
   assert.equal(gone.json.error, 'not_found');
-  assert.deepEqual((await station(service.port, service.key, 'GET', '/api/station/inbox')).json.items, []);
+  assert.deepEqual((await station(service.port, 'GET', '/api/station/inbox')).json.items, []);
 
   for (const bad of ['../station-key', '..%2Fstation-key', 'ABCDEF'.padEnd(32, '0'), 'a'.repeat(31), 'a'.repeat(33)]) {
-    const response = await station(service.port, service.key, 'GET', `/api/station/files/${bad}`);
+    const response = await station(service.port, 'GET', `/api/station/files/${bad}`);
     assert.equal(response.status, 404, bad);
   }
 });
@@ -198,14 +172,14 @@ test('legacy renewal is retired without revocation and old configuration does no
   const service = await startDrop(t, { dataDir, env: { DROP_CODE: 'obsolete' } });
   assert.equal((await drop(service.port, { fileName: 'cube.obj', body: OBJ })).status, 201);
   for (let attempt = 0; attempt < 2; ++attempt) {
-    const renewed = await station(service.port, service.key, 'POST', '/api/station/drop-code');
+    const renewed = await station(service.port, 'POST', '/api/station/drop-code');
     assert.equal(renewed.status, 410);
     assert.equal(renewed.json.error, 'retired');
     assert.equal(Object.hasOwn(renewed.json, 'dropCode'), false);
     assert.match(renewed.json.message, /Existing links still work/);
   }
   assert.equal(fs.readFileSync(path.join(dataDir, 'drop-code'), 'utf8'), 'legacy-value');
-  const status = (await station(service.port, service.key, 'GET', '/api/station/status')).json;
+  const status = (await station(service.port, 'GET', '/api/station/status')).json;
   assert.equal(status.dropCode, 'not-required');
   assert.equal(status.directSend, true);
   assert.equal((await drop(service.port, {code: 'obsolete', fileName: 'old-client.stl', body: ASCII_STL})).status, 201);
@@ -225,7 +199,7 @@ test('items older than DROP_TTL_HOURS are removed, on the timer and at start', a
   assert.equal(await first.drop.service.expire(), 0);
   clock.advance(60 * 1000);
   assert.equal(await first.drop.service.expire(), 1);
-  const items = (await station(first.port, first.key, 'GET', '/api/station/inbox')).json.items;
+  const items = (await station(first.port, 'GET', '/api/station/inbox')).json.items;
   assert.deepEqual(items.map((item) => item.fileName), ['newer.obj']);
   assert.ok(!fs.existsSync(path.join(dataDir, 'queue', `${old.json.id}.bin`)));
   assert.ok(!fs.existsSync(path.join(dataDir, 'queue', `${old.json.id}.json`)));
@@ -233,12 +207,10 @@ test('items older than DROP_TTL_HOURS are removed, on the timer and at start', a
   await first.close();
 
   // A restart long after the TTL removes what expired while it was stopped,
-  // and keeps the key and code.
+  // and keeps the queue.
   clock.advance(2 * 60 * 60 * 1000);
   const second = await startDrop(t, { clock, dataDir, env: { DROP_TTL_HOURS: '1' } });
-  assert.equal(second.key, first.key);
-  assert.equal(second.code, first.code);
-  assert.deepEqual((await station(second.port, second.key, 'GET', '/api/station/inbox')).json.items, []);
+  assert.deepEqual((await station(second.port, 'GET', '/api/station/inbox')).json.items, []);
   assert.deepEqual(fs.readdirSync(path.join(dataDir, 'queue')), []);
 });
 
@@ -253,55 +225,29 @@ test('a restart keeps queued items and clears unfinished uploads', async (t) => 
   fs.writeFileSync(path.join(queueDir, `${'d'.repeat(32)}.json`), '{not json');
 
   const second = await startDrop(t, { dataDir });
-  const items = (await station(second.port, second.key, 'GET', '/api/station/inbox')).json.items;
+  const items = (await station(second.port, 'GET', '/api/station/inbox')).json.items;
   assert.deepEqual(items.map((item) => item.id), [kept.json.id]);
   assert.deepEqual(fs.readdirSync(queueDir).sort(), [`${kept.json.id}.bin`, `${kept.json.id}.json`]);
 });
 
-test('the generated station key is stored with mode 0600 and never logged', async (t) => {
+test('the service keeps no station key: no key file, no key command, no key log line', async (t) => {
   const service = await startDrop(t);
-  const keyFile = path.join(service.dataDir, 'station-key');
-  assert.match(service.key, /^[A-Za-z0-9_-]{43}$/, '32 random bytes as base64url');
-  assert.equal(fs.readFileSync(keyFile, 'utf8'), `${service.key}\n`);
-  if (!isWindows) {
-    assert.equal(fs.statSync(keyFile).mode & 0o777, 0o600);
-  }
   await drop(service.port, { fileName: 'cube.obj', body: OBJ });
-  await station(service.port, service.key, 'POST', '/api/station/drop-code');
-  const log = service.logs.join('\n');
-  assert.ok(log.includes('docker compose exec lan-model-drop node server/station-key.mjs'), log);
-  assert.ok(!log.includes(service.key), 'the station key is never logged');
-  assert.ok(!log.includes('cube.obj'), 'file names are not logged');
-
-  // A widened file is made private again at the next start.
-  if (!isWindows) {
-    await service.close();
-    fs.chmodSync(keyFile, 0o644);
-    await startDrop(t, { dataDir: service.dataDir });
-    assert.equal(fs.statSync(keyFile).mode & 0o777, 0o600);
-  }
-});
-
-test('DROP_STATION_KEY replaces the generated key and is not written to the volume', async (t) => {
-  const key = 'configured-station-key-0123456789';
-  const service = await startDrop(t, { env: { DROP_STATION_KEY: key } });
+  await station(service.port, 'GET', '/api/station/inbox');
   assert.equal(fs.existsSync(path.join(service.dataDir, 'station-key')), false);
-  assert.equal((await station(service.port, key, 'GET', '/api/station/status')).status, 200);
-  assert.ok(service.logs.some((line) => line === 'Using the station key from DROP_STATION_KEY.'));
-  assert.ok(!service.logs.join('\n').includes(key));
+  assert.equal(fs.existsSync(path.join(dropRoot, 'server', 'station-key.mjs')), false);
+  assert.equal(fs.existsSync(path.join(dropRoot, 'server', 'secrets.mjs')), false);
+  const log = service.logs.join('\n');
+  assert.ok(!/station key|station-key/i.test(log), log);
+  assert.ok(!log.includes('cube.obj'), 'file names are not logged');
 });
 
-test('server/station-key.mjs prints the key on request', async (t) => {
-  const script = path.join(dropRoot, 'server', 'station-key.mjs');
-  const empty = tempDir(t);
-  const missing = spawnSync(process.execPath, [script], { env: { ...process.env, DROP_DATA_DIR: empty, DROP_STATION_KEY: '' }, encoding: 'utf8' });
-  assert.equal(missing.status, 1);
-  assert.equal(missing.stdout, '');
-  assert.match(missing.stderr, /Start the service once/);
-
-  const service = await startDrop(t);
-  const printed = execFileSync(process.execPath, [script], { env: { ...process.env, DROP_DATA_DIR: service.dataDir, DROP_STATION_KEY: '' }, encoding: 'utf8' });
-  assert.equal(printed, `${service.key}\n`);
-  const configured = execFileSync(process.execPath, [script], { env: { ...process.env, DROP_DATA_DIR: empty, DROP_STATION_KEY: 'configured-station-key-0123456789' }, encoding: 'utf8' });
-  assert.equal(configured, 'configured-station-key-0123456789\n');
+test('a DROP_STATION_KEY left in an old .env is ignored and nothing is written for it', async (t) => {
+  for (const value of ['configured-station-key-0123456789', 'too-short', 'has a space in it']) {
+    const service = await startDrop(t, { env: { DROP_STATION_KEY: value } });
+    assert.equal(fs.existsSync(path.join(service.dataDir, 'station-key')), false);
+    assert.equal((await station(service.port, 'GET', '/api/station/status')).status, 200);
+    assert.ok(!service.logs.join('\n').includes(value));
+    await service.close();
+  }
 });

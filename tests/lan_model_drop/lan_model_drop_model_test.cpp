@@ -195,11 +195,6 @@ static void names()
     CHECK(is_utc_stamp("2026-10-09T08:15:00Z"));
     CHECK(!is_utc_stamp("2026-10-09T08:15:00"));
     CHECK(!is_utc_stamp("2026-02-30T08:15:00Z"));
-    CHECK(is_station_key("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQ"));
-    CHECK(!is_station_key("short"));
-    CHECK(!is_station_key("has a space inside it"));
-    CHECK(!is_station_key("line\r\nInjected: header"));
-    CHECK(!is_station_key(std::string(513, 'k')));
     const unsigned char raw[] = {0x00, 0x0f, 0xa5, 0xff};
     CHECK(to_hex(raw, sizeof(raw)) == "000fa5ff");
 }
@@ -300,17 +295,17 @@ static void status_messages()
     StationStatus filled;
     CHECK(classify_status({true, 200, good}, &filled) == LinkState::Connected);
     CHECK(classify_status({false, 0, ""}) == LinkState::NotReachable);
-    CHECK(classify_status({true, 401, "{\"ok\":false}"}) == LinkState::WrongStationKey);
-    CHECK(classify_status({true, 403, ""}) == LinkState::WrongStationKey);
+    CHECK(classify_status({true, 401, "{\"ok\":false}"}) == LinkState::StationAsksForKey);
+    CHECK(classify_status({true, 403, ""}) == LinkState::StationAsksForKey);
     CHECK(classify_status({true, 404, "Not found"}) == LinkState::ProtocolNotSupported);
     CHECK(classify_status({true, 302, ""}) == LinkState::ProtocolNotSupported);
     CHECK(classify_status({true, 200, "<html>router login</html>"}) == LinkState::ProtocolNotSupported);
     CHECK(classify_status({true, 200, "{\"protocol\":2}"}) == LinkState::ProtocolNotSupported);
     CHECK(classify_status({true, 502, ""}) == LinkState::NotReachable);
-    CHECK(classify_failure({true, 401, ""}) == LinkState::WrongStationKey);
+    CHECK(classify_failure({true, 401, ""}) == LinkState::StationAsksForKey);
     CHECK(classify_failure({false, 0, ""}) == LinkState::NotReachable);
     CHECK(classify_failure({true, 400, ""}) == LinkState::ProtocolNotSupported);
-    CHECK(is_error_state(LinkState::NotReachable) && is_error_state(LinkState::NeedsStationKey));
+    CHECK(is_error_state(LinkState::NotReachable) && is_error_state(LinkState::StationAsksForKey));
     CHECK(!is_error_state(LinkState::Connected) && !is_error_state(LinkState::Off) && !is_error_state(LinkState::Checking));
 
     const std::string headers = "HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nx-content-sha256:  " + kSha +
@@ -546,8 +541,8 @@ static void verdicts()
     // Answers that say nothing about the file.
     CHECK(judge_download(item, {false, 0, ""}, "", "") == DownloadVerdict::Retry);
     CHECK(judge_download(item, {true, 404, "{\"ok\":false,\"error\":\"not_found\"}"}, "", "") == DownloadVerdict::Gone);
-    CHECK(judge_download(item, {true, 401, "{\"ok\":false,\"error\":\"unauthorized\"}"}, "", "") == DownloadVerdict::Unauthorized);
-    CHECK(judge_download(item, {true, 403, ""}, "", "") == DownloadVerdict::Unauthorized);
+    CHECK(judge_download(item, {true, 401, "{\"ok\":false,\"error\":\"unauthorized\"}"}, "", "") == DownloadVerdict::AsksForKey);
+    CHECK(judge_download(item, {true, 403, ""}, "", "") == DownloadVerdict::AsksForKey);
     CHECK(judge_download(item, {true, 500, ""}, "", "") == DownloadVerdict::Retry);
     CHECK(judge_download(item, {true, 302, ""}, "", "") == DownloadVerdict::Retry);
 

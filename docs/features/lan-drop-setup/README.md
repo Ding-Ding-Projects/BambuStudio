@@ -2,9 +2,9 @@
 
 Built portable companion with bounded existing-service runtime verification. Publication and complete setup acceptance remain pending.
 
-The separate companion inspects the local Docker engine and the exact LAN model drop Compose service. It offers configuration, review, startup, cancellation and health results through a sandboxed interface. Existing services are started in place rather than recreated from bundled defaults, preserving their port, volume, queue and station credential. Remote Docker endpoints are rejected.
+The separate companion inspects the local Docker engine and the exact LAN model drop Compose service. It offers configuration, review, startup, cancellation and health results through a sandboxed interface. Existing services are started in place rather than recreated from bundled defaults, preserving their port, volume and queue. Remote Docker endpoints are rejected.
 
-Fresh setup currently supports a generated station credential and a new dedicated named volume. An already-existing volume without its matching container blocks fresh setup for review. Custom credential input and folder selection remain unavailable. No credential enters renderer state, configuration, process arguments or logs. The server retains its existing protected-volume credential contract.
+Fresh setup currently supports a new dedicated named volume. An already-existing volume without its matching container blocks fresh setup for review. Folder selection remains unavailable. The drop box needs no station key, so setup asks for no credential and the pairing result carries only the service address.
 
 Cancellation is cooperative between bounded backend phases. It never kills a process by PID, stops the daemon or removes a container/volume. The UI remains attached until worker exit and service reconciliation; failed inspection leaves the operation unresolved and prevents another Start. Replaying an accepted request returns its original operation. Each session retains 128 receipts, then rejects new starts instead of evicting replay protection.
 
@@ -36,7 +36,7 @@ Eleven focused operation/controller tests passed using injected backend fixtures
 
 A separate production-consumer fixture checks stopped/running transitions, replacement identities, changed storage and positive/negative published-image digest admission using Docker-shaped JSON. The portable producer of source `dfc272840f97a947268b6dbd48128588bf58a3c4` generated an executable but failed its post-package proof step because a single-file array was unwrapped by PowerShell. The array handling has been corrected; that failed run is not accepted package proof.
 
-Still unfinished: automatic trusted prerequisite acquisition, native license/consent handling, fresh empty-folder storage, separately reviewed custom credential entrypoint, resumable drafts, copy URL/log views, complete localized diagnostics, native close-dialog localization, all language/theme/scale captures and measured minimum-size coverage. The required-feature inventory also remains incomplete, including search with independent regex builder, personal-wording import, action sounds, appearance settings, keyboard/palette coverage and complete embedded documentation. No universal feature-completeness claim is made.
+Still unfinished: automatic trusted prerequisite acquisition, native license/consent handling, fresh empty-folder storage, resumable drafts, copy URL/log views, complete localized diagnostics, native close-dialog localization, all language/theme/scale captures and measured minimum-size coverage. The required-feature inventory also remains incomplete, including search with independent regex builder, personal-wording import, action sounds, appearance settings, keyboard/palette coverage and complete embedded documentation. No universal feature-completeness claim is made.
 
 Design state inventory and proposed protocol are under `design/lan-drop-setup/`. Service version 1.0.1 is pinned by the bundled Compose file; companion publication and service publication are separate verdicts. No live service was changed during implementation.
 

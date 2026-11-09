@@ -4,9 +4,9 @@
 
 Mixed-version compatibility: protocol-1 status includes directSend:true and an inert dropCode value of not-required for older receivers. The authenticated legacy renewal endpoint returns 410 retired, never a successful rotation or revocation. An older desktop may briefly show a connection error after trying renewal; a later status poll can restore collection, but an in-flight poll can still trigger misleading renewal wording in that older binary; update the desktop to remove the obsolete control. The inert status value is never an upload credential. New receivers keep collecting from older services but hide direct invite links until the service advertises the capability, and show an upgrade instruction. Older desktop versions retain their old code labels until updated.
 
-Invite links contain only the address, with no credentials or query parameters. Code-renewal controls are removed. Legacy DROP_CODE configuration and the existing drop-code file are ignored without deleting either. Upgrades retain the same volume, station key and waiting models. Model-format, size, queue and expiry limits remain enforced.
+Invite links contain only the address, with no credentials or query parameters. Code-renewal controls are removed. Legacy DROP_CODE configuration and the existing drop-code file are ignored without deleting either. Upgrades retain the same volume and waiting models. Model-format, size, queue and expiry limits remain enforced.
 
-Anyone who can reach the service can send; inbox access, downloads and management still require the station key. Each source address allows 60 upload attempts per minute, followed by a five-minute cooldown. Use a trusted local network and never expose the service to the internet. Container 1.0.1 was published successfully by [run 42418444721](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/42418444721) from source `601003f9b97d8945732d5a166f8dbe2b061d040f`. The verified image digest is `sha256:9382599181a32a5d78730c82b315612fcadc51beacea0ad3b831500e122ce51a`; build-context SHA-256 is `4fb31a53d02699892ba4669a012900b13b7549040bba6e9d1f8cbf3a4424a389`. The exact digest was pulled and an isolated Compose project passed `up --wait`, local health and second-host LAN health checks. A real browser sent a synthetic STL with HTTP 201 and no sender-code header. Six desktop/mobile language tuples passed code-field absence, named accessibility controls, keyboard focus and horizontal-overflow checks. Edge reported an ignored Cross-Origin-Opener-Policy header on the HTTP LAN origin, so the zero-console-error criterion remains unmet. The existing service was then updated through host.bat --detached: its original station key still authenticated, its data volume and queued models were preserved, and health passed locally and from a second LAN host. Native desktop acceptance remains separate.
+Anyone who can reach the service can send, and the station needs no key: inbox access, downloads and removal are open to anyone on the network, while the computer running Bambu Studio shows every model and asks whether to open or discard it. An Authorization header sent by an older Bambu Studio is ignored. Each source address allows 60 upload attempts per minute, followed by a five-minute cooldown. Use a trusted local network and never expose the service to the internet. Container 1.0.1 was published successfully by [run 42418444721](https://github.com/Ding-Ding-Projects/BambuStudio/actions/runs/42418444721) from source `601003f9b97d8945732d5a166f8dbe2b061d040f`. The verified image digest is `sha256:9382599181a32a5d78730c82b315612fcadc51beacea0ad3b831500e122ce51a`; build-context SHA-256 is `4fb31a53d02699892ba4669a012900b13b7549040bba6e9d1f8cbf3a4424a389`. The exact digest was pulled and an isolated Compose project passed `up --wait`, local health and second-host LAN health checks. A real browser sent a synthetic STL with HTTP 201 and no sender-code header. Six desktop/mobile language tuples passed code-field absence, named accessibility controls, keyboard focus and horizontal-overflow checks. Edge reported an ignored Cross-Origin-Opener-Policy header on the HTTP LAN origin, so the zero-console-error criterion remains unmet. The existing service was then updated through host.bat --detached: its original station key still authenticated, its data volume and queued models were preserved, and health passed locally and from a second LAN host. Native desktop acceptance remains separate.
 
 People on your local network can send a 3D model to the Bambu Studio on this computer from a phone
 or a laptop browser. A small site runs in a Docker container (the `lan-model-drop` service in the
@@ -31,17 +31,15 @@ The option is off by default.
 
 1. Start the drop site on a computer of your network (usually this one) as its README describes,
    for example `docker compose up -d` in `lan-model-drop/`. It publishes port 8833 by default.
-2. Read its station key on that computer:
-   `docker compose exec lan-model-drop node server/station-key.mjs`.
-3. In Bambu Studio open **File, LAN model drop...**, switch on **Receive models from the LAN drop
-   site**, paste the key into **Station key** and press **Save key** (or Enter).
-4. Leave **Drop site address** at `http://localhost:8833` when the container runs on this computer,
+2. In Bambu Studio open **File, LAN model drop...** and switch on **Receive models from the LAN
+   drop site**. There is no key to enter.
+3. Leave **Drop site address** at `http://localhost:8833` when the container runs on this computer,
    or enter the address Bambu Studio reaches it at, such as `http://my-nas.local:8833`. The field
    accepts `http://` or `https://`, a host name or an IPv4 address and an optional port; anything
    else is refused with an explanation and not saved.
-5. **Test connection** checks `/healthz` and then the station status with the key. The status line
-   reads Connected (with the station name), Not reachable, Wrong station key, Protocol not
-   supported, Station key needed, Address not valid or Protected key storage unavailable.
+4. **Test connection** checks `/healthz` and then the station status. The status line reads
+   Connected (with the station name), Not reachable, Drop box needs an update (an older container
+   that still asks for a key), Protocol not supported or Address not valid.
 
 ## The invite
 
@@ -117,19 +115,12 @@ lists that was already decided is deleted there as well.
 
 ## Security and privacy
 
-- The station key is a secret. It is stored only as a Windows DPAPI blob for the current Windows
-  account (`CryptProtectData` with purpose entropy, user interface forbidden) in
-  `lan-model-drop/station-key.dpapi` in the data folder, never in the settings file. Another
-  account, or a copy of the folder on another computer, cannot decrypt it; a full data-folder
-  backup therefore carries only that blob, never the key in clear. Other systems report the storage
-  as unavailable instead of keeping the key in plain text.
-- The key is never logged. Requests carry only `Authorization: Bearer <key>` and `Accept`: the
-  application's usual extra headers are removed, redirects are not followed and the transfer trace
-  is off. Requests go straight to the drop site, never through a proxy named in the
-  `http_proxy`, `https_proxy` or `all_proxy` environment variables. Copies of the key in memory are
-  overwritten after use. The masked field can be shown with
-  the eye button; both fields are excluded from captures, history and exports.
-- Over `http://` the key and the files travel unencrypted. With `http://localhost:8833` nothing
+- The station needs no key. Requests carry only `Accept`: the application's usual extra headers are
+  removed, redirects are not followed and the transfer trace is off. Requests go straight to the drop
+  site, never through a proxy named in the `http_proxy`, `https_proxy` or `all_proxy` environment
+  variables. A `station-key.dpapi` file left in the data folder by an earlier version is no longer
+  read and can be deleted.
+- Over `http://` the files travel unencrypted. With `http://localhost:8833` nothing
   leaves this computer; when the drop site runs on another computer, keep it on a network you trust
   or put it behind an `https://` reverse proxy and use that address (certificates are verified, so
   the proxy needs one this computer trusts).
@@ -158,8 +149,8 @@ lists that was already decided is deleted there as well.
   go to a temporary name before the rename, device names and long paths fall back to
   `model.<type>`, the clean-up at start, and the pending deletes on disk.
 - `node --test tests/lan_model_drop/app_wiring.test.mjs` reads the sources and checks the visible
-  section, the menu items, the palette rows, the indicator, DPAPI storage, that the key is never
-  logged or saved in the settings, that every request runs on the worker thread and reaches windows
+  section, the menu items, the palette rows, the indicator, that no key or Authorization header is
+  sent or saved, that every request runs on the worker thread and reaches windows
   through the event queue, the shutdown order and that nothing is opened automatically. It also
   checks that a received folder that waits or was opened is never downloaded into, that deletes go
   only to the site that listed the file and are kept on disk, and that a poll which changes nothing
@@ -196,7 +187,7 @@ Historical-version verification (not runtime evidence for 1.0.1):
   (`delete_settled`) and both invite links. The same answers go through the sender page's own
   outcome rules and invite reader, and the requests curl sent are compared with the protocol
   headers Chromium sent.
-- The station sources compile in a Linux syntax check, and the DPAPI key store and the adapter
-  enumeration also compile with the MinGW cross compiler; the accessibility events have only been
+- The station sources compile in a Linux syntax check, and the adapter
+  enumeration also compiles with the MinGW cross compiler; the accessibility events have only been
   reviewed. A built Windows application talking to a real drop site on a real network has not been
   observed yet.

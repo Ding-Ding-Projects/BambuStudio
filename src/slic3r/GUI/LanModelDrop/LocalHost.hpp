@@ -23,8 +23,6 @@ public:
         std::string code;
         std::string address;
         std::string lan_url;
-        std::string station_key;
-        ~Result();
     };
     LocalHost() = default;
     ~LocalHost();

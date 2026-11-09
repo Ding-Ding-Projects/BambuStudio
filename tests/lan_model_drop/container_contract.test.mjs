@@ -95,8 +95,8 @@ test('every setting the service reads is passed by compose and explained in .env
   }
   assert.ok(listed.has('DROP_PORT'));
   // The template never carries a secret, and a real .env is never committed.
-  assert.match(example, /^DROP_STATION_KEY=$/m);
-  assert.match(example, /^DROP_CODE=$/m);
+  assert.doesNotMatch(example, /STATION_KEY|DROP_CODE/);
+  assert.doesNotMatch(compose, /STATION_KEY|DROP_CODE/);
   assert.match(example, /^DROP_PUBLIC_URL=$/m);
   assert.match(read('.gitignore'), /^\.env$/m);
   assert.ok(!fs.existsSync(path.join(dropRoot, '.env')) || spawnSync('git', ['-C', repoRoot, 'ls-files', '--error-unmatch', 'lan-model-drop/.env']).status !== 0,
@@ -109,14 +109,14 @@ test('every setting the service reads is passed by compose and explained in .env
   assert.match(compose, /DROP_STATION_NAME: \$\{DROP_STATION_NAME:-Bambu Studio\}/);
 });
 
-test('the service reads the station key with the command its log and documents name', () => {
-  const command = 'docker compose exec lan-model-drop node server/station-key.mjs';
-  for (const name of ['README.md', 'README.yue_HK.md', '.env.example', 'compose.yaml', path.join('server', 'app.mjs')]) {
-    assert.ok(read(name).includes(command.replace('docker compose exec lan-model-drop ', '')), `${name} names the key command`);
+test('no shipped file or script reads, prints or asks for a station key', () => {
+  for (const name of ['README.md', 'README.yue_HK.md', '.env.example', 'compose.yaml', 'Dockerfile', 'host.ps1', 'wizard-host.ps1', path.join('server', 'app.mjs')]) {
+    assert.doesNotMatch(read(name), /station-key|STATION_KEY/, `${name} mentions the removed key`);
   }
+  // The documents may explain, in one place, what an older container did; none of them offers the command that printed the key.
   const docs = path.join(repoRoot, 'docs', 'features', 'application-integration');
-  for (const name of ['lan-model-drop-site.md', 'lan-model-drop-site.yue_HK.md']) {
-    assert.ok(fs.readFileSync(path.join(docs, name), 'utf8').includes(command), `${name} names the key command`);
+  for (const name of ['lan-model-drop.md', 'lan-model-drop.yue_HK.md', 'lan-model-drop-site.md', 'lan-model-drop-site.yue_HK.md']) {
+    assert.doesNotMatch(fs.readFileSync(path.join(docs, name), 'utf8'), /station-key\.mjs/, `${name} offers the removed command`);
   }
 });
 
@@ -143,7 +143,7 @@ test('installing with that rule ships the container files and leaves a local .en
   const source = path.join(work, 'source');
   fs.cpSync(dropRoot, path.join(source, 'lan-model-drop'), { recursive: true });
   for (const name of ['host.bat', 'compose.yaml']) fs.copyFileSync(path.join(repoRoot, name), path.join(source, name));
-  fs.writeFileSync(path.join(source, 'lan-model-drop', '.env'), 'DROP_STATION_KEY=never-shipped-0123456789\n');
+  fs.writeFileSync(path.join(source, 'lan-model-drop', '.env'), 'DROP_STATION_NAME=never-shipped\n');
   fs.mkdirSync(path.join(source, 'lan-model-drop', 'node_modules', 'x'), { recursive: true });
   fs.writeFileSync(path.join(source, 'lan-model-drop', 'node_modules', 'x', 'index.js'), '');
   fs.writeFileSync(path.join(source, 'lan-model-drop', 'server', 'scratch.test.mjs'), '');
@@ -175,7 +175,7 @@ test('installing with that rule ships the container files and leaves a local .en
   }).sort();
   const shipped = list(path.join(prefix, 'lan-model-drop'));
   for (const name of ['Dockerfile', 'compose.yaml', '.env.example', '.dockerignore', 'README.md', 'README.yue_HK.md',
-    'server/main.mjs', 'server/station-key.mjs', 'server/healthcheck.mjs', 'site/index.html', 'site/app.js',
+    'server/main.mjs', 'server/healthcheck.mjs', 'site/index.html', 'site/app.js',
     'site/fonts/MaterialSymbolsOutlined-subset.woff2']) {
     assert.ok(shipped.includes(name), `${name} is installed`);
   }

@@ -6,7 +6,7 @@ All states below are production requirements. The prototype's scenario selector 
 | --- | --- | --- |
 | discover | inspecting, existing-owned, fresh, unrelated-conflict | Continue after exact ownership inspection; preserve unrelated service |
 | requirements | checking, ready, missing-runtime, engine-stopped, missing-compose, unsupported-host, installer-cancelled, license-required, restart-required | Check again or supported installation; cancellation is incomplete |
-| configure | existing-preserved, fresh-defaults, fresh-folder, invalid-port, port-in-use, nonempty-folder, unsafe-path, custom-credential | Validate before review; clear confidential input on departure |
+| configure | existing-preserved, fresh-defaults, fresh-folder, invalid-port, port-in-use, nonempty-folder, unsafe-path | Validate before review |
 | review | ready, stale-environment | Show intended changes and preserved data; revalidate before start |
 | execute | pulling, starting, local-health, lan-health, cancelling, cancelled-retained, failed-retained | Show real phase events; cancel owned work, then reconcile |
 | ready | lan-verified-locally, second-device-unverified, running-after-cancel | Open actual verified URL; copy URL; recheck; logs; finish |
@@ -28,14 +28,14 @@ Required tuples: each state at 960 × 720 and proposed 640 × 520 DIP; English, 
 
 ## Decisive production checks
 
-1. Existing service restart preserves queue, named volume and station credential; unrelated and remote configurations remain unchanged.
-2. Fresh service accepts direct model upload without a drop code; management endpoints still reject absent/incorrect station credentials.
+1. Existing service restart preserves queue, named volume; unrelated and remote configurations remain unchanged.
+2. Fresh service accepts direct model upload without a drop code, and its station endpoints answer without any key.
 3. Nonempty folder, overlapping destination, invalid port and occupied port cannot reach start.
 4. Cancellation during pull/start checks actual process and service identity; no unrelated process is terminated and retained service/data are reported truthfully.
 5. Missing prerequisite, declined native consent, license requirement and pending restart never return success.
 6. Protected values never appear in renderer diagnostics, process arguments, logs, resume files, URLs or captures.
 7. A portable executable launches independently, performs real setup and verifies a real LAN URL. Same-host reachability and second-device reachability have separate verdicts.
-8. Resume revalidates stored nonconfidential drafts and does not restore a custom credential.
+8. Resume revalidates stored drafts.
 
 Independent review and every production check are pending. The design author's source inspection cannot substitute for either.
 

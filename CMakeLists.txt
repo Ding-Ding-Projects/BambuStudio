@@ -929,7 +929,7 @@ if (WIN32)
     install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/browser-extension/" DESTINATION "${CMAKE_INSTALL_PREFIX}/browser-extension")
     # The LAN model drop container ships beside the application too, so it can
     # be started from the installed folder with `docker compose up -d`. A local
-    # .env (it can hold the station key) and development files never ship.
+    # .env (it holds local settings) and development files never ship.
     install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/lan-model-drop/" DESTINATION "${CMAKE_INSTALL_PREFIX}/lan-model-drop"
         PATTERN ".env" EXCLUDE
         PATTERN ".gitignore" EXCLUDE

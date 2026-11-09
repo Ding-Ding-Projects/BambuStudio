@@ -64,19 +64,14 @@ using Clock = std::chrono::steady_clock;
 struct WorkerConfig
 {
     std::uint64_t              generation = 0; // any settings change
-    std::uint64_t              identity   = 0; // a change of address or key: start a fresh inbox
+    std::uint64_t              identity   = 0; // a change of address: start a fresh inbox
     std::uint64_t              session    = 0; // switched on again: start a fresh inbox
     bool                       enabled    = false;
     std::optional<BaseAddress> address;
-    std::string                key; // secret: wiped when replaced, never logged
     std::filesystem::path      received_root;
     std::filesystem::path      pending_file; // the deletes the drop sites have not confirmed yet
 
-    WorkerConfig() = default;
-    WorkerConfig(const WorkerConfig &) = default;
-    WorkerConfig &operator=(const WorkerConfig &) = default;
-    ~WorkerConfig() { wipe(key); }
-    bool usable() const { return address.has_value() && is_station_key(key); }
+    bool usable() const { return address.has_value(); }
 };
 
 struct Shared
@@ -150,7 +145,6 @@ std::filesystem::path data_root() { return std::filesystem::u8path(data_dir()); 
 std::filesystem::path drop_root() { return data_root() / "lan-model-drop"; }
 std::filesystem::path received_root() { return drop_root() / "received"; }
 std::filesystem::path pending_file() { return drop_root() / "pending-deletes.txt"; }
-std::filesystem::path key_file() { return station_key_file(data_root()); }
 
 // A received file waits for the user while LanModelDropFiles.hpp's marker is in its folder. Folders
 // that still carry it at the next start were never opened: they are removed, and the file arrives
@@ -280,16 +274,14 @@ Exchange exchange(const WorkerConfig &cfg, Method method, const std::string &url
     Exchange result;
     if (url.empty() || !cfg.usable()) return result;
     Http http = make_request(method, url);
-    std::string authorization = "Bearer " + cfg.key;
     // Only the fields this protocol defines go to the drop site: no cloud client identity headers.
     http.clear_headers()
-        .header("Authorization", authorization)
         .header("Accept", "application/json")
         .timeout_connect(5)
         .timeout_max(timeout_seconds)
         .follow_redirects(false)
         .verbose(false)
-        // Straight to the drop site: the key must not pass through a proxy from the environment.
+        // Straight to the drop site: a local address must not pass through a proxy from the environment.
         .no_proxy()
         .size_limit(size_limit)
         .on_progress([cancel_when](Http::Progress, bool &cancel) {
@@ -305,7 +297,6 @@ Exchange exchange(const WorkerConfig &cfg, Method method, const std::string &url
             result.http_status = status;
             result.body        = std::move(body);
         });
-    wipe(authorization);
     if (method == Method::Post) http.header("Content-Type", "application/json").set_post_body(std::string("{}"));
     if (headers != nullptr) http.on_header_callback([headers](std::string all) { *headers = std::move(all); });
     http.perform_sync();
@@ -326,7 +317,7 @@ enum class Refusal { None, Size, Checksum, Type, Listing };
 
 struct Download
 {
-    enum class Kind { Ok, Refused, Retry, Gone, Unauthorized, Exists } kind = Kind::Retry;
+    enum class Kind { Ok, Refused, Retry, Gone, AsksForKey, Exists } kind = Kind::Retry;
     Refusal               refusal = Refusal::None;
     std::filesystem::path file;
 };
@@ -350,7 +341,7 @@ Download download(const WorkerConfig &cfg, const InboxItem &item, const CancelWh
     case DownloadVerdict::Accept: break;
     case DownloadVerdict::Retry: return result; // network failure, cancelled or no usable answer: try again later
     case DownloadVerdict::Gone: result.kind = Download::Kind::Gone; return result;
-    case DownloadVerdict::Unauthorized: result.kind = Download::Kind::Unauthorized; return result;
+    case DownloadVerdict::AsksForKey: result.kind = Download::Kind::AsksForKey; return result;
     case DownloadVerdict::RefuseSize: result.kind = Download::Kind::Refused; result.refusal = Refusal::Size; return result;
     case DownloadVerdict::RefuseChecksum: result.kind = Download::Kind::Refused; result.refusal = Refusal::Checksum; return result;
     case DownloadVerdict::RefuseType: result.kind = Download::Kind::Refused; result.refusal = Refusal::Type; return result;
@@ -448,7 +439,7 @@ void worker_main()
             }
         }
 
-        // A new address, key or session starts a fresh inbox, keeping the deletes still owed, each to
+        // A new address or session starts a fresh inbox, keeping the deletes still owed, each to
         // the site that listed the item.
         if (cfg.identity != tracked_identity || cfg.session != tracked_session) {
             const std::vector<PendingDelete> pending = tracker.all_pending_deletes();
@@ -467,8 +458,7 @@ void worker_main()
         keep_pending(cfg);
         if (!cfg.usable()) {
             // Never leave a requested test without an answer.
-            const LinkState missing = cfg.address ? LinkState::NeedsStationKey : LinkState::InvalidAddress;
-            if (test) post([generation = cfg.generation, missing] { on_test_result(generation, missing, std::nullopt); });
+            if (test) post([generation = cfg.generation] { on_test_result(generation, LinkState::InvalidAddress, std::nullopt); });
             continue;
         }
 
@@ -552,9 +542,9 @@ void worker_main()
                 BOOST_LOG_TRIVIAL(warning) << "LAN model drop: refused item " << item.id << " (check " << static_cast<int>(d.refusal) << ")";
                 tracker.queue_delete(item.id, base);
                 post([item, refusal = d.refusal] { on_refused(item, refusal); });
-            } else if (d.kind == Download::Kind::Unauthorized) {
+            } else if (d.kind == Download::Kind::AsksForKey) {
                 tracker.retry_later(item.id);
-                post([generation = cfg.generation] { on_link_state(generation, LinkState::WrongStationKey, std::nullopt); });
+                post([generation = cfg.generation] { on_link_state(generation, LinkState::StationAsksForKey, std::nullopt); });
                 break;
             } else if (d.kind == Download::Kind::Retry) {
                 if (polling()) {
@@ -826,35 +816,27 @@ void apply_settings()
     if (address_text.empty()) address_text = kDefaultAddress;
     const auto address = parse_base_address(address_text);
 
-    std::string          key;
-    const KeyStoreResult stored = load_station_key(key_file(), key);
-
     View &v           = gui().view;
     const bool was_on = v.enabled;
     v.enabled         = enabled;
     v.address         = address ? address->base : address_text;
     v.address_valid   = address.has_value();
-    v.has_key         = stored == KeyStoreResult::Ok;
     v.tested          = false;
     v.busy_test       = false;
     if (!enabled) v.state = LinkState::Off;
     else if (!address) v.state = LinkState::InvalidAddress;
-    else if (stored == KeyStoreResult::Unavailable) v.state = LinkState::KeyStorageUnavailable;
-    else if (stored != KeyStoreResult::Ok) v.state = LinkState::NeedsStationKey;
     else v.state = LinkState::Checking;
 
     std::uint64_t generation = 0;
     bool          identity_changed = false;
     wake_worker([&](Shared &s) {
         WorkerConfig &c = s.config;
-        identity_changed = c.address.has_value() != address.has_value() || (address && c.address->base != address->base) || c.key != key;
+        identity_changed = c.address.has_value() != address.has_value() || (address && c.address->base != address->base);
         if (identity_changed) ++c.identity;
         if (enabled && !was_on) ++c.session;
         ++c.generation;
         c.enabled = enabled;
         c.address = address;
-        wipe(c.key);
-        c.key           = key;
         c.received_root = received_root();
         c.pending_file  = pending_file();
         s.poll_now      = true;
@@ -862,7 +844,6 @@ void apply_settings()
         g_identity.store(c.identity);
         g_session.store(c.session);
     });
-    wipe(key);
     g_enabled.store(enabled);
     gui().generation = generation;
     if (identity_changed || !enabled) {
@@ -893,7 +874,6 @@ void shutdown()
     {
         std::lock_guard<std::mutex> lock(g_shared.mutex);
         g_shared.stop = true;
-        wipe(g_shared.config.key);
     }
     g_shared.wake.notify_all();
     if (g_thread.joinable()) g_thread.join();
@@ -914,18 +894,9 @@ void test_connection()
     if (g_stopping.load()) return;
     View &v = gui().view;
     v.tested = false;
-    std::string    key;
-    const KeyStoreResult stored = load_station_key(key_file(), key);
-    wipe(key);
     if (!v.address_valid) {
         v.tested     = true;
         v.test_state = LinkState::InvalidAddress;
-    } else if (stored == KeyStoreResult::Unavailable) {
-        v.tested     = true;
-        v.test_state = LinkState::KeyStorageUnavailable;
-    } else if (stored != KeyStoreResult::Ok) {
-        v.tested     = true;
-        v.test_state = LinkState::NeedsStationKey;
     } else {
         v.busy_test = true;
         ensure_worker();
@@ -939,20 +910,6 @@ void show_waiting_again()
     for (const Waiting &w : gui().waiting) push_waiting_notification(w);
 }
 
-KeyStoreResult store_station_key(const std::string &key)
-{
-    const KeyStoreResult result = key.empty() ? forget_station_key(key_file()) : save_station_key(key_file(), key);
-    if (result == KeyStoreResult::Ok || result == KeyStoreResult::Missing) apply_settings();
-    return result;
-}
-
-std::string stored_station_key()
-{
-    std::string key;
-    load_station_key(key_file(), key);
-    return key;
-}
-
 void open_preferences_section() { wxGetApp().open_preferences(kEnabledConfigKey); }
 
 wxString state_text(LinkState state)
@@ -962,11 +919,9 @@ wxString state_text(LinkState state)
     case LinkState::Checking: return _L("Connecting");
     case LinkState::Connected: return _L("Connected");
     case LinkState::NotReachable: return _L("Not reachable");
-    case LinkState::WrongStationKey: return _L("Wrong station key");
+    case LinkState::StationAsksForKey: return _L("Drop box needs an update");
     case LinkState::ProtocolNotSupported: return _L("Protocol not supported");
-    case LinkState::NeedsStationKey: return _L("Station key needed");
     case LinkState::InvalidAddress: return _L("Address not valid");
-    case LinkState::KeyStorageUnavailable: return _L("Protected key storage unavailable");
     }
     return _L("Not reachable");
 }

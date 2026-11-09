@@ -59,7 +59,7 @@ public static class BambuHostBoundedReader {
     try {
         if (-not $process.Start()) { throw 'process_start' }
         # Drain both streams concurrently. Never forward Docker output into a
-        # pairing result; config and station-key output may contain credentials.
+        # pairing result; docker config output may contain credentials.
         $stdout = [BambuHostBoundedReader]::Read($process.StandardOutput, 1048576)
         $stderr = [BambuHostBoundedReader]::Read($process.StandardError, 65536)
         if (-not $process.WaitForExit(1000 * [Math]::Min($remaining, $TimeoutSeconds))) {
@@ -220,10 +220,7 @@ try {
     if ($urls.Count -eq 0) { throw 'lan' }
     if ($PairingPipe) {
         $script:FailureCode = 'pairing_failed'
-        $key = (Invoke-Docker ($script:Compose + @('exec', '-T', 'lan-model-drop', 'node', 'server/station-key.mjs'))).Trim()
-        if ($key -notmatch '^[\x21-\x7e]{16,512}$') { throw 'key' }
-        try { Send-PairingResult @{ schema = 1; ok = $true; address = $address; lanUrl = $urls[0]; stationKey = $key } }
-        finally { $key = $null }
+        Send-PairingResult @{ schema = 1; ok = $true; address = $address; lanUrl = $urls[0] }
     } else {
         Write-Host 'LAN model drop is healthy. These LAN addresses answered from this computer:'
         foreach ($url in $urls) { Write-Host $url }

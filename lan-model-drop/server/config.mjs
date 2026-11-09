@@ -66,12 +66,6 @@ export function cleanStationName(raw) {
   return characters.length > MAX_STATION_NAME ? characters.slice(0, MAX_STATION_NAME).join('').trim() : text;
 }
 
-// A station key travels in an HTTP header, so it is visible ASCII without
-// spaces. It is long enough that guessing it is not a practical attack.
-export function validStationKey(value) {
-  return typeof value === 'string' && /^[\x21-\x7e]{16,512}$/.test(value);
-}
-
 // A host Bambu Studio takes in an invite address (LanModelDropModel.cpp,
 // parse_base_address): a host name of dot-separated labels of letters, digits
 // and hyphens, not starting with a dot or a hyphen nor ending with a hyphen,
@@ -134,15 +128,6 @@ export function readConfig(env = process.env) {
     throw new ConfigError('DROP_QUEUE_MAX_BYTES must be at least DROP_MAX_BYTES, or no full-size model would fit.');
   }
 
-  let stationKey = null;
-  if (present(env.DROP_STATION_KEY)) {
-    stationKey = env.DROP_STATION_KEY.trim();
-    // The key itself is never repeated in a message.
-    if (!validStationKey(stationKey)) {
-      throw new ConfigError('DROP_STATION_KEY must be 16 to 512 visible ASCII characters without spaces.');
-    }
-  }
-
   const publicUrl = present(env.DROP_PUBLIC_URL) ? normalizePublicUrl(env.DROP_PUBLIC_URL) : null;
 
   return Object.freeze({
@@ -152,7 +137,6 @@ export function readConfig(env = process.env) {
     ttlHours,
     queueMaxFiles,
     queueMaxBytes,
-    stationKey,
     publicUrl,
   });
 }

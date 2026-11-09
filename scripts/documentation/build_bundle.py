@@ -148,7 +148,7 @@ def literal(value):
 
 def build(root):
     directory = root / 'docs/features'
-    paths = sorted(directory.rglob('*.md'))
+    paths = sorted(directory.rglob('*.md'), key=lambda path: path.as_posix())
     if not paths or len(paths) > 4096:
         raise ValueError('Article count outside supported bounds')
     records, total = [], 0

@@ -10,7 +10,6 @@ import { AttemptLimiter, clientAddress } from './attempts.mjs';
 import { LISTEN_PORT, PROTOCOL, SERVICE } from './config.mjs';
 import { cleanFileName, cleanSender, NameError } from './names.mjs';
 import { DropQueue, ID_PATTERN, newId } from './queue.mjs';
-import { loadStationKey, secretsEqual } from './secrets.mjs';
 import { ContentProbe, contentMatches, typeForName } from './sniff.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -168,7 +167,6 @@ const MESSAGES = Object.freeze({
   unsupported_type: 'Only 3MF, STL, STEP, OBJ and AMF models are accepted.',
   too_many_attempts: 'Too many upload attempts. Try again in a few minutes.',
   queue_full: 'The drop box is full. Ask the person at the computer to open or discard some models.',
-  unauthorized: 'A valid station key is required.',
   not_found: 'Not found.',
   method_not_allowed: 'This method is not allowed here.',
 });
@@ -179,7 +177,6 @@ export function createDropService(config, options = {}) {
   const ttlMs = config.ttlHours * 60 * 60 * 1000;
 
   fs.mkdirSync(config.dataDir, { recursive: true, mode: 0o700 });
-  const stationKey = loadStationKey(config.dataDir, config.stationKey);
   const queue = new DropQueue({ dataDir: config.dataDir, maxFiles: config.queueMaxFiles, maxBytes: config.queueMaxBytes, now, log });
   queue.load();
   const site = loadSite(options.siteDir ?? DEFAULT_SITE_DIR, {
@@ -189,12 +186,6 @@ export function createDropService(config, options = {}) {
     PROTOCOL,
   });
   const limiter = new AttemptLimiter({ now });
-
-  const keyFile = path.join(config.dataDir, 'station-key');
-  const readKey = 'docker compose exec lan-model-drop node server/station-key.mjs';
-  if (stationKey.source === 'environment') log('Using the station key from DROP_STATION_KEY.');
-  else if (stationKey.source === 'generated') log(`Generated a station key in ${keyFile}. Read it with: ${readKey}`);
-  else log(`Using the station key in ${keyFile}. Read it with: ${readKey}`);
 
   // Refuses an upload. A small body is read and discarded so the answer
   // arrives cleanly; a large or unread one closes the connection afterwards.
@@ -263,18 +254,7 @@ export function createDropService(config, options = {}) {
     }
   }
 
-  // The bearer token is always compared, even when it is missing, so a
-  // missing and a wrong key take the same path.
-  function stationAuthorized(req) {
-    const header = req.headers.authorization;
-    const match = typeof header === 'string' ? /^Bearer +(\S+) *$/i.exec(header) : null;
-    return secretsEqual(match ? match[1] : '', stationKey.key);
-  }
-
   async function handleStation(req, res, route) {
-    if (!stationAuthorized(req)) {
-      return fail(res, 401, 'unauthorized', MESSAGES.unauthorized, { 'WWW-Authenticate': 'Bearer realm="lan-model-drop"' });
-    }
     const { method } = req;
     if (route === 'status') {
       if (method !== 'GET') return fail(res, 405, 'method_not_allowed', MESSAGES.method_not_allowed, { Allow: 'GET' });
@@ -397,7 +377,6 @@ export function createDropService(config, options = {}) {
     queue,
     handle,
     expire,
-    get stationKeySource() { return stationKey.source; },
     async start() {
       await expire();
       if (!timer) {

@@ -1,5 +1,4 @@
 #include "LocalHost.hpp"
-#include "LanModelDropKeyStore.hpp"
 #include "LanModelDropModel.hpp"
 #include <nlohmann/json.hpp>
 #include <algorithm>
@@ -9,7 +8,6 @@
 #include <filesystem>
 #include <fstream>
 #include <set>
-#include <map>
 #include <stdexcept>
 #include <vector>
 
@@ -30,71 +28,41 @@ namespace Slic3r { namespace GUI { namespace LanModelDrop {
 namespace {
 std::atomic<bool> setup_active{false};
 
-// JSON parsing also makes temporary strings. Scrub allocator-owned memory when
-// released, including parser failures before a document is returned.
-template<class T> struct WipingAllocator : std::allocator<T> {
-    using value_type = T;
-    template<class U> struct rebind { using other = WipingAllocator<U>; };
-    WipingAllocator() = default;
-    template<class U> WipingAllocator(const WipingAllocator<U> &) {}
-    void deallocate(T *pointer, std::size_t count) {
-        volatile unsigned char *bytes = reinterpret_cast<volatile unsigned char *>(pointer);
-        for (std::size_t i = 0; i < count * sizeof(T); ++i) bytes[i] = 0;
-        std::allocator<T>::deallocate(pointer, count);
-    }
-};
-using ProtectedString = std::basic_string<char, std::char_traits<char>, WipingAllocator<char>>;
-using ProtectedJson = nlohmann::basic_json<std::map, std::vector, ProtectedString, bool,
-    std::int64_t, std::uint64_t, double, WipingAllocator>;
-void clear_value(ProtectedString &value) { std::fill(value.begin(), value.end(), '\0'); value.clear(); }
-std::string public_string(const ProtectedJson &value) {
-    const auto &text = value.get_ref<const ProtectedString &>();
-    return std::string(text.data(), text.size());
-}
+using json = nlohmann::json;
 
-bool parse_result(std::string &bytes, LocalHost::Result &result)
+bool parse_result(const std::string &bytes, LocalHost::Result &result)
 {
-    ProtectedJson document;
     try {
         std::set<std::string> keys;
-        document = ProtectedJson::parse(bytes, [&keys](int depth, ProtectedJson::parse_event_t event, ProtectedJson &value) {
+        json document = json::parse(bytes, [&keys](int depth, json::parse_event_t event, json &value) {
             if (depth > 1) throw std::runtime_error("nested result");
-            if (event == ProtectedJson::parse_event_t::key && !keys.insert(public_string(value)).second)
+            if (event == json::parse_event_t::key && !keys.insert(value.get<std::string>()).second)
                 throw std::runtime_error("duplicate result field");
             return true;
         });
-        wipe(bytes);
         if (!document.is_object() || !document.contains("schema") || !document["schema"].is_number_integer() ||
             document["schema"] != 1 || !document.contains("ok") || !document["ok"].is_boolean()) throw std::runtime_error("invalid result");
         if (!document["ok"].get<bool>()) {
             if (document.size() != 3 || !document.contains("code") || !document["code"].is_string()) throw std::runtime_error("invalid failure");
-            const auto code = public_string(document["code"]);
+            const auto code = document["code"].get<std::string>();
             if (code.empty() || code.size() > 64 || code.find_first_not_of("abcdefghijklmnopqrstuvwxyz_") != std::string::npos)
                 throw std::runtime_error("invalid failure code");
             // Never surface script-supplied diagnostics: only an internal fixed outcome.
             result.code = "setup_failed";
             return true;
         }
-        if (document.size() != 5 || !document.contains("address") || !document["address"].is_string() ||
-            !document.contains("lanUrl") || !document["lanUrl"].is_string() ||
-            !document.contains("stationKey") || !document["stationKey"].is_string()) throw std::runtime_error("invalid success");
-        const auto address = parse_base_address(public_string(document["address"]));
-        const auto lan = parse_base_address(public_string(document["lanUrl"]));
-        auto &key = document["stationKey"].get_ref<ProtectedString &>();
+        if (document.size() != 4 || !document.contains("address") || !document["address"].is_string() ||
+            !document.contains("lanUrl") || !document["lanUrl"].is_string()) throw std::runtime_error("invalid success");
+        const auto address = parse_base_address(document["address"].get<std::string>());
+        const auto lan = parse_base_address(document["lanUrl"].get<std::string>());
         if (!address || address->scheme != "http" || address->host != "127.0.0.1" || !address->explicit_port ||
-            !lan || lan->scheme != "http" || !is_private_ipv4(lan->host) || lan->port != address->port ||
-            !is_station_key(std::string_view(key.data(), key.size()))) throw std::runtime_error("invalid pairing");
+            !lan || lan->scheme != "http" || !is_private_ipv4(lan->host) || lan->port != address->port)
+            throw std::runtime_error("invalid pairing");
         result.address = address->base;
         result.lan_url = lan->base + "/";
-        result.station_key.assign(key.data(), key.size());
-        clear_value(key);
         result.ok = true;
         return true;
     } catch (...) {
-        wipe(bytes);
-        wipe(result.station_key);
-        if (document.is_object() && document.contains("stationKey") && document["stationKey"].is_string())
-            clear_value(document["stationKey"].get_ref<ProtectedString &>());
         result.code = "invalid_result";
         return false;
     }
@@ -210,7 +178,6 @@ bool setup(std::atomic<bool> &cancel, LocalHost::Result &result)
     }
     std::string bytes;
     bytes.reserve(8192);
-    struct WipeBytes { std::string &bytes; ~WipeBytes() { wipe(bytes); } } wipe_bytes{bytes};
     bool complete = false;
     while (bytes.size() < 8192 && !cancel.load()) {
         std::array<char, 1024> buffer{};
@@ -248,7 +215,7 @@ bool persisted_station_matches(const std::filesystem::path &path, const std::str
         const auto bytes = std::filesystem::file_size(path, error);
         if (error || bytes == 0 || bytes > 32 * 1024 * 1024) return false;
         std::ifstream input(path, std::ios::binary);
-        ProtectedJson document;
+        json document;
         input >> document; // AppConfig appends a checksum line after the JSON object.
         if (!input || !document.is_object() || !document.contains("app") || !document["app"].is_object()) return false;
         const auto &app = document["app"];
@@ -256,13 +223,12 @@ bool persisted_station_matches(const std::filesystem::path &path, const std::str
             if (!app.contains(key)) return expected.empty();
             const auto &value = app[key];
             if (value.is_boolean()) return expected == (value.get<bool>() ? "true" : "false");
-            return value.is_string() && public_string(value) == expected;
+            return value.is_string() && value.get<std::string>() == expected;
         };
         return matches("lan_drop_address", address) && matches("lan_drop_enabled", enabled);
     } catch (...) { return false; }
 }
 
-LocalHost::Result::~Result() { wipe(station_key); }
 LocalHost::~LocalHost() { cancel(); }
 void LocalHost::cancel()
 {

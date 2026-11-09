@@ -49,11 +49,9 @@ const char *state_name(LinkState state)
     case LinkState::Checking: return "Checking";
     case LinkState::Connected: return "Connected";
     case LinkState::NotReachable: return "NotReachable";
-    case LinkState::WrongStationKey: return "WrongStationKey";
+    case LinkState::StationAsksForKey: return "StationAsksForKey";
     case LinkState::ProtocolNotSupported: return "ProtocolNotSupported";
-    case LinkState::NeedsStationKey: return "NeedsStationKey";
     case LinkState::InvalidAddress: return "InvalidAddress";
-    case LinkState::KeyStorageUnavailable: return "KeyStorageUnavailable";
     }
     return "?";
 }

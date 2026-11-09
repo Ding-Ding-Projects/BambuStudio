@@ -101,7 +101,7 @@ Branch `ai/feature/20261104-door-status-api`. Details: [`docs/features/device/st
 - [x] Add `tests/status_api.test.mjs` with `tests/status_api_fixture.cpp`: behaviour of the real header plus source pins (passes with MSVC; `--negative` shows each removed guard is caught).
 - [ ] Build the application with the new files and run it: the Boost.Beast listener, the wxTimer snapshot and the Preferences rows have not been compiled or driven. Native runtime is not verified.
 - [ ] Check the door state against a real printer that reports door-open support (bit 23 of `home_flag` or `print.stat` is from community notes).
-- [ ] Decide whether the token should move to protected storage like the LAN drop station key; today it is in the application settings file.
+- [ ] Decide whether the token should move to protected storage (Windows data protection); today it is in the application settings file.
 
 ## Device live readings and printer options, 4 November 2026
 

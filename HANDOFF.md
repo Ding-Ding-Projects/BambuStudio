@@ -1,5 +1,25 @@
 # Bambu Studio handoff
 
+## LAN model drop: no station key, 9 November 2026
+
+The owner decided the drop box needs no key, because the person at the Bambu Studio
+computer sees every model before it is opened. The container no longer generates,
+reads or prints a station key (`server/secrets.mjs`, `server/station-key.mjs` and
+`DROP_STATION_KEY` are gone) and answers the station routes without an
+Authorization header; a header sent by an older Bambu Studio is ignored. Bambu Studio
+sends no key, has no key field or key store (`LanModelDropKeyStore` is removed from
+the build), and `host.ps1` hands the pairing result only the address. A 401 or 403
+from a container that still asks for a key reads as **Drop box needs an update**
+(`LinkState::StationAsksForKey`). An old `station-key.dpapi` file is left on disk
+and never read. Documentation, the setup companion, its protocol and the Cantonese
+files follow. Node tests and the compiled pure-model tests pass; the C++ application
+changes (`LanModelDropStation.cpp`, `LanModelDropUi.cpp`, `LocalHost.cpp`,
+`Preferences.cpp`) were not compiled here and still need a Windows build, and a real
+published container has not been rebuilt, so the Docker image and the native UI remain
+unverified. The Cantonese articles under `docs/features/application-integration/` were
+already behind their English sources before this change, so their `source-sha256`
+values were not refreshed.
+
 ## Startup crash, the remaining builds and an unfinished menus batch, 9 November 2026
 
 **Fixed:** releases built from ba14553 onwards crashed on start with an

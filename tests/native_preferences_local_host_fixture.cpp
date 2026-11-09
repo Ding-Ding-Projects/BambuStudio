@@ -4,12 +4,9 @@
 #include <fstream>
 #include <iostream>
 
-namespace Slic3r { namespace GUI { namespace LanModelDrop {
-void wipe(std::string &value) { if (!value.empty()) SecureZeroMemory(value.data(), value.size()); value.clear(); }
-}}}
 using namespace Slic3r::GUI::LanModelDrop;
 static void require(bool condition, const char *message) { if (!condition) throw std::runtime_error(message); }
-static const char *valid_template = R"({"schema":1,"ok":true,"address":"http://127.0.0.1:8833","lanUrl":"http://fixture.lan:8833/","stationKey":"fixture-only-key-123456"})";
+static const char *valid_template = R"({"schema":1,"ok":true,"address":"http://127.0.0.1:8833","lanUrl":"http://fixture.lan:8833/"})";
 static std::string expand(std::string body)
 {
     // Fixed RFC1918 test octets, never discovered from a real host.
@@ -54,19 +51,19 @@ int main()
         {
             std::string bytes = valid;
             LocalHost::Result result;
-            require(parse_result(bytes, result) && result.ok && bytes.empty(), "valid result consumed and wiped");
+            require(parse_result(bytes, result) && result.ok, "valid result accepted");
             require(result.address == "http://127.0.0.1:8833" && result.lan_url == expand("http://fixture.lan:8833/"), "address binding");
         }
         for (const auto &bad : {
             std::string(R"({"schema":1,"schema":1,"ok":false,"code":"bad"})"),
-            std::string(R"({"schema":1,"ok":true,"address":"http://8.8.8.8:8833","lanUrl":"http://fixture.lan:8833/","stationKey":"fixture-only-key-123456"})"),
-            std::string(R"({"schema":1,"ok":true,"address":"http://127.0.0.1:8833","lanUrl":"http://fixture.lan:8834/","stationKey":"fixture-only-key-123456"})"),
-            std::string(R"({"schema":1,"ok":true,"address":"http://127.0.0.1:8833","lanUrl":"http://8.8.8.8:8833/","stationKey":"fixture-only-key-123456"})"),
-            std::string(R"({"schema":1,"ok":true,"address":"http://127.0.0.1:8833","lanUrl":"http://fixture.lan:8833/","stationKey":"bad"})"),
+            std::string(R"({"schema":1,"ok":true,"address":"http://8.8.8.8:8833","lanUrl":"http://fixture.lan:8833/"})"),
+            std::string(R"({"schema":1,"ok":true,"address":"http://127.0.0.1:8833","lanUrl":"http://fixture.lan:8834/"})"),
+            std::string(R"({"schema":1,"ok":true,"address":"http://127.0.0.1:8833","lanUrl":"http://8.8.8.8:8833/"})"),
+            std::string(R"({"schema":1,"ok":true,"address":"http://127.0.0.1:8833","lanUrl":"http://fixture.lan:8833/","unexpected":"field"})"),
             std::string(R"({"schema":1,"ok":false,"code":{"nested":1}})"), std::string("not json")}) {
             std::string bytes=expand(bad);
             LocalHost::Result result;
-            require(!parse_result(bytes, result) && !result.ok && bytes.empty() && result.station_key.empty(), "invalid result rejected and wiped");
+            require(!parse_result(bytes, result) && !result.ok, "invalid result rejected");
         }
         const std::string writer = "$rights=[IO.Pipes.PipeAccessRights]::Write -bor [IO.Pipes.PipeAccessRights]::ReadPermissions\n"
             "$p=[IO.Pipes.NamedPipeClientStream]::new('.', $PairingPipe, $rights, [IO.Pipes.PipeOptions]::None, "

@@ -33,21 +33,20 @@ function render(focus = false) {
   $('heading').textContent = text(...headings[step]);
   $('identity').textContent = text('Companion 1.0.1 • Expected service 1.0.1 • ', '設定工具 1.0.1 • 預期服務 1.0.1 • ') +
     (verifiedImage && verifiedUntil > Date.now() ? text('Actual service: verified published image', '實際服務：已驗證發佈映像') : text('Actual service requires inspection', '實際服務需要檢查'));
-  $('description').textContent = text('Keep existing service data and credentials. A fresh setup uses a new dedicated volume and a securely generated station credential.', '保留現有服務資料同憑證。全新設定會使用新嘅專用磁碟區，同安全產生嘅站台憑證。');
+  $('description').textContent = text('Keep existing service data. A fresh setup uses a new dedicated volume. The drop box needs no key.', '保留現有服務資料。全新設定會使用新嘅專用磁碟區。投遞箱唔需要密鑰。');
   $('status').textContent = message;
   $('fields').hidden = step !== 1; $('review').hidden = step !== 2; $('result').hidden = step !== 4;
   $('name-label').textContent = text('Station name', '站台名稱'); $('port-label').textContent = text('Host port', '主機連接埠');
   $('name').disabled = !!snapshot?.containerId; $('port').disabled = !!snapshot?.containerId;
   $('storage').textContent = snapshot?.containerId ? text('Existing storage and station name will be retained.', '會保留現有儲存空間同站台名稱。') : text('Storage: a new dedicated named volume.', '儲存：新嘅專用命名磁碟區。');
-  $('credential').textContent = snapshot?.containerId ? text('Existing credential retained. Its value is never displayed.', '保留現有憑證，唔會顯示憑證值。') : text('Generate a station credential inside the service. Custom input is unavailable until its protected server entrypoint is implemented.', '喺服務內產生站台憑證。受保護嘅伺服器輸入功能完成之前，未能使用自訂憑證。');
-  $('limitations').textContent = text('Initial implementation: folder selection, automatic prerequisite installation, custom credentials, resume and the full settings inventory remain unfinished.', '初步版本：資料夾選擇、自動安裝所需工具、自訂憑證、繼續上次設定同完整設定項目仍未完成。');
+  $('limitations').textContent = text('Initial implementation: folder selection, automatic prerequisite installation, resume and the full settings inventory remain unfinished.', '初步版本：資料夾選擇、自動安裝所需工具、繼續上次設定同完整設定項目仍未完成。');
   $('back').textContent = text('Back', '上一步'); $('back').disabled = busy || step === 0 || !!operation && !operation.terminal;
   $('cancel').textContent = text('Cancel and reconcile', '取消並核實狀態'); $('cancel').hidden = !operation || !!operation.terminal;
   $('cancel').disabled = !!operation?.cancelRequested;
   $('next').textContent = step === 0 ? text('Check requirements', '檢查所需工具') : step === 2 ? text('Start service', '啟動服務') : step === 3 ? text('Recheck actual state', '重新檢查實際狀態') : step === 4 ? text('Inspect again', '再次檢查') : text('Review', '確認');
   $('next').disabled = busy || step === 3 && (!!operation?.workerActive || !!operation?.reconciliationActive);
   $('position').textContent = text('Step ', '步驟 ') + (step + 1) + '/5';
-  if (configuration) $('review').textContent = text('Port: ', '連接埠：') + configuration.port + '\n' + text('Existing data and credentials are preserved. Only the owned service will be started. No public Internet exposure or host restart.', '會保留現有資料同憑證，只啟動自有服務。唔會公開到互聯網或重新啟動主機。');
+  if (configuration) $('review').textContent = text('Port: ', '連接埠：') + configuration.port + '\n' + text('Existing data is preserved. Only the owned service will be started. No public Internet exposure or host restart.', '會保留現有資料，只啟動自有服務。唔會公開到互聯網或重新啟動主機。');
   if (step === 4) {
     $('result').replaceChildren();
     const resultText = document.createElement('p');
@@ -74,7 +73,7 @@ $('next').onclick = () => action(async () => {
     $('port').value = snapshot.port; step = 1;
   } else if (step === 1) {
     configuration = await request('configure', { snapshotId: snapshot.snapshotId, port: Number($('port').value), stationName: $('name').value,
-      storage: snapshot.containerId ? 'existing' : 'new-volume', credentialMode: snapshot.containerId ? 'preserve' : 'generate' });
+      storage: snapshot.containerId ? 'existing' : 'new-volume' });
     step = 2;
   } else if (step === 2) {
     operation = await request('start', { configurationId: configuration.configurationId, snapshotId: snapshot.snapshotId }); step = 3; void poll();

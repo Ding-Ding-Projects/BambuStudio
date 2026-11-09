@@ -15,7 +15,7 @@ function errorOf(response) {
 }
 
 async function inbox(service) {
-  const response = await station(service.port, service.key, 'GET', '/api/station/inbox');
+  const response = await station(service.port, 'GET', '/api/station/inbox');
   assert.equal(response.status, 200);
   return response.json.items;
 }
@@ -157,7 +157,7 @@ test('a full drop box is 507, by file count and by bytes', async (t) => {
 
   // Taking an item out makes room again.
   const [first] = await inbox(byCount);
-  assert.equal((await station(byCount.port, byCount.key, 'DELETE', `/api/station/files/${first.id}`)).status, 204);
+  assert.equal((await station(byCount.port, 'DELETE', `/api/station/files/${first.id}`)).status, 204);
   assert.equal((await drop(byCount.port, { fileName: 'cube2.obj', body: OBJ })).status, 201);
 
   const byBytes = await startDrop(t, { env: { DROP_MAX_BYTES: '500', DROP_QUEUE_MAX_BYTES: '800' } });

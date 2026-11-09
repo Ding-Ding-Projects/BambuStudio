@@ -1,9 +1,7 @@
 # LAN model drop for Bambu Studio MD3.
 #
 #   ../host.bat --detached               pull, start and verify LAN health
-#   docker compose exec lan-model-drop node server/station-key.mjs
-#                                        print the station key for Bambu Studio
-#   docker compose down                  stop it (queued models and the key stay)
+#   docker compose down                  stop it (queued models stay)
 #
 # Settings go in a .env file next to this one; .env.example lists them all.
 
@@ -27,7 +25,6 @@ services:
       DROP_TTL_HOURS: ${DROP_TTL_HOURS:-24}
       DROP_QUEUE_MAX_FILES: ${DROP_QUEUE_MAX_FILES:-50}
       DROP_QUEUE_MAX_BYTES: ${DROP_QUEUE_MAX_BYTES:-2147483648}
-      DROP_STATION_KEY: ${DROP_STATION_KEY:-}
       DROP_PUBLIC_URL: ${DROP_PUBLIC_URL:-}
     volumes:
       - drop-data:/data

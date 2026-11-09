@@ -187,7 +187,7 @@ test('the sender page works end to end in Chromium', { skip, timeout: 90000 }, a
   const done = await waitFor(() => page.evaluate("!document.getElementById('send').disabled || document.getElementById('live').dataset.tone === 'error' ? document.getElementById('live').textContent : ''"),
     'the send to finish');
   assert.equal(done, english.liveDone.replace('$1', '1').replace('$2', '2'));
-  const inbox = (await station(service.port, service.key, 'GET', '/api/station/inbox')).json.items;
+  const inbox = (await station(service.port, 'GET', '/api/station/inbox')).json.items;
   assert.deepEqual(inbox.map(({ fileName, sender, type, bytes }) => ({ fileName, sender, type, bytes })),
     [{ fileName: 'cube.stl', sender: 'Mei', type: 'stl', bytes: ASCII_STL.length }]);
   const rows = await page.evaluate("[...document.querySelectorAll('#file-list .file-row')].map((row) => row.dataset.status + ' ' + row.querySelector('.file-state').textContent)");
