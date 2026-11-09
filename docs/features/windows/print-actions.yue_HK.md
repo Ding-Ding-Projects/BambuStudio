@@ -1,6 +1,6 @@
 ---
 translation-of: print-actions.md
-source-sha256: 1dc5da7e8baba068ee35683fd7fc10ee7a6f8ed70ba73df259874bc221abbfbe
+source-sha256: 7f817035a409d41ee664fb2586245fe393d6465b040b18a97d4ed9987360ccda
 review-status: agent-drafted
 ---
 
@@ -9,6 +9,10 @@ review-status: agent-drafted
 # 打印盤操作同材料映射
 
 準備同預覽操作欄分開提供 **Slice plate**、**Slice and Print**、**Slice and Send** 同 **Print plate**。兩個組合操作都會檢查版本、材料同打印盤，而且只處理當前打印盤，即使普通 Slice 按鈕設定為 Slice all 都一樣。**Slice and Print** 成功切片後開啟原有打印機選擇同打印設定；**Slice and Send** 開啟原有傳送對話框，確認後只傳送檔案，唔會開始打印。打印機選擇同最後確認都保留。操作欄喺較窄畫面會換行；即使符號字型未能載入，選項按鈕仍會顯示文字箭嘴。
+
+## 外觀
+
+四個操作掣跟 2026 年 11 月設計板，高 40 px，圓角 12 px。**Print plate** 係唯一實心嘅掣，排喺最尾；**Slice plate** 用次要底色；**Slice and Print** 同 **Slice and Send** 係外框掣，直接坐喺操作欄底色上面。Slice plate 同 Print plate 係分割掣，畫成一件：主體同 36 px 闊嘅選項部分用直角夾埋，中間一條 1 px 分隔線，外框淨係描外圍。選項選單開住嗰陣，嗰半邊會保持按下嘅底色，箭嘴向上；選單一熄，兩樣都會還原。停用嘅掣冇底色，字用外框色，所以停用嘅 Print plate 同停用嘅 Slice plate 睇落一樣。雙語模式下操作字保持英文，廣東話名放喺每粒掣嘅提示入面。目前打印盤晶片係冇邊框嘅次要底色晶片，估算嗰行重量同長度用等寬字型。
 
 每個後續操作只會執行一次，並綁定打印盤、請求批次同原生切片批次。另一個切片要求、取消、切片失敗或未開始、打印盤或項目被替換，以及打印盤結果改變，都唔會開啟後續對話框。成功而且未改變嘅切片可以重用；開啟任何設定對話框之前都會清除待處理操作。材料映射改變會令舊切片失效，並返回準備畫面，除非用戶選擇 **Swap and reslice**。
 

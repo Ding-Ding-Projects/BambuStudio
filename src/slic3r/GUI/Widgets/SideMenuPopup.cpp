@@ -49,6 +49,11 @@ void SidePopup::OnDismiss()
     // implementation can destroy it synchronously on some wx backends.
     dismissing = true;
     Slic3r::GUI::wxGetApp().set_side_menu_popup_status(false);
+    if (on_dismiss) {
+        auto callback = std::move(on_dismiss);
+        on_dismiss    = nullptr;
+        callback();
+    }
     restoreInvokerFocus();
     PopupWindow::OnDismiss();
     restoreInvokerFocus();

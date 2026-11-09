@@ -37,10 +37,29 @@ public:
 
     void SetTextLayout(EHorizontalOrientation orient, int margin = 15);
 
-    // 0: legacy flat-seam split, 1: full pill, 2: leading half of a split
-    // button (pill on the left, small radius on the right), 3: trailing half
-    // (small radius on the left, pill on the right).
+    // 0: legacy flat-seam split, 1: one rounded shape, 2: leading half of a
+    // split button (rounded on the left, square on the seam side), 3: trailing
+    // half (square on the seam side, rounded on the right). The two halves of a
+    // split button meet with no gap and read as one shape with a hairline seam.
     void SetLayoutStyle(int style);
+
+    // Split buttons: a 1 px seam line drawn on the leading half's seam edge,
+    // inset vertically by inset_dip, in the colour for the current state.
+    void SetSplitSeam(StateColor const &colour, int inset_dip);
+
+    // Gap between the leading glyph and the label, in design pixels (default 6).
+    void SetGlyphGap(int dip);
+
+    // Inset of the focus ring from the control edge, in design pixels (default 3).
+    void SetFocusInset(int dip);
+
+    // Keep the pressed fill while a menu this button opened is showing.
+    void SetHeldPressed(bool held);
+    bool IsHeldPressed() const { return held_pressed; }
+
+    // Never show the inline bilingual form; in bilingual mode the Cantonese
+    // counterpart always goes to the tooltip note. The action bar uses this.
+    void SetEnglishOnly(bool english_only);
 
     void SetLabel(const wxString& label);
 
@@ -111,6 +130,14 @@ private:
     bool pressedDown      = false;
     bool keyboard_pressed = false;
     int  layout_style     = 0;
+
+    StateColor seam_color;
+    bool       has_seam        = false;
+    int        seam_inset_dip  = 8;
+    int        glyph_gap_dip   = 6;
+    int        focus_inset_dip = 3;
+    bool       held_pressed    = false;
+    bool       english_only    = false;
 
     // Bilingual mode bookkeeping: the tooltip the caller actually asked for,
     // and the Cantonese note (if any) currently folded on top of it.

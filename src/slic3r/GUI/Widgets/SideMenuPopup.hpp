@@ -13,6 +13,8 @@
 #include "SideButton.hpp"
 #include "PopupWindow.hpp"
 
+#include <functional>
+
 class SidePopup : public PopupWindow
 {
 private:
@@ -29,6 +31,7 @@ private:
     // theme that was in force when the popup was constructed.
     double   radius = 0.0;
     wxColour border_color;
+    std::function<void()> on_dismiss;
 public:
     SidePopup(wxWindow* parent);
     ~SidePopup();
@@ -41,6 +44,10 @@ public:
     virtual bool Show(bool show = true) wxOVERRIDE;
 
     void append_button(SideButton* btn);
+
+    // Called once when the popup closes, so the button that opened it can
+    // release its held pressed fill and restore its chevron.
+    void SetOnDismiss(std::function<void()> callback) { on_dismiss = std::move(callback); }
 
     void paintEvent(wxPaintEvent& evt);
     void keyDown(wxKeyEvent& event);

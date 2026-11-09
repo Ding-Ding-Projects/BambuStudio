@@ -46,7 +46,15 @@ function checkActionBar(source) {
     assert.match(bar, /m_prepare_action_bar->SetBackgroundColour\(bar_bg\)/);
     const pills = code(body(source, 'void MainFrame::update_side_button_style('));
     assert.match(pills, /const wxColour\s+bar_bg\s+= prepare_bar_surface\(\);/);
-    assert.equal((pills.match(/SetBottomColour\(bar_bg\)/g) || []).length, 2, 'both pill styles take the bar ground');
+    assert.equal((pills.match(/SetBottomColour\(bar_bg\)/g) || []).length, 1, 'one style helper sets the bar ground');
+    const helper = pills.indexOf('auto style_action = [&](SideButton *btn,');
+    assert(helper >= 0 && pills.indexOf('SetBottomColour(bar_bg)') > helper, 'the bar ground is set inside the helper');
+    for (const group of [/for \(SideButton \*btn : \{m_slice_btn, m_slice_option_btn\}\)\s*style_action\(btn,/,
+                         /for \(SideButton \*btn : \{m_print_btn, m_print_option_btn\}\)\s*style_action\(btn,/,
+                         /for \(SideButton \*btn : \{m_slice_print_btn, m_slice_send_btn\}\)\s*style_action\(btn,/])
+        assert.match(pills, group, 'every action button passes through the helper');
+    assert.match(pills, /MD3::Metrics::soft_radius\(btn_height\)/, 'the board radius, not a pill');
+    assert.doesNotMatch(pills, /pill_radius/, 'no pill returns to the bar');
     assert.doesNotMatch(pills, /SetBottomColour\((?!bar_bg\))/, 'no pill names another corner colour');
     assert.doesNotMatch(pills, /SurfaceContainerLow\b/, 'the old bar colour is gone from the pills');
     const tools = code(body(source, 'wxSizer* MainFrame::create_side_tools('));
