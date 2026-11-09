@@ -1,5 +1,17 @@
 # Bambu Studio handoff
 
+## Base64 per-file controls and media preview, 9 November 2026
+
+The Files tab can pause, resume or cancel one file alone (buttons on the selected row and the
+row's right-click menu); the data: URL tab plays audio and video through `wxMediaCtrl` from a
+temporary file named by the digest, removed when the preview changes or the panel closes. The
+live menu rows from the unfinished menus batch now have their Cantonese strings and their article
+sections. Checked by `tests/base64_per_file.test.mjs`, `tests/base64_media_preview.test.mjs` and
+the catalog's require-complete compile; syntax-checked here, not yet run on Windows. Still not
+built: a second Text tab session, the twelve regrouped Preferences sections with migration (a
+large split of `create_general_tab` and `create_other_tab` by topic), the virtual disk, Minecraft
+and drawing board extras listed in their articles.
+
 ## The Pages site redesigned layer by layer, 9 November 2026
 
 The landing site at ding-ding-projects.github.io/BambuStudio was rebuilt around the hero graphic
