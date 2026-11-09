@@ -120,8 +120,20 @@ FeatureFinderPanel::FeatureFinderPanel(wxWindow *parent) : wxPanel(parent, wxID_
 
     auto *footer = new Label(this, Label::Body_12,
         wxString::Format(_L("The command palette (%s) finds every feature too. A feature marked Not built yet is designed and planned; its Open button appears the day it ships."),
-                         wxString::FromUTF8(PaletteIndex::palette_shortcut_label())));
+                         wxString::FromUTF8(PaletteIndex::palette_shortcut_label())),
+        LB_AUTO_WRAP | wxST_NO_AUTORESIZE);
+    footer->SetMinSize(wxSize(0, -1));
     footer->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+    // The sentence wraps instead of running past the right edge. Its height is
+    // only known after the first wrap, so lay the page out again when it changes.
+    footer->Bind(wxEVT_SIZE, [this, footer](wxSizeEvent &e) {
+        e.Skip();
+        CallAfter([this, footer]() {
+            if (IsBeingDeleted()) return;
+            footer->InvalidateBestSize();
+            if (footer->GetBestSize().y != footer->GetSize().y) Layout();
+        });
+    });
     root->Add(footer, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, pad);
 
     SetSizer(root);
@@ -329,15 +341,24 @@ wxPanel *FeatureFinderPanel::make_row(wxWindow *parent, const Feature &feature)
     text->Add(where, 0, wxEXPAND | wxTOP, FromDIP(2));
     sizer->Add(text, 1, wxALIGN_CENTER_VERTICAL | wxLEFT | wxTOP | wxBOTTOM, FromDIP(8));
 
-    // Badge or real shortcut, then Open (or the honest reason there is none).
-    wxString side;
-    if (feature.badge == Badge::Fixed) side = _L("Fixed in this version");
-    else if (feature.badge == Badge::New && ready) side = _L("New in this version");
-    else if (*feature.shortcut != '\0') side = wxString::FromUTF8(feature.shortcut);
-    if (!side.IsEmpty() && ready) {
-        auto *chip = new Label(row, Label::Body_12, side);
+    // A version badge sits under the title: beside it, its long bilingual text
+    // squeezed the title onto extra lines and pushed the second language out of
+    // the row. A short real shortcut stays on the right, then Open (or the
+    // honest reason there is none).
+    wxString badge;
+    if (feature.badge == Badge::Fixed) badge = _L("Fixed in this version");
+    else if (feature.badge == Badge::New && ready) badge = _L("New in this version");
+    if (!badge.IsEmpty() && ready) {
+        auto *chip = new Label(row, Label::Body_12, badge, LB_AUTO_WRAP | wxST_NO_AUTORESIZE);
+        chip->SetMinSize(wxSize(0, -1));
         chip->SetBackgroundColour(base);
-        chip->SetForegroundColour(StateColor::semantic(feature.badge == Badge::None ? MD3::Role::OnSurfaceVariant : MD3::Role::Primary));
+        chip->SetForegroundColour(StateColor::semantic(MD3::Role::Primary));
+        text->Add(chip, 0, wxEXPAND | wxTOP, FromDIP(2));
+    }
+    if (badge.IsEmpty() && *feature.shortcut != '\0' && ready) {
+        auto *chip = new Label(row, Label::Body_12, wxString::FromUTF8(feature.shortcut));
+        chip->SetBackgroundColour(base);
+        chip->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
         sizer->Add(chip, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(8));
     }
     if (ready) {
