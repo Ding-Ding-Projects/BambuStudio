@@ -505,22 +505,22 @@
     {
       "route": "design-system/md3-design-system.md",
       "title": "Vendored Material Design 3 design system",
-      "sha256": "11a549b7fb27e84730eef706d560058c9758e984d5a74152dbe00ea1d03f7b95"
+      "sha256": "dd1796e4c54b942b96f15f7052beb789df6e8dd4f1f1c4afbcb6c22f2d085904"
     },
     {
       "route": "design-system/md3-design-system.yue_HK.md",
       "title": "內建 Material Design 3 設計系統",
-      "sha256": "17600dcfdde103e6c74b70acf3c30b99cc052a0b1a26f213715e757dcf0e866c"
+      "sha256": "4e5519b3d2a0fa06dbb23813dc493a6326adc6dcd3c23ee68dfda15a04e43577"
     },
     {
       "route": "design-system/md3-parity-register.md",
       "title": "MD3 parity register",
-      "sha256": "1e0d0b842c0682f1973eaab4c6624e7c219bf2da25572e07ba2beb4b71fbe899"
+      "sha256": "2a59afb7e5e7bcada7cc30307939c24f4f802d6a26f5f83412419b84ac448cee"
     },
     {
       "route": "design-system/md3-parity-register.yue_HK.md",
       "title": "MD3 統一登記冊",
-      "sha256": "66b1d543dbe8f540cb209811fcf4378451edd0423467ce5999b56cb406c10fc3"
+      "sha256": "a83780c269662f05f1f73c70db9b103ae101e72a8f4901884ef7a437aca889de"
     },
     {
       "route": "design-system/monitor-atlas.md",
@@ -675,12 +675,12 @@
     {
       "route": "design-system/studio-atlas-shared-controls.md",
       "title": "Studio Atlas shared control anatomy",
-      "sha256": "b80f4d1851599099f61df69822d30da389b3b17ee2943ca6e70463cc16e51f7f"
+      "sha256": "cdde3c143c08d19144911ec27cbcd125000b3e89711f7bff50da90899ea67699"
     },
     {
       "route": "design-system/studio-atlas-shared-controls.yue_HK.md",
       "title": "Studio Atlas 共用控件結構",
-      "sha256": "3d0fcaca5676fcaa1fb990ceabd0c128b55581e78b854542597fe7ee5f416c24"
+      "sha256": "449c417c71c518ac383fbb7cb2cf9e44d6bdf6dffca2b02830a90cf514ee092b"
     },
     {
       "route": "design-system/studio-atlas-shell-and-tabs.md",
@@ -2305,7 +2305,7 @@
       "bytes": 16430
     }
   ],
-  "bundle_sha256": "e27441cf38eaeba511c30f933dba65dd4d30a801777f07109a3865eb28133f7f",
+  "bundle_sha256": "9745d79e6116ebc3eae97a33414a0d11b0c1af6168fd2c62cb540e55eea2126d",
   "unavailable_references": [
     {
       "source": "api/README.md",

@@ -1,6 +1,6 @@
 ---
 translation-of: md3-design-system.md
-source-sha256: 11a549b7fb27e84730eef706d560058c9758e984d5a74152dbe00ea1d03f7b95
+source-sha256: dd1796e4c54b942b96f15f7052beb789df6e8dd4f1f1c4afbcb6c22f2d085904
 review-status: agent-drafted
 ---
 
@@ -52,9 +52,13 @@ review-status: agent-drafted
   [`../../../HANDOFF.md`](../../../HANDOFF.md)。
 - 一個元素對元素對比審計針對設計工具產生一個矩陣。顏色、令牌同排字層報告完整：最後掃描發現 21 個剩餘主題字面、其中 18 個被處理喺嗰個工作中同 3 個被保留刻意超固定位圖資產（錨定同合理化喺下方「保留主題字面」）。剩餘三角洲係結構化組件解剖、唔係色錯誤：相機 HUD 覆蓋層系統、Material Symbols 圖示字體基礎設施同某啲藥丸幾何變數。呢啲被追蹤為未來工作喺
   [`../../../ROADMAP.md`](../../../ROADMAP.md)。
-- 藥丸幾何喺共用 Widgets 庫係完整：每個控制工具包呼叫藥丸衍生佢嘅角落半徑從高度 / 2 喺繪製或佈局時間。`Button::applyMD3Style()` 設定
-  `SetCornerRadius(FromDIP(height) / 2.0)` 同喺 `Rescale()` 上重新執行、所以半徑存活 DPI/密度變更；`SwitchButton` 用 `size.y / 2` 繪製佢嘅追蹤同拇指每繪製。規則而家被命名累加為 `MD3::Metrics::pill_radius(height)`。分段控制
-  （`SwitchBoard`、`MultiSwitchButton`）係刻意唔係藥丸──工具包用固定追蹤半徑繪製佢哋。剩餘藥丸幾何變數係功能級控制冇專用小部件類別（過濾/選擇晶片、搜尋欄位藥丸、設定導航項目藥丸）同屬於鉻/設定表面。
+- 形狀跟 2026 年 11 月設計板（擁有人決定 D1，2026 年 11 月 9 日）：所有㩒得嘅控制（按鈕、晶片、
+  圖示掣同加減器）都係軟角矩形，半徑係 `MD3::Metrics::soft_radius(height)`，大約高度嘅 0.3（40 高係 12，
+  30 高係 9）。`Button::applyMD3Style()` 設定 `SetCornerRadius(MD3::Metrics::soft_radius(FromDIP(height)))`，
+  喺 `Rescale()` 會重新計，所以 DPI 同密度改變都跟得上。㩒得嘅圖示掣係軟方形（`IconShape::Square`，
+  闊度等於容器，決定 D3）。完整藥丸（`MD3::Metrics::pill_radius(height)`）淨係留俾搜尋欄、開關、
+  導航指示同唔㩒得嘅數字徽章。分段控制（`SwitchBoard`、`MultiSwitchButton`）保留固定軌道半徑。
+  唯一仲係圓形嘅㩒得掣係 AMS 設定掣，因為 `AMSControl.cpp` 要同上游合併基線逐字節一樣。
 
 ### 保留主題字面
 

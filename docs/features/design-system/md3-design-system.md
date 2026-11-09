@@ -69,15 +69,16 @@ feature colors, and the 3D paint palettes keep their data-bearing meaning.
   anatomy, not mis-colorings: the camera-HUD overlay system, the Material Symbols icon-font
   infrastructure, and some pill-geometry variants. These are tracked as future work in
   [`../../../ROADMAP.md`](../../../ROADMAP.md).
-- Pill geometry in the shared Widgets library is complete: every control the kit calls a pill derives
-  its corner radius from height / 2 at paint or layout time. `Button::applyMD3Style()` sets
-  `SetCornerRadius(FromDIP(height) / 2.0)` and re-runs on `Rescale()`, so the radius survives
-  DPI/density changes; `SwitchButton` draws its track and thumb with `size.y / 2` every paint. The
-  rule is now named additively as `MD3::Metrics::pill_radius(height)`. Segmented controls
-  (`SwitchBoard`, `MultiSwitchButton`) are intentionally not pills — the kit draws them with a fixed
-  track radius. The remaining pill-geometry variants are feature-level controls with no dedicated
-  widget class (filter/choice chips, the search-field pill, the settings nav-item pill) and belong to
-  the chrome/settings surfaces.
+- Shape geometry follows the November 2026 design boards (owner decision D1, 9 November 2026):
+  every pressable control (buttons, chips, icon buttons and steppers) is a soft rectangle whose
+  radius is `MD3::Metrics::soft_radius(height)`, about 0.3 of the height (12 at 40, 9 at 30).
+  `Button::applyMD3Style()` sets `SetCornerRadius(MD3::Metrics::soft_radius(FromDIP(height)))` and
+  re-runs on `Rescale()`, so the radius survives DPI and density changes. Pressable icon buttons are
+  soft squares (`IconShape::Square`, width equal to the container, decision D3). Full pills
+  (`MD3::Metrics::pill_radius(height)`) remain only for search fields, switches, navigation
+  indicators and non-interactive count badges. Segmented controls (`SwitchBoard`,
+  `MultiSwitchButton`) keep their fixed track radius. The one pressable circle left is the AMS
+  settings button, because `AMSControl.cpp` is held byte-identical to the upstream merge baseline.
 
 ### Retained theme literals
 
