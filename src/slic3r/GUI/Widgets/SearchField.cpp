@@ -429,15 +429,26 @@ void SearchField::layoutText()
     const int y = (sz.y - th) / 2;
     m_text->SetSize(lead, y, w, th);
 
-    // The native cue banner clips mid-letter when the placeholder is wider than
-    // the entry, so shorten it with an ellipsis to the width it actually gets.
+    // The native cue banner clips mid-letter when the hint is wider than the
+    // entry. A hint that fits is left alone, including the "English · 廣東話"
+    // pair the bilingual decorator sets only when it fits. One that does not
+    // fit falls back to the placeholder, shortened with an ellipsis if even
+    // that is too wide; a shortened hint gets its full text back once the
+    // field is wide enough again.
     if (!m_placeholder.IsEmpty() && w > 0) {
         wxClientDC dc(m_text);
         dc.SetFont(m_text->GetFont());
-        const wxString fitted = wxControl::Ellipsize(m_placeholder, dc, wxELLIPSIZE_END,
-                                                     std::max(0, w - FromDIP(8)));
-        if (fitted != m_text->GetHint())
-            m_text->SetHint(fitted);
+        const int      room    = std::max(0, w - FromDIP(8));
+        const wxString current = m_text->GetHint();
+        const auto     fits    = [&dc, room](const wxString &text) { return dc.GetTextExtent(text).GetWidth() <= room; };
+        if (!fits(current)) {
+            const wxString next = fits(m_placeholder) ? m_placeholder
+                                                      : wxControl::Ellipsize(m_placeholder, dc, wxELLIPSIZE_END, room);
+            if (next != current)
+                m_text->SetHint(next);
+        } else if (!current.StartsWith(m_placeholder) && fits(m_placeholder)) {
+            m_text->SetHint(m_placeholder);
+        }
     }
 
     const int action_y = (sz.y - action) / 2;

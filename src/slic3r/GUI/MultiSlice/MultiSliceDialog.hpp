@@ -10,7 +10,7 @@
 #include "slic3r/GUI/GUI_Utils.hpp"
 
 class Button;
-class CheckBox;
+class CheckBox; // the kit widget (::CheckBox), not GUI::CheckBox
 class Label;
 class SearchField;
 class wxScrolledWindow;
@@ -39,7 +39,7 @@ private:
     {
         std::string preset;   // preset name, as the preset bundle knows it
         std::string type;     // "PLA", "ABS", ... (may be empty)
-        CheckBox   *check  = nullptr;
+        ::CheckBox *check  = nullptr;
         wxWindow   *row    = nullptr;
         Label      *status = nullptr;
         Status      state  = Status::Idle;
@@ -58,6 +58,7 @@ private:
     void begin_next();
     void apply_ink(const std::string &preset);
     void restore_inks();
+    void use_slot_inks();
     void on_tick(wxTimerEvent &);
     void finish_variant(bool sliced);
     void finish_run();

@@ -1,6 +1,7 @@
 #include "MultiSliceDialog.hpp"
 #include "MultiSliceNames.hpp"
 
+#include "../BilingualDecorator.hpp"
 #include "../GUI.hpp"
 #include "../GUI_App.hpp"
 #include "../I18N.hpp"
@@ -15,11 +16,15 @@
 #include "../Widgets/MD3Tokens.hpp"
 #include "../Widgets/SearchField.hpp"
 #include "../Widgets/StateColor.hpp"
+#include "../Tab.hpp"
 #include "libslic3r/AppConfig.hpp"
+#include "libslic3r/miniz_extension.hpp"
 #include "libslic3r/PresetBundle.hpp"
 
 #include <boost/filesystem.hpp>
 #include <boost/log/trivial.hpp>
+
+#include <nlohmann/json.hpp>
 
 #include <algorithm>
 
@@ -41,6 +46,29 @@ std::string ink_type(const Preset &preset)
 {
     const auto *types = preset.config.option<ConfigOptionStrings>("filament_type");
     return types && !types->values.empty() ? types->values.front() : std::string();
+}
+
+// The ink a written sliced file was really sliced with, read back from the
+// project settings stored in the file. Empty when it cannot be read.
+std::string ink_in_file(const boost::filesystem::path &file)
+{
+    mz_zip_archive zip;
+    mz_zip_zero_struct(&zip);
+    if (!open_zip_reader(&zip, file.string())) return {};
+    std::string ink;
+    size_t size = 0;
+    if (void *data = mz_zip_reader_extract_file_to_heap(&zip, "Metadata/project_settings.config", &size, 0)) {
+        try {
+            const auto settings = nlohmann::json::parse(static_cast<const char *>(data), static_cast<const char *>(data) + size);
+            const auto it = settings.find("filament_settings_id");
+            if (it != settings.end() && it->is_array() && !it->empty() && it->front().is_string())
+                ink = it->front().get<std::string>();
+        } catch (...) {
+        }
+        mz_free(data);
+    }
+    close_zip_reader(&zip);
+    return ink;
 }
 
 PartPlate *current_plate()
@@ -129,7 +157,7 @@ void MultiSliceDialog::build()
         auto *row = new wxPanel(m_list);
         row->SetBackgroundColour(m_list->GetBackgroundColour());
         auto *rs = new wxBoxSizer(wxHORIZONTAL);
-        ink.check = new CheckBox(row);
+        ink.check = new ::CheckBox(row);
         ink.check->SetName(wxString::FromUTF8(ink.preset));
         ink.check->Bind(wxEVT_TOGGLEBUTTON, [this](wxCommandEvent &e) { update_summary(); e.Skip(); });
         rs->Add(ink.check, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(8));
@@ -253,6 +281,8 @@ void MultiSliceDialog::update_summary()
         m_summary->SetLabel(wxString::Format(_L("%d inks chosen: %d sliced files will be saved."), chosen, chosen));
     m_start->Enable(!m_running && chosen >= 2 && !m_folder.empty());
     Layout();
+    // Text set after the window was shown is paired with its Cantonese again.
+    I18N::refresh_bilingual_decoration(this);
 }
 
 void MultiSliceDialog::set_destination(const boost::filesystem::path &folder, bool removable)
@@ -266,6 +296,7 @@ void MultiSliceDialog::set_destination(const boost::filesystem::path &folder, bo
                                                  from_path(folder)));
     m_destination->InvalidateBestSize();
     Layout();
+    I18N::refresh_bilingual_decoration(this);
 }
 
 void MultiSliceDialog::choose_destination()
@@ -305,6 +336,7 @@ void MultiSliceDialog::show_status(Ink &ink, Status state, const wxString &detai
     ink.row->Layout();
     m_list->Layout();
     m_list->FitInside();
+    I18N::refresh_bilingual_decoration(this);
 }
 
 void MultiSliceDialog::start()
@@ -350,7 +382,19 @@ void MultiSliceDialog::apply_ink(const std::string &preset)
         bundle->set_filament_preset(slot, preset);
         plater->on_filament_change(slot);
     }
-    plater->sidebar().update_presets(Preset::TYPE_FILAMENT);
+    // Make the ink take effect the way the ink list does: the first slot's ink
+    // becomes the edited ink, and the plater takes the new configuration.
+    // Setting the slot names alone leaves the old ink in the sliced settings.
+    use_slot_inks();
+}
+
+void MultiSliceDialog::use_slot_inks()
+{
+    PresetBundle *bundle = wxGetApp().preset_bundle;
+    if (Tab *tab = wxGetApp().get_tab(Preset::TYPE_FILAMENT); tab && !bundle->filament_presets.empty())
+        tab->select_preset(bundle->filament_presets.front(), false, "", true);
+    wxGetApp().plater()->on_config_change(bundle->full_config());
+    wxGetApp().plater()->sidebar().update_presets(Preset::TYPE_FILAMENT);
 }
 
 void MultiSliceDialog::restore_inks()
@@ -364,7 +408,7 @@ void MultiSliceDialog::restore_inks()
         bundle->set_filament_preset(slot, m_original[slot]);
         plater->on_filament_change(slot);
     }
-    plater->sidebar().update_presets(Preset::TYPE_FILAMENT);
+    use_slot_inks();
     m_original.clear();
 }
 
@@ -434,8 +478,16 @@ void MultiSliceDialog::finish_variant(bool sliced)
         const int plate_idx      = plater->get_partplate_list().get_curr_plate_index();
         const int ret = plater->export_3mf(target, SaveStrategy::Silence | SaveStrategy::SplitModel | SaveStrategy::WithGcode |
                                                         SaveStrategy::SkipModel, plate_idx);
+        // The last word on which ink a file holds is the file itself: a file
+        // sliced with any other ink is removed rather than saved under this name.
+        const std::string written = ret < 0 ? std::string() : ink_in_file(target);
         if (ret < 0) {
             show_status(ink, Status::Failed, _L("the file could not be written"));
+        } else if (written != ink.preset) {
+            boost::system::error_code ec;
+            boost::filesystem::remove(target, ec);
+            BOOST_LOG_TRIVIAL(warning) << "multi-slice: file for " << ink.preset << " was sliced with " << written << "; removed";
+            show_status(ink, Status::Failed, _L("it was sliced with a different ink, so it was not kept"));
         } else {
             ink.file = target.string();
             show_status(ink, Status::Saved);
@@ -464,6 +516,7 @@ void MultiSliceDialog::finish_run()
                                 : wxString::Format(_L("Done. %d of %d sliced files saved; your inks are back."), saved, int(m_queue.size())));
     BOOST_LOG_TRIVIAL(info) << "multi-slice: saved " << saved << " of " << m_queue.size();
     Layout();
+    I18N::refresh_bilingual_decoration(this);
 }
 
 void MultiSliceDialog::on_dpi_changed(const wxRect &)
