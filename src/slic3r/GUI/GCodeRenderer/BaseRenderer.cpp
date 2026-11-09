@@ -2246,7 +2246,16 @@ namespace Slic3r
                     int clicked = -1;
                     const float spacing = ImGui::GetStyle().ItemSpacing.x;
                     const float row_max_x = ImGui::GetWindowPos().x + ImGui::GetWindowContentRegionMax().x;
+                    // Each chip line starts with the same inset as the headers and
+                    // text rows (a Dummy followed by SameLine); without it the first
+                    // chip's outline sat flush against the card's left edge.
+                    bool line_start = true;
                     for (std::size_t i = 0; i < chips.size(); ++i) {
+                        if (line_start) {
+                            ImGui::Dummy({ window_padding, 0.0f });
+                            ImGui::SameLine();
+                            line_start = false;
+                        }
                         const std::string content = chip_content(chips[i]);
                         ImGui::PushID(static_cast<int>(i));
                         if (draw_chip(content, chips[i].selected))
@@ -2258,6 +2267,8 @@ namespace Slic3r
                             const float next_w = chip_width(chip_content(chips[i + 1]));
                             if (ImGui::GetItemRectMax().x + spacing + next_w < row_max_x)
                                 ImGui::SameLine();
+                            else
+                                line_start = true;
                         }
                     }
                     return clicked;

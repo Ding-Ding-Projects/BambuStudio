@@ -485,6 +485,32 @@
         '外觀、預設、網絡、版本歷史同關於 — 人人話入去睇一眼，然後就唔捨得走。'
       ]
     },
+    'screen.multislice': { en: ['Multi-slice'], yue: ['多重切片'] },
+    'screen.multislice.body': {
+      en: [
+        'Slice the plate once for each ink you choose and save one sliced file per ink, ready for the USB drive. Each file is checked for the ink it was really sliced with.',
+        'Slice the plate once per chosen ink and save one sliced file for each, ready for the USB drive. Each file is checked for the ink it was really sliced with.',
+        'Tick PLA, ABS and whatever else, press once, and get one sliced file per ink for the USB drive. Each file is opened and checked for its real ink, so no file lies about what it is.'
+      ],
+      yue: [
+        '揀幾多款墨水，個盤就切幾多次，每款墨水各自存一個切片檔，可以直接放入打印機嘅 USB 手指。每個檔都會檢查返真正切片用嘅墨水。',
+        '揀幾多款墨水就切幾多次，每款各自存一個切片檔，直接放入 USB 手指。每個檔都會檢查返真正用嘅墨水。',
+        '剔 PLA、ABS 隨便幾款，㩒一下，每款墨水出一個切片檔放入 USB 手指。每個檔都會打開驗明正身，冇得呃人。'
+      ]
+    },
+    'screen.landrop': { en: ['LAN model drop'], yue: ['LAN 模型投遞'] },
+    'screen.landrop.body': {
+      en: [
+        'A drop box on your own network: anyone on it sends a model from a phone or browser, and Bambu Studio asks you before opening it. No key to copy. The sender page can show your own wording from a wording file kept in that browser only.',
+        'A drop box on your network: send a model from a phone or browser, and Bambu Studio asks before it opens anything. No key to copy. The sender page can take a wording file, kept in that browser only.',
+        'A drop box on your own Wi-Fi: anyone sends a model from their phone, and Bambu Studio asks you before opening it. No key to copy out of a terminal. Drop your wording file on the page and it talks like you, in that browser only.'
+      ],
+      yue: [
+        '你自己網絡上嘅投遞箱：同一個網絡嘅人用手機或者瀏覽器傳個模型過嚟，Bambu Studio 開之前會先問你。唔使抄密鑰。投遞頁可以用你嘅用語檔，只留喺嗰個瀏覽器。',
+        '你網絡上嘅投遞箱：用手機或者瀏覽器傳模型，Bambu Studio 開之前先問你。唔使抄密鑰。投遞頁可以收用語檔，只留喺嗰個瀏覽器。',
+        '自己 Wi-Fi 上嘅投遞箱：人哋用手機傳個模型過嚟，Bambu Studio 開之前會問你先。唔使喺終端機抄密鑰。將你嘅用語檔拖落頁面，佢就會講你嘅話，只係喺嗰個瀏覽器。'
+      ]
+    },
     'screen.smarthome': { en: ['Home Assistant'], yue: ['Home Assistant'] },
     'screen.smarthome.body': {
       en: [

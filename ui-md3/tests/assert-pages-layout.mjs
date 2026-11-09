@@ -119,9 +119,12 @@ async function findProse(directory, prefix) {
 await findProse(siteRoot, '');
 assert.deepEqual(prose, [], 'The composed Pages site must not publish markdown.');
 
+// Every module under ui-md3/site, kept in step with the folder: a module added
+// without its line here fails this check, which is the point.
 const expectedModules = [
-  'boot.js', 'changelog.data.js', 'changelog.js', 'copy.js', 'core.js',
-  'dimsum.data.js', 'dimsum.js', 'regex.js', 'settings.js', 'tabs.js', 'views.js'
+  'attention.js', 'boot.js', 'changelog.data.js', 'changelog.js', 'confirmation.js',
+  'copy.js', 'core.js', 'dimsum.data.js', 'dimsum.js', 'human-date.js', 'narration.js',
+  'regex.js', 'schedule.js', 'settings.js', 'tabs.js', 'views.js', 'wording.js'
 ];
 assert.deepEqual(
   siteModules.sort(),

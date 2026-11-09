@@ -43,7 +43,9 @@
     { key: 'screen.calibration', icon: 'tune', art: 'calibration.webp', alt: 'Calibration parts and a digital caliper arranged on a build plate.' },
     { key: 'screen.filament', icon: 'palette', art: 'filament.webp', alt: 'Colorful ink spools and material samples in a modular tray.' },
     { key: 'screen.settings', icon: 'settings', art: 'settings.webp', alt: 'Layered light and dark appearance surfaces with a generated tonal color palette.' },
-    { key: 'screen.smarthome', icon: 'home_iot_device', art: '', alt: '' }
+    { key: 'screen.smarthome', icon: 'home_iot_device', art: '', alt: '' },
+    { key: 'screen.multislice', icon: 'layers', art: '', alt: '' },
+    { key: 'screen.landrop', icon: 'send', art: '', alt: '' }
   ];
 
   function element(html) {

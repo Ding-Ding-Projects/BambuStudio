@@ -170,7 +170,7 @@ test('every copy key the site assembles at runtime exists too', () => {
     ...[1, 2, 3, 4].flatMap((n) => [`build.step${n}.title`, `build.step${n}.body`]),
     ...['group.product', 'group.tools', 'group.project'],
     ...['home', 'prepare', 'preview', 'device', 'multidevice', 'project', 'calibration',
-      'filament', 'settings', 'smarthome'].flatMap((s) => [`screen.${s}`, `screen.${s}.body`]),
+      'filament', 'settings', 'smarthome', 'multislice', 'landrop'].flatMap((s) => [`screen.${s}`, `screen.${s}.body`]),
     ...['tab.overview', 'tab.screens', 'tab.materialyou', 'tab.download', 'tab.changelog',
       'tab.regex', 'tab.settings', 'tab.build'],
     ...['notify.saved', 'notify.reset.done', 'notify.copied', 'notify.copyfailed',
