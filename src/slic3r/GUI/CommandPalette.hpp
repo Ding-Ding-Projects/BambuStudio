@@ -7,6 +7,7 @@
 #include <vector>
 
 #include <wx/dialog.h>
+#include <wx/timer.h>
 
 #include "CommandPaletteIndex.hpp"
 #include "Widgets/MD3DialogChrome.hpp"
@@ -75,6 +76,8 @@ private:
 
     void collect_entries();
     void rebuild_rows();
+    // Rebuilds now if typing left a rebuild waiting, so keys act on the current results.
+    void flush_query();
     void select_row(int index);
     void run_selected();
     wxPanel *make_row(const Entry &entry, int index);
@@ -92,6 +95,8 @@ private:
     int                 m_selected { -1 };
     PaletteIndex::PaletteSize m_size { PaletteIndex::PaletteSize::Card };
     MD3TransientEntrance m_entrance;
+    // Rebuilding every row on each keystroke made typing lag; rebuild once typing pauses.
+    wxTimer             m_query_timer;
 };
 
 } // namespace Slic3r::GUI

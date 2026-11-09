@@ -111,16 +111,17 @@ CommandPalette::CommandPalette(MainFrame *frame)
     collect_entries();
     rebuild_rows();
 
-    m_search->SetOnQuery([this](const wxString &) { rebuild_rows(); });
+    m_query_timer.Bind(wxEVT_TIMER, [this](wxTimerEvent &) { rebuild_rows(); });
+    m_search->SetOnQuery([this](const wxString &) { m_query_timer.StartOnce(120); });
     m_search->SetOnRegexToggle([this](bool) { rebuild_rows(); });
 
     // Keyboard driving: the search entry keeps focus; arrows/Enter/Esc are
     // intercepted before they reach the text control.
     auto on_key = [this](wxKeyEvent &e) {
         switch (e.GetKeyCode()) {
-        case WXK_DOWN:   select_row(m_selected + 1); return;
-        case WXK_UP:     select_row(m_selected - 1); return;
-        case WXK_RETURN: run_selected(); return;
+        case WXK_DOWN:   flush_query(); select_row(m_selected + 1); return;
+        case WXK_UP:     flush_query(); select_row(m_selected - 1); return;
+        case WXK_RETURN: flush_query(); run_selected(); return;
         case WXK_ESCAPE: dismiss(); return;
         default: e.Skip();
         }
@@ -561,9 +562,22 @@ void CommandPalette::rebuild_rows()
             break; // keep the palette instant; refine the query for more
     }
     m_list->FitInside();
+    // Rows were measured before their wrapping labels knew the row width; the
+    // second line of a bilingual title and the description were cut off. Lay
+    // the list out again now that the labels have wrapped at their real width.
+    m_list->Layout();
+    m_list->FitInside();
+    m_list->Layout();
     m_list->Thaw();
     if (!m_rows.empty())
         select_row(0);
+}
+
+void CommandPalette::flush_query()
+{
+    if (!m_query_timer.IsRunning()) return;
+    m_query_timer.Stop();
+    rebuild_rows();
 }
 
 void CommandPalette::select_row(int index)

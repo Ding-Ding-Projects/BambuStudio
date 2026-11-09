@@ -599,7 +599,8 @@ wxWindow *ExtensionsPanel::build_detail_side(wxWindow *parent)
     m_banner->SetSizer(bp);
     s->Add(m_banner, 0, wxEXPAND | wxBOTTOM, FromDIP(12));
 
-    auto *actions = new wxBoxSizer(wxHORIZONTAL);
+    // Wraps instead of cutting the last button when the detail pane is narrow.
+    auto *actions = new wxWrapSizer(wxHORIZONTAL);
     m_sample = make_button(body, _L("Try with a sample"), GlyphSample, true);
     m_sample->SetToolTip(_L("Run it once with a request made of invented values marked as samples"));
     m_sample->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { try_sample(); });
@@ -607,13 +608,13 @@ wxWindow *ExtensionsPanel::build_detail_side(wxWindow *parent)
     m_open_folder->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { open_selected_folder(); });
     m_remove = make_button(body, _L("Remove"), GlyphDelete);
     m_remove->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { remove_selected(); });
-    actions->Add(m_sample, 0, wxRIGHT, FromDIP(6));
-    actions->Add(m_open_folder, 0, wxRIGHT, FromDIP(6));
-    actions->AddStretchSpacer(1);
-    actions->Add(m_remove, 0);
+    actions->Add(m_sample, 0, wxRIGHT | wxBOTTOM, FromDIP(6));
+    actions->Add(m_open_folder, 0, wxRIGHT | wxBOTTOM, FromDIP(6));
+    actions->Add(m_remove, 0, wxBOTTOM, FromDIP(6));
     s->Add(actions, 0, wxEXPAND | wxBOTTOM, FromDIP(12));
 
-    m_tabs = new TextTabbar(body, TextTabbar::Align::Left, 24);
+    // A tighter gap keeps all five tabs inside the narrow detail pane.
+    m_tabs = new TextTabbar(body, TextTabbar::Align::Left, 12);
     m_tabs->Bind(wxEVT_CHOICE, [this](wxCommandEvent &e) { select_tab(e.GetInt()); });
     s->Add(m_tabs, 0, wxEXPAND | wxBOTTOM, FromDIP(8));
     m_book = new wxSimplebook(body, wxID_ANY);
@@ -801,6 +802,13 @@ void ExtensionsPanel::refresh_list()
     m_folder->SetLabel(wxString::Format(_L("%s · %d folders"), wxString::FromUTF8(h.root().u8string()), int(folders)));
     if (m_rows.empty() && !h.extensions().empty())
         m_folder->SetLabel(m_folder->GetLabel() + "\n" + _L("Nothing matches the search and the filter."));
+    // A wrapped label gets taller after new text; without a relayout its row
+    // keeps the old height and the second line is cut.
+    m_folder->InvalidateBestSize();
+    if (auto *side = dynamic_cast<wxScrolledWindow *>(m_folder->GetParent())) {
+        side->Layout();
+        side->FitInside();
+    }
 }
 
 void ExtensionsPanel::refresh_limits()
