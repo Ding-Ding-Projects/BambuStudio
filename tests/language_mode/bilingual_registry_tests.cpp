@@ -21,6 +21,10 @@ TEST_CASE("Bilingual registry normalises labels as the UI shows them", "[Bilingu
 {
     REQUIRE(BilingualRegistry::normalize("&File\tCtrl+O") == L"File");
     REQUIRE(BilingualRegistry::normalize("Save && close") == L"Save & close");
+    // A lone '&' before a space marks no letter, so the raw message and the
+    // label escaped for a native control share one key.
+    REQUIRE(BilingualRegistry::normalize("Profiles & backup") == L"Profiles & backup");
+    REQUIRE(BilingualRegistry::normalize("Profiles && backup") == BilingualRegistry::normalize("Profiles & backup"));
     REQUIRE(BilingualRegistry::normalize("Line one\nline  two ") == L"Line one line two");
     REQUIRE(BilingualRegistry::strip_mnemonic(u8("檔案(&F)")) == u8("檔案"));
     REQUIRE(BilingualRegistry::strip_mnemonic(u8("匯出（&E）")) == u8("匯出"));

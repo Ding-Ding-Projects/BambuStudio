@@ -160,9 +160,12 @@ std::wstring BilingualRegistry::normalize(const wxString &text)
             if (i + 1 < in.size() && in[i + 1] == L'&') {
                 c = L'&';
                 ++i;
-            } else {
+            } else if (i + 1 < in.size() && !is_space(in[i + 1])) {
                 continue; // mnemonic marker
             }
+            // A lone '&' before a space or at the end marks no letter: it is the
+            // text itself, so "Profiles & backup" and the escaped
+            // "Profiles && backup" find the same translation.
         }
         if (is_space(c)) {
             pending_space = !out.empty();
