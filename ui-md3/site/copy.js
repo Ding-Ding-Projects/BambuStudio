@@ -1497,6 +1497,14 @@
     'notify.base64.copied': { en: ['The result was copied.', 'Copied. It is on your clipboard, ready to paste anywhere.'], yue: ['結果已複製。', '複製咗，喺剪貼簿度，隨便貼。'] },
     'notify.docs.linkcopied': { en: ['The article link was copied.', 'Article link copied; paste it and the reader opens on this article.'], yue: ['文章連結已複製。', '文章連結複製咗，貼出去就會開返呢篇。'] },
 
+    'hud.title': { en: ['Demo print'], yue: ['示範打印'] },
+    'hud.layer': { en: ['Layer {n} of {total}'], yue: ['第 {n} 層，共 {total} 層'] },
+    'hud.nozzle': { en: ['Nozzle'], yue: ['噴嘴'] },
+    'hud.bed': { en: ['Bed'], yue: ['熱床'] },
+    'hud.fan': { en: ['Fan'], yue: ['風扇'] },
+    'hud.hint': { en: ['An animation of the live charts, not a real printer.', 'An animation of the live charts, not a real printer; the real ones are in the app.'], yue: ['呢個係即時圖表嘅動畫，唔係真打印機。', '呢個係即時圖表嘅動畫，唔係真打印機；真嗰啲喺應用入面。'] },
+    'rail.heading': { en: ['Sixteen features, one window'], yue: ['十六項功能，一個視窗'] },
+
     /* -------------------------------------------------------------- footer */
     'footer.launch': { en: ['Launch app'], yue: ['開啟應用'] },
     'footer.source': { en: ['Source'], yue: ['原始碼'] },

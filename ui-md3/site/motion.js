@@ -111,6 +111,38 @@
     global.setTimeout(function () { panel.classList.remove('tab-enter'); }, 400);
   }
 
+  /* --------------------------------------------------------------- hud */
+
+  // The demo readout on the hero: the layer counts up and the readings drift
+  // the way a real print does. With reduced motion it is still: one honest
+  // frame, no ticking.
+  var hudTimer = null;
+  function hud(panel) {
+    var layerLine = panel.querySelector('.hud-layer');
+    var fill = panel.querySelector('.hud-fill');
+    if (!layerLine || !fill) return;
+    var total = 180;
+    var layer = 137;
+    function paint() {
+      site.setCopy(layerLine, 'hud.layer', { n: layer, total: total });
+      fill.style.width = Math.round(layer / total * 100) + '%';
+      var wobble = Math.sin(layer / 3);
+      var nozzle = panel.querySelector('[data-hud="nozzle"]');
+      var bed = panel.querySelector('[data-hud="bed"]');
+      var fan = panel.querySelector('[data-hud="fan"]');
+      if (nozzle) nozzle.textContent = (220 + Math.round(wobble)) + ' °C';
+      if (bed) bed.textContent = '55 °C';
+      if (fan) fan.textContent = (80 + Math.round(wobble * 4)) + ' %';
+    }
+    paint();
+    if (hudTimer) global.clearInterval(hudTimer);
+    hudTimer = global.setInterval(function () {
+      if (reduced() || doc.hidden || panel.hidden) return;
+      layer = layer >= total ? 1 : layer + 1;
+      paint();
+    }, 900);
+  }
+
   /* ---------------------------------------------------------- preview */
 
   function setPreview(on) {
@@ -135,6 +167,7 @@
     apply: apply,
     watch: watch,
     transition: transition,
+    hud: hud,
     setPreview: setPreview,
     previewing: function () { return previewReduced; }
   };

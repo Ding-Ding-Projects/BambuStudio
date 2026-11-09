@@ -76,58 +76,63 @@
 
   function renderOverview(panel) {
     panel.innerHTML =
-      '<div class="hero reveal">' +
-        '<div class="hero-grid">' +
-          '<div class="hero-copy">' +
-            '<p class="eyebrow"><span class="hero-layer" aria-hidden="true"></span>' +
-              '<span data-copy="overview.eyebrow"></span></p>' +
-            '<h1 class="hero-title" data-copy="hero.headline"></h1>' +
-            '<p class="lede" data-copy="hero.lede"></p>' +
-            '<div class="cta-row">' +
-              '<a class="btn btn-filled" href="' + APP_HREF + '">' +
-                '<span data-icon aria-hidden="true">rocket_launch</span>' +
-                '<span data-copy="hero.cta.launch"></span></a>' +
-              '<a class="btn btn-tonal" href="' + REPO + '/releases/latest/download/BambuStudioMD3-Setup.exe">' +
-                '<span data-icon aria-hidden="true">download</span>' +
-                '<span data-copy="hero.cta.download"></span></a>' +
-              '<a class="btn btn-outline" href="' + REPO + '/tree/master/ui-md3" target="_blank" rel="noopener">' +
-                '<span data-icon aria-hidden="true">code</span>' +
-                '<span data-copy="hero.cta.source"></span></a>' +
-            '</div>' +
-            '<p class="hint"><span data-icon aria-hidden="true">warning</span>' +
-              '<span data-copy="hero.integrity"></span> ' +
-              '<a href="' + REPO + '/releases/latest/download/BambuStudioMD3-Setup.exe.sha256" data-copy="hero.checksum"></a> · ' +
-              '<a href="' + REPO + '/releases/latest" data-copy="hero.releaseDetails"></a></p>' +
-            '<div class="hero-badges">' +
-              badge('overview.stat.releases', String(changelog.releaseCount || 0)) +
-              badge('tab.features', String(global.BambuFeatures ? global.BambuFeatures.FEATURES.length : 16)) +
-              badge('overview.stat.cases', '555') +
-              badge('overview.stat.trackers', '0') +
-            '</div>' +
-          '</div>' +
-          '<div class="stage">' +
-            '<div class="hero-art-frame">' +
-              '<img class="hero-art" src="./assets/showcase/hero-studio.webp" width="1536" height="1024" ' +
-                'fetchpriority="high" data-copy-attr="alt:hero.art.alt">' +
-              // The toolpaths draw themselves over the printer; with reduced
-              // motion they are complete and share the one primary hue.
-              '<svg class="hero-paths" viewBox="0 0 600 400" preserveAspectRatio="none" aria-hidden="true" focusable="false">' +
-                '<path class="p1" d="M40 352 C 150 300, 230 384, 330 330 S 520 300, 575 342"/>' +
-                '<path class="p2" d="M60 322 C 170 280, 240 352, 340 300 S 500 270, 560 312"/>' +
-                '<path class="p3" d="M80 292 C 180 256, 250 318, 350 272 S 490 244, 545 284"/>' +
-                '<circle class="nozzle" cx="575" cy="342" r="7"/>' +
-              '</svg>' +
-              '<span class="chip c1"><span data-icon aria-hidden="true">layers</span>' +
-                '<span data-copy="hero.chip.layers"></span></span>' +
-              '<span class="chip c2"><span data-icon aria-hidden="true">palette</span>' +
-                '<span data-copy="hero.chip.accent"></span></span>' +
-              '<span class="chip c3"><span data-icon aria-hidden="true">schedule</span>' +
-                '<span data-copy="hero.chip.time"></span></span>' +
-            '</div>' +
-            '<p class="hint"><span data-icon aria-hidden="true">timeline</span><span data-copy="hero.toolpath"></span></p>' +
+      '<div class="showstage">' +
+        '<img class="showstage-art" src="./assets/showcase/hero-studio.webp" width="1536" height="1024" ' +
+          'fetchpriority="high" data-copy-attr="alt:hero.art.alt">' +
+        '<div class="showstage-scrim" aria-hidden="true"></div>' +
+        // The toolpaths sweep the whole stage; with reduced motion they are
+        // complete and share the one primary hue.
+        '<svg class="hero-paths" viewBox="0 0 1200 600" preserveAspectRatio="none" aria-hidden="true" focusable="false">' +
+          '<path class="p1" d="M-20 560 C 180 470, 330 590, 520 520 S 860 430, 1010 500 S 1160 470, 1220 440"/>' +
+          '<path class="p2" d="M-20 520 C 200 440, 340 550, 540 480 S 850 390, 1000 455 S 1150 430, 1220 400"/>' +
+          '<path class="p3" d="M-20 480 C 220 410, 350 510, 560 440 S 840 350, 990 410 S 1140 390, 1220 360"/>' +
+          '<circle class="nozzle" cx="1010" cy="500" r="8"/>' +
+        '</svg>' +
+        '<div class="showstage-copy">' +
+          '<p class="eyebrow"><span class="hero-layer" aria-hidden="true"></span>' +
+            '<span data-copy="overview.eyebrow"></span></p>' +
+          '<h1 class="hero-title" data-copy="hero.headline"></h1>' +
+          '<p class="lede" data-copy="hero.lede"></p>' +
+          '<div class="cta-row">' +
+            '<a class="btn btn-filled btn-big" href="' + APP_HREF + '">' +
+              '<span data-icon aria-hidden="true">rocket_launch</span>' +
+              '<span data-copy="hero.cta.launch"></span></a>' +
+            '<a class="btn btn-tonal btn-big" href="' + REPO + '/releases/latest/download/BambuStudioMD3-Setup.exe">' +
+              '<span data-icon aria-hidden="true">download</span>' +
+              '<span data-copy="hero.cta.download"></span></a>' +
+            '<a class="btn btn-outline btn-big" href="' + REPO + '/tree/master/ui-md3" target="_blank" rel="noopener">' +
+              '<span data-icon aria-hidden="true">code</span>' +
+              '<span data-copy="hero.cta.source"></span></a>' +
           '</div>' +
         '</div>' +
+        // A small animated readout in the shape of the app's live charts. It is
+        // labelled as a demo: nothing here comes from a printer.
+        '<aside class="hud" data-copy-attr="aria-label:hud.title">' +
+          '<p class="hud-title"><span class="hud-dot" aria-hidden="true"></span><span data-copy="hud.title"></span></p>' +
+          '<p class="hud-layer" data-copy="hud.layer" data-copy-params=\'{"n":137,"total":180}\'></p>' +
+          '<div class="hud-bar" aria-hidden="true"><span class="hud-fill"></span></div>' +
+          '<svg class="hud-spark" viewBox="0 0 220 56" preserveAspectRatio="none" aria-hidden="true" focusable="false">' +
+            '<path class="hud-line" d="M0 44 L20 40 L40 43 L60 30 L80 34 L100 22 L120 26 L140 16 L160 20 L180 12 L200 15 L220 8"/>' +
+          '</svg>' +
+          '<div class="hud-readings">' +
+            '<span><span data-copy="hud.nozzle"></span><strong class="mono" data-hud="nozzle">220 °C</strong></span>' +
+            '<span><span data-copy="hud.bed"></span><strong class="mono" data-hud="bed">55 °C</strong></span>' +
+            '<span><span data-copy="hud.fan"></span><strong class="mono" data-hud="fan">80 %</strong></span>' +
+          '</div>' +
+          '<p class="hud-hint" data-copy="hud.hint"></p>' +
+        '</aside>' +
       '</div>' +
+      '<p class="hint stage-hint"><span data-icon aria-hidden="true">warning</span>' +
+        '<span data-copy="hero.integrity"></span> ' +
+        '<a href="' + REPO + '/releases/latest/download/BambuStudioMD3-Setup.exe.sha256" data-copy="hero.checksum"></a> · ' +
+        '<a href="' + REPO + '/releases/latest" data-copy="hero.releaseDetails"></a></p>' +
+      '<nav class="rail" data-copy-attr="aria-label:rail.heading">' +
+        (global.BambuFeatures ? global.BambuFeatures.FEATURES.map(function (feature, index) {
+          return '<a class="rail-chip" href="#features" data-tab-link="features" data-rail="' + feature.id + '" style="--rail-i:' + index + '">' +
+            '<span data-icon aria-hidden="true">' + feature.icon + '</span>' +
+            '<span data-copy="feature.' + feature.id + '"></span></a>';
+        }).join('') : '') +
+      '</nav>' +
       '<section class="demo reveal">' +
         '<a class="demo-window" href="' + APP_HREF + '" data-copy-attr="aria-label:hero.cta.launch">' +
           '<span class="demo-bar"><span class="demo-dot"></span><span class="demo-dot"></span><span class="demo-dot live"></span>' +
@@ -169,10 +174,17 @@
     }
     panel.addEventListener('click', function (event) {
       var link = event.target.closest('[data-tab-link]');
-      if (link && global.BambuSiteTabs) { event.preventDefault(); global.BambuSiteTabs.activate(link.dataset.tabLink, { focus: true }); }
+      if (link && global.BambuSiteTabs) {
+        event.preventDefault();
+        global.BambuSiteTabs.activate(link.dataset.tabLink, { focus: true });
+        if (link.dataset.rail) {
+          var card = doc.querySelector('[data-feature="' + link.dataset.rail + '"]');
+          if (card) { card.scrollIntoView({ block: 'center' }); card.classList.add('teleported'); global.setTimeout(function () { card.classList.remove('teleported'); }, 1600); }
+        }
+      }
     });
     if (global.BambuFeatures) global.BambuFeatures.wire(panel);
-    if (global.BambuMotion) global.BambuMotion.watch(panel);
+    if (global.BambuMotion) { global.BambuMotion.watch(panel); global.BambuMotion.hud(panel); }
   }
 
   function badge(labelKey, value) {
