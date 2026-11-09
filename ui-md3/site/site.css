@@ -894,6 +894,8 @@ body {
 
 /* --------------------------------------------------------------- hero */
 .hero { position: relative; }
+.hero .stage { flex-direction: column; gap: 10px; align-items: stretch; }
+.hero .stage > .hint { justify-content: center; }
 .hero-layer {
   display: inline-block; width: 32px; height: 26px; border-radius: 4px; vertical-align: middle;
   background-image: repeating-linear-gradient(180deg, var(--md-primary) 0 2px, transparent 2px 7px);
