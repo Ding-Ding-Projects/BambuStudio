@@ -3033,9 +3033,7 @@ namespace Slic3r
                     // after the option chips (same column order as ink_headers).
                     auto format_cell = [imperial_units](double meters, double grams) {
                         char cell[64];
-                        ::sprintf(cell, imperial_units ? "%.2f in
-%.2f oz" : "%.2f m
-%.2f g", meters, grams);
+                        ::sprintf(cell, imperial_units ? "%.2f in\n%.2f oz" : "%.2f m\n%.2f g", meters, grams);
                         return std::string(cell);
                     };
                     // shows only extruders actually used
