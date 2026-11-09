@@ -817,7 +817,29 @@ void Button::render(wxDC& dc)
     auto text = Slic3r::GUI::PersonalVocabulary::display(GetLabel());
     m_label_truncated = false;
     if (vertical && textSize.x + padding.x * 2 > size.x) {
-        Label::split_lines(dc, size.x - padding.x * 2, text, text, 2);
+        // A Latin word is never broken across lines ("Calibratio / n" in the
+        // navigation rail): the label shrinks half a point at a time, to 80% at
+        // most, until its longest word fits. Text without spaces between its
+        // characters, such as Chinese, keeps breaking between characters.
+        const int room = size.x - padding.x * 2;
+        const auto latin = [](const wxString &word) {
+            for (const wxUniChar c : word)
+                if (c.GetValue() >= 0x2E80) return false;
+            return !word.empty();
+        };
+        const auto longest_latin_word = [&dc, &text, &latin]() {
+            int widest = 0;
+            for (const wxString &word : wxSplit(text, ' ', '\0'))
+                if (latin(word)) widest = std::max(widest, dc.GetTextExtent(word).GetWidth());
+            return widest;
+        };
+        wxFont font = dc.GetFont();
+        const double smallest = font.GetFractionalPointSize() * 0.8;
+        while (longest_latin_word() > room && font.GetFractionalPointSize() - 0.5 >= smallest) {
+            font.SetFractionalPointSize(font.GetFractionalPointSize() - 0.5);
+            dc.SetFont(font);
+        }
+        Label::split_lines(dc, room, text, text, 2);
         textSize = dc.GetMultiLineTextExtent(text);
         if (padding.x * 2 + textSize.x > size.x) {
             text = wxControl::Ellipsize(text, dc, wxELLIPSIZE_END, size.x - padding.x * 2);

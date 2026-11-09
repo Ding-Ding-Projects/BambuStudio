@@ -330,6 +330,10 @@ void MultiSliceDialog::show_status(Ink &ink, Status state, const wxString &detai
     case Status::Failed:  text = detail.empty() ? _L("Not saved") : wxString::Format(_L("Not saved: %s"), detail); break;
     case Status::Skipped: text = _L("Stopped"); break;
     }
+    // A short status has no room to grow into, so the decorator never pairs it;
+    // in bilingual mode it carries its Cantonese itself, "Saved · 存咗".
+    if (const wxString cantonese = I18N::bilingual_secondary(text); !cantonese.empty() && cantonese != text)
+        text += wxString::FromUTF8(" \xC2\xB7 ") + cantonese;
     ink.status->SetLabel(text);
     ink.status->SetForegroundColour(role(state == Status::Failed ? MD3::Role::Error :
                                          state == Status::Saved ? MD3::Role::Primary : MD3::Role::OnSurfaceVariant));
