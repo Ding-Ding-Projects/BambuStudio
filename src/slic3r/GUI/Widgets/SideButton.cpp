@@ -487,7 +487,7 @@ void SideButton::dorender(wxDC& dc, wxDC& text_dc)
                 dc.DrawRoundedRectangle(0, 0, size.x, size.y, radius);
                 dc.SetPen(wxNullPen);
             } else if (layout_style == 2 || layout_style == 3) {
-                draw_split_segment(dc, size, this->radius, FromDIP(4), layout_style == 2);
+                draw_split_segment(dc, size, this->radius, FromDIP(6), layout_style == 2);
                 dc.SetPen(wxNullPen);
             } else {
                 dc.DrawRoundedRectangle(0, 0, size.x, size.y, radius);

@@ -407,6 +407,9 @@ function clearWording() {
   state.wording = createWording([]);
   storeWording([]);
   renderStatic();
+  // The clear button is disabled now, so keyboard focus moves to its neighbour
+  // instead of falling to the page.
+  $('wording-choose').focus();
   setLive({ key: 'wordingCleared' });
 }
 

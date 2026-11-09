@@ -4402,7 +4402,7 @@ void MainFrame::update_side_button_style()
         btn->SetTextLayout(SideButton::EHorizontalOrientation::HO_Center);
         btn->SetCornerRadius(pill);
         btn->SetExtraSize(wxSize(FromDIP(10), FromDIP(10)));
-        btn->SetMinSize(wxSize(FromDIP(40), btn_height));
+        btn->SetMinSize(wxSize(FromDIP(48), btn_height));
     };
 
     style_outlined(m_slice_btn);
@@ -4451,10 +4451,13 @@ void MainFrame::update_slice_print_status(SlicePrintEventType event, bool can_sl
 
     BOOST_LOG_TRIVIAL(info) << boost::format("m_slice_select %1%: can_slice= %2%, can_print %3%, enable_slice %4%, enable_print %5% ")%m_slice_select % can_slice %can_print %enable_slice %enable_print;
     m_print_btn->Enable(enable_print);
+    // A split button is one control: its options half takes the main half's state.
+    if (m_print_option_btn) m_print_option_btn->Enable(enable_print);
     // Disabled-with-reason: a disabled Print button explains itself via its
     // tooltip; the tooltip is cleared as soon as printing becomes possible.
     m_print_btn->SetToolTip(enable_print ? wxString() : print_disabled_reason);
     m_slice_btn->Enable(enable_slice);
+    if (m_slice_option_btn) m_slice_option_btn->Enable(enable_slice);
     const auto* output_plate = m_plater->get_partplate_list().get_curr_plate();
     const bool enable_output = !m_plater->is_background_process_slicing() && output_plate &&
         !m_plater->only_gcode_mode() && !m_plater->using_exported_file() &&

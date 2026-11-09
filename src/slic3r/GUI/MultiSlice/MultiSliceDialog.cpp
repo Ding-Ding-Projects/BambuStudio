@@ -166,10 +166,11 @@ void MultiSliceDialog::build()
                                LB_AUTO_WRAP | wxST_NO_AUTORESIZE);
         name->SetMinSize(wxSize(FromDIP(160), -1));
         text->Add(name, 0, wxEXPAND);
+        Label *type_label = nullptr;
         if (!ink.type.empty()) {
-            auto *type = new Label(row, Label::Body_12, wxString::FromUTF8(ink.type));
-            type->SetForegroundColour(role(MD3::Role::OnSurfaceVariant));
-            text->Add(type, 0);
+            type_label = new Label(row, Label::Body_12, wxString::FromUTF8(ink.type));
+            type_label->SetForegroundColour(role(MD3::Role::OnSurfaceVariant));
+            text->Add(type_label, 0);
         }
         rs->Add(text, 1, wxALIGN_CENTER_VERTICAL);
         ink.status = new Label(row, Label::Body_12, wxString());
@@ -184,6 +185,8 @@ void MultiSliceDialog::build()
         };
         row->Bind(wxEVT_LEFT_UP, toggle);
         name->Bind(wxEVT_LEFT_UP, toggle);
+        ink.status->Bind(wxEVT_LEFT_UP, toggle);
+        if (type_label) type_label->Bind(wxEVT_LEFT_UP, toggle);
         ink.row = row;
         m_list_sizer->Add(row, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(8));
     }

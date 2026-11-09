@@ -504,4 +504,10 @@ h2 {
     scroll-behavior: auto !important;
   }
   .file-row[data-status="sending"] .file-icon [data-icon] { animation: none; }
+  /* The level-up banner holds still for its 3.4 s instead of animating; the
+     global rule above would otherwise jump it to its faded end state. */
+  .wording-banner.show { animation: none; opacity: 1; transform: translate(-50%, -50%); }
+}
+@media (forced-colors: active) {
+  .wording-banner { border: 2px solid CanvasText; }
 }

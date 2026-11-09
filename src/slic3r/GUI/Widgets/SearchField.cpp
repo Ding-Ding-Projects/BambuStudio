@@ -451,7 +451,10 @@ void SearchField::layoutText()
         }
     }
 
-    const int action_y = (sz.y - action) / 2;
+    // Centred in the pill, with at least one pixel of pill above and below so a
+    // button's square background never covers the outline (the regex toggle
+    // left a gap in the bottom edge).
+    const int action_y = std::max(FromDIP(2), (sz.y - action) / 2);
     int       action_x = sz.x - right - action;
     if (m_tune_button)
         m_tune_button->SetSize(action_x, action_y, action, action);
