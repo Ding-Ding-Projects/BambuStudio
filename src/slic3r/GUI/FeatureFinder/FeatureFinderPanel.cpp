@@ -335,7 +335,11 @@ wxPanel *FeatureFinderPanel::make_row(wxWindow *parent, const Feature &feature)
     title->SetForegroundColour(StateColor::semantic(ready ? MD3::Role::OnSurface : MD3::Role::OnSurfaceVariant));
     text->Add(title, 0, wxEXPAND);
     auto *where = new Label(row, Label::Body_12, _(feature.where), LB_AUTO_WRAP | wxST_NO_AUTORESIZE);
-    where->SetMinSize(wxSize(0, -1));
+    // A wrapping label reports no height until it has been wrapped once, and
+    // the row was laid out before that, so the line ended up 0 px tall. Reserve
+    // its lines (two in bilingual mode) up front.
+    const int where_lines = 1 + int(where->GetLabel().Freq('\n'));
+    where->SetMinSize(wxSize(0, where->GetCharHeight() * where_lines + FromDIP(2)));
     where->SetBackgroundColour(base);
     where->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     text->Add(where, 0, wxEXPAND | wxTOP, FromDIP(2));

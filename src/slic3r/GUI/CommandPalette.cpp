@@ -437,13 +437,19 @@ wxPanel *CommandPalette::make_row(const Entry &entry, int index)
 
     auto *text_col = new wxBoxSizer(wxVERTICAL);
     auto *title = new Label(row, Label::Head_14, entry.title, LB_AUTO_WRAP | wxST_NO_AUTORESIZE);
-    title->SetMinSize(wxSize(0, -1));
+    // A wrapping label has no height until its first wrap, which happens after
+    // the row is laid out; reserve its lines (two in bilingual mode) up front
+    // so the second language is not cut in half.
+    const auto reserve_lines = [this](Label *l) {
+        l->SetMinSize(wxSize(0, l->GetCharHeight() * (1 + int(l->GetLabel().Freq('\n'))) + FromDIP(2)));
+    };
+    reserve_lines(title);
     title->SetBackgroundColour(base);
     title->SetForegroundColour(on);
     text_col->Add(title, 0, wxEXPAND);
     if (!entry.desc.IsEmpty()) {
         auto *desc = new Label(row, Label::Body_13, entry.desc, LB_AUTO_WRAP | wxST_NO_AUTORESIZE);
-        desc->SetMinSize(wxSize(0, -1));
+        reserve_lines(desc);
         desc->SetBackgroundColour(base);
         desc->SetForegroundColour(on_var);
         text_col->Add(desc, 0, wxEXPAND | wxTOP, FromDIP(4));

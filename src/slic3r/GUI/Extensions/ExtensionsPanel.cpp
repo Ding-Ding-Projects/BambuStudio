@@ -562,7 +562,11 @@ wxWindow *ExtensionsPanel::build_detail_side(wxWindow *parent)
     m_detail_empty->SetSizer(es);
     outer->Add(m_detail_empty, 1, wxEXPAND);
 
-    m_detail_body = new wxPanel(detail);
+    // Scrolls when the bilingual header, banner and tabs need more height than
+    // the window has; the tab content keeps a usable minimum height.
+    auto *detail_scroll = new MD3ScrolledWindow(detail, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL | wxBORDER_NONE);
+    detail_scroll->SetScrollRate(0, FromDIP(12));
+    m_detail_body = detail_scroll;
     m_detail_body->SetBackgroundColour(detail->GetBackgroundColour());
     wxWindow *body = m_detail_body;
     auto     *s    = new wxBoxSizer(wxVERTICAL);
@@ -673,6 +677,7 @@ wxWindow *ExtensionsPanel::build_detail_side(wxWindow *parent)
     m_book->AddPage(m_settings, "settings");
     m_book->AddPage(m_runs_page, "runs");
     m_book->AddPage(m_manifest_page, "manifest");
+    m_book->SetMinSize(wxSize(-1, FromDIP(320)));
     s->Add(m_book, 1, wxEXPAND);
     m_detail_body->SetSizer(s);
     outer->Add(m_detail_body, 1, wxEXPAND | wxALL, FromDIP(18));
@@ -943,6 +948,7 @@ void ExtensionsPanel::refresh_detail()
     fill_manifest(*x);
     select_tab(m_tab);
     m_detail_body->Layout();
+    static_cast<wxScrolledWindow *>(m_detail_body)->FitInside();
     m_detail->Layout();
 }
 
