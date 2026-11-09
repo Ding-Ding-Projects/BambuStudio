@@ -866,6 +866,16 @@ private:
 // ---------------------------------------------------------------------------
 // TabStrip
 // ---------------------------------------------------------------------------
+// The strip paints its own surface, but children (the icon buttons) read the
+// window background to blend with it, so keep the two in step.
+static void sync_strip_background(TabStrip *strip)
+{
+    const wxColour base = strip->IsVertical() ? StateColor::semantic(MD3::Role::SurfaceContainerLow)
+                                              : StateColor::semantic(MD3::Role::Surface);
+    if (strip->GetBackgroundColour() != base)
+        strip->SetBackgroundColour(base);
+}
+
 TabStrip::TabStrip(wxWindow *parent, const Options &options)
     : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE | wxWANTS_CHARS), m_options(options)
 {
@@ -875,6 +885,7 @@ TabStrip::TabStrip(wxWindow *parent, const Options &options)
     SetDoubleBuffered(true);
 #endif
     SetBackgroundStyle(wxBG_STYLE_PAINT);
+    sync_strip_background(this);
 
     auto make_action = [this](uint32_t glyph, const wxString &fallback, const wxString &name) {
         Button *b = new Button(this, "", "", 0, 0, wxID_ANY);
@@ -1985,6 +1996,7 @@ void TabStrip::OnPaint(wxPaintEvent &)
     wxAutoBufferedPaintDC dc(this);
     const wxSize          sz       = GetClientSize();
     const bool            vertical = IsVertical();
+    sync_strip_background(this);
     dc.SetBackground(wxBrush(vertical ? StateColor::semantic(MD3::Role::SurfaceContainerLow) : StateColor::semantic(MD3::Role::Surface)));
     dc.Clear();
 
@@ -2039,6 +2051,7 @@ void TabStrip::OnPaint(wxPaintEvent &)
 
 void TabStrip::RestyleAll()
 {
+    sync_strip_background(this);
     for (auto *b : m_buttons)
         b->Restyle();
     for (auto *h : m_headers)
