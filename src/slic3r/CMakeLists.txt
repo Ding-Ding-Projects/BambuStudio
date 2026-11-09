@@ -94,6 +94,8 @@ set(SLIC3R_GUI_SOURCES
     GUI/Widgets/MappingRow.hpp
     GUI/Widgets/PillView.cpp
     GUI/Widgets/PillView.hpp
+    GUI/Widgets/Tag.cpp
+    GUI/Widgets/Tag.hpp
     GUI/SyncAmsDialog.cpp
     GUI/SyncAmsDialog.hpp
     GUI/ModelPreview.cpp

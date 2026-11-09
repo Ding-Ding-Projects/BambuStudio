@@ -59956,3 +59956,13 @@ msgstr "播放緊"
 #. review-status: agent-drafted
 msgid "Ready"
 msgstr "準備好"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Save to"
+msgstr "存去"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "USB drive"
+msgstr "USB 手指"

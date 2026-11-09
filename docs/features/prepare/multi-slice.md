@@ -17,8 +17,9 @@ command palette (search for "Multi-slice").
 3. Check where the files go. When a USB drive is plugged in it is chosen
    automatically; otherwise the last folder you saved to is used, or the Documents
    folder when there is none yet. **Change folder** picks another one.
-4. Select **Slice and save**. Each ink shows **Waiting**, **Slicing**, **File saved**
-   or **Not saved** with the reason.
+4. Select **Slice and save**. Each ink shows a tag: **Waiting**, **Slicing**,
+   **File saved** or **Not saved**. A failed ink gives the reason on a line under
+   its name.
 5. When it finishes, **Show files** opens the folder. If it was a USB drive, the
    usual eject button appears.
 
@@ -26,6 +27,25 @@ The files are named after the project and the ink, for example
 `bracket_Bambu_PLA_Basic_BBL_X1C.gcode.3mf` and `bracket_Bambu_ABS_BBL_X1C.gcode.3mf`.
 Spaces and characters that some file systems refuse become `_`; a name already
 used in the same run gets `(2)`, `(3)` and so on.
+
+## The window
+
+- The header carries the title and a close button. The window can be resized.
+- Each ink is one row in a rounded list. Pointing at a row fills it lightly; a
+  chosen ink keeps a tonal fill, so the choice shows at a glance. Click anywhere
+  on the row, or use its check box with the keyboard. The ink type (PLA, ABS, ...)
+  is a small tag after the name. The header above the list names the two columns,
+  **INK** and **STATUS**.
+- The status tags are neutral while waiting or stopped, tonal while slicing,
+  green once the file is saved and red when it was not saved.
+- Under the list, one line sums up the state: how many inks are chosen, or
+  "Slicing 2 of 3" with a progress bar while it runs.
+- **SAVE TO** shows the folder once, shortened in the middle when it is long. A
+  green **USB drive** tag appears when the folder is on the printer's USB drive.
+  **Change folder** sits next to it.
+- The footer keeps **Show files** at the left after a file is saved, then **Close**
+  and the one committing action, **Slice and save**, at the right. While it runs
+  **Close** becomes the red **Stop**.
 
 ## What changes for each file
 
@@ -57,8 +77,8 @@ and the run moves on to the next one.
 
 ## Stopping
 
-**Stop**, or closing the window, finishes the ink being sliced and then stops.
-The inks that did not start are shown as **Stopped**, and the original inks are
+**Stop**, the close button in the header, or the Escape key finishes the ink being
+sliced and then stops. The inks that did not start are shown as **Stopped**, and the original inks are
 put back.
 
 ## Limits

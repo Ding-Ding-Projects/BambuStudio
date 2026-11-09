@@ -38579,3 +38579,9 @@ msgstr ""
 
 msgid "Ready"
 msgstr ""
+
+msgid "Save to"
+msgstr ""
+
+msgid "USB drive"
+msgstr ""

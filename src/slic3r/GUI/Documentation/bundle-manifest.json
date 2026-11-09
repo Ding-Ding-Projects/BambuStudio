@@ -1195,12 +1195,12 @@
     {
       "route": "prepare/multi-slice.md",
       "title": "Multi-slice: one sliced file per ink",
-      "sha256": "ed759076f8edf8e56b910928a39c6c14b8b8d77531121042113a2cc64755ee6b"
+      "sha256": "0002dede1efa4b7014aa9b0c20ff4d92c167f6607c50b7ffb3112a91606eab1d"
     },
     {
       "route": "prepare/multi-slice.yue_HK.md",
       "title": "多重切片：每款墨水一個切片檔",
-      "sha256": "3f250923133a4ee548b2e92e9a78432609d8d8133b311ddf1ef92a04e74ad4a7"
+      "sha256": "25e5b3d3d61e1bb482eb39dd3f7c277ece876be0ed22c8fd1816b9d93391dd0d"
     },
     {
       "route": "prepare/native-lifecycle.md",
@@ -1865,12 +1865,12 @@
     {
       "route": "windows/print-actions.md",
       "title": "Plate print actions and material mapping",
-      "sha256": "1dc5da7e8baba068ee35683fd7fc10ee7a6f8ed70ba73df259874bc221abbfbe"
+      "sha256": "7f817035a409d41ee664fb2586245fe393d6465b040b18a97d4ed9987360ccda"
     },
     {
       "route": "windows/print-actions.yue_HK.md",
       "title": "打印盤操作同材料映射",
-      "sha256": "ee9bfd5d0c7af6f72dc51d32dbef0b687d458352d5c64c0b94492e06065695a1"
+      "sha256": "52d2be9ca13234a9d133a741a469fd0e8d8591324b2db90ea38c62431f0a1d29"
     },
     {
       "route": "windows/print-simulation.md",
@@ -2305,7 +2305,7 @@
       "bytes": 16430
     }
   ],
-  "bundle_sha256": "9745d79e6116ebc3eae97a33414a0d11b0c1af6168fd2c62cb540e55eea2126d",
+  "bundle_sha256": "67b281070abd8be2868a4f97b3104841d8078f20533470ef8b2d2a9d9ffe35ec",
   "unavailable_references": [
     {
       "source": "api/README.md",
