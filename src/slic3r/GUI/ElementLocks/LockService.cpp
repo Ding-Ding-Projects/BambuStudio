@@ -129,7 +129,13 @@ wxString wait_text(std::int64_t seconds)
 Label *label(wxWindow *parent, const wxFont &font, const wxString &text, MD3::Role colour = MD3::Role::OnSurface, bool wrap = false)
 {
     auto *l = new Label(parent, font, text, wrap ? (LB_AUTO_WRAP | wxST_NO_AUTORESIZE) : 0);
-    if (wrap) l->SetMinSize(wxSize(parent->FromDIP(380), -1));
+    if (wrap) {
+        // A label wraps itself at construction with its not-yet-laid-out width, which can
+        // break the text after every character and make the dialog fit to a huge height.
+        // Wrap once at the minimum width; later size events re-wrap to the real width.
+        l->SetMinSize(wxSize(parent->FromDIP(380), -1));
+        l->Wrap(parent->FromDIP(380));
+    }
     l->SetBackgroundColour(parent->GetBackgroundColour());
     l->SetForegroundColour(role(colour));
     return l;

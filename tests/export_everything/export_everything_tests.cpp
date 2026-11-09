@@ -493,13 +493,15 @@ TEST_CASE("run_export writes a data file, a sidecar and a ZIP", "[export][job]")
 
 TEST_CASE("Preference export excludes unknown sections keys and invalid safe values", "[export][privacy]")
 {
-    CHECK(preference_export_allowed("", "dark_color_mode", "1"));
-    CHECK(preference_export_allowed("", "motion_preference", "reduced"));
-    CHECK_FALSE(preference_export_allowed("", "access_token", "example"));
+    // AppConfig stores top-level preferences in the "app" section.
+    CHECK(preference_export_allowed("app", "dark_color_mode", "1"));
+    CHECK(preference_export_allowed("app", "motion_preference", "reduced"));
+    CHECK_FALSE(preference_export_allowed("app", "access_token", "example"));
     CHECK_FALSE(preference_export_allowed("custom", "dark_color_mode", "1"));
-    CHECK_FALSE(preference_export_allowed("", "future_setting", "1"));
-    CHECK_FALSE(preference_export_allowed("", "dark_color_mode", "unexpected private text"));
-    CHECK_FALSE(preference_export_allowed("", "personal_vocabulary", "{}"));
+    CHECK_FALSE(preference_export_allowed("", "dark_color_mode", "1"));
+    CHECK_FALSE(preference_export_allowed("app", "future_setting", "1"));
+    CHECK_FALSE(preference_export_allowed("app", "dark_color_mode", "unexpected private text"));
+    CHECK_FALSE(preference_export_allowed("app", "personal_vocabulary", "{}"));
 }
 
 TEST_CASE("Invalid encrypted output is rejected before staging spawning or overwriting", "[export][privacy]")

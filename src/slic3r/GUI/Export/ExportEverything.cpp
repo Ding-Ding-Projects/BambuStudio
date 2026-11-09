@@ -42,7 +42,8 @@ bool preset_export_allowed(const std::string &key, const std::string &value)
 
 bool preference_export_allowed(const std::string &section, const std::string &key, const std::string &value)
 {
-    if (!section.empty()) return false;
+    // AppConfig keeps every top-level preference in the section named "app".
+    if (section != "app") return false;
     static const std::vector<std::string> booleans = {
         "autocenter", "background_processing", "single_instance", "use_inches",
         "use_perspective_camera", "use_free_camera", "reverse_mouse_wheel_zoom",
