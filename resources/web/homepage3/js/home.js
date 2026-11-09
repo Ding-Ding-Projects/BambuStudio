@@ -1140,16 +1140,57 @@ function OnHomeMelody() { SendHomeCommand("homepage_melody"); }
 // Native sends booleans and numbers as strings (property tree JSON).
 function HomeFlag(v) { return v===true || v==="true"; }
 
+// A catalogue sentence in the current language, built from text nodes only.
+// In bilingual mode the Cantonese sits on its own line below the English, the
+// way every other card shows it, instead of the " / " join meant for tooltips.
+function SetHomeCatalogueText(el, key)
+{
+	el.textContent='';
+	if(GetCurrentWebLang()!=='bilingual_en_yue_HK')
+	{
+		el.textContent=StripBilingualMarkup(GetCurrentTextByKey(key));
+		return;
+	}
+	var english=StripBilingualMarkup(LangText['en'][key] || '');
+	var cantonese=LangText['yue_HK'].hasOwnProperty(key) ? StripBilingualMarkup(LangText['yue_HK'][key]) : '';
+	var first=document.createElement('span');
+	first.lang='en';
+	first.textContent=english;
+	el.appendChild(first);
+	if(cantonese!=='' && cantonese!==english)
+	{
+		var second=document.createElement('span');
+		second.className='BilingualSecondary';
+		second.lang='yue-Hant-HK';
+		second.setAttribute('style', BILINGUAL_SECONDARY_STYLE);
+		second.textContent='粵語：'+cantonese;
+		second.title=second.textContent;
+		el.appendChild(second);
+	}
+}
+
 function ShowHomeSideStatus(pVal)
 {
 	var lan=pVal['lan'] || {};
 	var on=HomeFlag(lan['enabled']);
 	$('#HomeLanCard').toggleClass('Off', !on);
-	var state=on ? String(lan['state'] || '') : GetCurrentPlainTextByKey('t317');
-	var waiting=parseInt(lan['waiting'] || '0', 10);
-	if(on && waiting>0)
-		state += ' \u00b7 ' + GetCurrentPlainTextByKey('t325').replace('{n}', waiting);
-	$('#HomeLanState').text(state);
+	// Off is a sentence from the catalogue: body font, with the Cantonese on its
+	// own line like every other card. On is the live state from the app (address,
+	// models waiting), which stays plain text in the monospace face.
+	var stateEl=$('#HomeLanState');
+	stateEl.toggleClass('HomeSideMono', on);
+	if(!on)
+	{
+		SetHomeCatalogueText(stateEl[0], 't317');
+	}
+	else
+	{
+		var state=String(lan['state'] || '');
+		var waiting=parseInt(lan['waiting'] || '0', 10);
+		if(waiting>0)
+			state += ' \u00b7 ' + GetCurrentPlainTextByKey('t325').replace('{n}', waiting);
+		stateEl.text(state);
+	}
 
 	var list=document.getElementById('HomePrinterList');
 	list.textContent='';
