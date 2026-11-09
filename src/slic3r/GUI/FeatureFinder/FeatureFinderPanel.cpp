@@ -382,6 +382,9 @@ wxPanel *FeatureFinderPanel::make_row(wxWindow *parent, const Feature &feature)
             _L("Designed and planned for this app. It is not in this build yet.") : reason);
     }
     row->SetSizer(sizer);
+    // An explicit min height wins over the content's own size, so a row whose
+    // bilingual labels need more than kRowHeight was cut. Take the larger.
+    row->SetMinSize(wxSize(-1, std::max(FromDIP(kRowHeight), sizer->CalcMin().y)));
     return row;
 }
 

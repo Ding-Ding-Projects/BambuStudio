@@ -57,6 +57,7 @@ private:
     void save();
     void refresh();         // reads every disk again and asks Windows what is attached
     void refresh_list();    // the filter chips, the search and the rows shown
+    void relayout_details();
     void refresh_details(); // the selected disk
     const Row *selected() const;
     std::vector<DiskInfo> infos() const;
@@ -106,6 +107,7 @@ private:
     Label                     *m_state        = nullptr;
     Label                     *m_facts        = nullptr;
     Label                     *m_problem      = nullptr;
+    wxScrolledWindow          *m_details_pane = nullptr;
     std::vector<Button *>      m_actions;
     wxWindow                  *m_running_bar  = nullptr;
     Label                     *m_running_what = nullptr;

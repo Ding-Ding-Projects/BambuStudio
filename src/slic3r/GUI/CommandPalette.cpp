@@ -460,6 +460,9 @@ wxPanel *CommandPalette::make_row(const Entry &entry, int index)
         add_rich_controls(row, sizer, entry.rich);
 
     row->SetSizer(sizer);
+    // An explicit min height wins over the content's own size, so a row whose
+    // bilingual labels need more than kRowHeight was cut. Take the larger.
+    row->SetMinSize(wxSize(-1, std::max(FromDIP(kRowHeight), sizer->CalcMin().y)));
 
     auto activate = [this, index]() { select_row(index); run_selected(); };
     for (wxWindow *w : {static_cast<wxWindow *>(row), static_cast<wxWindow *>(icon),

@@ -13,6 +13,7 @@
 #include "../Widgets/ComboBox.hpp"
 #include "../Widgets/Label.hpp"
 #include "../Widgets/MD3DataView.hpp"
+#include "../Widgets/MD3ScrolledWindow.hpp"
 #include "../Widgets/MD3DialogChrome.hpp"
 #include "../Widgets/MD3Menu.hpp"
 #include "../Widgets/MD3Tokens.hpp"
@@ -491,19 +492,25 @@ void VirtualDisksPanel::build()
     m_list->Bind(wxEVT_DATAVIEW_ITEM_CONTEXT_MENU, [this](wxDataViewEvent &) { copy_steps(m_list); });
     body->Add(m_list, 3, wxEXPAND | wxRIGHT, pad);
 
+    // The details and their twelve actions can need more height than the
+    // window has; they scroll instead of running off the bottom.
+    auto *pane = new MD3ScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL | wxBORDER_NONE);
+    pane->SetBackgroundColour(GetBackgroundColour());
+    pane->SetScrollRate(0, FromDIP(12));
+    m_details_pane = pane;
     auto *details = new wxBoxSizer(wxVERTICAL);
-    m_title = text(this, Label::Head_16, _L("Choose a disk"));
+    m_title = text(pane, Label::Head_16, _L("Choose a disk"));
     details->Add(m_title, 0);
-    m_state = text(this, Label::Body_13, wxString(), true);
+    m_state = text(pane, Label::Body_13, wxString(), true);
     details->Add(m_state, 0, wxTOP, FromDIP(2));
-    m_problem = text(this, Label::Body_13, wxString());
+    m_problem = text(pane, Label::Body_13, wxString());
     m_problem->SetForegroundColour(role(MD3::Role::Error));
     details->Add(m_problem, 0, wxTOP, FromDIP(6));
-    m_facts = text(this, Label::Mono_12, wxString());
+    m_facts = text(pane, Label::Mono_12, wxString());
     details->Add(m_facts, 0, wxTOP, FromDIP(8));
     auto *ops = new wxWrapSizer(wxHORIZONTAL);
     const auto op = [&](const wxString &label, std::uint32_t glyph, std::function<void()> fn) {
-        auto *b = button(this, label, glyph);
+        auto *b = button(pane, label, glyph);
         b->Bind(wxEVT_BUTTON, [fn](wxCommandEvent &) { fn(); });
         m_actions.push_back(b);
         ops->Add(b, 0, wxRIGHT | wxBOTTOM, FromDIP(6));
@@ -521,7 +528,8 @@ void VirtualDisksPanel::build()
     op(_L("Copy the steps..."), GlyphCopy, [this]() { copy_steps(m_actions.back()); });
     op(_L("Remove from the list"), GlyphRemove, [this]() { remove_selected(); });
     details->Add(ops, 0, wxEXPAND | wxTOP, FromDIP(12));
-    body->Add(details, 2, wxEXPAND);
+    pane->SetSizer(details);
+    body->Add(pane, 2, wxEXPAND);
     root->Add(body, 1, wxEXPAND | wxALL, pad);
 
     auto *drop = text(this, Label::Body_12, _L("Drop .vhd, .vhdx, .avhdx, .vhds or .iso files anywhere on this page to add them."), true);
@@ -652,6 +660,16 @@ const VirtualDisksPanel::Row *VirtualDisksPanel::selected() const
     return nullptr;
 }
 
+void VirtualDisksPanel::relayout_details()
+{
+    // Empty problem and facts lines would leave a gap above the actions.
+    m_problem->Show(!m_problem->GetLabel().IsEmpty());
+    m_facts->Show(!m_facts->GetLabel().IsEmpty());
+    Layout();
+    m_details_pane->Layout();
+    m_details_pane->FitInside();
+}
+
 void VirtualDisksPanel::refresh_details()
 {
     const Row *r = selected();
@@ -661,7 +679,7 @@ void VirtualDisksPanel::refresh_details()
         m_state->SetLabel(m_rows.empty() ? _L("Add a disk file or a folder, drop files here, or create a disk.") : wxString());
         m_facts->SetLabel(wxString());
         m_problem->SetLabel(wxString());
-        Layout();
+        relayout_details();
         return;
     }
     const DiskInfo &d = r->info;
@@ -724,7 +742,7 @@ void VirtualDisksPanel::refresh_details()
                            vdisk || d.format == Format::Iso,
                            !m_running};
     for (std::size_t i = 0; i < m_actions.size() && i < sizeof(enable) / sizeof(enable[0]); ++i) m_actions[i]->Enable(enable[i]);
-    Layout();
+    relayout_details();
 }
 
 void VirtualDisksPanel::add_files(const std::vector<std::string> &paths)

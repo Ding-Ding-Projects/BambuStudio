@@ -618,7 +618,7 @@ wxWindow *ExtensionsPanel::build_detail_side(wxWindow *parent)
     s->Add(actions, 0, wxEXPAND | wxBOTTOM, FromDIP(12));
 
     // A tighter gap keeps all five tabs inside the narrow detail pane.
-    m_tabs = new TextTabbar(body, TextTabbar::Align::Left, 12);
+    m_tabs = new TextTabbar(body, TextTabbar::Align::Left, 8);
     m_tabs->Bind(wxEVT_CHOICE, [this](wxCommandEvent &e) { select_tab(e.GetInt()); });
     s->Add(m_tabs, 0, wxEXPAND | wxBOTTOM, FromDIP(8));
     m_book = new wxSimplebook(body, wxID_ANY);
@@ -947,8 +947,12 @@ void ExtensionsPanel::refresh_detail()
     fill_runs(*x);
     fill_manifest(*x);
     select_tab(m_tab);
-    m_detail_body->Layout();
-    static_cast<wxScrolledWindow *>(m_detail_body)->FitInside();
+    // The description and banner wrap during the first layout and only then
+    // know their height, so lay out a second time with those heights.
+    for (int pass = 0; pass < 2; ++pass) {
+        m_detail_body->Layout();
+        static_cast<wxScrolledWindow *>(m_detail_body)->FitInside();
+    }
     m_detail->Layout();
 }
 
