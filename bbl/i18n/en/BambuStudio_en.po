@@ -38466,3 +38466,64 @@ msgstr ""
 
 msgid "File saved"
 msgstr ""
+
+msgid "Whether this object is printed; a copy that is not printable stays on the plate, greyed"
+msgstr ""
+
+msgid "Solid"
+msgstr ""
+
+msgid "Wire"
+msgstr ""
+
+msgid "Draw this object solid, or as the edges of its triangles. Only the view changes; nothing is saved in the project"
+msgstr ""
+
+msgid "See through this object to what is behind it, down to 10 %. Only the view changes; nothing is saved in the project"
+msgstr ""
+
+msgid "Snap to grid"
+msgstr ""
+
+msgid "Dragging an object puts its centre on the grid. Hold Alt while dragging to move freely"
+msgstr ""
+
+msgid "Grid step"
+msgstr ""
+
+msgid "How far apart the grid lines are that dragged objects snap to"
+msgstr ""
+
+msgid "Locked"
+msgstr ""
+
+msgid "Arrange and orient leave a locked plate as it is"
+msgstr ""
+
+msgid "Color scheme"
+msgstr ""
+
+msgid "What the colors of the preview show, as the legend's scheme does"
+msgstr ""
+
+msgid "Shown in the preview, as the legend's options are"
+msgstr ""
+
+msgid "Legend"
+msgstr ""
+
+msgid "The legend with the color scheme, the options and the statistics"
+msgstr ""
+
+msgid "Changes it at once, as its own switch on the row does"
+msgstr ""
+
+msgid "Changes it at once, as its own choice on the row does"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Back to the default, %s"
+msgstr ""
+
+msgid "An existing remote station is configured. Its address has not been changed."
+msgstr ""

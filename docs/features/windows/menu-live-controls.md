@@ -72,8 +72,37 @@ Right-click empty space in Prepare, with nothing selected:
 | Show Overhang | Switch | View > Show Overhang |
 | Focus | Switch | Preferences > Attention modes > Focus |
 
-Right-click an object: **Copies** is a stepper for how many copies of that
-object are on the plate; each step adds or removes one copy.
+Right-click an object:
+
+| Row | Control | What it does |
+| --- | --- | --- |
+| Copies | Stepper | How many copies of that object are on the plate; each step adds or removes one |
+| Printable | Switch | Whether the object is printed; a copy that is not printable stays on the plate, greyed |
+| View | Choice: Solid, Wire | Draws the object solid, or as the edges of its triangles. Only the view changes; nothing is saved in the project |
+| Opacity | Slider, 10 % to 100 % in steps of 10 | See through the object to what is behind it. Only the view changes; nothing is saved in the project |
+| Snap to grid | Switch | Dragging an object puts its centre on the grid. Hold `Alt` while dragging to move freely. The same as View > Snap to grid |
+| Grid step | Stepper, in mm | How far apart the grid lines are that dragged objects snap to |
+
+Right-click a plate: **Locked** is a switch; Arrange and orient leave a locked
+plate as it is. The rules for snapping (`src/slic3r/GUI/ViewTools/SnapGrid`)
+and the per-object look (`src/slic3r/GUI/ViewTools/ObjectViews`) are wx-free.
+
+## In the Preview
+
+Right-click the Preview:
+
+| Row | Control | The same as |
+| --- | --- | --- |
+| Color scheme | Choice | The legend's scheme (Line type, Speed, Layer height, and the rest) |
+| One switch per option | Switch | The legend's options (Travel, Retractions, Wipe, and the rest) |
+| Legend | Switch | The legend with the color scheme, the options and the statistics |
+
+## On a Preferences row
+
+Right-click a row in Preferences: its switch or choice is on the menu and
+changes the setting at once, as the row's own control does, followed by **Back
+to the default** with the default value shown, **Copy the setting key** and
+**Explain this** (`F1`).
 
 ## For code
 
@@ -95,7 +124,9 @@ still holds every menu to the Material menu.
 
 ## Not done yet
 
-Live rows in the object list's own menus, the Preview's menus and the
-Preferences rows are not added yet. An opacity slider and a solid or wire view
-per object, as drawn on the design board, need 3D view support that does not
-exist.
+Live rows in the object list's own menus are not added. The rows on an
+object's menu, the Preview's menu and the Preferences rows were built on 9
+November 2026 and have not yet been run on Windows; the sources are checked by
+`tests/view_tools.test.mjs` (snapping and the object look, with a negative
+build) and `tests/live_menu_startup.test.mjs` (values are read only when a menu
+opens, never while the Plater is still being built).

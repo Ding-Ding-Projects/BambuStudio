@@ -59771,3 +59771,103 @@ msgstr "檔案，匯出，多重切片"
 #. review-status: agent-drafted
 msgid "File saved"
 msgstr "已經存咗"
+
+#. reviewed-category: tooltip
+#. review-status: agent-drafted
+msgid "Whether this object is printed; a copy that is not printable stays on the plate, greyed"
+msgstr "呢件物件會唔會打印；唔可打印嘅副本會留喺板上，變灰"
+
+#. reviewed-category: label
+#. review-status: agent-drafted
+msgid "Solid"
+msgstr "實心"
+
+#. reviewed-category: label
+#. review-status: agent-drafted
+msgid "Wire"
+msgstr "線框"
+
+#. reviewed-category: tooltip
+#. review-status: agent-drafted
+msgid "Draw this object solid, or as the edges of its triangles. Only the view changes; nothing is saved in the project"
+msgstr "將呢件物件畫成實心，或者只畫三角形嘅邊。只係畫面改變，專案唔會儲存任何嘢"
+
+#. reviewed-category: tooltip
+#. review-status: agent-drafted
+msgid "See through this object to what is behind it, down to 10 %. Only the view changes; nothing is saved in the project"
+msgstr "透過呢件物件睇到後面嘅嘢，最低去到 10 %。只係畫面改變，專案唔會儲存任何嘢"
+
+#. reviewed-category: menu
+#. review-status: agent-drafted
+msgid "Snap to grid"
+msgstr "貼齊格線"
+
+#. reviewed-category: tooltip
+#. review-status: agent-drafted
+msgid "Dragging an object puts its centre on the grid. Hold Alt while dragging to move freely"
+msgstr "拖動物件時佢嘅中心會貼住格線。拖動時㩒住 Alt 就可以自由移動"
+
+#. reviewed-category: label
+#. review-status: agent-drafted
+msgid "Grid step"
+msgstr "格線間距"
+
+#. reviewed-category: tooltip
+#. review-status: agent-drafted
+msgid "How far apart the grid lines are that dragged objects snap to"
+msgstr "拖動物件貼齊嘅格線相隔幾遠"
+
+#. reviewed-category: label
+#. review-status: agent-drafted
+msgid "Locked"
+msgstr "已鎖定"
+
+#. reviewed-category: tooltip
+#. review-status: agent-drafted
+msgid "Arrange and orient leave a locked plate as it is"
+msgstr "排列同定向唔會郁已鎖定嘅板"
+
+#. reviewed-category: label
+#. review-status: agent-drafted
+msgid "Color scheme"
+msgstr "顏色方案"
+
+#. reviewed-category: tooltip
+#. review-status: agent-drafted
+msgid "What the colors of the preview show, as the legend's scheme does"
+msgstr "預覽嘅顏色代表乜嘢，同圖例嘅方案一樣"
+
+#. reviewed-category: tooltip
+#. review-status: agent-drafted
+msgid "Shown in the preview, as the legend's options are"
+msgstr "喺預覽顯示嘅嘢，同圖例嘅選項一樣"
+
+#. reviewed-category: label
+#. review-status: agent-drafted
+msgid "Legend"
+msgstr "圖例"
+
+#. reviewed-category: tooltip
+#. review-status: agent-drafted
+msgid "The legend with the color scheme, the options and the statistics"
+msgstr "有顏色方案、選項同統計嘅圖例"
+
+#. reviewed-category: tooltip
+#. review-status: agent-drafted
+msgid "Changes it at once, as its own switch on the row does"
+msgstr "即刻改變，同嗰行自己嘅開關一樣"
+
+#. reviewed-category: tooltip
+#. review-status: agent-drafted
+msgid "Changes it at once, as its own choice on the row does"
+msgstr "即刻改變，同嗰行自己嘅選擇一樣"
+
+#. reviewed-category: menu
+#. review-status: agent-drafted
+msgid "Back to the default, %s"
+msgstr "回復預設值，%s"
+
+#. reviewed-category: message
+#. review-status: agent-drafted
+msgid "An existing remote station is configured. Its address has not been changed."
+msgstr "已經設定咗一個遠端工作站，佢嘅地址冇改變。"

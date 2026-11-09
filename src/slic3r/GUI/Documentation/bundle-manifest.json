@@ -995,12 +995,12 @@
     {
       "route": "pages/README.md",
       "title": "GitHub Pages site",
-      "sha256": "8347bb99767c392c85deba22d93653e789bf6e8d09984bd9843d3465e8296bfd"
+      "sha256": "d5ed61a049230aa7e59d92d295fb0e415338c56beec34dd39239cff59680494d"
     },
     {
       "route": "pages/README.yue_HK.md",
       "title": "GitHub Pages 網站",
-      "sha256": "de48b22ae4663ff27120703ea9cc6c13f4d9218f53e429a4ba87485df2307359"
+      "sha256": "7afbaa5a632eaf375fe7ff50a1a3ce60947eb95903d3a1966c06b826d479ac09"
     },
     {
       "route": "pages/attention-and-message-decoration.md",
@@ -1765,12 +1765,12 @@
     {
       "route": "windows/menu-live-controls.md",
       "title": "Live controls in menus",
-      "sha256": "b0c5cb7bec18d3a0510e8d30bfb5aff3af47fd596989cb289fbfb5026b477bed"
+      "sha256": "e722c4fdcab0425761260c642e3df66d0d790616160a01ee0ea193f7b3d58ffd"
     },
     {
       "route": "windows/menu-live-controls.yue_HK.md",
       "title": "選單入面嘅即時控制",
-      "sha256": "682f7f5b305745fea191a63a1179c7ced2b2cc76af164d4c1946b41c0ab7a057"
+      "sha256": "43d1b8db6e8bde215ad4e58e636fcd0637482587990f93d4f748333e00ac4990"
     },
     {
       "route": "windows/menu-motion.md",
@@ -2305,7 +2305,7 @@
       "bytes": 16430
     }
   ],
-  "bundle_sha256": "88d9cadd2de78a17a8c703b898e4bf9e0cd80e2a5b2b5911078d32966504e3fa",
+  "bundle_sha256": "9de4bf7dec8e53a541327a9c12fd718c6829bcce0b3e4980576ca4be35d23362",
   "unavailable_references": [
     {
       "source": "api/README.md",
