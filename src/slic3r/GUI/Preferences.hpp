@@ -171,6 +171,11 @@ protected:
     bool           key_changed(const std::string &key) const;
     bool           row_changed(const SearchRow &row) const;
     const RowInfo *row_info(const std::string &key) const;
+    // Right-click (or Shift+F10) on a row's name, its value or the empty space
+    // beside them: the value as a live switch or choice, Back to the default,
+    // Copy the setting key and Explain this.
+    const RowInfo *row_at(wxWindow *source, const wxPoint &screen) const;
+    void           show_row_menu(const std::string &key, const wxPoint &screen);
 
     // ---- Changing settings from elsewhere in the dialog ----------------------
     // A setter makes a row's own control take a value, so every side effect a

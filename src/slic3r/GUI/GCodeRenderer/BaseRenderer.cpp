@@ -3837,6 +3837,42 @@ namespace Slic3r
                 ImGui::PopStyleColor(8);
             }
 
+            std::vector<EViewType> BaseRenderer::menu_view_types() const
+            {
+                std::vector<EViewType> out;
+                for (const EViewType type : view_type_items)
+                    if (!get_view_type_string(type).empty()) out.push_back(type);
+                return out;
+            }
+
+            std::string BaseRenderer::view_type_name(EViewType type) { return get_view_type_string(type); }
+
+            std::string BaseRenderer::move_type_name(EMoveType type)
+            {
+                switch (type) {
+                case EMoveType::Travel: return _u8L("Travel");
+                case EMoveType::Seam: return _u8L("Seams");
+                case EMoveType::Retract: return _u8L("Retract");
+                case EMoveType::Unretract: return _u8L("Unretract");
+                case EMoveType::Wipe: return _u8L("Wipe");
+                case EMoveType::Tool_change: return _u8L("Filament Changes");
+                default: return std::string();
+                }
+            }
+
+            void BaseRenderer::choose_view_type(EViewType type)
+            {
+                const auto it = std::find(view_type_items.begin(), view_type_items.end(), type);
+                if (it != view_type_items.end()) apply_view_type_selection(int(it - view_type_items.begin()), type);
+            }
+
+            void BaseRenderer::show_move_type(EMoveType type, bool visible)
+            {
+                if (is_move_type_visible(type) == visible) return;
+                set_move_type_visible(type, visible);
+                on_visibility_changed();
+            }
+
             void BaseRenderer::update_by_mode(ConfigOptionMode mode)
             {
                 view_type_items.clear();

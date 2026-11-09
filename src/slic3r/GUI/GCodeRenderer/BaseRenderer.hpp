@@ -172,6 +172,15 @@ namespace Slic3r {
                 virtual void render(int canvas_width, int canvas_height, int right_margin) = 0;
                 virtual bool is_move_type_visible(EMoveType type) const = 0;
                 virtual void set_move_type_visible(EMoveType type, bool visible) = 0;
+                // The Preview's right-click menu: the color schemes and the kinds of
+                // move the legend offers now, their names, and choosing them exactly
+                // as the legend's chips do.
+                std::vector<EViewType>        menu_view_types() const;
+                const std::vector<EMoveType> &menu_move_types() const { return options_items; }
+                static std::string            view_type_name(EViewType type);
+                static std::string            move_type_name(EMoveType type);
+                void                          choose_view_type(EViewType type);
+                void                          show_move_type(EMoveType type, bool visible);
                 virtual bool is_extrusion_role_visible(ExtrusionRole role) const = 0;
                 virtual void set_extrusion_role_visible(ExtrusionRole role, bool is_visible) = 0;
                 virtual uint32_t get_extrusion_role_visibility_flags() const = 0;

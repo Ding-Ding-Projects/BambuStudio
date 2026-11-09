@@ -1,6 +1,7 @@
 #include "libslic3r/libslic3r.h"
 #include "GLCanvas3D.hpp"
 #include "AttentionModes/AttentionService.hpp"
+#include "ViewTools/SnapGrid.hpp"
 #include "WipeTowerPlacement.hpp"
 #include "Overview/AssemblyStepsUtils.hpp"
 #include "Overview/OverviewUtils.hpp"
@@ -6422,6 +6423,7 @@ void GLCanvas3D::on_mouse(wxMouseEvent& evt)
                                 // The dragging operation is initiated.
                                 m_mouse.drag.move_volume_idx = volume_idx;
                                 m_selection.start_dragging();
+                                m_snap_origin = m_selection.get_bounding_box().center();
                                 m_mouse.drag.start_position_3D = m_mouse.scene_position;
                                 m_sequential_print_clearance_first_displacement = true;
                                 m_moving = true;
@@ -6474,7 +6476,15 @@ void GLCanvas3D::on_mouse(wxMouseEvent& evt)
                 }
                 TransformationType trafo_type;
                 trafo_type.set_relative();
-                m_selection.translate(cur_pos - m_mouse.drag.start_position_3D, trafo_type);
+                Vec3d displacement = cur_pos - m_mouse.drag.start_position_3D;
+                // Snap to grid: the centre of what is dragged lands on the grid; Alt moves freely.
+                if (AppConfig *cfg = wxGetApp().app_config; cfg && SnapGrid::on_from(cfg->get(SnapGrid::kOnKey)) && !evt.AltDown()) {
+                    const SnapGrid::Move snapped = SnapGrid::snap(m_snap_origin.x(), m_snap_origin.y(), {displacement.x(), displacement.y()},
+                                                                  SnapGrid::step_from(cfg->get(SnapGrid::kStepKey)));
+                    displacement.x() = snapped.x;
+                    displacement.y() = snapped.y;
+                }
+                m_selection.translate(displacement, trafo_type);
                 if (current_printer_technology() == ptFFF) {
                     if (fff_print()->config().print_sequence == PrintSequence::ByObject)
                         update_sequential_clearance();

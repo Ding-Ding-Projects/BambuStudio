@@ -311,6 +311,15 @@ public:
     static float explosion_ratio;
     // Focus (an attention mode): set while the 3D view draws with something selected.
     static bool  s_focus_dim;
+    // An object's own view, chosen on its menu (ObjectViews): its opacity and
+    // Solid or Wire, looked up by object index while drawing. Null when no
+    // view is set up (tests, before the Plater exists).
+    struct ObjectLook
+    {
+        float opacity = 1.f;
+        bool  wire    = false;
+    };
+    static std::function<ObjectLook(int object_idx)> s_object_look;
     static float last_explosion_ratio;
 
     enum EHoverState : unsigned char

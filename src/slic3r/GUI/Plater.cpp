@@ -1,6 +1,7 @@
 #include "ProjectTabBar.hpp"
 #include "Plater.hpp"
 #include "ElementLocks/LockService.hpp"
+#include "ViewTools/ObjectViews.hpp"
 #include "VocabularyDrop.hpp"
 #include "SettingsDraftUndo.hpp"
 #include "Jobs/ImportJob.hpp"
@@ -13260,6 +13261,15 @@ Plater::priv::priv(Plater *q, MainFrame *main_frame)
         view3D_canvas->Bind(EVT_GLCANVAS_SELECT_CURR_PLATE_ALL, [this](SimpleEvent&) {this->q->select_curr_plate_all(); });
 
         view3D_canvas->Bind(EVT_GLCANVAS_SELECT_ALL, [this](SimpleEvent&) { this->q->select_all(); });
+        // Object views: the opacity and Solid or Wire chosen on an object's menu.
+        GLVolume::s_object_look = [this](int object_idx) {
+            GLVolume::ObjectLook look;
+            if (ObjectViews::views().empty() || object_idx < 0 || object_idx >= int(model.objects.size())) return look;
+            const ObjectViews::Look mine = ObjectViews::views().look(model.objects[object_idx]->id().id);
+            look.opacity = float(mine.opacity);
+            look.wire    = mine.wire;
+            return look;
+        };
         // Element locks: a click on a locked object in the 3D view stops with
         // the hint, and a right-click offers Unlock, unless a gizmo handle is
         // under the mouse.
@@ -13355,6 +13365,27 @@ Plater::priv::priv(Plater *q, MainFrame *main_frame)
 
     // Preview events:
     preview->get_wxglcanvas()->Bind(EVT_GLCANVAS_QUESTION_MARK, [](SimpleEvent&) { wxGetApp().keyboard_shortcuts(); });
+    // Right-click in Preview (without dragging, and not over the sliders or
+    // the legend): the color scheme, the moves shown and the legend, in place.
+    {
+        wxGLCanvas *canvas = preview->get_wxglcanvas();
+        auto        down   = std::make_shared<wxPoint>(wxDefaultPosition);
+        canvas->Bind(wxEVT_RIGHT_DOWN, [down](wxMouseEvent &e) {
+            *down = e.GetPosition();
+            e.Skip();
+        });
+        canvas->Bind(wxEVT_RIGHT_UP, [this, down, canvas](wxMouseEvent &e) {
+            e.Skip();
+            const wxPoint at    = e.GetPosition();
+            const bool    moved = *down == wxDefaultPosition || std::abs(at.x - down->x) > 4 || std::abs(at.y - down->y) > 4;
+            *down               = wxDefaultPosition;
+            if (moved || (wxGetApp().imgui() && wxGetApp().imgui()->want_mouse())) return;
+            canvas->CallAfter([this, canvas, at]() {
+                if (wxMenu *menu = q->preview_menu(); menu && menu->GetMenuItemCount() > 0)
+                    q->PopupMenu(menu, q->ScreenToClient(canvas->ClientToScreen(at)));
+            });
+        });
+    }
     preview->get_wxglcanvas()->Bind(EVT_GLCANVAS_UPDATE_BED_SHAPE, [q](SimpleEvent&) { q->set_bed_shape(); });
     preview->get_wxglcanvas()->Bind(EVT_GLCANVAS_UPDATE, [this](SimpleEvent &) {
             preview->get_canvas3d()->set_as_dirty();
@@ -13672,6 +13703,8 @@ Plater::priv::priv(Plater *q, MainFrame *main_frame)
 Plater::priv::~priv()
 {
     m_shutting_down = true;
+    GLVolume::s_object_look = nullptr; // it reads this model
+    ObjectViews::views().clear();
     m_pending_slice_output.clear();
     background_process.reset();
     shutdown_project_history();
@@ -37035,6 +37068,7 @@ wxMenu *Plater::assemble_object_menu() { return p->menus.assemble_object_menu();
 wxMenu *Plater::assemble_part_menu() { return p->menus.assemble_part_menu(); }
 wxMenu *Plater::assemble_multi_selection_menu() { return p->menus.assemble_multi_selection_menu(); }
 wxMenu *Plater::filament_action_menu(int active_filament_menu_id) { return p->menus.filament_action_menu(active_filament_menu_id); }
+wxMenu *Plater::preview_menu() { return p->menus.preview_menu(); }
 int     Plater::GetPlateIndexByRightMenuInLeftUI() { return p->m_is_RightClickInLeftUI; }
 void    Plater::SetPlateIndexByRightMenuInLeftUI(int index) { p->m_is_RightClickInLeftUI = index; }
 SuppressBackgroundProcessingUpdate::SuppressBackgroundProcessingUpdate() :

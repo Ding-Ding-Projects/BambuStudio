@@ -1140,6 +1140,10 @@ list(APPEND SLIC3R_GUI_SOURCES
     GUI/LiveCharts/LiveChartsPanel.hpp
     GUI/LiveCharts/LiveSeries.cpp
     GUI/LiveCharts/LiveSeries.hpp
+    GUI/ViewTools/ObjectViews.cpp
+    GUI/ViewTools/ObjectViews.hpp
+    GUI/ViewTools/SnapGrid.cpp
+    GUI/ViewTools/SnapGrid.hpp
     GUI/SetupWizard/SetupModel.cpp
     GUI/SetupWizard/SetupModel.hpp
     GUI/SetupWizard/SetupWizardDialog.cpp

@@ -1,5 +1,54 @@
 # Bambu Studio handoff
 
+## Startup crash, the remaining builds and an unfinished menus batch, 9 November 2026
+
+**Fixed:** releases built from ba14553 onwards crashed on start with an
+access violation (0xC0000005). Menu switches read their value while being
+added, and the 3D view's menus are built inside the Plater's constructor,
+before `wxGetApp().plater()` is set. a4d2cec reads a switch's value only when
+its menu opens and guards the startup menus' getters;
+`tests/live_menu_startup.test.mjs` pins both. Found by the README screenshot
+run on md3-v291 (run 42515047706): every capture failed with the installed
+app exiting right after loading. The hosted startup trace (run 42515799430)
+failed in its own setup (a zlib dependency for Python), so there is no stack
+from it; the cause is from the code. md3-v305 (fcf033f) is the first release
+with the fix; nobody has started it on Windows yet. To verify, dispatch
+`readme-screenshots.yml` for md3-v305 with its target commit. 98e4cc8 also
+broke the Windows build with a parameter named `near`, which Windows headers
+define as a macro; fcf033f renamed it.
+
+**Built since the last section:** 4743500 (Local tools page), 053de16 (more
+Preferences), 1648886 (extension settings), 9ffa6e5 (send paths and planned
+filament), 1374b08 (Follow Windows theme, undo of added printers), 4da05d9
+(attention modes), 14462f0 (live charts: AMS humidity and part fan charts,
+momentum arrow, particles, 12-hour clock, recording whichever page is open),
+98e4cc8 (element locks on ink rows and objects, lock badges). Each has its
+article, Cantonese twin and checks.
+
+**Unfinished, committed as is:** the context menu batch. Code is in and its
+standalone tests pass, but the articles, the Cantonese strings and a source
+check are not written, and nothing of it has run on Windows:
+
+- Snap to grid (View menu and an object's menu, with a grid step; Alt drags
+  freely), in `src/slic3r/GUI/ViewTools/SnapGrid.*` and `GLCanvas3D.cpp`.
+- Per-object View (Solid or Wire) and Opacity on an object's menu, session
+  only, in `ViewTools/ObjectViews.*`, drawn by `3DScene.cpp`.
+- A Preview right-click menu: color scheme, the legend's move options and the
+  legend, through new public `BaseRenderer` calls.
+- A right-click menu on Preferences rows: the value as a live switch or
+  choice, Back to the default, Copy the setting key, Explain this.
+- Printable and the plate's Locked as live switches.
+
+To finish it: write the sections in `docs/features/windows/menu-live-controls.md`
+and its twin, add the Cantonese strings (`scripts/i18n/update_catalogs.py
+--report-missing` lists them), add a source check, and run it on Windows.
+
+**Still not built:** Base64 (pausing or cancelling one file, audio and video
+previews, a second Text session), the drawing board's remaining items,
+virtual disk extras, Minecraft extras, and the twelve regrouped Preferences
+sections with their migration. Signed extensions stay out because code
+signing is not allowed.
+
 ## Local tools and the last unbuilt features, 8 November 2026
 
 Commits 6d33c47 to 1514031 add, each with an article, a Cantonese twin, a

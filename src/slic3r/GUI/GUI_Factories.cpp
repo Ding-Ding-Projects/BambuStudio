@@ -1,5 +1,8 @@
 #include "libslic3r/libslic3r.h"
 #include "ElementLocks/LockService.hpp"
+#include "ViewTools/ObjectViews.hpp"
+#include "ViewTools/SnapGrid.hpp"
+#include "GCodeViewer.hpp"
 #include "PresetComboBoxes.hpp"
 #include "libslic3r/PresetBundle.hpp"
 #include "libslic3r/Model.hpp"
@@ -890,31 +893,27 @@ wxMenuItem* MenuFactory::append_menu_item_instance_to_object(wxMenu* menu)
 
 wxMenuItem* MenuFactory::append_menu_item_printable(wxMenu* menu)
 {
-    // BBS: to be checked
-    wxMenuItem* menu_item_printable = append_menu_check_item(menu, wxID_ANY, _L("Printable"), "",
-        [](wxCommandEvent&) { obj_list()->toggle_printable_state(); }, menu);
-
-    m_parent->Bind(wxEVT_UPDATE_UI, [](wxUpdateUIEvent& evt) {
-        ObjectList* list = obj_list();
+    // Printable, changed in place: the menu stays open. Reads the first
+    // selected object or copy, as the check item it replaces did.
+    const auto printable = []() {
+        ObjectList         *list = obj_list();
         wxDataViewItemArray sels;
-        list->GetSelections(sels);
-        wxDataViewItem frst_item = sels[0];
-        ItemType type = list->GetModel()->GetItemType(frst_item);
-        bool check;
-        if (type != itInstance && type != itObject)
-            check = false;
-        else {
-            int obj_idx = list->GetModel()->GetObjectIdByItem(frst_item);
-            int inst_idx = type == itObject ? 0 : list->GetModel()->GetInstanceIdByItem(frst_item);
-            check = list->object(obj_idx)->instances[inst_idx]->printable;
-        }
-
-        evt.Check(check);
-        plater()->set_current_canvas_as_dirty();
-
-        }, menu_item_printable->GetId());
-
-    return menu_item_printable;
+        if (list) list->GetSelections(sels);
+        if (sels.empty()) return false;
+        const wxDataViewItem first = sels[0];
+        const ItemType       type  = list->GetModel()->GetItemType(first);
+        if (type != itInstance && type != itObject) return false;
+        const int obj_idx  = list->GetModel()->GetObjectIdByItem(first);
+        const int inst_idx = type == itObject ? 0 : list->GetModel()->GetInstanceIdByItem(first);
+        ModelObject *object = obj_idx >= 0 ? list->object(obj_idx) : nullptr;
+        return object && inst_idx >= 0 && inst_idx < int(object->instances.size()) && object->instances[inst_idx]->printable;
+    };
+    return MD3::AppendSwitch(menu, _L("Printable"), printable,
+        [printable](bool on) {
+            if (printable() != on) obj_list()->toggle_printable_state();
+            plater()->set_current_canvas_as_dirty();
+        },
+        _L("Whether this object is printed; a copy that is not printable stays on the plate, greyed"));
 }
 
 void MenuFactory::append_menu_item_rename(wxMenu* menu)
@@ -1442,6 +1441,51 @@ void MenuFactory::create_bbl_object_menu()
             else if (want < now && p->can_decrease_instances()) p->decrease_instances(size_t(now - want));
         },
         _L("How many copies of this object are on the plate; each step adds or removes one"));
+    // How this object is drawn, and how dragging snaps: changed in place, the menu stays open.
+    const auto selected_object_id = []() -> long long {
+        Plater   *p   = plater();
+        const int idx = p ? p->get_selected_object_idx() : -1;
+        return idx >= 0 && idx < int(p->model().objects.size()) ? (long long) p->model().objects[idx]->id().id : -1;
+    };
+    const auto redraw = []() {
+        if (GLCanvas3D *canvas = plater()->get_current_canvas3D()) {
+            canvas->set_as_dirty();
+            canvas->request_extra_frame(); // the transparent pass takes a new opacity from the next frame
+            canvas->post_event(SimpleEvent(wxEVT_PAINT));
+        }
+    };
+    MD3::AppendChoice(&m_object_menu, _L("View"), {_L("Solid"), _L("Wire")},
+        [selected_object_id]() {
+            const long long id = selected_object_id();
+            return id >= 0 && ObjectViews::views().look(size_t(id)).wire ? 1 : 0;
+        },
+        [selected_object_id, redraw](int choice) {
+            const long long id = selected_object_id();
+            if (id < 0) return;
+            ObjectViews::views().set_wire(size_t(id), choice == 1);
+            redraw();
+        },
+        _L("Draw this object solid, or as the edges of its triangles. Only the view changes; nothing is saved in the project"));
+    MD3::AppendSlider(&m_object_menu, _L("Opacity"), 10, 100, 10, "%",
+        [selected_object_id]() {
+            const long long id = selected_object_id();
+            return id >= 0 ? ObjectViews::views().look(size_t(id)).opacity * 100.0 : 100.0;
+        },
+        [selected_object_id, redraw](double percent) {
+            const long long id = selected_object_id();
+            if (id < 0) return;
+            ObjectViews::views().set_opacity(size_t(id), percent / 100.0);
+            redraw();
+        },
+        _L("See through this object to what is behind it, down to 10 %. Only the view changes; nothing is saved in the project"));
+    MD3::AppendSwitch(&m_object_menu, _L("Snap to grid"),
+        []() { return SnapGrid::on_from(wxGetApp().app_config->get(SnapGrid::kOnKey)); },
+        [](bool on) { wxGetApp().app_config->set(SnapGrid::kOnKey, on ? "1" : "0"); },
+        _L("Dragging an object puts its centre on the grid. Hold Alt while dragging to move freely"));
+    MD3::AppendStepper(&m_object_menu, _L("Grid step"), SnapGrid::kMinStep, SnapGrid::kMaxStep, 0.5, 1, "mm",
+        []() { return SnapGrid::step_from(wxGetApp().app_config->get(SnapGrid::kStepKey)); },
+        [](double step) { wxGetApp().app_config->set(SnapGrid::kStepKey, SnapGrid::step_text(step)); },
+        _L("How far apart the grid lines are that dragged objects snap to"));
     // Object Repair
     append_menu_item_fix_through_netfabb(&m_object_menu);
     // Object Simplify
@@ -1761,6 +1805,20 @@ void MenuFactory::create_plate_menu()
         []() { return plater()->can_delete_plate(); }, m_parent);
 #endif
 
+    // Locked, changed in place: a locked plate is left as it is by arrange and orient.
+    MD3::AppendSwitch(menu, _L("Locked"),
+        []() {
+            PartPlate *plate = plater() ? plater()->get_partplate_list().get_selected_plate() : nullptr;
+            return plate && plate->is_locked();
+        },
+        [](bool on) {
+            PartPlate *plate = plater() ? plater()->get_partplate_list().get_selected_plate() : nullptr;
+            if (!plate) return;
+            plate->lock(on);
+            plater()->set_current_canvas_as_dirty();
+        },
+        _L("Arrange and orient leave a locked plate as it is"));
+
     append_menu_item(
         menu, wxID_ANY, _L("Move Plate"), "",
         [](wxCommandEvent &e) {
@@ -2045,10 +2103,65 @@ wxMenu *MenuFactory::filament_action_menu(int active_filament_menu_id) {
 }
 
 
+wxMenu *MenuFactory::preview_menu()
+{
+    // Rebuilt each time: the schemes on offer change with the print (the
+    // thermal ones come and go), and the rows read the preview shown now.
+    m_preview_menu      = std::make_unique<wxMenu>();
+    const auto renderer = []() -> std::shared_ptr<gcode::BaseRenderer> {
+        GLCanvas3D *canvas = plater() ? plater()->get_preview_canvas3D() : nullptr;
+        return canvas ? canvas->get_gcode_viewer().get_renderer() : nullptr;
+    };
+    const auto now = renderer();
+    if (!now) return m_preview_menu.get();
+    const std::vector<gcode::EViewType> types = now->menu_view_types();
+    std::vector<wxString>               names;
+    for (const gcode::EViewType type : types) names.push_back(from_u8(gcode::BaseRenderer::view_type_name(type)));
+    if (!types.empty())
+        MD3::AppendChoice(m_preview_menu.get(), _L("Color scheme"), names,
+            [types, renderer]() {
+                const auto r  = renderer();
+                const auto it = r ? std::find(types.begin(), types.end(), r->get_view_type()) : types.end();
+                return it == types.end() ? 0 : int(it - types.begin());
+            },
+            [types, renderer](int choice) {
+                if (const auto r = renderer(); r && choice >= 0 && choice < int(types.size())) r->choose_view_type(types[choice]);
+            },
+            _L("What the colors of the preview show, as the legend's scheme does"));
+    m_preview_menu->AppendSeparator();
+    for (const EMoveType move : now->menu_move_types()) {
+        const std::string name = gcode::BaseRenderer::move_type_name(move);
+        if (name.empty()) continue;
+        MD3::AppendSwitch(m_preview_menu.get(), from_u8(name),
+            [move, renderer]() {
+                const auto r = renderer();
+                return r && r->is_move_type_visible(move);
+            },
+            [move, renderer](bool on) {
+                if (const auto r = renderer()) r->show_move_type(move, on);
+            },
+            _L("Shown in the preview, as the legend's options are"));
+    }
+    m_preview_menu->AppendSeparator();
+    MD3::AppendSwitch(m_preview_menu.get(), _L("Legend"),
+        []() {
+            GLCanvas3D *canvas = plater() ? plater()->get_preview_canvas3D() : nullptr;
+            return canvas && canvas->get_gcode_viewer().is_legend_enabled();
+        },
+        [](bool on) {
+            GLCanvas3D *canvas = plater() ? plater()->get_preview_canvas3D() : nullptr;
+            if (!canvas) return;
+            canvas->get_gcode_viewer().enable_legend(on);
+            canvas->set_as_dirty();
+            canvas->post_event(SimpleEvent(wxEVT_PAINT));
+        },
+        _L("The legend with the color scheme, the options and the statistics"));
+    return m_preview_menu.get();
+}
+
 //BBS: add partplate related logic
 wxMenu* MenuFactory::plate_menu()
 {
-    append_menu_item_locked(&m_plate_menu);
     append_menu_item_plate_name(&m_plate_menu);
     AppearanceEditor::append_edit_appearance_item(m_plate_menu, "object-list.plate", nullptr);
     append_menu_item_show_labels(&m_plate_menu);

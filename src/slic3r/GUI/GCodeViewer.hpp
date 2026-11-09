@@ -85,7 +85,7 @@ namespace Slic3r {
                 void record_record_gcodeviewer_option_item();
                 bool get_min_max_value_of_option(int index, float& _min, float& _max) const;
                 // end helio
-            private:
+                // The renderer drawing now (the Preview's right-click menu reads its schemes and moves).
                 const std::shared_ptr<gcode::BaseRenderer>& get_renderer() const;
 
             private:

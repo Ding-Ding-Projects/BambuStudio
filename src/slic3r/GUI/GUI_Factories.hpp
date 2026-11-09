@@ -81,6 +81,8 @@ public:
     wxMenu* assemble_multi_selection_menu();
 
     wxMenu *filament_action_menu(int active_filament_menu_id);
+    // Right-click in Preview: the color scheme, the moves shown and the legend, changed in place.
+    wxMenu *preview_menu();
 
 private:
     enum MenuType {
@@ -105,6 +107,7 @@ private:
     MenuWithSeparators m_assemble_part_menu;
 
     std::unique_ptr<wxMenu>     m_filament_popup_menu;
+    std::unique_ptr<wxMenu>     m_preview_menu;
     int                         m_filament_menu_active_id{-1};
 
     int object_menu_count{ 0 };

@@ -112,6 +112,7 @@
 #include "Base64Toolkit/Base64ToolkitPanel.hpp"
 #include "Extensions/ExtensionRuntime.hpp"
 #include "LiveCharts/LiveChartsPanel.hpp"
+#include "ViewTools/SnapGrid.hpp"
 #include "Drawing/DrawingPanel.hpp"
 #include "VirtualDisks/VirtualDisksPanel.hpp"
 #include "GameServers/ServersPanel.hpp"
@@ -5460,6 +5461,15 @@ void MainFrame::init_menubar_as_editor()
                 m_plater->get_current_canvas3D()->post_event(SimpleEvent(wxEVT_PAINT));
             },
             this, [this]() { return m_plater->is_view3D_shown(); }, [this]() { return m_plater->is_view3D_overhang_shown(); }, this);
+        // Snap to grid: dragged objects land with their centre on the grid (step on an object's menu).
+        append_menu_check_item(viewMenu, wxID_ANY, _L("Snap to grid"),
+            _L("Dragging an object puts its centre on the grid. Hold Alt while dragging to move freely"),
+            [](wxCommandEvent &) {
+                const bool on = SnapGrid::on_from(wxGetApp().app_config->get(SnapGrid::kOnKey));
+                wxGetApp().app_config->set(SnapGrid::kOnKey, on ? "0" : "1");
+            },
+            this, [this]() { return m_plater->is_view3D_shown(); },
+            []() { return SnapGrid::on_from(wxGetApp().app_config->get(SnapGrid::kOnKey)); }, this);
         viewMenu->AppendSeparator();
         append_menu_item(
             viewMenu, wxID_ANY, _L("Set 3DConnexion"), _L("Set 3DConnexion mouse"),

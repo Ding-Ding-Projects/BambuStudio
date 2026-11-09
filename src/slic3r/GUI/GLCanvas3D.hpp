@@ -812,6 +812,8 @@ public:
 
     SequentialPrintClearance m_sequential_print_clearance;
     bool m_sequential_print_clearance_first_displacement{ true };
+    // Snap to grid: the centre of what is dragged when the drag started.
+    Vec3d m_snap_origin{ Vec3d::Zero() };
 
     struct ToolbarHighlighter
     {

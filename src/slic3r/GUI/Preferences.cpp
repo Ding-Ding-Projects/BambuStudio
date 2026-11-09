@@ -70,6 +70,9 @@
 #include "Widgets/MaterialIcon.hpp"
 #include "Widgets/ProgressBar.hpp"
 #include "Widgets/SuperConfirmGate.hpp"
+#include "Widgets/MD3Menu.hpp"
+#include <wx/clipbrd.h>
+#include <climits>
 #include "wx/graphics.h"
 #include <wx/dcgraph.h>
 #include <wx/fontenum.h>
@@ -1958,6 +1961,23 @@ void PreferencesDialog::create()
     m_search->SetOnRegexToggle([this](bool) { apply_search_filter(m_search->GetValue()); });
     start_change_tracking();
     refresh_section_counts();
+    // A right-click on a row (its name, its value or the space beside them), or
+    // Shift+F10 on its control: the row's own menu. Text fields keep their own.
+    Bind(wxEVT_CONTEXT_MENU, [this](wxContextMenuEvent &e) {
+        auto   *source = dynamic_cast<wxWindow *>(e.GetEventObject());
+        wxPoint screen = e.GetPosition();
+        if (source != nullptr && screen == wxDefaultPosition) {
+            const wxRect r = source->GetScreenRect();
+            screen         = wxPoint(r.x + r.width / 2, r.y + r.height / 2);
+        }
+        const RowInfo *row = source != nullptr ? row_at(source, screen) : nullptr;
+        if (row == nullptr) {
+            e.Skip();
+            return;
+        }
+        const std::string key = row->key;
+        CallAfter([this, key, screen]() { show_row_menu(key, screen); });
+    });
 
     main_sizer->Add(m_body_row, 1, wxEXPAND);
     main_sizer->Add(create_bottom_buttons(), 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(12));
@@ -2093,6 +2113,105 @@ void PreferencesDialog::build_search_index()
             row.keys = indexed_row.keys;
             m_search_rows.push_back(std::move(row));
         }
+    }
+}
+
+namespace {
+
+// The windows a row is drawn with, shown ones only.
+void row_windows(wxSizer *sizer, std::vector<wxWindow *> &out)
+{
+    if (sizer == nullptr) return;
+    for (wxSizerItem *item : sizer->GetChildren()) {
+        if (!item->IsShown()) continue;
+        if (wxWindow *w = item->GetWindow()) out.push_back(w);
+        else if (wxSizer *inner = item->GetSizer()) row_windows(inner, out);
+    }
+}
+
+} // namespace
+
+const PreferencesDialog::RowInfo *PreferencesDialog::row_at(wxWindow *source, const wxPoint &screen) const
+{
+    for (const RowInfo &info : m_row_info) {
+        if (info.row == nullptr || info.provenance == nullptr) continue; // a second key shares the first one's row
+        wxWindow *host = info.row->GetContainingWindow();
+        if (host == nullptr || !host->IsShownOnScreen()) continue;
+        bool inside = false;
+        for (wxWindow *w = source; w != nullptr; w = w->GetParent())
+            if (w == host) {
+                inside = true;
+                break;
+            }
+        if (!inside) continue;
+        // From the top of the row's highest part to the bottom of its lowest,
+        // across the whole page, so the empty space beside it counts too.
+        std::vector<wxWindow *> parts;
+        row_windows(info.row, parts);
+        int top = INT_MAX, bottom = INT_MIN;
+        for (wxWindow *w : parts) {
+            const wxRect r = w->GetScreenRect();
+            top            = std::min(top, r.GetTop());
+            bottom         = std::max(bottom, r.GetBottom());
+        }
+        if (parts.empty() || top > bottom) continue;
+        const wxRect page = host->GetScreenRect();
+        if (screen.x >= page.GetLeft() && screen.x <= page.GetRight() && screen.y >= top && screen.y <= bottom) return &info;
+    }
+    return nullptr;
+}
+
+void PreferencesDialog::show_row_menu(const std::string &key, const wxPoint &screen)
+{
+    wxMenu                           menu;
+    const std::optional<std::string> now      = stored_value(key);
+    const std::optional<std::string> fallback = default_value(key);
+    const wxString                   title    = setting_title(key);
+    // The value itself, changed in place through the row's own control.
+    if (can_set(key) && now && !PreferenceHistory::is_sensitive_key(key)) {
+        if (*now == "true" || *now == "false") {
+            MD3::AppendSwitch(&menu, title,
+                              [this, key]() {
+                                  const auto value = stored_value(key);
+                                  return value && *value == "true";
+                              },
+                              [this, key](bool on) { set_value(key, on ? "true" : "false"); },
+                              _L("Changes it at once, as its own switch on the row does"));
+        } else if (const auto labels = m_value_labels.find(key); labels != m_value_labels.end() && labels->second.size() >= 2) {
+            std::vector<std::string> values;
+            std::vector<wxString>    names;
+            for (const auto &[value, label] : labels->second) {
+                values.push_back(value);
+                names.push_back(label);
+            }
+            MD3::AppendChoice(&menu, title, names,
+                              [this, key, values]() {
+                                  const auto value = stored_value(key);
+                                  const auto it    = value ? std::find(values.begin(), values.end(), *value) : values.end();
+                                  return it == values.end() ? 0 : int(it - values.begin());
+                              },
+                              [this, key, values](int choice) {
+                                  if (choice >= 0 && choice < int(values.size())) set_value(key, values[size_t(choice)]);
+                              },
+                              _L("Changes it at once, as its own choice on the row does"));
+        }
+    }
+    if (menu.GetMenuItemCount() > 0) menu.AppendSeparator();
+    const int back = wxID_HIGHEST + 1, copy = wxID_HIGHEST + 2, explain = wxID_HIGHEST + 3;
+    if (can_set(key) && fallback && now && *fallback != *now)
+        menu.Append(back, wxString::Format(_L("Back to the default, %s"), shown_value(key, *fallback)));
+    menu.Append(copy, _L("Copy the setting key"), wxString::FromUTF8(key));
+    menu.Append(explain, _L("Explain this") + "\tF1");
+    const int chosen = MD3::PopupMenuSelection(this, menu, screen);
+    if (chosen == back && fallback) {
+        set_value(key, *fallback);
+    } else if (chosen == copy) {
+        if (wxTheClipboard->Open()) {
+            wxTheClipboard->SetData(new wxTextDataObject(wxString::FromUTF8(key)));
+            wxTheClipboard->Close();
+        }
+    } else if (chosen == explain) {
+        show_info(key);
     }
 }
 

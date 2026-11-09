@@ -555,6 +555,7 @@ void GLVolume::set_color(const std::array<float, 4>& rgba)
 // BBS
 float GLVolume::explosion_ratio = 1.0;
 bool GLVolume::s_focus_dim = false;
+std::function<GLVolume::ObjectLook(int)> GLVolume::s_object_look;
 float GLVolume::last_explosion_ratio = 1.0;
 
 void GLVolume::set_render_color(float r, float g, float b, float a)
@@ -629,6 +630,12 @@ void GLVolume::set_render_color()
         render_color[3] = UNPRINTABLE_COLOR[3];
     }
 
+    // An object's own opacity, chosen on its menu: never more opaque than that.
+    // The transparent pass picks it up from the next frame on.
+    if (s_object_look && composite_id.object_id >= 0 && !is_wipe_tower) {
+        const ObjectLook look = s_object_look(composite_id.object_id);
+        if (look.opacity < 1.f) render_color[3] = std::min(render_color[3], look.opacity);
+    }
 }
 
 std::array<float, 4> color_from_model_volume(const ModelVolume& model_volume)
@@ -1856,7 +1863,12 @@ void GLVolumeCollection::render(GUI::ERenderPipelineStage             render_pip
             // Only disable MMU colors if this specific volume has a color override
             bool this_volume_has_override = m_use_volume_color_override &&
                                            m_volume_color_overrides.find(volume.second.first) != m_volume_color_overrides.end();
+            // An object shown as Wire (its menu, View): its triangles' edges only.
+            const bool wire = GLVolume::s_object_look && volume.first->composite_id.object_id >= 0 && !volume.first->is_wipe_tower &&
+                              GLVolume::s_object_look(volume.first->composite_id.object_id).wire;
+            if (wire) glsafe(::glPolygonMode(GL_FRONT_AND_BACK, GL_LINE));
             volume.first->render(camera, colors,model,with_outline && volume.first->selected, volume.first->slice_error ? red_color : body_color, this_volume_has_override);
+            if (wire) glsafe(::glPolygonMode(GL_FRONT_AND_BACK, GL_FILL));
         }
         else {
             if (volume.first->selected) {
