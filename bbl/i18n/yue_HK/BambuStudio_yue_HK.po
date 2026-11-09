@@ -59911,3 +59911,48 @@ msgstr "呢個檔案已取消，寫咗一半嘅嘢會移除，其他檔案照做
 #. review-status: agent-drafted
 msgid "Show the written file in its folder"
 msgstr "喺資料夾顯示寫出嘅檔案"
+
+#. reviewed-category: hint
+#. review-status: agent-drafted
+msgid "Previews never run anything: images are drawn from their pixels, text is shown as plain text, and audio or video is played from a temporary file by the system player, which is removed when the preview changes. Text over 2 MB and images, audio or video over 64 MB show a size notice instead of a partial preview."
+msgstr "預覽唔會執行任何嘢：圖片由像素畫出嚟，文字以純文字顯示，聲音或者影片就由系統播放器播放一個臨時檔案，預覽一改就會移除。超過 2 MB 嘅文字同超過 64 MB 嘅圖片、聲音或者影片會顯示大小提示，唔會顯示一半嘅預覽。"
+
+#. reviewed-category: status
+#. review-status: agent-drafted
+msgid "This %s is %s, over the 64 MB preview limit. Save it to play it."
+msgstr "呢個%s有 %s，超過 64 MB 嘅預覽上限。儲存佢先可以播放。"
+
+#. reviewed-category: label
+#. review-status: agent-drafted
+msgid "audio"
+msgstr "聲音"
+
+#. reviewed-category: label
+#. review-status: agent-drafted
+msgid "video"
+msgstr "影片"
+
+#. reviewed-category: status
+#. review-status: agent-drafted
+msgid "The temporary file for the player could not be written. Save the bytes to play them in your own player."
+msgstr "寫唔到播放器要用嘅臨時檔案。將位元組儲存落嚟，用你自己嘅播放器播放。"
+
+#. reviewed-category: status
+#. review-status: agent-drafted
+msgid "The system player cannot open this format. Save the bytes to play them in your own player."
+msgstr "系統播放器開唔到呢個格式。將位元組儲存落嚟，用你自己嘅播放器播放。"
+
+#. reviewed-category: status
+#. review-status: agent-drafted
+msgid "This build has no media player. Save the bytes to play them in your own player."
+msgstr "呢個版本冇媒體播放器。將位元組儲存落嚟，用你自己嘅播放器播放。"
+
+#. reviewed-category: status
+#. review-status: agent-drafted
+msgid "Playing"
+msgstr "播放緊"
+
+#. reviewed-category: status
+#. review-status: agent-drafted
+msgid "Ready"
+msgstr "準備好"

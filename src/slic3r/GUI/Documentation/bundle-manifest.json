@@ -1485,12 +1485,12 @@
     {
       "route": "windows/base64-toolkit.md",
       "title": "Base64 toolkit",
-      "sha256": "b283c1dac5911575bdc9de1ba2b96b53098039e84d70c27c8e8eb65af219f687"
+      "sha256": "1484bc3145b71e0e1abc81f98290359baa02f79335a48453fbcfd2f1e000a5cd"
     },
     {
       "route": "windows/base64-toolkit.yue_HK.md",
       "title": "Base64 工具箱",
-      "sha256": "c0240769c37208392cb82bd5041c0336cf48185a7b37509d93a6eba5d8fd0a9b"
+      "sha256": "af2d31955e56269cb68fef1e2ea064b922eb1126d27388be586e70ad25be65d5"
     },
     {
       "route": "windows/bulk-filament-actions.md",
@@ -2305,7 +2305,7 @@
       "bytes": 16430
     }
   ],
-  "bundle_sha256": "5288f47234b0d1f2935a00153152a846d9173b25fcf0c8e39db025df78997010",
+  "bundle_sha256": "e27441cf38eaeba511c30f933dba65dd4d30a801777f07109a3865eb28133f7f",
   "unavailable_references": [
     {
       "source": "api/README.md",

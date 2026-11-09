@@ -38551,3 +38551,31 @@ msgstr ""
 
 msgid "Show the written file in its folder"
 msgstr ""
+
+msgid "Previews never run anything: images are drawn from their pixels, text is shown as plain text, and audio or video is played from a temporary file by the system player, which is removed when the preview changes. Text over 2 MB and images, audio or video over 64 MB show a size notice instead of a partial preview."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "This %s is %s, over the 64 MB preview limit. Save it to play it."
+msgstr ""
+
+msgid "audio"
+msgstr ""
+
+msgid "video"
+msgstr ""
+
+msgid "The temporary file for the player could not be written. Save the bytes to play them in your own player."
+msgstr ""
+
+msgid "The system player cannot open this format. Save the bytes to play them in your own player."
+msgstr ""
+
+msgid "This build has no media player. Save the bytes to play them in your own player."
+msgstr ""
+
+msgid "Playing"
+msgstr ""
+
+msgid "Ready"
+msgstr ""

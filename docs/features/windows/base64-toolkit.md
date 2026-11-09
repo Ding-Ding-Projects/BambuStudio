@@ -89,9 +89,14 @@ back into `report.pdf`. Pick files or drop them on either card.
   size, the parameters, whether it was Base64 or percent-encoded, and whether
   the bytes' signature matches the declared type.
 - **Preview**: images are drawn from their pixels (with size and colour), text
-  is shown as plain text in its charset, and Hex shows the first 4 KB. Text
-  over 2 MB and images over 64 MB show a size notice instead. Audio and video
-  are not played here; **Save bytes as a file** writes them for your own player.
+  is shown as plain text in its charset, and Hex shows the first 4 KB. Audio
+  and Video are offered when the bytes or the declared type say so: the bytes
+  go to a temporary file named by their digest, which the system player
+  (`wxMediaCtrl`) plays with Play, Pause and Stop and the position; the file is
+  removed when the preview changes or the panel closes, and nothing in the URL
+  is opened or run. Text over 2 MB and images, audio or video over 64 MB show a
+  size notice instead. A format the system player refuses says so;
+  **Save bytes as a file** writes them for your own player.
 
 ## History
 
@@ -123,6 +128,9 @@ stored in `base64-toolkit-history.jsonl` in the data folder, keeps the newest
   names, cancelling, a bad character in the second chunk with its exact offset,
   data: URLs, byte order marks, empty and missing files, and names outside
   ASCII. A negative build drops the encoder's last group and must fail.
+- `tests/base64_media_preview.test.mjs`: the sources of the audio and video
+  preview: the choices, when they are offered, the temporary file named by its
+  digest, its removal, and the size limit. Each check fails on a broken copy.
 - `tests/base64_per_file.test.mjs`: the sources of pausing and cancelling one
   file: the worker skips a paused queued file and waits inside a paused
   running one, a cancel wakes a paused file, and the buttons and the row menu
@@ -134,6 +142,6 @@ stored in `base64-toolkit-history.jsonl` in the data folder, keeps the newest
 
 ## Not done yet
 
-Audio and video preview, and opening a Text tab session in a second tab, are
-designed but not built. Pausing or cancelling one file alone was built on 9
-November 2026 and has not yet been run on Windows.
+Opening a Text tab session in a second tab is designed but not built. Pausing
+or cancelling one file alone and the audio and video preview were built on 9
+November 2026 and have not yet been run on Windows.

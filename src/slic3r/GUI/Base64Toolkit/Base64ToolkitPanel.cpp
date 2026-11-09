@@ -30,6 +30,8 @@
 #include <wx/filedlg.h>
 #include <wx/image.h>
 #include <wx/log.h>
+#include <wx/mediactrl.h>
+#include <wx/stdpaths.h>
 #include <wx/mstream.h>
 #include <wx/numformatter.h>
 #include <wx/simplebook.h>
@@ -363,6 +365,7 @@ Base64ToolkitPanel::Base64ToolkitPanel(wxWindow *parent)
     : wxPanel(parent, wxID_ANY)
     , m_convert_timer(this, wxWindow::NewControlId())
     , m_job_timer(this, wxWindow::NewControlId())
+    , m_media_timer(this, wxWindow::NewControlId())
     , m_url_timer(this, wxWindow::NewControlId())
     , m_history(fs::u8path(data_dir()) / "base64-toolkit-history.jsonl")
 {
@@ -416,6 +419,8 @@ Base64ToolkitPanel::~Base64ToolkitPanel()
     m_convert_timer.Stop();
     m_job_timer.Stop();
     m_url_timer.Stop();
+    m_media_timer.Stop();
+    media_unload();
     stop_worker();
 }
 
@@ -1619,10 +1624,47 @@ wxWindow *Base64ToolkitPanel::build_url_page(wxWindow *parent)
     m_url_signature = make_label(read, Label::Body_13, wxString(), true, true);
     rs->Add(m_url_signature, 0, wxEXPAND | wxTOP, FromDIP(4));
     auto *pr = new wxBoxSizer(wxHORIZONTAL);
-    add_choice(read, pr, m_url_preview, _L("Preview"), {{0, _L("Image")}, {1, _L("Text")}, {2, _L("Hex")}}, [this](int v) { url_show_preview(v); });
+    add_choice(read, pr, m_url_preview, _L("Preview"), {{0, _L("Image")}, {1, _L("Text")}, {2, _L("Hex")}, {3, _L("Audio")}, {4, _L("Video")}},
+               [this](int v) { url_show_preview(v); });
     rs->Add(pr, 0, wxTOP, gap);
     m_url_image = new wxStaticBitmap(read, wxID_ANY, wxNullBitmap);
     rs->Add(m_url_image, 0, wxTOP, FromDIP(4));
+#if wxUSE_MEDIACTRL
+    // The player is created once, hidden, and given a temporary file to play
+    // when an audio or video preview is chosen. It never loads the URL itself.
+    auto *media = new wxMediaCtrl();
+    if (media->Create(read, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(320), FromDIP(180)), 0)) {
+        m_url_media = media;
+        media->Bind(wxEVT_MEDIA_LOADED, [this](wxMediaEvent &) { media_refresh(); });
+        media->Bind(wxEVT_MEDIA_FINISHED, [this](wxMediaEvent &) { media_refresh(); });
+        media->Bind(wxEVT_MEDIA_STATECHANGED, [this](wxMediaEvent &) { media_refresh(); });
+        media->Hide();
+        rs->Add(media, 0, wxTOP, FromDIP(4));
+    } else {
+        media->Destroy();
+    }
+#endif
+    auto *media_row = new wxPanel(read, wxID_ANY);
+    media_row->SetBackgroundColour(read->GetBackgroundColour());
+    auto *mr = new wxBoxSizer(wxHORIZONTAL);
+    m_media_play = make_button(media_row, _L("Play"), GlyphPlay, true);
+    m_media_play->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { media_toggle(); });
+    m_media_stop = make_button(media_row, _L("Stop"), GlyphCancel);
+    m_media_stop->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) {
+#if wxUSE_MEDIACTRL
+        if (auto *mc = dynamic_cast<wxMediaCtrl *>(m_url_media)) mc->Stop();
+#endif
+        media_refresh();
+    });
+    m_media_info = make_label(media_row, Label::Body_12, wxString(), true, true);
+    mr->Add(m_media_play, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(6));
+    mr->Add(m_media_stop, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(10));
+    mr->Add(m_media_info, 1, wxALIGN_CENTER_VERTICAL);
+    media_row->SetSizer(mr);
+    m_url_media_row = media_row;
+    media_row->Hide();
+    rs->Add(media_row, 0, wxEXPAND | wxTOP, FromDIP(4));
+    m_media_timer.Bind(wxEVT_TIMER, [this](wxTimerEvent &) { media_refresh(); });
     m_url_image_info = make_label(read, Label::Body_12, wxString(), true, true);
     rs->Add(m_url_image_info, 0, wxEXPAND | wxTOP, FromDIP(4));
     m_url_preview_text = new TextArea(read, wxString(), wxSize(-1, FromDIP(200)), wxTE_READONLY);
@@ -1636,7 +1678,7 @@ wxWindow *Base64ToolkitPanel::build_url_page(wxWindow *parent)
     m_url_save->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { url_save_bytes(); });
     rs->Add(m_url_save, 0, wxTOP, FromDIP(8));
     rs->Add(make_label(read, Label::Body_12,
-                       _L("Previews never run anything: images are drawn from their pixels and text is shown as plain text. Text over 2 MB and images over 64 MB show a size notice instead of a partial preview. Audio and video are not played here; save the bytes to play them in your own player."),
+                       _L("Previews never run anything: images are drawn from their pixels, text is shown as plain text, and audio or video is played from a temporary file by the system player, which is removed when the preview changes. Text over 2 MB and images, audio or video over 64 MB show a size notice instead of a partial preview."),
                        true, true),
             0, wxEXPAND | wxTOP | wxBOTTOM, gap);
     read->SetSizer(rs);
@@ -1805,8 +1847,12 @@ void Base64ToolkitPanel::url_read()
     const B64::DetectedType type = B64::detect_type(m_url_parsed.bytes);
     const bool image = m_url_parsed_ok && type.preview == B64::DetectedType::Preview::Image;
     const bool textual = m_url_parsed_ok && (type.preview == B64::DetectedType::Preview::Text || m_url_parsed.mime.rfind("text/", 0) == 0);
-    for (auto &[v, button] : m_url_preview.buttons) button->Enable(m_url_parsed_ok && (v == 2 || (v == 0 && image) || (v == 1 && textual)));
-    const int kind = image ? 0 : textual ? 1 : 2;
+    const bool player = m_url_media != nullptr;
+    const bool audio = m_url_parsed_ok && player && (type.preview == B64::DetectedType::Preview::Audio || m_url_parsed.mime.rfind("audio/", 0) == 0);
+    const bool video = m_url_parsed_ok && player && (type.preview == B64::DetectedType::Preview::Video || m_url_parsed.mime.rfind("video/", 0) == 0);
+    for (auto &[v, button] : m_url_preview.buttons)
+        button->Enable(m_url_parsed_ok && (v == 2 || (v == 0 && image) || (v == 1 && textual) || (v == 3 && audio) || (v == 4 && video)));
+    const int kind = image ? 0 : textual ? 1 : audio ? 3 : video ? 4 : 2;
     set_choice(m_url_preview, kind);
     url_show_preview(m_url_parsed_ok ? kind : -1);
     m_url_save->Enable(m_url_parsed_ok);
@@ -1819,7 +1865,17 @@ void Base64ToolkitPanel::url_show_preview(int kind)
     m_url_image_info->Hide();
     m_url_preview_text->Hide();
     m_url_preview_note->SetLabel(wxString());
-    if (kind == 0) {
+    media_unload();
+    if (kind == 3 || kind == 4) {
+        if (bytes.size() > kImagePreview) {
+            m_url_preview_note->SetLabel(wxString::Format(_L("This %s is %s, over the 64 MB preview limit. Save it to play it."),
+                                                          kind == 3 ? _L("audio") : _L("video"), size_text(bytes.size())));
+        } else {
+            std::string ext = B64::extension_for_mime(m_url_parsed.mime);
+            if (ext.empty()) ext = B64::detect_type(bytes).extension;
+            media_load(bytes, ext.empty() ? ".bin" : ext);
+        }
+    } else if (kind == 0) {
         if (bytes.size() > kImagePreview) {
             m_url_preview_note->SetLabel(wxString::Format(_L("This image is %s, over the 64 MB preview limit. Save it to view it."), size_text(bytes.size())));
         } else {
@@ -1871,6 +1927,83 @@ void Base64ToolkitPanel::url_show_preview(int kind)
         page->Layout();
         if (auto *scrolled = dynamic_cast<wxScrolledWindow *>(page)) scrolled->FitInside();
     }
+}
+
+void Base64ToolkitPanel::media_load(const B64::Bytes &bytes, const std::string &extension)
+{
+#if wxUSE_MEDIACTRL
+    auto *mc = dynamic_cast<wxMediaCtrl *>(m_url_media);
+    if (!mc) return;
+    // The file is named by its content, in the temporary folder, and removed
+    // when the preview changes or the panel closes.
+    const std::string digest = B64::sha256_hex(bytes.data(), bytes.size());
+    const fs::path    path   = to_path(wxStandardPaths::Get().GetTempDir()) / ("bambu-base64-" + digest.substr(0, 16) + extension);
+    if (!write_all(path, bytes.data(), bytes.size())) {
+        m_url_preview_note->SetLabel(_L("The temporary file for the player could not be written. Save the bytes to play them in your own player."));
+        return;
+    }
+    m_media_temp = path;
+    if (!mc->Load(wxString::FromUTF8(path.u8string()))) {
+        m_url_preview_note->SetLabel(_L("The system player cannot open this format. Save the bytes to play them in your own player."));
+        media_unload();
+        return;
+    }
+    mc->Show();
+    if (m_url_media_row) m_url_media_row->Show();
+    m_media_info->SetLabel(_L("Loading"));
+    m_media_timer.Start(500);
+#else
+    (void) bytes;
+    (void) extension;
+    m_url_preview_note->SetLabel(_L("This build has no media player. Save the bytes to play them in your own player."));
+#endif
+}
+
+void Base64ToolkitPanel::media_unload()
+{
+    m_media_timer.Stop();
+#if wxUSE_MEDIACTRL
+    if (auto *mc = dynamic_cast<wxMediaCtrl *>(m_url_media)) {
+        mc->Stop();
+        mc->Hide();
+    }
+#endif
+    if (m_url_media_row) m_url_media_row->Hide();
+    if (!m_media_temp.empty()) {
+        std::error_code ec;
+        fs::remove(m_media_temp, ec);
+        m_media_temp.clear();
+    }
+}
+
+void Base64ToolkitPanel::media_toggle()
+{
+#if wxUSE_MEDIACTRL
+    auto *mc = dynamic_cast<wxMediaCtrl *>(m_url_media);
+    if (!mc) return;
+    if (mc->GetState() == wxMEDIASTATE_PLAYING) mc->Pause();
+    else mc->Play();
+#endif
+    media_refresh();
+}
+
+void Base64ToolkitPanel::media_refresh()
+{
+#if wxUSE_MEDIACTRL
+    auto *mc = dynamic_cast<wxMediaCtrl *>(m_url_media);
+    if (!mc || !m_media_info) return;
+    const bool playing = mc->GetState() == wxMEDIASTATE_PLAYING;
+    m_media_play->SetLabel(playing ? _L("Pause") : _L("Play"));
+    m_media_play->SetGlyph(playing ? GlyphPause : GlyphPlay);
+    const auto seconds = [](wxFileOffset ms) {
+        const long s = long(ms / 1000);
+        return wxString::Format("%ld:%02ld", s / 60, s % 60);
+    };
+    const wxFileOffset length = mc->Length(), at = mc->Tell();
+    if (length > 0) m_media_info->SetLabel(wxString::Format(_L("%s of %s"), seconds(at), seconds(length)));
+    else m_media_info->SetLabel(playing ? _L("Playing") : _L("Ready"));
+    if (m_url_media_row) m_url_media_row->Layout();
+#endif
 }
 
 void Base64ToolkitPanel::url_save_bytes()

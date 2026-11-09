@@ -126,6 +126,12 @@ private:
     void url_rebuild();
     void url_read();
     void url_show_preview(int kind);
+    // Audio and video: the bytes go to a temporary file the player loads;
+    // nothing else in the URL is opened or run.
+    void media_load(const Base64Toolkit::Bytes &bytes, const std::string &extension);
+    void media_unload();
+    void media_toggle();
+    void media_refresh();
     void url_save_bytes();
     void url_copy();
     void url_save_text();
@@ -213,6 +219,13 @@ private:
     Label          *m_url_preview_note = nullptr;
     Button         *m_url_save        = nullptr;
     wxTimer         m_url_timer;
+    wxWindow       *m_url_media       = nullptr; // a wxMediaCtrl when the build has one
+    wxWindow       *m_url_media_row   = nullptr;
+    Button         *m_media_play      = nullptr;
+    Button         *m_media_stop      = nullptr;
+    Label          *m_media_info      = nullptr;
+    wxTimer         m_media_timer;
+    std::filesystem::path m_media_temp;
     Base64Toolkit::Bytes m_url_source_bytes;
     std::string          m_url_source_name;
     Base64Toolkit::DataUrl m_url_parsed;
