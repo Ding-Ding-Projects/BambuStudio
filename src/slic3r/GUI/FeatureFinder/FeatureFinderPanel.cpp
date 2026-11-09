@@ -12,6 +12,7 @@
 #include "../Plater.hpp"
 #include "../Widgets/Button.hpp"
 #include "../Widgets/Label.hpp"
+#include "../Widgets/LabelGrowWithWrap.hpp"
 #include "../Widgets/MD3ScrolledWindow.hpp"
 #include "../Widgets/MD3Tokens.hpp"
 #include "../Widgets/MaterialIcon.hpp"
@@ -311,7 +312,6 @@ wxPanel *FeatureFinderPanel::make_row(wxWindow *parent, const Feature &feature)
     auto *row = new wxPanel(parent, wxID_ANY);
     row->SetName(wxString::FromUTF8(feature.id));
     row->SetBackgroundColour(base);
-    row->SetMinSize(wxSize(-1, FromDIP(kRowHeight)));
     auto *sizer = new wxBoxSizer(wxHORIZONTAL);
 
     const wxColour glyph_colour = StateColor::semantic(ready ? MD3::Role::Primary : MD3::Role::OnSurfaceVariant);
@@ -331,6 +331,7 @@ wxPanel *FeatureFinderPanel::make_row(wxWindow *parent, const Feature &feature)
     auto *text = new wxBoxSizer(wxVERTICAL);
     auto *title = new Label(row, Label::Head_14, _(feature.title), LB_AUTO_WRAP | wxST_NO_AUTORESIZE);
     title->SetMinSize(wxSize(0, -1));
+    GrowWithWrap(title);
     title->SetBackgroundColour(base);
     title->SetForegroundColour(StateColor::semantic(ready ? MD3::Role::OnSurface : MD3::Role::OnSurfaceVariant));
     text->Add(title, 0, wxEXPAND);
@@ -340,6 +341,7 @@ wxPanel *FeatureFinderPanel::make_row(wxWindow *parent, const Feature &feature)
     // its lines (two in bilingual mode) up front.
     const int where_lines = 1 + int(where->GetLabel().Freq('\n'));
     where->SetMinSize(wxSize(0, where->GetCharHeight() * where_lines + FromDIP(2)));
+    GrowWithWrap(where);
     where->SetBackgroundColour(base);
     where->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
     text->Add(where, 0, wxEXPAND | wxTOP, FromDIP(2));
@@ -382,9 +384,10 @@ wxPanel *FeatureFinderPanel::make_row(wxWindow *parent, const Feature &feature)
             _L("Designed and planned for this app. It is not in this build yet.") : reason);
     }
     row->SetSizer(sizer);
-    // An explicit min height wins over the content's own size, so a row whose
-    // bilingual labels need more than kRowHeight was cut. Take the larger.
-    row->SetMinSize(wxSize(-1, std::max(FromDIP(kRowHeight), sizer->CalcMin().y)));
+    // A spacer, not an explicit min height, keeps the row at least kRowHeight:
+    // an explicit min wins over the content's own size and would cut a row
+    // whose bilingual labels need more height.
+    sizer->Add(0, FromDIP(kRowHeight));
     return row;
 }
 

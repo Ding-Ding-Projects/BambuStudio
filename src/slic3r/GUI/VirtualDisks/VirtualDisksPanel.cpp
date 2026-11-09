@@ -501,8 +501,11 @@ void VirtualDisksPanel::build()
     auto *details = new wxBoxSizer(wxVERTICAL);
     m_title = text(pane, Label::Head_16, _L("Choose a disk"));
     details->Add(m_title, 0);
-    m_state = text(pane, Label::Body_13, wxString(), true);
-    details->Add(m_state, 0, wxTOP, FromDIP(2));
+    // Wraps inside the details column instead of running past its edge.
+    m_state = new Label(pane, Label::Body_13, wxString(), LB_AUTO_WRAP | wxST_NO_AUTORESIZE);
+    m_state->SetMinSize(wxSize(0, -1));
+    m_state->SetForegroundColour(role(MD3::Role::OnSurfaceVariant));
+    details->Add(m_state, 0, wxEXPAND | wxTOP, FromDIP(2));
     m_problem = text(pane, Label::Body_13, wxString());
     m_problem->SetForegroundColour(role(MD3::Role::Error));
     details->Add(m_problem, 0, wxTOP, FromDIP(6));
@@ -665,9 +668,12 @@ void VirtualDisksPanel::relayout_details()
     // Empty problem and facts lines would leave a gap above the actions.
     m_problem->Show(!m_problem->GetLabel().IsEmpty());
     m_facts->Show(!m_facts->GetLabel().IsEmpty());
-    Layout();
-    m_details_pane->Layout();
-    m_details_pane->FitInside();
+    // The wrapped state line knows its height only after the first pass.
+    for (int pass = 0; pass < 2; ++pass) {
+        Layout();
+        m_details_pane->Layout();
+        m_details_pane->FitInside();
+    }
 }
 
 void VirtualDisksPanel::refresh_details()

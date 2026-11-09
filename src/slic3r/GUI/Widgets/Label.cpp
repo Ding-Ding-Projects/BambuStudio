@@ -1,5 +1,6 @@
 #include "libslic3r/Utils.hpp"
 #include "Label.hpp"
+#include "LabelGrowWithWrap.hpp"
 #include "../PersonalVocabulary.hpp"
 #include "MaterialIcon.hpp"
 #include "StateColor.hpp"
@@ -7,6 +8,8 @@
 
 #include "../GUI_App.hpp"
 #include "libslic3r/AppConfig.hpp"
+
+#include <wx/scrolwin.h>
 
 #include <algorithm>
 #include <cmath>
@@ -817,6 +820,32 @@ void Label::Wrap(int width)
     InvalidateBestSize();
     const int overflow = GetBestSize().GetWidth() - width;
     if (overflow > 0) DoWrap(width - overflow);
+}
+
+void GrowWithWrap(Label *self)
+{
+    self->Bind(wxEVT_SIZE, [self](wxSizeEvent &evt) {
+        evt.Skip();
+        self->CallAfter([self]() {
+            if (self->IsBeingDeleted()) return;
+            self->InvalidateBestSize();
+            const int wrapped = self->GetBestSize().GetHeight();
+            if (wrapped <= self->GetMinSize().GetHeight()) return;
+            self->SetMinSize(wxSize(self->GetMinSize().GetWidth(), wrapped));
+            for (wxWindow *w = self->GetParent(); w; w = w->GetParent()) {
+                w->InvalidateBestSize();
+                if (auto *scrolled = dynamic_cast<wxScrolledWindow *>(w)) {
+                    scrolled->Layout();
+                    scrolled->FitInside();
+                    break;
+                }
+                if (w->IsTopLevel()) {
+                    w->Layout();
+                    break;
+                }
+            }
+        });
+    });
 }
 
 void Label::DoWrap(int width)

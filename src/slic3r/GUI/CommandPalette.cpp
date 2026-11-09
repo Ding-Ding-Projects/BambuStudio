@@ -22,6 +22,7 @@
 #include "NotificationManager.hpp"
 #include "Widgets/Button.hpp"
 #include "Widgets/Label.hpp"
+#include "Widgets/LabelGrowWithWrap.hpp"
 #include "Widgets/MaterialIcon.hpp"
 #include "Widgets/MD3DialogChrome.hpp"
 #include "Widgets/MD3Tokens.hpp"
@@ -408,7 +409,6 @@ wxPanel *CommandPalette::make_row(const Entry &entry, int index)
 
     auto *row = new wxPanel(m_list, wxID_ANY);
     row->SetBackgroundColour(base);
-    row->SetMinSize(wxSize(-1, FromDIP(kRowHeight)));
     row->Bind(wxEVT_PAINT, [this, row, index](wxPaintEvent &) {
         wxPaintDC dc(row);
         if (m_selected == index) {
@@ -444,12 +444,14 @@ wxPanel *CommandPalette::make_row(const Entry &entry, int index)
         l->SetMinSize(wxSize(0, l->GetCharHeight() * (1 + int(l->GetLabel().Freq('\n'))) + FromDIP(2)));
     };
     reserve_lines(title);
+    GrowWithWrap(title);
     title->SetBackgroundColour(base);
     title->SetForegroundColour(on);
     text_col->Add(title, 0, wxEXPAND);
     if (!entry.desc.IsEmpty()) {
         auto *desc = new Label(row, Label::Body_13, entry.desc, LB_AUTO_WRAP | wxST_NO_AUTORESIZE);
         reserve_lines(desc);
+        GrowWithWrap(desc);
         desc->SetBackgroundColour(base);
         desc->SetForegroundColour(on_var);
         text_col->Add(desc, 0, wxEXPAND | wxTOP, FromDIP(4));
@@ -460,9 +462,10 @@ wxPanel *CommandPalette::make_row(const Entry &entry, int index)
         add_rich_controls(row, sizer, entry.rich);
 
     row->SetSizer(sizer);
-    // An explicit min height wins over the content's own size, so a row whose
-    // bilingual labels need more than kRowHeight was cut. Take the larger.
-    row->SetMinSize(wxSize(-1, std::max(FromDIP(kRowHeight), sizer->CalcMin().y)));
+    // A spacer, not an explicit min height, keeps the row at least kRowHeight:
+    // an explicit min wins over the content's own size and would cut a row
+    // whose bilingual labels need more height.
+    sizer->Add(0, FromDIP(kRowHeight));
 
     auto activate = [this, index]() { select_row(index); run_selected(); };
     for (wxWindow *w : {static_cast<wxWindow *>(row), static_cast<wxWindow *>(icon),
