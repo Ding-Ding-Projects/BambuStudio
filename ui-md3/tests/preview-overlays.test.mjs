@@ -30,6 +30,16 @@ const body = (source, signature) => {
   return source.slice(start, next === -1 ? undefined : next);
 };
 
+// A helper in the renderer's anonymous namespace is indented one level, so its
+// body ends at the first closing brace at that indent.
+const helper = (source, signature) => {
+  const start = source.indexOf(signature);
+  assert.notEqual(start, -1, `${signature} exists`);
+  const end = source.indexOf('\n    }\n', start);
+  assert.ok(end > start, `${signature} has a body`);
+  return source.slice(start, end);
+};
+
 test('the notification column in Preview stops left of the expanded legend dock', async () => {
   assert.match(base, /float BaseRenderer::get_legend_dock_width\(\) const\s*\{\s*return m_legend_expanded \? m_legend_width : 0\.0f;\s*\}/,
     'the dock reports its width only while it is expanded');
@@ -104,9 +114,19 @@ test('the dock blocks span the dock and the grouping card is sized from its cont
   assert.match(base, /ImGui::SetCursorScreenPos\(ImVec2\(dock_x0, ImGui::GetCursorScreenPos\(\)\.y\)\);\s*ImGui::SetNextItemWidth\(dock_span \+ 2\.0f \* ImGui::GetFrameHeight\(\)\);\s*if \(ImGui::BBLBeginCombo\("##preview_view_overflow"/,
     'the view-mode combo gets the dock span, not the default 65% item width');
   assert.doesNotMatch(base, /pop_combo_style\(\);\s*ImGui::SameLine\(\);\s*ImGui::Dummy\(/, 'no spacer after the full-width combo: it would switch the horizontal scrollbar on');
-  assert.match(base, /const ImVec2 stats_min\(dock_x0, stats_rect_min\.y - 4\.0f \* m_scale\);\s*const ImVec2 stats_max\(std::max\(dock_x0 \+ dock_span, stats_rect_max\.x \+ 6\.0f \* m_scale\),/,
-    'the statistics card spans the dock instead of hugging its widest line');
-  assert.doesNotMatch(base, /stats_rect_min\.x - 6\.0f \* m_scale/, 'its left outline no longer starts outside the clip rect');
+  // The summary well replaces the old dock-spanning, outlined statistics card.
+  assert.match(base, /well_begin\(well, imgui, m_is_dark, m_scale, dock_x0 \+ 8\.0f \* m_scale, dock_x0 \+ dock_span - 8\.0f \* m_scale\);/,
+    'the well is inset 8 px from both dock edges, inside the clip rect');
+  const wellEnd = helper(base, 'void well_end(SummaryWell &w)');
+  assert.match(wellEnd, /AddRectFilled\(ImVec2\(w\.left, w\.top\), ImVec2\(w\.right, w\.y\),\s*md3_imgui_col32\(MD3::Role::SurfaceContainerLowest, w\.dark\),\s*float\(MD3::Metrics::radius_well\) \* w\.scale\)/,
+    'the well fills SurfaceContainerLowest with the well radius');
+  assert.doesNotMatch(wellEnd, /AddRect\(/, 'the well draws no outline');
+  assert.match(helper(base, 'void well_begin('), /w\.y\s*=\s*w\.top \+ 10\.0f \* scale;/, 'top padding is 10');
+  assert.match(wellEnd, /w\.y \+= 12\.0f \* w\.scale;/, 'bottom padding is 12');
+  // Negative cases: the old card geometry must not come back.
+  assert.doesNotMatch(base, /stats_rect_min|stats_rect_max|stats_radius/, 'no hugging, outlined statistics card');
+  assert.doesNotMatch(base, /ImVec2 stats_min\(dock_x0,/, 'the well never starts flush with the dock edge');
+  assert.doesNotMatch(base, /dock_x0 \+ 8\.0f \* m_scale - /, 'and never starts left of the clip rect');
 
   const cardStart = base.indexOf('void BaseRenderer::render_legend_color_arr_recommen(');
   const cardEnd = base.indexOf('void BaseRenderer::update_moves_slider(');
@@ -183,4 +203,48 @@ test('the All Plates Stats tile draws its glyph and label above the wash in opaq
     assert.ok(contrast(rgb(hex('onSurface')), band) >= 4.5, `${theme}: the label reads on the darkest band`);
     assert.ok(contrast(rgb(hex('onSurfaceVariant')), band) >= 3.0, `${theme}: the glyph reads on the darkest band`);
   }
+});
+
+test('the dock chips, group labels and statistic rows follow the board', () => {
+  // Group labels: no glyph, 0.80 font scale, OnSurfaceVariant, uppercase.
+  const label = helper(base, 'void imgui_group_label(');
+  assert.match(label, /SetWindowFontScale\(0\.80f\)/, 'group labels draw at 0.80 scale');
+  assert.match(label, /Role::OnSurfaceVariant/);
+  assert.match(label, /uppercase_ascii\(text\)/);
+  assert.doesNotMatch(base, /imgui_section_header/, 'the glyph-led section header is gone');
+  assert.doesNotMatch(base, /MaterialIcon::(Palette|Tune|Insights)/, 'no group label carries a glyph');
+  // Chips: 30 px, radius 9 from the shared tokens, drawn as draw-list items.
+  assert.match(base, /const float chip_height = float\(MD3::Metrics::chip_height\) \* m_scale;/);
+  assert.match(base, /const float chip_radius = float\(MD3::Metrics::radius_chip\) \* m_scale;/);
+  assert.doesNotMatch(base, /0\.5f \* chip_height/, 'chips are no longer pills');
+  assert.doesNotMatch(base, /ImGui::Button\(content\.c_str\(\)/, 'the glyph is not part of a button string');
+  assert.match(base, /m\.glyph_x = chip_border \+ 10\.0f \* m_scale;\s*m\.label_x = m\.glyph_x \+ 16\.0f \* m_scale \+ 6\.0f \* m_scale;/, 'glyph slot: 10 before, 16 wide, 6 after');
+  assert.match(base, /m\.label_x = chip_border \+ 12\.0f \* m_scale;/, 'plain chips pad 12');
+  assert.match(base, /chip_metrics\(chips\[i \+ 1\]\)\.width/, 'the wrap predictor measures with the drawing metrics');
+  assert.match(base, /MD3::Role::SecondaryContainer/, 'a selected chip fills SecondaryContainer');
+  assert.doesNotMatch(base, /selected \? primary : chip_transparent/, 'no Primary fill for a selected chip');
+  // Statistic rows: label OnSurfaceVariant, value in the mono face on the value edge.
+  const row = helper(base, 'void well_stat_row(');
+  assert.match(row, /md3_imgui_col32\(total \? MD3::Role::OnSurface : MD3::Role::OnSurfaceVariant, w\.dark\)/, 'the label is OnSurfaceVariant');
+  assert.match(row, /w\.value_right\(\) - value_size\.x/, 'the value is right-aligned to the value edge');
+  assert.match(row, /push_mono_font\(\)/);
+  assert.match(row, /SetWindowFontScale\(0\.86f\)/, 'the Cantonese caption is smaller');
+  assert.match(row, /bilingual \? caption_line : 0\.0f/, 'every bilingual row reserves the caption line');
+  assert.match(row, /md3_accent_readable\(MD3::Role::Primary, MD3::Role::SurfaceContainerLowest, w\.dark\)/, 'the Primary total falls back when contrast fails');
+  // Ink table: right-aligned headers, swatch ring, row hover, scroll inside the well.
+  const header = helper(base, 'void well_ink_header(');
+  assert.match(header, /right\[c\] - ImGui::CalcTextSize\(text\.c_str\(\)\)\.x/, 'column headers are right-aligned');
+  const rows = helper(base, 'void well_ink_draw_rows(');
+  assert.match(rows, /MD3::Role::OutlineVariant, w\.dark\), 4\.0f \* scale, 0, 1\.0f \* scale\)/, 'swatches carry a 1 px OutlineVariant ring');
+  assert.match(rows, /Role::SurfaceContainerHigh, w\.dark\), 8\.0f \* scale\)/, 'row hover is a radius 8 SurfaceContainerHigh tile');
+  assert.match(helper(base, 'void well_ink_group('), /BeginChild\("color_prints"/, 'a tall ink list scrolls in a child inside the well');
+  // All-plates statistics use the same well and rows.
+  const platesStart = base.indexOf('void BaseRenderer::render_all_plates_stats(');
+  const platesEnd = base.indexOf('ImGui::PopStyleColor(8);', platesStart);
+  assert.ok(platesStart !== -1 && platesEnd > platesStart, 'the all-plates window exists');
+  const plates = base.slice(platesStart, platesEnd);
+  assert.match(plates, /well_begin\(well,/);
+  assert.match(plates, /well_ink_group\(well,/);
+  assert.match(plates, /well_stat_row\(well, _u8L\("Plate"\)/);
+  assert.doesNotMatch(plates, /append_item|imgui\.title\(/, 'no second table style');
 });
