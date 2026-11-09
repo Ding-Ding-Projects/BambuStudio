@@ -181,6 +181,7 @@ void SearchField::SetPlaceholder(const wxString &placeholder)
     m_placeholder = placeholder;
     if (m_text)
         m_text->SetHint(placeholder);
+    layoutText();
     applyAccessibleName();
 }
 
@@ -427,6 +428,17 @@ void SearchField::layoutText()
         th = m_text->GetSize().y;
     const int y = (sz.y - th) / 2;
     m_text->SetSize(lead, y, w, th);
+
+    // The native cue banner clips mid-letter when the placeholder is wider than
+    // the entry, so shorten it with an ellipsis to the width it actually gets.
+    if (!m_placeholder.IsEmpty() && w > 0) {
+        wxClientDC dc(m_text);
+        dc.SetFont(m_text->GetFont());
+        const wxString fitted = wxControl::Ellipsize(m_placeholder, dc, wxELLIPSIZE_END,
+                                                     std::max(0, w - FromDIP(8)));
+        if (fitted != m_text->GetHint())
+            m_text->SetHint(fitted);
+    }
 
     const int action_y = (sz.y - action) / 2;
     int       action_x = sz.x - right - action;

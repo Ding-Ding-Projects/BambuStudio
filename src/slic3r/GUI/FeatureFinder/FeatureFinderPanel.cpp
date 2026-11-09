@@ -329,13 +329,13 @@ wxPanel *FeatureFinderPanel::make_row(wxWindow *parent, const Feature &feature)
     sizer->Add(icon, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(8));
 
     auto *text = new wxBoxSizer(wxVERTICAL);
-    auto *title = new Label(row, Label::Head_14, _(feature.title), LB_AUTO_WRAP | wxST_NO_AUTORESIZE);
+    auto *title = new Label(row, Label::Head_14, wxControl::EscapeMnemonics(_(feature.title)), LB_AUTO_WRAP | wxST_NO_AUTORESIZE);
     title->SetMinSize(wxSize(0, -1));
     GrowWithWrap(title);
     title->SetBackgroundColour(base);
     title->SetForegroundColour(StateColor::semantic(ready ? MD3::Role::OnSurface : MD3::Role::OnSurfaceVariant));
     text->Add(title, 0, wxEXPAND);
-    auto *where = new Label(row, Label::Body_12, _(feature.where), LB_AUTO_WRAP | wxST_NO_AUTORESIZE);
+    auto *where = new Label(row, Label::Body_12, wxControl::EscapeMnemonics(_(feature.where)), LB_AUTO_WRAP | wxST_NO_AUTORESIZE);
     // A wrapping label reports no height until it has been wrapped once, and
     // the row was laid out before that, so the line ended up 0 px tall. Reserve
     // its lines (two in bilingual mode) up front.
