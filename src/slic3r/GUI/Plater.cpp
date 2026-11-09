@@ -13381,8 +13381,8 @@ Plater::priv::priv(Plater *q, MainFrame *main_frame)
             *down               = wxDefaultPosition;
             if (moved || (wxGetApp().imgui() && wxGetApp().imgui()->want_mouse())) return;
             canvas->CallAfter([this, canvas, at]() {
-                if (wxMenu *menu = q->preview_menu(); menu && menu->GetMenuItemCount() > 0)
-                    q->PopupMenu(menu, q->ScreenToClient(canvas->ClientToScreen(at)));
+                if (wxMenu *menu = this->q->preview_menu(); menu && menu->GetMenuItemCount() > 0)
+                    this->q->PopupMenu(menu, this->q->ScreenToClient(canvas->ClientToScreen(at)));
             });
         });
     }
