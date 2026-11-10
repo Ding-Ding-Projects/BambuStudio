@@ -1,6 +1,6 @@
 ---
 translation-of: README.md
-source-sha256: 69491b644048d560f0cdf4a23bae696d32515c9155d4235d15483718150f11a6
+source-sha256: 06acb28b0d5e435900e7a41b923e2a9912a6a8bc0c4e305f70846f6565803609
 review-status: agent-drafted
 ---
 
@@ -42,6 +42,7 @@ review-status: agent-drafted
 - [打印模擬播放（進給速率真實）](print-simulation.md)
 - [板打印動作同材料對應](print-actions.md)
 - [快速開印模式](express-print-mode.md)：跳過可選嘅開印前準備，保留加熱、歸零、入墨、清料線同等溫。
+- [潤滑模式同打印旋律](lubricate-mode.md)：開印時或者喺 Device 頁將熱床同打印頭行晒全程，配貨車倒後嘀嘀聲，或者喺打印對話框揀第二首歌。
 - [LAN 場發送同設備資格](lan-farm-sending.md)
 - [AI 打印機監察（本地模型）](ai-printer-watch.md)
 - [AI 墨水掃描器（QR 手機上傳 → AMS 插槽）](ai-filament-scanner.md)

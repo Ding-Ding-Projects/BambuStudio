@@ -50,6 +50,7 @@
 - [Print simulation playback (feedrate-true)](print-simulation.md)
 - [Plate print actions and material mapping](print-actions.md)
 - [Express print mode](express-print-mode.md): skip the optional pre-print preparation and keep heating, homing, the filament load, the purge line and the temperature waits.
+- [Lubricate mode and print melodies](lubricate-mode.md): run the bed and toolhead through full travel at print start or from the Device page, with a truck backup beep or another tune chosen in the print dialog.
 - [LAN farm sending and device eligibility](lan-farm-sending.md)
 - [AI printer watch (local models)](ai-printer-watch.md)
 - [AI filament scanner (QR phone upload → AMS slot)](ai-filament-scanner.md)

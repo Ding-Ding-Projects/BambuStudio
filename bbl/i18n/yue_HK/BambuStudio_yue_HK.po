@@ -60045,7 +60045,7 @@ msgstr "歡樂頌"
 #. reviewed-category: slicing-printing
 #. review-status: agent-drafted
 msgid "Twinkle, Twinkle, Little Star"
-msgstr "一閃一閃小星星"
+msgstr "一閃一閃亮晶晶"
 
 #. reviewed-category: slicing-printing
 #. review-status: agent-drafted

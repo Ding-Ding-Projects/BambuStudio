@@ -1375,12 +1375,12 @@
     {
       "route": "windows/README.md",
       "title": "Windows features",
-      "sha256": "69491b644048d560f0cdf4a23bae696d32515c9155d4235d15483718150f11a6"
+      "sha256": "1dc183c87a15afa7dd8569dd986373540ffce075d4872b4ba116b24d0f02467a"
     },
     {
       "route": "windows/README.yue_HK.md",
       "title": "Windows 功能",
-      "sha256": "8c0d20b1db898f8ee71df2c7b858a4a37239db365f298337c53a5c5db927338f"
+      "sha256": "a5beca9e1c5f5c467e8c3ff0b92ccb4babc4aa81477e2002d36eea2eda88fd6c"
     },
     {
       "route": "windows/action-sounds.md",
@@ -1721,6 +1721,16 @@
       "route": "windows/local-tools.yue_HK.md",
       "title": "本機工具頁",
       "sha256": "450b11ba0e3f231621c603b38c6fc5348e65d5da8384f8f0ee8c783a8409f131"
+    },
+    {
+      "route": "windows/lubricate-mode.md",
+      "title": "Lubricate mode and print melodies",
+      "sha256": "35c246d31d0a66dee9725326c41cbdec4c11b9ceaa2c0176bdcaaea4017105cb"
+    },
+    {
+      "route": "windows/lubricate-mode.yue_HK.md",
+      "title": "潤滑模式同打印旋律",
+      "sha256": "e77f43557e9d048fc47860f82aca0f9193f668762a0e06bc26d38f0615f80b01"
     },
     {
       "route": "windows/material-context-menus.md",
@@ -2305,7 +2315,7 @@
       "bytes": 16430
     }
   ],
-  "bundle_sha256": "67b281070abd8be2868a4f97b3104841d8078f20533470ef8b2d2a9d9ffe35ec",
+  "bundle_sha256": "458514c44b3bc3a7e9418087be02f7e126050ba8e26f8dd8eb59c2fdb05c4a6f",
   "unavailable_references": [
     {
       "source": "api/README.md",
@@ -3430,6 +3440,16 @@
     {
       "source": "windows/local-tools.yue_HK.md",
       "target": "../../../design/local-tools-2026-11/README.md",
+      "kind": "link"
+    },
+    {
+      "source": "windows/lubricate-mode.md",
+      "target": "../../../design/lubricate-2026-11/captures/README.md",
+      "kind": "link"
+    },
+    {
+      "source": "windows/lubricate-mode.yue_HK.md",
+      "target": "../../../design/lubricate-2026-11/captures/README.md",
       "kind": "link"
     },
     {
