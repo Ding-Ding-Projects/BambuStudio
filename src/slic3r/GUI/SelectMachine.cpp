@@ -3776,16 +3776,23 @@ void SelectMachineDialog::refresh_lubricate_melody_list()
     const auto *enabled = process ? process->option<ConfigOptionBool>("lubricate_mode") : nullptr;
     const std::string current = lubricate_melody(chosen ? chosen->value : std::string()).id;
 
-    ::SearchField::MatchPass match(m_lubricate_search->GetValue(), m_lubricate_search->IsRegexEnabled(),
-                                   m_lubricate_search->IsCaseSensitive(), m_lubricate_search->IsWholeWord(),
-                                   m_lubricate_search->IsMultiline());
+    // One pass per melody: a regex pass shares one short wall-clock budget across
+    // every candidate and lets all the rest through once it runs out, which on a
+    // busy machine happened after three or four melodies. Eight passes are cheap.
+    auto matches = [this](const wxString &text) {
+        ::SearchField::MatchPass match(m_lubricate_search->GetValue(), m_lubricate_search->IsRegexEnabled(),
+                                       m_lubricate_search->IsCaseSensitive(), m_lubricate_search->IsWholeWord(),
+                                       m_lubricate_search->IsMultiline());
+        return match.matches(text);
+    };
     m_lubricate_list->Freeze();
     m_lubricate_list->Clear();
     m_lubricate_ids.clear();
     for (const LubricateMelody &melody : lubricate_melodies()) {
-        const wxString name = _(wxString::FromUTF8(melody.name));
+        const wxString english = wxString::FromUTF8(melody.name);
+        const wxString name    = _(english);
         // Match the translated name and the English one, so either language finds it.
-        if (!match.matches(name) && !match.matches(wxString::FromUTF8(melody.name)))
+        if (!matches(name) && (name == english || !matches(english)))
             continue;
         m_lubricate_list->Append(name);
         m_lubricate_ids.emplace_back(melody.id);
