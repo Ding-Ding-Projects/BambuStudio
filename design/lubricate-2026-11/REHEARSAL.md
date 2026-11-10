@@ -21,4 +21,5 @@ Nothing fixable is left open.
 
 - Light theme: the boards are drawn in the dark theme only.
 - Cantonese and bilingual layouts on the boards.
-- The real print dialog: it needs a connected printer, which the capture host does not have.
+- The boards against the built app side by side: the app captures in [captures](captures/README.md)
+  were taken after this review and list where the app still differs.

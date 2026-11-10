@@ -40,3 +40,7 @@ strings are in `bbl/i18n/yue_HK/BambuStudio_yue_HK.po`.
 ## Review
 
 See [REHEARSAL.md](REHEARSAL.md).
+
+## Captures from the built app
+
+See [captures](captures/README.md): the three features captured from the built app on the H2C, with what was not reached and where the app still differs from the boards.
