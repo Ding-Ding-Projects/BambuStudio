@@ -502,6 +502,12 @@ void TabCtrl::doRender(wxDC& dc)
         const int bs2 = (1 + border_width) / 2;
         dc.SetPen(wxPen(StateColor::semantic(MD3::Role::OutlineVariant), bw));
         dc.DrawLine(0, size.y - bs2, size.x, size.y - bs2);
+        // The first pill always sits at the top left. When a deferred move during
+        // the parent's layout leaves the pills somewhere else (seen on first show:
+        // every row a hundred pixels low, so only half of the first row was
+        // visible), lay them out again once this paint is done.
+        if (!btns.empty() && btns.front()->GetPosition() != wxPoint(FromDIP(10), border_width * 2))
+            CallAfter([this]() { relayoutPills(); });
         return;
     }
 

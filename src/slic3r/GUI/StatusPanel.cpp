@@ -3498,7 +3498,7 @@ wxBoxSizer *StatusBasePanel::create_axis_control(wxWindow *parent)
     m_button_lubricate->SetToolTip(_L("Home the printer, then move the bed all the way down and up and the toolhead "
                                       "along the full length of every axis, so fresh grease spreads along the rails "
                                       "and lead screws. Bambu Lab printers beep like a truck backing up while the bed moves."));
-    sizer->Add(m_button_lubricate, 0, wxALIGN_CENTER | wxTOP, FromDIP(8));
+    sizer->Add(m_button_lubricate, 0, wxALIGN_CENTER | wxTOP | wxBOTTOM, FromDIP(8));
     sizer->AddStretchSpacer();
     return sizer;
 }

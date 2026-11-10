@@ -3065,7 +3065,11 @@ void SelectMachineDialog::update_option_opts(MachineObject *obj)
     {
         for (auto opt : m_checkbox_list) { opt.second->Hide(); }
         m_option_express->Hide();
-        if (m_lubricate_panel) m_lubricate_panel->Hide();
+        /*the melody is a process preset value, so it can be chosen before a printer is selected*/
+        if (m_lubricate_panel) {
+            m_lubricate_panel->Show(m_print_type == FROM_NORMAL);
+            refresh_lubricate_melody_list();
+        }
         update_options_layout();
         return;
     }
