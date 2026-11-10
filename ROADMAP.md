@@ -1,5 +1,17 @@
 # Roadmap
 
+## Lubricate mode and print melodies, 10 November 2026
+
+- [x] Add lubricate mode at the start of every print and as a Device page button, with the routine placed after the last full homing command.
+- [x] Add the print dialog melody list with search, regex and the shared builder, and play the chosen melody at every start in every mode.
+- [x] Make the Bambu Lab H2C the main target and check its start G-code with a sliced cube.
+- [x] Draw the design boards and capture the new features from the built app.
+- [x] Write the article and its Cantonese twin, and translate every new string.
+- [ ] Run lubricate mode and each melody on a real H2C and confirm how `M1006 W` paces the moves.
+- [ ] Capture the Lubricate confirmation and the button while printing with a printer connected.
+- [ ] Reflow the Device page so it no longer scrolls sideways at 1200x800.
+- [ ] Capture the light theme and Cantonese layouts of the new screens.
+
 ## Local tools and the last unbuilt features, 8 November 2026
 
 - [x] Build the Every feature page, Preferences provenance and its remake (section reset, import, undo, related settings, playground, section counts), job names in your own wording, the Base64 toolkit, the practical setup wizard, extensions with the check before a print is sent, live charts, element locks, attention modes, the drawing board, live menu controls, virtual disks and Minecraft servers, each with an article, a Cantonese twin, a board and checks.

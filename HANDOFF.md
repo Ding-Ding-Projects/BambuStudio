@@ -1,5 +1,37 @@
 # Bambu Studio handoff
 
+## Lubricate mode and print melodies, 10 November 2026
+
+Lubricate mode runs the bed and toolhead through their full travel so fresh grease spreads along
+the rails and lead screws: at the start of every print when the Others > Special mode option is on,
+and on demand from the Lubricate button under the Device page jog grid. While the bed moves, a
+Bambu Lab printer beeps like a truck backing up, or plays another melody chosen in the print
+dialog's list (search field, regex toggle, shared regex builder). The chosen melody plays at the
+start of every print whatever mode is on. The Bambu Lab H2C is the main target. The article is
+`docs/features/windows/lubricate-mode.md` with its Cantonese twin; the design boards and the
+captures from the built app are in `design/lubricate-2026-11/`.
+
+Commits: `48f87b54c` (routine and option), `306b8321d` (skip conditional homing lines),
+`fa929bfbb` (melody picker), `92ef659fb` (melody at every start), `a4f0de812` (boards),
+`4c418ea3a` (picker without a printer, hidden Process tabs), `4ff4dfaf2` (one regex pass per
+melody), `034f53271` (captures), `fde4fb482` (kit list for melodies, search field outline),
+`5d1b76fdd` (article and catalog), `1b10b4887` (changed preset no longer widens the sidebar,
+All Plates Stats tile icon).
+
+Checked on the app built from `1b10b4887` on a hidden desktop: slicing a cube for the H2C places
+the routine after `G28 Z P0 T250` with one buzzer note before each bed segment; the option, the
+Device button, the picker with plain, regex and no-match searches, the Process page after a change
+and the All Plates Stats tile were captured and looked at. Not checked: a run on a real printer
+(including whether `M1006 W` waits for the note before the next move), the Lubricate confirmation
+and the button while printing (both need a printer), the regex builder popover on the hidden
+desktop, and the light theme and Cantonese layouts.
+
+Corrections: the message of `fde4fb482` says the Device page no longer scrolls sideways; that was
+wrong and `1b10b4887` restores the page's minimum width. The page still scrolls sideways at
+1200x800 because its ink column sits right of the Control column; fixing it needs a reflow of
+that page. The Cantonese catalog entry for the song title was reworded in `5d1b76fdd`; the earlier
+wording stays in the history of `fa929bfbb`, which can only change by rewriting published history.
+
 ## Base64 per-file controls and media preview, 9 November 2026
 
 The Files tab can pause, resume or cancel one file alone (buttons on the selected row and the
