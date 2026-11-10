@@ -104,10 +104,21 @@ std::string insert_lubricate_routine(const std::string &start_gcode, const Lubri
     for (std::string line; std::getline(in, line);)
         lines.push_back(line);
 
+    // M622 ... M623 is a firmware conditional on Bambu Lab printers (the H2C start
+    // G-code homes with `G28 R` inside one that only runs when bed leveling is
+    // skipped), so a homing line inside it may never run and is not a place to start.
     int last_home = -1;
-    for (int i = 0; i < int(lines.size()); ++i)
-        if (is_full_homing_line(lines[i]))
+    int conditional_depth = 0;
+    for (int i = 0; i < int(lines.size()); ++i) {
+        const std::string &line  = lines[i];
+        const size_t       start = line.find_first_not_of(" \t");
+        if (start != std::string::npos && line.compare(start, 4, "M622") == 0)
+            ++conditional_depth;
+        else if (start != std::string::npos && line.compare(start, 4, "M623") == 0)
+            conditional_depth = std::max(0, conditional_depth - 1);
+        else if (conditional_depth == 0 && is_full_homing_line(line))
             last_home = i;
+    }
 
     if (last_home < 0)
         return "G28 ; home before lubricate mode\n" + lubricate_routine_gcode(area) + start_gcode;

@@ -26,7 +26,8 @@ struct LubricateArea
 std::string lubricate_routine_gcode(const LubricateArea &area, const std::string &rehome = std::string());
 
 // The start G-code with the routine inserted after its last full homing line
-// (G28, not a G28.<n> calibration variant), so the routine starts from a homed
+// (G28, not a G28.<n> calibration variant, and not inside an M622/M623 firmware
+// conditional that may be skipped), so the routine starts from a homed
 // machine and the rest of the start G-code finds the state it expects. Without a
 // homing line the routine homes first and is placed at the top.
 std::string insert_lubricate_routine(const std::string &start_gcode, const LubricateArea &area);
