@@ -66,6 +66,8 @@ namespace Slic3r{
 
 namespace Slic3r { namespace GUI {
 
+class ListBox;
+
 std::string get_nozzle_volume_type_cloud_string(NozzleVolumeType nozzle_volume_type);
 void        print_ams_mapping_result(std::vector<FilamentInfo> &result);
 
@@ -365,7 +367,7 @@ private:
     // shared search field) that also mirrors the process preset.
     wxPanel*                                 m_lubricate_panel{nullptr};
     ::SearchField*                           m_lubricate_search{nullptr};
-    wxListBox*                               m_lubricate_list{nullptr};
+    ListBox*                                 m_lubricate_list{nullptr};
     wxStaticText*                            m_lubricate_note{nullptr};
     std::vector<std::string>                 m_lubricate_ids; // ids shown in the list, in order
 

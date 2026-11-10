@@ -28,6 +28,7 @@
 #include "Widgets/RadioBox.hpp"
 #include "Widgets/Label.hpp"
 #include "Widgets/SearchField.hpp"
+#include "Widgets/ListBox.hpp"
 #include "libslic3r/GCode/LubricateRoutine.hpp"
 #include "Widgets/MaterialIcon.hpp"
 #include "Widgets/MD3DialogChrome.hpp"
@@ -3745,10 +3746,8 @@ wxPanel *SelectMachineDialog::create_lubricate_melody_panel(wxWindow *parent)
     // Regex mode, case and whole-word changes from the builder popover re-run the filter.
     m_lubricate_search->SetOnRegexToggle([this](bool) { refresh_lubricate_melody_list(); });
 
-    m_lubricate_list = new wxListBox(m_lubricate_panel, wxID_ANY, wxDefaultPosition, wxSize(-1, FromDIP(120)), 0, nullptr,
-                                     wxLB_SINGLE | wxLB_NEEDED_SB);
-    m_lubricate_list->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
-    m_lubricate_list->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+    // The kit list paints the rounded selected and hover rows; tall enough for most of the tunes.
+    m_lubricate_list = new ListBox(m_lubricate_panel, wxID_ANY, wxSize(-1, FromDIP(200)));
     m_lubricate_list->SetFont(Label::Body_14);
     m_lubricate_list->SetName(_L("Lubricate melody"));
     m_lubricate_list->Bind(wxEVT_LISTBOX, [this](wxCommandEvent &) { on_lubricate_melody_selected(); });

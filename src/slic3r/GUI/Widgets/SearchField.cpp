@@ -454,16 +454,21 @@ void SearchField::layoutText()
     // Centred in the pill, with at least one pixel of pill above and below so a
     // button's square background never covers the outline (the regex toggle
     // left a gap in the bottom edge).
-    const int action_y = std::max(FromDIP(2), (sz.y - action) / 2);
+    // At 150 % the 2-DIP focus pen is 3 px wide and GDI rounds it one row further
+    // in, so keep a whole pixel clear of the ring and shorten the buttons to fit;
+    // otherwise they covered the ring's inner row and it looked broken between them.
+    const int ring     = FromDIP(2) + 1;
+    const int action_h = std::max(1, std::min(action, sz.y - 2 * ring));
+    const int action_y = std::max(ring, (sz.y - action_h) / 2);
     int       action_x = sz.x - right - action;
     if (m_tune_button)
-        m_tune_button->SetSize(action_x, action_y, action, action);
+        m_tune_button->SetSize(action_x, action_y, action, action_h);
     action_x -= gap + action;
     if (m_regex_button)
-        m_regex_button->SetSize(action_x, action_y, action, action);
+        m_regex_button->SetSize(action_x, action_y, action, action_h);
     action_x -= gap + action;
     if (m_clear_button)
-        m_clear_button->SetSize(action_x, action_y, action, action);
+        m_clear_button->SetSize(action_x, action_y, action, action_h);
 }
 
 void SearchField::applyTextCtrlTheme()
