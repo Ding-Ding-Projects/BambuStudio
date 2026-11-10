@@ -4262,6 +4262,17 @@ void PrintConfigDef::init_fff_params()
     def->mode    = comSimple;
     def->set_default_value(new ConfigOptionBool(false));
 
+    def          = this->add("lubricate_mode", coBool);
+    def->label   = L("Lubricate mode");
+    def->tooltip = L("Before every print, right after the printer homes, run the motion system through its "
+                     "whole travel so fresh grease spreads along the rails, lead screws and bearings: the bed "
+                     "moves all the way down and back up twice, and the toolhead runs the full length of X, of Y "
+                     "and both diagonals. On Bambu Lab printers the buzzer beeps like a truck backing up while "
+                     "the bed moves. The printer homes again before the rest of the preparation, so the print "
+                     "itself is unchanged; the start takes a few minutes longer. Default: off.");
+    def->mode    = comSimple;
+    def->set_default_value(new ConfigOptionBool(false));
+
     def          = this->add("enable_order_independent_overlap_carving", coBool);
     def->label   = L("Order-independent overlap carving");
     def->tooltip = L("When enabled, overlapping model parts are carved by bounding-box size so smaller embedded parts are not removed by larger parts due to volume order.");

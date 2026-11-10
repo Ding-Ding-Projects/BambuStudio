@@ -594,6 +594,8 @@ protected:
     float           m_fixed_aspect_ratio{1.8};
 
     AxisCtrlButton *m_bpButton_xy;
+    // Lubricate mode on demand: home, then run every axis through its whole travel.
+    Button         *m_button_lubricate{nullptr};
     // Kit Device.jsx:82 — a compact 10/1 mm step SegmentedControl above the XY grid
     // so BOTH legacy jog magnitudes (outer +10 / inner +1 rings) stay reachable.
     MultiSwitchButton *m_axis_step_switch{nullptr};
@@ -872,6 +874,7 @@ protected:
     /* axis control */
     bool check_axis_z_at_home(MachineObject* obj);
     void on_axis_ctrl_xy(wxCommandEvent &event);
+    void on_lubricate(wxCommandEvent &event);
     void on_axis_ctrl_z_up_10(wxCommandEvent &event);
     void on_axis_ctrl_z_up_1(wxCommandEvent &event);
     void on_axis_ctrl_z_down_1(wxCommandEvent &event);

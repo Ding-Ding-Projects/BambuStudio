@@ -244,6 +244,8 @@ set(lisbslic3r_sources
     GCode/WipeTower.hpp
     GCode/GCodeProcessor.cpp
     GCode/GCodeProcessor.hpp
+    GCode/LubricateRoutine.cpp
+    GCode/LubricateRoutine.hpp
     GCode/AvoidCrossingPerimeters.cpp
     GCode/AvoidCrossingPerimeters.hpp
     GCode/ConflictChecker.cpp

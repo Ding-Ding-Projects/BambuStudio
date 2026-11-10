@@ -5,6 +5,7 @@
 #include "ExtrusionEntity.hpp"
 #include "EdgeGrid.hpp"
 #include "Geometry/ConvexHull.hpp"
+#include "GCode/LubricateRoutine.hpp"
 #include "GCode/PrintExtents.hpp"
 #include "GCode/WipeTower.hpp"
 #include "ShortestPath.hpp"
@@ -3182,6 +3183,18 @@ void GCode::_do_export(Print& print, GCodeOutputStream &file, ThumbnailsGenerato
     update_placeholder_parser_with_variant_params();
 
     std::string machine_start_gcode = this->placeholder_parser_process("machine_start_gcode", print.config().machine_start_gcode.value, initial_extruder_id);
+    if (print.config().lubricate_mode.value) {
+        // Lubricate mode: run every axis through its whole travel right after the printer homes.
+        LubricateArea area;
+        const BoundingBoxf bed(print.config().printable_area.values);
+        area.min_x  = bed.min.x();
+        area.min_y  = bed.min.y();
+        area.max_x  = bed.max.x();
+        area.max_y  = bed.max.y();
+        area.max_z  = print.config().printable_height.value;
+        area.buzzer = is_BBL_Printer();
+        machine_start_gcode = insert_lubricate_routine(machine_start_gcode, area);
+    }
     if (print.config().gcode_flavor != gcfKlipper) {
         // Set bed temperature if the start G-code does not contain any bed temp control G-codes.
         this->_print_first_layer_bed_temperature(file, print, machine_start_gcode, initial_extruder_id, true);

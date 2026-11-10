@@ -25,6 +25,9 @@
 
 #include "MsgDialog.hpp"
 #include "slic3r/Utils/Http.hpp"
+#include "libslic3r/BoundingBox.hpp"
+#include "libslic3r/GCode/LubricateRoutine.hpp"
+#include "libslic3r/PresetBundle.hpp"
 #include "libslic3r/Thread.hpp"
 #include "libslic3r/Utils.hpp"
 #include "DeviceErrorDialog.hpp"
@@ -3487,6 +3490,15 @@ wxBoxSizer *StatusBasePanel::create_axis_control(wxWindow *parent)
     sizer->AddStretchSpacer();
     sizer->Add(m_axis_step_switch, 0, wxALIGN_CENTER | wxBOTTOM, FromDIP(8));
     sizer->Add(m_bpButton_xy, 0, wxALIGN_CENTER | wxALL, 0);
+
+    m_button_lubricate = new Button(parent, _L("Lubricate"));
+    m_button_lubricate->SetVariant(Button::Variant::Tonal);
+    m_button_lubricate->SetButtonSize(Button::Size::Small);
+    m_button_lubricate->SetGlyph(0xE798 /* water_drop */);
+    m_button_lubricate->SetToolTip(_L("Home the printer, then move the bed all the way down and up and the toolhead "
+                                      "along the full length of every axis, so fresh grease spreads along the rails "
+                                      "and lead screws. Bambu Lab printers beep like a truck backing up while the bed moves."));
+    sizer->Add(m_button_lubricate, 0, wxALIGN_CENTER | wxTOP, FromDIP(8));
     sizer->AddStretchSpacer();
     return sizer;
 }
@@ -4236,6 +4248,7 @@ StatusPanel::StatusPanel(wxWindow *parent, wxWindowID id, const wxPoint &pos, co
     // callback (wired in create_misc_control); no separate fan button to bind.
 
     m_bpButton_xy->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_axis_ctrl_xy), NULL, this); // TODO
+    m_button_lubricate->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_lubricate), NULL, this);
     m_bpButton_z_10->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_axis_ctrl_z_up_10), NULL, this);
     m_bpButton_z_1->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_axis_ctrl_z_up_1), NULL, this);
     m_bpButton_z_down_1->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_axis_ctrl_z_down_1), NULL, this);
@@ -4309,6 +4322,7 @@ StatusPanel::~StatusPanel()
     m_switch_cham_fan->Disconnect(wxEVT_COMMAND_TOGGLEBUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_nozzle_fan_switch), NULL, this);*/
 
     m_bpButton_xy->Disconnect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_axis_ctrl_xy), NULL, this);
+    m_button_lubricate->Disconnect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_lubricate), NULL, this);
     m_bpButton_z_10->Disconnect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_axis_ctrl_z_up_10), NULL, this);
     m_bpButton_z_1->Disconnect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_axis_ctrl_z_up_1), NULL, this);
     m_bpButton_z_down_1->Disconnect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(StatusPanel::on_axis_ctrl_z_down_1), NULL, this);
@@ -4843,6 +4857,7 @@ void StatusPanel::show_printing_status(bool ctrl_area, bool temp_area)
 {
     if (!ctrl_area) {
         m_bpButton_xy->Enable(false);
+        m_button_lubricate->Enable(false);
         m_bpButton_z_10->Enable(false);
         m_bpButton_z_1->Enable(false);
         m_bpButton_z_down_1->Enable(false);
@@ -4861,6 +4876,7 @@ void StatusPanel::show_printing_status(bool ctrl_area, bool temp_area)
         m_extruder_label->SetForegroundColour(device_disabled_text_color());
     } else {
         m_bpButton_xy->Enable();
+        m_button_lubricate->Enable();
         m_bpButton_z_10->Enable();
         m_bpButton_z_1->Enable();
         m_bpButton_z_down_1->Enable();
@@ -4918,6 +4934,7 @@ void StatusPanel::apply_control_area_force_disable()
         if (m_tempCtrl_bed) m_tempCtrl_bed->Enable(false);
         if (m_tempCtrl_chamber) m_tempCtrl_chamber->Enable(false);
         if (m_bpButton_xy) m_bpButton_xy->Enable(false);
+        if (m_button_lubricate) m_button_lubricate->Enable(false);
         if (m_bpButton_z_10) m_bpButton_z_10->Enable(false);
         if (m_bpButton_z_1) m_bpButton_z_1->Enable(false);
         if (m_bpButton_z_down_1) m_bpButton_z_down_1->Enable(false);
@@ -6064,6 +6081,41 @@ void StatusPanel::reset_printing_values()
         m_project_task_showing_task = false;
         m_project_task_need_repaint = true;
     }
+}
+
+void StatusPanel::on_lubricate(wxCommandEvent &)
+{
+    MachineObject *obj = get_current_dev();
+    if (!obj || obj->is_in_printing())
+        return;
+    const PresetBundle *bundle = wxGetApp().preset_bundle;
+    if (bundle == nullptr)
+        return;
+
+    // The travel limits come from the printer profile selected in Prepare, which is
+    // the profile of this printer when the two match.
+    const DynamicPrintConfig &printer = bundle->printers.get_edited_preset().config;
+    const auto *bed    = printer.option<ConfigOptionPoints>("printable_area");
+    const auto *height = printer.option<ConfigOptionFloat>("printable_height");
+    if (bed == nullptr || bed->values.empty() || height == nullptr)
+        return;
+
+    MessageDialog confirm(this,
+                          _L("The bed will move all the way down and back up, and the toolhead along the full length "
+                             "of every axis. Clear the build plate first. Start lubricate mode?"),
+                          _L("Lubricate"), wxYES_NO | wxICON_QUESTION);
+    if (confirm.ShowModal() != wxID_YES)
+        return;
+
+    const BoundingBoxf box(bed->values);
+    LubricateArea      area;
+    area.min_x  = box.min.x();
+    area.min_y  = box.min.y();
+    area.max_x  = box.max.x();
+    area.max_y  = box.max.y();
+    area.max_z  = height->value;
+    area.buzzer = true; // the Device page drives Bambu Lab printers, which all have the M1006 buzzer
+    obj->publish_gcode("G28\n" + lubricate_routine_gcode(area));
 }
 
 void StatusPanel::on_axis_ctrl_xy(wxCommandEvent &event)
