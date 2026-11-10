@@ -3500,8 +3500,13 @@ void GLCanvas3D::render(bool only_init)
         m_assembly_steps->process_assembly_pdf_capture();
     }
 
-    if (LayoutProbe::canvas_png_requested())
-        save_frame_png(LayoutProbe::take_canvas_png_request(), get_canvas_size());
+    // Only the canvas on screen answers: the hidden one can still draw a frame (a toast
+    // fading out, a timer) and would hand back the other view.
+    if (LayoutProbe::canvas_png_requested()) {
+        Plater *plater = wxGetApp().plater();
+        if (plater == nullptr || plater->get_current_canvas3D() == this)
+            save_frame_png(LayoutProbe::take_canvas_png_request(), get_canvas_size());
+    }
 
     ogl_manager.unbind_vao();
     ogl_manager.clear_dirty();

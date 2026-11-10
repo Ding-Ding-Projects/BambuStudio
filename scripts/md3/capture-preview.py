@@ -385,11 +385,44 @@ class Run:
         return closed
 
     # -- building blocks ---------------------------------------------------------------------
+    def dpi_scale(self):
+        """The display scale the probe reports (1.5 at 150 %), read once."""
+        if getattr(self, '_dpi_scale', None) is None:
+            header = next((r for r in self.s.probe() if r.get('kind') == 'header'), {})
+            self._dpi_scale = float(header.get('dpi_scale') or 1.0)
+        return self._dpi_scale
+
     def resize(self, size):
-        self.s.command(f'resize {self.s.main} {size[0]} {size[1]}', settle=4)
+        # The sizes are design pixels, like the 1200x800 the capture datadirs configure; the
+        # resize command takes physical pixels, so scale them, or at 150 % the narrow window
+        # leaves the canvas a strip a hundred pixels wide.
+        scale = self.dpi_scale()
+        self.s.command(f'resize {self.s.main} {round(size[0] * scale)} {round(size[1] * scale)}', settle=4)
 
     def go_prepare(self):
-        self.s.click(self.s.main, *PREPARE_TAB, settle=3)
+        """Click the Prepare entry of the navigation rail.
+
+        It is found by its label in the probe, because its position follows the layout and the
+        display scale; the fixed point is only the fallback for a probe without the rail.
+        """
+        def is_prepare(r):
+            text = f"{r.get('label') or ''} {r.get('name') or ''}".casefold()
+            return 'prepare' in text or '準備' in text
+        records = self.s.probe()
+        frame = next((r for r in records if r.get('kind') == 'toplevel' and r.get('hwnd') == self.s.main), None)
+
+        def inside(r):
+            if frame is None:
+                return True
+            f, p = frame['rect'], r['screen']
+            return f['x'] <= p['x'] < f['x'] + f['w'] and f['y'] <= p['y'] < f['y'] + f['h']
+        # A hidden page keeps a second Prepare button far below the window, so keep the one on screen.
+        rail = sorted((r for r in shown(records, type_contains='Button') if is_prepare(r) and inside(r)),
+                      key=lambda r: (r['screen']['x'], r['screen']['y']))
+        if rail:
+            self.s.click_record(rail[0], settle=3)
+        else:
+            self.s.click(self.s.main, *PREPARE_TAB, settle=3)
 
     def sidebar_tabs(self, records):
         """The sidebar's tab strip buttons from top to bottom: Ink, Process, Objects."""
@@ -430,7 +463,12 @@ class Run:
     def add_plate(self):
         """Click the add button of the bottom bar and check that a button labelled with 2 appears."""
         records = self.s.probe()
-        adders = [r for r in self.plate_buttons(records) if 38 <= r['rect']['w'] <= 46]
+        buttons = self.plate_buttons(records)
+        # The button is named Add Plate; a square button of the bar is the fallback for a
+        # translated name. Its size follows the display scale, so only the shape is checked.
+        adders = [r for r in buttons if str(r.get('name') or '').casefold() == 'add plate']
+        adders = adders or [r for r in buttons if abs(r['rect']['w'] - r['rect']['h']) <= 4
+                            and not str(r.get('label') or '').strip() and r['type'] == 'Button']
         if not adders:
             self.cannot('second-plate', 'the bottom bar shows no add-plate button')
             return False
@@ -450,52 +488,129 @@ class Run:
         """Open the canvas Arrange options, press its Arrange button and close the options again.
 
         The options are an ImGui panel the layout probe cannot see, so its button is found on a
-        canvas frame: the panel is the white block under the toolbar, and its first button sits
-        near the bottom left corner of it.
+        canvas frame: the panel is the block of one colour under the toolbar (white in light
+        mode, dark in dark mode), and its first button sits near the bottom left corner of it.
         """
         try:
             from PIL import Image
         except ImportError:
             self.cannot('arrange', 'Pillow is not installed, so the Arrange button cannot be located')
             return False
+        def near(a, b):
+            return max(abs(a[i] - b[i]) for i in range(3)) <= 6
+
+        def grab():
+            frame = os.path.join(self.s.staging, f'{self.s.pid}-arrange.png')
+            if not self.s.canvas_png(frame):
+                return None
+            image = Image.open(frame).convert('RGB')
+            os.remove(frame)
+            return image
+
+        # A frame before the click: the canvas background also runs wide in one colour, so the
+        # panel is only open where that row has changed. Taking it first also makes the canvas
+        # draw at its current size, so the toolbar rects the probe reads next are current (they
+        # are kept from the last frame, which after a resize in Preview is the old size).
+        before = grab()
         item = self.gl_item(self.s.probe(), 'arrange')
         if not item:
             self.cannot('arrange', 'the canvas toolbar reports no arrange item')
             return False
         rect = item['rect']
         centre = (rect['x'] + rect['w'] // 2, rect['y'] + rect['h'] // 2)
+        # Every length below is in units of the toolbar item, so it follows the display scale.
+        unit = rect['h'] / 60.0
+
+        def panel_frame():
+            """The canvas frame and a row inside the panel, or None when the panel is not open."""
+            image = grab()
+            if image is None:
+                return None
+            if not (0 <= centre[0] < image.width and rect['y'] + rect['h'] < image.height):
+                sizes.append((image.size, rect))
+                return None
+            pixels = image.load()
+            old = before.load() if before is not None and before.size == image.size else None
+            x_lo, x_hi = max(0, rect['x'] - int(40 * unit)), min(image.width, rect['x'] + int(420 * unit))
+            # The first panel row: a little below the toolbar, where the panel colour runs wide.
+            for y in range(rect['y'] + rect['h'] + int(8 * unit), min(image.height, rect['y'] + rect['h'] + int(60 * unit))):
+                colour = pixels[centre[0], y]
+                if old is not None and near(old[centre[0], y], colour):
+                    continue
+                run = [x for x in range(x_lo, x_hi) if near(pixels[x, y], colour)]
+                if len(run) >= int(240 * unit):
+                    return image, pixels, y, colour, min(run)
+            return None
+
+        sizes = []
         self.s.click(item['host'], *centre, settle=2)
-        frame = os.path.join(self.s.staging, f'{self.s.pid}-arrange.png')
-        if not self.s.canvas_png(frame):
-            self.cannot('arrange', 'no canvas frame to locate the Arrange button on')
-            return False
-        image = Image.open(frame).convert('RGB')
-        os.remove(frame)
-        pixels = image.load()
-        x_lo, x_hi = max(0, rect['x'] - 40), min(image.width, rect['x'] + 420)
-        # A row well inside the panel gives its left edge. The panel's inner left margin has no
-        # content and stays white down to the panel's bottom, except for the thin separators, so
-        # the bottom is where more than a few non-white rows in a row follow.
-        white = [x for x in range(x_lo, x_hi) if min(pixels[x, 90]) >= 252]
-        if len(white) < 120:
+        found = panel_frame()
+        if found is None:
+            # The first click after switching back from Preview can go to the canvas focus only.
+            self.s.click(item['host'], *centre, settle=2)
+            found = panel_frame()
+        if found is None:
+            if sizes:
+                self.cannot('arrange', f'the toolbar item lies outside the canvas frame (frame size, item rect: {sizes[-1]})')
+                return False
             self.cannot('arrange', 'the Arrange options panel did not open')
             return False
-        left = min(white)
-        bottom, gap = 90, 0
-        for y in range(91, image.height):
-            if min(pixels[left + 4, y]) >= 252:
+        image, pixels, top, colour, left = found
+        # The panel's inner left margin has no content and keeps the panel colour down to the
+        # panel's bottom, except for the thin separators, so the bottom is where more than a few
+        # rows of another colour follow.
+        bottom, gap = top, 0
+        for y in range(top + 1, image.height):
+            if near(pixels[left + 4, y], colour):
                 bottom, gap = y, 0
             else:
                 gap += 1
                 if gap > 3:
                     break
-        if bottom < 150:
+        if bottom - top < int(60 * unit):
             self.cannot('arrange', 'the Arrange options panel is too short to hold its buttons')
             return False
-        self.s.click(item['host'], left + 42, bottom - 19, settle=10)
+        self.s.click(item['host'], left + int(42 * unit), bottom - int(19 * unit), settle=10)
         self.s.click(item['host'], *centre, settle=2)  # the item is a toggle: close the options
         self.notes.append({'arrange': 'pressed the Arrange button of the canvas options'})
         return True
+
+    def ink_chips(self, listing):
+        """The ink chips of the Objects list, top to bottom, as (x, y, ink) in the list's own
+        coordinates; None without PIL. The chips are found by their ink colours, so the row
+        height and the column position may follow the density and the display scale."""
+        try:
+            from PIL import Image
+        except ImportError:
+            return None
+        probe = os.path.join(self.s.staging, f'{self.s.pid}-chips.png')
+        self.s.shot(probe, hwnd=listing['hwnd'])
+        image = Image.open(probe).convert('RGB')
+        os.remove(probe)
+        pixels = image.load()
+        inks = [tuple(int(c[i:i + 2], 16) for i in (1, 3, 5)) for c in FILAMENT_COLOURS]
+
+        def ink_of(p):
+            for n, ink in enumerate(inks, start=1):
+                if max(abs(p[i] - ink[i]) for i in range(3)) <= 24:
+                    return n
+            return None
+
+        chips, band = [], None
+        for y in range(image.height):
+            hits = [(x, ink_of(pixels[x, y])) for x in range(image.width)]
+            hits = [(x, n) for x, n in hits if n]
+            if len(hits) >= 12:
+                xs = [x for x, _ in hits]
+                if band is None:
+                    band = {'y0': y, 'x0': min(xs), 'x1': max(xs), 'ink': hits[len(hits) // 2][1]}
+                band['y1'] = y
+            elif band is not None:
+                chips.append(((band['x0'] + band['x1']) // 2, (band['y0'] + band['y1']) // 2, band['ink']))
+                band = None
+        if band is not None:
+            chips.append(((band['x0'] + band['x1']) // 2, (band['y0'] + band['y1']) // 2, band['ink']))
+        return chips
 
     def assign_ink(self, row, ink, label):
         """Give the object in list row `row` (0 is the plate row) the ink number `ink`."""
@@ -504,9 +619,15 @@ class Run:
         if not listing:
             self.cannot(label, 'the Objects list is not on screen')
             return False
-        y = 10 + 22 * row
-        chip_x = 423  # the ink column, in the list's own coordinates at the 608 px sidebar
-        self.s.click(listing['hwnd'], 300, y, settle=1.2)
+        chips = self.ink_chips(listing)
+        if chips is None:
+            self.cannot(label, 'Pillow is not installed, so the ink chips cannot be located')
+            return False
+        if len(chips) < row:
+            self.cannot(label, f'the Objects list shows {len(chips)} ink chips, need {row}')
+            return False
+        chip_x, y, _ = chips[row - 1]
+        self.s.click(listing['hwnd'], chip_x // 2, y, settle=1.2)  # select the row on its name
         self.s.click(listing['hwnd'], chip_x, y, settle=1.2)
         self.s.click(listing['hwnd'], chip_x, y, settle=1.8)  # a second click on the cell starts editing
         records = self.s.probe()
@@ -516,33 +637,32 @@ class Run:
             return False
         self.s.click_record(combo, settle=1.5)
         # The dropdown list window is created with the editor and only shown by the click, so it is
-        # recognised by its size (one 30 px row per ink), and the result is checked on the chip.
+        # recognised by its shape: one row per ink, each row as tall as the display scale makes it.
         rows = len(FILAMENTS)
         candidates = [w for w in self.s.windows()
-                      if w['class'] == 'wxWindowNR' and 100 <= w['width'] <= 170 and abs(w['height'] - 30 * rows) <= 4]
+                      if w['class'] == 'wxWindowNR' and 100 <= w['width'] <= 400 and 24 * rows <= w['height'] <= 80 * rows]
         if not candidates:
             self.cannot(label, 'the ink dropdown list did not appear')
             return False
         for menu in candidates:
-            self.s.click(menu['handle'], 30, 15 + 30 * (ink - 1), settle=2)
-            state = self.chip_ink(row)
+            step = menu['height'] / rows
+            self.s.click(menu['handle'], 30, int(step * (ink - 0.5)), settle=2)
+            state = self.chip_ink(row, ink)
             if state is not False:
                 self.notes.append({'ink_chip': state})
                 return True
         self.cannot(label, 'the ink chip did not change after choosing from the dropdown')
         return False
 
-    def chip_ink(self, row):
-        """True when the ink chip of list row `row` is orange (ink 2), False when it is not, None without PIL."""
-        try:
-            from PIL import Image
-        except ImportError:
+    def chip_ink(self, row, ink=2):
+        """True when the ink chip of list row `row` shows ink `ink`, False when it does not, None without PIL."""
+        listing = next(iter(shown(self.s.probe(), type_contains='wxDataViewMainWindow')), None)
+        if not listing:
+            return False
+        chips = self.ink_chips(listing)
+        if chips is None:
             return None
-        probe = os.path.join(self.s.staging, f'{self.s.pid}-chip.png')
-        self.s.shot(probe)
-        pixel = Image.open(probe).convert('RGB').getpixel((542, 247 + 22 * row))
-        os.remove(probe)
-        return True if (pixel[0] > 235 and 80 < pixel[1] < 140 and pixel[2] < 60) else False
+        return len(chips) >= row and chips[row - 1][2] == ink
 
     def slice_plate(self, label, timeout=240):
         records = self.s.probe()
@@ -689,6 +809,8 @@ def main():
     except Exception as exc:  # the report must still be written
         crashed = f'{type(exc).__name__}: {exc}'
         print(f'driver stopped: {crashed}', flush=True)
+        import traceback
+        traceback.print_exc()
     finally:
         session.stop()
     report = {'tuple': args.tuple_id, 'exe': args.exe, 'exe_sha256': exe_sha, 'printer': args.printer,
