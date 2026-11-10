@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Lubricate on the Device page</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./kit.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&amp;family=Roboto+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..500,0..1,0&amp;display=swap" rel="stylesheet">
+<style>
+.jog{width:212px;height:212px;border-radius:50%;background:#141a17;position:relative;flex:none}
+.jog .in2{position:absolute;inset:46px;border-radius:50%;background:#1f2823}
+.jog .hm{position:absolute;inset:82px;border-radius:50%;background:#24342b;display:grid;place-items:center;color:#cde9d6}
+.jog .ar{position:absolute;color:#a9b6ad;font-size:18px}
+.zc{display:flex;flex-direction:column;gap:6px;flex:none}
+.zc .zb{width:56px;height:40px;border-radius:12px;background:#141a17;display:grid;place-items:center;color:#a9b6ad}
+.tmp{display:grid;grid-template-columns:24px 1fr auto;gap:10px;align-items:center;font-size:13px;padding:10px 12px;border-radius:12px;background:#141a17}
+.scrim{background:#0a0e0c;border-radius:20px;padding:28px;display:grid;place-items:center;min-height:300px}
+.btn.lube{height:36px;border-radius:10px}
+.btn[disabled]{opacity:.38}
+</style>
+</helmet>
+<div class="pg">
+  <div class="row wrap"><div class="grow"><div class="h1">Lubricate on the Device page</div><div class="sub">One button under the jog grid homes the printer, then runs the bed all the way down and up and the toolhead along every axis, playing the chosen melody while the bed moves. It asks first, because full travel hits anything left on the plate.</div></div><span class="tag g">Built</span></div>
+  <div style="display:grid;grid-template-columns:minmax(0,1fr) 520px;gap:12px">
+    <section class="card" aria-label="Printer controls">
+      <div class="row"><div class="h2 grow">Control</div><span class="tag">Bambu Lab H2C · Idle</span></div>
+      <div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:20px;align-items:start">
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div class="tmp"><span class="ms mut" aria-hidden="true">mode_heat</span><span>Left nozzle</span><span class="num">25 / 0 °C</span></div>
+          <div class="tmp"><span class="ms mut" aria-hidden="true">mode_heat</span><span>Right nozzle</span><span class="num">25 / 0 °C</span></div>
+          <div class="tmp"><span class="ms mut" aria-hidden="true">heat</span><span>Heatbed</span><span class="num">24 / 0 °C</span></div>
+          <div class="tmp"><span class="ms mut" aria-hidden="true">airwave</span><span>Chamber</span><span class="num">26 °C</span></div>
+        </div>
+        <div class="row" style="align-items:flex-start;gap:20px">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+            <div class="seg" role="radiogroup" aria-label="Move distance (mm)"><button class="on">10</button><button>1</button></div>
+            <div class="jog" aria-label="XY jog grid">
+              <div class="in2"></div>
+              <span class="ar ms" style="left:97px;top:10px">keyboard_double_arrow_up</span>
+              <span class="ar ms" style="left:97px;bottom:10px">keyboard_double_arrow_down</span>
+              <span class="ar ms" style="left:10px;top:97px">keyboard_double_arrow_left</span>
+              <span class="ar ms" style="right:10px;top:97px">keyboard_double_arrow_right</span>
+              <div class="hm"><span class="ms" aria-hidden="true">home</span></div>
+            </div>
+            <button class="btn t lube" aria-describedby="lube-tip"><span class="ms" aria-hidden="true" style="font-size:18px">water_drop</span>Lubricate</button>
+          </div>
+          <div class="zc" aria-label="Bed control">
+            <div class="lbl" style="text-align:center">Bed</div>
+            <div class="zb"><span class="ms">keyboard_double_arrow_up</span></div>
+            <div class="zb"><span class="ms">keyboard_arrow_up</span></div>
+            <div class="zb"><span class="ms">keyboard_arrow_down</span></div>
+            <div class="zb"><span class="ms">keyboard_double_arrow_down</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="well" id="lube-tip" role="note">
+        <div class="lbl">Tooltip</div>
+        <div class="note" style="color:#d3ddd6">Home the printer, then move the bed all the way down and up and the toolhead along the full length of every axis, so fresh grease spreads along the rails and lead screws. Bambu Lab printers beep like a truck backing up while the bed moves.</div>
+      </div>
+    </section>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="scrim" aria-label="Confirmation">
+        <div class="dlg" role="dialog" aria-label="Lubricate" style="width:420px;box-sizing:border-box">
+          <div class="row"><span class="ms ok" aria-hidden="true">help</span><div class="h2">Lubricate</div></div>
+          <div style="font-size:14px;line-height:1.5;color:#d3ddd6">The bed will move all the way down and back up, and the toolhead along the full length of every axis. Clear the build plate first. Start lubricate mode?</div>
+          <div class="row" style="justify-content:flex-end"><button class="btn p">Yes</button><button class="btn">No</button></div>
+        </div>
+      </div>
+      <section class="card" aria-label="While printing">
+        <div class="h3">While a print runs</div>
+        <div class="row"><button class="btn t lube" disabled><span class="ms" aria-hidden="true" style="font-size:18px">water_drop</span>Lubricate</button><span class="note grow">Disabled with the jog controls; the button also does nothing while the printer is busy.</span></div>
+      </section>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Lubricate melody in the print dialog</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./kit.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&amp;family=Roboto+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..500,0..1,0&amp;display=swap" rel="stylesheet">
+<style>
+.sf{height:44px;border-radius:22px;background:#2c3832;border:1px solid #7c8a81;display:flex;align-items:center;gap:8px;padding:0 6px 0 14px;box-sizing:border-box;font-size:13.5px}
+.sf.focus{border-color:#6fdc98}
+.sf .q{flex:1;min-width:0;color:#e3ebe5}.sf .ph{color:#a9b6ad}
+.sf .rx{height:32px;min-width:32px;padding:0 8px;border-radius:16px;display:grid;place-items:center;font-family:'Roboto Mono',monospace;font-size:13px;color:#a9b6ad}
+.sf .rx.on{background:#3a4a40;color:#d6eedd}
+.sf .ib{width:32px;height:32px;border-radius:16px}
+.lb{background:#2c3832;border-radius:12px;padding:6px;display:flex;flex-direction:column;gap:2px}
+.lb .it{height:34px;display:flex;align-items:center;padding:0 12px;border-radius:8px;font-size:14px}
+.lb .it.sel{background:#24342b;color:#cde9d6;font-weight:500}
+.opt{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;padding:10px 12px;border-radius:12px;background:#141a17;font-size:13px}
+.st{display:flex;flex-direction:column;gap:8px}
+.pop{background:#1f2823;border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+</style>
+</helmet>
+<div class="pg">
+  <div class="row wrap"><div class="grow"><div class="h1">Lubricate melody in the print dialog</div><div class="sub">Below the print options: a search field with the shared regex toggle and builder, a list of melodies, and a line that says when the tune plays. Picking one writes the process preset the way Express print mode does, so the plate is sliced again before it is sent.</div></div><span class="tag g">Built</span></div>
+  <div style="display:grid;grid-template-columns:minmax(0,1fr) 560px;gap:12px;align-items:start">
+    <section class="card" aria-label="Print dialog options">
+      <div class="row"><div class="h2 grow">Send print job</div><span class="tag">Bambu Lab H2C</span></div>
+      <div class="g2">
+        <div class="opt"><span>Express print mode</span><span class="sw off"></span></div>
+        <div class="opt"><span>Timelapse</span><span class="sw"></span></div>
+        <div class="opt"><span>Auto Bed Leveling</span><span class="mut">Auto</span></div>
+        <div class="opt"><span>Flow Dynamics Calibration</span><span class="mut">Auto</span></div>
+      </div>
+      <div class="st" aria-label="Lubricate melody">
+        <div class="h3">Lubricate melody</div>
+        <div class="sf"><span class="ms mut" aria-hidden="true">search</span><span class="q ph">Search melodies</span><span class="rx" aria-label="Regular expression">.*</span><button class="ib" aria-label="Regex builder"><span class="ms" aria-hidden="true" style="font-size:18px">tune</span></button></div>
+        <div class="lb" role="listbox" aria-label="Lubricate melody">
+          <div class="it sel" role="option" aria-selected="true">Truck backing up</div>
+          <div class="it" role="option">Two-tone siren</div>
+          <div class="it" role="option">Rising chirp</div>
+          <div class="it" role="option">Ode to Joy</div>
+          <div class="it" role="option">Twinkle, Twinkle, Little Star</div>
+          <div class="it" role="option">Fur Elise</div>
+          <div class="it" role="option">Westminster chimes</div>
+          <div class="it" role="option">Silent</div>
+        </div>
+        <div class="note">Plays once at the start of the print. Changing it slices the plate again.</div>
+      </div>
+      <div class="row" style="justify-content:flex-end"><button class="btn">Cancel</button><button class="btn p">Send</button></div>
+    </section>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <section class="card" aria-label="Plain search">
+        <div class="lbl">Plain text</div>
+        <div class="sf focus"><span class="ms mut" aria-hidden="true">search</span><span class="q">tw</span><span class="rx">.*</span><button class="ib" aria-label="Regex builder"><span class="ms" aria-hidden="true" style="font-size:18px">tune</span></button><button class="ib" aria-label="Clear"><span class="ms" aria-hidden="true" style="font-size:18px">close</span></button></div>
+        <div class="lb"><div class="it">Two-tone siren</div><div class="it sel">Twinkle, Twinkle, Little Star</div></div>
+        <div class="note">Plays while the bed moves in lubricate mode. Changing it slices the plate again.</div>
+      </section>
+      <section class="card" aria-label="Regex search with the builder">
+        <div class="lbl">Regex, with the builder open</div>
+        <div class="sf focus"><span class="ms mut" aria-hidden="true">search</span><span class="q mono">^(Ode|Fur)</span><span class="rx on">.*</span><button class="ib" aria-label="Regex builder"><span class="ms" aria-hidden="true" style="font-size:18px">tune</span></button><button class="ib" aria-label="Clear"><span class="ms" aria-hidden="true" style="font-size:18px">close</span></button></div>
+        <div class="pop" role="dialog" aria-label="Regex builder">
+          <div class="row"><span class="h3 grow">Regex builder</span><span class="tag g">Valid</span></div>
+          <div class="row wrap"><span class="chip">^ start</span><span class="chip">( group )</span><span class="chip">| or</span><span class="chip">.* anything</span><span class="chip on">Case sensitive</span><span class="chip">Whole word</span></div>
+          <div class="note">Matches the translated name and the English name, so either language finds a melody.</div>
+        </div>
+        <div class="lb"><div class="it">Ode to Joy</div><div class="it">Fur Elise</div></div>
+      </section>
+      <section class="card" aria-label="No match">
+        <div class="lbl">No match</div>
+        <div class="sf"><span class="ms mut" aria-hidden="true">search</span><span class="q">banjo</span><span class="rx">.*</span><button class="ib" aria-label="Regex builder"><span class="ms" aria-hidden="true" style="font-size:18px">tune</span></button></div>
+        <div class="note">No melody matches the search.</div>
+      </section>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Lubricate mode in the process settings</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./kit.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&amp;family=Roboto+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..500,0..1,0&amp;display=swap" rel="stylesheet">
+<style>
+.opt{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px;border-radius:12px;font-size:13px}
+.opt.sel{background:#24342b;color:#cde9d6}
+.cb{width:18px;height:18px;border-radius:4px;border:2px solid #7c8a81;box-sizing:border-box;flex:none}
+.cb.on{background:#6fdc98;border-color:#6fdc98;display:grid;place-items:center;color:#00391c}
+.code b{color:#9ff7bf;font-weight:500}.code i{color:#7c8a81;font-style:normal}
+</style>
+</helmet>
+<div class="pg">
+  <div class="row wrap"><div class="grow"><div class="h1">Lubricate mode in the process settings</div><div class="sub">A switch on the Others page, beside Express print mode. When it is on, the start G-code runs the full-travel routine right after the printer's first full homing, then homes again so the rest of the preparation is unchanged.</div></div><span class="tag g">Built</span></div>
+  <div style="display:grid;grid-template-columns:minmax(0,1fr) 600px;gap:12px">
+    <section class="card" aria-label="Process settings, Others, Special mode">
+      <div class="row"><div class="lbl grow">Special mode</div><span class="ms mut" aria-hidden="true">tune</span></div>
+      <div class="opt"><span>Spiral vase</span><span class="cb"></span></div>
+      <div class="opt"><span>Timelapse</span><span class="mut">Traditional</span></div>
+      <div class="opt"><span>Express print mode</span><span class="cb"></span></div>
+      <div class="opt sel"><span>Lubricate mode</span><span class="cb on"><span class="ms" style="font-size:16px;font-weight:700">check</span></span></div>
+      <div class="well" role="note">
+        <div class="lbl">Tooltip</div>
+        <div class="note" style="color:#d3ddd6">Before every print, right after the printer homes, run the motion system through its whole travel so fresh grease spreads along the rails, lead screws and bearings: the bed moves all the way down and back up twice, and the toolhead runs the full length of X, of Y and both diagonals. On Bambu Lab printers the buzzer beeps like a truck backing up while the bed moves. The printer homes again before the rest of the preparation, so the print itself is unchanged; the start takes a few minutes longer. Default: off.</div>
+      </div>
+    </section>
+    <section class="card" aria-label="Where the routine goes in the H2C start G-code">
+      <div class="h2">Where it runs on the H2C</div>
+      <div class="code">G28 X T300
+G1 X175 Y160 F30000
+G28 Z P0 T250             <i>; end of the first homing</i>
+<b>; lubricate melody: truck_backup</b>
+<b>G1 Z5.00 F1500</b>
+<b>M1006 A83 B20 L99 ...    ; a beep, then 25 mm of bed</b>
+<b>G1 Z29.23 F1500</b>
+<b>...                      ; down and up twice, X, Y, diagonals</b>
+<b>G28 Z P0 T250 ; home again after lubricate mode</b>
+...
+M622 J0
+    G28 R                 <i>; skipped: inside a firmware conditional</i>
+M623</div>
+      <div class="note">With lubricate mode off, the chosen melody still plays once at the very start of every print, in every mode, including Express print mode. Silent turns it off.</div>
+    </section>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

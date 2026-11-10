@@ -1,0 +1,38 @@
+{
+ "v": 3,
+ "createdOnFiles": {
+  "v": 1,
+  "at": "2026-11-10T03:00:00Z"
+ },
+ "title": "Bambu Studio: lubricate mode and print melodies",
+ "launch": {
+  "view": "canvas"
+ },
+ "pages": [],
+ "boards": {
+  "LubricateDevice.dc.html": {
+   "x": 0,
+   "y": 0,
+   "w": 1440,
+   "h": 900,
+   "title": "Device page: the Lubricate button, its confirmation and its printing state",
+   "expand": "fill"
+  },
+  "LubricateMode.dc.html": {
+   "x": 1520,
+   "y": 0,
+   "w": 1440,
+   "h": 900,
+   "title": "Process settings: lubricate mode and where it runs in the H2C start G-code",
+   "expand": "fill"
+  },
+  "MelodyPicker.dc.html": {
+   "x": 0,
+   "y": 1000,
+   "w": 1440,
+   "h": 1100,
+   "title": "Print dialog: the melody list with search, regex and its states",
+   "expand": "fill"
+  }
+ }
+}
