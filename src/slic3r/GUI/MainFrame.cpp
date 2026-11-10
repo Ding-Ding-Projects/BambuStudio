@@ -3844,7 +3844,14 @@ wxSizer* MainFrame::create_side_tools(wxWindow* parent)
                     // Preview may auto-slice on entry. Establish this request first,
                     // otherwise its automatic run races the queued explicit action.
                     m_plater->GetEventHandler()->ProcessEvent(slice_event);
-                    // The action handler selects Preview with no_slice=true.
+                    // The action handler selects Preview with no_slice=true. Keep the
+                    // navigation rail in step without firing a second preview-enter
+                    // event (ChangeSelection, as Ctrl+R does): otherwise the rail still
+                    // shows Prepare as selected, and a click on it does nothing.
+                    if (m_plater->is_preview_shown() && m_tabpanel && m_tabpanel->GetSelection() != (int) tpPreview) {
+                        m_tabpanel->ChangeSelection(tpPreview);
+                        m_last_selected_tab = tpPreview;
+                    }
                 }
             }
         };
