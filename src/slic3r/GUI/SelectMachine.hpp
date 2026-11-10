@@ -28,6 +28,8 @@
 #include <memory>
 
 #include "GUI_ObjectLayers.hpp"
+
+class SearchField;
 #include "Widgets/LinkLabel.hpp"
 #include "boost/bimap/bimap.hpp"
 #include "AmsMappingPopup.hpp"
@@ -359,6 +361,13 @@ private:
     // Express print mode mirrors the process preset, never AppConfig, so it is
     // laid out with the rows but kept out of m_checkbox_list.
     PrintOption*                             m_option_express{nullptr};
+    // Lubricate melody: a searchable list (with the regex builder of the
+    // shared search field) that also mirrors the process preset.
+    wxPanel*                                 m_lubricate_panel{nullptr};
+    ::SearchField*                           m_lubricate_search{nullptr};
+    wxListBox*                               m_lubricate_list{nullptr};
+    wxStaticText*                            m_lubricate_note{nullptr};
+    std::vector<std::string>                 m_lubricate_ids; // ids shown in the list, in order
 
     std::shared_ptr<int>                m_token = std::make_shared<int>(0);
     std::vector<wxString>               m_bedtype_list;
@@ -742,6 +751,9 @@ private:
     void on_flow_pa_caliation_option_changed(wxCommandEvent& event);
     void on_nozzle_offset_option_changed(wxCommandEvent& event);
     void on_express_option_changed(wxCommandEvent& event);
+    wxPanel* create_lubricate_melody_panel(wxWindow* parent);
+    void refresh_lubricate_melody_list();
+    void on_lubricate_melody_selected();
     void on_pa_value_switch_changed(wxCommandEvent &event);
 
     // get mapping nozzle display string for rack

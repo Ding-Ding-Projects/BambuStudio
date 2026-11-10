@@ -59991,3 +59991,68 @@ msgstr "打印機會先歸位，然後熱床由頂落到底再返上去，工具
 #. review-status: agent-drafted
 msgid "The bed will move all the way down and back up, and the toolhead along the full length of every axis. Clear the build plate first. Start lubricate mode?"
 msgstr "熱床會由頂落到底再返上去，工具頭亦會沿住每條軸行盡全程。請先清空打印板。要開始潤滑模式嗎？"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Lubricate melody"
+msgstr "潤滑旋律"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "The tune the printer buzzer plays while the bed moves in lubricate mode, one note per bed segment. Choose it in the print dialog. Default: truck backing up."
+msgstr "潤滑模式入面熱床郁動嗰陣，打印機蜂鳴器播嘅曲，熱床每郁一段就播一粒音。喺打印對話框揀。預設：貨車倒後。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Search melodies"
+msgstr "搜尋旋律"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "No melody matches the search."
+msgstr "冇旋律符合搜尋。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Plays while the bed moves at the start of the print. Changing it slices the plate again."
+msgstr "開印嗰陣熱床郁動時會播。改咗會重新切片。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Lubricate mode is off in the process settings, so no melody plays on this print."
+msgstr "流程設定入面潤滑模式未開，所以今次打印唔會播旋律。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Truck backing up"
+msgstr "貨車倒後"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Two-tone siren"
+msgstr "雙音警笛"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Rising chirp"
+msgstr "上升嘀嘀聲"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Ode to Joy"
+msgstr "歡樂頌"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Twinkle, Twinkle, Little Star"
+msgstr "一閃一閃小星星"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Fur Elise"
+msgstr "給愛麗絲"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Westminster chimes"
+msgstr "西敏寺鐘聲"

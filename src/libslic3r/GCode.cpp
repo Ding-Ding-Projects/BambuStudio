@@ -3193,6 +3193,7 @@ void GCode::_do_export(Print& print, GCodeOutputStream &file, ThumbnailsGenerato
         area.max_y  = bed.max.y();
         area.max_z  = print.config().printable_height.value;
         area.buzzer = is_BBL_Printer();
+        area.melody = print.config().lubricate_melody.value;
         machine_start_gcode = insert_lubricate_routine(machine_start_gcode, area);
     }
     if (print.config().gcode_flavor != gcfKlipper) {

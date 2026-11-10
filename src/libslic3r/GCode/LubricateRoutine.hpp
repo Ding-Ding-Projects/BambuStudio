@@ -2,8 +2,25 @@
 #define slic3r_GCode_LubricateRoutine_hpp_
 
 #include <string>
+#include <vector>
 
 namespace Slic3r {
+
+// A tune for the buzzer while the bed moves: one note before each bed segment,
+// repeating from the start when the travel is longer than the tune. Notes are
+// MIDI note numbers (69 = A4, 440 Hz); 0 is a rest. Every tune is either a
+// public-domain melody or a plain original pattern.
+struct LubricateMelody
+{
+    const char      *id;   // stored in the `lubricate_melody` option
+    const char      *name; // English display name, translated by the GUI
+    std::vector<int> notes;
+};
+
+// The melody library, the default (truck backing up) first.
+const std::vector<LubricateMelody> &lubricate_melodies();
+// The melody with this id, or the default when the id is unknown or empty.
+const LubricateMelody &lubricate_melody(const std::string &id);
 
 // Lubricate mode: run the motion system through its whole travel so fresh grease
 // spreads along the rails, lead screws and bearings. The bed travels from near the
@@ -19,6 +36,8 @@ struct LubricateArea
     double max_z = 0.;
     // Bambu Lab printers play notes with M1006; other firmware gets no sound.
     bool buzzer = false;
+    // Id of the tune played while the bed moves (see lubricate_melodies()).
+    std::string melody;
 };
 
 // The routine on its own. It assumes a homed machine and leaves it homed again

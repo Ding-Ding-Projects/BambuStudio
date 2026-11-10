@@ -6115,6 +6115,8 @@ void StatusPanel::on_lubricate(wxCommandEvent &)
     area.max_y  = box.max.y();
     area.max_z  = height->value;
     area.buzzer = true; // the Device page drives Bambu Lab printers, which all have the M1006 buzzer
+    if (const auto *melody = bundle->prints.get_edited_preset().config.option<ConfigOptionString>("lubricate_melody"))
+        area.melody = melody->value;
     obj->publish_gcode("G28\n" + lubricate_routine_gcode(area));
 }
 

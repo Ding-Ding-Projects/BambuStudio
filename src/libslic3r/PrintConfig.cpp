@@ -4273,6 +4273,13 @@ void PrintConfigDef::init_fff_params()
     def->mode    = comSimple;
     def->set_default_value(new ConfigOptionBool(false));
 
+    def          = this->add("lubricate_melody", coString);
+    def->label   = L("Lubricate melody");
+    def->tooltip = L("The tune the printer buzzer plays while the bed moves in lubricate mode, one note per bed "
+                     "segment. Choose it in the print dialog. Default: truck backing up.");
+    def->mode    = comSimple;
+    def->set_default_value(new ConfigOptionString("truck_backup"));
+
     def          = this->add("enable_order_independent_overlap_carving", coBool);
     def->label   = L("Order-independent overlap carving");
     def->tooltip = L("When enabled, overlapping model parts are carved by bounding-box size so smaller embedded parts are not removed by larger parts due to volume order.");

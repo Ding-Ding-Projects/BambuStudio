@@ -27,6 +27,8 @@
 #include "Widgets/CheckBox.hpp"
 #include "Widgets/RadioBox.hpp"
 #include "Widgets/Label.hpp"
+#include "Widgets/SearchField.hpp"
+#include "libslic3r/GCode/LubricateRoutine.hpp"
 #include "Widgets/MaterialIcon.hpp"
 #include "Widgets/MD3DialogChrome.hpp"
 #include "BackgroundSlicingProcess.hpp"
@@ -984,6 +986,7 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     m_options_line_panel->Fit();
 
     options_sizer->Add(m_sizer_options, 0, wxEXPAND, 0);
+    options_sizer->Add(create_lubricate_melody_panel(m_options_other), 0, wxEXPAND | wxTOP, FromDIP(8));
     options_sizer->Add(0, 0, 1, wxTOP, FromDIP(8));
     options_sizer->Add(m_pa_value_panel);
     options_sizer->Add(0, 0, 1, wxTOP, FromDIP(12));
@@ -3062,12 +3065,18 @@ void SelectMachineDialog::update_option_opts(MachineObject *obj)
     {
         for (auto opt : m_checkbox_list) { opt.second->Hide(); }
         m_option_express->Hide();
+        if (m_lubricate_panel) m_lubricate_panel->Hide();
         update_options_layout();
         return;
     }
 
     /*express print mode: a normal send only, the SD card view has no preset to write*/
     m_option_express->Show(m_print_type == FROM_NORMAL);
+    /*lubricate melody: also a process preset value, so a normal send only*/
+    if (m_lubricate_panel) {
+        m_lubricate_panel->Show(m_print_type == FROM_NORMAL);
+        refresh_lubricate_melody_list();
+    }
 
     /*timelapse*/
     m_checkbox_list["timelapse"]->Show();
@@ -3712,6 +3721,100 @@ void SelectMachineDialog::on_express_option_changed(wxCommandEvent &event)
         load_option_vals(obj); // the rows return to their saved per-printer values
     else
         apply_express_print_mode_to_options(obj);
+    CallAfter([this] { update_by_obj(get_current_machine()); });
+}
+
+wxPanel *SelectMachineDialog::create_lubricate_melody_panel(wxWindow *parent)
+{
+    m_lubricate_panel = new wxPanel(parent, wxID_ANY);
+    m_lubricate_panel->SetBackgroundColour(parent->GetBackgroundColour());
+    auto *sizer = new wxBoxSizer(wxVERTICAL);
+
+    auto *title = new Label(m_lubricate_panel, _L("Lubricate melody"));
+    title->SetFont(Label::Head_14);
+    title->SetToolTip(_L("The tune the printer buzzer plays while the bed moves in lubricate mode, one note per bed "
+                         "segment. Choose it in the print dialog. Default: truck backing up."));
+
+    m_lubricate_search = new ::SearchField(m_lubricate_panel, _L("Search melodies"));
+    m_lubricate_search->SetOnQuery([this](const wxString &) { refresh_lubricate_melody_list(); });
+    // Regex mode, case and whole-word changes from the builder popover re-run the filter.
+    m_lubricate_search->SetOnRegexToggle([this](bool) { refresh_lubricate_melody_list(); });
+
+    m_lubricate_list = new wxListBox(m_lubricate_panel, wxID_ANY, wxDefaultPosition, wxSize(-1, FromDIP(120)), 0, nullptr,
+                                     wxLB_SINGLE | wxLB_NEEDED_SB);
+    m_lubricate_list->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
+    m_lubricate_list->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
+    m_lubricate_list->SetFont(Label::Body_14);
+    m_lubricate_list->SetName(_L("Lubricate melody"));
+    m_lubricate_list->Bind(wxEVT_LISTBOX, [this](wxCommandEvent &) { on_lubricate_melody_selected(); });
+
+    m_lubricate_note = new wxStaticText(m_lubricate_panel, wxID_ANY, wxEmptyString);
+    m_lubricate_note->SetFont(Label::Body_12);
+    m_lubricate_note->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+
+    sizer->Add(title, 0, wxBOTTOM, FromDIP(6));
+    sizer->Add(m_lubricate_search, 0, wxEXPAND | wxBOTTOM, FromDIP(6));
+    sizer->Add(m_lubricate_list, 0, wxEXPAND | wxBOTTOM, FromDIP(4));
+    sizer->Add(m_lubricate_note, 0, wxEXPAND);
+    m_lubricate_panel->SetSizer(sizer);
+    m_lubricate_panel->Hide();
+    refresh_lubricate_melody_list();
+    return m_lubricate_panel;
+}
+
+void SelectMachineDialog::refresh_lubricate_melody_list()
+{
+    if (!m_lubricate_list || !m_lubricate_search) return;
+    const PresetBundle *bundle = wxGetApp().preset_bundle;
+    const DynamicPrintConfig *process = bundle ? &bundle->prints.get_edited_preset().config : nullptr;
+    const auto *chosen  = process ? process->option<ConfigOptionString>("lubricate_melody") : nullptr;
+    const auto *enabled = process ? process->option<ConfigOptionBool>("lubricate_mode") : nullptr;
+    const std::string current = lubricate_melody(chosen ? chosen->value : std::string()).id;
+
+    ::SearchField::MatchPass match(m_lubricate_search->GetValue(), m_lubricate_search->IsRegexEnabled(),
+                                   m_lubricate_search->IsCaseSensitive(), m_lubricate_search->IsWholeWord(),
+                                   m_lubricate_search->IsMultiline());
+    m_lubricate_list->Freeze();
+    m_lubricate_list->Clear();
+    m_lubricate_ids.clear();
+    for (const LubricateMelody &melody : lubricate_melodies()) {
+        const wxString name = _(wxString::FromUTF8(melody.name));
+        // Match the translated name and the English one, so either language finds it.
+        if (!match.matches(name) && !match.matches(wxString::FromUTF8(melody.name)))
+            continue;
+        m_lubricate_list->Append(name);
+        m_lubricate_ids.emplace_back(melody.id);
+        if (current == melody.id)
+            m_lubricate_list->SetSelection(int(m_lubricate_ids.size()) - 1);
+    }
+    m_lubricate_list->Thaw();
+
+    if (m_lubricate_ids.empty())
+        m_lubricate_note->SetLabel(_L("No melody matches the search."));
+    else if (enabled && enabled->value)
+        m_lubricate_note->SetLabel(_L("Plays while the bed moves at the start of the print. Changing it slices the plate again."));
+    else
+        m_lubricate_note->SetLabel(_L("Lubricate mode is off in the process settings, so no melody plays on this print."));
+    m_lubricate_panel->Layout();
+}
+
+void SelectMachineDialog::on_lubricate_melody_selected()
+{
+    if (!m_lubricate_list) return;
+    const int index = m_lubricate_list->GetSelection();
+    if (index == wxNOT_FOUND || index >= int(m_lubricate_ids.size())) return;
+    const std::string &id = m_lubricate_ids[index];
+
+    const PresetBundle *bundle = wxGetApp().preset_bundle;
+    const auto *chosen = bundle ? bundle->prints.get_edited_preset().config.option<ConfigOptionString>("lubricate_melody") : nullptr;
+    if (chosen && chosen->value == id) return;
+
+    // Same route as Express print mode: write the process preset, which marks
+    // the G-code stale, and print setup offers Slice again.
+    DynamicPrintConfig cfg;
+    cfg.set_key_value("lubricate_melody", new ConfigOptionString(id));
+    if (Tab *tab = wxGetApp().get_tab(Preset::TYPE_PRINT))
+        tab->load_config(cfg);
     CallAfter([this] { update_by_obj(get_current_machine()); });
 }
 

@@ -1453,6 +1453,7 @@ PRINT_CONFIG_CLASS_DEFINE(
     ((ConfigOptionBool,                enable_wrapping_detection))
     ((ConfigOptionBool,                express_print_mode))
     ((ConfigOptionBool,                lubricate_mode))
+    ((ConfigOptionString,              lubricate_melody))
     ((ConfigOptionBool,                enable_order_independent_overlap_carving))
     ((ConfigOptionInt,                 wrapping_detection_layers))
     ((ConfigOptionPoints,              wrapping_exclude_area))

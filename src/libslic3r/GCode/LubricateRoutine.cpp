@@ -28,23 +28,27 @@ std::string fmt(double v)
     return out.str();
 }
 
-// One reversing-truck beep: about 1 kHz (MIDI note 83, B5) on all three buzzer
-// channels, the same channel layout as the start tune of the Bambu Lab profiles.
-std::string beep()
+// One note on all three buzzer channels, the same channel layout as the start
+// tune of the Bambu Lab profiles. A rest plays nothing.
+std::string note(int midi)
 {
+    if (midi <= 0)
+        return std::string();
+    const std::string n = std::to_string(midi);
     return "M1006 S1\n"
-           "M1006 A83 B20 L99 C83 D20 M99 E83 F20 N99\n"
+           "M1006 A" + n + " B20 L99 C" + n + " D20 M99 E" + n + " F20 N99\n"
            "M1006 W\n";
 }
 
-// Move the bed from `from` to `to` in segments, with a beep before each one.
-void bed_travel(std::ostringstream &out, double from, double to, bool buzzer)
+// Move the bed from `from` to `to` in segments, playing the next note of the
+// tune before each one. `next_note` carries the position across calls.
+void bed_travel(std::ostringstream &out, double from, double to, const std::vector<int> *tune, size_t &next_note)
 {
     const double length = std::abs(to - from);
     const int    steps  = std::max(1, int(std::ceil(length / z_segment)));
     for (int i = 1; i <= steps; ++i) {
-        if (buzzer)
-            out << beep();
+        if (tune != nullptr && !tune->empty())
+            out << note((*tune)[next_note++ % tune->size()]);
         out << "G1 Z" << fmt(from + (to - from) * i / steps) << " F" << z_feed << "\n";
     }
 }
@@ -62,6 +66,35 @@ bool is_full_homing_line(const std::string &line)
 
 } // namespace
 
+const std::vector<LubricateMelody> &lubricate_melodies()
+{
+    // MIDI notes: C5 = 72, D5 = 74, E5 = 76, F5 = 77, G5 = 79, A5 = 81, B5 = 83.
+    static const std::vector<LubricateMelody> melodies{
+        // About 1 kHz, the beeper of a reversing truck.
+        {"truck_backup", "Truck backing up", {83}},
+        {"two_tone_siren", "Two-tone siren", {81, 76}},
+        {"rising_chirp", "Rising chirp", {72, 76, 79, 84}},
+        // Beethoven, Symphony No. 9 (public domain).
+        {"ode_to_joy", "Ode to Joy", {76, 76, 77, 79, 79, 77, 76, 74, 72, 72, 74, 76, 76, 74, 74, 0}},
+        // Traditional (public domain).
+        {"twinkle", "Twinkle, Twinkle, Little Star", {72, 72, 79, 79, 81, 81, 79, 0, 77, 77, 76, 76, 74, 74, 72, 0}},
+        // Beethoven, Bagatelle No. 25 (public domain).
+        {"fur_elise", "Fur Elise", {76, 75, 76, 75, 76, 71, 74, 72, 69, 0}},
+        // The Westminster Quarters (public domain).
+        {"westminster", "Westminster chimes", {76, 72, 74, 67, 0, 67, 74, 76, 72, 0}},
+        {"silent", "Silent", {}},
+    };
+    return melodies;
+}
+
+const LubricateMelody &lubricate_melody(const std::string &id)
+{
+    for (const LubricateMelody &m : lubricate_melodies())
+        if (id == m.id)
+            return m;
+    return lubricate_melodies().front();
+}
+
 std::string lubricate_routine_gcode(const LubricateArea &area, const std::string &rehome)
 {
     const double x0 = area.min_x + edge_margin, x1 = area.max_x - edge_margin;
@@ -74,12 +107,16 @@ std::string lubricate_routine_gcode(const LubricateArea &area, const std::string
         out << "; lubricate mode skipped: the printable area is too small\n";
         return out.str();
     }
+    const LubricateMelody &melody = lubricate_melody(area.melody);
+    const std::vector<int> *tune  = area.buzzer ? &melody.notes : nullptr;
+    size_t                  next_note = 0;
+    out << "; lubricate melody: " << melody.id << "\n";
     out << "G90\n";
     out << "G1 Z" << fmt(z0) << " F" << z_feed << "\n";
     for (int c = 0; c < cycles; ++c) {
-        // Bed: all the way down and back up, beeping like a reversing truck.
-        bed_travel(out, z0, z1, area.buzzer);
-        bed_travel(out, z1, z0, area.buzzer);
+        // Bed: all the way down and back up, with the melody playing as it moves.
+        bed_travel(out, z0, z1, tune, next_note);
+        bed_travel(out, z1, z0, tune, next_note);
         // Toolhead: the whole length of X and of Y, then both diagonals.
         out << "G1 X" << fmt(x0) << " Y" << fmt(y0) << " F" << xy_feed << "\n";
         out << "G1 X" << fmt(x1) << "\n";

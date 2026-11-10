@@ -36562,3 +36562,42 @@ msgstr ""
 
 msgid "The bed will move all the way down and back up, and the toolhead along the full length of every axis. Clear the build plate first. Start lubricate mode?"
 msgstr ""
+
+msgid "Lubricate melody"
+msgstr ""
+
+msgid "The tune the printer buzzer plays while the bed moves in lubricate mode, one note per bed segment. Choose it in the print dialog. Default: truck backing up."
+msgstr ""
+
+msgid "Search melodies"
+msgstr ""
+
+msgid "No melody matches the search."
+msgstr ""
+
+msgid "Plays while the bed moves at the start of the print. Changing it slices the plate again."
+msgstr ""
+
+msgid "Lubricate mode is off in the process settings, so no melody plays on this print."
+msgstr ""
+
+msgid "Truck backing up"
+msgstr ""
+
+msgid "Two-tone siren"
+msgstr ""
+
+msgid "Rising chirp"
+msgstr ""
+
+msgid "Ode to Joy"
+msgstr ""
+
+msgid "Twinkle, Twinkle, Little Star"
+msgstr ""
+
+msgid "Fur Elise"
+msgstr ""
+
+msgid "Westminster chimes"
+msgstr ""
