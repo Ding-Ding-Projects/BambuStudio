@@ -10911,15 +10911,18 @@ void GLCanvas3D::_render_imgui_select_plate_toolbar()
             ImVec2 end_pos = ImVec2(start_pos.x + size.x, start_pos.y + size.y);
             ImGui::GetWindowDrawList()->AddRectFilled(start_pos, end_pos, md3_scrim_imu32(0.125f));
         }
-        // The same rect the button uses for its image, now above the wash.
-        ImGui::GetWindowDrawList()->AddImage(btn_texture_id, start_pos,
-            ImVec2(start_pos.x + button_width, start_pos.y + button_height),
-            ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), ImGui::GetColorU32(glyph_clr));
-
         // Fit the complete translated label to the tile instead of painting past its edge.
         const std::string stats_text = _u8L("All Plates") + "\n" + _u8L("Stats");
         const float label_width = std::max(1.0f, button_width - 8.0f);
         const float label_height = std::max(1.0f, button_height * 0.60f - 4.0f);
+
+        // The icon gets the square above the label, so the label never covers it
+        // (drawn over the whole tile, the glyph sat under the two lines of text).
+        const float icon_side = std::max(1.0f, std::min(button_width, button_height - label_height - 4.0f));
+        const ImVec2 icon_pos(start_pos.x + (button_width - icon_side) * 0.5f, start_pos.y + 2.0f);
+        ImGui::GetWindowDrawList()->AddImage(btn_texture_id, icon_pos,
+            ImVec2(icon_pos.x + icon_side, icon_pos.y + icon_side),
+            ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), ImGui::GetColorU32(glyph_clr));
         ImFont* label_font = ImGui::GetFont();
         float label_size = 15.0f;
         ImVec2 label_extent = label_font->CalcTextSizeA(label_size, FLT_MAX, label_width, stats_text.c_str());

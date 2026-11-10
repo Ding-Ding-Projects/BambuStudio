@@ -839,9 +839,7 @@ static wxImage fail_image;
 
 #define NORMAL_SPACING FromDIP(5)
 #define PAGE_SPACING FromDIP(MD3::Metrics::active().padding)
-// Narrow enough that the left column and the control column both fit the device page of a
-// 1200x800 window; the camera and the task card grow with the window above that.
-#define PAGE_MIN_WIDTH FromDIP(380)
+#define PAGE_MIN_WIDTH FromDIP(574)
 #define PROGRESSBAR_HEIGHT FromDIP(8)
 
 #define SWITCH_BUTTON_SIZE (wxSize(FromDIP(40), -1))

@@ -426,6 +426,12 @@ void Tab::create_preset_tab()
     // BBS: model config
     if (m_presets_choice) {
         m_presets_choice->Reparent(m_top_panel);
+        // The combo still takes the remaining width, but its minimum no longer follows
+        // the preset name (the name ends with an ellipsis when it has to), so the "*" of a
+        // changed preset cannot widen the sidebar past its pane and bring up a horizontal
+        // scroll bar.
+        m_presets_choice->SetLabelShrinks(true);
+        m_presets_choice->SetMinSize(wxSize(FromDIP(160), -1));
         m_top_sizer->Add(m_presets_choice, 1, wxLEFT | wxALIGN_CENTER_VERTICAL, FromDIP(10));
     } else {
         m_top_sizer->AddSpacer(FromDIP(10));

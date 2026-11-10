@@ -27,6 +27,10 @@ class TextInput : public wxNavigationEnabled<StaticBox>
     // control by an owning widget). Only affects the ellipsis boundary in render().
     int m_reserved_right_width = 0;
 
+    // When set, the minimum width no longer grows with the label: a narrow control
+    // ends its label with an ellipsis instead of widening its parent.
+    bool m_label_shrinks = false;
+
     std::vector<std::shared_ptr<TextInputValChecker>> m_checkers;
 
     static const int TextInputWidth = 200;
@@ -78,6 +82,9 @@ public:
 
     // See m_reserved_right_width.
     void SetReservedRightWidth(int width);
+
+    // See m_label_shrinks.
+    void SetLabelShrinks(bool shrinks);
 
     virtual void Rescale();
 

@@ -203,6 +203,14 @@ void TextInput::SetTextColor(StateColor const& color)
     state_handler.update_binds();
 }
 
+void TextInput::SetLabelShrinks(bool shrinks)
+{
+    if (m_label_shrinks == shrinks)
+        return;
+    m_label_shrinks = shrinks;
+    messureSize();
+}
+
 void TextInput::SetReservedRightWidth(int width)
 {
     if (width < 0)
@@ -395,8 +403,9 @@ void TextInput::messureSize()
     const auto m = measureContent();
     labelSize = m.label;
     static_tips_size = m.support;
+    const int label_width = std::max(m.label.x, m.support.x);
     const auto layout = atlasFieldLayout(GetSize().x, m.padding, m.gap, m.icons,
-        std::max(m.label.x, m.support.x), m.prefix.x, m.unit.x, m.entry.x,
+        m_label_shrinks ? std::min(label_width, FromDIP(48)) : label_width, m.prefix.x, m.unit.x, m.entry.x,
         m.editable, !m.editable || (GetWindowStyle() & wxALIGN_RIGHT));
     const int label_height = m.label.y + (static_tips.empty() ? 0 : m.support.y + FromDIP(4));
     const int content_height = std::max(m.editable ? m.entry.y : 0, label_height);
