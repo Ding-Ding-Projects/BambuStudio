@@ -40,6 +40,10 @@ struct LubricateArea
     std::string melody;
 };
 
+// The whole melody once, for a print start without lubricate mode, so the
+// chosen tune plays on every print. Empty for Silent.
+std::string start_melody_gcode(const std::string &melody_id);
+
 // The routine on its own. It assumes a homed machine and leaves it homed again
 // with `rehome` (a whole G28 line), or with a plain G28 when that is empty.
 std::string lubricate_routine_gcode(const LubricateArea &area, const std::string &rehome = std::string());

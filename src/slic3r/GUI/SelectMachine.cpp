@@ -3732,8 +3732,9 @@ wxPanel *SelectMachineDialog::create_lubricate_melody_panel(wxWindow *parent)
 
     auto *title = new Label(m_lubricate_panel, _L("Lubricate melody"));
     title->SetFont(Label::Head_14);
-    title->SetToolTip(_L("The tune the printer buzzer plays while the bed moves in lubricate mode, one note per bed "
-                         "segment. Choose it in the print dialog. Default: truck backing up."));
+    title->SetToolTip(_L("The tune the printer buzzer plays at the start of every print, in every mode. With lubricate "
+                         "mode on it plays one note per bed segment while the bed moves; otherwise the whole tune "
+                         "plays once before the printer starts. Choose it in the print dialog. Default: truck backing up."));
 
     m_lubricate_search = new ::SearchField(m_lubricate_panel, _L("Search melodies"));
     m_lubricate_search->SetOnQuery([this](const wxString &) { refresh_lubricate_melody_list(); });
@@ -3792,9 +3793,9 @@ void SelectMachineDialog::refresh_lubricate_melody_list()
     if (m_lubricate_ids.empty())
         m_lubricate_note->SetLabel(_L("No melody matches the search."));
     else if (enabled && enabled->value)
-        m_lubricate_note->SetLabel(_L("Plays while the bed moves at the start of the print. Changing it slices the plate again."));
+        m_lubricate_note->SetLabel(_L("Plays while the bed moves in lubricate mode. Changing it slices the plate again."));
     else
-        m_lubricate_note->SetLabel(_L("Lubricate mode is off in the process settings, so no melody plays on this print."));
+        m_lubricate_note->SetLabel(_L("Plays once at the start of the print. Changing it slices the plate again."));
     m_lubricate_panel->Layout();
 }
 

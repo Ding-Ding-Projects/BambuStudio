@@ -59999,8 +59999,8 @@ msgstr "潤滑旋律"
 
 #. reviewed-category: slicing-printing
 #. review-status: agent-drafted
-msgid "The tune the printer buzzer plays while the bed moves in lubricate mode, one note per bed segment. Choose it in the print dialog. Default: truck backing up."
-msgstr "潤滑模式入面熱床郁動嗰陣，打印機蜂鳴器播嘅曲，熱床每郁一段就播一粒音。喺打印對話框揀。預設：貨車倒後。"
+msgid "The tune the printer buzzer plays at the start of every print, in every mode. With lubricate mode on it plays one note per bed segment while the bed moves; otherwise the whole tune plays once before the printer starts. Choose it in the print dialog. Default: truck backing up."
+msgstr "每次開印都會播嘅蜂鳴器曲，無論咩模式都會播。開咗潤滑模式，熱床郁動嗰陣每段播一粒音；冇開就喺打印機開始之前成首播一次。喺打印對話框揀。預設：貨車倒後。"
 
 #. reviewed-category: slicing-printing
 #. review-status: agent-drafted
@@ -60014,13 +60014,13 @@ msgstr "冇旋律符合搜尋。"
 
 #. reviewed-category: slicing-printing
 #. review-status: agent-drafted
-msgid "Plays while the bed moves at the start of the print. Changing it slices the plate again."
-msgstr "開印嗰陣熱床郁動時會播。改咗會重新切片。"
+msgid "Plays while the bed moves in lubricate mode. Changing it slices the plate again."
+msgstr "潤滑模式入面熱床郁動嗰陣播。改咗會重新切片。"
 
 #. reviewed-category: slicing-printing
 #. review-status: agent-drafted
-msgid "Lubricate mode is off in the process settings, so no melody plays on this print."
-msgstr "流程設定入面潤滑模式未開，所以今次打印唔會播旋律。"
+msgid "Plays once at the start of the print. Changing it slices the plate again."
+msgstr "開印嗰陣播一次。改咗會重新切片。"
 
 #. reviewed-category: slicing-printing
 #. review-status: agent-drafted

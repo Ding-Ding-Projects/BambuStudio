@@ -3195,6 +3195,10 @@ void GCode::_do_export(Print& print, GCodeOutputStream &file, ThumbnailsGenerato
         area.buzzer = is_BBL_Printer();
         area.melody = print.config().lubricate_melody.value;
         machine_start_gcode = insert_lubricate_routine(machine_start_gcode, area);
+    } else if (is_BBL_Printer()) {
+        // Without lubricate mode the chosen melody still plays, once, as the first thing the
+        // printer does, in every mode (Express print mode included).
+        machine_start_gcode = start_melody_gcode(print.config().lubricate_melody.value) + machine_start_gcode;
     }
     if (print.config().gcode_flavor != gcfKlipper) {
         // Set bed temperature if the start G-code does not contain any bed temp control G-codes.

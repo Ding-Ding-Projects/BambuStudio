@@ -95,6 +95,17 @@ const LubricateMelody &lubricate_melody(const std::string &id)
     return lubricate_melodies().front();
 }
 
+std::string start_melody_gcode(const std::string &melody_id)
+{
+    const LubricateMelody &melody = lubricate_melody(melody_id);
+    if (melody.notes.empty())
+        return std::string();
+    std::string out = "; start melody: " + std::string(melody.id) + "\n";
+    for (int midi : melody.notes)
+        out += note(midi);
+    return out;
+}
+
 std::string lubricate_routine_gcode(const LubricateArea &area, const std::string &rehome)
 {
     const double x0 = area.min_x + edge_margin, x1 = area.max_x - edge_margin;

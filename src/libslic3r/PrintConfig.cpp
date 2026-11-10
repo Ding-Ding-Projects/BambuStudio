@@ -4275,8 +4275,9 @@ void PrintConfigDef::init_fff_params()
 
     def          = this->add("lubricate_melody", coString);
     def->label   = L("Lubricate melody");
-    def->tooltip = L("The tune the printer buzzer plays while the bed moves in lubricate mode, one note per bed "
-                     "segment. Choose it in the print dialog. Default: truck backing up.");
+    def->tooltip = L("The tune the printer buzzer plays at the start of every print, in every mode. With lubricate "
+                     "mode on it plays one note per bed segment while the bed moves; otherwise the whole tune "
+                     "plays once before the printer starts. Choose it in the print dialog. Default: truck backing up.");
     def->mode    = comSimple;
     def->set_default_value(new ConfigOptionString("truck_backup"));
 

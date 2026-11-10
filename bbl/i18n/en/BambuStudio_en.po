@@ -38604,7 +38604,7 @@ msgstr ""
 msgid "Lubricate melody"
 msgstr ""
 
-msgid "The tune the printer buzzer plays while the bed moves in lubricate mode, one note per bed segment. Choose it in the print dialog. Default: truck backing up."
+msgid "The tune the printer buzzer plays at the start of every print, in every mode. With lubricate mode on it plays one note per bed segment while the bed moves; otherwise the whole tune plays once before the printer starts. Choose it in the print dialog. Default: truck backing up."
 msgstr ""
 
 msgid "Search melodies"
@@ -38613,10 +38613,10 @@ msgstr ""
 msgid "No melody matches the search."
 msgstr ""
 
-msgid "Plays while the bed moves at the start of the print. Changing it slices the plate again."
+msgid "Plays while the bed moves in lubricate mode. Changing it slices the plate again."
 msgstr ""
 
-msgid "Lubricate mode is off in the process settings, so no melody plays on this print."
+msgid "Plays once at the start of the print. Changing it slices the plate again."
 msgstr ""
 
 msgid "Truck backing up"
