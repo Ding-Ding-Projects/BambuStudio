@@ -53,9 +53,11 @@ DoorChimeCard::DoorChimeCard(wxWindow *parent) : StaticBox(parent)
     m_switch->SetMinSize(wxSize(FromDIP(44), FromDIP(24)));
     m_switch->SetValue(DoorChime::enabled());
     m_switch->SetToolTip(_L("Beta: the door reading comes from a status bit that the printer maker does not document."));
-    m_switch->Bind(wxEVT_TOGGLEBUTTON, [this](wxCommandEvent &) {
+    m_switch->Bind(wxEVT_TOGGLEBUTTON, [this](wxCommandEvent &event) {
         DoorChime::set_enabled(m_switch->GetValue());
         refresh_state();
+        // The switch redraws itself in its own handler for this event, which runs after this one.
+        event.Skip();
     });
     switch_row->Add(m_switch, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(8));
 
