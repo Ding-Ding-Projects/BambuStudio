@@ -29,6 +29,7 @@
 #include "Widgets/Label.hpp"
 #include "Widgets/SearchField.hpp"
 #include "Widgets/ListBox.hpp"
+#include "BilingualDecorator.hpp"
 #include "libslic3r/GCode/LubricateRoutine.hpp"
 #include "Widgets/MaterialIcon.hpp"
 #include "Widgets/MD3DialogChrome.hpp"
@@ -3793,7 +3794,10 @@ void SelectMachineDialog::refresh_lubricate_melody_list()
         // Match the translated name and the English one, so either language finds it.
         if (!matches(name) && (name == english || !matches(english)))
             continue;
-        m_lubricate_list->Append(name);
+        // List values are left alone by the bilingual decorator, and every row has room
+        // for both names, so bilingual mode shows "English · 廣東話" here itself.
+        const wxString second = I18N::bilingual_secondary(name);
+        m_lubricate_list->Append(second.empty() ? name : name + wxS(" · ") + second);
         m_lubricate_ids.emplace_back(melody.id);
         if (current == melody.id)
             m_lubricate_list->SetSelection(int(m_lubricate_ids.size()) - 1);
