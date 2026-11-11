@@ -735,12 +735,22 @@
     {
       "route": "device/README.md",
       "title": "Device features",
-      "sha256": "33384b3244e321f67a366b08946d9439c54859befaada0cfb2595aeabe7d89d0"
+      "sha256": "9e561d8b57c30300df5a4d195d6786f8193f6c3e964ced2e4158f75156923791"
     },
     {
       "route": "device/README.yue_HK.md",
       "title": "設備功能",
-      "sha256": "8e51a15fbf7bf5771b4b787192fbc3e24b7a6c6e27ab81874f622ad945b9676b"
+      "sha256": "0249814491ff2e1c9bf37abdcfb634375ead67dab0937a39e59535651a9da390"
+    },
+    {
+      "route": "device/door-chime.md",
+      "title": "Door chimes",
+      "sha256": "0c694c17d072595e30ba6b22e74808b5753bed4a4ea80f04863ae92aab863406"
+    },
+    {
+      "route": "device/door-chime.yue_HK.md",
+      "title": "門鈴",
+      "sha256": "d4fb30a39dd935e7035c4c636482326966ff5724bf6997a1fb6e3cb37a7bc58a"
     },
     {
       "route": "device/farm-lan.md",
@@ -2315,7 +2325,7 @@
       "bytes": 16430
     }
   ],
-  "bundle_sha256": "458514c44b3bc3a7e9418087be02f7e126050ba8e26f8dd8eb59c2fdb05c4a6f",
+  "bundle_sha256": "08b02d9025519652cf9b7039b92a2a94a5cb6086eec1f7f77f8359f4182459ea",
   "unavailable_references": [
     {
       "source": "api/README.md",

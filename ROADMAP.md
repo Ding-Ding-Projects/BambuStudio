@@ -1,5 +1,14 @@
 # Roadmap
 
+## Door chimes, 11 November 2026
+
+- [x] Play a chime on the printer when its door opens and another when it closes, off by default.
+- [x] Offer seven open chimes and seven close chimes plus Silent, with a Preview on the printer for each pick.
+- [x] Put the switch, the quick picks and Preview on a Device page card, with a line saying whether a chime can play now.
+- [x] Keep chimes away from running, paused, preparing and slicing prints.
+- [x] Write the article and its Cantonese twin, translate every string, and capture the card from the built app.
+- [ ] Hear the chimes on a real H2C and confirm the door edges arrive when the door moves.
+
 ## Lubricate mode and print melodies, 10 November 2026
 
 - [x] Add lubricate mode at the start of every print and as a Device page button, with the routine placed after the last full homing command.
@@ -11,7 +20,7 @@
 - [ ] Capture the Lubricate confirmation and the button while printing with a printer connected.
 - [x] Reflow the Device page so it no longer scrolls sideways at 1200x800.
 - [x] Capture the Cantonese light theme layouts of the Device button, the melody list and the regex builder.
-- [ ] Capture the bilingual layouts of the new screens.
+- [x] Capture the bilingual print dialog melody list, with both names on every row.
 
 ## Local tools and the last unbuilt features, 8 November 2026
 

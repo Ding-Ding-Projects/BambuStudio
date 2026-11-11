@@ -1,5 +1,27 @@
 # Bambu Studio handoff
 
+## Door chimes, 11 November 2026
+
+The printer plays a chime through its buzzer when its door opens and another when it closes. A
+Door chime card on the Device page under Move turns it on (off by default, labelled beta because
+the door reading is an undocumented status bit), picks one of seven chimes for each edge plus
+Silent, and has a Preview button beside each that plays the pick on the printer. A watcher checks
+the selected printer's door reading twice a second and sends the chime on each edge; the first
+reading after connecting or switching printers only records the state. Chimes wait while the
+printer is printing, paused, preparing or slicing, because the tune turns the motors on and off
+(`M17` / `M18`) and waits for the motion queue. Article: `docs/features/device/door-chime.md` with
+its Cantonese twin; captures in `design/door-chime-2026-11/captures/`.
+
+Commits: `7395719e3` (feature, 26 catalog strings, 196 standalone assertions), `8266cc95b`
+(missing include that failed one build), `10823088b` (the switch did not redraw when flipped,
+because the card's handler did not pass the event on), then the article and captures.
+
+Checked: `tests/door_chime.test.mjs` with MSVC, the Cantonese catalog compile (12184 entries), the
+card in the built app on a hidden desktop with no printer: defaults, the switch redrawing, a
+keyboard change of the close chime, both settings surviving a restart, and the Cantonese light
+layout. Not checked: a chime on a real printer, the door edges on a real H2C, and Preview with a
+printer connected.
+
 ## Lubricate mode and print melodies, 10 November 2026
 
 Lubricate mode runs the bed and toolhead through their full travel so fresh grease spreads along
@@ -17,7 +39,7 @@ Commits: `48f87b54c` (routine and option), `306b8321d` (skip conditional homing 
 melody), `034f53271` (captures), `fde4fb482` (kit list for melodies, search field outline),
 `5d1b76fdd` (article and catalog), `1b10b4887` (changed preset no longer widens the sidebar,
 All Plates Stats tile icon), `f9caf773c` (Device page columns stack when narrow, preset name
-ellipsis).
+ellipsis), `961c4b9ed` (melody rows show both names in bilingual mode).
 
 Checked on the apps built from `1b10b4887` and `f9caf773c` on a hidden desktop: slicing a cube for the H2C places
 the routine after `G28 Z P0 T250` with one buzzer note before each bed segment; the option, the
@@ -25,7 +47,8 @@ Device button, the picker with plain, regex and no-match searches, the Process p
 and the All Plates Stats tile were captured and looked at, and so were the Device page, the
 melody list and the regex builder in Cantonese with the light theme. Not checked: a run on a real
 printer (including whether `M1006 W` waits for the note before the next move), the Lubricate
-confirmation and the button while printing (both need a printer), and the bilingual layout.
+confirmation and the button while printing (both need a printer). The bilingual print dialog was
+captured on `961c4b9ed`.
 
 Corrections: the message of `fde4fb482` says the Device page no longer scrolls sideways; that was
 wrong and `1b10b4887` restores the page's minimum width. `f9caf773c` then fixed it properly:
