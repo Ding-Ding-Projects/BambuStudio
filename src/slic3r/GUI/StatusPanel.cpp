@@ -2362,6 +2362,8 @@ StatusBasePanel::StatusBasePanel(wxWindow *parent, wxWindowID id, const wxPoint 
     bSizer_status_below->Add(m_panel_separator_right, 0, wxEXPAND | wxALL, 0);
 
     bSizer_status->Add(bSizer_status_below, 1, wxALL | wxEXPAND, 0);
+    m_status_below_sizer = bSizer_status_below;
+    m_status_left_sizer  = bSizer_left;
 
     m_panel_separotor_bottom = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, PAGE_SPACING), wxTAB_TRAVERSAL);
     m_panel_separotor_bottom->SetBackgroundColour(device_page_color());
@@ -2370,6 +2372,24 @@ StatusBasePanel::StatusBasePanel(wxWindow *parent, wxWindowID id, const wxPoint 
     this->SetSizerAndFit(bSizer_status);
     this->Layout();
     recolor_device_surface_tree(this);
+    Bind(wxEVT_SIZE, [this](wxSizeEvent &event) {
+        update_column_orientation();
+        event.Skip();
+    });
+}
+
+void StatusBasePanel::update_column_orientation()
+{
+    if (!m_status_below_sizer || !m_status_left_sizer || !m_machine_ctrl_panel) return;
+    // Side by side needs both columns at their minimum widths plus the three gaps around them.
+    const int needed = m_status_left_sizer->CalcMin().x + m_machine_ctrl_panel->GetBestSize().x + 3 * PAGE_SPACING;
+    const int orient = GetClientSize().x < needed ? wxVERTICAL : wxHORIZONTAL;
+    if (m_status_below_sizer->GetOrientation() == orient) return;
+    m_status_below_sizer->SetOrientation(orient);
+    // Stacked, the monitoring column keeps its natural height instead of stretching.
+    if (auto *item = m_status_below_sizer->GetItem(m_status_left_sizer)) item->SetProportion(orient == wxHORIZONTAL ? 1 : 0);
+    Layout();
+    FitInside();
 }
 
 static const char* MONITOR_CTRL_AGE_REQUIREMENTS_URL = "https://portal-qa.bambulab.net/zh/policies/page/age-requirements-for-bambulab-account";

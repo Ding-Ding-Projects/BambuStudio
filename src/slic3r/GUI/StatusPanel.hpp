@@ -643,6 +643,10 @@ protected:
     wgtDeviceNozzleRack* m_panel_nozzle_rack{ nullptr };
 
     wxPanel *       m_panel_separator_right;
+    // Holds the monitoring column and the Control column. It stacks them when the page is too
+    // narrow for both side by side, so the page never needs a sideways scroll bar.
+    wxBoxSizer *    m_status_below_sizer{nullptr};
+    wxSizer *       m_status_left_sizer{nullptr};
     wxPanel *       m_panel_separotor_bottom;
     wxGridBagSizer *m_tasklist_info_sizer{nullptr};
     wxBoxSizer *    m_printing_sizer;
@@ -734,6 +738,7 @@ public:
     StaticBox *create_move_group(wxWindow *parent);
     void        bind_ctrl_area_mask_tracking(wxWindow *machine_ctrl_panel);
     void        on_ctrl_area_mask_event(wxEvent &event);
+    void        update_column_orientation();
     void        update_ctrl_area_masks();
     void        ensure_ctrl_area_mask_pool(size_t n);
     void        show_ctrl_area_mask_hint(CtrlAreaMaskOverlay* from);

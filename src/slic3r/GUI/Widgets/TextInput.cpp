@@ -378,14 +378,14 @@ void TextInput::render(wxDC& dc)
     dc.SetFont(GetFont());
     dc.SetTextForeground(label_color.colorForStates(states));
     wxString label_text = wxWindow::GetLabel();
-    if (m_reserved_right_width > 0 && m.label.x > label_room)
+    if ((m_reserved_right_width > 0 || m_label_shrinks) && m.label.x > label_room)
         label_text = wxControl::Ellipsize(label_text, dc, wxELLIPSIZE_END, label_room);
     dc.DrawText(label_text, label_x, label_y);
     if (!static_tips.empty()) {
         dc.SetFont(Label::Body_12);
         dc.SetTextForeground(label_color.colorForStates(states));
         wxString tips_text = static_tips;
-        if (m_reserved_right_width > 0 && m.support.x > label_room)
+        if ((m_reserved_right_width > 0 || m_label_shrinks) && m.support.x > label_room)
             tips_text = wxControl::Ellipsize(tips_text, dc, wxELLIPSIZE_END, label_room);
         dc.DrawText(tips_text, label_x, label_y + m.label.y + support_gap);
     }
