@@ -9,8 +9,9 @@
 - [x] Write the article and its Cantonese twin, and translate every new string.
 - [ ] Run lubricate mode and each melody on a real H2C and confirm how `M1006 W` paces the moves.
 - [ ] Capture the Lubricate confirmation and the button while printing with a printer connected.
-- [ ] Reflow the Device page so it no longer scrolls sideways at 1200x800.
-- [ ] Capture the light theme and Cantonese layouts of the new screens.
+- [x] Reflow the Device page so it no longer scrolls sideways at 1200x800.
+- [x] Capture the Cantonese light theme layouts of the Device button, the melody list and the regex builder.
+- [ ] Capture the bilingual layouts of the new screens.
 
 ## Local tools and the last unbuilt features, 8 November 2026
 

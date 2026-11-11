@@ -16,20 +16,21 @@ Commits: `48f87b54c` (routine and option), `306b8321d` (skip conditional homing 
 `4c418ea3a` (picker without a printer, hidden Process tabs), `4ff4dfaf2` (one regex pass per
 melody), `034f53271` (captures), `fde4fb482` (kit list for melodies, search field outline),
 `5d1b76fdd` (article and catalog), `1b10b4887` (changed preset no longer widens the sidebar,
-All Plates Stats tile icon).
+All Plates Stats tile icon), `f9caf773c` (Device page columns stack when narrow, preset name
+ellipsis).
 
-Checked on the app built from `1b10b4887` on a hidden desktop: slicing a cube for the H2C places
+Checked on the apps built from `1b10b4887` and `f9caf773c` on a hidden desktop: slicing a cube for the H2C places
 the routine after `G28 Z P0 T250` with one buzzer note before each bed segment; the option, the
 Device button, the picker with plain, regex and no-match searches, the Process page after a change
-and the All Plates Stats tile were captured and looked at. Not checked: a run on a real printer
-(including whether `M1006 W` waits for the note before the next move), the Lubricate confirmation
-and the button while printing (both need a printer), the regex builder popover on the hidden
-desktop, and the light theme and Cantonese layouts.
+and the All Plates Stats tile were captured and looked at, and so were the Device page, the
+melody list and the regex builder in Cantonese with the light theme. Not checked: a run on a real
+printer (including whether `M1006 W` waits for the note before the next move), the Lubricate
+confirmation and the button while printing (both need a printer), and the bilingual layout.
 
 Corrections: the message of `fde4fb482` says the Device page no longer scrolls sideways; that was
-wrong and `1b10b4887` restores the page's minimum width. The page still scrolls sideways at
-1200x800 because its ink column sits right of the Control column; fixing it needs a reflow of
-that page. The Cantonese catalog entry for the song title was reworded in `5d1b76fdd`; the earlier
+wrong and `1b10b4887` restores the page's minimum width. `f9caf773c` then fixed it properly:
+the page needed about 2200 px because the camera column (at least 861 px) sat beside the Control
+column (its ink group alone at least 867 px), and it now stacks them when they do not fit. The Cantonese catalog entry for the song title was reworded in `5d1b76fdd`; the earlier
 wording stays in the history of `fa929bfbb`, which can only change by rewriting published history.
 
 ## Base64 per-file controls and media preview, 9 November 2026
