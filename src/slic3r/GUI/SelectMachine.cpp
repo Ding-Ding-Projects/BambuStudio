@@ -29,6 +29,7 @@
 #include "Widgets/Label.hpp"
 #include "Widgets/SearchField.hpp"
 #include "Widgets/ListBox.hpp"
+#include "Widgets/SwitchButton.hpp"
 #include "BilingualDecorator.hpp"
 #include "libslic3r/GCode/LubricateRoutine.hpp"
 #include "Widgets/MaterialIcon.hpp"
@@ -3742,6 +3743,21 @@ wxPanel *SelectMachineDialog::create_lubricate_melody_panel(wxWindow *parent)
                          "mode on it plays one note per bed segment while the bed moves; otherwise the whole tune "
                          "plays once before the printer starts. Choose it in the print dialog. Default: truck backing up."));
 
+    // Lubricate mode itself, so it can be seen and changed where the print is sent.
+    auto *mode_row   = new wxBoxSizer(wxHORIZONTAL);
+    auto *mode_label = new Label(m_lubricate_panel, _L("Lubricate before printing"));
+    mode_label->SetFont(Label::Body_14);
+    mode_row->Add(mode_label, 1, wxALIGN_CENTER_VERTICAL);
+    m_lubricate_switch = new ::SwitchButton(m_lubricate_panel);
+    m_lubricate_switch->SetMinSize(wxSize(FromDIP(44), FromDIP(24)));
+    m_lubricate_switch->SetToolTip(_L("Run the bed and the toolhead through their full travel right after the printer homes. "
+                                      "Changing it slices the plate again."));
+    m_lubricate_switch->Bind(wxEVT_TOGGLEBUTTON, [this](wxCommandEvent &event) {
+        on_lubricate_mode_toggled();
+        event.Skip(); // the switch redraws itself in its own handler
+    });
+    mode_row->Add(m_lubricate_switch, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(8));
+
     m_lubricate_search = new ::SearchField(m_lubricate_panel, _L("Search melodies"));
     m_lubricate_search->SetOnQuery([this](const wxString &) { refresh_lubricate_melody_list(); });
     // Regex mode, case and whole-word changes from the builder popover re-run the filter.
@@ -3758,6 +3774,7 @@ wxPanel *SelectMachineDialog::create_lubricate_melody_panel(wxWindow *parent)
     m_lubricate_note->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
 
     sizer->Add(title, 0, wxBOTTOM, FromDIP(6));
+    sizer->Add(mode_row, 0, wxEXPAND | wxBOTTOM, FromDIP(6));
     sizer->Add(m_lubricate_search, 0, wxEXPAND | wxBOTTOM, FromDIP(6));
     sizer->Add(m_lubricate_list, 0, wxEXPAND | wxBOTTOM, FromDIP(4));
     sizer->Add(m_lubricate_note, 0, wxEXPAND);
@@ -3775,6 +3792,7 @@ void SelectMachineDialog::refresh_lubricate_melody_list()
     const auto *chosen  = process ? process->option<ConfigOptionString>("lubricate_melody") : nullptr;
     const auto *enabled = process ? process->option<ConfigOptionBool>("lubricate_mode") : nullptr;
     const std::string current = lubricate_melody(chosen ? chosen->value : std::string()).id;
+    if (m_lubricate_switch) m_lubricate_switch->SetValue(enabled && enabled->value);
 
     // One pass per melody: a regex pass shares one short wall-clock budget across
     // every candidate and lets all the rest through once it runs out, which on a
@@ -3831,6 +3849,26 @@ void SelectMachineDialog::on_lubricate_melody_selected()
     if (Tab *tab = wxGetApp().get_tab(Preset::TYPE_PRINT))
         tab->load_config(cfg);
     CallAfter([this] { update_by_obj(get_current_machine()); });
+}
+
+void SelectMachineDialog::on_lubricate_mode_toggled()
+{
+    if (!m_lubricate_switch) return;
+    const bool on = m_lubricate_switch->GetValue();
+    const PresetBundle *bundle = wxGetApp().preset_bundle;
+    const auto *enabled = bundle ? bundle->prints.get_edited_preset().config.option<ConfigOptionBool>("lubricate_mode") : nullptr;
+    if (enabled && enabled->value == on) return;
+
+    // Same route as the melody: write the process preset, which marks the G-code
+    // stale, so the plate is sliced again with or without the routine.
+    DynamicPrintConfig cfg;
+    cfg.set_key_value("lubricate_mode", new ConfigOptionBool(on));
+    if (Tab *tab = wxGetApp().get_tab(Preset::TYPE_PRINT))
+        tab->load_config(cfg);
+    CallAfter([this] {
+        refresh_lubricate_melody_list();
+        update_by_obj(get_current_machine());
+    });
 }
 
 void SelectMachineDialog::save_option_vals()

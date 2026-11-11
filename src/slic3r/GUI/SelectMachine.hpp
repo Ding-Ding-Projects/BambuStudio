@@ -64,6 +64,8 @@ namespace Slic3r{
     struct GCodeProcessorResult;
 }
 
+class SwitchButton;
+
 namespace Slic3r { namespace GUI {
 
 class ListBox;
@@ -366,6 +368,7 @@ private:
     // Lubricate melody: a searchable list (with the regex builder of the
     // shared search field) that also mirrors the process preset.
     wxPanel*                                 m_lubricate_panel{nullptr};
+    ::SwitchButton*                          m_lubricate_switch{nullptr};
     ::SearchField*                           m_lubricate_search{nullptr};
     ListBox*                                 m_lubricate_list{nullptr};
     wxStaticText*                            m_lubricate_note{nullptr};
@@ -756,6 +759,7 @@ private:
     wxPanel* create_lubricate_melody_panel(wxWindow* parent);
     void refresh_lubricate_melody_list();
     void on_lubricate_melody_selected();
+    void on_lubricate_mode_toggled();
     void on_pa_value_switch_changed(wxCommandEvent &event);
 
     // get mapping nozzle display string for rack

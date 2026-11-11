@@ -1735,12 +1735,12 @@
     {
       "route": "windows/lubricate-mode.md",
       "title": "Lubricate mode and print melodies",
-      "sha256": "35c246d31d0a66dee9725326c41cbdec4c11b9ceaa2c0176bdcaaea4017105cb"
+      "sha256": "546dbe0a4c86003b806f008a195bfa96f0c4b539ae37008af23cef2b6ba54bd8"
     },
     {
       "route": "windows/lubricate-mode.yue_HK.md",
       "title": "潤滑模式同打印旋律",
-      "sha256": "e77f43557e9d048fc47860f82aca0f9193f668762a0e06bc26d38f0615f80b01"
+      "sha256": "dbaff031045efd95c4ef18551e858dad156dec5908dd9960a1df4f49554f53e6"
     },
     {
       "route": "windows/material-context-menus.md",
@@ -2325,7 +2325,7 @@
       "bytes": 16430
     }
   ],
-  "bundle_sha256": "08b02d9025519652cf9b7039b92a2a94a5cb6086eec1f7f77f8359f4182459ea",
+  "bundle_sha256": "5be8cb6d8de9ef68756faedc32cfe74733dad4d1d14bde452116402cce1f9cb6",
   "unavailable_references": [
     {
       "source": "api/README.md",

@@ -1,6 +1,6 @@
 ---
 translation-of: lubricate-mode.md
-source-sha256: 35c246d31d0a66dee9725326c41cbdec4c11b9ceaa2c0176bdcaaea4017105cb
+source-sha256: 546dbe0a4c86003b806f008a195bfa96f0c4b539ae37008af23cef2b6ba54bd8
 review-status: agent-drafted
 ---
 
@@ -23,7 +23,7 @@ review-status: agent-drafted
 
 ## 每次開印
 
-選項係流程設定 **其他** 頁 **特殊模式** 組入面嘅 `lubricate_mode`，喺 **快速開印模式** 下面。預設關閉，跟流程預設一齊儲存。
+選項係流程設定 **其他** 頁 **特殊模式** 組入面嘅 `lubricate_mode`，喺 **快速開印模式** 下面。預設開啟，跟流程預設一齊儲存。**傳送打印工作** 對話框都有顯示，就係旋律列表上面嘅 **開印前潤滑**；喺嗰度開或者關會寫入流程預設同重新切片，所以送去打印機嘅 G-code 一定同個掣一致。開之前切好嘅打印板要再切一次先有程序，喺其他切片軟件切嘅檔案或者喺打印機螢幕開印就永遠冇。
 
 開咗之後，`insert_lubricate_routine()` 會將程序放喺開始 G-code 最後一句完整歸零指令之後：即係 `G28`，唔係 `G28.<n>` 校準指令，亦唔係 `M622`/`M623` 韌體條件入面嗰句。H2C 上面係 `G28 Z P0 T250`，喺第一次歸零之後，所以程序喺已歸零嘅機上行。開始 G-code 冇普通 `G28` 嘅機（P2S 同 X2D）會喺程序前面加 `G28 ; home before lubricate mode`。
 

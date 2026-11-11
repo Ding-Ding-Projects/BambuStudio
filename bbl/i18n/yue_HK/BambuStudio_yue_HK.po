@@ -59974,8 +59974,8 @@ msgstr "潤滑模式"
 
 #. reviewed-category: slicing-printing
 #. review-status: agent-drafted
-msgid "Before every print, right after the printer homes, run the motion system through its whole travel so fresh grease spreads along the rails, lead screws and bearings: the bed moves all the way down and back up twice, and the toolhead runs the full length of X, of Y and both diagonals. On Bambu Lab printers the buzzer beeps like a truck backing up while the bed moves. The printer homes again before the rest of the preparation, so the print itself is unchanged; the start takes a few minutes longer. Default: off."
-msgstr "每次打印之前，打印機歸位之後，即刻將成套運動系統行盡全程，等新塗嘅潤滑油均勻分佈喺路軌、絲桿同軸承上面：熱床會由頂落到底再返上去兩次，工具頭會行盡 X 軸、Y 軸同兩條對角線。喺 Bambu Lab 打印機上面，熱床郁動嗰陣蜂鳴器會好似貨車倒後咁「嘟嘟」聲。打印機會喺其餘準備步驟之前再歸位一次，所以打印本身唔受影響，只係開印會慢幾分鐘。預設：關閉。"
+msgid "Before every print, right after the printer homes, run the motion system through its whole travel so fresh grease spreads along the rails, lead screws and bearings: the bed moves all the way down and back up twice, and the toolhead runs the full length of X, of Y and both diagonals. On Bambu Lab printers the buzzer beeps like a truck backing up while the bed moves. The printer homes again before the rest of the preparation, so the print itself is unchanged; the start takes a few minutes longer. Default: on."
+msgstr "每次打印之前，打印機歸位之後，即刻將成套運動系統行盡全程，等新塗嘅潤滑油均勻分佈喺路軌、絲桿同軸承上面：熱床會由頂落到底再返上去兩次，工具頭會行盡 X 軸、Y 軸同兩條對角線。喺 Bambu Lab 打印機上面，熱床郁動嗰陣蜂鳴器會好似貨車倒後咁「嘟嘟」聲。打印機會喺其餘準備步驟之前再歸位一次，所以打印本身唔受影響，只係開印會慢幾分鐘。預設：開啟。"
 
 #. reviewed-category: slicing-printing
 #. review-status: agent-drafted
@@ -60186,3 +60186,13 @@ msgstr "敲兩下"
 #. review-status: agent-drafted
 msgid "Bye chirp"
 msgstr "拜拜啾啾"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Lubricate before printing"
+msgstr "開印前潤滑"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Run the bed and the toolhead through their full travel right after the printer homes. Changing it slices the plate again."
+msgstr "打印機歸位之後，即刻將熱床同工具頭行盡全程。改咗會重新切片。"

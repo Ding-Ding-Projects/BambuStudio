@@ -4269,9 +4269,9 @@ void PrintConfigDef::init_fff_params()
                      "moves all the way down and back up twice, and the toolhead runs the full length of X, of Y "
                      "and both diagonals. On Bambu Lab printers the buzzer beeps like a truck backing up while "
                      "the bed moves. The printer homes again before the rest of the preparation, so the print "
-                     "itself is unchanged; the start takes a few minutes longer. Default: off.");
+                     "itself is unchanged; the start takes a few minutes longer. Default: on.");
     def->mode    = comSimple;
-    def->set_default_value(new ConfigOptionBool(false));
+    def->set_default_value(new ConfigOptionBool(true));
 
     def          = this->add("lubricate_melody", coString);
     def->label   = L("Lubricate melody");

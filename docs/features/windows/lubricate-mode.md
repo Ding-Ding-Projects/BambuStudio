@@ -24,7 +24,12 @@ printer's printable area and printable height, with a 5 mm margin on every side:
 ## At the start of every print
 
 The option is `lubricate_mode` on the process settings **Others** page, in the **Special mode**
-group, under **Express print mode**. It is off by default and saved with the process preset.
+group, under **Express print mode**. It is on by default and saved with the process preset. The
+**Send print job** dialog shows it too, as **Lubricate before printing** above the melody list;
+turning it on or off there writes the process preset and slices the plate again, so the G-code
+sent to the printer always matches the switch. A plate sliced before it was turned on has no
+routine until it is sliced again, and a file sliced in another slicer or started from the
+printer screen never has one.
 
 With it on, `insert_lubricate_routine()` places the routine straight after the last full homing
 line of the start G-code: a `G28` line, never a `G28.<n>` calibration command and never one inside
