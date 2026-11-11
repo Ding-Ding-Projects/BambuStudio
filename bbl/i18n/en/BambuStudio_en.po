@@ -38639,3 +38639,81 @@ msgstr ""
 
 msgid "Westminster chimes"
 msgstr ""
+
+msgid "Door chime"
+msgstr ""
+
+msgid "Play a chime when the door opens or closes"
+msgstr ""
+
+msgid "Beta: the door reading comes from a status bit that the printer maker does not document."
+msgstr ""
+
+msgid "When the door opens"
+msgstr ""
+
+msgid "When the door closes"
+msgstr ""
+
+msgid "Play the door-open chime on the printer now"
+msgstr ""
+
+msgid "Play the door-close chime on the printer now"
+msgstr ""
+
+msgid "Connect a printer to hear the chimes."
+msgstr ""
+
+msgid "This printer does not report its door, so only Preview plays. The chimes need a printer with a door sensor."
+msgstr ""
+
+msgid "Chimes wait while the printer is printing, so the print is never disturbed."
+msgstr ""
+
+msgid "The printer plays the chime when its door opens or closes. Each chime releases the motors when it ends."
+msgstr ""
+
+msgid "Turn the switch on to hear the chimes when the door moves."
+msgstr ""
+
+msgid "Ding-dong"
+msgstr ""
+
+msgid "Welcome rise"
+msgstr ""
+
+msgid "Shop bell"
+msgstr ""
+
+msgid "Westminster, first phrase"
+msgstr ""
+
+msgid "Hello chirp"
+msgstr ""
+
+msgid "Marimba up"
+msgstr ""
+
+msgid "Single ping"
+msgstr ""
+
+msgid "Dong-ding"
+msgstr ""
+
+msgid "Falling arpeggio"
+msgstr ""
+
+msgid "Westminster, closing phrase"
+msgstr ""
+
+msgid "Goodnight"
+msgstr ""
+
+msgid "Soft latch"
+msgstr ""
+
+msgid "Double tap"
+msgstr ""
+
+msgid "Bye chirp"
+msgstr ""

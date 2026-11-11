@@ -1158,6 +1158,11 @@ list(APPEND SLIC3R_GUI_SOURCES
     GUI/Melody/MelodyModel.hpp
     GUI/Melody/MelodyCreatorDialog.cpp
     GUI/Melody/MelodyCreatorDialog.hpp
+    GUI/DoorChime/DoorChime.hpp
+    GUI/DoorChime/DoorChimeService.cpp
+    GUI/DoorChime/DoorChimeService.hpp
+    GUI/DoorChime/DoorChimeCard.cpp
+    GUI/DoorChime/DoorChimeCard.hpp
     GUI/third_party/qrcodegen.cpp
     GUI/third_party/qrcodegen.hpp
     GUI/ModelPreviewDialog.hpp

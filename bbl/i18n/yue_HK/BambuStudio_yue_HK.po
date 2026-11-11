@@ -60056,3 +60056,133 @@ msgstr "給愛麗絲"
 #. review-status: agent-drafted
 msgid "Westminster chimes"
 msgstr "西敏寺鐘聲"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Door chime"
+msgstr "門鈴"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Play a chime when the door opens or closes"
+msgstr "打印機門開或者關嘅時候響一下"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Beta: the door reading comes from a status bit that the printer maker does not document."
+msgstr "測試版：門嘅讀數嚟自打印機廠冇公開說明嘅狀態位元。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "When the door opens"
+msgstr "門打開嘅時候"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "When the door closes"
+msgstr "門關上嘅時候"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Play the door-open chime on the printer now"
+msgstr "即刻喺打印機播開門鈴聲"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Play the door-close chime on the printer now"
+msgstr "即刻喺打印機播關門鈴聲"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Connect a printer to hear the chimes."
+msgstr "連接打印機先聽到鈴聲。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "This printer does not report its door, so only Preview plays. The chimes need a printer with a door sensor."
+msgstr "呢部打印機唔會報告門嘅狀態，所以淨係預覽會響。鈴聲要有門感應器嘅打印機先用得。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Chimes wait while the printer is printing, so the print is never disturbed."
+msgstr "打印緊嘅時候鈴聲會等，唔會騷擾到打印。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "The printer plays the chime when its door opens or closes. Each chime releases the motors when it ends."
+msgstr "打印機門開或者關嘅時候會播鈴聲。每次播完都會放鬆馬達。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Turn the switch on to hear the chimes when the door moves."
+msgstr "開咗個掣，門一郁就會聽到鈴聲。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Ding-dong"
+msgstr "叮噹"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Welcome rise"
+msgstr "歡迎上揚"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Shop bell"
+msgstr "店舖門鈴"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Westminster, first phrase"
+msgstr "西敏寺鐘聲第一句"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Hello chirp"
+msgstr "哈囉啾啾"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Marimba up"
+msgstr "木琴上行"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Single ping"
+msgstr "一聲叮"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Dong-ding"
+msgstr "噹叮"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Falling arpeggio"
+msgstr "下行琶音"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Westminster, closing phrase"
+msgstr "西敏寺鐘聲收尾句"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Goodnight"
+msgstr "早唞"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Soft latch"
+msgstr "輕輕扣門"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Double tap"
+msgstr "敲兩下"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Bye chirp"
+msgstr "拜拜啾啾"
