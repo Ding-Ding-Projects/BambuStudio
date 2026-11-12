@@ -192,6 +192,11 @@ wxSizer *DoorChimeCard::build_monitor_section()
     where->Add(ssh_label, 0, wxALIGN_CENTER_VERTICAL);
     m_monitor_ssh = new TextInput(this, wxString::FromUTF8(config_value(DoorMonitor::SSH_KEY)), "", "", wxDefaultPosition, wxSize(FromDIP(200), -1));
     m_monitor_ssh->GetTextCtrl()->SetHint("user@host");
+    // Typing a host means the monitor should run there.
+    m_monitor_ssh->GetTextCtrl()->Bind(wxEVT_TEXT, [this](wxCommandEvent &event) {
+        if (!m_monitor_ssh->GetTextCtrl()->GetValue().IsEmpty() && m_monitor_target->GetSelection() != 1) m_monitor_target->SetSelection(1);
+        event.Skip();
+    });
     m_monitor_ssh->SetToolTip(_L("Uses your existing SSH key. Docker Desktop on this computer provides the docker command."));
     where->Add(m_monitor_ssh, 1, wxEXPAND);
     section->Add(where, 0, wxEXPAND | wxBOTTOM, FromDIP(8));
@@ -229,8 +234,11 @@ wxSizer *DoorChimeCard::build_monitor_section()
 
 void DoorChimeCard::on_monitor_target()
 {
+    // The host field stays editable either way, so it can be filled in before
+    // choosing the SSH target; it only reads as secondary for this computer.
     const bool ssh = m_monitor_target->GetSelection() == 1;
-    m_monitor_ssh->Enable(ssh && !m_monitor_busy);
+    m_monitor_ssh->Enable(!m_monitor_busy);
+    m_monitor_ssh->GetTextCtrl()->SetForegroundColour(ssh ? text_color() : muted_color());
 }
 
 void DoorChimeCard::refresh_monitor_buttons()
@@ -411,6 +419,8 @@ void DoorChimeCard::on_preview(bool open)
 void DoorChimeCard::refresh_state()
 {
     using DoorChime::Readiness;
+    // A target picked with the keyboard sends no change event, so follow it here too.
+    if (m_monitor_target != nullptr) on_monitor_target();
     const Readiness ready = DoorChime::readiness();
     // A preview only needs the buzzer, so it works on a printer without a door sensor.
     const bool can_preview = ready == Readiness::Ready || ready == Readiness::NoDoorSensor;
