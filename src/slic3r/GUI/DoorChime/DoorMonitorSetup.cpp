@@ -1,5 +1,15 @@
 #include "DoorMonitorSetup.hpp"
 
+// A header in the precompiled set defines pid_t as a macro on Windows, which
+// breaks Boost.Process's own typedef of that name.
+#ifdef pid_t
+#undef pid_t
+#endif
+#include <boost/process.hpp>
+#ifdef _WIN32
+#include <boost/process/windows.hpp>
+#endif
+
 #include "libslic3r/Utils.hpp"
 #include "slic3r/Utils/Http.hpp"
 
@@ -7,10 +17,6 @@
 #include <boost/filesystem.hpp>
 #include <boost/log/trivial.hpp>
 #include <boost/nowide/fstream.hpp>
-#include <boost/process.hpp>
-#ifdef _WIN32
-#include <boost/process/windows.hpp>
-#endif
 #include <nlohmann/json.hpp>
 
 #include <chrono>

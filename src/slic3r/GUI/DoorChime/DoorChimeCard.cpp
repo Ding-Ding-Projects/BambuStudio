@@ -4,6 +4,7 @@
 #include "DoorMonitorSetup.hpp"
 
 #include "../DeviceManager.hpp"
+#include "../DeviceCore/DevManager.h"
 #include "../GUI_App.hpp"
 #include "libslic3r/AppConfig.hpp"
 
