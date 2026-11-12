@@ -9,6 +9,7 @@ selected and no printer connected. Each one was looked at before it was kept.
 | [door-chime-card.png](door-chime-card.png) | Device page at 1200x800, scrolled down: the Door chime card under the Move card, switched on, with Ding-dong and Dong-ding chosen and Preview off because no printer is connected | `10823088b` |
 | [door-chime-card-on.png](door-chime-card-on.png) | The card alone right after the switch was turned on: the switch redraws at once | `10823088b` |
 | [door-chime-close-picked.png](door-chime-close-picked.png) | After a restart on the same data directory: the switch is still on and the close chime is still Falling arpeggio, picked from the keyboard before the restart | `8266cc95b` |
+| [door-monitor-section.png](door-monitor-section.png) | The Door monitor section under the chime picks: Run it on (This computer), the SSH host field, Set up door monitor, Open and Copy password, before any setup | `caecb5f95` |
 | [door-chime-card-yue-light.png](door-chime-card-yue-light.png) | The Device page with the card in Cantonese with the light theme | `10823088b` |
 
 Checked in the same runs, without a picture: the switch and the close chime choice are written to

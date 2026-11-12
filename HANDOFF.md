@@ -1,5 +1,30 @@
 # Bambu Studio handoff
 
+## One-click door monitor setup, 12 November 2026
+
+The Door chime card has a Door monitor section. **Set up door monitor** runs the Printer Door
+Monitor (Ding-Ding-Projects/printer-door-monitor) with Docker Compose on this computer or on a
+Docker host over SSH, waits for it to be healthy, hands it the selected printer and the chimes
+picked in the card through `docker exec ... node src/provision-cli.mjs`, and opens the page
+signed in with a one-time link. Bambu Studio then turns its own chime switch off so a door rings
+once. Without a LAN printer the monitor still starts with the chimes set and the status says the
+printer was left out. **Open** gets a fresh sign-in link; **Copy password** copies the password
+Bambu Studio chose. The monitor side (provisioning key in the data volume, loopback-only route,
+one-time links, never replacing an existing password) shipped as monitor 1.1.0.
+
+Commits: `3b3cdfc6f` (feature), `caecb5f95` (a missing include and a `pid_t` macro clash with
+Boost.Process), `aef64588d` (start without a printer, 33 catalog strings), `fe172b5f4` (second
+coverage counter; `BAMBU_STUDIO_NO_BROWSER` logs the page instead of opening a browser, for
+off-screen checks), `0977026b4` (LAN address instead of 127.0.0.1; the page grows with the
+status), `9bc0df633` (SSH host field usable after a keyboard pick).
+
+Checked in the built app on a hidden desktop, browser disabled: Set up door monitor on this
+computer and on a Docker host over SSH. Both monitors came up healthy on 1.1.0 with a password
+and Ding-dong / Dong-ding switched on, and the status gave each LAN address; an empty SSH host
+gives the user@host message. The sign-in link signs a browser in from the LAN address (state 200
+with its cookie, 401 without). Not checked: filling in a real printer, which needs a printer
+Bambu Studio has reached over the LAN.
+
 ## Lubricate mode at print start, 11 November 2026
 
 Reported: lubricate mode did not run before a print started. Two causes were found and fixed.

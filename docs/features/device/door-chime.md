@@ -73,16 +73,50 @@ chime the motors are released, so a later jog on the Device page may ask to home
   moment.
 - Only the printer selected on the Device page is watched.
 
+## Door monitor: chimes while Bambu Studio is closed
+
+Bambu Studio only rings the chimes while it is running. The **Door monitor** section at the bottom
+of the card sets up the [Printer Door Monitor](https://github.com/Ding-Ding-Projects/printer-door-monitor)
+web app, which keeps a log of every opening and closing and rings the chimes around the clock.
+
+1. Under **Run it on**, choose **This computer** or **A Docker host over SSH**. For SSH, enter
+   the host as `user@host`; typing a host picks the SSH target by itself. SSH uses your existing
+   key, and Docker Desktop on this computer provides the `docker` command.
+2. Press **Set up door monitor**. Bambu Studio checks Docker, downloads the monitor image, starts
+   it with Docker Compose, waits for it to be healthy, hands it the selected printer (IP address,
+   serial number, LAN access code) and the two chimes chosen in the card, checks its page from this
+   computer, and opens it in the browser already signed in.
+3. The status line gives the address, such as `http://<host>:8790/`. Bambu Studio turns its own
+   chime switch off, so a door does not ring twice.
+
+**Open** asks the monitor for a new one-time sign-in link and opens the page signed in.
+**Copy password** copies the password Bambu Studio chose for a monitor that had none, for signing
+in from a phone or another computer. A monitor that already had a password keeps it; Bambu Studio
+never replaces it.
+
+Without a printer that Bambu Studio can reach over the LAN, the monitor still starts with the
+chimes set, and the status line says the printer was left out. Connect to the printer over the
+LAN and press **Set up door monitor** again, or enter it on the monitor's own page. Pressing the
+button again also updates the monitor to the newest image and keeps its door log.
+
+When something stops the setup, the status line says which step and why: Docker not installed or
+not running, the SSH host unreachable without a password prompt, the image not downloadable,
+port 8790 already taken, the monitor not getting healthy within 90 seconds, or its page blocked by
+a firewall.
+
 ## Files and tests
 
 - `src/slic3r/GUI/DoorChime/DoorChime.hpp`: the chime library, the G-code, the door edge detector
   and the printing rule, free of wxWidgets.
 - `src/slic3r/GUI/DoorChime/DoorChimeService.cpp`: the watcher, the settings and Preview.
 - `src/slic3r/GUI/DoorChime/DoorChimeCard.cpp`: the Device page card.
+- `src/slic3r/GUI/DoorChime/DoorMonitorSetup.cpp`: the one-click Door monitor setup (Docker, provisioning, sign-in link).
 - `tests/door_chime_test.cpp` (196 assertions, run by `tests/door_chime.test.mjs`).
 
 Verified: the assertions above with MSVC, the Cantonese catalog check, and the card in the built
-app on a hidden desktop with no printer connected. Not verified: a chime played by a real printer
+app on a hidden desktop with no printer connected. **Set up door monitor** was pressed in the built
+app for both targets, this computer and a Docker host over SSH: each time the monitor came up
+healthy on 1.1.0 with a password and the chosen chimes, and the status line gave its LAN address. Not verified: a chime played by a real printer
 and the door edge on a real H2C, which need the printer.
 
 ## Related

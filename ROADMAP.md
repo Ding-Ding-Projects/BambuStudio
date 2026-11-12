@@ -1,5 +1,13 @@
 # Roadmap
 
+## One-click door monitor setup, 12 November 2026
+
+- [x] Set up the door monitor from the Door chime card in one click, on this computer or over SSH.
+- [x] Hand it the selected printer and the chosen chimes, and open it signed in.
+- [x] Start it with the chimes set even when no printer is connected yet.
+- [x] Translate the new strings and record the setup in the door chime article.
+- [ ] Run the setup with a real H2C selected and hear a monitor chime when the door moves.
+
 ## Lubricate mode at print start, 11 November 2026
 
 - [x] Turn lubricate mode on by default and show its switch in the print dialog.

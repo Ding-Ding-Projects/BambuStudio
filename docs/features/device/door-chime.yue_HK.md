@@ -60,14 +60,41 @@ M18
 - 門讀數跟住打印機嘅狀態報告一齊嚟，所以鈴聲可能會遲門一陣。
 - 只會睇住 Device 頁選咗嗰部打印機。
 
+## 門監察：閂咗 Bambu Studio 都照響
+
+Bambu Studio 開住先會響門鈴。張卡底下嘅 **門監察** 部分會幫你裝好
+[Printer Door Monitor](https://github.com/Ding-Ding-Projects/printer-door-monitor) 呢個網頁程式，
+佢會記低每次開門關門，二十四小時照響門鈴。
+
+1. 喺 **喺邊度運行** 揀 **呢部電腦** 或者 **經 SSH 連去嘅 Docker 主機**。用 SSH 就喺欄度寫
+   `user@host`；一打主機就會自動揀 SSH。SSH 用你現有嘅金鑰，`docker` 指令由呢部電腦嘅 Docker
+   Desktop 提供。
+2. 撳 **設定門監察**。Bambu Studio 會檢查 Docker、下載門監察映像檔、用 Docker Compose 啟動、等佢
+   健康、將選咗嘅打印機（IP 地址、序號、區域網絡存取碼）同張卡揀好嘅兩段門鈴交俾佢、喺呢部電腦
+   檢查佢個頁面，再喺瀏覽器登入好打開。
+3. 狀態行會顯示地址，例如 `http://<主機>:8790/`。Bambu Studio 會閂咗自己個門鈴開關，免得一開門
+   響兩次。
+
+**打開** 會叫門監察俾一條新嘅一次性登入連結，再登入好打開個頁面。**複製密碼** 會複製 Bambu Studio
+幫一部未有密碼嘅門監察揀嘅密碼，方便用手機或者其他電腦登入。門監察本身已經有密碼就照用舊嗰個，
+Bambu Studio 永遠唔會改佢。
+
+如果 Bambu Studio 未經區域網絡連到打印機，門監察都照樣啟動、門鈴設定好，狀態行會話你知未填打印機。
+經 LAN 連接打印機之後再撳一次 **設定門監察**，或者喺門監察自己個頁面輸入就得。再撳一次亦會將門監察
+更新到最新映像檔，門記錄照留。
+
+設定中途停咗，狀態行會講係邊一步同點解：未裝或者未開 Docker、SSH 主機要輸密碼先連到、下載唔到
+映像檔、8790 埠已經俾人用緊、90 秒內都未健康，或者個頁面俾防火牆擋住。
+
 ## 檔案同測試
 
 - `src/slic3r/GUI/DoorChime/DoorChime.hpp`：鈴聲庫、G-code、門邊緣偵測同打印中規則，唔依賴 wxWidgets。
 - `src/slic3r/GUI/DoorChime/DoorChimeService.cpp`：守門員、設定同預覽。
 - `src/slic3r/GUI/DoorChime/DoorChimeCard.cpp`：Device 頁張卡。
+- `src/slic3r/GUI/DoorChime/DoorMonitorSetup.cpp`：一撳就裝好門監察（Docker、交設定、登入連結）。
 - `tests/door_chime_test.cpp`（196 個斷言，由 `tests/door_chime.test.mjs` 執行）。
 
-已驗證：上面嘅斷言用 MSVC 跑過、廣東話目錄檢查，同埋喺隱藏桌面冇連接打印機嘅情況下睇過砌好嘅程式入面張卡。未驗證：真打印機播鈴聲，同真 H2C 上嘅門邊緣，呢兩樣要有打印機先得。
+已驗證：上面嘅斷言用 MSVC 跑過、廣東話目錄檢查，同埋喺隱藏桌面冇連接打印機嘅情況下睇過砌好嘅程式入面張卡。喺砌好嘅程式入面對兩個目標（呢部電腦同經 SSH 嘅 Docker 主機）都撳過 **設定門監察**：每次門監察都以 1.1.0 健康咁起好，有密碼同揀好嘅門鈴，狀態行顯示佢嘅區域網絡地址。未驗證：真打印機播鈴聲，同真 H2C 上嘅門邊緣，呢兩樣要有打印機先得。
 
 ## 相關
 
