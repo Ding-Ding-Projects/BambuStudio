@@ -34,7 +34,9 @@ printer screen never has one.
 With it on, `insert_lubricate_routine()` places the routine straight after the last full homing
 line of the start G-code: a `G28` line, never a `G28.<n>` calibration command and never one inside
 an `M622`/`M623` firmware conditional. On the H2C that is `G28 Z P0 T250`, after the first homing
-pass, so the routine runs on a homed machine. A start G-code with no plain `G28` (the P2S and the
+pass, so the routine runs on a homed machine. The H2C homes Z inside `M1009 Q1 L1` and
+`M1009 Q1 L0`, a pair the printer maker does not document, so the routine waits until after the
+closing line and homes again inside the same pair, as the start G-code does. A start G-code with no plain `G28` (the P2S and the
 X2D) gets `G28 ; home before lubricate mode` in front of the routine.
 
 ## The melody

@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdlib>
 #include <sstream>
 #include <vector>
 
@@ -140,7 +141,12 @@ std::string lubricate_routine_gcode(const LubricateArea &area, const std::string
         out << "G1 X" << fmt(x0) << " Y" << fmt(y1) << "\n";
     }
     out << "M400\n";
-    out << (rehome.empty() ? std::string("G28") : rehome) << " ; home again after lubricate mode\n";
+    if (rehome.empty())
+        out << "G28 ; home again after lubricate mode\n";
+    else if (rehome.find('\n') != std::string::npos)
+        out << rehome; // several lines, already commented and terminated
+    else
+        out << rehome << " ; home again after lubricate mode\n";
     out << ";===== lubricate mode end =====\n";
     return out.str();
 }
@@ -171,18 +177,48 @@ std::string insert_lubricate_routine(const std::string &start_gcode, const Lubri
     if (last_home < 0)
         return "G28 ; home before lubricate mode\n" + lubricate_routine_gcode(area) + start_gcode;
 
-    std::string rehome = lines[last_home];
-    const size_t comment = rehome.find(';');
-    if (comment != std::string::npos)
-        rehome.erase(comment);
-    while (!rehome.empty() && (rehome.back() == ' ' || rehome.back() == '\t' || rehome.back() == '\r'))
-        rehome.pop_back();
+    // A line without its comment, its trailing blanks and its indentation.
+    auto code_of = [](std::string line) {
+        const size_t comment = line.find(';');
+        if (comment != std::string::npos)
+            line.erase(comment);
+        while (!line.empty() && (line.back() == ' ' || line.back() == '\t' || line.back() == '\r'))
+            line.pop_back();
+        const size_t start = line.find_first_not_of(" \t");
+        return start == std::string::npos ? std::string() : line.substr(start);
+    };
+    std::string rehome       = code_of(lines[last_home]);
+    int         insert_after = last_home;
+
+    // The H2C homes Z inside `M1009 Q1 L1` ... `M1009 Q1 L0`. The command is not
+    // documented, so the routine does not run inside that window: it goes after
+    // the closing line, and homing again reopens the same window around the same
+    // homing line, as the start G-code does.
+    auto nearby_code = [&](int from, int step) {
+        for (int i = from + step; i >= 0 && i < int(lines.size()) && std::abs(i - from) <= 8; i += step)
+            if (!code_of(lines[i]).empty())
+                return i;
+        return -1;
+    };
+    const int close = nearby_code(last_home, 1);
+    if (close >= 0 && code_of(lines[close]).rfind("M1009", 0) == 0) {
+        int open = -1;
+        for (int i = last_home - 1; i >= 0 && last_home - i <= 8; --i)
+            if (code_of(lines[i]).rfind("M1009", 0) == 0) {
+                open = i;
+                break;
+            }
+        if (open >= 0) {
+            rehome = code_of(lines[open]) + "\n" + rehome + " ; home again after lubricate mode\n" + code_of(lines[close]) + "\n";
+            insert_after = close;
+        }
+    }
 
     std::string result;
     for (int i = 0; i < int(lines.size()); ++i) {
         result += lines[i];
         result += '\n';
-        if (i == last_home)
+        if (i == insert_after)
             result += lubricate_routine_gcode(area, rehome);
     }
     if (!start_gcode.empty() && start_gcode.back() != '\n' && !result.empty())
