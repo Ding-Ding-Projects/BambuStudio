@@ -26,6 +26,8 @@
 #include <algorithm>
 #include <thread>
 
+#include <boost/log/trivial.hpp>
+
 namespace Slic3r { namespace GUI {
 
 namespace {
@@ -50,6 +52,18 @@ std::string config_value(const char *key) { return app_config() != nullptr ? app
 void set_config_value(const char *key, const std::string &value)
 {
     if (app_config() != nullptr) app_config()->set(key, value);
+}
+
+// Opens the monitor in the default browser. Automated checks that run Bambu
+// Studio off screen set BAMBU_STUDIO_NO_BROWSER so the page is logged instead
+// of opening on someone's desktop.
+void open_page(const std::string &url)
+{
+    if (wxGetEnv("BAMBU_STUDIO_NO_BROWSER", nullptr)) {
+        BOOST_LOG_TRIVIAL(info) << "Door monitor page (browser disabled): " << url;
+        return;
+    }
+    wxLaunchDefaultBrowser(wxString::FromUTF8(url));
 }
 
 wxString phase_text(DoorMonitor::Phase phase)
@@ -287,7 +301,7 @@ void DoorChimeCard::on_monitor_setup()
                 if (result.password_set) set_config_value(DoorMonitor::PASSWORD_KEY, password);
                 // The monitor rings the chimes now; Bambu Studio ringing them too would play each one twice.
                 DoorChime::set_enabled(false);
-                wxLaunchDefaultBrowser(wxString::FromUTF8(result.login_url.empty() ? result.url : result.login_url));
+                open_page(result.login_url.empty() ? result.url : result.login_url);
             }
             if (!self) return;
             self->m_monitor_busy = false;
@@ -320,7 +334,7 @@ void DoorChimeCard::on_monitor_open()
         const DoorMonitor::Result result = DoorMonitor::sign_in_link(ssh, url);
         wxGetApp().CallAfter([self, result, url]() {
             // Without a sign-in link (the monitor was moved or stopped) the plain page still opens.
-            wxLaunchDefaultBrowser(wxString::FromUTF8(result.login_url.empty() ? url : result.login_url));
+            open_page(result.login_url.empty() ? url : result.login_url);
             if (!self) return;
             self->m_monitor_busy = false;
             self->refresh_monitor_buttons();
