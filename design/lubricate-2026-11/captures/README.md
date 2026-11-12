@@ -13,6 +13,8 @@ was kept. The commit in each row is the source the app was built from.
 | [melody-picker.png](melody-picker.png) | Print dialog: Lubricate melody with the search field, its regex toggle and builder button, the themed list with Truck backing up chosen, and the note for lubricate mode off | `1b10b4887` |
 | [process-after-change.png](process-after-change.png) | Others page after a setting changed: the preset reads as modified, its long name ends in an ellipsis, and no horizontal scroll bar appears under the settings | `f9caf773c` |
 | [all-plates-stats-tile.png](all-plates-stats-tile.png) | Preview with two sliced plates: the All Plates Stats tile draws its icon above the label | `1b10b4887` |
+| [print-lubricate-switch-on.png](print-lubricate-switch-on.png) | Print dialog on a fresh setup: Lubricate before printing is on by default | `cc4af01e0` |
+| [print-lubricate-switch-off.png](print-lubricate-switch-off.png) | The same switch turned off: the note changes to the once-at-start wording and the plate is marked for slicing again | `cc4af01e0` |
 | [melody-search.png](melody-search.png) | Plain search `tw`: Two-tone siren and Twinkle, Twinkle, Little Star | `4c418ea3a` |
 | [melody-regex.png](melody-regex.png) | Regex search `^(Ode\|Fur)`: Ode to Joy and Fur Elise only | `4ff4dfaf2` |
 | [device-lubricate-button-yue-light.png](device-lubricate-button-yue-light.png) | The same Device page in Cantonese with the light theme | `f9caf773c` |

@@ -1,5 +1,23 @@
 # Bambu Studio handoff
 
+## Lubricate mode at print start, 11 November 2026
+
+Reported: lubricate mode did not run before a print started. Two causes were found and fixed.
+First, the option shipped off by default and only lived on the Others page, so prints started
+without it; it is now on by default (`2c9e7e072`), and the Send print job dialog shows a
+"Lubricate before printing" switch above the melody list that writes the process preset and
+slices again. Second, on the H2C the routine sat between `M1009 Q1 L1` and `M1009 Q1 L0`, an
+undocumented pair the start G-code wraps around its Z homing; it now runs after the closing line
+and homes again inside the same pair (`cc4af01e0`). `tests/lubricate_routine.test.mjs` runs the
+insertion over all 30 Bambu Lab start templates (104 assertions) and fails when the old placement
+is put back.
+
+Checked on the app built from `cc4af01e0`: a cube sliced for the H2C on a fresh data directory has
+the routine after `M1009 Q1 L0` with the rehome wrapped in the same pair, and the dialog switch is
+on by default and turns off with the note changing. Not checked: a print on a real H2C, which is
+the only way to confirm the printer now runs the moves and plays the beeps. A plate sliced before
+this build, a file sliced elsewhere, or a print started from the printer screen has no routine.
+
 ## Door chimes, 11 November 2026
 
 The printer plays a chime through its buzzer when its door opens and another when it closes. A

@@ -1,5 +1,12 @@
 # Roadmap
 
+## Lubricate mode at print start, 11 November 2026
+
+- [x] Turn lubricate mode on by default and show its switch in the print dialog.
+- [x] Run the H2C routine outside its `M1009` homing window and home again inside the same window.
+- [x] Test the insertion over all 30 Bambu Lab start templates.
+- [ ] Watch a real H2C print start with the routine and confirm the moves and beeps.
+
 ## Door chimes, 11 November 2026
 
 - [x] Play a chime on the printer when its door opens and another when it closes, off by default.

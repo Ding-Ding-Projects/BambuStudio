@@ -1,7 +1,9 @@
 # Current implementation handoff
 
-Latest work: door chimes (11 November 2026), after lubricate mode and print
-melodies (10 November 2026). The full record is the first two sections of
+Latest work: lubricate mode at print start (11 November 2026): on by default,
+a switch in the print dialog, and the H2C routine moved outside its homing
+window. Before that: door chimes (11 November 2026), and lubricate mode and
+print melodies (10 November 2026). The full record is the first two sections of
 HANDOFF.md and of ROADMAP.md.
 
 ## State
@@ -19,7 +21,8 @@ builder, the Cantonese light layouts and the bilingual melody list.
 
 ## Open
 
-- Hear the door chimes and the lubricate melodies on a real H2C, confirm the
+- Watch a real H2C print start run the lubricate routine, hear the door
+  chimes and the lubricate melodies on it, confirm the
   door edges arrive when the door moves, and confirm how `M1006 W` paces the
   moves.
 - Capture Preview with a printer connected, the Lubricate confirmation and the
