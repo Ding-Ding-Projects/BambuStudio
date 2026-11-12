@@ -249,18 +249,14 @@ void DoorChimeCard::on_monitor_setup()
         }
     }
 
+    // The selected printer is filled in when Bambu Studio knows its LAN address and
+    // access code; otherwise the monitor still starts and asks for it on its page.
     DeviceManager *manager = wxGetApp().getDeviceManager();
     MachineObject *printer = manager != nullptr ? manager->get_selected_machine() : nullptr;
-    if (printer == nullptr || !printer->is_connected()) {
-        set_monitor_status(_L("Select and connect the printer first, so its details can be filled in."));
-        return;
-    }
-    request.printer_host = printer->get_dev_ip();
-    request.serial       = printer->get_dev_id();
-    request.access_code  = printer->get_access_code();
-    if (request.printer_host.empty() || request.access_code.empty()) {
-        set_monitor_status(_L("Connect to this printer over the network (LAN) once, so Bambu Studio knows its IP address and access code."));
-        return;
+    if (printer != nullptr && !printer->get_dev_ip().empty() && !printer->get_access_code().empty()) {
+        request.printer_host = printer->get_dev_ip();
+        request.serial       = printer->get_dev_id();
+        request.access_code  = printer->get_access_code();
     }
     request.open_chime  = DoorChime::chosen_id(true);
     request.close_chime = DoorChime::chosen_id(false);
@@ -283,8 +279,9 @@ void DoorChimeCard::on_monitor_setup()
             wxGetApp().CallAfter([self, phase]() { if (self) self->set_monitor_status(phase_text(phase)); });
         };
         const DoorMonitor::Result result = DoorMonitor::setup(request, on_phase, *cancel);
-        const std::string ssh = request.ssh;
-        wxGetApp().CallAfter([self, result, password, ssh]() {
+        const std::string ssh         = request.ssh;
+        const bool        has_printer = !request.printer_host.empty();
+        wxGetApp().CallAfter([self, result, password, ssh, has_printer]() {
             if (result.error == DoorMonitor::Error::None) {
                 set_config_value(DoorMonitor::URL_KEY, result.url);
                 if (result.password_set) set_config_value(DoorMonitor::PASSWORD_KEY, password);
@@ -297,9 +294,12 @@ void DoorChimeCard::on_monitor_setup()
             if (result.error == DoorMonitor::Error::None) {
                 self->m_switch->SetValue(false);
                 self->refresh_state();
-                self->set_monitor_status(wxString::Format(
+                wxString status = wxString::Format(
                     _L("Ready at %s on %s. The door monitor rings the chimes now, so Bambu Studio stopped ringing them itself."),
-                    wxString::FromUTF8(result.url), ssh.empty() ? _L("this computer") : wxString::FromUTF8(ssh)));
+                    wxString::FromUTF8(result.url), ssh.empty() ? _L("this computer") : wxString::FromUTF8(ssh));
+                if (!has_printer)
+                    status += "\n" + _L("No printer was filled in: connect to the printer over the network (LAN) and press Set up door monitor again, or enter it on the monitor's page.");
+                self->set_monitor_status(status);
             } else {
                 self->set_monitor_status(error_text(result.error));
             }

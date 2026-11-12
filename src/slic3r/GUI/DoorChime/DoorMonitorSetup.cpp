@@ -239,11 +239,12 @@ Result setup(const Request &request, const std::function<void(Phase)> &on_phase,
     result.url = "http://" + (host.empty() ? std::string("127.0.0.1") : host) + ":" + std::to_string(PORT) + "/";
 
     on_phase(Phase::Configure);
-    nlohmann::json body = {
-        {"printer", {{"host", request.printer_host}, {"serial", request.serial}, {"accessCode", request.access_code}}},
-        {"chime", {{"enabled", true}, {"open", request.open_chime}, {"close", request.close_chime}}},
-        {"setupDone", true},
-    };
+    nlohmann::json body = {{"chime", {{"enabled", true}, {"open", request.open_chime}, {"close", request.close_chime}}}};
+    // Without a printer the monitor still starts, and its own setup screen asks for one.
+    if (!request.printer_host.empty()) {
+        body["printer"]   = {{"host", request.printer_host}, {"serial", request.serial}, {"accessCode", request.access_code}};
+        body["setupDone"] = true;
+    }
     if (!request.password.empty()) body["password"] = request.password;
     if (!provision(ssh, body, result)) return failed(result.error, result.detail);
 

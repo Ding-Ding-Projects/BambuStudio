@@ -33,7 +33,7 @@ inline constexpr const char *PASSWORD_KEY = "door_monitor_password";
 struct Request
 {
     std::string ssh;          // empty: this computer
-    std::string printer_host; // the printer's LAN address
+    std::string printer_host; // the printer's LAN address; empty to leave the printer for later
     std::string serial;
     std::string access_code;
     std::string open_chime;

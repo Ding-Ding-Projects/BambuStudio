@@ -38723,3 +38723,102 @@ msgstr ""
 
 msgid "Run the bed and the toolhead through their full travel right after the printer homes. Changing it slices the plate again."
 msgstr ""
+
+msgid "Checking Docker…"
+msgstr ""
+
+msgid "Getting the door monitor image…"
+msgstr ""
+
+msgid "Starting the door monitor…"
+msgstr ""
+
+msgid "Waiting for the door monitor to be ready…"
+msgstr ""
+
+msgid "Giving it the printer and the chimes…"
+msgstr ""
+
+msgid "Checking its page from this computer…"
+msgstr ""
+
+msgid "Write the SSH host as user@host, for example docker@my-docker-host."
+msgstr ""
+
+msgid "Docker is not installed on this computer. Install Docker Desktop, then try again. It is also needed to reach a host over SSH."
+msgstr ""
+
+msgid "Docker Compose is not available. Update Docker Desktop, then try again."
+msgstr ""
+
+msgid "Docker is installed but not running. Start Docker Desktop, then try again."
+msgstr ""
+
+msgid "Docker on that host cannot be reached over SSH. Check that SSH to it works without a password prompt."
+msgstr ""
+
+msgid "The door monitor image could not be downloaded. Check the network, then try again."
+msgstr ""
+
+msgid "The door monitor did not start. Port 8790 may already be in use on that computer."
+msgstr ""
+
+msgid "The door monitor started but did not get ready within 90 seconds."
+msgstr ""
+
+msgid "The door monitor did not accept the printer settings."
+msgstr ""
+
+msgid "The door monitor is running, but its page does not open from this computer. Check the firewall on that computer."
+msgstr ""
+
+msgid "Door monitor"
+msgstr ""
+
+msgid "Keeps a log of the doors and rings these chimes from a computer with Docker, even while Bambu Studio is closed. One click sets it up for the selected printer."
+msgstr ""
+
+msgid "Run it on"
+msgstr ""
+
+msgid "This computer"
+msgstr ""
+
+msgid "A Docker host over SSH"
+msgstr ""
+
+msgid "SSH host"
+msgstr ""
+
+msgid "Uses your existing SSH key. Docker Desktop on this computer provides the docker command."
+msgstr ""
+
+msgid "Set up door monitor"
+msgstr ""
+
+msgid "Runs the door monitor with Docker, gives it this printer and these chimes, and opens it signed in"
+msgstr ""
+
+msgid "Open the door monitor in the browser, signed in"
+msgstr ""
+
+msgid "Copy password"
+msgstr ""
+
+msgid "Copy the door monitor password Bambu Studio chose, for signing in on another device"
+msgstr ""
+
+msgid "Set up at %s."
+msgstr ""
+
+msgid "Ready at %s on %s. The door monitor rings the chimes now, so Bambu Studio stopped ringing them itself."
+msgstr ""
+
+msgid "this computer"
+msgstr ""
+
+msgid "Password copied."
+msgstr ""
+
+msgid "No printer was filled in: connect to the printer over the network (LAN) and press Set up door monitor again, or enter it on the monitor's page."
+msgstr ""

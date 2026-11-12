@@ -60196,3 +60196,170 @@ msgstr "開印前潤滑"
 #. review-status: agent-drafted
 msgid "Run the bed and the toolhead through their full travel right after the printer homes. Changing it slices the plate again."
 msgstr "打印機歸位之後，即刻將熱床同工具頭行盡全程。改咗會重新切片。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Checking Docker…"
+msgstr "檢查緊 Docker…"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Getting the door monitor image…"
+msgstr "攞緊門監察映像檔…"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Starting the door monitor…"
+msgstr "啟動緊門監察…"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Waiting for the door monitor to be ready…"
+msgstr "等緊門監察準備好…"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Giving it the printer and the chimes…"
+msgstr "將打印機同門鈴設定交俾佢…"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Checking its page from this computer…"
+msgstr "喺呢部電腦檢查緊佢個頁面…"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Write the SSH host as user@host, for example docker@my-docker-host."
+msgstr "SSH 主機要寫成 user@host，例如 docker@my-docker-host。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Docker is not installed on this computer. Install Docker Desktop, then try again. It is also needed to reach a host over SSH."
+msgstr "呢部電腦未裝 Docker。請先裝 Docker Desktop，再試一次。經 SSH 連去其他主機都要用到佢。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Docker Compose is not available. Update Docker Desktop, then try again."
+msgstr "用唔到 Docker Compose。請更新 Docker Desktop，再試一次。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Docker is installed but not running. Start Docker Desktop, then try again."
+msgstr "Docker 已經裝咗但未開。請開 Docker Desktop，再試一次。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Docker on that host cannot be reached over SSH. Check that SSH to it works without a password prompt."
+msgstr "經 SSH 連唔到嗰部主機嘅 Docker。請確認 SSH 去佢唔使輸入密碼都連得到。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The door monitor image could not be downloaded. Check the network, then try again."
+msgstr "下載唔到門監察映像檔。請檢查網絡，再試一次。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The door monitor did not start. Port 8790 may already be in use on that computer."
+msgstr "門監察開唔到。嗰部電腦嘅 8790 埠可能已經俾其他程式用緊。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The door monitor started but did not get ready within 90 seconds."
+msgstr "門監察開咗，但 90 秒內都未準備好。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The door monitor did not accept the printer settings."
+msgstr "門監察唔接受呢啲打印機設定。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The door monitor is running, but its page does not open from this computer. Check the firewall on that computer."
+msgstr "門監察運行緊，但喺呢部電腦打唔開佢個頁面。請檢查嗰部電腦嘅防火牆。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Door monitor"
+msgstr "門監察"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Keeps a log of the doors and rings these chimes from a computer with Docker, even while Bambu Studio is closed. One click sets it up for the selected printer."
+msgstr "喺一部有 Docker 嘅電腦記低每次開門關門，仲會響呢啲門鈴，就算閂咗 Bambu Studio 都照做。撳一下就幫揀咗嘅打印機設定好。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Run it on"
+msgstr "喺邊度運行"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "This computer"
+msgstr "呢部電腦"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "A Docker host over SSH"
+msgstr "經 SSH 連去嘅 Docker 主機"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "SSH host"
+msgstr "SSH 主機"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Uses your existing SSH key. Docker Desktop on this computer provides the docker command."
+msgstr "用你現有嘅 SSH 金鑰。docker 指令由呢部電腦嘅 Docker Desktop 提供。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Set up door monitor"
+msgstr "設定門監察"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Runs the door monitor with Docker, gives it this printer and these chimes, and opens it signed in"
+msgstr "用 Docker 運行門監察，將呢部打印機同呢啲門鈴交俾佢，再登入好打開佢"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Open the door monitor in the browser, signed in"
+msgstr "喺瀏覽器打開門監察，已經登入"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Copy password"
+msgstr "複製密碼"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Copy the door monitor password Bambu Studio chose, for signing in on another device"
+msgstr "複製 Bambu Studio 幫門監察揀嘅密碼，方便喺其他裝置登入"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+#, c-format
+msgid "Set up at %s."
+msgstr "已設定喺 %s。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+#, c-format
+msgid "Ready at %s on %s. The door monitor rings the chimes now, so Bambu Studio stopped ringing them itself."
+msgstr "已準備好：%s（喺 %s）。而家由門監察響門鈴，所以 Bambu Studio 自己唔再響。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "this computer"
+msgstr "呢部電腦"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Password copied."
+msgstr "已複製密碼。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "No printer was filled in: connect to the printer over the network (LAN) and press Set up door monitor again, or enter it on the monitor's page."
+msgstr "未填入打印機：請經區域網絡 (LAN) 連接打印機，再撳一次「設定門監察」，或者喺門監察個頁面自己輸入。"
