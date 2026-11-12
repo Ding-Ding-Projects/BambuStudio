@@ -1163,6 +1163,8 @@ list(APPEND SLIC3R_GUI_SOURCES
     GUI/DoorChime/DoorChimeService.hpp
     GUI/DoorChime/DoorChimeCard.cpp
     GUI/DoorChime/DoorChimeCard.hpp
+    GUI/DoorChime/DoorMonitorSetup.cpp
+    GUI/DoorChime/DoorMonitorSetup.hpp
     GUI/third_party/qrcodegen.cpp
     GUI/third_party/qrcodegen.hpp
     GUI/ModelPreviewDialog.hpp

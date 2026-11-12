@@ -1,6 +1,11 @@
 #include "DoorChimeCard.hpp"
 
 #include "DoorChimeService.hpp"
+#include "DoorMonitorSetup.hpp"
+
+#include "../DeviceManager.hpp"
+#include "../GUI_App.hpp"
+#include "libslic3r/AppConfig.hpp"
 
 #include "../I18N.hpp"
 #include "../Widgets/Button.hpp"
@@ -10,10 +15,15 @@
 #include "../Widgets/MaterialIcon.hpp"
 #include "../Widgets/StateColor.hpp"
 #include "../Widgets/SwitchButton.hpp"
+#include "../Widgets/TextInput.hpp"
 
+#include <wx/clipbrd.h>
 #include <wx/sizer.h>
+#include <wx/utils.h>
+#include <wx/weakref.h>
 
 #include <algorithm>
+#include <thread>
 
 namespace Slic3r { namespace GUI {
 
@@ -31,6 +41,48 @@ const std::vector<DoorChime::Chime> &chimes_for(bool open)
 }
 
 wxString chime_name(const DoorChime::Chime &chime) { return _(wxString::FromUTF8(chime.name)); }
+
+AppConfig *app_config() { return wxGetApp().app_config; }
+
+std::string config_value(const char *key) { return app_config() != nullptr ? app_config()->get(key) : std::string(); }
+
+void set_config_value(const char *key, const std::string &value)
+{
+    if (app_config() != nullptr) app_config()->set(key, value);
+}
+
+wxString phase_text(DoorMonitor::Phase phase)
+{
+    using DoorMonitor::Phase;
+    switch (phase) {
+    case Phase::Check: return _L("Checking Docker…");
+    case Phase::Pull: return _L("Getting the door monitor image…");
+    case Phase::Start: return _L("Starting the door monitor…");
+    case Phase::Health: return _L("Waiting for the door monitor to be ready…");
+    case Phase::Configure: return _L("Giving it the printer and the chimes…");
+    case Phase::Reach: return _L("Checking its page from this computer…");
+    }
+    return {};
+}
+
+wxString error_text(DoorMonitor::Error error)
+{
+    using DoorMonitor::Error;
+    switch (error) {
+    case Error::None: return {};
+    case Error::BadTarget: return _L("Write the SSH host as user@host, for example docker@my-docker-host.");
+    case Error::DockerMissing: return _L("Docker is not installed on this computer. Install Docker Desktop, then try again. It is also needed to reach a host over SSH.");
+    case Error::ComposeMissing: return _L("Docker Compose is not available. Update Docker Desktop, then try again.");
+    case Error::EngineStopped: return _L("Docker is installed but not running. Start Docker Desktop, then try again.");
+    case Error::SshEngine: return _L("Docker on that host cannot be reached over SSH. Check that SSH to it works without a password prompt.");
+    case Error::Pull: return _L("The door monitor image could not be downloaded. Check the network, then try again.");
+    case Error::Start: return _L("The door monitor did not start. Port 8790 may already be in use on that computer.");
+    case Error::Health: return _L("The door monitor started but did not get ready within 90 seconds.");
+    case Error::Configure: return _L("The door monitor did not accept the printer settings.");
+    case Error::Reach: return _L("The door monitor is running, but its page does not open from this computer. Check the firewall on that computer.");
+    }
+    return {};
+}
 
 } // namespace
 
@@ -75,6 +127,7 @@ DoorChimeCard::DoorChimeCard(wxWindow *parent) : StaticBox(parent)
     sizer->Add(switch_row, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(12));
     sizer->Add(rows, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(12));
     sizer->Add(m_note, 0, wxEXPAND | wxALL, FromDIP(12));
+    sizer->Add(build_monitor_section(), 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(12));
     SetSizer(sizer);
 
     // The printer can connect, start printing or finish while the card is on
@@ -82,6 +135,205 @@ DoorChimeCard::DoorChimeCard(wxWindow *parent) : StaticBox(parent)
     m_refresh.Bind(wxEVT_TIMER, [this](wxTimerEvent &) { if (IsShownOnScreen()) refresh_state(); });
     m_refresh.Start(1000);
     refresh_state();
+    refresh_monitor_buttons();
+}
+
+DoorChimeCard::~DoorChimeCard() { *m_monitor_cancel = true; }
+
+wxSizer *DoorChimeCard::build_monitor_section()
+{
+    auto *section = new wxBoxSizer(wxVERTICAL);
+
+    auto *divider = new wxWindow(this, wxID_ANY, wxDefaultPosition, wxSize(-1, FromDIP(1)));
+    divider->SetBackgroundColour(divider_color());
+    section->Add(divider, 0, wxEXPAND | wxBOTTOM, FromDIP(12));
+
+    auto *heading = new Label(this, _L("Door monitor"));
+    heading->SetFont(::Label::Head_14);
+    heading->SetForegroundColour(text_color());
+    section->Add(heading, 0, wxBOTTOM, FromDIP(4));
+
+    auto *intro = new Label(this, _L("Keeps a log of the doors and rings these chimes from a computer with Docker, even while Bambu Studio is closed. One click sets it up for the selected printer."));
+    intro->SetFont(::Label::Body_12);
+    intro->SetForegroundColour(muted_color());
+    intro->Wrap(FromDIP(420));
+    section->Add(intro, 0, wxEXPAND | wxBOTTOM, FromDIP(8));
+
+    auto *where = new wxFlexGridSizer(2, FromDIP(8), FromDIP(12));
+    where->AddGrowableCol(1, 1);
+    auto *where_label = new Label(this, _L("Run it on"));
+    where_label->SetFont(::Label::Body_13);
+    where_label->SetForegroundColour(text_color());
+    where->Add(where_label, 0, wxALIGN_CENTER_VERTICAL);
+    m_monitor_target = new ComboBox(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(200), -1), 0, nullptr, wxCB_READONLY);
+    m_monitor_target->Append(_L("This computer"));
+    m_monitor_target->Append(_L("A Docker host over SSH"));
+    m_monitor_target->SetSelection(config_value(DoorMonitor::TARGET_KEY) == "ssh" ? 1 : 0);
+    m_monitor_target->Bind(wxEVT_COMBOBOX, [this](wxCommandEvent &) { on_monitor_target(); });
+    where->Add(m_monitor_target, 1, wxEXPAND);
+    auto *ssh_label = new Label(this, _L("SSH host"));
+    ssh_label->SetFont(::Label::Body_13);
+    ssh_label->SetForegroundColour(text_color());
+    where->Add(ssh_label, 0, wxALIGN_CENTER_VERTICAL);
+    m_monitor_ssh = new TextInput(this, wxString::FromUTF8(config_value(DoorMonitor::SSH_KEY)), "", "", wxDefaultPosition, wxSize(FromDIP(200), -1));
+    m_monitor_ssh->GetTextCtrl()->SetHint("user@host");
+    m_monitor_ssh->SetToolTip(_L("Uses your existing SSH key. Docker Desktop on this computer provides the docker command."));
+    where->Add(m_monitor_ssh, 1, wxEXPAND);
+    section->Add(where, 0, wxEXPAND | wxBOTTOM, FromDIP(8));
+
+    auto *buttons = new wxBoxSizer(wxHORIZONTAL);
+    m_monitor_setup = new Button(this, _L("Set up door monitor"));
+    m_monitor_setup->SetVariant(Button::Variant::Filled);
+    m_monitor_setup->SetButtonSize(Button::Size::Small);
+    m_monitor_setup->SetToolTip(_L("Runs the door monitor with Docker, gives it this printer and these chimes, and opens it signed in"));
+    m_monitor_setup->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { on_monitor_setup(); });
+    buttons->Add(m_monitor_setup, 0, wxRIGHT, FromDIP(8));
+    m_monitor_open = new Button(this, _L("Open"));
+    m_monitor_open->SetVariant(Button::Variant::Tonal);
+    m_monitor_open->SetButtonSize(Button::Size::Small);
+    m_monitor_open->SetToolTip(_L("Open the door monitor in the browser, signed in"));
+    m_monitor_open->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { on_monitor_open(); });
+    buttons->Add(m_monitor_open, 0, wxRIGHT, FromDIP(8));
+    m_monitor_password = new Button(this, _L("Copy password"));
+    m_monitor_password->SetVariant(Button::Variant::Text);
+    m_monitor_password->SetButtonSize(Button::Size::Small);
+    m_monitor_password->SetToolTip(_L("Copy the door monitor password Bambu Studio chose, for signing in on another device"));
+    m_monitor_password->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { on_monitor_copy_password(); });
+    buttons->Add(m_monitor_password, 0);
+    section->Add(buttons, 0, wxBOTTOM, FromDIP(8));
+
+    m_monitor_status = new Label(this, wxEmptyString);
+    m_monitor_status->SetFont(::Label::Body_12);
+    m_monitor_status->SetForegroundColour(muted_color());
+    section->Add(m_monitor_status, 0, wxEXPAND);
+
+    const std::string url = config_value(DoorMonitor::URL_KEY);
+    if (!url.empty()) m_monitor_status->SetLabel(wxString::Format(_L("Set up at %s."), wxString::FromUTF8(url)));
+    return section;
+}
+
+void DoorChimeCard::on_monitor_target()
+{
+    const bool ssh = m_monitor_target->GetSelection() == 1;
+    m_monitor_ssh->Enable(ssh && !m_monitor_busy);
+}
+
+void DoorChimeCard::refresh_monitor_buttons()
+{
+    m_monitor_setup->Enable(!m_monitor_busy);
+    m_monitor_target->Enable(!m_monitor_busy);
+    m_monitor_open->Enable(!m_monitor_busy && !config_value(DoorMonitor::URL_KEY).empty());
+    m_monitor_password->Enable(!config_value(DoorMonitor::PASSWORD_KEY).empty());
+    on_monitor_target();
+}
+
+void DoorChimeCard::set_monitor_status(const wxString &status)
+{
+    if (m_monitor_status->GetLabel() == status) return;
+    m_monitor_status->SetLabel(status);
+    m_monitor_status->Wrap(std::max(FromDIP(200), GetClientSize().x - FromDIP(24)));
+    Layout();
+    if (GetParent() != nullptr) GetParent()->Layout();
+}
+
+void DoorChimeCard::on_monitor_setup()
+{
+    if (m_monitor_busy) return;
+    DoorMonitor::Request request;
+    if (m_monitor_target->GetSelection() == 1) {
+        request.ssh = m_monitor_ssh->GetTextCtrl()->GetValue().Trim().Trim(false).ToStdString();
+        if (!DoorMonitor::valid_ssh_target(request.ssh)) {
+            set_monitor_status(error_text(DoorMonitor::Error::BadTarget));
+            return;
+        }
+    }
+
+    DeviceManager *manager = wxGetApp().getDeviceManager();
+    MachineObject *printer = manager != nullptr ? manager->get_selected_machine() : nullptr;
+    if (printer == nullptr || !printer->is_connected()) {
+        set_monitor_status(_L("Select and connect the printer first, so its details can be filled in."));
+        return;
+    }
+    request.printer_host = printer->get_dev_ip();
+    request.serial       = printer->get_dev_id();
+    request.access_code  = printer->get_access_code();
+    if (request.printer_host.empty() || request.access_code.empty()) {
+        set_monitor_status(_L("Connect to this printer over the network (LAN) once, so Bambu Studio knows its IP address and access code."));
+        return;
+    }
+    request.open_chime  = DoorChime::chosen_id(true);
+    request.close_chime = DoorChime::chosen_id(false);
+    // The same password is offered every time; the monitor takes it only when it has none.
+    std::string password = config_value(DoorMonitor::PASSWORD_KEY);
+    if (password.empty()) password = DoorMonitor::generate_password();
+    request.password = password;
+
+    set_config_value(DoorMonitor::TARGET_KEY, request.ssh.empty() ? "local" : "ssh");
+    if (!request.ssh.empty()) set_config_value(DoorMonitor::SSH_KEY, request.ssh);
+
+    m_monitor_busy = true;
+    refresh_monitor_buttons();
+    set_monitor_status(phase_text(DoorMonitor::Phase::Check));
+
+    wxWeakRef<DoorChimeCard> self(this);
+    auto cancel = m_monitor_cancel;
+    std::thread([self, cancel, request, password]() {
+        const auto on_phase = [self](DoorMonitor::Phase phase) {
+            wxGetApp().CallAfter([self, phase]() { if (self) self->set_monitor_status(phase_text(phase)); });
+        };
+        const DoorMonitor::Result result = DoorMonitor::setup(request, on_phase, *cancel);
+        const std::string ssh = request.ssh;
+        wxGetApp().CallAfter([self, result, password, ssh]() {
+            if (result.error == DoorMonitor::Error::None) {
+                set_config_value(DoorMonitor::URL_KEY, result.url);
+                if (result.password_set) set_config_value(DoorMonitor::PASSWORD_KEY, password);
+                // The monitor rings the chimes now; Bambu Studio ringing them too would play each one twice.
+                DoorChime::set_enabled(false);
+                wxLaunchDefaultBrowser(wxString::FromUTF8(result.login_url.empty() ? result.url : result.login_url));
+            }
+            if (!self) return;
+            self->m_monitor_busy = false;
+            if (result.error == DoorMonitor::Error::None) {
+                self->m_switch->SetValue(false);
+                self->refresh_state();
+                self->set_monitor_status(wxString::Format(
+                    _L("Ready at %s on %s. The door monitor rings the chimes now, so Bambu Studio stopped ringing them itself."),
+                    wxString::FromUTF8(result.url), ssh.empty() ? _L("this computer") : wxString::FromUTF8(ssh)));
+            } else {
+                self->set_monitor_status(error_text(result.error));
+            }
+            self->refresh_monitor_buttons();
+        });
+    }).detach();
+}
+
+void DoorChimeCard::on_monitor_open()
+{
+    const std::string url = config_value(DoorMonitor::URL_KEY);
+    if (url.empty() || m_monitor_busy) return;
+    const std::string ssh = config_value(DoorMonitor::TARGET_KEY) == "ssh" ? config_value(DoorMonitor::SSH_KEY) : std::string();
+    m_monitor_busy = true;
+    refresh_monitor_buttons();
+    wxWeakRef<DoorChimeCard> self(this);
+    std::thread([self, ssh, url]() {
+        const DoorMonitor::Result result = DoorMonitor::sign_in_link(ssh, url);
+        wxGetApp().CallAfter([self, result, url]() {
+            // Without a sign-in link (the monitor was moved or stopped) the plain page still opens.
+            wxLaunchDefaultBrowser(wxString::FromUTF8(result.login_url.empty() ? url : result.login_url));
+            if (!self) return;
+            self->m_monitor_busy = false;
+            self->refresh_monitor_buttons();
+        });
+    }).detach();
+}
+
+void DoorChimeCard::on_monitor_copy_password()
+{
+    const std::string password = config_value(DoorMonitor::PASSWORD_KEY);
+    if (password.empty() || !wxTheClipboard->Open()) return;
+    wxTheClipboard->SetData(new wxTextDataObject(wxString::FromUTF8(password)));
+    wxTheClipboard->Close();
+    set_monitor_status(_L("Password copied."));
 }
 
 DoorChimeCard::Row DoorChimeCard::add_row(wxSizer *sizer, bool open, const wxString &label)
