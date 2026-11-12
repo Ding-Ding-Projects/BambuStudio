@@ -247,8 +247,16 @@ void DoorChimeCard::set_monitor_status(const wxString &status)
     if (m_monitor_status->GetLabel() == status) return;
     m_monitor_status->SetLabel(status);
     m_monitor_status->Wrap(std::max(FromDIP(200), GetClientSize().x - FromDIP(24)));
+    // A longer status makes the card taller, so the page it sits on has to
+    // grow its scrollable area too, or the last line is cut off.
     Layout();
-    if (GetParent() != nullptr) GetParent()->Layout();
+    for (wxWindow *parent = GetParent(); parent != nullptr; parent = parent->GetParent()) {
+        parent->Layout();
+        if (dynamic_cast<wxScrolledWindow *>(parent) != nullptr) {
+            parent->FitInside();
+            break;
+        }
+    }
 }
 
 void DoorChimeCard::on_monitor_setup()

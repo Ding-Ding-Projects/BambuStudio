@@ -235,7 +235,11 @@ Result setup(const Request &request, const std::function<void(Phase)> &on_phase,
     if (!healthy) return failed(Error::Health, cancel ? "cancelled" : "");
 
     Result result;
-    const std::string host = ssh.empty() ? address_toward(request.printer_host) : ssh.substr(ssh.find('@') + 1);
+    // On this computer, the address on the printer's network; without a printer,
+    // the one on the default route (a documentation address is only routed, never sent to).
+    std::string host = ssh.empty() ? std::string() : ssh.substr(ssh.find('@') + 1);
+    if (ssh.empty() && !request.printer_host.empty()) host = address_toward(request.printer_host);
+    if (ssh.empty() && host.empty()) host = address_toward("192.0.2.1");
     result.url = "http://" + (host.empty() ? std::string("127.0.0.1") : host) + ":" + std::to_string(PORT) + "/";
 
     on_phase(Phase::Configure);
