@@ -60364,74 +60364,110 @@ msgstr "已複製密碼。"
 msgid "No printer was filled in: connect to the printer over the network (LAN) and press Set up door monitor again, or enter it on the monitor's page."
 msgstr "未填入打印機：請經區域網絡 (LAN) 連接打印機，再撳一次「設定門監察」，或者喺門監察個頁面自己輸入。"
 
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
 #: src/slic3r/GUI/DeviceTab/RackColdPullDialog.cpp
 msgid "Clear the chamber of hands and tools. Take this hotend from its rack slot."
 msgstr "將雙手同工具移離機艙，再從架位取出呢個熱端。"
 
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
 #: src/slic3r/GUI/DeviceTab/RackColdPullDialog.cpp
 msgid "Waiting for the selected hotend to be reported on the right toolhead."
 msgstr "等緊打印機回報指定熱端已經裝喺右工具頭。"
 
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
 #: src/slic3r/GUI/DeviceTab/RackColdPullDialog.cpp
 msgid "On the printer touchscreen, open Toolbox > Nozzle Cold Pull Maintenance. Choose the right hotend and its material. Follow the touchscreen prompts to detach the PTFE tube and insert the previously used filament. Use dedicated cleaning filament only if supported by the manufacturer's procedure for this material."
 msgstr "喺打印機觸控屏打開「工具箱」嘅「噴嘴冷拉保養」。揀右熱端同相應物料。按觸控屏提示拆開 PTFE 管，插入之前用過嘅耗材。只有原廠指引確認清潔耗材適用於呢款物料先好用。"
 
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
 #: src/slic3r/GUI/DeviceTab/RackColdPullDialog.cpp
 msgid "Cold pull active. Follow the touchscreen prompts. When instructed, remove the filament and refit the PTFE tube. Keep clear during motion."
 msgstr "冷拉進行中。請跟觸控屏指示，到有提示先抽出耗材，再裝返 PTFE 管。機件移動期間請保持距離。"
 
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
 #: src/slic3r/GUI/DeviceTab/RackColdPullDialog.cpp
 msgid "The firmware has left cold pull mode. Check the touchscreen result. Confirm only if this nozzle finished successfully, the filament was removed and the PTFE tube was refitted. Close this guide if the operation failed or was cancelled."
 msgstr "韌體已退出冷拉模式。請睇觸控屏嘅結果。只有噴嘴完成保養、耗材已經抽出，而且 PTFE 管已經裝返好，先好確認。如果失敗或者取消咗，請關閉嚮導。"
 
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
 #: src/slic3r/GUI/DeviceTab/RackColdPullDialog.cpp
 msgid "Clear the chamber of hands and tools. Return this hotend to its original rack slot."
 msgstr "將雙手同工具移離機艙，再將呢個熱端放返原位。"
 
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
 #: src/slic3r/GUI/DeviceTab/RackColdPullDialog.cpp
 msgid "Waiting for the same hotend to be reported in its original rack slot."
 msgstr "等緊打印機回報同一個熱端已經放返原位。"
 
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
 #: src/slic3r/GUI/DeviceTab/RackColdPullDialog.cpp
 msgid "Every listed hotend was confirmed by the operator and verified back in its rack slot."
 msgstr "每個列出嘅熱端都已由操作員確認完成保養，亦已核實放返原位。"
 
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
 #: src/slic3r/GUI/DeviceTab/RackColdPullDialog.cpp
 msgid "Guide stopped. Check the printer touchscreen for any operation still running. Reopen the guide with an idle, connected H2C and a recognized rack inventory."
 msgstr "嚮導已停止。請喺打印機觸控屏檢查有冇動作仍然進行緊。等 H2C 重新連接、閒置同識別到噴嘴架資料，再開嚮導。"
 
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
 #: src/slic3r/GUI/DeviceTab/RackColdPullDialog.cpp
 msgid "Cold pull all rack nozzles"
 msgstr "逐個冷拉架上噴嘴"
 
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
 #: src/slic3r/GUI/DeviceTab/RackColdPullDialog.cpp
 msgid "Close guide"
 msgstr "關閉嚮導"
 
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
 #: src/slic3r/GUI/DeviceTab/RackColdPullDialog.cpp
 msgid "No verified hotend queue"
 msgstr "未有可核實嘅熱端清單"
 
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
 #: src/slic3r/GUI/DeviceTab/RackColdPullDialog.cpp
 msgid "Rack slot %d | %u of %u returned"
 msgstr "架位 %d｜已放回 %u / %u"
 
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
 #: src/slic3r/GUI/DeviceTab/RackColdPullDialog.cpp
 msgid "Hands and tools are clear of the chamber"
 msgstr "雙手同工具已經移離機艙"
 
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
 #: src/slic3r/GUI/DeviceTab/RackColdPullDialog.cpp
 msgid "The printer confirmed success and the PTFE tube is refitted"
 msgstr "打印機已確認成功，PTFE 管亦已裝返好"
 
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
 #: src/slic3r/GUI/DeviceTab/RackColdPullDialog.cpp
 msgid "Take nozzle"
 msgstr "取出噴嘴"
 
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
 #: src/slic3r/GUI/DeviceTab/RackColdPullDialog.cpp
 msgid "Return nozzle"
 msgstr "放回噴嘴"
 
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
 #: src/slic3r/GUI/DeviceTab/RackColdPullDialog.cpp
 msgid "Confirm result"
 msgstr "確認結果"
