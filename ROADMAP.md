@@ -1,5 +1,11 @@
 # Roadmap
 
+## Printer switching and print setup, 22 November 2026
+
+- [x] Verify md3-v324 opens Home through its installed desktop shortcut target on Windows.
+- [ ] Verify switching physical printers from Prepare and Preview with connected devices.
+- [ ] Verify changing a nozzle assignment or print melody slices the plate again and returns to print confirmation on a connected device.
+
 ## One-click door monitor setup, 12 November 2026
 
 - [x] Set up the door monitor from the Door chime card in one click, on this computer or over SSH.

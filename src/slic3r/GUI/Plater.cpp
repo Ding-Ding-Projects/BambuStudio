@@ -12241,7 +12241,7 @@ public:
         FORCE_BACKGROUND_PROCESSING_UPDATE = 2,
         POSTPONE_VALIDATION_ERROR_MESSAGE  = 4,
     };
-    void update(unsigned int flags = 0);
+    void update(unsigned int flags = 0, bool allow_background_start = true);
     void select_view(const std::string& direction);
     //BBS: add no_slice option
     void set_slice_from_slice_btn(bool flag);
@@ -14790,7 +14790,7 @@ void Plater::priv::shutdown_project_history()
     }
 }
 
-void Plater::priv::update(unsigned int flags)
+void Plater::priv::update(unsigned int flags, bool allow_background_start)
 {
     // the following line, when enabled, causes flickering on NVIDIA graphics cards
 //    wxWindowUpdateLocker freeze_guard(q);
@@ -14814,10 +14814,12 @@ void Plater::priv::update(unsigned int flags)
     // todo: better to mark thumbnail dirty here
     q->mark_plate_toolbar_image_dirty();
 
-    if (force_background_processing_restart)
-        this->restart_background_process(update_status);
-    else
-        this->schedule_background_process();
+    if (allow_background_start) {
+        if (force_background_processing_restart)
+            this->restart_background_process(update_status);
+        else
+            this->schedule_background_process();
+    }
 
     // BBS
 #if 0
@@ -20975,8 +20977,9 @@ void Plater::priv::on_process_completed(SlicingProcessCompletedEvent &evt)
         BOOST_LOG_TRIVIAL(info) << boost::format("finished, reload print soon");
         m_is_slicing = false;
         m_slice_all = false;
-        if (has_error)
-            this->main_frame->update_slice_print_status(MainFrame::eEventSliceUpdate);
+        // Earlier status updates still saw m_is_slicing. Refresh after releasing
+        // ownership so setup can request another slice immediately.
+        this->main_frame->update_slice_print_status(MainFrame::eEventSliceUpdate);
         this->preview->reload_print(false);
         q->mark_plate_toolbar_image_dirty();
         /* BBS if in publishing progress */
@@ -28702,8 +28705,8 @@ bool Plater::apply_print_setup_filament_maps(int expected_plate_index, const std
     plate->set_filament_volume_maps(volumes);
     plate->update_slice_result_valid_state(false);
     set_plater_dirty(true);
-    update(false, true);
-    wxGetApp().mainframe->select_tab(MainFrame::tp3DEditor);
+    // The dialog owns the ensuing combined request. Apply without starting a competing worker.
+    update(false, true, false);
     return true;
 }
 
@@ -31115,7 +31118,7 @@ void Plater::add_file()
     }
 }
 
-void Plater::update(bool conside_update_flag, bool force_background_processing_update)
+void Plater::update(bool conside_update_flag, bool force_background_processing_update, bool allow_background_start)
 {
     if (is_new_project_and_check_state()) {
         return;
@@ -31123,12 +31126,12 @@ void Plater::update(bool conside_update_flag, bool force_background_processing_u
     unsigned int flag = force_background_processing_update ? (unsigned int)Plater::priv::UpdateParams::FORCE_BACKGROUND_PROCESSING_UPDATE : 0;
     if (conside_update_flag) {
         if (need_update()) {
-            p->update(flag);
+            p->update(flag, allow_background_start);
             p->set_need_update(false);
         }
     }
     else
-        p->update(flag);
+        p->update(flag, allow_background_start);
 }
 
 void Plater::object_list_changed() { p->object_list_changed(); }

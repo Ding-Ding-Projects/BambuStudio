@@ -44,8 +44,8 @@ X2D) gets `G28 ; home before lubricate mode` in front of the routine.
 The process option `lubricate_melody` holds the tune. It is chosen in the **Send print job**
 dialog, under the print options, in a list with a search field. The field takes plain text, or a
 regular expression with the `.*` toggle, and opens the shared regex builder from its tune button;
-it matches both the shown name and the English name. Choosing a tune writes the process preset
-the way the Express print mode switch does, so the plate is sliced again before it is sent. The
+it matches both the shown name and the English name. Choosing a different tune in single-plate setup saves the process preset and starts a fresh slice.
+After a successful slice, print setup reopens for review. Press **Send** to submit. The
 list shows whether or not a printer is connected.
 
 | Melody | Notes |

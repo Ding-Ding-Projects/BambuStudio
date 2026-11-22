@@ -268,9 +268,13 @@ const checks = {
     order(tick, ['update_show_status(obj_);', 'add_quick_swap_pending_notice();', 'update_print_status_msg();']);
 
     const refresh = block(dialog, 'void SelectMachineDialog::refresh_quick_swap_controls()');
-    assert.match(refresh, /CallAfter\(\[this\] \{\s*refresh_quick_swap_controls\(\);\s*update_by_obj\(get_current_machine\(\)\);\s*\}\);/,
-      'a move or its undo re-checks Send at once');
-    assert.match(refresh, /const bool changed = quick_swap_pending\(\);/);
+    order(refresh, ['button->Bind(wxEVT_BUTTON', 'm_pending_filaments_map[id] =', 'apply_quick_swap();']);
+    const apply = block(dialog, 'void SelectMachineDialog::apply_quick_swap()');
+    order(apply, ['validate_print_setup_filament_maps(', 'EndModal(wxID_CLOSE)', 'apply_print_setup_filament_maps(', 'request_slice_and_print()']);
+    for (const method of ['on_lubricate_melody_selected', 'on_lubricate_mode_toggled']) {
+      const edit = block(dialog, 'void SelectMachineDialog::' + method + '()');
+      order(edit, ['can_slice_again_from_dialog()', 'tab->load_config(cfg);', 'slice_again_from_dialog();']);
+    }
   },
 
   timelapseRow(src) {
@@ -325,7 +329,7 @@ test('each contract rejects the defect it pins', () => {
     ['staleSliceLabelsTranslated', 'bilingual_registry_tests.cpp', 'u8("重新切片");', 'u8("再切片");'],
     ['staleSliceLabelsTranslated', 'bilingual_registry_tests.cpp', 'REQUIRE(registry.lookup(message + " " + action).empty());', 'REQUIRE(!registry.lookup(message).empty());'],
     ['sendNeverSilent', 'SelectMachine.cpp', '        add_quick_swap_pending_notice();\n        update_print_status_msg();\n        return;', '        return;'],
-    ['sendNeverSilent', 'SelectMachine.cpp', '                update_by_obj(get_current_machine());\n', ''],
+    ['sendNeverSilent', 'SelectMachine.cpp', '            apply_quick_swap();\n', ''],
     ['timelapseRow', 'SelectMachine.cpp', '    update_row_height();\n    update_title_display();', '    update_title_display();'],
     ['timelapseRow', 'SelectMachine.cpp', 'm_timelapse_folder_btn->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));\n    m_timelapse_folder_btn->SetToolTip',
       'm_timelapse_folder_btn->SetBackgroundColour(ThemeColor::White);\n    m_timelapse_folder_btn->SetToolTip'],

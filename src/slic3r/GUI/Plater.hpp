@@ -620,7 +620,7 @@ public:
     void statistics_burial_data_form_mw();
     const wxString& get_last_loaded_gcode() const { return m_last_loaded_gcode; }
 
-    void update(bool conside_update_flag = false, bool force_background_processing_update = false);
+    void update(bool conside_update_flag = false, bool force_background_processing_update = false, bool allow_background_start = true);
     //BBS
     Worker &      get_ui_job_worker();
     const Worker &get_ui_job_worker() const;

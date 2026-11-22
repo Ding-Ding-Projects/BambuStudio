@@ -383,11 +383,8 @@ private:
     std::vector<int>                    m_filaments_map;
     std::vector<int>                    m_pending_filaments_map;
     std::vector<std::pair<int, wxString>> m_quick_move_filaments;
-    wxPanel*                            m_quick_swap_panel{ nullptr };
     wxBoxSizer*                         m_quick_move_left{ nullptr };
     wxBoxSizer*                         m_quick_move_right{ nullptr };
-    Button*                             m_quick_swap{ nullptr };
-    Button*                             m_quick_swap_reslice{ nullptr };
     std::shared_ptr<BBLStatusBarPrint>  m_status_bar;
 
     Slic3r::DynamicPrintConfig          m_required_data_config;
@@ -714,7 +711,7 @@ private:
     /* update material items position*/
     void update_material_item_pos(MachineObject* obj_);
     void refresh_quick_swap_controls();
-    void apply_quick_swap(bool reslice);
+    void apply_quick_swap();
     // A nozzle move made here that Swap has not applied yet; Send is blocked
     // while one is pending and the dialog says why.
     bool quick_swap_pending() const;

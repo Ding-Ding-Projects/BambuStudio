@@ -1,5 +1,9 @@
 # Bambu Studio handoff
 
+## Workspace printer selection and installed startup, 22 November 2026
+
+The released 2.9.2028 installer was checked against its SHA-256 sidecar and applied to an existing Windows installation. The desktop shortcut target started the versioned executable, which rendered the Home workspace. The network plug-in subsequently reported successful installation. This check covers md3-v324. Printer switching and print setup on a connected device require separate verification.
+
 ## One-click door monitor setup, 12 November 2026
 
 The Door chime card has a Door monitor section. **Set up door monitor** runs the Printer Door

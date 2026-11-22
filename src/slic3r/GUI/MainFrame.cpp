@@ -3179,10 +3179,22 @@ bool MainFrame::can_save() const
 
 bool MainFrame::request_slice_and_print()
 {
-    if (!m_slice_print_btn || !m_slice_print_btn->IsEnabled()) return false;
-    wxCommandEvent event(wxEVT_BUTTON, m_slice_print_btn->GetId());
-    event.SetEventObject(m_slice_print_btn);
-    wxPostEvent(m_slice_print_btn, event);
+    if (!m_plater || !m_slice_print_btn) return false;
+    update_slice_print_status(eEventSliceUpdate);
+    if (!m_slice_print_btn->IsEnabled()) return false;
+    const auto* plate = m_plater->get_partplate_list().get_curr_plate();
+    const auto index = m_plater->get_partplate_list().get_curr_plate_index();
+    const auto model_id = m_plater->model().id();
+    CallAfter([this, plate, index, model_id] {
+        if (!m_plater || !m_slice_print_btn || m_plater->model().id() != model_id ||
+            m_plater->get_partplate_list().get_curr_plate_index() != index ||
+            m_plater->get_partplate_list().get_curr_plate() != plate) return;
+        update_slice_print_status(eEventSliceUpdate);
+        if (!m_slice_print_btn->IsEnabled()) return;
+        wxCommandEvent event(wxEVT_BUTTON, m_slice_print_btn->GetId());
+        event.SetEventObject(m_slice_print_btn);
+        m_slice_print_btn->GetEventHandler()->ProcessEvent(event);
+    });
     return true;
 }
 
@@ -3801,7 +3813,7 @@ wxSizer* MainFrame::create_side_tools(wxWindow* parent)
             if (!wxGetApp().check_slice_version_policy()) return;
 
             if (m_plater->is_background_process_update_scheduled())
-                m_plater->update(false, true);
+                m_plater->update(false, true, false);
 
             m_plater->reset_check_status();
             if (!m_plater->check_ams_status(!print_after_slice && m_slice_select == eSliceAll))
@@ -3810,7 +3822,8 @@ wxSizer* MainFrame::create_side_tools(wxWindow* parent)
 
             //this->m_plater->select_view_3D("Preview");
             m_plater->exit_gizmo();
-            m_plater->update(true, true);
+            // Complete validation without allowing an automatic slice to claim the worker first.
+            m_plater->update(true, true, false);
 
             bool slice = true;
 
