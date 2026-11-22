@@ -114,6 +114,11 @@ function HotendActions({
   const canReadAll = actions.can_read_all_hotends ?? true;
   return (
     <div className="action-group hotend-actions">
+      {actions.rack_cold_pull_label && (
+        <button type="button" onClick={() => onAction('rack_cold_pull')}>
+          {actions.rack_cold_pull_label}
+        </button>
+      )}
       <button
         type="button"
         className="primary"

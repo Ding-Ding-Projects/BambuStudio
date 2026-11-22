@@ -229,11 +229,11 @@ void DevNozzleRack::CtrlRackReadAll(bool gui_check) const
     m_nozzle_system->GetOwner()->publish_json(j);
 }
 
-void DevNozzleRack::CtrlNozzleExchange(int from, int to) const
+bool DevNozzleRack::CtrlNozzleExchange(int from, int to, const std::function<bool()>& still_ready) const
 {
-    if (!CheckRackMoveWarningDlg())
+    if (!CheckRackMoveWarningDlg() || (still_ready && !still_ready()))
     {
-        return;
+        return false;
     }
 
     json j;
@@ -241,7 +241,7 @@ void DevNozzleRack::CtrlNozzleExchange(int from, int to) const
     j["print"]["sequence_id"] = std::to_string(MachineObject::m_sequence_id++);
     j["print"]["from"] = from;
     j["print"]["to"] = to;
-    m_nozzle_system->GetOwner()->publish_json(j);
+    return m_nozzle_system->GetOwner()->publish_json(j) == 0;
 }
 
 namespace {

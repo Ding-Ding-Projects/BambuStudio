@@ -102,6 +102,7 @@ namespace action_state {
 
 // state.hotend_page.actions - hotend tab toolbar.
 namespace hotend_actions {
+    inline constexpr const char* rack_cold_pull_label = "rack_cold_pull_label";
     inline constexpr const char* can_read_all_hotends     = "can_read_all_hotends";
     inline constexpr const char* read_all_disabled_reason = "read_all_disabled_reason";
 }

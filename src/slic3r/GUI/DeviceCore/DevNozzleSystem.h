@@ -10,6 +10,7 @@
 #include <wx/string.h>
 #include <map>
 #include <optional>
+#include <chrono>
 
 namespace Slic3r
 {
@@ -150,6 +151,7 @@ public:
 
     // serial number
     wxString GetSerialNumber() const;
+    const std::string& GetReportedSerial() const { return m_reported_serial; }
     DevFirmwareVersionInfo GetFirmwareInfo() const;
 
     // location
@@ -211,6 +213,7 @@ private:
     int  GetTotalExtruderCount() const;
 
 private:
+    std::string m_reported_serial;
     bool m_is_exist = true;
     bool m_hc_state = true;
 
@@ -245,6 +248,9 @@ class DevNozzleSystem
 {
     friend class DevNozzleSystemParser;
 private:
+    std::optional<int> m_reported_occupancy;
+    std::chrono::steady_clock::time_point m_inventory_time{};
+
     enum Status : int
     {
         NOZZLE_SYSTEM_IDLE = 0,
@@ -258,6 +264,8 @@ public:
 public:
     MachineObject* GetOwner() const { return m_owner; }
 
+    std::optional<int> GetReportedOccupancy() const { return m_reported_occupancy; }
+    auto GetInventoryTime() const { return m_inventory_time; }
     // nozzles
     DevNozzle                       GetNozzleByPosId(int pos_id) const { return pos_id < 0x10 ? GetExtNozzle(pos_id) : GetRackNozzle(pos_id - 0x10); };
     std::optional<DevNozzle>        GetNozzleOptByPosId(int pos_id) const;

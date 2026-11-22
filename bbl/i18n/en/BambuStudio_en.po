@@ -38822,3 +38822,75 @@ msgstr ""
 
 msgid "No printer was filled in: connect to the printer over the network (LAN) and press Set up door monitor again, or enter it on the monitor's page."
 msgstr ""
+
+#: src/slic3r/GUI/DeviceTab/RackColdPullDialog.cpp
+msgid "Clear the chamber of hands and tools. Take this hotend from its rack slot."
+msgstr "Clear the chamber of hands and tools. Take this hotend from its rack slot."
+
+#: src/slic3r/GUI/DeviceTab/RackColdPullDialog.cpp
+msgid "Waiting for the selected hotend to be reported on the right toolhead."
+msgstr "Waiting for the selected hotend to be reported on the right toolhead."
+
+#: src/slic3r/GUI/DeviceTab/RackColdPullDialog.cpp
+msgid "On the printer touchscreen, open Toolbox > Nozzle Cold Pull Maintenance. Choose the right hotend and its material. Follow the touchscreen prompts to detach the PTFE tube and insert the previously used filament. Use dedicated cleaning filament only if supported by the manufacturer's procedure for this material."
+msgstr "On the printer touchscreen, open Toolbox > Nozzle Cold Pull Maintenance. Choose the right hotend and its material. Follow the touchscreen prompts to detach the PTFE tube and insert the previously used filament. Use dedicated cleaning filament only if supported by the manufacturer's procedure for this material."
+
+#: src/slic3r/GUI/DeviceTab/RackColdPullDialog.cpp
+msgid "Cold pull active. Follow the touchscreen prompts. When instructed, remove the filament and refit the PTFE tube. Keep clear during motion."
+msgstr "Cold pull active. Follow the touchscreen prompts. When instructed, remove the filament and refit the PTFE tube. Keep clear during motion."
+
+#: src/slic3r/GUI/DeviceTab/RackColdPullDialog.cpp
+msgid "The firmware has left cold pull mode. Check the touchscreen result. Confirm only if this nozzle finished successfully, the filament was removed and the PTFE tube was refitted. Close this guide if the operation failed or was cancelled."
+msgstr "The firmware has left cold pull mode. Check the touchscreen result. Confirm only if this nozzle finished successfully, the filament was removed and the PTFE tube was refitted. Close this guide if the operation failed or was cancelled."
+
+#: src/slic3r/GUI/DeviceTab/RackColdPullDialog.cpp
+msgid "Clear the chamber of hands and tools. Return this hotend to its original rack slot."
+msgstr "Clear the chamber of hands and tools. Return this hotend to its original rack slot."
+
+#: src/slic3r/GUI/DeviceTab/RackColdPullDialog.cpp
+msgid "Waiting for the same hotend to be reported in its original rack slot."
+msgstr "Waiting for the same hotend to be reported in its original rack slot."
+
+#: src/slic3r/GUI/DeviceTab/RackColdPullDialog.cpp
+msgid "Every listed hotend was confirmed by the operator and verified back in its rack slot."
+msgstr "Every listed hotend was confirmed by the operator and verified back in its rack slot."
+
+#: src/slic3r/GUI/DeviceTab/RackColdPullDialog.cpp
+msgid "Guide stopped. Check the printer touchscreen for any operation still running. Reopen the guide with an idle, connected H2C and a recognized rack inventory."
+msgstr "Guide stopped. Check the printer touchscreen for any operation still running. Reopen the guide with an idle, connected H2C and a recognized rack inventory."
+
+#: src/slic3r/GUI/DeviceTab/RackColdPullDialog.cpp
+msgid "Cold pull all rack nozzles"
+msgstr "Cold pull all rack nozzles"
+
+#: src/slic3r/GUI/DeviceTab/RackColdPullDialog.cpp
+msgid "Close guide"
+msgstr "Close guide"
+
+#: src/slic3r/GUI/DeviceTab/RackColdPullDialog.cpp
+msgid "No verified hotend queue"
+msgstr "No verified hotend queue"
+
+#: src/slic3r/GUI/DeviceTab/RackColdPullDialog.cpp
+msgid "Rack slot %d | %u of %u returned"
+msgstr "Rack slot %d | %u of %u returned"
+
+#: src/slic3r/GUI/DeviceTab/RackColdPullDialog.cpp
+msgid "Hands and tools are clear of the chamber"
+msgstr "Hands and tools are clear of the chamber"
+
+#: src/slic3r/GUI/DeviceTab/RackColdPullDialog.cpp
+msgid "The printer confirmed success and the PTFE tube is refitted"
+msgstr "The printer confirmed success and the PTFE tube is refitted"
+
+#: src/slic3r/GUI/DeviceTab/RackColdPullDialog.cpp
+msgid "Take nozzle"
+msgstr "Take nozzle"
+
+#: src/slic3r/GUI/DeviceTab/RackColdPullDialog.cpp
+msgid "Return nozzle"
+msgstr "Return nozzle"
+
+#: src/slic3r/GUI/DeviceTab/RackColdPullDialog.cpp
+msgid "Confirm result"
+msgstr "Confirm result"

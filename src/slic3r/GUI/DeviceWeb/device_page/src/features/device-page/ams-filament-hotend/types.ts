@@ -362,6 +362,7 @@ export interface FilamentPageActionState {
 
 /** state.hotend_page.actions */
 export interface HotendPageActionState {
+  rack_cold_pull_label?: string;
   can_read_all_hotends?: boolean;
   read_all_disabled_reason?: string;
 }

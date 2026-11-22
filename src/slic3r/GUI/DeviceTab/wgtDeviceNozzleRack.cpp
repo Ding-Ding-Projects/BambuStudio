@@ -9,6 +9,7 @@
 //**********************************************************/
 
 #include "wgtDeviceNozzleRack.h"
+#include "RackColdPullDialog.hpp"
 #include "slic3r/GUI/Widgets/StateColor.hpp"
 #include "slic3r/GUI/Widgets/MaterialIcon.hpp"
 #include "wgtDeviceNozzleRackUpdate.h"
@@ -270,8 +271,16 @@ void wgtDeviceNozzleRackArea::CreateGui()
     m_btn_read_all->SetVariant(Button::Variant::Outlined);
     m_btn_read_all->Bind(wxEVT_BUTTON, &wgtDeviceNozzleRackArea::OnBtnReadAll, this);
 
+    m_btn_cold_pull = new Button(m_panel_content, _L("Cold pull all rack nozzles"));
+    m_btn_cold_pull->SetVariant(Button::Variant::Outlined);
+    m_btn_cold_pull->Hide();
+    m_btn_cold_pull->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) {
+        if (auto rack = m_nozzle_rack.lock())
+            ShowRackColdPullDialog(this, rack);
+    });
     btn_sizer->Add(m_btn_hotends_infos, 0, wxLEFT);
     btn_sizer->Add(m_btn_read_all, 0, wxLEFT, FromDIP(5));
+    btn_sizer->Add(m_btn_cold_pull, 0, wxLEFT, FromDIP(5));
     content_sizer->Add(btn_sizer, 0, wxLEFT, FromDIP(10));
 
     /* refresh panel */
@@ -442,6 +451,8 @@ void wgtDeviceNozzleRackArea::UpdateRackInfo(std::weak_ptr<DevNozzleRack> rack)
         UpdateNozzleItems(m_nozzle_items, nozzle_rack);
         m_rack_pos_panel->UpdateRackPos(nozzle_rack);
         m_btn_read_all->Enable(nozzle_rack->CtrlCanReadAll());
+        const bool supported = SupportsRackColdPull(nozzle_rack);
+        if (m_btn_cold_pull->Show(supported)) Layout();
     }
 
     if (m_rack_upgrade_dlg && m_rack_upgrade_dlg->IsShown())

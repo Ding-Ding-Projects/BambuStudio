@@ -1156,6 +1156,7 @@ void DevNozzleSystemParser::ParseV2_0(const json& device_json, DevNozzleSystem* 
             system->m_replace_nozzle_tar = std::make_optional(nozzle_json["tar_id"].get<int>());
         }
 
+        system->m_reported_occupancy.reset();
         system->ClearNozzles();
         for (auto it = nozzle_json["info"].begin(); it != nozzle_json["info"].end(); it++)
         {
@@ -1240,7 +1241,8 @@ void DevNozzleSystemParser::ParseV2_0(const json& device_json, DevNozzleSystem* 
             }
             if (njon.contains("sn"))/*maybe not contains*/
             {
-                nozzle_obj.m_sn = njon["sn"].get<std::string>();
+                nozzle_obj.m_reported_serial = njon["sn"].get<std::string>();
+                nozzle_obj.m_sn = nozzle_obj.m_reported_serial;
                 auto firm_info = system->GetNozzleRack()->GetNozzleFirmwareInfo(nozzle_obj.m_addr_id.value_or(-1));
                 if (!firm_info.sn.empty()) {
                     nozzle_obj.m_sn = firm_info.sn;
@@ -1277,6 +1279,8 @@ void DevNozzleSystemParser::ParseV2_0(const json& device_json, DevNozzleSystem* 
                 system->m_ext_nozzles[nozzle_obj.m_nozzle_id] = nozzle_obj;
             }
         }
+        system->m_reported_occupancy = nozzle_exist_bits_opt;
+        system->m_inventory_time = std::chrono::steady_clock::now();
     }
 
     // fill none-exist nozzles

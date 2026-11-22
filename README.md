@@ -1,5 +1,7 @@
 # BambuStudio
 
+The H2C rack maintenance guide takes and returns identified hotends one at a time. Start each cold pull on the H2C touchscreen and follow its filament prompts. [Cold pull every H2C rack hotend](docs/features/device/rack-cold-pull.md).
+
 The workspace navigation includes **Select Printer**. Switch devices from Prepare or Preview and keep the current plate on screen. See [Print setup](docs/features/workspace/print-setup-atlas.md).
 
 Bambu Studio is a feature-rich slicer for Bambu Lab printers: project-based workflows, optimized slicing algorithms and a graphic interface built for a smooth printing experience. This fork rebuilds the native Windows interface on Material Design 3, keeps upstream slicing intact, and adds its own features: three language modes (English, Hong Kong Cantonese, bilingual), automatic updates, local project history, a command palette, a regex builder on every search, Home Assistant handover, **Express print mode** and the **Melody creator**.

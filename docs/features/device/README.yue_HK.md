@@ -1,12 +1,14 @@
 ---
 translation-of: README.md
-source-sha256: 9e561d8b57c30300df5a4d195d6786f8193f6c3e964ced2e4158f75156923791
+source-sha256: 0b788b9c2106a89f6fe35703803c110b2c74c0995e2633c7126e2b06093e9dfb
 review-status: agent-drafted
 ---
 
 > 英文原文：[Device features](README.md)
 
 # 設備功能
+
+- [逐個冷拉 H2C 噴嘴架嘅熱端](rack-cold-pull.yue_HK.md)：逐個識別熱端，喺打印機觸控屏完成保養，再放返原位。
 
 - [LAN 打印機場](farm-lan.md)：設備庫存、選擇、本地發送同任務結果。
 - [即時圖表](live-charts.md)：照打印機送嚟嘅樣，顯示噴嘴、熱床同機箱溫度隨時間嘅變化，有目標線、蠟燭圖、鍵盤十字線同 CSV。

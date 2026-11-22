@@ -6,6 +6,7 @@
 #include "DevNozzleSystem.h"
 #include "DevFirmware.h"
 
+#include <functional>
 #include <map>
 #include <vector>
 #include <optional>
@@ -145,7 +146,7 @@ public:
 
     void CrtlRackReadNozzle(int rack_nozzle_id) const;
     void CtrlRackReadAll(bool gui_check = false) const;
-    void CtrlNozzleExchange(int from, int to) const;
+    bool CtrlNozzleExchange(int from, int to, const std::function<bool()>& still_ready = {}) const;
     bool CtrlCanReadAll() const;
 
     void CtrlStopHotendRackJob() const;

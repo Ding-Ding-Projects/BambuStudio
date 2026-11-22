@@ -137,6 +137,7 @@ private:
 
     Button* m_btn_hotends_infos;
     Button* m_btn_read_all;
+    Button* m_btn_cold_pull;
 
     /* refresh book */
     Label* m_progress_refresh{ nullptr };

@@ -1,5 +1,9 @@
 # Bambu Studio handoff
 
+## H2C rack maintenance, 22 November 2026
+
+The guide uses the existing rack exchange command, checks fresh nozzle identity reports, observes cold-pull status and waits for operator confirmation before returning each nozzle. The firmware routine starts on the touchscreen. Hardware verification on a populated H2C rack is outstanding.
+
 ## Workspace printer selection and installed startup, 22 November 2026
 
 The released 2.9.2028 installer was checked against its SHA-256 sidecar and applied to an existing Windows installation. The desktop shortcut target started the versioned executable, which rendered the Home workspace. The network plug-in subsequently reported successful installation. This check covers md3-v324. Printer switching and print setup on a connected device require separate verification.

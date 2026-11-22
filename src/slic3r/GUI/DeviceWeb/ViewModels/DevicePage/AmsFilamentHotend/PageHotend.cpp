@@ -1,4 +1,5 @@
 #include "ViewModel.hpp"
+#include "slic3r/GUI/DeviceTab/RackColdPullDialog.hpp"
 #include "ResolverDeviceState.hpp"
 #include "ResolverSlotState.hpp"
 #include "ActionHandlerHotend.hpp"
@@ -293,6 +294,8 @@ void DevicePageAmsFilamentHotendVM::BuildHotendRackStatus(MachineObject* machine
     hotend_page[SK::hotend_page::hotend_rack_status] = DevicePageHotendRackProgressStatusBuilder::Build(machine_obj);
 
     const bool rack_busy = hotend_page[SK::hotend_page::hotend_rack_status].value(SK::rack_status::active, false);
+    if (SupportsRackColdPull(nozzle_rack))
+        hotend_page[SK::hotend_page::actions][SK::hotend_actions::rack_cold_pull_label] = _u8L("Cold pull all rack nozzles");
     const bool can_read_all = nozzle_rack && nozzle_rack->CtrlCanReadAll() && !rack_busy;
     hotend_page[SK::hotend_page::actions][SK::hotend_actions::can_read_all_hotends] = can_read_all;
     if (!can_read_all) {
@@ -633,7 +636,14 @@ std::optional<nlohmann::json> DevicePageHotendActionHandler::TryHandle(DevicePag
                                                                        const nlohmann::json& payload,
                                                                        MachineObject* machine_obj)
 {
-    if (action == "hotend_detail") {
+    if (action == "rack_cold_pull") {
+        auto rack = machine_obj ? machine_obj->GetNozzleRack() : nullptr;
+        if (!SupportsRackColdPull(rack))
+            return vm.MakeResponse(vm.GetModule(), "action", action, 2, _u8L("Unavailable"), vm.BuildState());
+        wxGetApp().CallAfter([rack] {
+            ShowRackColdPullDialog(wxGetApp().mainframe, rack);
+        });
+    } else if (action == "hotend_detail") {
         const int display_index = payload.value("display_index", 0);
         if (display_index <= 0) {
             return vm.MakeResponse(vm.GetModule(), "action", action, 2, _u8L("Invalid hotend display_index"), vm.BuildState());

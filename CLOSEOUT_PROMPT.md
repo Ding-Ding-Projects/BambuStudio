@@ -1,5 +1,7 @@
 # Print workflow handoff
 
+The H2C rack guide uses supported take and return commands. The operator starts each cold pull on the touchscreen and confirms completion. Verify against a populated rack before reporting hardware acceptance.
+
 Bambu Studio md3-v324 (2.9.2028) was installed from the checksum-verified public installer. Its desktop shortcut target opened the Home workspace on Windows.
 
 The updated source adds physical printer selection to the shared workspace navigation. Slice and Print retains the target plate through slicing. A left or right nozzle reassignment or a print melody change in print setup requests a fresh slice before returning to confirmation. Sending a job requires a separate user action.

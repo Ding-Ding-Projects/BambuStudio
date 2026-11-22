@@ -184,6 +184,13 @@
         icons.appendChild(hotend.renderToolbarMoreMenu(actions, handleToolbarAction));
         toolbarEl.appendChild(icons);
       } else {
+        if (actions.rack_cold_pull_label) {
+          toolbarEl.appendChild(el('button', {
+            type: 'button',
+            text: actions.rack_cold_pull_label,
+            onClick: function () { handleToolbarAction('rack_cold_pull'); },
+          }));
+        }
         var canReadAll = actions.can_read_all_hotends !== undefined ? actions.can_read_all_hotends : true;
         toolbarEl.appendChild(el('div', { class: 'action-group hotend-actions' },
           el('button', {

@@ -10,6 +10,7 @@ list(APPEND SLIC3R_GUI_SOURCES
     GUI/DeviceTab/uiAMSBestPositionPopup.cpp
     GUI/DeviceTab/uiDeviceUpdateVersion.h
     GUI/DeviceTab/uiDeviceUpdateVersion.cpp
+    GUI/DeviceTab/RackColdPullDialog.cpp
     GUI/DeviceTab/wgtDeviceNozzleRack.h
     GUI/DeviceTab/wgtDeviceNozzleRack.cpp
     GUI/DeviceTab/wgtDeviceNozzleRackUpdate.h

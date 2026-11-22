@@ -1,5 +1,10 @@
 # Roadmap
 
+## H2C rack cold pull
+
+- [ ] Verify the guided queue with a populated H2C rack, including a mounted hotend, a cancelled pull and a disconnect.
+- [ ] Enable remote initiation of the firmware cold-pull routine if an H2C-supported command becomes available.
+
 ## Printer switching and print setup, 22 November 2026
 
 - [x] Verify md3-v324 opens Home through its installed desktop shortcut target on Windows.
