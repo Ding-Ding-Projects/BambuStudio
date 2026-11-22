@@ -4,6 +4,18 @@ This Studio Atlas source pass covers the existing `SelectMachineDialog`, printer
 popup rows, and `SendToPrinterDialog`. It changes presentation and local sizing without
 adding messages, settings, transport paths, or submission logic.
 
+## Choose a physical printer while preparing a plate
+
+Choose **Select Printer** on the navigation rail in Prepare, Preview, Print, Monitor,
+or another workspace. The menu lists printers available to your account and accessible
+LAN devices. Use the name and device ID to distinguish identical machine names.
+The check mark identifies the active device. Offline entries cannot be selected.
+Use the arrow keys and Enter to choose, or Escape to dismiss and keep the previous selection.
+
+Choosing a device keeps the current workspace open. In normal Print setup the selected
+device is the initial destination. The printer preset still controls slicing, and the
+usual compatibility checks and final send confirmation still apply.
+
 ## Review hierarchy
 
 The print-job review groups the existing summary, material mapping, and options into

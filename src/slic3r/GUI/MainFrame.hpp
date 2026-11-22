@@ -391,6 +391,7 @@ public:
     //void        load_configbundle(wxString file = wxEmptyString);
     void        load_config(const DynamicPrintConfig& config);
     //BBS: jump to monitor
+    void        show_printer_selector(wxWindow *anchor);
     void        jump_to_monitor(std::string dev_id = "");
     void        jump_to_multipage();
     //BBS: hint when jump to 3Deditor under preview only mode

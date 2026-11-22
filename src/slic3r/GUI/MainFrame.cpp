@@ -133,6 +133,7 @@
 #include "FilamentMapDialog.hpp"
 
 #include "DeviceCore/DevManager.h"
+#include "DeviceManager.hpp"
 #include "slic3r/GUI/DeviceWeb/DeviceWebPage.hpp"
 
 #ifdef _WIN32
@@ -2911,7 +2912,10 @@ void MainFrame::init_tabpanel()
     // Settings is a navigation action rather than a synthetic notebook page.
     // This preserves every established TabPosition/page index while matching
     // the Material navigation model used by the main workspaces.
-    m_tabpanel->AddNavigationAction(_L("Settings"), "settings", []() {
+    m_tabpanel->AddNavigationAction(_L("Select Printer"), "printer", [this](wxWindow *anchor) {
+        show_printer_selector(anchor);
+    });
+    m_tabpanel->AddNavigationAction(_L("Settings"), "settings", [](wxWindow *) {
         wxGetApp().open_preferences();
     });
 
@@ -6418,6 +6422,38 @@ void MainFrame::open_every_feature()
 }
 
 //BBS
+void MainFrame::show_printer_selector(wxWindow *anchor)
+{
+    wxMenu menu;
+    auto *manager = wxGetApp().getDeviceManager();
+    if (manager && manager->get_agent() && m_monitor) {
+        const auto *selected = manager->get_selected_machine();
+        for (const auto &[id, machine] : manager->get_my_machine_list()) {
+            if (!machine) continue;
+            wxString name = from_u8(machine->get_dev_name());
+            name += " (" + from_u8(id) + ")";
+            name.Replace("&", "&&");
+            auto *item = menu.AppendCheckItem(wxID_ANY, name);
+            item->Check(selected && selected->get_dev_id() == id);
+            item->Enable(machine->is_online() || machine->is_connected());
+            menu.Bind(wxEVT_MENU, [this, device_id = id](wxCommandEvent &) {
+                // The menu runs a nested event loop. Resolve ownership and connectivity again.
+                auto *manager = wxGetApp().getDeviceManager();
+                auto *device = manager && manager->get_agent() ? manager->get_my_machine(device_id) : nullptr;
+                if (!device || (!device->is_online() && !device->is_connected())) {
+                    MessageDialog dialog(this, from_u8(device_id) + ": " + _L("Unavailable"), _L("Select Printer"), wxOK);
+                    dialog.ShowModal();
+                    return;
+                }
+                if (m_monitor) m_monitor->select_machine(device_id);
+            }, item->GetId());
+        }
+    }
+    if (menu.GetMenuItemCount() == 0)
+        menu.Append(wxID_ANY, _L("No printers found"))->Enable(false);
+    MD3::PopupMenuBelow(anchor, &menu, true);
+}
+
 void MainFrame::jump_to_monitor(std::string dev_id)
 {
     if (!dev_id.empty()) {

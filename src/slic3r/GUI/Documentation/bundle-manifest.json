@@ -745,12 +745,12 @@
     {
       "route": "device/door-chime.md",
       "title": "Door chimes",
-      "sha256": "0c694c17d072595e30ba6b22e74808b5753bed4a4ea80f04863ae92aab863406"
+      "sha256": "e0e5517fb30e5a40913aced98057fdc169c19e21f8aac8232283408cb95eb0f7"
     },
     {
       "route": "device/door-chime.yue_HK.md",
       "title": "門鈴",
-      "sha256": "d4fb30a39dd935e7035c4c636482326966ff5724bf6997a1fb6e3cb37a7bc58a"
+      "sha256": "8f75b727b9d9037d86f43b4436177a20ef22d0d2d03525d29d9af8d732e67d4f"
     },
     {
       "route": "device/farm-lan.md",
@@ -2205,12 +2205,12 @@
     {
       "route": "workspace/print-setup-atlas.md",
       "title": "Print setup and storage transfer presentation",
-      "sha256": "25358084bb72804c0217e95d1137ef024f4aada447b66f4f13229395f2377dc5"
+      "sha256": "f5776f0fce86ffb4976e07e7d654f88aa100db54a6241982399cb0f96f88bf09"
     },
     {
       "route": "workspace/print-setup-atlas.yue_HK.md",
       "title": "打印設定同儲存傳送外觀",
-      "sha256": "15d6cb65e5da26c6ee15c52d86c839f41daa45b0bbe8ce1b7958a6618ccf16de"
+      "sha256": "59e1b459a1ffbc034ca86cc128622679def632d68206c614108979c02c82f0a2"
     },
     {
       "route": "workspace/project-tabs.md",
@@ -2325,7 +2325,7 @@
       "bytes": 16430
     }
   ],
-  "bundle_sha256": "b0ac7f176edaf79ff4132ea5608b19e310ede1bcf0ef0abfe976925b02b79261",
+  "bundle_sha256": "d7fce855165abca2e1457d828434b7da3fa1c3686df5b0c6a31acfd74d7eecd2",
   "unavailable_references": [
     {
       "source": "api/README.md",
@@ -2870,6 +2870,16 @@
     {
       "source": "device/README.yue_HK.md",
       "target": "status-api.postman_collection.json",
+      "kind": "link"
+    },
+    {
+      "source": "device/door-chime.md",
+      "target": "https://github.com/Ding-Ding-Projects/printer-door-monitor",
+      "kind": "link"
+    },
+    {
+      "source": "device/door-chime.yue_HK.md",
+      "target": "https://github.com/Ding-Ding-Projects/printer-door-monitor",
       "kind": "link"
     },
     {

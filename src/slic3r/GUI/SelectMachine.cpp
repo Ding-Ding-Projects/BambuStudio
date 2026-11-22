@@ -726,18 +726,7 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     m_sizer_filament_2extruder->Add(m_filament_right_panel, 0, wxEXPAND, 0);
     m_sizer_filament_2extruder->Layout();
 
-    m_quick_swap_panel = new wxPanel(m_scroll_area, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
-    auto* quick_swap_sizer = new wxBoxSizer(wxHORIZONTAL);
-    m_quick_swap = new Button(m_quick_swap_panel, _L("Swap"));
-    m_quick_swap_reslice = new Button(m_quick_swap_panel, _L("Swap and reslice"));
-    m_quick_swap->SetToolTip(_L("Apply the selected nozzle moves and return to Prepare."));
-    m_quick_swap_reslice->SetToolTip(_L("Apply the selected nozzle moves, reslice, then reopen print setup."));
-    quick_swap_sizer->Add(m_quick_swap, 0, wxRIGHT, FromDIP(8));
-    quick_swap_sizer->Add(m_quick_swap_reslice, 0);
-    m_quick_swap_panel->SetSizer(quick_swap_sizer);
-    m_quick_swap->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { apply_quick_swap(false); });
-    m_quick_swap_reslice->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { apply_quick_swap(true); });
-    m_quick_swap_panel->Hide();
+
 
     m_filament_panel->Hide();
 
@@ -1191,7 +1180,6 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     m_scroll_sizer->Add(sizer_split_filament, 1, wxEXPAND|wxLEFT|wxRIGHT, FromDIP(15));
     m_scroll_sizer->Add(m_filament_panel, 0, wxALIGN_CENTER|wxLEFT|wxRIGHT, FromDIP(15));
     m_scroll_sizer->Add(m_sizer_filament_2extruder, 0, wxEXPAND|wxLEFT|wxRIGHT, FromDIP(15));
-    m_scroll_sizer->Add(m_quick_swap_panel, 0, wxLEFT|wxRIGHT|wxTOP, FromDIP(15));
     m_scroll_sizer->Add(0, 0, 0, wxTOP, FromDIP(6));
     m_scroll_sizer->Add(m_statictext_ams_msg, 0, wxLEFT|wxRIGHT, FromDIP(15));
     m_scroll_sizer->Add(0, 0, 0, wxTOP, FromDIP(10));
@@ -2137,7 +2125,6 @@ void SelectMachineDialog::prepare(int print_plate_idx)
     if (m_quick_move_left) m_quick_move_left->Clear(true);
     if (m_quick_move_right) m_quick_move_right->Clear(true);
     m_quick_move_filaments.clear();
-    if (m_quick_swap_panel) m_quick_swap_panel->Hide();
 }
 
 void SelectMachineDialog::update_print_status_msg()
@@ -3792,6 +3779,7 @@ void SelectMachineDialog::refresh_lubricate_melody_list()
     const auto *chosen  = process ? process->option<ConfigOptionString>("lubricate_melody") : nullptr;
     const auto *enabled = process ? process->option<ConfigOptionBool>("lubricate_mode") : nullptr;
     const std::string current = lubricate_melody(chosen ? chosen->value : std::string()).id;
+    m_lubricate_panel->Enable(can_slice_again_from_dialog());
     if (m_lubricate_switch) m_lubricate_switch->SetValue(enabled && enabled->value);
 
     // One pass per melody: a regex pass shares one short wall-clock budget across
@@ -3833,7 +3821,7 @@ void SelectMachineDialog::refresh_lubricate_melody_list()
 
 void SelectMachineDialog::on_lubricate_melody_selected()
 {
-    if (!m_lubricate_list) return;
+    if (!m_lubricate_list || !can_slice_again_from_dialog()) return;
     const int index = m_lubricate_list->GetSelection();
     if (index == wxNOT_FOUND || index >= int(m_lubricate_ids.size())) return;
     const std::string &id = m_lubricate_ids[index];
@@ -3842,33 +3830,28 @@ void SelectMachineDialog::on_lubricate_melody_selected()
     const auto *chosen = bundle ? bundle->prints.get_edited_preset().config.option<ConfigOptionString>("lubricate_melody") : nullptr;
     if (chosen && chosen->value == id) return;
 
-    // Same route as Express print mode: write the process preset, which marks
-    // the G-code stale, and print setup offers Slice again.
-    DynamicPrintConfig cfg;
-    cfg.set_key_value("lubricate_melody", new ConfigOptionString(id));
-    if (Tab *tab = wxGetApp().get_tab(Preset::TYPE_PRINT))
+    if (Tab *tab = wxGetApp().get_tab(Preset::TYPE_PRINT)) {
+        DynamicPrintConfig cfg;
+        cfg.set_key_value("lubricate_melody", new ConfigOptionString(id));
         tab->load_config(cfg);
-    CallAfter([this] { update_by_obj(get_current_machine()); });
+        slice_again_from_dialog();
+    }
 }
 
 void SelectMachineDialog::on_lubricate_mode_toggled()
 {
-    if (!m_lubricate_switch) return;
+    if (!m_lubricate_switch || !can_slice_again_from_dialog()) return;
     const bool on = m_lubricate_switch->GetValue();
     const PresetBundle *bundle = wxGetApp().preset_bundle;
     const auto *enabled = bundle ? bundle->prints.get_edited_preset().config.option<ConfigOptionBool>("lubricate_mode") : nullptr;
     if (enabled && enabled->value == on) return;
 
-    // Same route as the melody: write the process preset, which marks the G-code
-    // stale, so the plate is sliced again with or without the routine.
-    DynamicPrintConfig cfg;
-    cfg.set_key_value("lubricate_mode", new ConfigOptionBool(on));
-    if (Tab *tab = wxGetApp().get_tab(Preset::TYPE_PRINT))
+    if (Tab *tab = wxGetApp().get_tab(Preset::TYPE_PRINT)) {
+        DynamicPrintConfig cfg;
+        cfg.set_key_value("lubricate_mode", new ConfigOptionBool(on));
         tab->load_config(cfg);
-    CallAfter([this] {
-        refresh_lubricate_melody_list();
-        update_by_obj(get_current_machine());
-    });
+        slice_again_from_dialog();
+    }
 }
 
 void SelectMachineDialog::save_option_vals()
@@ -4695,7 +4678,9 @@ void SelectMachineDialog::update_user_printer()
     if (!m_list.empty())
     {
         int prefer_idx = 0;
-        if (m_print_type == FROM_NORMAL && m_printer_last_select.empty()) {
+        // The current physical printer is first in the sorted list. Only suggest
+        // a preset match when there is no selected device.
+        if (m_print_type == FROM_NORMAL && m_printer_last_select.empty() && !dev->get_selected_machine()) {
             prefer_idx = find_preset_matched_index();
             BOOST_LOG_TRIVIAL(info) << "pick printer by source model " << KV(log_key::dev_id, m_list[prefer_idx]->get_dev_id());
         }
@@ -6086,13 +6071,12 @@ void SelectMachineDialog::reset_and_sync_ams_list()
 
 void SelectMachineDialog::refresh_quick_swap_controls()
 {
-    if (!m_quick_swap_panel) return;
+    if (!m_quick_move_left || !m_quick_move_right) return;
     m_quick_move_left->Clear(true);
     m_quick_move_right->Clear(true);
     const bool available = m_print_type == FROM_NORMAL && !m_is_in_sending_mode &&
         m_print_plate_idx == wxGetApp().plater()->get_partplate_list().get_curr_plate_index() &&
         !m_quick_move_filaments.empty();
-    m_quick_swap_panel->Show(available);
     if (!available) return;
 
     for (const auto& filament : m_quick_move_filaments) {
@@ -6124,19 +6108,9 @@ void SelectMachineDialog::refresh_quick_swap_controls()
         }
         button->Bind(wxEVT_BUTTON, [this, id](wxCommandEvent&) {
             m_pending_filaments_map[id] = m_pending_filaments_map[id] == 1 ? 2 : 1;
-            CallAfter([this] {
-                refresh_quick_swap_controls();
-                // Re-check now rather than on the next refresh tick: a move
-                // blocks Send with its reason, and undoing the last move gives
-                // Send back whatever state the printer checks allow.
-                update_by_obj(get_current_machine());
-            });
+            apply_quick_swap();
         });
     }
-    const bool changed = quick_swap_pending();
-    m_quick_swap->Enable(changed);
-    m_quick_swap_reslice->Enable(changed);
-    if (changed) Enable_Send_Button(false);
     m_filament_left_panel->Layout();
     m_filament_right_panel->Layout();
     m_scroll_area->FitInside();
@@ -6195,7 +6169,7 @@ void SelectMachineDialog::slice_again_from_dialog()
             _L("Send print job"), wxOK | wxICON_INFORMATION).ShowModal();
 }
 
-void SelectMachineDialog::apply_quick_swap(bool reslice)
+void SelectMachineDialog::apply_quick_swap()
 {
     if (m_is_in_sending_mode || !quick_swap_pending()) return;
     Plater* plater = wxGetApp().plater();
@@ -6204,6 +6178,7 @@ void SelectMachineDialog::apply_quick_swap(bool reslice)
     const auto requested = m_pending_filaments_map;
     wxString reason;
     if (!plater->validate_print_setup_filament_maps(plate_index, expected, requested, reason)) {
+        m_pending_filaments_map = m_filaments_map;
         MessageDialog(this, reason, _L("Swap nozzle assignment"), wxOK | wxICON_WARNING).ShowModal();
         return;
     }
@@ -6214,7 +6189,7 @@ void SelectMachineDialog::apply_quick_swap(bool reslice)
             _L("Swap nozzle assignment"), wxOK | wxICON_WARNING).ShowModal();
         return;
     }
-    if (reslice && !wxGetApp().mainframe->request_slice_and_print())
+    if (!wxGetApp().mainframe->request_slice_and_print())
         MessageDialog(wxGetApp().mainframe,
             _L("The nozzle assignment was saved. Start slicing from Prepare when the slice action is available."),
             _L("Swap nozzle assignment"), wxOK | wxICON_INFORMATION).ShowModal();

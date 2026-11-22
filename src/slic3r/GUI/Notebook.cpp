@@ -51,6 +51,7 @@ uint32_t tab_glyph_for(const std::string &bmp_name)
         {"tab_calibration_active",  MaterialIcon::Build},
         {"tab_filament_active",     MaterialIcon::Palette},
         // Settings / parameters sub-tabs + the trailing Settings nav action.
+        {"printer",                 MaterialIcon::Print},
         {"settings",                MaterialIcon::Settings},
         {"cog",                     MaterialIcon::Settings},
         {"notebook_presets_active", MaterialIcon::Settings},
@@ -484,13 +485,15 @@ bool ButtonsListCtrl::InsertPage(size_t n, const wxString &text, bool bSelect /*
     return true;
 }
 
-void ButtonsListCtrl::AddAction(const wxString &text, const std::string &bmp_name, std::function<void()> action)
+void ButtonsListCtrl::AddAction(const wxString &text, const std::string &bmp_name, std::function<void(wxWindow*)> action)
 {
     Button *button = new Button(this, text, bmp_name, wxNO_BORDER);
     button->SetToolTip(text);
     button->SetName(text);
     if (const uint32_t glyph = tab_glyph_for(bmp_name)) button->SetGlyph(glyph, tab_glyph_px);
-    button->Bind(wxEVT_BUTTON, [action = std::move(action)](wxCommandEvent &) { if (action) action(); });
+    button->Bind(wxEVT_BUTTON, [this, button, action = std::move(action)](wxCommandEvent &) {
+        if (action) action(button->IsShown() ? button : m_overflow_button);
+    });
     m_actionButtons.push_back(button);
     ApplyTheme();
 }

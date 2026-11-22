@@ -38,7 +38,7 @@ public:
     void UpdateMode();
     void Rescale();
     bool InsertPage(size_t n, const wxString &text, bool bSelect = false, const std::string &bmp_name = "", const std::string &inactive_bmp_name = "");
-    void AddAction(const wxString &text, const std::string &bmp_name, std::function<void()> action);
+    void AddAction(const wxString &text, const std::string &bmp_name, std::function<void(wxWindow*)> action);
     void RemovePage(size_t n);
     bool SetPageImage(size_t n, const std::string& bmp_name) const;
     void SetPageText(size_t n, const wxString& strText);
@@ -294,7 +294,7 @@ public:
 
     ButtonsListCtrl* GetBtnsListCtrl() const { return static_cast<ButtonsListCtrl*>(m_bookctrl); }
 
-    void AddNavigationAction(const wxString &text, const std::string &bmp_name, std::function<void()> action)
+    void AddNavigationAction(const wxString &text, const std::string &bmp_name, std::function<void(wxWindow*)> action)
     {
         GetBtnsListCtrl()->AddAction(text, bmp_name, std::move(action));
     }

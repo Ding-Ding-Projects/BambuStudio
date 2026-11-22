@@ -1,6 +1,6 @@
 ---
 translation-of: print-setup-atlas.md
-source-sha256: 25358084bb72804c0217e95d1137ef024f4aada447b66f4f13229395f2377dc5
+source-sha256: f5776f0fce86ffb4976e07e7d654f88aa100db54a6241982399cb0f96f88bf09
 review-status: agent-drafted
 ---
 
@@ -10,6 +10,15 @@ review-status: agent-drafted
 
 Studio Atlas 呢次原始碼更新涵蓋現有 `SelectMachineDialog`、打印機清單彈出視窗嘅行，
 同 `SendToPrinterDialog`。只改外觀同局部尺寸，冇新增字串、設定、傳輸路徑或提交邏輯。
+
+## 準備打印盤時選擇實體打印機
+
+喺準備、預覽、打印、監察或者其他工作區，都可以撳導覽列嘅「選擇打印機」。
+清單會列出帳戶可用嘅打印機同有權使用嘅區域網絡裝置。同名機可以用裝置識別碼分辨；
+剔號代表目前選擇，離線嘅機就選唔到。用方向鍵移到目標，再撳 Enter，或者撳 Escape 保留原有選擇。
+
+轉機之後會留喺同一個工作區。開啟一般打印設定時，啱啱揀嘅機會成為預設目的地。
+切片仍然用原來嘅打印機預設，傳送前亦一樣會檢查相容性同要求最後確認。
 
 ## 檢閱層次
 
