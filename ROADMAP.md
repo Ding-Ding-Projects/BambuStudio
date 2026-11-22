@@ -1,5 +1,11 @@
 # Roadmap
 
+## Version 325 verification
+
+- [x] Build, package and verify the installed startup of 2.9.2029.
+- [x] Open the device chooser in Prepare, slice a cube into print setup and return to confirmation after changing its melody.
+- [ ] Exercise a live nozzle reassignment and an H2C rack maintenance cycle.
+
 ## H2C rack cold pull
 
 - [ ] Verify the guided queue with a populated H2C rack, including a mounted hotend, a cancelled pull and a disconnect.

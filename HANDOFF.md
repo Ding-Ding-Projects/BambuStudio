@@ -1,5 +1,9 @@
 # Bambu Studio handoff
 
+## Version 325 delivery, 22 November 2026
+
+The published Windows package 2.9.2029 and all four accompanying release assets matched their local SHA-256 digests. An existing installation updated and opened Home from its installed shortcut. With a sample cube, the shared device menu opened in Prepare and Slice and Print opened confirmation. Changing Rising chirp to Truck backing up closed and reopened print setup with the selection retained. [Runtime evidence](docs/evidence/print-setup-v325/evidence.json). Live device switching, dual-nozzle reassignment and a physical rack cycle remain unverified.
+
 ## H2C rack maintenance, 22 November 2026
 
 The guide uses the existing rack exchange command, checks fresh nozzle identity reports, observes cold-pull status and waits for operator confirmation before returning each nozzle. The firmware routine starts on the touchscreen. Hardware verification on a populated H2C rack is outstanding.

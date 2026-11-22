@@ -1,5 +1,9 @@
 # BambuStudio
 
+[Version 325](https://github.com/Ding-Ding-Projects/BambuStudio/releases/tag/md3-v325) adds workspace device selection and returns to print setup after a melody change. The menu below was opened in Prepare with an empty device list. [Verification details](docs/evidence/print-setup-v325/evidence.json).
+
+![The Select Printer menu open in a profile without registered devices](docs/evidence/print-setup-v325/device-menu.png)
+
 The H2C rack maintenance guide takes and returns identified hotends one at a time. Start each cold pull on the H2C touchscreen and follow its filament prompts. [Cold pull every H2C rack hotend](docs/features/device/rack-cold-pull.md).
 
 The workspace navigation includes **Select Printer**. Switch devices from Prepare or Preview and keep the current plate on screen. See [Print setup](docs/features/workspace/print-setup-atlas.md).

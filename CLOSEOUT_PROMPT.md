@@ -1,9 +1,5 @@
-# Print workflow handoff
+# Job 2027 preservation
 
-The H2C rack guide uses supported take and return commands. The operator starts each cold pull on the touchscreen and confirms completion. Verify against a populated rack before reporting hardware acceptance.
+The private publication gate records two finished reviews for the first component release and its source. Two more snapshots preserve the exact reviewed technical rows for the unfinished Job 2027 closeout tree and commit `5d8bb239cdb4ce5f6a84a87fd3b59bc4f41148dd`. The default and earlier reviews retain their original values. The Job 2027 closeout does not claim five fresh Microsoft Windows starts or a working portable ZIP.
 
-Bambu Studio md3-v324 (2.9.2028) was installed from the checksum-verified public installer. Its desktop shortcut target opened the Home workspace on Windows.
-
-The updated source adds physical printer selection to the shared workspace navigation. Slice and Print retains the target plate through slicing. A left or right nozzle reassignment or a print melody change in print setup requests a fresh slice before returning to confirmation. Sending a job requires a separate user action.
-
-Verify the candidate's native build and installed startup, then exercise Slice and Print, both nozzle directions and a melody change. Check cancellation, failed slices, switching plates and the selected physical printer. A real-device result requires a connected printer. See HANDOFF.md and ROADMAP.md for outstanding verification.
+The complete gate sweep on the preceding reviewed update reported 123 discovered, 114 passed, 8 failed, and 1 unverified. The sources and focused transport/projection checks for this preservation update are verified separately. Other existing primary Git worktree edits belong to separate work. user requested usage limit reached and cleanup authorization with 4% account allowance remaining.

@@ -1,0 +1,35 @@
+{
+  "release": "md3-v325",
+  "packageVersion": "2.9.2029",
+  "source": "541e2c9dae26ea74334cd843206d73cbfa06517a",
+  "librarySHA256": "f7b04a722702ee85f4f617d84186a6608cc8c07a9b27e87189f81d647bd12013",
+  "date": "2026-11-22",
+  "timezone": "America/Toronto",
+  "method": "Win32 PrintWindow on individual controls of the staged release executable on a separate desktop",
+  "profile": "Isolated English light-theme profile and bundled cube fixture",
+  "displayScale": "Not independently measured for each image",
+  "privacy": "Reviewed images show test controls and no device identifiers or account data.",
+  "images": [
+    {
+      "file": "device-menu.png",
+      "state": "Workspace device menu with no registered devices",
+      "width": 450,
+      "height": 311,
+      "sha256": "fd86f84b0051383246d3635326d0a778d7b952186721877ca05faa1d78d2acc4"
+    },
+    {
+      "file": "melody-before.png",
+      "state": "Rising chirp selected before the change",
+      "width": 646,
+      "height": 200,
+      "sha256": "8411fe83809a280414fc4f8af25b399a3063a811994ad6ca8c0e4b07130d4243"
+    },
+    {
+      "file": "melody-after.png",
+      "state": "Truck backing up selected after print setup reopened",
+      "width": 646,
+      "height": 200,
+      "sha256": "b82f31a494253176bf3cdadcc1d49ef6bdffb92325ec1e43d9316a695091e9b2"
+    }
+  ]
+}
