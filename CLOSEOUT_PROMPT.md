@@ -1,5 +1,9 @@
-# Job 2027 preservation
+# Bambu Studio print workflow handoff
 
-The private publication gate records two finished reviews for the first component release and its source. Two more snapshots preserve the exact reviewed technical rows for the unfinished Job 2027 closeout tree and commit `5d8bb239cdb4ce5f6a84a87fd3b59bc4f41148dd`. The default and earlier reviews retain their original values. The Job 2027 closeout does not claim five fresh Microsoft Windows starts or a working portable ZIP.
+Release md3-v325 was built from 541e2c9dae26ea74334cd843206d73cbfa06517a. Five published files matched their local SHA-256 digests. The existing Windows installation updated to 2.9.2029 and its shortcut opened Home.
 
-The complete gate sweep on the preceding reviewed update reported 123 discovered, 114 passed, 8 failed, and 1 unverified. The sources and focused transport/projection checks for this preservation update are verified separately. Other existing primary Git worktree edits belong to separate work. user requested usage limit reached and cleanup authorization with 4% account allowance remaining.
+The device selector opened in Prepare with an isolated, empty device list. Slice and Print opened print setup for a sample cube. Changing the lubrication melody from Rising chirp to Truck backing up closed and reopened confirmation with the new selection. See docs/evidence/print-setup-v325/evidence.json.
+
+The H2C guide supports rack take and return with operator confirmation. Start each cold pull on the touchscreen. The rack queue tests passed. Live switching, material reassignment on a dual-nozzle printer and a complete physical rack cycle still require connected equipment. See HANDOFF.md and ROADMAP.md.
+
+The later build-system change a37a48adb adjusts project generation for Boost.Locale in a fresh build. Read the hosted build result before reporting its status.
