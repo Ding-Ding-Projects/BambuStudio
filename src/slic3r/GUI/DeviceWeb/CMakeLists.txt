@@ -118,23 +118,16 @@ function(prepare_node_env)
         endif()
 
         message(STATUS "Extracting Node.js...")
-        if(WIN32)
-            execute_process(
-                COMMAND powershell -NoProfile -Command
-                        "Expand-Archive -Path '${NODE_CACHE_DIR}/${NODE_ARCHIVE_NAME}' -DestinationPath '${NODE_CACHE_DIR}' -Force"
-                WORKING_DIRECTORY "${NODE_CACHE_DIR}"
-                RESULT_VARIABLE extract_result
-                OUTPUT_VARIABLE extract_output
-                ERROR_VARIABLE extract_error
-            )
-        else()
-            execute_process(
-                COMMAND tar -xf "${NODE_ARCHIVE_NAME}"
-                WORKING_DIRECTORY "${NODE_CACHE_DIR}"
-                RESULT_VARIABLE extract_result
-                OUTPUT_VARIABLE extract_output
-                ERROR_VARIABLE extract_error
-            )
+        # CMake extracts the archive itself on every platform. The Windows route used to
+        # shell out to Windows PowerShell's Expand-Archive, which on hosted runners could
+        # report success without writing node.exe (a PowerShell 7 module path inherited by
+        # the child shell), leaving the configure step to fail one line later.
+        set(extract_result 0)
+        set(extract_error "")
+        file(ARCHIVE_EXTRACT INPUT "${NODE_CACHE_DIR}/${NODE_ARCHIVE_NAME}" DESTINATION "${NODE_CACHE_DIR}")
+        if(NOT EXISTS "${NODE_EXECUTABLE}")
+            file(GLOB node_cache_listing LIST_DIRECTORIES true "${NODE_CACHE_DIR}/*")
+            set(extract_error "archive extracted but ${NODE_EXECUTABLE} is missing; cache holds: ${node_cache_listing}")
         endif()
 
         if(NOT extract_result EQUAL 0)
