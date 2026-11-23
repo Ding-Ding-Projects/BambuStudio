@@ -39,7 +39,7 @@
       "title": "Navigation rail component",
       "w": 88,
       "x": 1520,
-      "y": 3160
+      "y": 3640
     },
     "Preview.dc.html": {
       "expand": "fill",
@@ -54,15 +54,15 @@
       "title": "Title bar component",
       "w": 1440,
       "x": 0,
-      "y": 3160
+      "y": 3640
     },
     "Tokens.dc.html": {
       "expand": "fill",
       "h": 1447,
       "title": "Graphite tokens",
       "w": 1440,
-      "x": 1792,
-      "y": 1671
+      "x": 1520,
+      "y": 2040
     }
   },
   "createdOnFiles": {
@@ -81,6 +81,34 @@
       "w": 240,
       "x": 0,
       "y": -300
+    },
+    "sticky-main": {
+      "x": -400, "y": 0, "w": 320, "fill": "teal",
+      "text": "Prepare. Shows the floating 3D canvas, sidebar cards, gizmo rail and Slice/Print split buttons.\nTry: Tweaks > Look > accent swatches and the motion switch.\nNot built natively yet: rounded canvas corners, Ink list, Process tiles, Express print card, scene toolbar."
+    },
+    "sticky-home": {
+      "x": 3040, "y": 0, "w": 320, "fill": "teal",
+      "text": "Home. Recent files, Online Models, Print History, LAN model drop, printers, Melody creator entry.\nTry: accent and motion tweaks; hover the cards.\nNot built natively yet: the Home navigation column with Online Models and Print History."
+    },
+    "sticky-preview": {
+      "x": -400, "y": 1020, "w": 320, "fill": "teal",
+      "text": "Preview. View types, display options, legend dock, layer slider, move timeline.\nTry: turn motion off to see the static end state.\nNot built natively yet: view chips, display options row, layer slider and bottom bar layout."
+    },
+    "sticky-device": {
+      "x": 3040, "y": 1020, "w": 320, "fill": "orange",
+      "text": "Device. Camera, progress, speed, temperatures, AMS, fans, light.\nOpen decision: rail label says Device, native tab says Monitor. Pick one before implementation.\nNot built natively yet: the restyled Device screen."
+    },
+    "sticky-dialogs": {
+      "x": -400, "y": 2040, "w": 320, "fill": "teal",
+      "text": "Dialogs. Send print job, Melody creator, command palette with regex search.\nTry: accent swatches recolour the primary actions.\nNot built natively yet: Send print and Melody creator layouts."
+    },
+    "sticky-tokens": {
+      "x": 3040, "y": 2040, "w": 320, "fill": "teal",
+      "text": "Graphite tokens. Colour roles (dark and light), type, shape, elevation, motion.\nTry: the accent tweak shows how the primary role reads on every surface.\nBuilt natively: the colour roles (b92da01)."
+    },
+    "sticky-components": {
+      "x": -400, "y": 3640, "w": 320, "fill": "teal",
+      "text": "Shared title bar and navigation rail, imported by every screen.\nTry: NavRail Tweaks > active destination.\nNot built natively yet: title bar menus as text buttons and the extra rail destinations."
     }
   },
   "order": [

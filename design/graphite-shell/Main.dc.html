@@ -95,6 +95,7 @@ font-family:Roboto,system-ui,sans-serif;color:var(--tx);background:var(--bg)}
 .gs .toast{animation:gs-toast var(--d6) var(--e-emp-dec) both;animation-delay:500ms}
 .gs .scrim{animation:gs-fade var(--d4) var(--e-std) both}
 .gs .scrubbing{animation:gs-layer var(--d8) var(--e-std) 1}
+.gs.still *,.gs.still *::before,.gs.still *::after{animation:none!important;transition:none!important}
 @media (prefers-reduced-motion:reduce){
   .gs *,.gs *::before,.gs *::after{animation-duration:.01ms!important;animation-delay:0s!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
   .gs .prog>i::after{display:none}
@@ -120,7 +121,7 @@ a{color:#6fdc98}
 .gs .xyz input:focus{outline:none;box-shadow:inset 0 0 0 2px var(--pri)}
 </style>
 </helmet>
-<div class="gs" style="width: 100%; height: 900px; display: flex; flex-direction: column; overflow: hidden">
+<div class="gs {{motionCls}}" style="--pri: {{accent}}; width: 100%; height: 900px; display: flex; flex-direction: column; overflow: hidden">
   <dc-import name="TitleBar" active="prepare" hint-size="100%,48px"></dc-import>
   <div style="flex: 1; display: flex; min-height: 0">
     <dc-import name="NavRail" active="prepare" hint-size="88px,852px"></dc-import>
@@ -274,11 +275,13 @@ a{color:#6fdc98}
   </div>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#6fdc98","options":["#6fdc98","#8ab4ff","#ffb870","#e3ebe5"],"section":"Look"},"motion":{"editor":"boolean","default":true,"section":"Look"},"$preview":{"width":1440,"height":900}}'>
 class Component extends DCLogic {
   renderVals() {
     const G = (label, glyph, div, on) => ({ label, glyph, div: div ? 'block' : 'none', cls: on ? 'on' : '' });
     return {
+      accent: this.props.accent ?? "#6fdc98",
+      motionCls: (this.props.motion ?? true) ? "" : "still",
       inks: [
         { slot: '1', name: 'PLA Basic · Bambu Green', temp: '220°C', color: '#00ae42', fg: '#ffffff' },
         { slot: '2', name: 'PLA Matte · Ivory', temp: '220°C', color: '#f2ead8', fg: '#1a1a1a' },

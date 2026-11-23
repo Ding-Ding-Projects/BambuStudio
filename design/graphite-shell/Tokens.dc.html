@@ -95,6 +95,7 @@ font-family:Roboto,system-ui,sans-serif;color:var(--tx);background:var(--bg)}
 .gs .toast{animation:gs-toast var(--d6) var(--e-emp-dec) both;animation-delay:500ms}
 .gs .scrim{animation:gs-fade var(--d4) var(--e-std) both}
 .gs .scrubbing{animation:gs-layer var(--d8) var(--e-std) 1}
+.gs.still *,.gs.still *::before,.gs.still *::after{animation:none!important;transition:none!important}
 @media (prefers-reduced-motion:reduce){
   .gs *,.gs *::before,.gs *::after{animation-duration:.01ms!important;animation-delay:0s!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
   .gs .prog>i::after{display:none}
@@ -113,7 +114,7 @@ body{margin:0;background:#0e1311}
 @media (prefers-reduced-motion:reduce){.gs .tr:hover .bar{animation:none;opacity:1}}
 </style>
 </helmet>
-<div class="gs" style="width: 100%; min-height: 1280px; padding: 40px; display: flex; flex-direction: column; gap: 24px">
+<div class="gs {{motionCls}}" style="--pri: {{accent}}; width: 100%; min-height: 1280px; padding: 40px; display: flex; flex-direction: column; gap: 24px">
   <header class="screen">
     <h1 style="margin: 0; font-size: 34px; font-weight: 500; letter-spacing: -.01em">Graphite: colour roles, type, shape and motion</h1>
     <p style="margin: 6px 0 0; color: var(--tx2); font-size: 14px">Green-tinted graphite neutrals, one mint accent, amber for heat, blue for network. Roles map one to one onto MD3::Role in the native kit. Hover a duration row to play its easing.</p>
@@ -199,13 +200,15 @@ body{margin:0;background:#0e1311}
   </div>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1280}}'>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#6fdc98","options":["#6fdc98","#8ab4ff","#ffb870","#e3ebe5"],"section":"Look"},"motion":{"editor":"boolean","default":true,"section":"Look"},"$preview":{"width":1440,"height":1280}}'>
 class Component extends DCLogic {
   renderVals() {
     const names = ['surface','surfaceDim','surfaceBright','scLowest','scLow','sc','scHigh','scHighest','onSurface','onSurfaceVariant','outline','outlineVariant','primary','onPrimary','primaryContainer','onPrimaryContainer','secondaryContainer','onSecondaryContainer','error','errorContainer','inverseSurface','inverseOn','onError','onErrorContainer'];
     const dark = ['#0e1311','#0b0f0d','#333d37','#0a0e0c','#141a17','#18201c','#1f2823','#28322c','#e3ebe5','#a9b6ad','#7c8a81','#34413a','#6fdc98','#00391c','#0f5130','#9ff7bf','#24342b','#cde9d6','#ffb4ab','#93000a','#e3ebe6','#2c332f','#690005','#ffdad6'];
     const light = ['#f5f8f5','#d5ddd7','#fafcfa','#ffffff','#eef3ef','#e7eee9','#dfe8e2','#d6e1da','#131c17','#3f4c44','#66766c','#c0ccc4','#146c2e','#ffffff','#a6f4b8','#00210c','#d3e8da','#0e1f15','#ba1a1a','#ffdad6','#2b322e','#edf2ee','#ffffff','#410002'];
     return {
+      accent: this.props.accent ?? "#6fdc98",
+      motionCls: (this.props.motion ?? true) ? "" : "still",
       dark: names.map((n, i) => ({ name: n, hex: dark[i] })),
       light: names.map((n, i) => ({ name: n, hex: light[i] })),
       durations: [

@@ -95,6 +95,7 @@ font-family:Roboto,system-ui,sans-serif;color:var(--tx);background:var(--bg)}
 .gs .toast{animation:gs-toast var(--d6) var(--e-emp-dec) both;animation-delay:500ms}
 .gs .scrim{animation:gs-fade var(--d4) var(--e-std) both}
 .gs .scrubbing{animation:gs-layer var(--d8) var(--e-std) 1}
+.gs.still *,.gs.still *::before,.gs.still *::after{animation:none!important;transition:none!important}
 @media (prefers-reduced-motion:reduce){
   .gs *,.gs *::before,.gs *::after{animation-duration:.01ms!important;animation-delay:0s!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
   .gs .prog>i::after{display:none}
@@ -118,7 +119,7 @@ body{margin:0;background:#0e1311}
 .gs .inp:focus{outline:none;box-shadow:inset 0 0 0 2px var(--pri)}
 </style>
 </helmet>
-<div class="gs" style="width: 100%; min-height: 900px; padding: 32px 24px; display: flex; gap: 24px; align-items: flex-start; justify-content: center; background: radial-gradient(90% 70% at 50% 0%, #17211c 0%, #0e1311 70%)">
+<div class="gs {{motionCls}}" style="--pri: {{accent}}; width: 100%; min-height: 900px; padding: 32px 24px; display: flex; gap: 24px; align-items: flex-start; justify-content: center; background: radial-gradient(90% 70% at 50% 0%, #17211c 0%, #0e1311 70%)">
 
   <section class="dg dlg" role="dialog" aria-label="Send print job" style="flex: 0 0 404px; animation-delay: 0ms">
     <div class="row"><h2 class="grow">Send print job</h2><button class="ib sl" aria-label="Close"><span class="ms" aria-hidden="true">close</span></button></div>
@@ -221,11 +222,13 @@ body{margin:0;background:#0e1311}
   </div>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#6fdc98","options":["#6fdc98","#8ab4ff","#ffb870","#e3ebe5"],"section":"Look"},"motion":{"editor":"boolean","default":true,"section":"Look"},"$preview":{"width":1440,"height":900}}'>
 class Component extends DCLogic {
   renderVals() {
     const pat = (bits, on) => bits.split('').map((b) => (b === '1' ? on : '#28322c'));
     return {
+      accent: this.props.accent ?? "#6fdc98",
+      motionCls: (this.props.motion ?? true) ? "" : "still",
       rows: [
         { name: 'Bed leveling', note: 'Off in express', checked: false, disabled: true, fg: '#7c8a81' },
         { name: 'Flow dynamics calibration', note: 'Off in express', checked: false, disabled: true, fg: '#7c8a81' },

@@ -95,6 +95,7 @@ font-family:Roboto,system-ui,sans-serif;color:var(--tx);background:var(--bg)}
 .gs .toast{animation:gs-toast var(--d6) var(--e-emp-dec) both;animation-delay:500ms}
 .gs .scrim{animation:gs-fade var(--d4) var(--e-std) both}
 .gs .scrubbing{animation:gs-layer var(--d8) var(--e-std) 1}
+.gs.still *,.gs.still *::before,.gs.still *::after{animation:none!important;transition:none!important}
 @media (prefers-reduced-motion:reduce){
   .gs *,.gs *::before,.gs *::after{animation-duration:.01ms!important;animation-delay:0s!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
   .gs .prog>i::after{display:none}
@@ -119,7 +120,7 @@ body{margin:0;background:#0e1311}
 .gs .bub::after{content:"";position:absolute;right:-5px;top:9px;width:10px;height:10px;background:var(--pri);transform:rotate(45deg);border-radius:2px}
 </style>
 </helmet>
-<div class="gs" style="width: 100%; height: 900px; display: flex; flex-direction: column; overflow: hidden">
+<div class="gs {{motionCls}}" style="--pri: {{accent}}; width: 100%; height: 900px; display: flex; flex-direction: column; overflow: hidden">
   <dc-import name="TitleBar" active="preview" hint-size="100%,48px"></dc-import>
   <div style="flex: 1; display: flex; min-height: 0">
     <dc-import name="NavRail" active="preview" hint-size="88px,852px"></dc-import>
@@ -203,7 +204,7 @@ body{margin:0;background:#0e1311}
   </div>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#6fdc98","options":["#6fdc98","#8ab4ff","#ffb870","#e3ebe5"],"section":"Look"},"motion":{"editor":"boolean","default":true,"section":"Look"},"$preview":{"width":1440,"height":900}}'>
 class Component extends DCLogic {
   renderVals() {
     const colors = ['#ffb870', '#6fdc98', '#8ab4ff', '#6fdc98', '#e3ebe5'];
@@ -214,6 +215,8 @@ class Component extends DCLogic {
       layers.push({ x: 500 - w / 2, y: 550 - i * 10, w, c: i % 5 === 4 ? '#8ab4ff' : colors[i % 3], o: i > current ? 0.32 : 1 });
     }
     return {
+      accent: this.props.accent ?? "#6fdc98",
+      motionCls: (this.props.motion ?? true) ? "" : "still",
       layers,
       curY: 550 - current * 10 - 1,
       legend: [
