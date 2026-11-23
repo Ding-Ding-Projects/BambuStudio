@@ -49,7 +49,9 @@
 - [ ] Move the local tools out of the bottom of **File** into their own **Local tools** title bar menu, opened by **Every feature**, with menu labels that follow a loaded personal wording file; verify in the built application.
 - [ ] Review the rest of the title bar menus for findability on the design canvas (owner report: menu items are hard to locate).
 - [x] Record that the native wxWidgets text boxes skip the TinyMCE rich text editor, with the reason, in `docs/features/design-system/graphite-shell.md`.
-- [ ] Decide whether to cold pull every rack hotend without the touchscreen; the printer exposes no documented remote start, so this would need a generated G-code routine tested on a real H2C.
+- [x] Decided with the owner: the rack cold pull is only ever started by hand, as its own maintenance cycle, never part of a print; it keeps using the touchscreen cold pull routine, and the guide is also in **Local tools > Cold pull all rack hotends**.
+- [ ] Group the **Local tools** menu under Printer, Files and models, Windows and games, and Safety and settings (built; the menu popup could not be opened on the hidden desktop, so the grouping is not yet seen in the running application).
+- [x] Update the installed copy to md3-v327 (2.9.2040) through its own updater, keeping 2.9.2029 for rollback; the updated copy was not launched.
 
 ## Lubricate mode and print melodies, 10 November 2026
 

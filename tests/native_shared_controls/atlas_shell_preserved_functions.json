@@ -9,7 +9,7 @@
     {
       "file": "src/slic3r/GUI/MainFrame.cpp",
       "name": "void MainFrame::init_tabpanel(",
-      "sha256": "8d2eb9be5bfb1817cd7af5f3559fabd44f40c89c5689046cd5fbc536771a811e",
+      "sha256": "d1121ca3c554880afaf8b5a3d73e736e2ad10ce41860e5cd82acdf9bfbff4e48",
       "end": "void MainFrame::show_device("
     },
     {
@@ -25,7 +25,7 @@
     {
       "file": "src/slic3r/GUI/MainFrame.cpp",
       "name": "void MainFrame::switch_project_tab(",
-      "sha256": "b4ca0154b162f7278f9c98a20c3cc996f98795cbfcc53ec2d9a200531e2efe57"
+      "sha256": "8c6551c0be8454b465fb3d9036207ea9bf9540d3219cc8a5f005904ffff41cd4"
     },
     {
       "file": "src/slic3r/GUI/MainFrame.cpp",

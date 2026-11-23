@@ -66,7 +66,7 @@ def app_frame():
         die(f"no headless desktop '{DESKTOP}' — run driver.py launch first ({r.get('error')})")
     frames = [w for w in r.get("windows", [])
               if w.get("class") == "wxWindowNR"
-              and "BambuStudio" in (w.get("title") or "")
+              and "BambuStudio" in (w.get("title") or "").replace(" ", "")
               and w.get("width", 0) > 800]
     if not frames:
         die("no BambuStudio main frame on the headless desktop — run driver.py launch")

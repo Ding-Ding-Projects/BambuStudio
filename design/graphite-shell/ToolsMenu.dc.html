@@ -31,7 +31,7 @@ body{margin:0}
 @media (prefers-reduced-motion:reduce){.gs *{animation:none!important;transition:none!important}}
 </style>
 </helmet>
-<div class="gs {{motionCls}}" style="--pri: {{accent}}; width: 100%; min-height: 900px; display: flex; flex-direction: column">
+<div class="gs {{motionCls}}" style="--pri: {{accent}}; width: 100%; min-height: 1240px; display: flex; flex-direction: column">
   <header style="height: 48px; padding: 0 12px; display: flex; align-items: center; gap: 4px; background: #0a0e0c" aria-label="Title bar">
     <span class="ms" aria-hidden="true" style="color: var(--pri); margin-right: 8px">deployed_code</span>
     <nav aria-label="Menus" style="display: flex; gap: 2px">
@@ -61,19 +61,19 @@ body{margin:0}
   </div>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#6fdc98","options":["#6fdc98","#8ab4ff","#ffb870","#e3ebe5"],"section":"Look"},"motion":{"editor":"boolean","default":true,"section":"Look"},"$preview":{"width":1440,"height":900}}'>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#6fdc98","options":["#6fdc98","#8ab4ff","#ffb870","#e3ebe5"],"section":"Look"},"motion":{"editor":"boolean","default":true,"section":"Look"},"$preview":{"width":1440,"height":1240}}'>
 class Component extends DCLogic {
   renderVals() {
     return {
       accent: this.props.accent ?? '#6fdc98',
       motionCls: (this.props.motion ?? true) ? '' : 'still',
       groups: [
-        { name: 'Printer', items: [{ icon: 'qr_code_scanner', label: 'AI filament scanner…' }, { icon: 'home', label: 'Smart home…' }, { icon: 'music_note', label: 'Melody creator…' }, { icon: 'monitoring', label: 'Live charts…' }] },
-        { name: 'Files and data', items: [{ icon: 'move_to_inbox', label: 'LAN model drop…' }, { icon: 'swap_horiz', label: 'Local file converter…' }, { icon: 'data_object', label: 'Base64 toolkit…' }] },
+        { name: 'Printer', items: [{ icon: 'qr_code_scanner', label: 'AI filament scanner…' }, { icon: 'home', label: 'Smart home…' }, { icon: 'music_note', label: 'Melody creator…' }, { icon: 'monitoring', label: 'Live charts…' }, { icon: 'ac_unit', label: 'Cold pull all rack hotends…' }] },
+        { name: 'Files and models', items: [{ icon: 'move_to_inbox', label: 'LAN model drop…' }, { icon: 'qr_code', label: 'Invite someone to send a model…' }, { icon: 'swap_horiz', label: 'Local file converter…' }, { icon: 'data_object', label: 'Base64 toolkit…' }, { icon: 'draw', label: 'Drawing board…' }, { icon: 'memory', label: 'Local model suite…' }, { icon: 'extension', label: 'Extensions…' }] },
         { name: 'Windows and games', items: [{ icon: 'hard_drive', label: 'Virtual disks…' }, { icon: 'dns', label: 'Minecraft servers…' }] },
-        { name: 'Safety', items: [{ icon: 'lock', label: 'Element locks…' }, { icon: 'key', label: 'Authenticator…' }, { icon: 'backup', label: 'Config profiles & backup…' }] }
+        { name: 'Safety and settings', items: [{ icon: 'lock', label: 'Element locks…' }, { icon: 'key', label: 'Authenticator…' }, { icon: 'fingerprint', label: 'Identity history…' }, { icon: 'support_agent', label: 'Local support tickets…' }, { icon: 'backup', label: 'Config profiles & backup…' }, { icon: 'event_repeat', label: 'Scheduled settings…' }] }
       ]
-    };
+    };    };
   }
 }
 </script>

@@ -134,6 +134,7 @@
 
 #include "DeviceCore/DevManager.h"
 #include "DeviceManager.hpp"
+#include "DeviceTab/RackColdPullDialog.hpp"
 #include "slic3r/GUI/DeviceWeb/DeviceWebPage.hpp"
 
 #ifdef _WIN32
@@ -4990,6 +4991,14 @@ void MainFrame::init_menubar_as_editor()
             feature_command("local-tools", []() { LocalToolsHubPanel::open(); }), "", nullptr,
             []() { return true; }, this);
 
+        // Groups in the Local tools menu: a separator and a heading that is not a command.
+        const auto add_tools_group = [toolsMenu](const wxString& name) {
+            toolsMenu->AppendSeparator();
+            toolsMenu->Append(wxID_ANY, name)->Enable(false);
+        };
+
+        add_tools_group(_L("Printer"));
+
         append_menu_item(toolsMenu, wxID_ANY, _L("AI filament scanner") + dots,
             _L("Snap a spool photo on your phone; a local model identifies it and loads an AMS slot"),
             feature_command("filament-scanner", [this]() { FilamentScanDialog(this).ShowModal(); }), "", nullptr,
@@ -5005,6 +5014,28 @@ void MainFrame::init_menubar_as_editor()
             feature_command("melody", [this]() { MelodyCreatorDialog(this).ShowModal(); }), "", nullptr,
             []() { return true; }, this);
 
+        append_menu_item(toolsMenu, wxID_ANY, _L("Live charts") + dots,
+            _L("Temperatures, AMS humidity and the part cooling fan of the selected printer over time"),
+            feature_command("live-charts", []() { LiveCharts::LiveChartsPanel::open(); }), "", nullptr, []() { return true; }, this);
+        // Every feature and the palette open the charts straight on one series.
+        FeatureFinder::Commands::instance().add("live-charts-humidity", []() { LiveCharts::LiveChartsPanel::open(int(LiveCharts::Kind::Humidity)); });
+        FeatureFinder::Commands::instance().add("live-charts-fan", []() { LiveCharts::LiveChartsPanel::open(int(LiveCharts::Kind::Fan)); });
+
+        append_menu_item(toolsMenu, wxID_ANY, _L("Cold pull all rack hotends") + dots,
+            _L("A guide started by hand, never part of a print: each H2C rack hotend in turn, through the touchscreen cold pull"),
+            feature_command("rack-cold-pull", [this]() {
+                auto* devices = wxGetApp().getDeviceManager();
+                MachineObject* machine = devices ? devices->get_selected_machine() : nullptr;
+                const auto rack = machine ? machine->GetNozzleRack() : nullptr;
+                if (SupportsRackColdPull(rack))
+                    ShowRackColdPullDialog(this, rack);
+                else if (auto* plate = wxGetApp().plater())
+                    plate->get_notification_manager()->push_notification(
+                        into_u8(_L("Select a connected H2C with its hotend rack first. Nothing was sent to the printer.")));
+            }), "", nullptr, []() { return true; }, this);
+
+        add_tools_group(_L("Files and models"));
+
         // LAN model drop (docs/features/application-integration/lan-model-drop.md): the settings
         // section, and the invite someone opens to send a model to this computer.
         append_menu_item(toolsMenu, wxID_ANY, _L("LAN model drop") + dots,
@@ -5014,11 +5045,6 @@ void MainFrame::init_menubar_as_editor()
         append_menu_item(toolsMenu, wxID_ANY, _L("Invite someone to send a model") + dots,
             _L("Show the link and QR code of the LAN drop site"),
             [this](wxCommandEvent&) { LanModelDrop::open_invite_dialog(this); }, "", nullptr,
-            []() { return true; }, this);
-
-        append_menu_item(toolsMenu, wxID_ANY, _L("Local model suite") + dots,
-            _L("Inspect local Ollama models, catalog availability and guided tools"),
-            feature_command("model-suite", [this]() { show_ollama_suite(this, std::filesystem::u8path(data_dir())); }), "", nullptr,
             []() { return true; }, this);
 
         append_menu_item(toolsMenu, wxID_ANY, _L("Local file converter") + dots,
@@ -5038,20 +5064,20 @@ void MainFrame::init_menubar_as_editor()
                 open_service("base64", _L("Base64 toolkit"), [](wxWindow* parent) { return new Base64ToolkitPanel(parent); });
             }), "", nullptr, []() { return true; }, this);
 
+        append_menu_item(toolsMenu, wxID_ANY, _L("Drawing board") + dots,
+            _L("Draw on a capture of the plate with seven pens, versions and export, saved on this computer"),
+            feature_command("drawing", []() { Drawing::DrawingPanel::open(); }), "", nullptr, []() { return true; }, this);
+
+        append_menu_item(toolsMenu, wxID_ANY, _L("Local model suite") + dots,
+            _L("Inspect local Ollama models, catalog availability and guided tools"),
+            feature_command("model-suite", [this]() { show_ollama_suite(this, std::filesystem::u8path(data_dir())); }), "", nullptr,
+            []() { return true; }, this);
+
         append_menu_item(toolsMenu, wxID_ANY, _L("Extensions") + dots,
             _L("Steps after slicing, comment lines in exported G-code and commands of your own, each asking first"),
             feature_command("extensions", []() { Extensions::Runtime::open_manager(); }), "", nullptr, []() { return true; }, this);
 
-        append_menu_item(toolsMenu, wxID_ANY, _L("Live charts") + dots,
-            _L("Temperatures, AMS humidity and the part cooling fan of the selected printer over time"),
-            feature_command("live-charts", []() { LiveCharts::LiveChartsPanel::open(); }), "", nullptr, []() { return true; }, this);
-        // Every feature and the palette open the charts straight on one series.
-        FeatureFinder::Commands::instance().add("live-charts-humidity", []() { LiveCharts::LiveChartsPanel::open(int(LiveCharts::Kind::Humidity)); });
-        FeatureFinder::Commands::instance().add("live-charts-fan", []() { LiveCharts::LiveChartsPanel::open(int(LiveCharts::Kind::Fan)); });
-
-        append_menu_item(toolsMenu, wxID_ANY, _L("Drawing board") + dots,
-            _L("Draw on a capture of the plate with seven pens, versions and export, saved on this computer"),
-            feature_command("drawing", []() { Drawing::DrawingPanel::open(); }), "", nullptr, []() { return true; }, this);
+        add_tools_group(_L("Windows and games"));
 
         append_menu_item(toolsMenu, wxID_ANY, _L("Virtual disks") + dots,
             _L("Every VHD, VHDX and ISO you add: attach, create, grow, compact, chains, merge and Quick pack"),
@@ -5061,17 +5087,11 @@ void MainFrame::init_menubar_as_editor()
             _L("Create, adopt and run Java servers: console, every setting, players, versions, backups, schedules and a world generator"),
             feature_command("minecraft-servers", []() { GameServers::ServersPanel::open(); }), "", nullptr, []() { return true; }, this);
 
+        add_tools_group(_L("Safety and settings"));
+
         append_menu_item(toolsMenu, wxID_ANY, _L("Element locks") + dots,
             _L("Every element you locked, with Unlock beside each"),
             feature_command("element-locks", [this]() { ElementLocks::open_manager(this); }), "", nullptr, []() { return true; }, this);
-
-        append_menu_item(toolsMenu, wxID_ANY, _L("Scheduled settings") + dots,
-            _L("Schedule presentation without replacing stored preferences"),
-            feature_command("scheduled-settings", [this]() {
-                auto* service = wxGetApp().scheduled_preferences();
-                if (service) open_service("scheduled-settings", _L("Scheduled settings"),
-                    [service](wxWindow* parent) { return service->create_panel(parent); });
-            }), "", nullptr, []() { return wxGetApp().scheduled_preferences() != nullptr; }, this);
 
         const auto open_security = [this](const std::string& destination, const wxString& title) {
             try {
@@ -5106,6 +5126,14 @@ void MainFrame::init_menubar_as_editor()
             _L("Export or import the complete data folder (secrets included, slide-to-confirm) and manage unlimited profiles with local Git snapshot history"),
             feature_command("config-profiles", [this]() { ConfigProfilesDialog(this).ShowModal(); }), "", nullptr,
             []() { return true; }, this);
+
+        append_menu_item(toolsMenu, wxID_ANY, _L("Scheduled settings") + dots,
+            _L("Schedule presentation without replacing stored preferences"),
+            feature_command("scheduled-settings", [this]() {
+                auto* service = wxGetApp().scheduled_preferences();
+                if (service) open_service("scheduled-settings", _L("Scheduled settings"),
+                    [service](wxWindow* parent) { return service->create_panel(parent); });
+            }), "", nullptr, []() { return wxGetApp().scheduled_preferences() != nullptr; }, this);
 
         // Open the current project's folder in the configured external editor
         // (Preferences > General > External editor). "custom" routes to the

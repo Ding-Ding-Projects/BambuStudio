@@ -76,8 +76,8 @@ function visibleSection(prefs) {
 }
 
 function menuItems(mainFrame) {
-  assert.match(mainFrame, /append_menu_item\(fileMenu, wxID_ANY, _L\("LAN model drop"\) \+ dots,[\s\S]{0,200}?LanModelDrop::open_preferences_section\(\)/);
-  assert.match(mainFrame, /append_menu_item\(fileMenu, wxID_ANY, _L\("Invite someone to send a model"\) \+ dots,[\s\S]{0,200}?LanModelDrop::open_invite_dialog\(this\)/);
+  assert.match(mainFrame, /append_menu_item\(toolsMenu, wxID_ANY, _L\("LAN model drop"\) \+ dots,[\s\S]{0,200}?LanModelDrop::open_preferences_section\(\)/);
+  assert.match(mainFrame, /append_menu_item\(toolsMenu, wxID_ANY, _L\("Invite someone to send a model"\) \+ dots,[\s\S]{0,200}?LanModelDrop::open_invite_dialog\(this\)/);
 }
 
 function paletteEntries(index, palette) {
@@ -268,7 +268,7 @@ function invite(ui, station) {
 
 const contracts = [
   ['the option has its own visible Preferences section', () => visibleSection(src.prefs), () => visibleSection(src.prefs.replace('add_tab("lan_drop"', 'if (developer_mode) add_tab("lan_drop"'))],
-  ['the File menu opens the section and the invite', () => menuItems(src.mainFrame), () => menuItems(src.mainFrame.replace('_L("Invite someone to send a model") + dots', '_L("Invite") + dots'))],
+  ['the Local tools menu opens the section and the invite', () => menuItems(src.mainFrame), () => menuItems(src.mainFrame.replace('_L("Invite someone to send a model") + dots', '_L("Invite") + dots'))],
   ['the command palette lists the section, every row and the invite', () => paletteEntries(src.paletteIndex, src.palette), () => paletteEntries(src.paletteIndex.replace('"lan_drop_address"', '"lan_drop_addr"'), src.palette)],
   ['the title bar shows an indicator only while the option is on', () => indicator(src.topbar), () => indicator(src.topbar.replace('void BBLTopbar::SetHistoryInfo(const wxString& branch, const wxString& head)\n{', 'void BBLTopbar::SetHistoryInfo(const wxString& branch, const wxString& head)\n{\n    Realize();'))],
   ['the station sends no key and no Authorization header', () => noKey(src.station, src.stationHpp, src.ui, src.model, src.cmake), () => noKey(src.station.replace('.clear_headers()\n        .header("Accept", "application/json")', '.clear_headers()\n        .header("Authorization", "Bearer x")\n        .header("Accept", "application/json")'), src.stationHpp, src.ui, src.model, src.cmake)],

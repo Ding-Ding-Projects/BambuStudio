@@ -156,7 +156,7 @@ def list_windows():
 
 
 def app_windows():
-    return [w for w in list_windows() if "BambuStudio" in (w.get("title") or "")]
+    return [w for w in list_windows() if "BambuStudio" in (w.get("title") or "").replace(" ", "")]
 
 
 def cmd_launch(args):
@@ -200,7 +200,7 @@ def cmd_open(args):
         current = list_windows()
         new = [w for w in current if w["handle"] not in before]
         if any(w.get("class") == "wxWindowNR" and
-               "BambuStudio" in (w.get("title") or "") and
+               "BambuStudio" in (w.get("title") or "").replace(" ", "") and
                w.get("width", 0) > 800 for w in new):
             break
         for p in LOGDIR.glob("studio_*.log*"):

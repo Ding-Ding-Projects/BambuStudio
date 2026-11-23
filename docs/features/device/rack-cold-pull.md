@@ -1,6 +1,8 @@
 # Cold pull every H2C rack hotend
 
-Open **Device > Hotends & Rack > Cold pull all rack nozzles** with the H2C connected and idle. In the web-based device panel, open the **Hotend** tab and choose the same action. The guide takes an inventory of identified hotends and services them individually. If a rack hotend is already on the right toolhead, the guide starts there. The fixed left hotend is outside this sequence.
+Open **Device > Hotends & Rack > Cold pull all rack nozzles** with the H2C connected and idle. In the web-based device panel, open the **Hotend** tab and choose the same action. The guide takes an inventory of identified hotends and services them individually. If a rack hotend is already on the right toolhead, the guide starts there. The fixed left hotend is outside this sequence. You can also open the guide from **Local tools > Cold pull all rack hotends** in the title bar.
+
+The cold pull is only ever started by hand, as its own maintenance cycle. It is never added to a print, a print start or a print end, and the guide refuses to begin while the printer is printing, preparing a print, calibrating or updating.
 
 1. With hands and tools clear, confirm **Take nozzle**. The guide waits for the correct hotend on the right toolhead.
 2. On the H2C touchscreen, open **Toolbox > Nozzle Cold Pull Maintenance**. Select the right hotend and its material. Follow the firmware prompts for disconnecting the PTFE tube and inserting filament by hand. The manufacturer specifies the previously used filament. Only use a dedicated cleaning filament if the manufacturer supports it for the selected procedure.
