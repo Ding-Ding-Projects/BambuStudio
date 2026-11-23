@@ -3019,7 +3019,7 @@ wxBoxSizer *StatusBasePanel::create_temp_axis_group(wxWindow *parent)
     box->SetBackgroundColor(box_colour);
     box->SetBorderColor(box_border_colour);
     box->SetBackgroundColour(device_card_color());
-    box->SetCornerRadius(FromDIP(MD3::Metrics::active().radius));
+    box->SetCornerRadius(FromDIP(MD3::Metrics::radius_dialog));
 
     // MD3 SectionHeader: 11/600 uppercase + .6px tracking OnSurfaceVariant, with a
     // 16px leading Material Symbol (Device.jsx:50). Guarded so a stripped icon face
@@ -3041,7 +3041,7 @@ StaticBox *StatusBasePanel::create_print_options_group(wxWindow *parent)
     m_print_options_box->SetBackgroundColor(StateColor(device_card_color()));
     m_print_options_box->SetBorderColor(StateColor(device_divider_color()));
     m_print_options_box->SetBackgroundColour(device_card_color());
-    m_print_options_box->SetCornerRadius(FromDIP(MD3::Metrics::active().radius));
+    m_print_options_box->SetCornerRadius(FromDIP(MD3::Metrics::radius_dialog));
 
     auto *title = new SectionHeader(m_print_options_box, _L("Print Options"), MaterialIcon::available() ? MaterialIcon::Speed : 0);
 
@@ -3061,7 +3061,7 @@ StaticBox *StatusBasePanel::create_move_group(wxWindow *parent)
     m_move_control_box->SetBackgroundColor(StateColor(device_card_color()));
     m_move_control_box->SetBorderColor(StateColor(device_divider_color()));
     m_move_control_box->SetBackgroundColour(device_card_color());
-    m_move_control_box->SetCornerRadius(FromDIP(MD3::Metrics::active().radius));
+    m_move_control_box->SetCornerRadius(FromDIP(MD3::Metrics::radius_dialog));
 
     auto *title = new SectionHeader(m_move_control_box, _L("Move"), MaterialIcon::available() ? MaterialIcon::ControlCamera : 0);
 
@@ -3709,7 +3709,7 @@ StaticBox *StatusBasePanel::create_ams_group(wxWindow *parent)
     m_ams_control_box = new StaticBox(parent);
     m_ams_control_box->SetBackgroundColor(box_colour);
     m_ams_control_box->SetBorderColor(box_border_colour);
-    m_ams_control_box->SetCornerRadius(FromDIP(MD3::Metrics::active().radius));
+    m_ams_control_box->SetCornerRadius(FromDIP(MD3::Metrics::radius_dialog));
 
     m_ams_control_box->SetBackgroundColour(device_card_color());
 
@@ -3774,7 +3774,7 @@ wxBoxSizer *StatusBasePanel::create_filament_group(wxWindow *parent)
     m_filament_load_box = new StaticBox(parent);
     m_filament_load_box->SetBackgroundColor(box_colour);
     m_filament_load_box->SetBorderColor(box_border_colour);
-    m_filament_load_box->SetCornerRadius(FromDIP(MD3::Metrics::active().radius));
+    m_filament_load_box->SetCornerRadius(FromDIP(MD3::Metrics::radius_dialog));
     m_filament_load_box->SetBackgroundColour(device_card_color());
     m_filament_load_box->SetSizer(sizer_box);
 
@@ -6129,7 +6129,18 @@ void StatusPanel::on_lubricate(wxCommandEvent &)
     if (confirm.ShowModal() != wxID_YES)
         return;
 
-    const BoundingBoxf box(bed->values);
+    BoundingBoxf box(bed->values);
+    // Keep the strokes where every toolhead can reach (H2D, H2C), as the print start does.
+    if (const auto *reach = printer.option<ConfigOptionPointsGroups>("extruder_printable_area"))
+        for (const auto &points : reach->values) {
+            if (points.empty())
+                continue;
+            const BoundingBoxf r(points);
+            box.min.x() = std::max(box.min.x(), r.min.x());
+            box.min.y() = std::max(box.min.y(), r.min.y());
+            box.max.x() = std::min(box.max.x(), r.max.x());
+            box.max.y() = std::min(box.max.y(), r.max.y());
+        }
     LubricateArea      area;
     area.min_x  = box.min.x();
     area.min_y  = box.min.y();
@@ -7908,7 +7919,7 @@ void StatusPanel::on_sys_color_changed()
         card->SetBackgroundColor(card_background);
         card->SetBackgroundColour(device_card_color());
         card->SetBorderColor(card_border);
-        card->SetCornerRadius(FromDIP(MD3::Metrics::active().radius));
+        card->SetCornerRadius(FromDIP(MD3::Metrics::radius_dialog));
         card->Refresh();
     }
     if (m_fan_panel) {

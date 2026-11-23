@@ -2,67 +2,85 @@
   "v": 3,
   "attachments": {},
   "boards": {
-    "Device.dc.html": {
-      "expand": "fill",
-      "h": 900,
-      "title": "Device",
-      "w": 1440,
-      "x": 1520,
-      "y": 1020
-    },
-    "Dialogs.dc.html": {
-      "expand": "fill",
-      "h": 900,
-      "title": "Send print, Melody creator, command palette",
-      "w": 1440,
-      "x": 0,
-      "y": 2040
-    },
-    "Home.dc.html": {
-      "expand": "fill",
-      "h": 900,
-      "title": "Home",
-      "w": 1440,
-      "x": 1520,
-      "y": 0
-    },
-    "Main.dc.html": {
-      "expand": "fill",
-      "h": 900,
-      "title": "Prepare",
-      "w": 1440,
-      "x": 0,
-      "y": 0
-    },
-    "NavRail.dc.html": {
-      "h": 852,
-      "title": "Navigation rail component",
-      "w": 88,
-      "x": 1520,
-      "y": 3640
-    },
-    "Preview.dc.html": {
-      "expand": "fill",
-      "h": 900,
-      "title": "Preview",
-      "w": 1440,
-      "x": 0,
-      "y": 1020
-    },
     "TitleBar.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 1440,
       "h": 48,
       "title": "Title bar component",
-      "w": 1440,
+      "page": "shell"
+    },
+    "NavRail.dc.html": {
       "x": 0,
-      "y": 3640
+      "y": 420,
+      "w": 88,
+      "h": 852,
+      "title": "Navigation rail component",
+      "page": "shell"
     },
     "Tokens.dc.html": {
-      "expand": "fill",
+      "x": 0,
+      "y": 1400,
+      "w": 1440,
       "h": 1447,
       "title": "Graphite tokens",
+      "page": "shell",
+      "expand": "fill"
+    },
+    "Home.dc.html": {
+      "x": 0,
+      "y": 0,
       "w": 1440,
-      "x": 1520,
-      "y": 2040
+      "h": 900,
+      "title": "Home",
+      "page": "home",
+      "expand": "fill"
+    },
+    "Main.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "title": "Prepare",
+      "page": "prepare",
+      "expand": "fill"
+    },
+    "Preview.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "title": "Preview",
+      "page": "preview",
+      "expand": "fill"
+    },
+    "Device.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "title": "Device",
+      "page": "device",
+      "expand": "fill"
+    },
+    "DeviceSwitcher.dc.html": {
+      "x": 1920,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "title": "Quick printer switcher",
+      "page": "device",
+      "expand": "fill",
+      "is_interactive": true
+    },
+    "Dialogs.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "title": "Send print, Melody creator, command palette",
+      "page": "dialogs",
+      "expand": "fill"
     }
   },
   "createdOnFiles": {
@@ -71,56 +89,167 @@
   },
   "designSystems": [],
   "launch": {
-    "view": "canvas"
+    "view": "canvas",
+    "page": "prepare"
   },
   "notes": {
-    "title": {
-      "kind": "title1",
-      "maxW": 2960,
-      "text": "Bambu Studio MD3: Graphite shell",
-      "w": 240,
-      "x": 0,
-      "y": -300
+    "sticky-titlebar": {
+      "x": 1520,
+      "y": 0,
+      "w": 320,
+      "fill": "teal",
+      "page": "shell",
+      "text": "Title bar shared by every screen: menus, search (opens the command palette), project tabs, and the printer chip.\nTry: accent and motion tweaks on the screens that import it.\nNot built natively yet: menus drawn as text buttons."
     },
-    "sticky-main": {
-      "x": -400, "y": 0, "w": 320, "fill": "teal",
-      "text": "Prepare. Shows the floating 3D canvas, sidebar cards, gizmo rail and Slice/Print split buttons.\nTry: Tweaks > Look > accent swatches and the motion switch.\nNot built natively yet: rounded canvas corners, Ink list, Process tiles, Express print card, scene toolbar."
-    },
-    "sticky-home": {
-      "x": 3040, "y": 0, "w": 320, "fill": "teal",
-      "text": "Home. Recent files, Online Models, Print History, LAN model drop, printers, Melody creator entry.\nTry: accent and motion tweaks; hover the cards.\nNot built natively yet: the Home navigation column with Online Models and Print History."
-    },
-    "sticky-preview": {
-      "x": -400, "y": 1020, "w": 320, "fill": "teal",
-      "text": "Preview. View types, display options, legend dock, layer slider, move timeline.\nTry: turn motion off to see the static end state.\nNot built natively yet: view chips, display options row, layer slider and bottom bar layout."
-    },
-    "sticky-device": {
-      "x": 3040, "y": 1020, "w": 320, "fill": "orange",
-      "text": "Device. Camera, progress, speed, temperatures, AMS, fans, light.\nOpen decision: rail label says Device, native tab says Monitor. Pick one before implementation.\nNot built natively yet: the restyled Device screen."
-    },
-    "sticky-dialogs": {
-      "x": -400, "y": 2040, "w": 320, "fill": "teal",
-      "text": "Dialogs. Send print job, Melody creator, command palette with regex search.\nTry: accent swatches recolour the primary actions.\nNot built natively yet: Send print and Melody creator layouts."
+    "sticky-navrail": {
+      "x": 168,
+      "y": 420,
+      "w": 320,
+      "fill": "teal",
+      "page": "shell",
+      "text": "Navigation rail shared by every screen.\nTry: Tweaks > active destination.\nNot built natively yet: the extra rail destinations."
     },
     "sticky-tokens": {
-      "x": 3040, "y": 2040, "w": 320, "fill": "teal",
-      "text": "Graphite tokens. Colour roles (dark and light), type, shape, elevation, motion.\nTry: the accent tweak shows how the primary role reads on every surface.\nBuilt natively: the colour roles (b92da01)."
+      "x": 1520,
+      "y": 1400,
+      "w": 320,
+      "fill": "teal",
+      "page": "shell",
+      "text": "Graphite colour roles (dark and light), type, shape, elevation, motion.\nTry: the accent tweak.\nBuilt natively: colour roles; section labels are now sentence case at 13 px."
     },
-    "sticky-components": {
-      "x": -400, "y": 3640, "w": 320, "fill": "teal",
-      "text": "Shared title bar and navigation rail, imported by every screen.\nTry: NavRail Tweaks > active destination.\nNot built natively yet: title bar menus as text buttons and the extra rail destinations."
+    "sticky-home": {
+      "x": 1520,
+      "y": 0,
+      "w": 320,
+      "fill": "teal",
+      "page": "home",
+      "text": "Home: recent files, Online Models, Print History, LAN model drop, printers, Melody creator.\nTry: accent and motion tweaks.\nNot built natively yet: the Home navigation column."
+    },
+    "sticky-main": {
+      "x": 1520,
+      "y": 0,
+      "w": 320,
+      "fill": "teal",
+      "page": "prepare",
+      "text": "Prepare: floating 3D canvas, sidebar cards, gizmo rail, Slice and Print split buttons.\nTry: Tweaks > Look.\nNot built natively yet: rounded canvas corners, Ink list, Process tiles, Express print card."
+    },
+    "sticky-preview": {
+      "x": 1520,
+      "y": 0,
+      "w": 320,
+      "fill": "teal",
+      "page": "preview",
+      "text": "Preview: view types, display options, legend, layer slider, move timeline.\nTry: motion off for the static end state.\nNot built natively yet: the Preview control layout."
+    },
+    "sticky-device": {
+      "x": 1520,
+      "y": 0,
+      "w": 320,
+      "fill": "teal",
+      "page": "device",
+      "text": "Device: camera, progress, speed, temperatures, AMS, control, fans, extras.\nNative now: the cards use the 28 px corner from this board.\nOpen decision: rail label Device or Monitor."
+    },
+    "sticky-deviceswitcher": {
+      "x": 3440,
+      "y": 0,
+      "w": 320,
+      "fill": "teal",
+      "page": "device",
+      "text": "Quick printer switcher: a chip in the title bar on every page while a project is open; search by name, model or IP, with a regular expression toggle.\nTry: click the chip, type in search, toggle .*, pick a printer.\nNot built natively yet."
+    },
+    "sticky-dialogs": {
+      "x": 1520,
+      "y": 0,
+      "w": 320,
+      "fill": "teal",
+      "page": "dialogs",
+      "text": "Send print job, Melody creator, command palette with regex search.\nTry: accent swatches.\nNot built natively yet: Send print and Melody creator layouts."
+    },
+    "title-shell": {
+      "x": 0,
+      "y": -300,
+      "kind": "title1",
+      "text": "Graphite shell: Shell and tokens",
+      "maxW": 1840,
+      "page": "shell"
+    },
+    "title-home": {
+      "x": 0,
+      "y": -300,
+      "kind": "title1",
+      "text": "Graphite shell: Home",
+      "maxW": 1840,
+      "page": "home"
+    },
+    "title-prepare": {
+      "x": 0,
+      "y": -300,
+      "kind": "title1",
+      "text": "Graphite shell: Prepare",
+      "maxW": 1840,
+      "page": "prepare"
+    },
+    "title-preview": {
+      "x": 0,
+      "y": -300,
+      "kind": "title1",
+      "text": "Graphite shell: Preview",
+      "maxW": 1840,
+      "page": "preview"
+    },
+    "title-device": {
+      "x": 0,
+      "y": -300,
+      "kind": "title1",
+      "text": "Graphite shell: Device and printer switching",
+      "maxW": 3360,
+      "page": "device"
+    },
+    "title-dialogs": {
+      "x": 0,
+      "y": -300,
+      "kind": "title1",
+      "text": "Graphite shell: Dialogs",
+      "maxW": 1840,
+      "page": "dialogs"
     }
   },
   "order": [
-    "Main.dc.html",
+    "TitleBar.dc.html",
+    "NavRail.dc.html",
+    "Tokens.dc.html",
     "Home.dc.html",
+    "Main.dc.html",
     "Preview.dc.html",
     "Device.dc.html",
-    "Dialogs.dc.html",
-    "Tokens.dc.html",
-    "TitleBar.dc.html",
-    "NavRail.dc.html"
+    "DeviceSwitcher.dc.html",
+    "Dialogs.dc.html"
   ],
-  "pages": [],
+  "pages": [
+    {
+      "id": "shell",
+      "name": "Shell and tokens"
+    },
+    {
+      "id": "home",
+      "name": "Home"
+    },
+    {
+      "id": "prepare",
+      "name": "Prepare"
+    },
+    {
+      "id": "preview",
+      "name": "Preview"
+    },
+    {
+      "id": "device",
+      "name": "Device"
+    },
+    {
+      "id": "dialogs",
+      "name": "Dialogs"
+    }
+  ],
   "title": "Bambu Studio MD3 GUI Redesign"
 }

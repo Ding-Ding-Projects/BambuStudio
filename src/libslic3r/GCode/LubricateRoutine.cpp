@@ -13,12 +13,13 @@ namespace {
 // Distance kept from every edge of the bed and from the nozzle, in mm.
 constexpr double edge_margin   = 5.;
 constexpr double z_near_nozzle = 5.;
-// Bed segment between two beeps, in mm, and the bed speed (mm/min): 25 mm at
-// 25 mm/s gives roughly one beep a second, the cadence of a reversing truck.
-constexpr double z_segment = 25.;
-constexpr int    z_feed    = 1500;
-constexpr int    xy_feed   = 12000;
-constexpr int    cycles    = 2;
+// Bed and toolhead speeds (mm/min). Every stroke runs as one smooth move.
+constexpr int z_feed  = 1200;
+constexpr int xy_feed = 12000;
+constexpr int cycles  = 2;
+// Note and rest lengths in M1006 duration units, as in the Bambu Lab start tunes.
+constexpr int note_len = 10;
+constexpr int rest_len = 15;
 
 std::string fmt(double v)
 {
@@ -29,29 +30,32 @@ std::string fmt(double v)
     return out.str();
 }
 
-// One note on all three buzzer channels, the same channel layout as the start
-// tune of the Bambu Lab profiles. A rest plays nothing.
-std::string note(int midi)
+// One queued note on all three buzzer channels, the same line shape as the start
+// tune of the Bambu Lab profiles. A rest queues silence of the same shape, so the
+// rhythm of the tune survives.
+std::string note(int pitch)
 {
-    if (midi <= 0)
-        return std::string();
-    const std::string n = std::to_string(midi);
-    return "M1006 S1\n"
-           "M1006 A" + n + " B20 L99 C" + n + " D20 M99 E" + n + " F20 N99\n"
-           "M1006 W\n";
+    if (pitch <= 0) {
+        const std::string d = std::to_string(rest_len);
+        return "M1006 A0 B" + d + " L0 C0 D" + d + " M0 E0 F" + d + " N0\n";
+    }
+    const std::string n = std::to_string(pitch), d = std::to_string(note_len);
+    return "M1006 A" + n + " B" + d + " L99 C" + n + " D" + d + " M99 E" + n + " F" + d + " N99\n";
 }
 
-// Move the bed from `from` to `to` in segments, playing the next note of the
-// tune before each one. `next_note` carries the position across calls.
-void bed_travel(std::ostringstream &out, double from, double to, const std::vector<int> *tune, size_t &next_note)
+// The whole tune as one block: start the buffer once, queue every note, then play
+// it and wait, exactly like the start tune in the Bambu Lab profiles. Queuing one
+// note with a wait before every bed segment broke the tune into separate beeps and
+// made the bed stop and start between segments.
+std::string tune_block(const std::vector<int> &notes)
 {
-    const double length = std::abs(to - from);
-    const int    steps  = std::max(1, int(std::ceil(length / z_segment)));
-    for (int i = 1; i <= steps; ++i) {
-        if (tune != nullptr && !tune->empty())
-            out << note((*tune)[next_note++ % tune->size()]);
-        out << "G1 Z" << fmt(from + (to - from) * i / steps) << " F" << z_feed << "\n";
-    }
+    if (notes.empty())
+        return std::string();
+    std::string out = "M1006 S1\n";
+    for (int pitch : notes)
+        out += note(pitch);
+    out += "M1006 W\n";
+    return out;
 }
 
 bool is_full_homing_line(const std::string &line)
@@ -69,20 +73,22 @@ bool is_full_homing_line(const std::string &line)
 
 const std::vector<LubricateMelody> &lubricate_melodies()
 {
-    // MIDI notes: C5 = 72, D5 = 74, E5 = 76, F5 = 77, G5 = 79, A5 = 81, B5 = 83.
+    // Buzzer note numbers in the range the Bambu Lab start tunes use (about 48 to
+    // 61): 48 is C, 50 D, 52 E, 53 F, 55 G, 57 A, 59 B, 60 high C. 0 is a rest.
+    // Higher numbers than the profiles use came out as unrelated tones.
     static const std::vector<LubricateMelody> melodies{
-        // About 1 kHz, the beeper of a reversing truck.
-        {"truck_backup", "Truck backing up", {83}},
-        {"two_tone_siren", "Two-tone siren", {81, 76}},
-        {"rising_chirp", "Rising chirp", {72, 76, 79, 84}},
+        // The beeper of a reversing truck: beep, pause, beep.
+        {"truck_backup", "Truck backing up", {59, 0, 59, 0, 59, 0, 59, 0}},
+        {"two_tone_siren", "Two-tone siren", {57, 52, 57, 52, 57, 52}},
+        {"rising_chirp", "Rising chirp", {48, 52, 55, 60, 0, 48, 52, 55, 60}},
         // Beethoven, Symphony No. 9 (public domain).
-        {"ode_to_joy", "Ode to Joy", {76, 76, 77, 79, 79, 77, 76, 74, 72, 72, 74, 76, 76, 74, 74, 0}},
+        {"ode_to_joy", "Ode to Joy", {52, 52, 53, 55, 55, 53, 52, 50, 48, 48, 50, 52, 52, 50, 50, 0}},
         // Traditional (public domain).
-        {"twinkle", "Twinkle, Twinkle, Little Star", {72, 72, 79, 79, 81, 81, 79, 0, 77, 77, 76, 76, 74, 74, 72, 0}},
+        {"twinkle", "Twinkle, Twinkle, Little Star", {48, 48, 55, 55, 57, 57, 55, 0, 53, 53, 52, 52, 50, 50, 48, 0}},
         // Beethoven, Bagatelle No. 25 (public domain).
-        {"fur_elise", "Fur Elise", {76, 75, 76, 75, 76, 71, 74, 72, 69, 0}},
+        {"fur_elise", "Fur Elise", {52, 51, 52, 51, 52, 47, 50, 48, 45, 0}},
         // The Westminster Quarters (public domain).
-        {"westminster", "Westminster chimes", {76, 72, 74, 67, 0, 67, 74, 76, 72, 0}},
+        {"westminster", "Westminster chimes", {52, 48, 50, 43, 0, 43, 50, 52, 48, 0}},
         {"silent", "Silent", {}},
     };
     return melodies;
@@ -101,10 +107,7 @@ std::string start_melody_gcode(const std::string &melody_id)
     const LubricateMelody &melody = lubricate_melody(melody_id);
     if (melody.notes.empty())
         return std::string();
-    std::string out = "; start melody: " + std::string(melody.id) + "\n";
-    for (int midi : melody.notes)
-        out += note(midi);
-    return out;
+    return "; start melody: " + std::string(melody.id) + "\n" + tune_block(melody.notes);
 }
 
 std::string lubricate_routine_gcode(const LubricateArea &area, const std::string &rehome)
@@ -120,15 +123,16 @@ std::string lubricate_routine_gcode(const LubricateArea &area, const std::string
         return out.str();
     }
     const LubricateMelody &melody = lubricate_melody(area.melody);
-    const std::vector<int> *tune  = area.buzzer ? &melody.notes : nullptr;
-    size_t                  next_note = 0;
+    const std::string      tune   = area.buzzer ? tune_block(melody.notes) : std::string();
     out << "; lubricate melody: " << melody.id << "\n";
     out << "G90\n";
     out << "G1 Z" << fmt(z0) << " F" << z_feed << "\n";
     for (int c = 0; c < cycles; ++c) {
-        // Bed: all the way down and back up, with the melody playing as it moves.
-        bed_travel(out, z0, z1, tune, next_note);
-        bed_travel(out, z1, z0, tune, next_note);
+        // The tune plays while the machine stands still, then every stroke runs in one move.
+        out << tune;
+        // Bed: all the way down and back up.
+        out << "G1 Z" << fmt(z1) << " F" << z_feed << "\n";
+        out << "G1 Z" << fmt(z0) << " F" << z_feed << "\n";
         // Toolhead: the whole length of X and of Y, then both diagonals.
         out << "G1 X" << fmt(x0) << " Y" << fmt(y0) << " F" << xy_feed << "\n";
         out << "G1 X" << fmt(x1) << "\n";
@@ -139,8 +143,8 @@ std::string lubricate_routine_gcode(const LubricateArea &area, const std::string
         out << "G1 X" << fmt(x0) << " Y" << fmt(y0) << "\n";
         out << "G1 X" << fmt(x1) << " Y" << fmt(y0) << "\n";
         out << "G1 X" << fmt(x0) << " Y" << fmt(y1) << "\n";
+        out << "M400\n";
     }
-    out << "M400\n";
     if (rehome.empty())
         out << "G28 ; home again after lubricate mode\n";
     else if (rehome.find('\n') != std::string::npos)
@@ -192,8 +196,7 @@ std::string insert_lubricate_routine(const std::string &start_gcode, const Lubri
 
     // The H2C homes Z inside `M1009 Q1 L1` ... `M1009 Q1 L0`. The command is not
     // documented, so the routine does not run inside that window: it goes after
-    // the closing line, and homing again reopens the same window around the same
-    // homing line, as the start G-code does.
+    // the closing line, and homing again repeats the same window.
     auto nearby_code = [&](int from, int step) {
         for (int i = from + step; i >= 0 && i < int(lines.size()) && std::abs(i - from) <= 8; i += step)
             if (!code_of(lines[i]).empty())
@@ -209,7 +212,17 @@ std::string insert_lubricate_routine(const std::string &start_gcode, const Lubri
                 break;
             }
         if (open >= 0) {
-            rehome = code_of(lines[open]) + "\n" + rehome + " ; home again after lubricate mode\n" + code_of(lines[close]) + "\n";
+            // Repeat the whole window, not only its homing line: inside it the start
+            // G-code lowers the bed and parks the toolhead over the bed before homing Z,
+            // and homing Z from the corner where the routine ends misses the bed.
+            rehome.clear();
+            for (int i = open; i <= close; ++i) {
+                const std::string code = code_of(lines[i]);
+                if (code.empty())
+                    continue;
+                rehome += code;
+                rehome += i == last_home ? " ; home again after lubricate mode\n" : "\n";
+            }
             insert_after = close;
         }
     }

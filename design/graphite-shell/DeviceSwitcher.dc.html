@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Quick device switcher</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..500,0..1,0&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.gs{--bg:#0e1311;--s1:#141a17;--s2:#18201c;--s3:#1f2823;--s4:#28322c;--tx:#e3ebe5;--tx2:#a9b6ad;--tx3:#7c8a81;--onpri:#00391c;--amb:#ffb870;--err:#ffb4ab;font-family:Roboto,system-ui,sans-serif;color:var(--tx);background:var(--bg)}
+.gs,.gs *{box-sizing:border-box}
+.gs button,.gs input{font:inherit;color:inherit}
+.gs .ms{font-family:"Material Symbols Outlined";font-size:20px;line-height:1;font-feature-settings:"liga";flex-shrink:0}
+.gs .mono{font-family:"Roboto Mono",monospace}
+.gs .row{display:flex;align-items:center;gap:10px}
+.gs .grow{flex:1;min-width:0}
+.gs .sub{font-size:12px;color:var(--tx2)}
+.gs .chip{height:36px;padding:0 12px 0 10px;border-radius:18px;border:0;background:var(--s3);display:inline-flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);transition:background-color .2s cubic-bezier(.2,0,0,1)}
+.gs .chip:hover{background:var(--s4)}
+.gs .chip[aria-expanded="true"]{box-shadow:inset 0 0 0 2px var(--pri)}
+.gs .dot{width:8px;height:8px;border-radius:4px;display:inline-block}
+.gs .pop{width:440px;border-radius:28px;background:rgba(31,40,35,.96);box-shadow:inset 0 0 0 1px rgba(255,255,255,.06),0 18px 48px rgba(0,0,0,.5);padding:12px;display:flex;flex-direction:column;gap:8px;animation:pop .3s cubic-bezier(.05,.7,.1,1)}
+@keyframes pop{from{opacity:0;transform:translateY(-8px) scale(.98)}to{opacity:1;transform:none}}
+.gs .search{height:48px;border-radius:24px;background:var(--s1);display:flex;align-items:center;gap:8px;padding:0 6px 0 16px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}
+.gs .search input{flex:1;min-width:0;border:0;background:transparent;outline:none;font-size:14px}
+.gs .rx{height:36px;min-width:44px;border-radius:18px;border:0;background:transparent;font-family:"Roboto Mono",monospace;font-size:13px;cursor:pointer}
+.gs .rx.on{background:var(--pri);color:var(--onpri)}
+.gs .grp{font-size:13px;font-weight:500;color:var(--tx2);padding:8px 8px 2px}
+.gs .dev{width:100%;border:0;background:transparent;text-align:left;border-radius:20px;padding:10px 12px;display:flex;align-items:center;gap:12px;cursor:pointer;min-height:56px}
+.gs .dev:hover{background:var(--s3)}
+.gs .dev.sel{background:var(--s4);box-shadow:inset 0 0 0 1px var(--pri)}
+.gs .dev:focus-visible,.gs .chip:focus-visible,.gs .rx:focus-visible,.gs .foot:focus-visible{outline:2px solid var(--pri);outline-offset:2px}
+.gs .tile{width:40px;height:40px;border-radius:14px;background:var(--s2);display:grid;place-items:center}
+.gs .foot{height:44px;border:0;border-radius:22px;background:transparent;display:flex;align-items:center;gap:8px;padding:0 14px;font-size:13px;color:var(--pri);cursor:pointer}
+.gs .foot:hover{background:var(--s3)}
+.gs.still *{animation:none!important;transition:none!important}
+@media (prefers-reduced-motion:reduce){.gs *{animation:none!important;transition:none!important}}
+</style>
+</helmet>
+<div class="gs {{motionCls}}" style="--pri: {{accent}}; width: 100%; min-height: 900px; display: flex; flex-direction: column">
+  <header class="row" aria-label="Title bar" style="height: 48px; padding: 0 12px; gap: 8px; background: #0a0e0c">
+    <span class="ms" aria-hidden="true" style="color: var(--pri)">deployed_code</span>
+    <span style="font-size: 13px; font-weight: 500">bracket_v3.3mf</span>
+    <nav class="row" aria-label="Pages" style="gap: 4px; margin-left: 16px">
+      <span class="sub" style="padding: 0 10px">Prepare</span><span class="sub" style="padding: 0 10px">Preview</span><span class="sub" style="padding: 0 10px">Device</span>
+    </nav>
+    <span class="grow"></span>
+    <button class="chip" type="button" aria-haspopup="listbox" aria-expanded="{{openStr}}" aria-label="Printer: {{current.name}}, {{current.state}}. Switch printer" onClick="{{toggle}}">
+      <span class="ms" aria-hidden="true" style="font-size: 18px">print_connect</span>
+      <span>{{current.name}}</span>
+      <span class="dot" style="background: {{current.color}}"></span>
+      <span class="sub">{{current.state}}</span>
+      <span class="ms" aria-hidden="true" style="font-size: 18px">expand_more</span>
+    </button>
+  </header>
+
+  <div style="flex: 1; position: relative; display: flex; gap: 12px; padding: 12px; background: radial-gradient(80% 60% at 55% 40%, #17211c 0%, #0e1311 70%)">
+    <aside aria-hidden="true" style="width: 360px; display: flex; flex-direction: column; gap: 12px; opacity: .55">
+      <div style="height: 168px; border-radius: 28px; background: var(--s2); padding: 18px; display: flex; flex-direction: column; gap: 12px"><span style="width: 96px; height: 10px; border-radius: 5px; background: var(--s4)"></span><span style="height: 40px; border-radius: 14px; background: var(--s1)"></span><span style="height: 40px; border-radius: 14px; background: var(--s1)"></span></div>
+      <div style="height: 236px; border-radius: 28px; background: var(--s2); padding: 18px; display: flex; flex-direction: column; gap: 10px"><span style="width: 72px; height: 10px; border-radius: 5px; background: var(--s4)"></span><span style="height: 32px; border-radius: 12px; background: var(--s1)"></span><span style="height: 32px; border-radius: 12px; background: var(--s1)"></span><span style="height: 32px; border-radius: 12px; background: var(--s1)"></span><span style="height: 32px; border-radius: 12px; background: var(--s1)"></span></div>
+      <div style="flex: 1; border-radius: 28px; background: var(--s2)"></div>
+    </aside>
+    <div aria-hidden="true" style="flex: 1; border-radius: 24px; background: #121815; position: relative; overflow: hidden; opacity: .7">
+      <div style="position: absolute; left: 50%; top: 56%; width: 520px; height: 300px; transform: translate(-50%, -50%) perspective(900px) rotateX(55deg); border-radius: 18px; background: linear-gradient(#26302a, #1c2420); box-shadow: 0 30px 60px rgba(0,0,0,.45)"></div>
+      <div style="position: absolute; left: 50%; top: 50%; width: 120px; height: 90px; transform: translate(-50%, -30%); border-radius: 14px; background: var(--pri); opacity: .55"></div>
+    </div>
+
+    <sc-if value="{{open}}" hint-placeholder-val="{{ true }}">
+      <div class="pop" role="dialog" aria-label="Switch printer" style="position: absolute; right: 24px; top: 4px; z-index: 2">
+        <div class="search">
+          <span class="ms" aria-hidden="true" style="color: var(--tx2)">search</span>
+          <label for="dev-q" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Search printers</label>
+          <input id="dev-q" placeholder="Search by name, model or IP" value="{{query}}" onInput="{{onQuery}}">
+          <button class="rx {{rxCls}}" type="button" aria-pressed="{{regexStr}}" aria-label="Regular expression" title="Regular expression" onClick="{{toggleRegex}}">.*</button>
+        </div>
+        <div class="grp">My printers · {{count}} shown</div>
+        <div role="listbox" aria-label="Printers" style="display: flex; flex-direction: column; gap: 2px">
+          <sc-for list="{{shown}}" as="d" hint-placeholder-count="4">
+            <button class="dev {{d.cls}}" type="button" role="option" aria-selected="{{d.selStr}}" onClick="{{d.pick}}">
+              <span class="tile"><span class="ms" aria-hidden="true">{{d.icon}}</span></span>
+              <span class="grow" style="display: flex; flex-direction: column; gap: 2px">
+                <span style="font-size: 14px; font-weight: 500">{{d.name}}</span>
+                <span class="sub">{{d.model}} · <span class="mono">{{d.ip}}</span></span>
+              </span>
+              <span class="row" style="gap: 6px"><span class="dot" style="background: {{d.color}}"></span><span class="sub">{{d.state}}</span></span>
+            </button>
+          </sc-for>
+          <sc-if value="{{empty}}" hint-placeholder-val="{{ false }}">
+            <p class="sub" style="margin: 8px 12px">No printer matches. Check the spelling, or turn off regular expression.</p>
+          </sc-if>
+        </div>
+        <div class="row" style="border-top: 1px solid var(--s4); padding-top: 6px; gap: 4px">
+          <button class="foot" type="button"><span class="ms" aria-hidden="true" style="font-size: 18px">add</span>Add printer</button>
+          <span class="grow"></span>
+          <button class="foot" type="button"><span class="ms" aria-hidden="true" style="font-size: 18px">open_in_new</span>Open Device page</button>
+        </div>
+      </div>
+    </sc-if>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#6fdc98","options":["#6fdc98","#8ab4ff","#ffb870","#e3ebe5"],"section":"Look"},"motion":{"editor":"boolean","default":true,"section":"Look"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { open: true, query: '', regex: false, picked: 'h2c' }; }
+  renderVals() {
+    const all = [
+      { id: 'h2c', name: 'H2C Studio', model: 'Bambu Lab H2C', ip: '192.0.2.40', state: 'Idle', color: '#6fdc98', icon: 'precision_manufacturing' },
+      { id: 'x1c', name: 'X1C Garage', model: 'Bambu Lab X1 Carbon', ip: '192.0.2.41', state: 'Printing 62%', color: '#8ab4ff', icon: 'print' },
+      { id: 'p1s', name: 'P1S Desk', model: 'Bambu Lab P1S', ip: '192.0.2.42', state: 'Offline', color: '#7c8a81', icon: 'print_disabled' },
+      { id: 'a1', name: 'A1 mini Kids', model: 'Bambu Lab A1 mini', ip: '192.0.2.43', state: 'Error', color: '#ffb4ab', icon: 'error' }
+    ];
+    const q = this.state.query.trim();
+    let test = (s) => s.toLowerCase().includes(q.toLowerCase());
+    if (this.state.regex && q) { try { const re = new RegExp(q, 'i'); test = (s) => re.test(s); } catch (e) { test = () => false; } }
+    const shown = all.filter((d) => !q || test(d.name + ' ' + d.model + ' ' + d.ip)).map((d) => ({
+      ...d, cls: d.id === this.state.picked ? 'sel' : '', selStr: d.id === this.state.picked ? 'true' : 'false',
+      pick: () => this.setState({ picked: d.id, open: false })
+    }));
+    const current = all.find((d) => d.id === this.state.picked);
+    return {
+      accent: this.props.accent ?? '#6fdc98',
+      motionCls: (this.props.motion ?? true) ? '' : 'still',
+      open: this.state.open, openStr: this.state.open ? 'true' : 'false',
+      toggle: () => this.setState({ open: !this.state.open }),
+      query: this.state.query, onQuery: (e) => this.setState({ query: e.target.value }),
+      regexStr: this.state.regex ? 'true' : 'false', rxCls: this.state.regex ? 'on' : '',
+      toggleRegex: () => this.setState({ regex: !this.state.regex }),
+      shown, count: shown.length, empty: shown.length === 0, current
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -65,3 +65,11 @@ Still open:
 - The Home navigation column ends well above its bottom when there are few entries.
 - The motion is specified and drawn in the artboards only. No native animation was implemented and no running application was captured.
 - Several source strings were read at file level only: the Prepare sidebar process groups, the Device print options and the Print workflow panel contents were not opened in detail.
+
+## Pass of 2026-11-23
+
+- New board `DeviceSwitcher.dc.html`: a printer chip in the title bar on every page while a project is open, opening a searchable list (plain text or regular expression) of the user's printers. Choosing one switches the device everywhere. Frame: `frames/DeviceSwitcher.png`, rendered at 1440 px in Edge with a local stand-in runtime. Not built in the application yet.
+- The canvas now has one page per feature category: Shell and tokens, Home, Prepare, Preview, Device (with the switcher), Dialogs. Every board has a sticky note beside it on its page.
+- Every screen board has two Tweaks under Look: `accent` (default `#6fdc98`) and `motion` (default on; off stops every animation and transition).
+- Built in the application in this pass: the Device page cards use the 28 px corner radius from the Device board, and section labels are sentence case at 13 px instead of 11 px uppercase.
+- Review (Stageshow, commit matching the cached copy): the first switcher frame left the lower two thirds of the board empty and carried explanation text that belongs in the note, plus an invented keyboard hint; all three were fixed and the board re-rendered. Sample addresses use the documentation range 192.0.2.0/24. Not reviewed again in this pass: the six older boards, whose frames date from 2026-11-04.

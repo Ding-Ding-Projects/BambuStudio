@@ -3186,7 +3186,18 @@ void GCode::_do_export(Print& print, GCodeOutputStream &file, ThumbnailsGenerato
     if (print.config().lubricate_mode.value) {
         // Lubricate mode: run every axis through its whole travel right after the printer homes.
         LubricateArea area;
-        const BoundingBoxf bed(print.config().printable_area.values);
+        BoundingBoxf bed(print.config().printable_area.values);
+        // On printers with two toolheads (H2D, H2C) each one reaches only part of the
+        // bed; keep the strokes where every toolhead can go so none hits its limit.
+        for (const auto &reach : print.config().extruder_printable_area.values) {
+            if (reach.empty())
+                continue;
+            const BoundingBoxf r(reach);
+            bed.min.x() = std::max(bed.min.x(), r.min.x());
+            bed.min.y() = std::max(bed.min.y(), r.min.y());
+            bed.max.x() = std::min(bed.max.x(), r.max.x());
+            bed.max.y() = std::min(bed.max.y(), r.max.y());
+        }
         area.min_x  = bed.min.x();
         area.min_y  = bed.min.y();
         area.max_x  = bed.max.x();

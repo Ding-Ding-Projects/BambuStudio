@@ -15,11 +15,18 @@ G-code.
 printer's printable area and printable height, with a 5 mm margin on every side:
 
 1. `G90`, then the bed to Z 5 mm.
-2. Two cycles of the bed all the way down and back up at F1500, split into segments of at most
-   25 mm. Before each segment it plays the next note of the melody on the buzzer (`M1006`).
-3. The toolhead along the full length of X, the full length of Y and both diagonals at F12000.
-4. `M400`, then the printer's own homing line again, because the bed and the toolhead ended
-   somewhere else.
+2. Two cycles. Each cycle plays the whole melody once while the machine stands still (one
+   `M1006 S1`, every note, one `M1006 W`, the same shape as the start tune in the Bambu Lab
+   profiles), then moves the bed all the way down and back up at F1200 in two single moves.
+3. The toolhead along the full length of X, the full length of Y and both diagonals at F12000,
+   then `M400`.
+4. The printer's own homing again. On the H2C that is the whole `M1009 Q1 L1` ... `M1009 Q1 L0`
+   window from the start G-code, so the bed is lowered and the toolhead parked over the bed
+   before Z homes, exactly as at the start.
+
+On printers with two toolheads (H2D, H2C) the X and Y range is limited to the area every toolhead
+can reach (`extruder_printable_area`), so neither toolhead runs into its travel limit. On the H2C
+that keeps X between 30 and 320 mm.
 
 ## At the start of every print
 
@@ -50,7 +57,7 @@ list shows whether or not a printer is connected.
 
 | Melody | Notes |
 | --- | --- |
-| Truck backing up (default) | one high B, repeated |
+| Truck backing up (default) | B with a rest after it, four times |
 | Two-tone siren | A and E |
 | Rising chirp | C, E, G, high C |
 | Ode to Joy | the first phrase |
@@ -59,9 +66,14 @@ list shows whether or not a printer is connected.
 | Westminster chimes | the first quarter |
 | Silent | no sound |
 
-With lubricate mode on, the tune plays one note per bed segment, in a loop, so the truck tune
-beeps about once a second while the bed moves. With it off, the whole tune plays once before the
-start G-code on Bambu Lab printers. Silent turns both off.
+The notes use the buzzer note numbers the Bambu Lab start tunes use (about 48 to 61); rests are
+queued as silence so the rhythm holds. With lubricate mode on, the tune plays in full before each
+of the two cycles. With it off, the whole tune plays once before the start G-code on Bambu Lab
+printers. Silent turns both off.
+
+Earlier builds queued one note, with its own `M1006 S1` and `M1006 W`, before every 25 mm bed
+segment and used note numbers about two octaves higher. On a real H2C that sounded like random
+beeps and made the bed stop and start every segment; the routine above replaces it.
 
 ## From the Device page
 
@@ -76,9 +88,9 @@ Checked: a standalone test of the routine and the insertion rules, a survey of e
 start G-code template, the slice of a cube for the H2C in the built application (the routine lands
 after `G28 Z P0 T250` with one note before each bed segment), and captures of the option, the
 Device page button and the print dialog list in
-[design/lubricate-2026-11/captures](../../../design/lubricate-2026-11/captures/README.md). Not
-checked: a run on a physical printer. The timing of `M1006` against motion (whether `M1006 W`
-holds the next move until the note ends) is the open question that only the printer can answer.
+[design/lubricate-2026-11/captures](../../../design/lubricate-2026-11/captures/README.md). The
+2026-11-23 rewrite was checked by compiling the routine on its own and reading its output for the
+H2C start G-code. Not checked: a run of the rewrite on a physical printer.
 
 ## Related
 

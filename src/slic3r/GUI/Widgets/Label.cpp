@@ -886,7 +886,8 @@ double trackedTextWidth(wxDC &dc, const wxString &text, double tracking)
     return width + tracking * (text.length() - 1);
 }
 
-// The font a header paints with: Head_11 when its face is installed, the GUI
+// The font a header paints with: Head_13 (Graphite sentence-case section label)
+// when its face is installed, the GUI
 // font otherwise. Guard: GDI+ heap-corrupts when handed a font whose face is
 // missing from the session font table (see the MaterialIcon.cpp plain-GDI
 // rewrite), so the face is checked with a strict enumerator, not
@@ -898,14 +899,14 @@ wxFont sectionHeaderFont()
 #ifdef __WXMSW__
     static wxString s_face;
     static bool     s_ok = false;
-    const wxString  face = Label::Head_11.GetFaceName();
+    const wxString  face = Label::Head_13.GetFaceName();
     if (face != s_face) {
         s_face = face;
         s_ok   = !face.empty() && wxFontEnumerator::IsValidFacename(face);
     }
-    return s_ok ? Label::Head_11 : wxSystemSettings::GetFont(wxSYS_DEFAULT_GUI_FONT);
+    return s_ok ? Label::Head_13 : wxSystemSettings::GetFont(wxSYS_DEFAULT_GUI_FONT);
 #else
-    return Label::Head_11;
+    return Label::Head_13;
 #endif
 }
 
@@ -966,11 +967,11 @@ wxSize SectionHeader::DoGetBestClientSize() const
     dc.SetFont(sectionHeaderFont());
 
     const double scale    = static_cast<double>(FromDIP(1000)) / 1000.0; // fractional DPI factor
-    const double tracking = MD3::Type::label_tracking * scale;
+    const double tracking = 0.0 * scale; // Graphite: sentence case, no added tracking
     const int    gap      = FromDIP(6);
     const int    icon_px  = 16; // logical px; the icon font scales with the DC
 
-    const wxString up = m_text.Upper();
+    const wxString up = m_text; // Graphite: sentence case, as written
 
     wxCoord th = 0, tmp = 0;
     dc.GetTextExtent(up.empty() ? wxString("X") : up, &tmp, &th);
@@ -1005,11 +1006,11 @@ void SectionHeader::OnPaint(wxPaintEvent &)
     dc.SetTextForeground(fg);
 
     const double scale    = static_cast<double>(FromDIP(1000)) / 1000.0;
-    const double tracking = MD3::Type::label_tracking * scale;
+    const double tracking = 0.0 * scale; // Graphite: sentence case, no added tracking
     const int    gap      = FromDIP(6);
     const int    icon_px  = 16;
 
-    const wxString up = m_text.Upper();
+    const wxString up = m_text; // Graphite: sentence case, as written
 
     wxCoord th = 0, tmp = 0;
     dc.GetTextExtent(up.empty() ? wxString("X") : up, &tmp, &th);
