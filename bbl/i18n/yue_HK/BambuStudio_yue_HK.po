@@ -60471,3 +60471,171 @@ msgstr "放回噴嘴"
 #: src/slic3r/GUI/DeviceTab/RackColdPullDialog.cpp
 msgid "Confirm result"
 msgstr "確認結果"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+#: src/slic3r/GUI/FeatureFinder/FeatureCatalogue.cpp
+msgid "Local tools, Cold pull all rack hotends"
+msgstr "本機工具，逐個冷拉架上熱端"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+#: src/slic3r/GUI/FeatureFinder/FeatureCatalogue.cpp
+msgid "Title bar, Local tools"
+msgstr "標題列，本機工具"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+#: src/slic3r/GUI/MainFrame.cpp
+msgid "Files and models"
+msgstr "檔案同模型"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+#: src/slic3r/GUI/MainFrame.cpp
+msgid "Windows and games"
+msgstr "Windows 同遊戲"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+#: src/slic3r/GUI/MainFrame.cpp
+msgid "Safety and settings"
+msgstr "安全同設定"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+#: src/slic3r/GUI/MainFrame.cpp
+msgid "Cold pull all rack hotends"
+msgstr "逐個冷拉架上熱端"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+#: src/slic3r/GUI/MainFrame.cpp
+msgid "A guide started by hand, never part of a print: each H2C rack hotend in turn, through the touchscreen cold pull"
+msgstr "由你親手開始嘅嚮導，永遠唔會加入打印：用觸控屏嘅冷拉，逐個處理 H2C 架上熱端"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+#: src/slic3r/GUI/MainFrame.cpp
+msgid "Select a connected H2C with its hotend rack first. Nothing was sent to the printer."
+msgstr "請先揀一部已連接、有熱端架嘅 H2C。冇傳送任何嘢去打印機。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+#: src/slic3r/GUI/FeatureFinder/FeatureCatalogue.cpp
+msgid "Local tools, AI filament scanner"
+msgstr "本機工具，AI 墨水掃描器"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+#: src/slic3r/GUI/FeatureFinder/FeatureCatalogue.cpp
+msgid "Local tools, Authenticator"
+msgstr "本機工具，驗證器"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+#: src/slic3r/GUI/FeatureFinder/FeatureCatalogue.cpp
+msgid "Local tools, Base64 toolkit"
+msgstr "本機工具，Base64 工具箱"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+#: src/slic3r/GUI/FeatureFinder/FeatureCatalogue.cpp
+msgid "Local tools, Config profiles & backup"
+msgstr "本機工具，設定檔同備份"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+#: src/slic3r/GUI/FeatureFinder/FeatureCatalogue.cpp
+msgid "Local tools, Drawing board"
+msgstr "本機工具，畫板"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+#: src/slic3r/GUI/FeatureFinder/FeatureCatalogue.cpp
+msgid "Local tools, Extensions"
+msgstr "本機工具，擴充功能"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+#: src/slic3r/GUI/FeatureFinder/FeatureCatalogue.cpp
+msgid "Local tools, Identity history"
+msgstr "本機工具，身份歷史紀錄"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+#: src/slic3r/GUI/FeatureFinder/FeatureCatalogue.cpp
+msgid "Local tools, LAN model drop"
+msgstr "本機工具，LAN 模型投遞"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+#: src/slic3r/GUI/FeatureFinder/FeatureCatalogue.cpp
+msgid "Local tools, Local file converter"
+msgstr "本機工具，本機檔案轉換器"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+#: src/slic3r/GUI/FeatureFinder/FeatureCatalogue.cpp
+msgid "Local tools, Local model suite"
+msgstr "本機工具，本機模型套件"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+#: src/slic3r/GUI/FeatureFinder/FeatureCatalogue.cpp
+msgid "Local tools, Local support tickets"
+msgstr "本機工具，本機支援個案"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+#: src/slic3r/GUI/FeatureFinder/FeatureCatalogue.cpp
+msgid "Local tools, Melody creator"
+msgstr "本機工具，旋律製作器"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+#: src/slic3r/GUI/FeatureFinder/FeatureCatalogue.cpp
+msgid "Local tools, Minecraft servers"
+msgstr "本機工具，Minecraft 伺服器"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+#: src/slic3r/GUI/FeatureFinder/FeatureCatalogue.cpp
+msgid "Local tools, Scheduled settings"
+msgstr "本機工具，排程設定"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+#: src/slic3r/GUI/FeatureFinder/FeatureCatalogue.cpp
+msgid "Local tools, Smart home"
+msgstr "本機工具，智能家居"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+#: src/slic3r/GUI/FeatureFinder/FeatureCatalogue.cpp
+msgid "Local tools, Virtual disks"
+msgstr "本機工具，虛擬磁碟"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+#: src/slic3r/GUI/MainFrame.cpp
+msgid "Learn"
+msgstr "學習"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+#: src/slic3r/GUI/MainFrame.cpp
+msgid "Set up"
+msgstr "設定"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+#: src/slic3r/GUI/MainFrame.cpp
+msgid "Get help"
+msgstr "求助"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+#: src/slic3r/GUI/MainFrame.cpp
+msgid "Updates and about"
+msgstr "更新同關於"

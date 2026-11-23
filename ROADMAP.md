@@ -47,10 +47,13 @@
 - [x] Use the 28 px card corner on the Device page and sentence-case 13 px section labels.
 - [ ] Build the title bar printer chip that opens the searchable printer list on every page without leaving it, then verify it in the built application with a printer connected.
 - [ ] Move the local tools out of the bottom of **File** into their own **Local tools** title bar menu, opened by **Every feature**, with menu labels that follow a loaded personal wording file; verify in the built application.
-- [ ] Review the rest of the title bar menus for findability on the design canvas (owner report: menu items are hard to locate).
+- [x] Review the rest of the title bar menus for findability: File, Edit, View, Objects and Calibration are short and stay as they are; Help is grouped under Learn, Set up, Get help, and Updates and about; items ending in an ellipsis show their Cantonese again.
+- [x] Stage the bundled fonts outside the working directory when the data folder is not chosen yet (they used to land as `fonts/` wherever the app started).
+- [x] Show a dialog, not a Prepare-only toast, when **Cold pull all rack hotends** is chosen without a connected H2C.
+- [ ] Show Cantonese for the three bilingual menu items whose English comes from the override catalog (AI ink scanner, Check for Updates, About Bambu Studio) and for labels with a mnemonic (Show &Overhang).
 - [x] Record that the native wxWidgets text boxes skip the TinyMCE rich text editor, with the reason, in `docs/features/design-system/graphite-shell.md`.
 - [x] Decided with the owner: the rack cold pull is only ever started by hand, as its own maintenance cycle, never part of a print; it keeps using the touchscreen cold pull routine, and the guide is also in **Local tools > Cold pull all rack hotends**.
-- [ ] Group the **Local tools** menu under Printer, Files and models, Windows and games, and Safety and settings (built; the menu popup could not be opened on the hidden desktop, so the grouping is not yet seen in the running application).
+- [x] Group the **Local tools** menu under Printer, Files and models, Windows and games, and Safety and settings, with Cantonese headings; seen in the running application through the layout probe's `menu-popup` command.
 - [x] Update the installed copy to md3-v327 (2.9.2040) through its own updater, keeping 2.9.2029 for rollback; the updated copy was not launched.
 
 ## Lubricate mode and print melodies, 10 November 2026

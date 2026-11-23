@@ -203,7 +203,29 @@ inside an `EnumChildWindows` callback** — they reach stderr, which nobody sees
 on an off-screen desktop, and the enumeration silently returns an empty list.
 Collect handles in the callback and read their properties outside it.
 
+## Open and capture a title bar menu: `menupopup.py`
+
+`press.py menus` no longer finds items on the current build (the owner-drawn
+popup ignores posted clicks), and a driver `ss` of an open popup comes back black.
+What works:
+
+```bash
+BAMBU_LAYOUT_PROBE=1 "$PY" "$DRV" launch --fresh   # arms the in-app probe
+"$CLI" launch_on_headless_desktop --name bsrun --command "<venv-python> <abs>/menupopup.py <frame> \"Local tools\" <abs-out-prefix>"
+```
+
+- The probe opens the menu by title (`menu-popup <Title>`); the script waits until
+  the popup stops growing, then PrintWindows it from inside the desktop.
+- The script must be per-monitor DPI aware. Without that, Windows hands it
+  scaled-down rectangles and the capture is cropped (looks like clipped labels).
+- The probe also takes `invoke <label>` (fires a menu item), sent with
+  `scripts/md3/send-layout-probe.py <frame> --command "invoke <label>"` on the desktop.
+- `driver.py launch` now also returns once the main window is up, since current
+  builds may not log the GL-ready line.
+
 ## Files
+
+- `menupopup.py` — open a title bar menu by name through the layout probe and capture it (above).
 
 - `press.py` — press buttons/menu items by name (above). Start here for UI work.
 - `driver.py` — the harness (this directory). Env overrides: `LLCU_VENV`, `BS_DESKTOP`.

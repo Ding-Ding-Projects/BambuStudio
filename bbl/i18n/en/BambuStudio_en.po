@@ -38894,3 +38894,115 @@ msgstr "Return nozzle"
 #: src/slic3r/GUI/DeviceTab/RackColdPullDialog.cpp
 msgid "Confirm result"
 msgstr "Confirm result"
+
+#: src/slic3r/GUI/FeatureFinder/FeatureCatalogue.cpp
+msgid "Local tools, Cold pull all rack hotends"
+msgstr "Local tools, Cold pull all rack hotends"
+
+#: src/slic3r/GUI/FeatureFinder/FeatureCatalogue.cpp
+msgid "Title bar, Local tools"
+msgstr "Title bar, Local tools"
+
+#: src/slic3r/GUI/MainFrame.cpp
+msgid "Files and models"
+msgstr "Files and models"
+
+#: src/slic3r/GUI/MainFrame.cpp
+msgid "Windows and games"
+msgstr "Windows and games"
+
+#: src/slic3r/GUI/MainFrame.cpp
+msgid "Safety and settings"
+msgstr "Safety and settings"
+
+#: src/slic3r/GUI/MainFrame.cpp
+msgid "Cold pull all rack hotends"
+msgstr "Cold pull all rack hotends"
+
+#: src/slic3r/GUI/MainFrame.cpp
+msgid "A guide started by hand, never part of a print: each H2C rack hotend in turn, through the touchscreen cold pull"
+msgstr "A guide started by hand, never part of a print: each H2C rack hotend in turn, through the touchscreen cold pull"
+
+#: src/slic3r/GUI/MainFrame.cpp
+msgid "Select a connected H2C with its hotend rack first. Nothing was sent to the printer."
+msgstr "Select a connected H2C with its hotend rack first. Nothing was sent to the printer."
+
+#: src/slic3r/GUI/FeatureFinder/FeatureCatalogue.cpp
+msgid "Local tools, AI filament scanner"
+msgstr "Local tools, AI filament scanner"
+
+#: src/slic3r/GUI/FeatureFinder/FeatureCatalogue.cpp
+msgid "Local tools, Authenticator"
+msgstr "Local tools, Authenticator"
+
+#: src/slic3r/GUI/FeatureFinder/FeatureCatalogue.cpp
+msgid "Local tools, Base64 toolkit"
+msgstr "Local tools, Base64 toolkit"
+
+#: src/slic3r/GUI/FeatureFinder/FeatureCatalogue.cpp
+msgid "Local tools, Config profiles & backup"
+msgstr "Local tools, Config profiles & backup"
+
+#: src/slic3r/GUI/FeatureFinder/FeatureCatalogue.cpp
+msgid "Local tools, Drawing board"
+msgstr "Local tools, Drawing board"
+
+#: src/slic3r/GUI/FeatureFinder/FeatureCatalogue.cpp
+msgid "Local tools, Extensions"
+msgstr "Local tools, Extensions"
+
+#: src/slic3r/GUI/FeatureFinder/FeatureCatalogue.cpp
+msgid "Local tools, Identity history"
+msgstr "Local tools, Identity history"
+
+#: src/slic3r/GUI/FeatureFinder/FeatureCatalogue.cpp
+msgid "Local tools, LAN model drop"
+msgstr "Local tools, LAN model drop"
+
+#: src/slic3r/GUI/FeatureFinder/FeatureCatalogue.cpp
+msgid "Local tools, Local file converter"
+msgstr "Local tools, Local file converter"
+
+#: src/slic3r/GUI/FeatureFinder/FeatureCatalogue.cpp
+msgid "Local tools, Local model suite"
+msgstr "Local tools, Local model suite"
+
+#: src/slic3r/GUI/FeatureFinder/FeatureCatalogue.cpp
+msgid "Local tools, Local support tickets"
+msgstr "Local tools, Local support tickets"
+
+#: src/slic3r/GUI/FeatureFinder/FeatureCatalogue.cpp
+msgid "Local tools, Melody creator"
+msgstr "Local tools, Melody creator"
+
+#: src/slic3r/GUI/FeatureFinder/FeatureCatalogue.cpp
+msgid "Local tools, Minecraft servers"
+msgstr "Local tools, Minecraft servers"
+
+#: src/slic3r/GUI/FeatureFinder/FeatureCatalogue.cpp
+msgid "Local tools, Scheduled settings"
+msgstr "Local tools, Scheduled settings"
+
+#: src/slic3r/GUI/FeatureFinder/FeatureCatalogue.cpp
+msgid "Local tools, Smart home"
+msgstr "Local tools, Smart home"
+
+#: src/slic3r/GUI/FeatureFinder/FeatureCatalogue.cpp
+msgid "Local tools, Virtual disks"
+msgstr "Local tools, Virtual disks"
+
+#: src/slic3r/GUI/MainFrame.cpp
+msgid "Learn"
+msgstr "Learn"
+
+#: src/slic3r/GUI/MainFrame.cpp
+msgid "Set up"
+msgstr "Set up"
+
+#: src/slic3r/GUI/MainFrame.cpp
+msgid "Get help"
+msgstr "Get help"
+
+#: src/slic3r/GUI/MainFrame.cpp
+msgid "Updates and about"
+msgstr "Updates and about"

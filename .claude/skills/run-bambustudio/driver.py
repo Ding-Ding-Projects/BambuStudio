@@ -107,6 +107,11 @@ def wait_gl_init(t0, timeout=240):
     """Wait until a studio log newer than t0 contains the GL-ready line."""
     deadline = time.time() + timeout
     while time.time() < deadline:
+        # The main frame being up is an equally good signal: a build whose log no
+        # longer prints the GL line still opens its window once GL works.
+        if any(w.get("class") == "wxWindowNR" and w.get("width", 0) > 800
+               for w in app_windows()):
+            return None
         for p in LOGDIR.glob("studio_*.log*"):
             if p.stat().st_mtime >= t0 - 1:
                 try:
@@ -140,6 +145,10 @@ def write_wrapper(model=None):
         "set GALLIUM_DRIVER=llvmpipe",
         "set MESA_GL_VERSION_OVERRIDE=3.3",
         "set LIBGL_ALWAYS_SOFTWARE=1",
+        # Arm the in-app layout probe and its driver commands (menu-popup <Title>,
+        # invoke <label>) when the caller asks for them; off by default.
+        *[f"set {k}={os.environ[k]}" for k in ("BAMBU_LAYOUT_PROBE", "BAMBU_LAYOUT_PROBE_TAG")
+          if os.environ.get(k)],
         f'"{EXE}"' + (f' "{model}"' if model else "") + f' 1>"{out}" 2>&1',
     ]
     w.write_bytes(("\r\n".join(lines) + "\r\n").encode("ascii"))

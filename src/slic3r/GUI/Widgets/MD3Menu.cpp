@@ -1300,6 +1300,20 @@ MD3MenuPopup::MD3MenuPopup(wxWindow *owner, wxMenu *menu, MD3MenuPopup *parent_p
             wxString found = I18N::BilingualRegistry::instance().lookup(label);
             if (found.empty())
                 found = I18N::language_mode_service().translate(label).secondary;
+            // "Open Project..." is _L("Open Project") + dots: the catalogue knows
+            // the stem only, so look that up and keep the ellipsis.
+            if (found.empty()) {
+                wxString stem = label.BeforeFirst('\t');
+                for (const wxString &tail : {wxString("..."), wxString::FromUTF8("\xE2\x80\xA6")}) {
+                    if (stem.length() > tail.length() && stem.EndsWith(tail)) {
+                        stem.RemoveLast(tail.length());
+                        const wxString base = I18N::language_mode_service().translate(stem).secondary;
+                        if (!base.empty())
+                            found = base + wxString::FromUTF8("\xE2\x80\xA6");
+                        break;
+                    }
+                }
+            }
             return found;
         };
     }

@@ -4718,11 +4718,15 @@ static wxMenu* generate_help_menu()
         _L("Every feature in this app, where it lives, and one click to open it"), [](wxCommandEvent&) {
             if (auto* frame = wxGetApp().mainframe) frame->open_every_feature();
         });
-    append_menu_item(helpMenu, wxID_ANY, _L("Status Hub") + dots,
-        _L("Inspect status delivery and enrollment state"), feature_command("status-hub", []() {
-            if (auto* frame = wxGetApp().mainframe)
-                frame->open_service("status-hub", _L("Status Hub"), [](wxWindow* parent) { return new StatusHubPanel(parent); });
-        }));
+    // Groups in the Help menu: a separator and a heading that is not a command.
+    const auto add_group = [helpMenu](const wxString& name) {
+        helpMenu->AppendSeparator();
+        helpMenu->Append(wxID_ANY, name)->Enable(false);
+    };
+    add_group(_L("Learn"));
+    append_menu_item(helpMenu, wxID_ANY, _L("Documentation") + sep + PaletteIndex::docs_shortcut_label(),
+        _L("Browse every feature article offline, inside the app"),
+        [](wxCommandEvent &) { DocsBrowserDialog::ShowArticle(wxGetApp().mainframe); });
     append_menu_item(helpMenu, wxID_ANY, _L("Offline documentation") + dots,
         _L("Read bundled feature guides without opening a browser"), feature_command("offline-docs", []() {
             Documentation::ShowOfflineDocumentation(wxGetApp().mainframe);
@@ -4736,59 +4740,10 @@ static wxMenu* generate_help_menu()
     append_menu_item(helpMenu, wxID_ANY, _L("Keyboard Shortcuts") + sep + "& Shift+?", _L("Show the list of the keyboard shortcuts"),
                      feature_command("keyboard-shortcuts", []() { wxGetApp().keyboard_shortcuts(); }));
 #endif
-    append_menu_item(helpMenu, wxID_ANY, _L("Documentation") + sep + PaletteIndex::docs_shortcut_label(),
-        _L("Browse every feature article offline, inside the app"),
-        [](wxCommandEvent &) { DocsBrowserDialog::ShowArticle(wxGetApp().mainframe); });
-    append_menu_item(helpMenu, wxID_ANY, _L("Dual-extruder slicing tutorial"), _L("Open the slicing tutorial video"),
-        [](wxCommandEvent&) { play_dual_extruder_slice_video(); });
-    append_menu_item(helpMenu, wxID_ANY, _L("Dual-extruder TPU tutorial"), _L("Open the TPU printing tutorial video"),
-        [](wxCommandEvent&) { play_dual_extruder_print_tpu_video(); });
-    // Practical setup: language, look, printers, inks, backups; saves as it goes.
-    append_menu_item(helpMenu, wxID_ANY, _L("Set up Bambu Studio") + dots,
-        _L("Language, look, printers, inks and backups in one guided pass that saves as it goes"),
-        feature_command("practical-setup", []() {
-            if (auto* frame = wxGetApp().mainframe) SetupWizardDialog::open(frame);
-        }));
-    // Show Beginner's Tutorial
-    append_menu_item(helpMenu, wxID_ANY, _L("Setup Wizard"), _L("Setup Wizard"), feature_command("setup-wizard", []() { wxGetApp().ShowUserGuide(); }));
-
-    helpMenu->AppendSeparator();
-    // Open Config Folder
-    append_menu_item(helpMenu, wxID_ANY, _L("Show Configuration Folder"), _L("Show Configuration Folder"),
-        [](wxCommandEvent&) { Slic3r::GUI::desktop_open_datadir_folder(); });
-
     append_menu_item(helpMenu, wxID_ANY, _L("Show Tip of the Day"), _L("Show Tip of the Day"), [](wxCommandEvent&) {
         wxGetApp().plater()->get_dailytips()->open();
         wxGetApp().plater()->get_current_canvas3D()->set_as_dirty();
         });
-
-    append_menu_item(helpMenu, wxID_ANY, _L("Report issue"), _L("Report issue"), [](wxCommandEvent &) {
-        std::string url = "https://github.com/bambulab/BambuStudio/issues/new/choose";
-        wxLaunchDefaultBrowser(url);
-    });
-
-    // Report a bug
-    //append_menu_item(helpMenu, wxID_ANY, _L("Report Bug(TODO)"), _L("Report a bug of BambuStudio"),
-    //    [](wxCommandEvent&) {
-    //        //TODO
-    //    });
-    // Check New Version
-    append_menu_item(helpMenu, wxID_ANY, _L("Check for Update"), _L("Check for Update"),
-        [](wxCommandEvent&) {
-            wxGetApp().check_new_version(true, 1);
-        }, "", nullptr, []() {
-            return true;
-        });
-
-    append_menu_item(helpMenu, wxID_ANY, _L("Check for Presets Update"), _L("Check for Presets Update"), [](wxCommandEvent &) {
-        wxGetApp().check_config_updates_from_menu();
-    });
-
-     append_menu_item(helpMenu, wxID_ANY, _L("Open Network Test"), _L("Open Network Test"), [](wxCommandEvent&) {
-            NetworkTestDialog dlg(wxGetApp().mainframe);
-            dlg.ShowModal();
-        });
-
     // In-app changelog: every published release with dated, categorized,
     // commit-linked entries (resources/changelog/changelog.json).
     append_menu_item(helpMenu, wxID_ANY, _L("What's new / Changelog") + dots,
@@ -4797,7 +4752,52 @@ static wxMenu* generate_help_menu()
                 ChangelogDialog dialog(wxGetApp().mainframe);
                 dialog.ShowModal();
             }));
-
+    append_menu_item(helpMenu, wxID_ANY, _L("Dual-extruder slicing tutorial"), _L("Open the slicing tutorial video"),
+        [](wxCommandEvent&) { play_dual_extruder_slice_video(); });
+    append_menu_item(helpMenu, wxID_ANY, _L("Dual-extruder TPU tutorial"), _L("Open the TPU printing tutorial video"),
+        [](wxCommandEvent&) { play_dual_extruder_print_tpu_video(); });
+    add_group(_L("Set up"));
+    // Practical setup: language, look, printers, inks, backups; saves as it goes.
+    append_menu_item(helpMenu, wxID_ANY, _L("Set up Bambu Studio") + dots,
+        _L("Language, look, printers, inks and backups in one guided pass that saves as it goes"),
+        feature_command("practical-setup", []() {
+            if (auto* frame = wxGetApp().mainframe) SetupWizardDialog::open(frame);
+        }));
+    // Show Beginner's Tutorial
+    append_menu_item(helpMenu, wxID_ANY, _L("Setup Wizard"), _L("Setup Wizard"), feature_command("setup-wizard", []() { wxGetApp().ShowUserGuide(); }));
+    // Open Config Folder
+    append_menu_item(helpMenu, wxID_ANY, _L("Show Configuration Folder"), _L("Show Configuration Folder"),
+        [](wxCommandEvent&) { Slic3r::GUI::desktop_open_datadir_folder(); });
+    add_group(_L("Get help"));
+    append_menu_item(helpMenu, wxID_ANY, _L("Report issue"), _L("Report issue"), [](wxCommandEvent &) {
+        std::string url = "https://github.com/bambulab/BambuStudio/issues/new/choose";
+        wxLaunchDefaultBrowser(url);
+    });
+    // Report a bug
+    //append_menu_item(helpMenu, wxID_ANY, _L("Report Bug(TODO)"), _L("Report a bug of BambuStudio"),
+    //    [](wxCommandEvent&) {
+    //        //TODO
+    //    });
+    append_menu_item(helpMenu, wxID_ANY, _L("Open Network Test"), _L("Open Network Test"), [](wxCommandEvent&) {
+            NetworkTestDialog dlg(wxGetApp().mainframe);
+            dlg.ShowModal();
+        });
+    append_menu_item(helpMenu, wxID_ANY, _L("Status Hub") + dots,
+        _L("Inspect status delivery and enrollment state"), feature_command("status-hub", []() {
+            if (auto* frame = wxGetApp().mainframe)
+                frame->open_service("status-hub", _L("Status Hub"), [](wxWindow* parent) { return new StatusHubPanel(parent); });
+        }));
+    add_group(_L("Updates and about"));
+    // Check New Version
+    append_menu_item(helpMenu, wxID_ANY, _L("Check for Update"), _L("Check for Update"),
+        [](wxCommandEvent&) {
+            wxGetApp().check_new_version(true, 1);
+        }, "", nullptr, []() {
+            return true;
+        });
+    append_menu_item(helpMenu, wxID_ANY, _L("Check for Presets Update"), _L("Check for Presets Update"), [](wxCommandEvent &) {
+        wxGetApp().check_config_updates_from_menu();
+    });
     // About
 #ifndef __APPLE__
     wxString about_title = wxString::Format(_L("&About %s"), wxGetApp().app_display_name());
@@ -5029,9 +5029,9 @@ void MainFrame::init_menubar_as_editor()
                 const auto rack = machine ? machine->GetNozzleRack() : nullptr;
                 if (SupportsRackColdPull(rack))
                     ShowRackColdPullDialog(this, rack);
-                else if (auto* plate = wxGetApp().plater())
-                    plate->get_notification_manager()->push_notification(
-                        into_u8(_L("Select a connected H2C with its hotend rack first. Nothing was sent to the printer.")));
+                else // A dialog, not a canvas toast: the menu opens on every page, not only Prepare.
+                    MessageDialog(this, _L("Select a connected H2C with its hotend rack first. Nothing was sent to the printer."),
+                                  _L("Cold pull all rack hotends"), wxOK | wxICON_INFORMATION).ShowModal();
             }), "", nullptr, []() { return true; }, this);
 
         add_tools_group(_L("Files and models"));

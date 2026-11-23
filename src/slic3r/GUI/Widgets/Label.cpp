@@ -13,6 +13,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdlib>
 #include <string>
 #include <vector>
 
@@ -282,13 +283,28 @@ namespace {
 // this process. Squirrel then cannot delete the old app-<version> folder on
 // update or reinstall and Setup.exe fails with "Installation has failed"
 // (seen 2026-09-07: Roboto-Regular.ttf held by FontCache and Chrome). The
-// face is therefore copied once into <data_dir>\fonts, which no installer
+// face is therefore copied once into <data_dir>\fonts (or, before the data
+// folder is chosen, %LOCALAPPDATA%\BambuStudioFonts), which no installer
 // ever removes, and the copy is what gets registered.
 std::wstring stage_session_font(const std::wstring &source)
 {
     try {
         const boost::filesystem::path src(source);
-        const boost::filesystem::path dir = boost::filesystem::path(Slic3r::data_dir()) / "fonts";
+        // The first fonts are registered from the GUI_App constructor, before the
+        // data folder is chosen. data_dir() is still empty then, and "fonts" would
+        // resolve against the working directory: copies landed wherever the app
+        // was started, often its own app-<version> folder. Stage those under the
+        // per-user local data folder instead, which no installer removes either.
+        boost::filesystem::path dir;
+        const boost::filesystem::path data(Slic3r::data_dir());
+        if (!data.empty() && data.is_absolute()) {
+            dir = data / "fonts";
+        } else {
+            const wchar_t *local = ::_wgetenv(L"LOCALAPPDATA");
+            if (local == nullptr || *local == L'\0')
+                return source;
+            dir = boost::filesystem::path(local) / L"BambuStudioFonts";
+        }
         boost::system::error_code ec;
         boost::filesystem::create_directories(dir, ec);
         const boost::filesystem::path dst = dir / src.filename();
