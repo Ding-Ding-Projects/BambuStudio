@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Local tools menu</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..500,0..1,0&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.gs{--bg:#0e1311;--s1:#141a17;--s2:#18201c;--s3:#1f2823;--s4:#28322c;--tx:#e3ebe5;--tx2:#a9b6ad;--tx3:#7c8a81;font-family:Roboto,system-ui,sans-serif;color:var(--tx);background:var(--bg)}
+.gs,.gs *{box-sizing:border-box}
+.gs button{font:inherit;color:inherit}
+.gs .ms{font-family:"Material Symbols Outlined";font-size:20px;line-height:1;font-feature-settings:"liga";flex-shrink:0}
+.gs .mb{height:32px;padding:0 12px;border:0;border-radius:16px;background:transparent;font-size:13px;font-weight:500;color:var(--tx2);cursor:pointer}
+.gs .mb:hover{background:var(--s3)}
+.gs .mb.on{background:var(--s4);color:var(--tx)}
+.gs .menu{width:360px;border-radius:20px;background:#1f2823;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06),0 18px 48px rgba(0,0,0,.5);padding:8px;display:flex;flex-direction:column;animation:pop .25s cubic-bezier(.05,.7,.1,1)}
+@keyframes pop{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+.gs .it{display:flex;align-items:center;gap:12px;height:40px;padding:0 12px;border:0;border-radius:12px;background:transparent;text-align:left;font-size:13px;cursor:pointer;width:100%}
+.gs .it:hover{background:var(--s4)}
+.gs .it.lead{height:48px;font-weight:500}
+.gs .grp{font-size:12px;font-weight:500;color:var(--tx3);padding:10px 12px 4px}
+.gs .sep{height:1px;background:var(--s4);margin:6px 8px}
+.gs .mb:focus-visible,.gs .it:focus-visible{outline:2px solid var(--pri);outline-offset:2px}
+.gs.still *{animation:none!important;transition:none!important}
+@media (prefers-reduced-motion:reduce){.gs *{animation:none!important;transition:none!important}}
+</style>
+</helmet>
+<div class="gs {{motionCls}}" style="--pri: {{accent}}; width: 100%; min-height: 900px; display: flex; flex-direction: column">
+  <header style="height: 48px; padding: 0 12px; display: flex; align-items: center; gap: 4px; background: #0a0e0c" aria-label="Title bar">
+    <span class="ms" aria-hidden="true" style="color: var(--pri); margin-right: 8px">deployed_code</span>
+    <nav aria-label="Menus" style="display: flex; gap: 2px">
+      <button class="mb" type="button">File</button><button class="mb" type="button">Edit</button><button class="mb" type="button">View</button><button class="mb" type="button">Objects</button>
+      <button class="mb on" type="button" aria-haspopup="menu" aria-expanded="true">Local tools</button>
+      <button class="mb" type="button">Calibration</button><button class="mb" type="button">Help</button>
+    </nav>
+  </header>
+  <div style="flex: 1; position: relative; display: flex; gap: 12px; padding: 12px; background: radial-gradient(80% 60% at 55% 40%, #17211c 0%, #0e1311 70%)">
+    <aside aria-hidden="true" style="width: 360px; display: flex; flex-direction: column; gap: 12px; opacity: .5">
+      <div style="height: 168px; border-radius: 28px; background: var(--s2)"></div>
+      <div style="height: 236px; border-radius: 28px; background: var(--s2)"></div>
+      <div style="flex: 1; border-radius: 28px; background: var(--s2)"></div>
+    </aside>
+    <div aria-hidden="true" style="flex: 1; border-radius: 24px; background: #121815; opacity: .7"></div>
+    <div class="menu" role="menu" aria-label="Local tools" style="position: absolute; left: 300px; top: 4px">
+      <button class="it lead" type="button" role="menuitem"><span class="ms" aria-hidden="true" style="color: var(--pri)">apps</span>Every feature…</button>
+      <div class="sep"></div>
+      <button class="it" type="button" role="menuitem"><span class="ms" aria-hidden="true">dashboard</span>Local tools…</button>
+      <sc-for list="{{groups}}" as="g" hint-placeholder-count="4">
+        <div class="grp">{{g.name}}</div>
+        <sc-for list="{{g.items}}" as="i" hint-placeholder-count="3">
+          <button class="it" type="button" role="menuitem"><span class="ms" aria-hidden="true">{{i.icon}}</span>{{i.label}}</button>
+        </sc-for>
+      </sc-for>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#6fdc98","options":["#6fdc98","#8ab4ff","#ffb870","#e3ebe5"],"section":"Look"},"motion":{"editor":"boolean","default":true,"section":"Look"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      accent: this.props.accent ?? '#6fdc98',
+      motionCls: (this.props.motion ?? true) ? '' : 'still',
+      groups: [
+        { name: 'Printer', items: [{ icon: 'qr_code_scanner', label: 'AI filament scanner…' }, { icon: 'home', label: 'Smart home…' }, { icon: 'music_note', label: 'Melody creator…' }, { icon: 'monitoring', label: 'Live charts…' }] },
+        { name: 'Files and data', items: [{ icon: 'move_to_inbox', label: 'LAN model drop…' }, { icon: 'swap_horiz', label: 'Local file converter…' }, { icon: 'data_object', label: 'Base64 toolkit…' }] },
+        { name: 'Windows and games', items: [{ icon: 'hard_drive', label: 'Virtual disks…' }, { icon: 'dns', label: 'Minecraft servers…' }] },
+        { name: 'Safety', items: [{ icon: 'lock', label: 'Element locks…' }, { icon: 'key', label: 'Authenticator…' }, { icon: 'backup', label: 'Config profiles & backup…' }] }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

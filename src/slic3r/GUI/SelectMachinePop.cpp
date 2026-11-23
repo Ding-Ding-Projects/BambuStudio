@@ -293,6 +293,19 @@ void MachineObjectPanel::on_mouse_leave(wxMouseEvent &evt)
     Refresh();
 }
 
+namespace {
+bool g_pick_stays_on_page = false;
+void pick_machine(const std::string &dev_id)
+{
+    if (g_pick_stays_on_page)
+        wxGetApp().mainframe->select_device(dev_id);
+    else
+        wxGetApp().mainframe->jump_to_monitor(dev_id);
+}
+} // namespace
+
+void SelectMachinePopup::set_pick_stays_on_page(bool stay) { g_pick_stays_on_page = stay; }
+
 void MachineObjectPanel::on_mouse_left_up(wxMouseEvent &evt)
 {
     if (m_is_my_devices) {
@@ -321,7 +334,7 @@ void MachineObjectPanel::on_mouse_left_up(wxMouseEvent &evt)
                 GetEventHandler()->ProcessEvent(event);
             } else {
                 if (m_info) {
-                    wxGetApp().mainframe->jump_to_monitor(m_info->get_dev_id());
+                    pick_machine(m_info->get_dev_id());
                 }
                 //wxGetApp().mainframe->SetFocus();
                 wxCommandEvent event(EVT_DISSMISS_MACHINE_LIST);
@@ -332,14 +345,14 @@ void MachineObjectPanel::on_mouse_left_up(wxMouseEvent &evt)
         }
         if (m_info && m_info->is_lan_mode_printer()) {
             if (m_info->has_access_right() && m_info->is_avaliable()) {
-                wxGetApp().mainframe->jump_to_monitor(m_info->get_dev_id());
+                pick_machine(m_info->get_dev_id());
             } else {
                 wxCommandEvent event(EVT_CONNECT_LAN_PRINT);
                 event.SetEventObject(this);
                 wxPostEvent(this, event);
             }
         } else {
-            wxGetApp().mainframe->jump_to_monitor(m_info->get_dev_id());
+            pick_machine(m_info->get_dev_id());
         }
     } else {
         if (m_info && m_info->is_lan_mode_printer()) {
@@ -684,7 +697,7 @@ void SelectMachinePopup::update_other_devices()
                     ConnectPrinterDialog dlg(wxGetApp().mainframe, wxID_ANY, _L("Input access code"));
                     dlg.set_machine_object(mobj);
                     if (dlg.ShowModal() == wxID_OK) {
-                        wxGetApp().mainframe->jump_to_monitor(mobj->get_dev_id());
+                        pick_machine(mobj->get_dev_id());
                     }
                 }
             }
@@ -695,7 +708,7 @@ void SelectMachinePopup::update_other_devices()
             dlg.update_machine_info(mobj);
             int dlg_result = wxID_CANCEL;
             dlg_result     = dlg.ShowModal();
-            if (dlg_result == wxID_OK) { wxGetApp().mainframe->jump_to_monitor(mobj->get_dev_id()); }
+            if (dlg_result == wxID_OK) { pick_machine(mobj->get_dev_id()); }
         });
     }
 
@@ -868,7 +881,7 @@ void SelectMachinePopup::update_user_devices()
                     ConnectPrinterDialog dlg(wxGetApp().mainframe, wxID_ANY, _L("Input access code"));
                     dlg.set_machine_object(mobj);
                     if (dlg.ShowModal() == wxID_OK) {
-                        wxGetApp().mainframe->jump_to_monitor(mobj->get_dev_id());
+                        pick_machine(mobj->get_dev_id());
                     }
                 }
             }

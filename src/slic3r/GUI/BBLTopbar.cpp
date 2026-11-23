@@ -24,6 +24,9 @@
 #include "LanguageMode.hpp"
 #include "CommandPalette.hpp"
 #include "CommandPaletteIndex.hpp"
+#include "SelectMachinePop.hpp"
+#include "DeviceCore/DevManager.h"
+#include "PersonalVocabulary.hpp"
 
 #include <wx/dcmemory.h>
 #include <wx/graphics.h>
@@ -81,6 +84,10 @@ static constexpr int ID_LANGUAGE = ID_AMS_NOTEBOOK + 2;
 static constexpr int ID_UPDATE_READY = ID_AMS_NOTEBOOK + 3;
 // Graphite shell search field: opens the command palette.
 static constexpr int ID_SEARCH = ID_AMS_NOTEBOOK + 4;
+// Tools menu: the local tools, moved out of File so they can be found.
+static constexpr int ID_TOP_TOOLS_MENU = ID_AMS_NOTEBOOK + 6;
+// Graphite shell printer switcher: the selected printer, opening the printer list in place.
+static constexpr int ID_PRINTER_SWITCH = ID_AMS_NOTEBOOK + 5;
 // The search field is shown only when the bar is at least this wide (logical px),
 // so it never pushes the window controls into the overflow on a narrow window.
 static constexpr int TOPBAR_SEARCH_MIN_BAR_W = 1180;
@@ -399,6 +406,54 @@ static wxBitmap topbar_update_chip_bitmap(wxWindow *ref, bool hover)
     });
 }
 
+// Graphite shell printer switcher chip: printer glyph, the selected printer name,
+// a status dot and an expand arrow, on a SurfaceContainerHigh pill.
+static wxBitmap topbar_printer_chip_bitmap(wxWindow *ref, bool hover, const wxString &name, const wxColour &dot)
+{
+    const int  H        = 30;
+    const int  padx     = 12;
+    const int  gap      = 6;
+    const int  glyph    = 18;
+    const int  dot_d    = 8;
+    const bool icons_ok = MaterialIcon::available();
+    wxFont font = Label::Body_12;
+    if (!font.IsOk())
+        font = *wxNORMAL_FONT;
+    font.SetWeight(wxFONTWEIGHT_MEDIUM);
+    const double   scale = topbar_scale(ref);
+    const wxColour fg    = StateColor::semantic(MD3::Role::OnSurface);
+    const wxBitmap text  = topbar_text_alpha(font, scale, name, fg);
+    const double   tw = text.GetWidth() / scale, th = text.GetHeight() / scale;
+    wxSize gs(0, 0), es(0, 0);
+    if (icons_ok) {
+        wxBitmap   probe(1, 1);
+        wxMemoryDC mdc(probe);
+        gs = MaterialIcon::measure(mdc, MaterialIcon::Print, glyph);
+        es = MaterialIcon::measure(mdc, MaterialIcon::ExpandMore, glyph);
+        mdc.SelectObject(wxNullBitmap);
+    }
+    const int W = padx + (icons_ok ? gs.x + gap : 0) + static_cast<int>(std::ceil(tw)) + gap + dot_d +
+                  (icons_ok ? gap + es.x : 0) + padx - 4;
+    return topbar_make_canvas(ref, wxSize(W, H), [&](wxGraphicsContext *gc) {
+        gc->SetPen(*wxTRANSPARENT_PEN);
+        gc->SetBrush(wxBrush(StateColor::semantic(hover ? MD3::Role::SurfaceContainerHighest : MD3::Role::SurfaceContainerHigh)));
+        gc->DrawRoundedRectangle(0, 0, W, H, H / 2.0);
+        double x = padx;
+        if (icons_ok) {
+            gc->DrawBitmap(MaterialIcon::bitmap(ref, MaterialIcon::Print, glyph, fg), x, (H - gs.y) / 2.0, gs.x, gs.y);
+            x += gs.x + gap;
+        }
+        gc->DrawBitmap(text, x, (H - th) / 2.0, tw, th);
+        x += std::ceil(tw) + gap;
+        gc->SetBrush(wxBrush(dot));
+        gc->DrawEllipse(x, (H - dot_d) / 2.0, dot_d, dot_d);
+        x += dot_d + gap;
+        if (icons_ok)
+            gc->DrawBitmap(MaterialIcon::bitmap(ref, MaterialIcon::ExpandMore, glyph, StateColor::semantic(MD3::Role::OnSurfaceVariant)),
+                           x, (H - es.y) / 2.0, es.x, es.y);
+    });
+}
+
 // Graphite shell search field: a 32 px SurfaceContainer pill with the search
 // glyph, a hint and the palette shortcut on a SurfaceContainerHighest key cap.
 // Hover lifts the pill to SurfaceContainerHigh. Clicking it opens the command
@@ -687,7 +742,7 @@ void BBLTopbarArt::DrawButton(wxDC& dc, wxWindow* wnd, const wxAuiToolBarItem& i
     if (item.GetId() == ID_LOGO ||
         item.GetId() == ID_TOP_FILE_MENU || item.GetId() == ID_TOP_EDIT_MENU ||
         item.GetId() == ID_TOP_VIEW_MENU || item.GetId() == ID_TOP_OBJECTS_MENU ||
-        item.GetId() == ID_TOP_HELP_MENU || item.GetId() == ID_CALIB)
+        item.GetId() == ID_TOP_TOOLS_MENU || item.GetId() == ID_TOP_HELP_MENU || item.GetId() == ID_CALIB)
         font.SetWeight(wxFONTWEIGHT_MEDIUM);
     dc.SetFont(font);
 
@@ -744,7 +799,7 @@ void BBLTopbarArt::DrawButton(wxDC& dc, wxWindow* wnd, const wxAuiToolBarItem& i
     // The brand tile (§3.1) and history chip (§3.5) bake their own background, so
     // they opt out of the shared state layer.
     const int  item_id       = item.GetId();
-    const bool bakes_own_bg  = item_id == ID_LOGO || item_id == ID_HISTORY || item_id == ID_LANGUAGE || item_id == ID_UPDATE_READY || item_id == ID_SEARCH;
+    const bool bakes_own_bg  = item_id == ID_LOGO || item_id == ID_PRINTER_SWITCH || item_id == ID_HISTORY || item_id == ID_LANGUAGE || item_id == ID_UPDATE_READY || item_id == ID_SEARCH;
     if (!bakes_own_bg && !(item.GetState() & wxAUI_BUTTON_STATE_DISABLED)) {
         wxColour state_layer;
         // §3.9: the window Close control carries a destructive hover -- its state
@@ -792,7 +847,7 @@ void BBLTopbarArt::DrawButton(wxDC& dc, wxWindow* wnd, const wxAuiToolBarItem& i
         label_role = MD3::Role::Outline;
     else if (item.GetId() == ID_TOP_FILE_MENU || item.GetId() == ID_TOP_EDIT_MENU ||
              item.GetId() == ID_TOP_VIEW_MENU || item.GetId() == ID_TOP_OBJECTS_MENU ||
-             item.GetId() == ID_TOP_HELP_MENU || item.GetId() == ID_CALIB)
+             item.GetId() == ID_TOP_TOOLS_MENU || item.GetId() == ID_TOP_HELP_MENU || item.GetId() == ID_CALIB)
         label_role = MD3::Role::OnSurfaceVariant;
     else
         label_role = MD3::Role::OnSurface;
@@ -863,6 +918,9 @@ void BBLTopbar::Init(wxFrame* parent)
     m_edit_menu_item = this->AddTool(ID_TOP_EDIT_MENU, _L("Edit"), wxNullBitmap, wxEmptyString, wxITEM_NORMAL);
     m_view_menu_item = this->AddTool(ID_TOP_VIEW_MENU, _L("View"), wxNullBitmap, wxEmptyString, wxITEM_NORMAL);
     m_objects_menu_item = this->AddTool(ID_TOP_OBJECTS_MENU, _L("Objects"), wxNullBitmap, wxEmptyString, wxITEM_NORMAL);
+    // The local tools menu (scanner, smart home, servers, converters and more), named like
+    // the Local tools page it opens first.
+    m_tools_menu_item = this->AddTool(ID_TOP_TOOLS_MENU, _L("Local tools"), wxNullBitmap, wxEmptyString, wxITEM_NORMAL);
     // titlebar-remove-nonkit-controls: the Calibration dropdown is the only entry
     // point to the calibration tests on Windows (the File/Edit menus don't carry
     // them), so instead of orphaning the feature it is re-homed here as a kit text
@@ -885,6 +943,13 @@ void BBLTopbar::Init(wxFrame* parent)
     m_search_item->SetShortHelp(wxString::Format(_L("Search commands and settings (%s)"),
                                                  wxString::FromUTF8(GUI::PaletteIndex::palette_shortcut_label())));
     m_search_spacer = this->AddSpacer(FromDIP(MD3::Metrics::active().gap));
+
+    // Graphite shell printer switcher: choose the printer from any page.
+    m_printer_item = this->AddTool(ID_PRINTER_SWITCH, "", topbar_printer_chip_bitmap(this, false, _L("Choose a printer"),
+                                   StateColor::semantic(MD3::Role::Outline)), wxEmptyString, wxITEM_NORMAL);
+    // TRN: Tooltip of the title bar printer switcher.
+    m_printer_item->SetShortHelp(_L("Switch printer"));
+    this->AddSpacer(FromDIP(MD3::Metrics::active().gap));
 
     // §3.5 history chip -> the real version-history backend (MainFrame::show_project_history,
     // the same handler behind the File>Version history item). The chip bakes its
@@ -994,6 +1059,7 @@ void BBLTopbar::Init(wxFrame* parent)
     this->Bind(wxEVT_AUITOOLBAR_TOOL_DROPDOWN, &BBLTopbar::OnTopMenuToolItem, this, ID_TOP_EDIT_MENU);
     this->Bind(wxEVT_AUITOOLBAR_TOOL_DROPDOWN, &BBLTopbar::OnTopMenuToolItem, this, ID_TOP_VIEW_MENU);
     this->Bind(wxEVT_AUITOOLBAR_TOOL_DROPDOWN, &BBLTopbar::OnTopMenuToolItem, this, ID_TOP_OBJECTS_MENU);
+    this->Bind(wxEVT_AUITOOLBAR_TOOL_DROPDOWN, &BBLTopbar::OnTopMenuToolItem, this, ID_TOP_TOOLS_MENU);
     this->Bind(wxEVT_AUITOOLBAR_TOOL_DROPDOWN, &BBLTopbar::OnTopMenuToolItem, this, ID_TOP_HELP_MENU);
     this->Bind(wxEVT_AUITOOLBAR_TOOL_DROPDOWN, &BBLTopbar::OnCalibToolItem, this, ID_CALIB);
     this->Bind(wxEVT_AUITOOLBAR_TOOL_DROPDOWN, &BBLTopbar::OnHistoryChip, this, ID_HISTORY);
@@ -1003,6 +1069,13 @@ void BBLTopbar::Init(wxFrame* parent)
     this->Bind(wxEVT_AUITOOLBAR_TOOL_DROPDOWN, &BBLTopbar::OnLanguageSwitch, this, ID_LANGUAGE);
     this->Bind(wxEVT_AUITOOLBAR_TOOL_DROPDOWN, &BBLTopbar::OnUpdateChip, this, ID_UPDATE_READY);
     this->Bind(wxEVT_AUITOOLBAR_TOOL_DROPDOWN, &BBLTopbar::OnSearchField, this, ID_SEARCH);
+    this->Bind(wxEVT_AUITOOLBAR_TOOL_DROPDOWN, &BBLTopbar::OnPrinterChip, this, ID_PRINTER_SWITCH);
+    // Menu labels show the person's loaded wording file, and change back when it is cleared.
+    apply_menu_labels();
+    PersonalVocabulary::observe(this, [this] { apply_menu_labels(); });
+    m_printer_timer = new wxTimer(this);
+    this->Bind(wxEVT_TIMER, [this](wxTimerEvent &) { refresh_printer_chip(); }, m_printer_timer->GetId());
+    m_printer_timer->Start(1500);
     if (m_lan_drop_item)
         m_lan_drop_listener = LanModelDrop::add_listener([this] {
             const bool   was_shown = m_lan_drop_shown;
@@ -1369,6 +1442,81 @@ void BBLTopbar::SetUpdateReady(bool ready)
     Refresh(false);
 }
 
+void BBLTopbar::apply_menu_labels()
+{
+    const std::pair<wxAuiToolBarItem *, wxString> labels[] = {
+        {m_file_menu_item, _L("File")},          {m_edit_menu_item, _L("Edit")},
+        {m_view_menu_item, _L("View")},          {m_objects_menu_item, _L("Objects")},
+        {m_tools_menu_item, _L("Local tools")},  {m_help_menu_item, _L("Help")},
+    };
+    bool changed = false;
+    for (const auto &[item, source] : labels) {
+        if (item == nullptr)
+            continue;
+        const wxString shown = PersonalVocabulary::display(PersonalVocabulary::remember(source));
+        if (item->GetLabel() != shown) {
+            item->SetLabel(shown);
+            changed = true;
+        }
+    }
+    if (changed) {
+        realize_with_hidden_items();
+        Refresh(false);
+    }
+}
+
+void BBLTopbar::refresh_printer_chip(bool force)
+{
+    if (!m_printer_item)
+        return;
+    wxString    name = _L("Choose a printer");
+    wxColour    dot  = StateColor::semantic(MD3::Role::Outline);
+    std::string key  = "none";
+    if (auto *dev = wxGetApp().getDeviceManager()) {
+        if (MachineObject *obj = dev->get_selected_machine()) {
+            name = wxString::FromUTF8(obj->get_dev_name());
+            if (!obj->is_online()) {
+                key = "off";
+            } else if (obj->print_error || obj->mc_print_error_code) {
+                dot = StateColor::semantic(MD3::Role::Error);
+                key = "err";
+            } else if (obj->is_in_printing()) {
+                dot = wxColour(0x8a, 0xb4, 0xff);
+                key = "busy";
+            } else {
+                dot = StateColor::semantic(MD3::Role::Primary);
+                key = "idle";
+            }
+            key += ":" + obj->get_dev_id() + ":" + obj->get_dev_name();
+        }
+    }
+    if (!force && key == m_printer_key)
+        return;
+    m_printer_key = key;
+    m_printer_item->SetBitmap(topbar_printer_chip_bitmap(this, false, name, dot));
+    m_printer_item->SetHoverBitmap(topbar_printer_chip_bitmap(this, true, name, dot));
+    // TRN: Tooltip of the title bar printer switcher. %s is the printer name.
+    m_printer_item->SetShortHelp(wxString::Format(_L("Printer: %s. Click to switch printer"), name));
+    realize_with_hidden_items();
+    update_responsive_title(GetSize().GetWidth());
+    Refresh(false);
+}
+
+void BBLTopbar::OnPrinterChip(wxAuiToolBarEvent& event)
+{
+    auto *popup = dynamic_cast<SelectMachinePopup *>(m_printer_popup);
+    if (popup == nullptr) {
+        popup           = new SelectMachinePopup(this);
+        m_printer_popup = popup;
+    }
+    SelectMachinePopup::set_pick_stays_on_page(true);
+    const wxRect r   = GetToolRect(ID_PRINTER_SWITCH);
+    wxPoint      pos = ClientToScreen(wxPoint(r.GetRight(), r.GetBottom() + FromDIP(4)));
+    pos.x -= popup->GetSize().GetWidth();
+    popup->Move(pos);
+    popup->Popup();
+}
+
 void BBLTopbar::OnUpdateChip(wxAuiToolBarEvent& event)
 {
     if (!m_update_ready)
@@ -1395,6 +1543,8 @@ void BBLTopbar::SetHistoryInfo(const wxString& branch, const wxString& head)
     Refresh(false);
 }
 
+void BBLTopbar::SetToolsMenu(wxMenu* tools_menu) { m_tools_menu = tools_menu; }
+
 void BBLTopbar::SetTopMenus(wxMenu* file_menu, wxMenu* edit_menu, wxMenu* view_menu,
                              wxMenu* objects_menu, wxMenu* help_menu)
 {
@@ -1412,6 +1562,7 @@ wxMenu* BBLTopbar::top_menu_for_tool(int tool_id) const
     case ID_TOP_EDIT_MENU:    return m_edit_menu;
     case ID_TOP_VIEW_MENU:    return m_view_menu;
     case ID_TOP_OBJECTS_MENU: return m_objects_menu;
+    case ID_TOP_TOOLS_MENU: return m_tools_menu;
     case ID_TOP_HELP_MENU:    return m_help_menu;
     default:                  return nullptr;
     }
@@ -1433,6 +1584,7 @@ bool BBLTopbar::PopupMenuByTitle(const wxString &title)
     const Entry entries[] = {
         {"file", ID_TOP_FILE_MENU, m_file_menu},       {"edit", ID_TOP_EDIT_MENU, m_edit_menu},
         {"view", ID_TOP_VIEW_MENU, m_view_menu},       {"objects", ID_TOP_OBJECTS_MENU, m_objects_menu},
+        {"local tools", ID_TOP_TOOLS_MENU, m_tools_menu},
         {"calibration", ID_CALIB, &m_calib_menu},      {"help", ID_TOP_HELP_MENU, m_help_menu},
     };
     for (const Entry &e : entries) {
@@ -1468,7 +1620,7 @@ bool BBLTopbar::InvokeMenuItem(const wxString &label)
 {
     const wxString want = driver_norm(label);
     if (want.empty()) return false;
-    wxMenu *menus[] = {m_file_menu, m_edit_menu, m_view_menu, m_objects_menu, &m_calib_menu, m_help_menu};
+    wxMenu *menus[] = {m_file_menu, m_edit_menu, m_view_menu, m_objects_menu, m_tools_menu, &m_calib_menu, m_help_menu};
     for (wxMenu *menu : menus) {
         wxMenuItem *item = driver_find_item(menu, want);
         if (!item) continue;

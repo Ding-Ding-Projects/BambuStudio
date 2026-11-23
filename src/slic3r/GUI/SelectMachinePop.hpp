@@ -184,6 +184,9 @@ public:
 
     // PopupWindow virtual methods are all overridden to log them
     virtual void Popup(wxWindow *focus = NULL) wxOVERRIDE;
+    // When set, choosing a printer selects it without switching to the Device page
+    // (the title bar printer switcher). The Device page clears it before it opens the list.
+    static void set_pick_stays_on_page(bool stay);
     virtual void OnDismiss() wxOVERRIDE;
     virtual bool ProcessLeftDown(wxMouseEvent &event) wxOVERRIDE;
     virtual bool Show(bool show = true) wxOVERRIDE;

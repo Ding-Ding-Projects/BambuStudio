@@ -1,9 +1,20 @@
-# Bambu Studio print workflow handoff
+# Bambu Studio handoff, 23 November 2026
 
-Release md3-v325 was built from 541e2c9dae26ea74334cd843206d73cbfa06517a. Five published files matched their local SHA-256 digests. The existing Windows installation updated to 2.9.2029 and its shortcut opened Home.
+```text
+Repository: Ding-Ding-Projects/BambuStudio, branch main. Read HANDOFF.md, ROADMAP.md and design/graphite-shell/HANDOFF.md first.
 
-The device selector opened in Prepare with an isolated, empty device list. Slice and Print opened print setup for a sample cube. Changing the lubrication melody from Rising chirp to Truck backing up closed and reopened confirmation with the new selection. See docs/evidence/print-setup-v325/evidence.json.
+Done in this session (built locally with MSBuild, release not published):
+- Lubricate mode rewrite (src/libslic3r/GCode/LubricateRoutine.cpp, GCode.cpp, StatusPanel.cpp): the whole tune plays once per cycle in the note range of the Bambu Lab start tunes, with real rests, while the machine stands still; each bed and toolhead stroke is one move; strokes stay inside the area both H2D/H2C toolheads reach; homing again repeats the start G-code's whole lower-bed, park and home window. Checked by compiling the routine alone and reading its H2C output. Not run on a real printer.
+- Title bar printer chip (BBLTopbar.cpp, SelectMachinePop.cpp, MainFrame::select_device): shows the selected printer and status, opens the searchable printer list on any page and selects without switching to the Device page. Opening was driven on a hidden desktop; choosing a printer was not (the LAN printers needed an access code).
+- Local tools menu: the local tools moved out of File into their own title bar menu, with Every feature first. Driven on a hidden desktop. Menu labels follow a loaded personal wording file; not verified with a current file.
+- Device page cards use a 28 px corner; section labels are sentence case at 13 px.
+- Design canvas: one page per feature category, a sticky note per board, accent and motion tweaks, new DeviceSwitcher and ToolsMenu boards.
 
-The H2C guide supports rack take and return with operator confirmation. Start each cold pull on the touchscreen. The rack queue tests passed. Live switching, material reassignment on a dual-nozzle printer and a complete physical rack cycle still require connected equipment. See HANDOFF.md and ROADMAP.md.
-
-The later build-system change a37a48adb adjusts project generation for Boost.Locale in a fresh build. Read the hosted build result before reporting its status.
+Open:
+- Run the new lubricate routine and melodies on a real H2C.
+- Choose a printer from the chip with a connected printer.
+- Group the Local tools menu as the ToolsMenu board shows, and review the other menus for findability.
+- Cold pull every rack hotend without the touchscreen: the printer exposes no documented remote start; a generated G-code routine would need owner approval and a real H2C test.
+- The four old branches gap/lan-drop-* and md3-dynamic-color-wip are not merged: the LAN drop branches carry the station key that main deliberately removed; md3-dynamic-color-wip holds unmerged dynamic colour work.
+- Publish a release with these changes and update the installed copy.
+```

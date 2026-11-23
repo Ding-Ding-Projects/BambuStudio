@@ -4890,6 +4890,8 @@ void MainFrame::init_menubar_as_editor()
 
     // File menu
     wxMenu* fileMenu = new wxMenu;
+    // The local tools live in their own Tools menu, not at the bottom of File.
+    wxMenu* toolsMenu = new wxMenu;
     {
 #ifdef __APPLE__
         // New Window
@@ -4977,43 +4979,49 @@ void MainFrame::init_menubar_as_editor()
             feature_command("version-history", [this]() { show_project_history(); }), "", nullptr,
             [this](){return m_plater != nullptr; }, this);
 
-        append_menu_item(fileMenu, wxID_ANY, _L("Local tools") + dots,
+        append_menu_item(toolsMenu, wxID_ANY, _L("Every feature") + dots,
+            _L("Every feature of the application in one searchable list, with filters and what is not ready yet"),
+            [this](wxCommandEvent &) { open_every_feature(); }, "", nullptr,
+            []() { return true; }, this);
+        toolsMenu->AppendSeparator();
+
+        append_menu_item(toolsMenu, wxID_ANY, _L("Local tools") + dots,
             _L("Every local tool on one page: what each holds now, pins, search and what they finished"),
             feature_command("local-tools", []() { LocalToolsHubPanel::open(); }), "", nullptr,
             []() { return true; }, this);
 
-        append_menu_item(fileMenu, wxID_ANY, _L("AI filament scanner") + dots,
+        append_menu_item(toolsMenu, wxID_ANY, _L("AI filament scanner") + dots,
             _L("Snap a spool photo on your phone; a local model identifies it and loads an AMS slot"),
             feature_command("filament-scanner", [this]() { FilamentScanDialog(this).ShowModal(); }), "", nullptr,
             []() { return true; }, this);
 
-        append_menu_item(fileMenu, wxID_ANY, _L("Smart home") + dots,
+        append_menu_item(toolsMenu, wxID_ANY, _L("Smart home") + dots,
             _L("Home Assistant speakers, media controls, TTS narrator and alert lights"),
             feature_command("smart-home", [this]() { SmartHomeDialog(this).ShowModal(); }), "", nullptr,
             []() { return true; }, this);
 
-        append_menu_item(fileMenu, wxID_ANY, _L("Melody creator") + dots,
+        append_menu_item(toolsMenu, wxID_ANY, _L("Melody creator") + dots,
             _L("Compose a tune the printer plays, preview it, send it to the printer or add it to the start or end G-code"),
             feature_command("melody", [this]() { MelodyCreatorDialog(this).ShowModal(); }), "", nullptr,
             []() { return true; }, this);
 
         // LAN model drop (docs/features/application-integration/lan-model-drop.md): the settings
         // section, and the invite someone opens to send a model to this computer.
-        append_menu_item(fileMenu, wxID_ANY, _L("LAN model drop") + dots,
+        append_menu_item(toolsMenu, wxID_ANY, _L("LAN model drop") + dots,
             _L("Receive 3D models that people on your local network send through the drop site"),
             feature_command("lan-drop", []() { LanModelDrop::open_preferences_section(); }), "", nullptr,
             []() { return true; }, this);
-        append_menu_item(fileMenu, wxID_ANY, _L("Invite someone to send a model") + dots,
+        append_menu_item(toolsMenu, wxID_ANY, _L("Invite someone to send a model") + dots,
             _L("Show the link and QR code of the LAN drop site"),
             [this](wxCommandEvent&) { LanModelDrop::open_invite_dialog(this); }, "", nullptr,
             []() { return true; }, this);
 
-        append_menu_item(fileMenu, wxID_ANY, _L("Local model suite") + dots,
+        append_menu_item(toolsMenu, wxID_ANY, _L("Local model suite") + dots,
             _L("Inspect local Ollama models, catalog availability and guided tools"),
             feature_command("model-suite", [this]() { show_ollama_suite(this, std::filesystem::u8path(data_dir())); }), "", nullptr,
             []() { return true; }, this);
 
-        append_menu_item(fileMenu, wxID_ANY, _L("Local file converter") + dots,
+        append_menu_item(toolsMenu, wxID_ANY, _L("Local file converter") + dots,
             _L("Convert local files with verified bundled adapters"),
             feature_command("converter", [this]() {
                 open_service("converter", _L("Local file converter"), [](wxWindow* parent) {
@@ -5024,40 +5032,40 @@ void MainFrame::init_menubar_as_editor()
                 });
             }), "", nullptr, []() { return true; }, this);
 
-        append_menu_item(fileMenu, wxID_ANY, _L("Base64 toolkit") + dots,
+        append_menu_item(toolsMenu, wxID_ANY, _L("Base64 toolkit") + dots,
             _L("Encode and decode text, files beside the originals and data: URLs on this computer"),
             feature_command("base64", [this]() {
                 open_service("base64", _L("Base64 toolkit"), [](wxWindow* parent) { return new Base64ToolkitPanel(parent); });
             }), "", nullptr, []() { return true; }, this);
 
-        append_menu_item(fileMenu, wxID_ANY, _L("Extensions") + dots,
+        append_menu_item(toolsMenu, wxID_ANY, _L("Extensions") + dots,
             _L("Steps after slicing, comment lines in exported G-code and commands of your own, each asking first"),
             feature_command("extensions", []() { Extensions::Runtime::open_manager(); }), "", nullptr, []() { return true; }, this);
 
-        append_menu_item(fileMenu, wxID_ANY, _L("Live charts") + dots,
+        append_menu_item(toolsMenu, wxID_ANY, _L("Live charts") + dots,
             _L("Temperatures, AMS humidity and the part cooling fan of the selected printer over time"),
             feature_command("live-charts", []() { LiveCharts::LiveChartsPanel::open(); }), "", nullptr, []() { return true; }, this);
         // Every feature and the palette open the charts straight on one series.
         FeatureFinder::Commands::instance().add("live-charts-humidity", []() { LiveCharts::LiveChartsPanel::open(int(LiveCharts::Kind::Humidity)); });
         FeatureFinder::Commands::instance().add("live-charts-fan", []() { LiveCharts::LiveChartsPanel::open(int(LiveCharts::Kind::Fan)); });
 
-        append_menu_item(fileMenu, wxID_ANY, _L("Drawing board") + dots,
+        append_menu_item(toolsMenu, wxID_ANY, _L("Drawing board") + dots,
             _L("Draw on a capture of the plate with seven pens, versions and export, saved on this computer"),
             feature_command("drawing", []() { Drawing::DrawingPanel::open(); }), "", nullptr, []() { return true; }, this);
 
-        append_menu_item(fileMenu, wxID_ANY, _L("Virtual disks") + dots,
+        append_menu_item(toolsMenu, wxID_ANY, _L("Virtual disks") + dots,
             _L("Every VHD, VHDX and ISO you add: attach, create, grow, compact, chains, merge and Quick pack"),
             feature_command("virtual-disks", []() { VirtualDisks::VirtualDisksPanel::open(); }), "", nullptr, []() { return true; }, this);
 
-        append_menu_item(fileMenu, wxID_ANY, _L("Minecraft servers") + dots,
+        append_menu_item(toolsMenu, wxID_ANY, _L("Minecraft servers") + dots,
             _L("Create, adopt and run Java servers: console, every setting, players, versions, backups, schedules and a world generator"),
             feature_command("minecraft-servers", []() { GameServers::ServersPanel::open(); }), "", nullptr, []() { return true; }, this);
 
-        append_menu_item(fileMenu, wxID_ANY, _L("Element locks") + dots,
+        append_menu_item(toolsMenu, wxID_ANY, _L("Element locks") + dots,
             _L("Every element you locked, with Unlock beside each"),
             feature_command("element-locks", [this]() { ElementLocks::open_manager(this); }), "", nullptr, []() { return true; }, this);
 
-        append_menu_item(fileMenu, wxID_ANY, _L("Scheduled settings") + dots,
+        append_menu_item(toolsMenu, wxID_ANY, _L("Scheduled settings") + dots,
             _L("Schedule presentation without replacing stored preferences"),
             feature_command("scheduled-settings", [this]() {
                 auto* service = wxGetApp().scheduled_preferences();
@@ -5078,20 +5086,23 @@ void MainFrame::init_menubar_as_editor()
                     plate->get_notification_manager()->push_notification(into_u8(_L("Local security is unavailable. No protected action was performed.")));
             }
         };
-        append_menu_item(fileMenu, wxID_ANY, _L("Authenticator") + dots,
+        append_menu_item(toolsMenu, wxID_ANY, _L("Authenticator") + dots,
             _L("Manage local time-based authentication codes"),
             feature_command("authenticator", [open_security]() { open_security("authenticator", _L("Authenticator")); }),
             "", nullptr, [] { return true; }, this);
-        append_menu_item(fileMenu, wxID_ANY, _L("Identity history") + dots,
+        append_menu_item(toolsMenu, wxID_ANY, _L("Identity history") + dots,
             _L("Enroll an independent history password and inspect encrypted identity changes"),
             feature_command("identity-history", [open_security]() { open_security("identity-history", _L("Identity history")); }),
             "", nullptr, [] { return true; }, this);
-        append_menu_item(fileMenu, wxID_ANY, _L("Local support tickets") + dots,
+        append_menu_item(toolsMenu, wxID_ANY, _L("Local support tickets") + dots,
             _L("Manage local-only support records; nothing is sent anywhere"),
             feature_command("local-support", [open_security]() { open_security("local-support", _L("Local support tickets")); }),
             "", nullptr, [] { return true; }, this);
 
-        append_menu_item(fileMenu, wxID_ANY, _L("Config profiles & backup") + dots,
+        // "&" marks a mnemonic in a menu label, so it is doubled to show the ampersand itself.
+        wxString config_profiles_label = _L("Config profiles & backup");
+        config_profiles_label.Replace("&", "&&");
+        append_menu_item(toolsMenu, wxID_ANY, config_profiles_label + dots,
             _L("Export or import the complete data folder (secrets included, slide-to-confirm) and manage unlimited profiles with local Git snapshot history"),
             feature_command("config-profiles", [this]() { ConfigProfilesDialog(this).ShowModal(); }), "", nullptr,
             []() { return true; }, this);
@@ -5792,6 +5803,7 @@ void MainFrame::init_menubar_as_editor()
     }
 
     m_topbar->SetTopMenus(fileMenu, editMenu, viewMenu, objectsMenu, helpMenu);
+    m_topbar->SetToolsMenu(toolsMenu);
 
      // OrcaSlicer calibrations
     {
@@ -6473,6 +6485,12 @@ void MainFrame::jump_to_monitor(std::string dev_id)
         ((MonitorPanel*)m_monitor)->select_machine(dev_id);
     }
     m_tabpanel->SetSelection(tpMonitor);
+}
+
+void MainFrame::select_device(std::string dev_id)
+{
+    if (!dev_id.empty() && m_monitor)
+        ((MonitorPanel*)m_monitor)->select_machine(dev_id);
 }
 
 void MainFrame::jump_to_multipage()

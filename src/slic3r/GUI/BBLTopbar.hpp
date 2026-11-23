@@ -48,11 +48,14 @@ public:
     void OnUpdateChip(wxAuiToolBarEvent& event);
     // Graphite shell search field: opens the command palette.
     void OnSearchField(wxAuiToolBarEvent& event);
+    void OnPrinterChip(wxAuiToolBarEvent& event);
     // Shows the title bar update chip while a downloaded update waits for a restart.
     void SetUpdateReady(bool ready);
 
     wxAuiToolBarItem* FindToolByCurrentPosition();
 
+    // Tools holds the local tools that used to sit at the bottom of File.
+    void SetToolsMenu(wxMenu* tools_menu);
     void SetTopMenus(wxMenu* file_menu, wxMenu* edit_menu, wxMenu* view_menu,
                      wxMenu* objects_menu, wxMenu* help_menu);
     wxMenu *GetCalibMenu();
@@ -109,6 +112,8 @@ private:
     wxMenu* m_edit_menu;
     wxMenu* m_view_menu;
     wxMenu* m_objects_menu;
+    wxMenu* m_tools_menu{nullptr};
+    wxAuiToolBarItem* m_tools_menu_item{nullptr};
     wxMenu* m_help_menu;
     wxMenu m_calib_menu;
     wxAuiToolBarItem* m_title_item;
@@ -121,6 +126,14 @@ private:
     wxAuiToolBarItem* m_update_spacer{nullptr};
     bool              m_update_ready{false};
     void apply_update_visibility();
+    // Graphite shell printer switcher: the selected printer on every page, opening the
+    // searchable printer list without leaving the page. Refreshed by m_printer_timer.
+    wxAuiToolBarItem* m_printer_item{nullptr};
+    wxWindow*         m_printer_popup{nullptr};
+    wxTimer*          m_printer_timer{nullptr};
+    std::string       m_printer_key;
+    void refresh_printer_chip(bool force = false);
+    void apply_menu_labels();
     wxAuiToolBarItem* m_search_item{nullptr};
     wxAuiToolBarItem* m_search_spacer{nullptr};
     // Starts hidden; update_responsive_title() shows it once the bar is wide enough.

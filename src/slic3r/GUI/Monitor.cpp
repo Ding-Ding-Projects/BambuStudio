@@ -377,6 +377,7 @@ void MonitorPanel::on_printer_clicked(wxMouseEvent &event)
         m_select_machine.SetMinSize(wxSize(m_side_tools->GetSize().x, -1));
 #endif
 
+        SelectMachinePopup::set_pick_stays_on_page(false);
         m_select_machine.Popup();
     }
 }

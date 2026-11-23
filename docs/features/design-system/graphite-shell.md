@@ -41,3 +41,12 @@ Not verified yet: the hosted Windows build of the command palette, the title bar
 ## Next steps
 
 The design also rounds the canvas frame, rearranges the Preview controls (view chips, layer slider and the bottom bar) and restyles Device and the Send print and Melody creator dialogs. Those are not implemented yet. The full design is in `design/graphite-shell/`. The feature inventory that keeps the redesign from dropping any feature is `design/graphite-shell/FEATURE_PARITY.md`, and the motion specification is the Graphite shell section of `design/interface-motion.md`.
+
+## Title bar printer switcher and Local tools menu (23 November 2026)
+
+- **Printer switcher.** A chip at the right of the title bar shows the selected printer's name and a status dot (green idle, blue printing, red error, grey offline or none). Clicking it opens the same printer list as the Device page, with its search field and regular expression toggle, under the chip. Choosing a printer selects it for every page and leaves you on the page you were on; the Device page list still opens the Device page. Design board: `design/graphite-shell/DeviceSwitcher.dc.html`. Not yet verified in the built application with a printer connected.
+- **Local tools menu.** The local tools (filament scanner, smart home, melody creator, LAN model drop, model suite, converters, extensions, live charts, drawing board, virtual disks, game servers, locks, scheduled settings, authenticator, identity history, support tickets and config profiles) moved out of the bottom of **File** into their own **Local tools** menu between **Objects** and **Calibration**. Its first item, **Every feature**, opens the searchable list of every feature. Menu labels in the title bar follow a loaded personal wording file and change back when it is cleared.
+
+## Rich text boxes
+
+The application's text boxes are native wxWidgets controls in a C++ desktop application, so they do not use the TinyMCE editor, which needs a browser engine; no box was swapped for an embedded browser view just to host it. The boxes that could keep formatting (support ticket bodies, notes) are plain multi-line text. Web pages the application ships (the documentation site, the LAN model drop page) have no rich text box today; a rich text box added there uses a bundled, pinned TinyMCE.

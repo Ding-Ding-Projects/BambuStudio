@@ -41,6 +41,16 @@
 - [x] Write the article and its Cantonese twin, translate every string, and capture the card from the built app.
 - [ ] Hear the chimes on a real H2C and confirm the door edges arrive when the door moves.
 
+## Quick printer switcher and Graphite polish, 23 November 2026
+
+- [x] Draw the quick printer switcher board and split the design canvas into one page per feature category, each board with a sticky note and accent and motion tweaks.
+- [x] Use the 28 px card corner on the Device page and sentence-case 13 px section labels.
+- [ ] Build the title bar printer chip that opens the searchable printer list on every page without leaving it, then verify it in the built application with a printer connected.
+- [ ] Move the local tools out of the bottom of **File** into their own **Local tools** title bar menu, opened by **Every feature**, with menu labels that follow a loaded personal wording file; verify in the built application.
+- [ ] Review the rest of the title bar menus for findability on the design canvas (owner report: menu items are hard to locate).
+- [x] Record that the native wxWidgets text boxes skip the TinyMCE rich text editor, with the reason, in `docs/features/design-system/graphite-shell.md`.
+- [ ] Decide whether to cold pull every rack hotend without the touchscreen; the printer exposes no documented remote start, so this would need a generated G-code routine tested on a real H2C.
+
 ## Lubricate mode and print melodies, 10 November 2026
 
 - [x] Add lubricate mode at the start of every print and as a Device page button, with the routine placed after the last full homing command.
@@ -48,7 +58,8 @@
 - [x] Make the Bambu Lab H2C the main target and check its start G-code with a sliced cube.
 - [x] Draw the design boards and capture the new features from the built app.
 - [x] Write the article and its Cantonese twin, and translate every new string.
-- [ ] Run lubricate mode and each melody on a real H2C and confirm how `M1006 W` paces the moves.
+- [x] Rewrite the routine after an owner report from a real H2C (random beeps, stop-start bed): whole tune per cycle in the profile note range, one smooth move per stroke, both-toolhead reach, full lower-bed and park window before homing again (23 November 2026).
+- [ ] Run the rewritten lubricate mode and each melody on a real H2C and confirm the tune and the moves.
 - [ ] Capture the Lubricate confirmation and the button while printing with a printer connected.
 - [x] Reflow the Device page so it no longer scrolls sideways at 1200x800.
 - [x] Capture the Cantonese light theme layouts of the Device button, the melody list and the regex builder.

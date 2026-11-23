@@ -393,6 +393,8 @@ public:
     //BBS: jump to monitor
     void        show_printer_selector(wxWindow *anchor);
     void        jump_to_monitor(std::string dev_id = "");
+    // Selects a printer for every page without leaving the current one.
+    void        select_device(std::string dev_id);
     void        jump_to_multipage();
     //BBS: hint when jump to 3Deditor under preview only mode
     bool        preview_only_hint();
