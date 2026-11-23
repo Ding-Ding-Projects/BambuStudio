@@ -403,7 +403,31 @@ wxString display(const wxString &source)
     if (PersonalModes::school_presentation_suppressed.load()) return source;
     const auto value = source.ToStdWstring();
     auto &s = state();
-    { std::lock_guard<std::mutex> lock(s.source_mutex); if (!s.sources.count(value)) return source; }
+    // Menu labels are a translated text plus a fixed ellipsis
+    // (_L("Minecraft servers") + "..."). The ellipsis is structural, so such a
+    // label is as trusted as its translated stem.
+    std::wstring stem, tail;
+    {
+        std::lock_guard<std::mutex> lock(s.source_mutex);
+        if (!s.sources.count(value)) {
+            for (const wchar_t *t : {L"...", L"…"}) {
+                const std::wstring candidate(t);
+                if (value.size() > candidate.size() &&
+                    value.compare(value.size() - candidate.size(), candidate.size(), candidate) == 0 &&
+                    s.sources.count(value.substr(0, value.size() - candidate.size()))) {
+                    stem = value.substr(0, value.size() - candidate.size());
+                    tail = candidate;
+                    break;
+                }
+            }
+            if (stem.empty()) return source;
+        }
+    }
+    if (!stem.empty()) {
+        wxString shown = apply_indexed(wxString(stem), s.entries, s.index);
+        shown += wxString(tail);
+        return shown;
+    }
     return apply_indexed(source, s.entries, s.index);
 }
 

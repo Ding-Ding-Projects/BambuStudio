@@ -563,14 +563,22 @@ bool LanguageModeService::configure(std::string_view language_mode_id, const wxS
     }
 
     const bool catalog_ready = !next_profile.uses_auxiliary_cantonese_catalog || next_catalog != nullptr;
+    // Settings are applied again often (scheduled settings, school mode); only a
+    // change of mode or catalogue makes the recorded pairs wrong.
+    const bool same_language = m_profile.kind == next_profile.kind && m_cantonese_catalog != nullptr &&
+                               next_catalog != nullptr && m_cantonese_catalog_path == next_catalog_path;
     m_profile = std::move(next_profile);
     m_cantonese_catalog = std::move(next_catalog);
     m_cantonese_catalog_path = std::move(next_catalog_path);
     m_english_catalog = std::move(next_english);
     // Bilingual mode shows English through every legacy lookup and records the
     // Cantonese that belongs to it, so display code can add the second language.
-    BilingualRegistry::instance().reset(m_profile.kind == LanguageModeKind::BilingualEnglishCantoneseHongKong &&
-                                        m_cantonese_catalog != nullptr);
+    const bool bilingual = m_profile.kind == LanguageModeKind::BilingualEnglishCantoneseHongKong &&
+                           m_cantonese_catalog != nullptr;
+    if (same_language)
+        BilingualRegistry::instance().enable(bilingual);
+    else
+        BilingualRegistry::instance().reset(bilingual);
     return catalog_ready;
 }
 

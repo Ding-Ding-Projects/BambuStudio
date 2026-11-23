@@ -3491,7 +3491,7 @@ bool GUI_App::OnInit()
                 I18N::configure_language_mode(app_config->get("language"), from_u8(localization_dir()));
                 const bool bilingual = !PersonalModes::school_presentation_suppressed.load() &&
                     I18N::language_mode_profile().is_bilingual();
-                I18N::BilingualRegistry::instance().reset(bilingual);
+                I18N::BilingualRegistry::instance().enable(bilingual);
                 I18N::enable_bilingual_decorator(bilingual);
                 PersonalVocabulary::refresh();
                 FeatureServices::SurfaceRegistry::instance().refresh_presentation();

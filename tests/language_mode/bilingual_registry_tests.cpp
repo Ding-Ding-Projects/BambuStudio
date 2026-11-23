@@ -86,6 +86,20 @@ TEST_CASE("Bilingual registry records nothing outside bilingual mode", "[Bilingu
     REQUIRE(registry.lookup("Save").empty()); // reset clears everything
 }
 
+TEST_CASE("Bilingual registry keeps what it recorded while it stays enabled", "[BilingualRegistry]")
+{
+    // Menus record their labels once at startup; applying settings again in the
+    // same language must not forget them.
+    BilingualRegistry &registry = fresh(true);
+    registry.record("Check for Updates", u8("檢查更新"));
+    registry.enable(true);
+    REQUIRE(registry.lookup("Check for Updates") == u8("檢查更新"));
+    registry.enable(false);
+    REQUIRE(registry.lookup("Check for Updates").empty());
+    registry.enable(true);
+    REQUIRE(registry.lookup("Check for Updates").empty()); // switching off cleared it
+}
+
 TEST_CASE("Bilingual registry finds a message and its action only as separate labels", "[BilingualRegistry]")
 {
     // Print setup's stale-slice message and its Slice again action, paired as

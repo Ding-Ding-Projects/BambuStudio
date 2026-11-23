@@ -129,7 +129,7 @@ void ScheduledPreferences::apply(const ScheduledSettings::Effective& effective)
     language.set_funny_level(I18N::FunnyLanguage::Cantonese, I18N::parse_funny_level(m_config.get("funny_level_yue")));
     language.set_dialog_emojis(I18N::parse_dialog_emojis(m_config.get("dialog_emojis")));
     const bool bilingual = !PersonalModes::school_presentation_suppressed.load() && language.profile().is_bilingual();
-    I18N::BilingualRegistry::instance().reset(bilingual);
+    I18N::BilingualRegistry::instance().enable(bilingual);
     I18N::enable_bilingual_decorator(bilingual);
     MD3::Metrics::setDensity(m_config.get("ui_density") == "compact" ? MD3::Metrics::Density::Compact : MD3::Metrics::Density::Comfortable);
     const auto accent = m_config.get("ui_accent_seed");

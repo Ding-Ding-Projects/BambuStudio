@@ -50,7 +50,7 @@
 - [x] Review the rest of the title bar menus for findability: File, Edit, View, Objects and Calibration are short and stay as they are; Help is grouped under Learn, Set up, Get help, and Updates and about; items ending in an ellipsis show their Cantonese again.
 - [x] Stage the bundled fonts outside the working directory when the data folder is not chosen yet (they used to land as `fonts/` wherever the app started).
 - [x] Show a dialog, not a Prepare-only toast, when **Cold pull all rack hotends** is chosen without a connected H2C.
-- [ ] Show Cantonese for the three bilingual menu items whose English comes from the override catalog (AI ink scanner, Check for Updates, About Bambu Studio) and for labels with a mnemonic (Show &Overhang).
+- [x] Show Cantonese for the bilingual menu items whose English comes from the override catalog (AI ink scanner, Check for Updates, About Bambu Studio) and for labels with a mnemonic (Show &Overhang): settings applied again in the same language no longer clear the bilingual registry, and personal wording applies to labels ending in an ellipsis.
 - [x] Record that the native wxWidgets text boxes skip the TinyMCE rich text editor, with the reason, in `docs/features/design-system/graphite-shell.md`.
 - [x] Decided with the owner: the rack cold pull is only ever started by hand, as its own maintenance cycle, never part of a print; it keeps using the touchscreen cold pull routine, and the guide is also in **Local tools > Cold pull all rack hotends**.
 - [x] Group the **Local tools** menu under Printer, Files and models, Windows and games, and Safety and settings, with Cantonese headings; seen in the running application through the layout probe's `menu-popup` command.

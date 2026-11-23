@@ -156,6 +156,9 @@ const composition=pv.includes('wxString remember_composed(')?String.raw`
  check(display(wxString::FromUTF8("Open customer")).value==L"Open customer","dynamic menu excluded");
  remember_menu_label(wxString::FromUTF8("&Open menu"),wxString::FromUTF8("Open forged"));
  check(display(wxString::FromUTF8("Open forged")).value==L"Open forged","normalization must match");
+ remember(wxString::FromUTF8("Open drawer"));
+ check(display(wxString::FromUTF8("Open drawer...")).value==L"Inspect drawer...","registered text plus a menu ellipsis");
+ check(display(wxString::FromUTF8("Open cupboard...")).value==L"Open cupboard...","ellipsis grants nothing to an unknown stem");
 `:'';
 const generated=fixture.replace('// COMPOSITION_TESTS',composition).replace('// REGISTRATION',registration.join('\n')).replace('// HASH',crcTable+'\n'+method(imguiCore,'ImGuiID ImHashStr(')).replace('// MATCHER',functions.join('\n')).replace('// CANVAS',[
   method(imgui,'static void split_imgui_id('),method(imgui,'static std::string bilingual_stacked_utf8('),method(imgui,'static std::string bilingual_compact_utf8(')

@@ -122,6 +122,13 @@ void BilingualRegistry::reset(bool enabled)
     m_cache.clear();
 }
 
+void BilingualRegistry::enable(bool enabled)
+{
+    if (enabled && this->enabled())
+        return;
+    reset(enabled);
+}
+
 size_t BilingualRegistry::size() const
 {
     std::shared_lock lock(m_mutex);

@@ -24,8 +24,12 @@ class BilingualRegistry
 public:
     static BilingualRegistry &instance();
 
-    // Clears everything; called whenever the language mode is configured.
+    // Clears everything; called when the language mode or its catalogue changes.
     void reset(bool enabled);
+    // Turns recording on or off. Staying on keeps what is recorded: menus are
+    // built once at startup, so clearing on every settings apply would forget
+    // the Cantonese of their labels for the rest of the session.
+    void enable(bool enabled);
     bool enabled() const { return m_enabled.load(std::memory_order_relaxed); }
 
     // `english` is the text the UI received (vocabulary applied) and
