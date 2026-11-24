@@ -87,6 +87,13 @@ if (!wikiDir && process.env.BAMBU_SKIP_WIKI !== '1') {
   if (built.status !== 0) throw new Error('build-docs-data.mjs failed');
 }
 
+// The public screenshot gallery, built from the captures the README shows.
+{
+  const { spawnSync } = await import('node:child_process');
+  const built = spawnSync(process.execPath, [path.join(scriptDir, 'build-gallery.mjs'), path.join(outDir, 'gallery')], { stdio: 'inherit' });
+  if (built.status !== 0) throw new Error('build-gallery.mjs failed');
+}
+
 const files = [];
 async function walk(directory, prefix) {
   for (const entry of await readdir(directory, { withFileTypes: true })) {
