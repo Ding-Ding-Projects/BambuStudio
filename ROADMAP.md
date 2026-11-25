@@ -1,5 +1,14 @@
 # Roadmap
 
+## Cool down after a print, 25 November 2026
+
+- [x] Add a Cool down card to the Device page with one switch, off by default.
+- [x] Turn the part, auxiliary and chamber fans to full when the selected printer's print ends, and off once the bed and chamber are at or under 40 °C or after five minutes.
+- [x] Leave the fans to a new print, stop them when the switch is turned off, and skip them when the printer is already cool.
+- [x] Write the article and its Cantonese twin, translate every string, and capture the card from the built app.
+- [ ] Watch a real print end with the option on: fans at full, the cooling line counting down, fans off at 40 °C or five minutes.
+- [ ] Confirm `M106 P1`, `P2` and `P3` as live commands on an H2C, whose fans are otherwise set through the air duct controls.
+
 ## Version 325 verification
 
 - [x] Build, package and verify the installed startup of 2.9.2029.
