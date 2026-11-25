@@ -1,5 +1,9 @@
 # Bambu Studio handoff
 
+## Recovery from handler faults, 24 November 2026
+
+A start after signing in could end behind a fatal box, "Bambu Studio GUI initialization failed: invalid vector subscript". The bundled wxWidgets is built with exception support off, so any exception from an event handler left the event loop and ended the app. `GUI_App::OnRun()` now catches an ordinary exception, logs it, shows a non-blocking workspace notification and re-enters the event loop; network start-up and the account preset load are guarded the same way. Out-of-memory, a broken format string and a fault that repeats 50 times stay fatal. Checked on a local build of commit e0837a813 with a temporary injected out-of-range read: the main window opened and the notification appeared in Prepare. The out-of-range read on a signed-in start has not been located or removed, and the signed-in path itself was not exercised, because no stored sign-in was available on the build host. A fault raised during start-up outside the guarded blocks would still be fatal.
+
 ## Version 325 delivery, 22 November 2026
 
 The published Windows package 2.9.2029 and all four accompanying release assets matched their local SHA-256 digests. An existing installation updated and opened Home from its installed shortcut. With a sample cube, the shared device menu opened in Prepare and Slice and Print opened confirmation. Changing Rising chirp to Truck backing up closed and reopened print setup with the selection retained. [Runtime evidence](docs/evidence/print-setup-v325/evidence.json). Live device switching, dual-nozzle reassignment and a physical rack cycle remain unverified.
