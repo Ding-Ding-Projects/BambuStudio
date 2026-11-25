@@ -39006,3 +39006,36 @@ msgstr "Get help"
 #: src/slic3r/GUI/MainFrame.cpp
 msgid "Updates and about"
 msgstr "Updates and about"
+
+msgid "Cool down"
+msgstr ""
+
+msgid "Cool down the printer after a print"
+msgstr ""
+
+msgid "When a print ends, all fans run at full speed until the bed and chamber are at or under 40 °C, for five minutes at most. Bambu Studio must stay open with this printer selected."
+msgstr ""
+
+msgid "Off. Turn it on to run all fans after each print until the printer is cool."
+msgstr ""
+
+msgid "Fan control is locked for this printer, so the fans are left alone."
+msgstr ""
+
+msgid "Connect a printer. The cool down runs while Bambu Studio is open with the printer selected."
+msgstr ""
+
+msgid "Ready. When a print ends, all fans run until the bed and chamber are at or under 40 °C, for five minutes at most."
+msgstr ""
+
+msgid "Cooling: all fans on. Bed %s °C, chamber %s °C. Stops in %s at the latest."
+msgstr ""
+
+msgid "Cooling: all fans on. Bed %s °C. Stops in %s at the latest."
+msgstr ""
+
+msgid "Cooled down. The fans are off and the printer is cool enough to open."
+msgstr ""
+
+msgid "Stopped after five minutes with the bed at %s °C. The fans are off; the printer may still be warm."
+msgstr ""

@@ -60639,3 +60639,69 @@ msgstr "求助"
 #: src/slic3r/GUI/MainFrame.cpp
 msgid "Updates and about"
 msgstr "更新同關於"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+#: src/slic3r/GUI/PrintCooldown/PrintCooldownCard.cpp
+msgid "Cool down"
+msgstr "降溫"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+#: src/slic3r/GUI/PrintCooldown/PrintCooldownCard.cpp
+msgid "Cool down the printer after a print"
+msgstr "打印完之後幫打印機降溫"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+#: src/slic3r/GUI/PrintCooldown/PrintCooldownCard.cpp
+msgid "When a print ends, all fans run at full speed until the bed and chamber are at or under 40 °C, for five minutes at most. Bambu Studio must stay open with this printer selected."
+msgstr "打印完之後，所有風扇開盡，吹到熱床同機艙跌到 40 °C 或以下為止，最多五分鐘。Bambu Studio 要一直開住，仲要揀住呢部打印機。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+#: src/slic3r/GUI/PrintCooldown/PrintCooldownCard.cpp
+msgid "Off. Turn it on to run all fans after each print until the printer is cool."
+msgstr "未開。開咗之後，每次打印完都會開晒風扇吹到部機涼為止。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+#: src/slic3r/GUI/PrintCooldown/PrintCooldownCard.cpp
+msgid "Fan control is locked for this printer, so the fans are left alone."
+msgstr "呢部打印機鎖咗風扇控制，所以唔會郁啲風扇。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+#: src/slic3r/GUI/PrintCooldown/PrintCooldownCard.cpp
+msgid "Connect a printer. The cool down runs while Bambu Studio is open with the printer selected."
+msgstr "請連接打印機。Bambu Studio 開住兼揀住部打印機，降溫先會行。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+#: src/slic3r/GUI/PrintCooldown/PrintCooldownCard.cpp
+msgid "Ready. When a print ends, all fans run until the bed and chamber are at or under 40 °C, for five minutes at most."
+msgstr "準備好。打印完之後，所有風扇會吹到熱床同機艙跌到 40 °C 或以下，最多五分鐘。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+#: src/slic3r/GUI/PrintCooldown/PrintCooldownCard.cpp
+msgid "Cooling: all fans on. Bed %s °C, chamber %s °C. Stops in %s at the latest."
+msgstr "降溫緊：風扇全開。熱床 %s °C，機艙 %s °C。最遲 %s 之後停。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+#: src/slic3r/GUI/PrintCooldown/PrintCooldownCard.cpp
+msgid "Cooling: all fans on. Bed %s °C. Stops in %s at the latest."
+msgstr "降溫緊：風扇全開。熱床 %s °C。最遲 %s 之後停。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+#: src/slic3r/GUI/PrintCooldown/PrintCooldownCard.cpp
+msgid "Cooled down. The fans are off and the printer is cool enough to open."
+msgstr "已經涼咗。風扇熄咗，部機涼到可以開門。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+#: src/slic3r/GUI/PrintCooldown/PrintCooldownCard.cpp
+msgid "Stopped after five minutes with the bed at %s °C. The fans are off; the printer may still be warm."
+msgstr "五分鐘到，停咗，熱床仲有 %s °C。風扇熄咗，部機可能仲暖。"

@@ -129,6 +129,7 @@
 #include "DimSumSurprise.hpp"
 #include "TtsNarrator.hpp"
 #include "DoorChime/DoorChimeService.hpp"
+#include "PrintCooldown/PrintCooldownService.hpp"
 #include "PersonalModes/SchoolRuntime.hpp"
 #include "PersonalVocabulary.hpp"
 #include "FeatureServices/NarratorEnvironment.hpp"
@@ -1684,6 +1685,7 @@ void GUI_App::post_init()
 
     // Door chime (opt-in, off by default): the printer plays a chime when its door opens or closes.
     DoorChime::install();
+    PrintCooldown::install();
 
     // Extensions on print.finished: looks at the selected printer only while one is on.
     Extensions::Runtime::instance().start_watching_prints();

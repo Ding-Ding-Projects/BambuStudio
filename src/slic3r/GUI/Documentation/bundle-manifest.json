@@ -455,12 +455,12 @@
     {
       "route": "design-system/graphite-shell.md",
       "title": "Graphite shell",
-      "sha256": "42aac060141065acf929ccbdb3a8755cb42633402d90b50caf469e2d47d0235c"
+      "sha256": "c8c94e8f21d26cde122f938d1839d7b0a26f6535c21c6b8f9f9eaa2af4378b33"
     },
     {
       "route": "design-system/graphite-shell.yue_HK.md",
       "title": "石墨外殼",
-      "sha256": "b8810cd2282ccea88f1a237b70bc4021c008757aaff4a90770455aa65ac91717"
+      "sha256": "579322daf587c1cbde2b08b5630219714001355f3228861754ae1d560801e16e"
     },
     {
       "route": "design-system/humidity-details-atlas.md",
@@ -735,12 +735,12 @@
     {
       "route": "device/README.md",
       "title": "Device features",
-      "sha256": "0b788b9c2106a89f6fe35703803c110b2c74c0995e2633c7126e2b06093e9dfb"
+      "sha256": "73c6673f1e450dc675a62a7c6502593dae973f87aecd84e21bdf5d8b62b558b0"
     },
     {
       "route": "device/README.yue_HK.md",
       "title": "設備功能",
-      "sha256": "d57def8af16d3830296a31de1a3d2901bbf112aabde50da401fc1dd3637f4f4b"
+      "sha256": "040bbf1921d7ea57d589446b5994755dbc9624a12456980a88a401b531d92ce8"
     },
     {
       "route": "device/door-chime.md",
@@ -783,6 +783,16 @@
       "sha256": "5fcbfbf1ab1a4626871f0a157c7d6b3eebcbb8f26c2ff3ae1575440017594855"
     },
     {
+      "route": "device/print-cooldown.md",
+      "title": "Cool down after a print",
+      "sha256": "a5180368e5c1ccc9c7940736d83257dda1731c65720aac0aba9f763837a7dece"
+    },
+    {
+      "route": "device/print-cooldown.yue_HK.md",
+      "title": "打印完自動降溫",
+      "sha256": "3055383d5d07174ca07a958650a45f35cd37571277bb81ac7276f7819865d498"
+    },
+    {
       "route": "device/printer-melody.md",
       "title": "Printer melodies",
       "sha256": "e508889b53deed6dc7574c0716bd842a6274d69a61bdab5059f39a6f9d9a3e6b"
@@ -795,12 +805,12 @@
     {
       "route": "device/rack-cold-pull.md",
       "title": "Cold pull every H2C rack hotend",
-      "sha256": "e1ac51300b5fae4cff3f9404755eb72325a2a480ce05230b440f601bb827a95b"
+      "sha256": "813e891bd657aa69216826e8b8da1e4a9c1433f6796bf22871d70030127c9fee"
     },
     {
       "route": "device/rack-cold-pull.yue_HK.md",
       "title": "逐個冷拉 H2C 噴嘴架嘅熱端",
-      "sha256": "ed64f75a670eb9765f854885a540bcc117ae23e13ca1674222da83fd9e9ec126"
+      "sha256": "47afc4094e73bb28c1496eb44a68980b046f3ddaaecb7fda92f22b9294b80620"
     },
     {
       "route": "device/status-api.md",
@@ -1745,7 +1755,7 @@
     {
       "route": "windows/lubricate-mode.md",
       "title": "Lubricate mode and print melodies",
-      "sha256": "95d1bd25a7e29e620caf0980095b8344ba88017e8297aa2470e68c8603ab26d7"
+      "sha256": "0ed3d3bb9c42ae0b203f3128d748312be45191e9d8bf604487d2ba1895c37892"
     },
     {
       "route": "windows/lubricate-mode.yue_HK.md",
@@ -2335,7 +2345,7 @@
       "bytes": 16430
     }
   ],
-  "bundle_sha256": "248aff21e76a289aec64a310a7932d98bb903d33adbf7b59949b24c0a52afee6",
+  "bundle_sha256": "8071cb031fa29a3e523ed0b00d7c41be4101ad51f9a80cc8d0936b65bdbfbcb7",
   "unavailable_references": [
     {
       "source": "api/README.md",

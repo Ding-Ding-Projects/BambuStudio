@@ -16,6 +16,7 @@
 #include "BitmapCache.hpp"
 #include "GUI_App.hpp"
 #include "DoorChime/DoorChimeCard.hpp"
+#include "PrintCooldown/PrintCooldownCard.hpp"
 #include "MainFrame.hpp"
 #include "fila_manager/wgtFilaManagerCloudClient.h"
 #include "fila_manager/wgtFilaManagerStore.h"
@@ -2998,6 +2999,7 @@ wxBoxSizer *StatusBasePanel::create_machine_control_page(wxWindow *parent)
     bSizer_control->Add(m_filament_load_sizer, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(8));
     bSizer_control->Add(move_card, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(8));
     bSizer_control->Add(new DoorChimeCard(parent), 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(8));
+    bSizer_control->Add(new PrintCooldownCard(parent), 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(8));
     bSizer_control->Add(0, 0, 0, wxTOP, FromDIP(8));
 
     bSizer_right->Add(bSizer_control, 1, wxEXPAND | wxALL, 0);
