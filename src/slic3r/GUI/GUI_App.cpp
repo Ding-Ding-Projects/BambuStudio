@@ -3537,6 +3537,29 @@ bool GUI_App::OnInit()
     }
 }
 
+int GUI_App::OnRun()
+{
+    // The bundled wxWidgets is built without exception support, so it never
+    // calls OnExceptionInMainLoop(): an exception thrown by any event handler
+    // unwinds straight out of the event loop and used to end the app with a
+    // fatal box. Catch it here instead, report it, and start the loop again.
+    for (;;) {
+        try {
+            return wxApp::OnRun();
+        } catch (const std::bad_alloc &) {
+            throw;
+        } catch (const boost::io::bad_format_string &) {
+            throw;
+        } catch (const std::exception &ex) {
+            // A fault that fires on every pass would spin here forever; give
+            // up after a generous number of recoveries and fail as before.
+            if (is_closing() || m_recovered_error_count >= 50)
+                throw;
+            report_recovered_exception(ex.what(), "an event handler");
+        }
+    }
+}
+
 int GUI_App::OnExit()
 {
     StatusHubService::instance().stop();
