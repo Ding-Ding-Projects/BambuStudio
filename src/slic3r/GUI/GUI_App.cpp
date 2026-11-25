@@ -2593,10 +2593,17 @@ void GUI_App::restart_networking()
             plater_->get_notification_manager()->bbl_close_plugin_install_notification();
 
         if (m_agent->is_user_login()) {
-            remove_user_presets();
-            enable_user_preset_folder(true);
-            preset_bundle->load_user_presets(m_agent->get_user_id(), ForwardCompatibilitySubstitutionRule::Enable);
-            mainframe->update_side_preset_ui();
+            // A fault in one account preset must not skip the rest of start-up.
+            try {
+                remove_user_presets();
+                enable_user_preset_folder(true);
+                preset_bundle->load_user_presets(m_agent->get_user_id(), ForwardCompatibilitySubstitutionRule::Enable);
+                mainframe->update_side_preset_ui();
+            } catch (const std::bad_alloc &) {
+                throw;
+            } catch (const std::exception &ex) {
+                report_recovered_exception(ex.what(), "loading account presets");
+            }
         }
 
         if (app_config->get("sync_user_preset") == "true") {
@@ -4277,7 +4284,15 @@ bool GUI_App::on_init_inner()
     Slic3r::Http::set_extra_headers(extra_headers);
 
     copy_network_if_available();
-    on_init_network();
+    // Network start-up reads account data when a user is signed in. A fault
+    // there must not stop the app from opening.
+    try {
+        on_init_network();
+    } catch (const std::bad_alloc &) {
+        throw;
+    } catch (const std::exception &ex) {
+        report_recovered_exception(ex.what(), "network start-up");
+    }
 
     if (m_agent && m_agent->is_user_login()) {
         enable_user_preset_folder(true);
@@ -4486,6 +4501,7 @@ bool GUI_App::on_init_inner()
             this->mainframe->register_win32_callbacks();
 #endif
             this->post_init();
+            flush_recovered_errors();
 
             if (!m_download_file_url.empty()) {
                 request_model_download(m_download_file_url);
@@ -9403,8 +9419,56 @@ wxString GUI_App::filter_string(wxString str)
 
 bool GUI_App::OnExceptionInMainLoop()
 {
-    generic_exception_handle();
+    // One handler that fails must not take the whole app down: a signed-in
+    // start used to end in a fatal box because of a single out-of-range read.
+    // Running out of memory and a broken format string stay fatal, as before.
+    try {
+        throw;
+    } catch (const std::bad_alloc &) {
+        generic_exception_handle();
+    } catch (const boost::io::bad_format_string &) {
+        generic_exception_handle();
+    } catch (const std::exception &ex) {
+        report_recovered_exception(ex.what(), "an event handler");
+        return true;
+    } catch (...) {
+        report_recovered_exception("unknown exception", "an event handler");
+        return true;
+    }
     return false;
+}
+
+void GUI_App::report_recovered_exception(const std::string &what, const char *where)
+{
+    // A fault that repeats (a timer, a paint handler) must not flood the log
+    // or the notification corner.
+    ++m_recovered_error_count;
+    if (m_recovered_error_count <= 20) {
+        BOOST_LOG_TRIVIAL(error) << "Recovered from an exception in " << where << ": " << what;
+        flush_logs();
+    }
+    if (m_recovered_error_count > 3)
+        return;
+    m_recovered_errors.push_back(what);
+    CallAfter([this] { flush_recovered_errors(); });
+}
+
+void GUI_App::flush_recovered_errors()
+{
+    if (m_recovered_errors.empty() || is_closing())
+        return;
+    // Before the workspace exists there is nowhere to show a notification;
+    // post_init() calls this again once there is.
+    if (!m_post_initialized || plater_ == nullptr || plater_->get_notification_manager() == nullptr)
+        return;
+    std::vector<std::string> errors;
+    errors.swap(m_recovered_errors);
+    for (const std::string &what : errors) {
+        // TRN: Notification shown after the app survived an internal error. %1% is the technical message.
+        const wxString text = format_wxstr(_L("Something went wrong, but Bambu Studio kept running: %1%"), what);
+        plater_->get_notification_manager()->push_notification(NotificationType::CustomNotification,
+            NotificationManager::NotificationLevel::WarningNotificationLevel, into_u8(text));
+    }
 }
 
 #ifdef __APPLE__

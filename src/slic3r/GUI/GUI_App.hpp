@@ -288,6 +288,9 @@ public:
 private:
     bool            m_initialized { false };
     bool            m_post_initialized { false };
+    // Faults the app survived, waiting for the workspace to be able to show them.
+    std::vector<std::string> m_recovered_errors;
+    int             m_recovered_error_count { 0 };
     bool            m_app_conf_exists{ false };
     EAppMode        m_app_mode{ EAppMode::Editor };
     bool            m_is_recreating_gui{ false };
@@ -854,6 +857,10 @@ public:
 
     void            report_consent_common(bool agree, std::string scene, std::string formID);
     virtual bool OnExceptionInMainLoop();
+    // Records a fault the app survived and shows it as a notification that
+    // does not block, once the workspace can display one. Never opens a dialog.
+    void            report_recovered_exception(const std::string &what, const char *where);
+    void            flush_recovered_errors();
     // Calls wxLaunchDefaultBrowser if user confirms in dialog.
     bool            open_browser_with_warning_dialog(const wxString& url, int flags = 0);
 #ifdef __APPLE__
