@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "sourceCommit": "0a12cd0945b782fb28d02cfc0cd1c02ed1ee094b",
+  "executableSha256": "68b33481173e1b2653640fd5132e38512dc315dceb58c9fc7ca421e847d0514b",
+  "applicationDllSha256": "12710c0e5b61810b15ce33c1ad100431702e337ef52ee013fd1305d3876cc983",
+  "route": "Named hidden Windows desktop with locally installed Lowlevel, background edit and native layout-probe readback",
+  "fixture": {
+    "generator": "tests/automation-fixtures/generate_dense_sphere.py",
+    "triangles": 1035360,
+    "bytes": 51768084,
+    "sha256": "3184bf139a7645688fdd9cec8138f1b3a1097fdfa90b4e27a57f207618bbc598"
+  },
+  "simplifiedCanvasTriangleCount": 18170,
+  "observationSeconds": 38.71,
+  "nativeMessageTimeoutMs": 250,
+  "uiMessagesSent": 240,
+  "uiMessageTimeouts": 7,
+  "objectNamesBeforeCancel": [
+    "cube.stl",
+    "dense-sphere.stl",
+    "dense-sphere.stl"
+  ],
+  "objectNamesAfterCancel": [
+    "cube.stl",
+    "dense-sphere.stl",
+    "dense-sphere.stl"
+  ],
+  "objectNamesAfterNewImport": [
+    "cube.stl",
+    "dense-sphere.stl",
+    "dense-sphere.stl",
+    "cube.stl"
+  ],
+  "preFixProgress": "A 40% progress notification was still visible after cancellation.",
+  "captures": [
+    {
+      "path": "large-mesh-simplified.png",
+      "sha256": "5dd5e8508f78625e36b3b86b1ea12a00e8e4db56d9501c9597cfa36a2fa0a506",
+      "dimensions": [
+        700,
+        885
+      ],
+      "captureTimestamp": "Unavailable"
+    },
+    {
+      "path": "cancel-dense-import.png",
+      "sha256": "687e4f6d827848970fb1832d04ae36462af136e8b571578e0e00e1742c913bcb",
+      "dimensions": [
+        700,
+        885
+      ],
+      "captureTimestamp": "Unavailable"
+    }
+  ],
+  "limits": "One synthetic STL on this host and initial candidate. No strict response-time bound and no later repaired-build result."
+}
