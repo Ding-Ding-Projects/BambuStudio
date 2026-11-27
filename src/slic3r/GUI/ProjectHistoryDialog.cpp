@@ -377,17 +377,23 @@ void ProjectHistoryDialog::create_ui()
     auto *root = new wxBoxSizer(wxVERTICAL);
     root->Add(new MD3DialogCaption(this, _L("Local history")), 0, wxEXPAND);
 
-    m_title_label = new Label(this, Label::Head_20, _L("Local history"));
-    root->Add(m_title_label, 0, wxLEFT | wxRIGHT | wxTOP, FromDIP(24));
+    m_content_scroll = new MD3ScrolledWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL);
+    m_content_scroll->SetScrollRate(0, FromDIP(16));
+    m_content_scroll->SetMinSize(wxSize(0, 0));
+    auto *content = new wxBoxSizer(wxVERTICAL);
+    m_content_scroll->SetSizer(content);
+    root->Add(m_content_scroll, 1, wxEXPAND);
+    m_title_label = new Label(m_content_scroll, Label::Head_20, _L("Local history"));
+    content->Add(m_title_label, 0, wxLEFT | wxRIGHT | wxTOP, FromDIP(24));
 
     // TRN: Subtitle in the project Version history dialog.
-    m_subtitle_label = new Label(this, Label::Body_14,
+    m_subtitle_label = new Label(m_content_scroll, Label::Body_14,
         _L("Browse project, settings, draft and printer history saved on this device. No history is uploaded."),
         LB_AUTO_WRAP | wxST_NO_AUTORESIZE);
     m_subtitle_label->SetMinSize(wxSize(0, -1));
-    root->Add(m_subtitle_label, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(MD3::Metrics::active().gap));
+    content->Add(m_subtitle_label, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(MD3::Metrics::active().gap));
 
-    m_info_card = new StaticBox(this);
+    m_info_card = new StaticBox(m_content_scroll);
     auto *info_sizer = new wxBoxSizer(wxVERTICAL);
     const wxString saved_project = m_plater != nullptr ? m_plater->get_project_filename(".3mf") : wxString{};
     const wxString project_name  = saved_project.empty() ? _L("Untitled project") : wxFileName(saved_project).GetFullName();
@@ -404,11 +410,11 @@ void ProjectHistoryDialog::create_ui()
     set_wrapped_tooltip(m_project_label, project_line);
     info_sizer->Add(m_project_label, 0, wxEXPAND | wxALL, FromDIP(MD3::Metrics::active().padding));
     m_info_card->SetSizer(info_sizer);
-    root->Add(m_info_card, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(24));
+    content->Add(m_info_card, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(24));
 
     // Recovery banner for snapshots whose commit failed terminally. Hidden until
     // refresh_retained_failures() finds quarantined snapshots to surface.
-    m_failure_card = new StaticBox(this);
+    m_failure_card = new StaticBox(m_content_scroll);
     auto *failure_sizer = new wxBoxSizer(wxVERTICAL);
     // TRN: Heading of the recovery banner in the Version history dialog.
     m_failure_title_label = new Label(m_failure_card, Label::Head_14, _L("Some versions could not be saved"));
@@ -420,25 +426,29 @@ void ProjectHistoryDialog::create_ui()
     m_retry_failures_button->Bind(wxEVT_BUTTON, &ProjectHistoryDialog::on_retry_failures, this);
     failure_sizer->Add(m_retry_failures_button, 0, wxALIGN_RIGHT | wxALL, FromDIP(MD3::Metrics::active().padding));
     m_failure_card->SetSizer(failure_sizer);
-    root->Add(m_failure_card, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(24));
+    content->Add(m_failure_card, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(24));
     m_failure_card->Hide();
 
     TabStrip::Options options;
     options.surface_key = "local-history"; options.surface_name = _L("Local history"); options.strip_name = _L("History views");
     options.default_edge = MD3::Tabs::DockEdge::Top; options.allow_close = false;
-    auto *tabs = new TabStrip(this, options);
+    auto *tabs = new TabStrip(m_content_scroll, options);
     tabs->AddTab("timeline", _L("Timeline")); tabs->AddTab("table", _L("Table")); tabs->AddTab("graph", _L("Git graph"));
     tabs->AddTab("compare", _L("Compare")); tabs->AddTab("searches", _L("Past searches"));
     tabs->LoadLayout(); tabs->Activate("timeline", false);
     tabs->Bind(EVT_TABSTRIP_ACTIVATE, [this](wxCommandEvent &event) { set_view(event.GetString().ToStdString()); });
-    root->Add(tabs, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(24));
-    m_list_card = new StaticBox(this);
+    content->Add(tabs, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(24));
+    m_list_card = new StaticBox(m_content_scroll);
     auto *list_sizer = new wxBoxSizer(wxVERTICAL);
     // The search and the filter grid sit in the shared collapsible filter bar;
     // collapsed, it still names every filter that narrows the list.
     // TRN: Header of the collapsible search and filter row of a list.
     m_filters = new CollapsibleFilterBar(m_list_card, "project_history", _L("Search and filters"));
     wxWindow *filter_body  = m_filters->GetBody();
+    filter_body->Bind(wxEVT_SHOW, [this](wxShowEvent &event) {
+        event.Skip();
+        CallAfter([this] { update_responsive_layout(); });
+    });
     wxSizer  *filter_sizer = m_filters->GetBodySizer();
     // TRN: Placeholder of the search field filtering the version list.
     m_search_field = new SearchField(m_filters->GetBody(), _L("Search versions"));
@@ -453,7 +463,7 @@ void ProjectHistoryDialog::create_ui()
         update_selection();
     });
     filter_sizer->Add(m_search_field, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(8));
-    auto *filters = new wxFlexGridSizer(2, 4, FromDIP(6), FromDIP(8));
+    auto *filters = m_filter_grid = new wxFlexGridSizer(0, 4, FromDIP(6), FromDIP(8));
     // Every column shares the width: with only two growing, the device and
     // date fields kept their tiny default width and cut their hints short.
     for (int column = 0; column < 4; ++column) filters->AddGrowableCol(column, 1);
@@ -505,14 +515,16 @@ void ProjectHistoryDialog::create_ui()
     m_search_field->GetTextCtrl()->Bind(wxEVT_KEY_DOWN, [this](wxKeyEvent &event) { if (event.GetKeyCode() == WXK_RETURN || event.GetKeyCode() == WXK_NUMPAD_ENTER) submit_search(); else event.Skip(); });
     m_version_list = new MD3DataViewListCtrl(m_list_card, wxID_ANY, wxDefaultPosition, wxDefaultSize,
                                             wxDV_MULTIPLE | wxBORDER_NONE);
+    // Keep rows selectable even when all filters and bulk actions are shown.
+    m_version_list->SetMinSize(wxSize(0, FromDIP(160)));
     m_version_list->SetName(_L("Project versions"));
-    m_version_list->AppendTextColumn(_L("Commit"), wxDATAVIEW_CELL_INERT, FromDIP(104), wxALIGN_LEFT,
+    m_version_list->AppendTextColumn(_L("Time"), wxDATAVIEW_CELL_INERT, FromDIP(104), wxALIGN_LEFT,
                                      wxDATAVIEW_COL_RESIZABLE);
-    m_version_list->AppendTextColumn(_L("Message"), wxDATAVIEW_CELL_INERT, FromDIP(280), wxALIGN_LEFT,
+    m_version_list->AppendTextColumn(_L("Category / description"), wxDATAVIEW_CELL_INERT, FromDIP(280), wxALIGN_LEFT,
                                      wxDATAVIEW_COL_RESIZABLE);
-    m_version_list->AppendTextColumn(_L("Time"), wxDATAVIEW_CELL_INERT, FromDIP(150), wxALIGN_LEFT,
+    m_version_list->AppendTextColumn(_L("Commit"), wxDATAVIEW_CELL_INERT, FromDIP(150), wxALIGN_LEFT,
                                      wxDATAVIEW_COL_RESIZABLE);
-    m_version_list->AppendTextColumn(_L("Size"), wxDATAVIEW_CELL_INERT, FromDIP(80), wxALIGN_RIGHT,
+    m_version_list->AppendTextColumn(_L("Size / state"), wxDATAVIEW_CELL_INERT, FromDIP(80), wxALIGN_RIGHT,
                                      wxDATAVIEW_COL_RESIZABLE);
     m_version_list->Bind(wxEVT_DATAVIEW_SELECTION_CHANGED, &ProjectHistoryDialog::on_selection_changed, this);
     m_version_list->Bind(wxEVT_DATAVIEW_ITEM_ACTIVATED, &ProjectHistoryDialog::on_item_activated, this);
@@ -521,6 +533,7 @@ void ProjectHistoryDialog::create_ui()
     list_sizer->Add(m_version_list, 1, wxEXPAND | wxALL, FromDIP(8));
 
     m_graph = new RevisionGraph(m_list_card);
+    m_graph->SetMinSize(wxSize(0, FromDIP(100)));
     m_graph->Hide();
     list_sizer->Add(m_graph, 1, wxEXPAND | wxALL, FromDIP(8));
     m_detail = new TextAreaEditor(m_list_card, wxID_ANY, wxEmptyString, wxDefaultPosition, FromDIP(wxSize(400, 120)), wxTE_MULTILINE | wxTE_READONLY);
@@ -574,7 +587,7 @@ void ProjectHistoryDialog::create_ui()
     // away; set_status() mirrors the untruncated text into the tooltip.
     m_status_label = new Label(m_list_card, Label::Body_13, wxEmptyString,
                                LB_AUTO_WRAP | wxST_NO_AUTORESIZE);
-    m_status_label->SetMinSize(wxSize(0, -1)); // as above: the sizer owns the width, the text does not
+    m_status_label->SetMinSize(wxSize(0, m_status_label->GetCharHeight())); // as above: the sizer owns the width, the text does not
     list_sizer->Add(m_status_label, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(MD3::Metrics::active().padding));
 
     m_load_all_button = new Button(m_list_card, _L("Load all versions"));
@@ -584,14 +597,14 @@ void ProjectHistoryDialog::create_ui()
     list_sizer->Add(m_load_all_button, 0, wxALIGN_RIGHT | wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(MD3::Metrics::active().padding));
 
     m_list_card->SetSizer(list_sizer);
-    root->Add(m_list_card, 1, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(24));
+    content->Add(m_list_card, 1, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(24));
 
     // TRN: Safety note in the Version history dialog.
-    m_safety_label = new Label(this, Label::Body_12,
+    m_safety_label = new Label(m_content_scroll, Label::Body_12,
         _L("Restoring adds a new version. It never overwrites the project file or rewinds Git history."),
         LB_AUTO_WRAP | wxST_NO_AUTORESIZE);
     m_safety_label->SetMinSize(wxSize(0, -1));
-    root->Add(m_safety_label, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(24));
+    content->Add(m_safety_label, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(24));
 
     auto *actions = new wxBoxSizer(wxHORIZONTAL);
     m_refresh_button = new Button(this, _L("Refresh"));
@@ -633,6 +646,7 @@ void ProjectHistoryDialog::apply_theme()
     const wxColour outline       = StateColor::semantic(MD3::Role::OutlineVariant);
 
     SetBackgroundColour(surface);
+    m_content_scroll->SetBackgroundColour(surface);
     m_graph->SetBackgroundColour(list_surface);
     m_title_label->SetForegroundColour(text);
     m_subtitle_label->SetForegroundColour(secondary);
@@ -1036,6 +1050,12 @@ void ProjectHistoryDialog::update_responsive_layout()
         return;
 
     const int content_width = std::max(FromDIP(240), GetClientSize().GetWidth() - FromDIP(48));
+    const int columns = std::clamp((content_width - FromDIP(16)) / FromDIP(178), 1, 4);
+    if (columns != m_filter_grid->GetCols()) {
+        for (int i = 0; i < m_filter_grid->GetCols(); ++i) m_filter_grid->RemoveGrowableCol(i);
+        m_filter_grid->SetCols(columns);
+        for (int i = 0; i < columns; ++i) m_filter_grid->AddGrowableCol(i, 1);
+    }
 
     // wxStaticText::Wrap() mutates its rendered label. Restore the localized
     // source before every wrap so repeated resizes do not accumulate breaks.
@@ -1049,17 +1069,23 @@ void ProjectHistoryDialog::update_responsive_layout()
     m_safety_label->Wrap(content_width);
 
     Layout();
+    m_content_scroll->FitInside();
+    m_content_scroll->Layout();
 
-    const int commit_width  = FromDIP(104);
-    const int time_width    = FromDIP(150);
+    const int commit_width = std::max(FromDIP(104), m_version_list->GetTextExtent("ffffffffffff").x + FromDIP(16));
+    int time_width = FromDIP(150);
+    for (int i = 0; i < 12; ++i) {
+        const wxDateTime sample(28, static_cast<wxDateTime::Month>(i), 2026, 23, 59);
+        time_width = std::max(time_width, m_version_list->GetTextExtent(HumanDate::date_time(sample)).x + FromDIP(16));
+    }
     const int size_width    = FromDIP(80);
     const int list_width    = m_version_list->GetClientSize().GetWidth();
     const int message_width = std::max(FromDIP(140),
         list_width - commit_width - time_width - size_width - FromDIP(4));
     if (m_version_list->GetColumnCount() >= 4) {
-        m_version_list->GetColumn(0)->SetWidth(commit_width);
+        m_version_list->GetColumn(0)->SetWidth(m_view == "timeline" ? time_width : commit_width);
         m_version_list->GetColumn(1)->SetWidth(message_width);
-        m_version_list->GetColumn(2)->SetWidth(time_width);
+        m_version_list->GetColumn(2)->SetWidth(m_view == "timeline" ? commit_width : time_width);
         m_version_list->GetColumn(3)->SetWidth(size_width);
     }
 
@@ -1683,7 +1709,7 @@ void ProjectHistoryDialog::set_view(const std::string &view)
     m_version_list->GetColumn(1)->SetTitle(searches ? _L("Search and filters") : _L("Category / description"));
     m_version_list->GetColumn(2)->SetTitle(searches ? _L("Submitted") : view == "timeline" ? _L("Commit") : _L("Time"));
     m_version_list->GetColumn(3)->SetTitle(searches ? _L("View") : _L("Size / state"));
-    populate_versions(); update_selection(); Layout();
+    populate_versions(); update_selection(); update_responsive_layout();
 }
 
 void ProjectHistoryDialog::submit_search()
