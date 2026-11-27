@@ -3756,7 +3756,7 @@ wxPanel *SelectMachineDialog::create_lubricate_melody_panel(wxWindow *parent)
     m_lubricate_list->SetName(_L("Lubricate melody"));
     m_lubricate_list->Bind(wxEVT_LISTBOX, [this](wxCommandEvent &) { on_lubricate_melody_selected(); });
 
-    m_lubricate_note = new wxStaticText(m_lubricate_panel, wxID_ANY, wxEmptyString);
+    m_lubricate_note = new Label(m_lubricate_panel);
     m_lubricate_note->SetFont(Label::Body_12);
     m_lubricate_note->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
 

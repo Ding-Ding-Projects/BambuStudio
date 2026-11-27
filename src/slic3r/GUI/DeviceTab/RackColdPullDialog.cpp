@@ -7,11 +7,11 @@
 #include "slic3r/GUI/GUI_App.hpp"
 #include "slic3r/GUI/I18N.hpp"
 
-#include <wx/button.h>
-#include <wx/checkbox.h>
+#include "slic3r/GUI/Widgets/Button.hpp"
+#include "slic3r/GUI/Widgets/Label.hpp"
+#include "slic3r/GUI/Widgets/LabeledCheckBox.hpp"
 #include <wx/dialog.h>
 #include <wx/sizer.h>
-#include <wx/stattext.h>
 #include <wx/timer.h>
 #include <chrono>
 
@@ -112,11 +112,14 @@ void ShowRackColdPullDialog(wxWindow* parent, const std::shared_ptr<DevNozzleRac
 
     wxDialog dialog(parent, wxID_ANY, _L("Cold pull all rack nozzles"));
     auto* box = new wxBoxSizer(wxVERTICAL);
-    auto* title = new wxStaticText(&dialog, wxID_ANY, wxEmptyString);
-    auto* body = new wxStaticText(&dialog, wxID_ANY, wxEmptyString);
-    auto* check = new wxCheckBox(&dialog, wxID_ANY, wxEmptyString);
-    auto* action = new wxButton(&dialog, wxID_ANY, _L("Continue"));
-    auto* close = new wxButton(&dialog, wxID_CANCEL, _L("Close guide"));
+    auto* title = new Label(&dialog);
+    auto* body = new Label(&dialog);
+    auto* check = new LabeledCheckBox(&dialog, wxEmptyString);
+    auto* action = new Button(&dialog, _L("Continue"));
+    action->SetVariant(Button::Variant::Filled);
+    auto* close = new Button(&dialog, _L("Close guide"), wxEmptyString, 0, 0, wxID_CANCEL);
+    close->SetVariant(Button::Variant::Outlined);
+    close->Bind(wxEVT_BUTTON, [&](wxCommandEvent&) { dialog.EndModal(wxID_CANCEL); });
     for (wxWindow* w : std::array<wxWindow*, 5>{title, body, check, action, close})
         box->Add(w, 0, wxALL, dialog.FromDIP(8));
     dialog.SetSizer(box);
