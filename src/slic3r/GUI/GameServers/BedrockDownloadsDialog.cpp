@@ -186,7 +186,7 @@ private:
                 if (weak.expired()) return;
                 busy = false;
                 if (!error.empty() || out.empty()) {
-                    status->SetLabel(wxString::FromUTF8(error.empty() ? "Download incomplete." : error));
+                    status->SetLabel((error.empty() ? _L("Download incomplete.") : wxString::FromUTF8(error)));
                     return;
                 }
                 status->SetLabel(wxString::Format(_L("Saved %s. Computed SHA-256: %s"), wxString::FromUTF8(out), wxString::FromUTF8(sum)));
