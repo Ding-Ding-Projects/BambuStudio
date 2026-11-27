@@ -378,5 +378,10 @@
     "file": "src/slic3r/GUI/ScheduledSettings/Panel.cpp",
     "literal": "Not in this rule. Choose a value and add it explicitly.",
     "reason": "Panel::tr receives this English source and its explicit Cantonese translation together. The shared scheduled-settings renderer chooses the current language."
+  },
+  {
+    "file": "src/slic3r/GUI/ExtruderPanel.cpp",
+    "literal": "extruder side",
+    "reason": "Gettext context key distinguishing the left/right hotend indicator from unit and keyboard symbols; the source label itself is translated."
   }
 ]

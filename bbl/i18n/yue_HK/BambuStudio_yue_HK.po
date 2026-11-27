@@ -62151,3 +62151,8 @@ msgstr "%s 噴嘴 · 閒置"
 #. review-status: agent-drafted
 msgid "%s nozzle · Connected"
 msgstr "%s 噴嘴 · 已連線"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Invalid value"
+msgstr "無效值"

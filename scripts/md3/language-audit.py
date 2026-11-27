@@ -15,6 +15,8 @@ at lowlevel-computer-use-cheap.exe; the default is the checkout beside this
 repository under the user's GitHub folder.
 """
 import argparse
+import ctypes
+from ctypes import wintypes
 import json
 import os
 import shutil
@@ -26,16 +28,11 @@ from pathlib import Path
 
 import psutil
 
+from recapture import App, find_control
+
 DEFAULT_CHEAP = os.path.join(os.path.expanduser('~'), 'Documents', 'GitHub', 'lowlevel-computer-use-mcp', '.venv', 'Scripts', 'lowlevel-computer-use-cheap.exe')
 CHEAP = os.environ.get('LLCU_CHEAP', DEFAULT_CHEAP)
 SENDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'send-layout-probe.py')
-# Client coordinates at 100% in the 1200x800 main frame and the 780-wide
-# Preferences dialog (same values as capture-tuple.py).
-PREPARE = (211, 119)
-GEAR = (1155, 121)
-GENERAL = (79, 120)
-
-
 def cheap(tool, **kw):
     args = [CHEAP, tool]
     for k, v in kw.items():
@@ -47,14 +44,70 @@ def cheap(tool, **kw):
     return data
 
 
+def visible_target_windows(desktop, pid):
+    """Read only the target PID's top-level captions on the named desktop.
+
+    The cheap CLI's list operation sends synchronous WM_GETTEXT to every
+    window. A busy splash can block that operation before the PID is filtered.
+    GetWindowTextW reads a foreign process's cached top-level caption without
+    asking its event loop to respond. All input and launches still use Lowlevel.
+    """
+    user = ctypes.WinDLL('user32', use_last_error=True)
+    callback_type = ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)
+    user.OpenDesktopW.argtypes = [wintypes.LPCWSTR, wintypes.DWORD, wintypes.BOOL, wintypes.DWORD]
+    user.OpenDesktopW.restype = wintypes.HANDLE
+    user.CloseDesktop.argtypes = [wintypes.HANDLE]
+    user.EnumDesktopWindows.argtypes = [wintypes.HANDLE, callback_type, wintypes.LPARAM]
+    user.GetWindowThreadProcessId.argtypes = [wintypes.HWND, ctypes.POINTER(wintypes.DWORD)]
+    user.GetWindowRect.argtypes = [wintypes.HWND, ctypes.POINTER(wintypes.RECT)]
+    user.IsWindowVisible.argtypes = [wintypes.HWND]
+    for function in (user.GetClassNameW, user.GetWindowTextW):
+        function.argtypes = [wintypes.HWND, wintypes.LPWSTR, ctypes.c_int]
+    handle = user.OpenDesktopW(desktop, 0, False, 0x0001)  # DESKTOP_READOBJECTS
+    if not handle:
+        raise ctypes.WinError(ctypes.get_last_error())
+    windows = []
+
+    @callback_type
+    def collect(hwnd, _):
+        owner = wintypes.DWORD()
+        user.GetWindowThreadProcessId(hwnd, ctypes.byref(owner))
+        if owner.value == pid and user.IsWindowVisible(hwnd):
+            cls = ctypes.create_unicode_buffer(128)
+            title = ctypes.create_unicode_buffer(512)
+            rect = wintypes.RECT()
+            if user.GetClassNameW(hwnd, cls, len(cls)) and user.GetWindowRect(hwnd, ctypes.byref(rect)):
+                user.GetWindowTextW(hwnd, title, len(title))
+                windows.append({'process_id': pid, 'handle': hwnd, 'class': cls.value, 'title': title.value,
+                                'width': rect.right - rect.left, 'height': rect.bottom - rect.top})
+        return True
+
+    try:
+        if not user.EnumDesktopWindows(handle, collect, 0):
+            raise ctypes.WinError(ctypes.get_last_error())
+    finally:
+        user.CloseDesktop(handle)
+    return windows
+
+
 def wait_window(desktop, pid, pred, timeout, what):
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
-        for w in cheap('list_headless_windows', name=desktop)['windows']:
-            if w['process_id'] == pid and pred(w):
+        for w in visible_target_windows(desktop, pid):
+            if pred(w):
                 return w
         time.sleep(1.0)
     raise SystemExit(f'timed out waiting for {what}')
+
+
+def click_control(probe, hwnd, label, *, scope=None):
+    records = probe.probe()
+    control = find_control(records, label, scope or hwnd)
+    if not control or not control.get('enabled', True):
+        raise SystemExit(f'No enabled {label!r} control on the target surface.')
+    bounds = control['rect']
+    # Address the target's own client area, never a guessed point on the frame.
+    cheap('mouse_click', hwnd=control['hwnd'], x=bounds['w'] // 2, y=bounds['h'] // 2)
 
 
 def audit(desktop, hwnd, audit_file, out_file):
@@ -99,21 +152,28 @@ def main():
         if Path(candidate.exe()).resolve() != exe or arguments[1:] != ['--datadir', str(profile)]:
             raise SystemExit('Launched process does not match the target executable and profile.')
         process = candidate
-        frame = wait_window(args.desktop, pid, lambda w: w['class'] == 'wxWindowNR' and w['width'] >= 1000 and w['height'] >= 600, 240, 'the main frame')
+        frame = wait_window(args.desktop, pid, lambda w: w['class'] == 'wxWindowNR' and w['width'] >= 1000 and w['height'] >= 600 and 'Bambu Studio' in w['title'], 240, 'the main frame')
         time.sleep(8)
-        cheap('mouse_click', hwnd=frame['handle'], x=PREPARE[0], y=PREPARE[1])
+        probe = App(str(exe), str(profile), args.desktop, args.out)
+        probe.main = frame['handle']
+        probe.pid = pid
+        click_control(probe, frame['handle'], 'Prepare')
         time.sleep(6)  # the decorator sweeps every shown window about every 3 s
+        if not find_control(probe.probe(), 'Add ink', frame['handle']):
+            raise SystemExit('Prepare did not expose its ink controls.')
         result = audit(args.desktop, frame['handle'], audit_file, os.path.join(args.out, 'language-audit--prepare.json'))
         if result.get('mode') != 'bilingual' or not result.get('windows') or any(
                 window['class'] != 'wxFrame' for window in result['windows']):
             raise SystemExit('Prepare audit is blocked by another window or the wrong language.')
         summary['prepare'] = result['totals']
         labels.extend(result['english_only'])
-        cheap('mouse_click', hwnd=frame['handle'], x=GEAR[0], y=GEAR[1])
+        click_control(probe, frame['handle'], 'Settings')
         time.sleep(2.5)
         prefs = wait_window(args.desktop, pid, lambda w: w['class'] == '#32770' and w['width'] >= 700 and w['height'] >= 560 and ('Preferences' in w['title'] or '偏好設定' in w['title']), 20, 'Preferences')
-        cheap('mouse_click', hwnd=prefs['handle'], x=GENERAL[0], y=GENERAL[1])
+        click_control(probe, prefs['handle'], 'General')
         time.sleep(6)
+        if not find_control(probe.probe(), 'General Settings', prefs['handle']):
+            raise SystemExit('Preferences did not expose the General settings section.')
         result = audit(args.desktop, frame['handle'], audit_file, os.path.join(args.out, 'language-audit--preferences-general.json'))
         if result.get('mode') != 'bilingual' or not any(
                 window['class'] == 'wxDialog' and ('Preferences' in window['title'] or '偏好設定' in window['title'])

@@ -39924,3 +39924,6 @@ msgstr ""
 
 msgid "Sampled print order"
 msgstr ""
+
+msgid "Invalid value"
+msgstr ""
