@@ -39,9 +39,12 @@ public:
     NativeLaunchAdapter& operator=(const NativeLaunchAdapter&) = delete;
     bool available() const;
     std::string unavailable_reason() const;
-    NativePickerResult pick_executable(LaunchKind, void* native_owner = nullptr);
-    NativePickerResult pick_model_file(void* native_owner = nullptr);
-    NativeDirectoryResult pick_working_directory(void* native_owner = nullptr);
+    NativePickerResult pick_executable(LaunchKind, void* native_owner = nullptr,
+        const std::wstring& title = L"Select the registered executable", const std::wstring& filter = L"Native executable");
+    NativePickerResult pick_model_file(void* native_owner = nullptr,
+        const std::wstring& title = L"Select a local GGUF model", const std::wstring& filter = L"GGUF model");
+    NativeDirectoryResult pick_working_directory(void* native_owner = nullptr,
+        const std::wstring& title = L"Select the launch working directory");
     bool verified_file(const PickerEvidence&, bool executable) const override;
     bool directory_exists(const std::string&) const override;
     bool port_available(unsigned) const override;

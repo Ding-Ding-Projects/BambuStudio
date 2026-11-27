@@ -4194,24 +4194,31 @@ wxWindow *PreferencesDialog::create_general_tab()
         auto refresh = [runtime, mode_title, mode_status, enroll, replace, enable, unlock, scrolled, last_failed](int failed) {
             if (failed >= 0) *last_failed = failed != 0;
             mode_title->SetLabel(wxString::FromUTF8(runtime->mode().record().display_name));
-            wxString state = runtime->mode().suppressed() ? _L("Restricted presentation is active.") : _L("Normal presentation is active.");
+            const auto localized_stacked = [](const char *source) {
+                return I18N::render_localized_text_stacked(
+                    I18N::translate_mode(source).finalize_without_arguments()).label;
+            };
+            wxString state = runtime->mode().suppressed() ? localized_stacked(L("Restricted presentation is active.")) : localized_stacked(L("Normal presentation is active."));
             if (runtime->mode().status() == PersonalModes::RecordStatus::Corrupt || runtime->mode().status() == PersonalModes::RecordStatus::Unavailable)
-                state += "\n" + _L("Shared record is unreadable. Restricted presentation remains active.");
-            state += "\n" + (runtime->native_watch_available() ? _L("Native monitoring is active.") : _L("Native monitoring is unavailable; polling is used."));
+                state += "\n" + localized_stacked(L("Shared record is unreadable. Restricted presentation remains active."));
+            state += "\n" + (runtime->native_watch_available() ? localized_stacked(L("Native monitoring is active.")) : localized_stacked(L("Native monitoring is unavailable; polling is used.")));
             bool configured = false, available = true;
             unsigned wait_seconds = 0;
             try {
                 configured = wxGetApp().school_credentials().metadata().configured;
                 const auto attempts = wxGetApp().school_credentials().attempts();
                 wait_seconds = attempts.wait_seconds;
-                if (wait_seconds) state += "\n" + wxString::Format(_L("Try again in %u seconds."), wait_seconds);
+                if (wait_seconds) state += "\n" + I18N::render_localized_text_stacked(
+                    I18N::translate_mode(L("Try again in %u seconds.")).format_each([wait_seconds](const wxString &format) {
+                        return wxString::Format(format, wait_seconds);
+                    })).label;
             }
-            catch (const LocalSecurity::Failure&) { available = false; state += "\n" + _L("Credential vault is unavailable."); }
+            catch (const LocalSecurity::Failure&) { available = false; state += "\n" + localized_stacked(L("Credential vault is unavailable.")); }
             enroll->Enable(available && !configured);
             replace->Enable(available && configured && !wait_seconds);
             enable->Enable(available && configured && !runtime->mode().record().enabled);
             unlock->Enable(available && configured && runtime->mode().record().enabled && !wait_seconds);
-            if (*last_failed) state += "\n" + _L("The change was not applied. Check the credential, input limits and shared-record availability.");
+            if (*last_failed) state += "\n" + localized_stacked(L("The change was not applied. Check the credential, input limits and shared-record availability."));
             mode_status->SetLabel(state);
             scrolled->Layout(); scrolled->FitInside();
         };

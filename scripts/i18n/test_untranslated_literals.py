@@ -206,11 +206,17 @@ def find_matching_paren(text: str, open_index: int) -> int:
 
 def scan_file(path: Path) -> list[Hit]:
     raw = path.read_text(encoding="utf-8", errors="replace")
+    if not CALL_SITE_RE.search(raw):
+        return []
     clean = strip_comments(raw)
+    # Search for C++ calls only in code. A quoted documentation example such
+    # as SetLabel("...") is string data even in a generated C++ header. Blank
+    # it only for locating the call: actual arguments are read from clean.
+    syntax = STRING_LITERAL_RE.sub(lambda m: " " * len(m.group(0)), clean)
     rel = path.relative_to(REPO_ROOT).as_posix()
     hits: list[Hit] = []
 
-    for call_match in CALL_SITE_RE.finditer(clean):
+    for call_match in CALL_SITE_RE.finditer(syntax):
         open_paren = clean.find("(", call_match.start())
         if open_paren == -1:
             continue

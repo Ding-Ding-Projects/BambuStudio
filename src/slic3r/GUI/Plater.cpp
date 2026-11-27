@@ -1887,23 +1887,32 @@ void Sidebar::priv::update_printer_identity()
         name = _L("No printer chosen");
     if (text_printer_name->GetLabel() != name)
         text_printer_name->SetLabel(name);
-    wxString status;
+    wxString diam;
     if (auto *nd = printer.config.option<ConfigOptionFloats>("nozzle_diameter"); nd && !nd->values.empty()) {
-        wxString diam = wxString::FromDouble(nd->values[0], 1);
+        diam = wxString::FromDouble(nd->values[0], 1);
         for (size_t i = 1; i < nd->values.size(); ++i) {
             wxString d2 = wxString::FromDouble(nd->values[i], 1);
             if (d2 != diam) { diam += "/" + d2; break; }
         }
-        status = wxString::Format(_L("%s nozzle"), diam);
     }
-    if (printer.is_bbl_vendor_preset(bundle)) {
-        MachineObject *obj = wxGetApp().getDeviceManager() ? wxGetApp().getDeviceManager()->get_selected_machine() : nullptr;
-        const wxString conn = (obj && obj->is_connected()) ? _L("Connected") : _L("Idle");
-        status = status.IsEmpty() ? conn : status + wxString::FromUTF8(" \xC2\xB7 ") + conn;
+    const bool has_connection_state = printer.is_bbl_vendor_preset(bundle);
+    auto *manager = has_connection_state ? wxGetApp().getDeviceManager() : nullptr;
+    MachineObject *obj = manager ? manager->get_selected_machine() : nullptr;
+    const bool connected = obj && obj->is_connected();
+    // Format each language independently so diameter and connection state
+    // stay together, including when the pair fits only in a tooltip.
+    if (!diam.empty()) {
+        const char *source = L("%s nozzle");
+        if (has_connection_state)
+            source = connected ? L("%s nozzle · Connected") : L("%s nozzle · Idle");
+        const auto status = I18N::translate_mode(source).format_each(
+            [&diam](const wxString &format) { return wxString::Format(format, diam); });
+        I18N::apply_localized_text(*text_printer_status, status);
+    } else {
+        const char *source = has_connection_state ? (connected ? L("Connected") : L("Idle")) : "";
+        I18N::apply_localized_text(*text_printer_status, I18N::translate_mode(source).finalize_without_arguments());
     }
-    if (text_printer_status->GetLabel() != status)
-        text_printer_status->SetLabel(status);
-    const bool show_status = !status.IsEmpty();
+    const bool show_status = !diam.empty() || has_connection_state;
     if (printer_status_dot->IsShown() != show_status) {
         printer_status_dot->Show(show_status);
         text_printer_status->Show(show_status);
