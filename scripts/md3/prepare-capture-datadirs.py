@@ -40,6 +40,9 @@ def config_for(language: str, theme: str, density: str, downloads: str) -> dict:
     # Keys read by GUI_App at startup: "language" (LanguageMode id),
     # "dark_color_mode" ("1" forces dark, "0" forces light), "ui_density".
     return {
+        # Select an offline shipped preset so a fresh profile does not open
+        # the first-run model chooser over the surface being audited.
+        "models": [{"model": "Bambu Lab X1 Carbon", "nozzle_diameter": "0.4", "vendor": "BBL"}],
         "app": {
             "language": language,
             # Otherwise the app fills in the account's own Downloads folder, and
