@@ -472,6 +472,9 @@ namespace Slic3r {
     };
 
 
+    // Synchronous writer-side observer; the result reference must not escape the callback.
+    using GCodeMoveObserver = std::function<void(const GCodeProcessorResult&)>;
+
     class GCodeProcessor
     {
         static const std::vector<std::string> ReservedTags;
