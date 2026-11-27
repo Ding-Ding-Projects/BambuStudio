@@ -67,7 +67,9 @@ complete success, partial success, or failure is reported with a corner notifica
 dialog status as a fallback). The count says requests were **processed**, because an idempotent 2xx
 response may mean the printer was already configured rather than newly created. A failure
 identifies the printer serial and HTTP status but does not echo the response body, which may contain
-credentials. One import owns a single worker, a second import is rejected until it finishes, and one
+credentials. After an HTTP 500, the dialog points to the companion logs and printer LAN connection.
+Once the cause is resolved, repeat the confirmed handover. The companion skips already configured
+serials. An HTTP 500 alone cannot identify which server-side check failed. One import owns a single worker, a second import is rejected until it finishes, and one
 request processes at most 32 deduplicated printers. Within that single-flight import, requests run
 in four-wide waves. A full batch of 32 unreachable printers therefore occupies at most eight
 30-second timeout waves instead of 32 serial timeouts.

@@ -26987,6 +26987,9 @@ msgstr ""
 msgid "Home Assistant transport failed."
 msgstr ""
 
+msgid "Check the Bambu Lab integration logs and each affected printer's LAN connection. Then run Add my printers again. Already configured printers are skipped."
+msgstr ""
+
 #, possible-c-format, possible-boost-format
 msgid "Home Assistant returned HTTP %s."
 msgstr ""

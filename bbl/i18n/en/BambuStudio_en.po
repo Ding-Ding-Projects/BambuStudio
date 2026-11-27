@@ -19600,6 +19600,9 @@ msgstr "Clear lights"
 msgid "Home Assistant transport failed."
 msgstr "Home Assistant transport failed."
 
+msgid "Check the Bambu Lab integration logs and each affected printer's LAN connection. Then run Add my printers again. Already configured printers are skipped."
+msgstr "Check the Bambu Lab integration logs and each affected printer's LAN connection. Then run Add my printers again. Already configured printers are skipped."
+
 msgid "Home Assistant returned HTTP %s."
 msgstr "Home Assistant returned HTTP %s."
 
