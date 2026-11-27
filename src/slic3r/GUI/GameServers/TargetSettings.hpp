@@ -3,5 +3,6 @@
 #include <nlohmann/json.hpp>
 namespace Slic3r { namespace GUI { namespace GameServers {
 struct TargetSettingsResult {std::string error; nlohmann::json result;};
+TargetSettingsResult target_content_action(const WorldRecoveryTarget &target,const std::string &exe,const nlohmann::json &request);
 TargetSettingsResult target_settings(const WorldRecoveryTarget &target,const std::string &exe,nlohmann::json request);
 }}}

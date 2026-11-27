@@ -1,5 +1,6 @@
 #include "TargetSettings.hpp"
 #include "TargetSettingsScript.hpp"
+#include "TargetContentScript.hpp"
 #include "ContainerSetup.hpp"
 #include "NativeServerTarget.hpp"
 #include "ServerSystem.hpp"
@@ -85,5 +86,46 @@ TargetSettingsResult target_settings(const WorldRecoveryTarget &t, const std::st
         return {"The target reported an invalid file owner.", {}};
     if (owner_for_write) return who;
     return result(execute(args(user, write), request.dump()));
+}
+TargetSettingsResult target_content_action(const WorldRecoveryTarget &t, const std::string &exe, const nlohmann::json &request)
+{
+    if (!request.contains("action") || !request["action"].is_string()) return {"Invalid package action.", {}};
+    const bool read = request["action"] == "list";
+    if (!t.container) {
+        if (!ownership_id(t.owner) || shell_path(t.server_folder).empty()) return {"The selected SSH server has no verified identity.", {}};
+        auto argv = ssh_invocation(exe, t.profile,
+                                   "exec python3 -c " + shell_literal(target_content_script) + " " + shell_path(t.server_folder) + (t.bedrock ? " bedrock " : " java ") +
+                                       t.owner + " ssh");
+        return result(execute(argv, request.dump()));
+    }
+    const auto identity = target_settings(t, exe, {{"keys", nlohmann::json::array()}, {"mode", read ? "identity" : "write-identity"}});
+    if (!identity.error.empty() || !identity.result.contains("user") || !identity.result["user"].is_string())
+        return {"The selected container or file owner could not be verified.", {}};
+    std::vector<std::string> argv = {exe,
+                                     "--context",
+                                     t.profile,
+                                     "run",
+                                     "--rm",
+                                     "--interactive",
+                                     "--network",
+                                     "none",
+                                     "--read-only",
+                                     "--cap-drop",
+                                     "ALL",
+                                     "--security-opt",
+                                     "no-new-privileges",
+                                     "--user",
+                                     identity.result["user"].get<std::string>(),
+                                     "--volumes-from",
+                                     t.owner + (read ? ":ro" : ":rw"),
+                                     "python:3.13-alpine",
+                                     "python3",
+                                     "-c",
+                                     target_content_script,
+                                     "/data",
+                                     t.bedrock ? "bedrock" : "java",
+                                     t.owner,
+                                     "container"};
+    return result(execute(argv, request.dump()));
 }
 }}} // namespace Slic3r::GUI::GameServers

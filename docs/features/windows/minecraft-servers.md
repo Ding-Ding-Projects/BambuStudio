@@ -485,3 +485,11 @@ a historical link still has to answer before a package can be downloaded.
 Java acquisition verifies the manifest's version-record hash when available,
 the returned version ID, and the server file's published size and SHA-1.
 Requests clear unrelated client headers and use the approved public origins.
+
+In the SSH/container content dialog, **List installed content** identifies
+eligible files and their current state. Select a package to enable, disable,
+update, roll back or remove. Updates stream a replacement and preserve the
+previous revision on the target. Removed files stay in a separate recovery
+directory. The target rechecks selection identity and modification state.
+Bedrock updates match the pack UUID and group and preserve existing world
+activation where supported.

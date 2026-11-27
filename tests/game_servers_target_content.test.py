@@ -26,8 +26,9 @@ def exercise(code,containers):
                           "--user",str(os.getuid())+":"+str(os.getgid()),"--volumes-from",target+":rw","python:3.13-alpine","python3","-c",code,"/data",edition,target,"container"]
                 else:args=["python3","-c",code,d,edition,owner,"ssh"]
                 body=plug if edition=="java" else behavior;name="fixture.jar" if edition=="java" else "fixture.mcpack"
-                def send(flavour,sha,bad=False):
+                def send(flavour,sha,bad=False,extra=None):
                     header={"name":name,"size":len(body),"sha256":sha,"flavour":flavour,"activate":True}
+                    if extra:header.update(extra)
                     lines=[json.dumps(header),*(base64.b64encode(body[i:i+12288]).decode() for i in range(0,len(body),12288))]
                     result=subprocess.run(args,input="\n".join(lines)+"\n",text=True,capture_output=True,timeout=45)
                     if bad:assert result.returncode!=0;return {}
@@ -43,7 +44,29 @@ def exercise(code,containers):
                 else:
                     assert receipt["active"] and json.loads((w/"world_behavior_packs.json").read_text())[0]["pack_id"]==uid
                     assert send("Paper",digest)["active"]
-                print("container" if container else "SSH",edition,"verified streamed package installation and negative checks",flush=True)
+                def manage(action,item=None,bad=False):
+                    h={"action":action}
+                    if item:h.update({k:item[k] for k in ("id","state","stamp")})
+                    r=subprocess.run(args,input=json.dumps(h)+"\n",text=True,capture_output=True,timeout=45)
+                    if bad:assert r.returncode!=0;return {}
+                    assert r.returncode==0,r.stderr
+                    return json.loads(r.stdout)
+                def item():return manage("list")["packages"][0]
+                assert item()["state"]=="enabled"
+                assert manage("disable",item())["state"]=="disabled"
+                old_digest=digest
+                if edition=="java":body=package({"plugin.yml":"name: fixture","payload":"new"})
+                else:body=package({"manifest.json":json.dumps({"header":{"uuid":uid,"version":[1,1,0]},"modules":[{"type":"data"}]}),"functions/test.mcfunction":"say updated"})
+                digest=hashlib.sha256(body).hexdigest()
+                current=item()
+                extra={k:current[k] for k in ("id","state","stamp")};extra["action"]="update"
+                assert send("Paper",digest,extra=extra)["updated"]
+                assert manage("rollback",item())["changed"]
+                assert manage("remove",item())["state"]=="removed"
+                assert manage("enable",item())["state"]=="enabled"
+                if edition=="java":assert hashlib.sha256((root/"plugins"/name).read_bytes()).hexdigest()==old_digest
+                else:assert json.loads((w/"world_behavior_packs.json").read_text())[0]["version"]==[1,0,0]
+                print("container" if container else "SSH",edition,"verified streamed install, disable, update, rollback, remove, restore and rejection cases",flush=True)
 
 if __name__=="__main__":
     p=argparse.ArgumentParser();p.add_argument("--ssh");p.add_argument("--containers",action="store_true");opts=p.parse_args()
