@@ -1800,12 +1800,12 @@
     {
       "route": "windows/language-modes.md",
       "title": "English, Hong Kong Cantonese, and bilingual modes",
-      "sha256": "b5f1b0d39adac429b6177a66bb79db5ed987fc8553be2924b049c4f3c4983a8f"
+      "sha256": "70d2fe491becfec29e9769250e9be7ca3ecdb7b83ca67578efff7c0ac14a764d"
     },
     {
       "route": "windows/language-modes.yue_HK.md",
       "title": "英文、香港粵語同雙語模式",
-      "sha256": "7a3fc050de498aaf230d57e4218b75da72ae24019f5d263d26a61b4dfe954e6f"
+      "sha256": "c8d2b946783dfa0f1eb3ea2a6780f9225e63b7623a88cb37979994a7287ac3a1"
     },
     {
       "route": "windows/local-tools.md",
@@ -2410,7 +2410,7 @@
       "bytes": 16430
     }
   ],
-  "bundle_sha256": "46cc33e6e24188b2f578998fccf5b78f4b98f63abf8ba679742f7a14d435446c",
+  "bundle_sha256": "a62575c033354d995fe13ea5a8ea66a35d980fed637d2cdfeb4cf5fa6de72f59",
   "unavailable_references": [
     {
       "source": "api/README.md",

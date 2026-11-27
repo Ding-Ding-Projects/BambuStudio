@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run the layout probe's language-audit on Prepare and on Preferences > General, bilingual mode.
+"""Measure Prepare and Preferences > General in the profile language and audit bilingual labels.
 
 The audit lists every shown native label that has a Cantonese translation yet
 shows English only (docs/features/design-system/layout-probe.md). It runs
@@ -15,6 +15,8 @@ at lowlevel-computer-use-cheap.exe; the default is the checkout beside this
 repository under the user's GitHub folder.
 """
 import argparse
+import gettext
+import hashlib
 import ctypes
 from ctypes import wintypes
 import json
@@ -100,9 +102,9 @@ def wait_window(desktop, pid, pred, timeout, what):
     raise SystemExit(f'timed out waiting for {what}')
 
 
-def click_control(probe, hwnd, label, *, scope=None):
+def click_control(probe, hwnd, label):
     records = probe.probe()
-    control = find_control(records, label, scope or hwnd)
+    control = find_control(records, label, hwnd)
     if not control or not control.get('enabled', True):
         raise SystemExit(f'No enabled {label!r} control on the target surface.')
     bounds = control['rect']
@@ -124,6 +126,23 @@ def audit(desktop, hwnd, audit_file, out_file):
     raise SystemExit(f'no language-audit.json for {out_file}')
 
 
+def measure_surface(probe, hwnd, marker, language, report):
+    rows = probe.probe()
+    header = next(row for row in rows if row['kind'] == 'header')
+    owner = next((row for row in rows if row['kind'] == 'toplevel' and row['hwnd'] == hwnd), None)
+    if header['language'] != language or owner is None or not find_control(rows, marker, hwnd):
+        raise SystemExit(f'Could not verify {marker!r} on the requested {language} surface.')
+    # Exclude descendants of other top-levels, including an open dialog.
+    visible = {row['hwnd']: row for row in rows if row['kind'] == 'window'
+               and row.get('top') == hwnd and row.get('on_screen') is True}
+    flags = ('text_clipped', 'hint_clipped', 'clipped_by_parent', 'starved', 'zero_sized')
+    result = {'language': language, 'dark': header['dark'], 'density': header['density'],
+              'dpiScale': header['dpi_scale'], 'client': owner['client'], 'visibleControls': len(visible),
+              'flaggedControls': {flag: sum(bool(row.get(flag)) for row in visible.values()) for flag in flags}}
+    report.write_text(json.dumps(result, indent=2) + '\n', encoding='utf-8')
+    return result
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--exe', required=True)
@@ -135,7 +154,25 @@ def main():
     profile = Path(args.datadir).resolve(strict=True)
     if not (profile / 'BambuStudio.conf').is_file():
         raise SystemExit('The synthetic bilingual profile is missing its configuration.')
-    os.makedirs(args.out, exist_ok=True)
+    config, _ = json.JSONDecoder().raw_decode((profile / 'BambuStudio.conf').read_text(encoding='utf-8-sig'))
+    language = config['app']['language']
+    if language not in ('en', 'yue_HK', 'bilingual_en_yue_HK'):
+        raise SystemExit('Unknown synthetic profile language.')
+    bilingual = language == 'bilingual_en_yue_HK'
+    locale = 'yue_HK' if language == 'yue_HK' else 'en'
+    with (exe.parent / 'resources/i18n' / locale / 'BambuStudio.mo').open('rb') as catalog:
+        display = gettext.GNUTranslations(catalog)
+    label = display.gettext
+    out = Path(args.out)
+    out.mkdir(parents=True, exist_ok=True)
+    identities = {}
+    for name in ('bambu-studio.exe', 'BambuStudio.dll', 'resources/i18n/yue_HK/BambuStudio.mo'):
+        with (exe.parent / name).open('rb') as handle:
+            digest = hashlib.sha256()
+            for block in iter(lambda: handle.read(1024 * 1024), b''):
+                digest.update(block)
+            identities[name] = digest.hexdigest()
+    (out / 'binary-identities.json').write_text(json.dumps(identities, indent=2) + '\n', encoding='utf-8')
     os.environ['BAMBU_LAYOUT_PROBE'] = '1'
     os.environ['BAMBU_LAYOUT_PROBE_TAG'] = 'audit'
     audit_file = os.path.join(args.datadir, 'log', 'language-audit.json')
@@ -157,30 +194,32 @@ def main():
         probe = App(str(exe), str(profile), args.desktop, args.out)
         probe.main = frame['handle']
         probe.pid = pid
-        click_control(probe, frame['handle'], 'Prepare')
+        click_control(probe, frame['handle'], label('Prepare'))
         time.sleep(6)  # the decorator sweeps every shown window about every 3 s
-        if not find_control(probe.probe(), 'Add ink', frame['handle']):
-            raise SystemExit('Prepare did not expose its ink controls.')
-        result = audit(args.desktop, frame['handle'], audit_file, os.path.join(args.out, 'language-audit--prepare.json'))
-        if result.get('mode') != 'bilingual' or not result.get('windows') or any(
-                window['class'] != 'wxFrame' for window in result['windows']):
-            raise SystemExit('Prepare audit is blocked by another window or the wrong language.')
-        summary['prepare'] = result['totals']
-        labels.extend(result['english_only'])
-        click_control(probe, frame['handle'], 'Settings')
+        measure_surface(probe, frame['handle'], label('Add filament'), language, out / 'layout-prepare.json')
+        if any(w['class'] == '#32770' and w['title'] for w in visible_target_windows(args.desktop, pid)):
+            raise SystemExit('An unexpected dialog blocked the Prepare surface.')
+        if bilingual:
+            result = audit(args.desktop, frame['handle'], audit_file, out / 'language-audit--prepare.json')
+            if result.get('mode') != 'bilingual' or not result.get('windows') or any(
+                    window['class'] != 'wxFrame' for window in result['windows']):
+                raise SystemExit('Prepare audit is blocked by another window or the wrong language.')
+            summary['prepare'] = result['totals']
+            labels.extend(result['english_only'])
+        click_control(probe, frame['handle'], label('Settings'))
         time.sleep(2.5)
         prefs = wait_window(args.desktop, pid, lambda w: w['class'] == '#32770' and w['width'] >= 700 and w['height'] >= 560 and ('Preferences' in w['title'] or '偏好設定' in w['title']), 20, 'Preferences')
-        click_control(probe, prefs['handle'], 'General')
+        click_control(probe, prefs['handle'], display.pgettext('Preference', 'General'))
         time.sleep(6)
-        if not find_control(probe.probe(), 'General Settings', prefs['handle']):
-            raise SystemExit('Preferences did not expose the General settings section.')
-        result = audit(args.desktop, frame['handle'], audit_file, os.path.join(args.out, 'language-audit--preferences-general.json'))
-        if result.get('mode') != 'bilingual' or not any(
-                window['class'] == 'wxDialog' and ('Preferences' in window['title'] or '偏好設定' in window['title'])
-                for window in result.get('windows', [])):
-            raise SystemExit('Preferences was absent from the audited windows.')
-        summary['preferences-general'] = result['totals']
-        labels.extend(result['english_only'])
+        measure_surface(probe, prefs['handle'], label('General Settings'), language, out / 'layout-preferences-general.json')
+        if bilingual:
+            result = audit(args.desktop, frame['handle'], audit_file, out / 'language-audit--preferences-general.json')
+            if result.get('mode') != 'bilingual' or not any(
+                    window['class'] == 'wxDialog' and ('Preferences' in window['title'] or '偏好設定' in window['title'])
+                    for window in result.get('windows', [])):
+                raise SystemExit('Preferences was absent from the audited windows.')
+            summary['preferences-general'] = result['totals']
+            labels.extend(result['english_only'])
     finally:
         if process is not None:
             try:
