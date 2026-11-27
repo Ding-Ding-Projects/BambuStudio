@@ -1,0 +1,56 @@
+{
+  "release_tag": "md3-v331",
+  "source_commit": "b5d0bf2275caf165c7028f3e5d972b94f7a65a4c",
+  "package": "BambuStudioMD3-2.9.2044-full.nupkg",
+  "package_sha256": "bcbd31675867f8944129a7c26e402671b166fc6e917fb6803f5ab90c45593cb9",
+  "executable_sha256": "c812f9ed9ba15c14218199e25ab877d7427408f640cfdf462ed76416d97bfbd7",
+  "fixture": "tests/data/preview/six-cups.3mf",
+  "fixture_sha256": "ef59dafc2b6375c993500e015acc07084cae7ea0fc4e83b6a3352ae2d6e41e1f",
+  "method": "Hidden Windows desktop, isolated data directory, native layout probe canvas-png",
+  "captures": [
+    {
+      "file": "bilingual_en_yue_HK-light-comfortable.png",
+      "sha256": "0f1a05711584ada108d0622bc523141ae92b7e5221c986c0f3c35e18426bbda2",
+      "canvas_pixels": [
+        700,
+        885
+      ],
+      "language_mode": "bilingual_en_yue_HK",
+      "theme": "light",
+      "density": "comfortable"
+    },
+    {
+      "file": "en-light-comfortable.png",
+      "sha256": "1720aa53c20c57ee7b99ffe86b3b44ebe928667c1788280e309406abda7b3797",
+      "canvas_pixels": [
+        700,
+        885
+      ],
+      "language_mode": "en",
+      "theme": "light",
+      "density": "comfortable"
+    },
+    {
+      "file": "yue_HK-light-comfortable.png",
+      "sha256": "795f24a4a80303c2ca7f9548126b6fa318789cc1a30cf342cb339207e92906c5",
+      "canvas_pixels": [
+        700,
+        885
+      ],
+      "language_mode": "yue_HK",
+      "theme": "light",
+      "density": "comfortable"
+    },
+    {
+      "file": "en-wide.png",
+      "sha256": "93f4cf9736f821706dfdfdddaa8f82555484bcf7d1972e61ed9b1ec1aac8734f",
+      "canvas_pixels": [
+        1450,
+        1035
+      ],
+      "language_mode": "en",
+      "theme": "light",
+      "density": "comfortable"
+    }
+  ]
+}

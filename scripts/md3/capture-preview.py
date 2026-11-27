@@ -91,7 +91,7 @@ def cheap(tool, **kw):
     out = subprocess.run(args, capture_output=True, text=True, timeout=180)
     try:
         data = json.loads(out.stdout)
-    except json.JSONDecodeError:
+    except (UnicodeDecodeError, json.JSONDecodeError):
         raise RuntimeError(f'{tool}: unreadable reply\n{out.stdout}\n{out.stderr}')
     if not data.get('ok'):
         raise RuntimeError(f'{tool}: {data}')
@@ -261,7 +261,7 @@ class Session:
                 return None
             try:
                 lines = [json.loads(line) for line in open(staged, encoding='utf-8') if line.strip()]
-            except json.JSONDecodeError:
+            except (UnicodeDecodeError, json.JSONDecodeError):
                 return None
             return lines if lines and lines[-1].get('kind') == 'end' else None
         return wait_for(complete, 40) or []
@@ -694,6 +694,20 @@ class Run:
         self.save_canvas(f'{prefix}-canvas', what)
 
     # -- the flow ----------------------------------------------------------------------------
+    def capture_project(self, project):
+        """Open an existing project without changing its plates or filament assignments."""
+        self.go_prepare()
+        self.s.command(f'load {project}', settle=9)
+        project_title = os.path.splitext(os.path.basename(project))[0] + ' - '
+        if not any(row.get('kind') == 'toplevel' and
+                   str(row.get('title', '')).startswith(project_title) for row in self.s.probe()):
+            self.cannot('open-project', 'The requested project did not become the active document')
+            return
+        self.resize(WIDE)
+        self.save_window('project-opened', 'Opened project before slicing')
+        if self.slice_plate('slice-project-plate'):
+            self.preview_captures('project-preview', 'Active plate after slicing the supplied project')
+
     def run(self):
         s = self.s
         self.go_prepare()
@@ -788,10 +802,15 @@ def main():
     ap.add_argument('--datadir', required=True)
     ap.add_argument('--tuple', required=True, dest='tuple_id')
     ap.add_argument('--out', required=True)
+    ap.add_argument('--project', help='Open and slice this existing 3MF instead of creating sample cubes')
     ap.add_argument('--printer', default=PRINTER)
     ap.add_argument('--desktop', default='bspreview')
     ap.add_argument('--startup-timeout', type=float, default=240)
     args = ap.parse_args()
+    if args.project:
+        args.project = os.path.abspath(args.project)
+        if not os.path.isfile(args.project) or not args.project.lower().endswith('.3mf'):
+            ap.error('--project must refer to an existing 3MF file')
     sys.stdout.reconfigure(encoding='utf-8')
     os.makedirs(args.out, exist_ok=True)
     # The app writes its dump files itself; keep them on a short path and move them afterwards.
@@ -805,7 +824,10 @@ def main():
     try:
         session.start(args.startup_timeout)
         print(f'main frame {session.main} (pid {session.pid}) for {args.tuple_id}', flush=True)
-        run.run()
+        if args.project:
+            run.capture_project(args.project)
+        else:
+            run.run()
     except Exception as exc:  # the report must still be written
         crashed = f'{type(exc).__name__}: {exc}'
         print(f'driver stopped: {crashed}', flush=True)
@@ -818,6 +840,10 @@ def main():
               'captured_at': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
               'captures': run.saved, 'not_reached': run.unreached, 'notes': run.notes,
               'driver_stopped': crashed}
+    if args.project:
+        with open(args.project, 'rb') as project_file:
+            report['project'] = {'name': os.path.basename(args.project),
+                                 'sha256': hashlib.sha256(project_file.read()).hexdigest()}
     out_json = os.path.join(args.out, f'preview-capture--{args.tuple_id}.json')
     with open(out_json, 'w', encoding='utf-8') as fh:
         json.dump(report, fh, ensure_ascii=False, indent=1)
