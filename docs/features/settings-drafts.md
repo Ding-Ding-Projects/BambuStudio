@@ -28,6 +28,10 @@ Credential-like option keys are excluded from draft snapshots, persistence, comp
 
 ## Local history delivery
 
-Draft edits are recorded as sanitized local settings versions. Select a draft version in the local history browser to restore it to the matching open detached draft. The project tab and preset target must still match. Apply remains a separate confirmed action. Preset saves also create local versions; restoring one requires selecting that exact preset and leaves the result editable rather than activating another preset. Settings comparisons show individual added, changed and removed keys.
+Draft edits record the option key alongside the sanitized local settings snapshot.
+Search and scrolling update the draft's saved view without adding versions. A
+confirmed discard records its own revision even when its settings match the
+last edit. If the history write fails, a notification reports the missing
+record and the confirmed discard proceeds. Select a draft version in the local history browser to restore it to the matching open detached draft. The project tab and preset target must still match. Apply remains a separate confirmed action. Preset saves also create local versions; restoring one requires selecting that exact preset and leaves the result editable rather than activating another preset. Settings comparisons show individual added, changed and removed keys.
 
 Undo settings attachments use stable project-tab identity, so filename changes do not invalidate an otherwise matching target. Their storage estimate participates in Undo memory eviction. This fast-delivery change has not run tests or screenshots.

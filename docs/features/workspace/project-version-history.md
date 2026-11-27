@@ -48,7 +48,8 @@ synced or pushed anywhere; no `.git` appears in the user's own folders.
   archive remains intact.
 - **Current-version export**: File > Export > Export current version only as 3MF
   writes the current model and settings without either portable-history entry.
-  It works independently of pending history and requires a separate destination from the open project. It validates the staged ZIP and atomically
+  It works independently of pending history and requires a separate destination
+  from the open project. It validates the staged ZIP and atomically
   publishes it. On failure, the previous destination and pending export remain
   available. Reopening a saved archive in the same app profile retains a newer
   local autosave as the active version when it descends from the embedded head;
@@ -63,6 +64,14 @@ synced or pushed anywhere; no `.git` appears in the user's own folders.
   and swaps the live document (`Plater::restore_project_history_snapshot`)
   with a rollback archive kept until the swap succeeds; the original file on
   disk is never overwritten by the restore primitive.
+
+- **Filter by dates**: expand **Search and filters**. Type either date in
+  YYYY-MM-DD form or use **Pick dates on a calendar**. The shared month grid
+  accepts two dates in either order. Clear either field for an open-ended range.
+  Submitted searches store both bounds and restore them when rerun.
+- **Read ancestry**: choose **Git graph** and a store. The diagram connects
+  revisions using their recorded parents. A filtered-out parent is identified
+  by its short commit ID. The adjacent list supports keyboard selection.
 
 - **Crash-backup preservation**: when the app starts and finds an unsaved
   crash backup, that backup is committed to history **before** the
