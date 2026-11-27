@@ -2,11 +2,20 @@
 
 #include "slic3r/GUI/GUI.hpp"
 #include "slic3r/GUI/GUI_App.hpp"
+#include "slic3r/GUI/I18N.hpp"
 #include "slic3r/Utils/Http.hpp"
 #include "libslic3r/Log.hpp"
 
 namespace Slic3r {
 namespace GUI {
+
+namespace {
+wxString localized_stacked(const char *source)
+{
+    return I18N::render_localized_text_stacked(
+        I18N::translate_mode(source).finalize_without_arguments()).label;
+}
+} // namespace
 
 wxDEFINE_EVENT(EVT_UPGRADE_UPDATE_MESSAGE, wxCommandEvent);
 wxDEFINE_EVENT(EVT_UPGRADE_NETWORK_SUCCESS, wxCommandEvent);
@@ -75,17 +84,17 @@ void UpgradeNetworkJob::process()
     result = wxGetApp().download_plugin(name, package_name,
         [this, &curr_percent](int state, int percent, bool &cancel) {
             if (state == InstallStatusNormal) {
-                update_status(percent, _L("Downloading"));
+                update_status(percent, localized_stacked("Downloading"));
             } else if (state == InstallStatusDownloadFailed) {
-                update_status(percent, _L("Download failed"));
+                update_status(percent, localized_stacked("Download failed"));
             } else {
-                update_status(percent, _L("Downloading"));
+                update_status(percent, localized_stacked("Downloading"));
             }
             curr_percent = percent;
         }, cancel_fn);
 
     if (was_canceled()) {
-        update_status(0, _L("Cancelled"));
+        update_status(0, localized_stacked("Cancelled"));
         wxCommandEvent event(wxEVT_CLOSE_WINDOW);
         event.SetEventObject(m_event_handle);
         wxPostEvent(m_event_handle, event);
@@ -93,7 +102,7 @@ void UpgradeNetworkJob::process()
     }
 
     if (result < 0) {
-        update_status(0, _L("Download failed"));
+        update_status(0, localized_stacked("Download failed"));
         wxCommandEvent event(EVT_DOWNLOAD_NETWORK_FAILED);
         event.SetEventObject(m_event_handle);
         wxPostEvent(m_event_handle, event);
@@ -104,14 +113,14 @@ void UpgradeNetworkJob::process()
         name, package_name,
         [this](int state, int percent, bool &cancel) {
         if (state == InstallStatusInstallCompleted) {
-            update_status(percent, _L("Install successfully."));
+            update_status(percent, localized_stacked("Install successfully."));
         } else {
-            update_status(percent, _L("Installing"));
+            update_status(percent, localized_stacked("Installing"));
         }
         }, cancel_fn);
 
     if (was_canceled()) {
-        update_status(0, _L("Cancelled"));
+        update_status(0, localized_stacked("Cancelled"));
         wxCommandEvent event(wxEVT_CLOSE_WINDOW);
         event.SetEventObject(m_event_handle);
         wxPostEvent(m_event_handle, event);
@@ -119,7 +128,7 @@ void UpgradeNetworkJob::process()
     }
 
     if (result != 0) {
-        update_status(0, _L("Install failed"));
+        update_status(0, localized_stacked("Install failed"));
         wxCommandEvent event(EVT_INSTALL_NETWORK_FAILED);
         event.SetEventObject(m_event_handle);
         wxPostEvent(m_event_handle, event);
