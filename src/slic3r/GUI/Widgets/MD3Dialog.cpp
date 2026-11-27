@@ -245,6 +245,14 @@ bool MD3Dialog::CreateShell(wxWindow *          parent,
     return true;
 }
 
+void MD3Dialog::ShowHeaderIcon(bool show)
+{
+    if (!m_tile)
+        return;
+    m_tile->Show(show);
+    Layout();
+}
+
 void MD3Dialog::ShowHeaderClose(bool show)
 {
     if (!m_close_btn)
@@ -280,8 +288,7 @@ void MD3Dialog::build_shell(const wxString &title, const wxString &subtitle, Mat
 
     m_tile = new MD3HeaderTile(this, glyph);
     m_tile->SetForcedDark(m_forced_dark);
-    header->Add(m_tile, 0, wxALIGN_CENTER_VERTICAL);
-    header->AddSpacer(FromDIP(12));
+    header->Add(m_tile, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(12));
 
     auto *titles = new wxBoxSizer(wxVERTICAL);
     m_title_txt  = new Label(this, title);

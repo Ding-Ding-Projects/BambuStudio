@@ -157,6 +157,7 @@ protected:
     // Show/hide the header circular close affordance (e.g. an uncancelable
     // progress shell hides it). No-op before the shell is built.
     void ShowHeaderClose(bool show);
+    void ShowHeaderIcon(bool show);
     // Show/hide the footer divider + button row as a unit (a shell with no footer
     // actions hides it so no empty divider is left). No-op before build.
     void ShowFooter(bool show);
