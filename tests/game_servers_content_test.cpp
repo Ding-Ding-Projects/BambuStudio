@@ -2,6 +2,7 @@
 #include "../src/slic3r/GUI/GameServers/ContentCatalog.hpp"
 #include "../src/slic3r/GUI/GameServers/WorldJarData.hpp"
 #include "../src/slic3r/GUI/GameServers/BedrockPack.hpp"
+#include "../src/slic3r/GUI/GameServers/BedrockLifecycle.hpp"
 #include "../src/slic3r/GUI/GameServers/BedrockSettings.hpp"
 #include "../src/slic3r/GUI/GameServers/BedrockDistributions.hpp"
 #include "../src/slic3r/GUI/GameServers/BedrockHistory.hpp"
@@ -116,6 +117,26 @@ int main(int argc, char **argv) try
     check(extract_zip(archive.u8string(),restore.u8string()).ok && !extract_zip(archive.u8string(),restore.u8string()).ok,"native verified separate restore");
     std::string restored;check(read_file((restore/"server.properties").u8string(),restored,1024)&&restored=="server-name=example\n","restore protected properties exclusion");
     check(fs::exists(restore/"worlds"/"Example"/"level.dat") && !fs::exists(restore/"worlds"/"Example"/"db"/"LOCK"),"restored world files and excluded live lock");
+    const std::string pack_uuid="ec9410a2-de16-4f98-8eec-9efa1319db18";
+    const auto deployed=bedrock_dir/"behavior_packs"/pack_uuid;
+    fs::create_directories(deployed);
+    const auto baseline=nlohmann::json::parse(R"({"header":{"uuid":"ec9410a2-de16-4f98-8eec-9efa1319db18","version":[1,0,0]},"modules":[{"type":"data"}]})");
+    std::ofstream(deployed/"manifest.json")<<baseline.dump();std::ofstream(deployed/"payload")<<"original";
+    const auto reg=bedrock_dir/"worlds"/"Example"/"world_behavior_packs.json";
+    std::ofstream(reg)<<nlohmann::json::array({{{"pack_id",pack_uuid},{"version",{1,0,0}}}}).dump();
+    auto later=baseline;later["header"]["version"]={1,1,0};const auto updated_pack=dir/"updated.mcpack";
+    package(updated_pack,{{"manifest.json",later.dump()},{"payload","new"}});
+    auto operate=[&](const std::string &op){
+        auto inventory=list_local_bedrock_content(bedrock_dir);check(inventory.size()==1,"Bedrock inventory should have exactly one eligible pack");
+        auto message=change_local_bedrock_content(bedrock_dir,inventory.front(),op,updated_pack);if(!message.empty())throw std::runtime_error("Bedrock "+op+": "+message);
+    };
+    operate("disable");check(nlohmann::json::parse(std::ifstream(reg)).empty(),"disable kept world registration");
+    operate("update");operate("rollback");operate("remove");operate("enable");
+    check(nlohmann::json::parse(std::ifstream(reg))[0]["version"]==nlohmann::json::array({1,0,0}),"restored world registration lost version");
+    operate("update");check(nlohmann::json::parse(std::ifstream(reg))[0]["version"]==nlohmann::json::array({1,1,0}),"active Bedrock update did not update registration");
+    operate("rollback");check(nlohmann::json::parse(std::ifstream(deployed/"manifest.json"))==baseline,"active rollback did not restore original manifest");
+    std::cout<<"Windows Bedrock: native world archive, verified restore, seven pack transitions and world-registration readbacks passed.\n";
+
 #endif
     const auto pack_info = R"({"header":{"uuid":"ec9410a2-de16-4f98-8eec-9efa1319db18","version":[1,0,4]},"modules":[{"type":"data"},{"type":"script"}]})";
     check(bedrock_pack(pack_info).group == "behavior", "valid Bedrock behavior pack was rejected");
