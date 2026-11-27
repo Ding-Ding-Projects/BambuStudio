@@ -1,6 +1,6 @@
 ---
 translation-of: lan-model-drop-site.md
-source-sha256: 9df80d7bc6c9a001a800f80d0377b73784202a6a5330fb7acc24f5ed7715df6c
+source-sha256: 8dc0affcb6e98b837128d004ae728a85bbf52afe4c1877f71962ebb4f688b7b0
 review-status: agent-drafted
 ---
 
