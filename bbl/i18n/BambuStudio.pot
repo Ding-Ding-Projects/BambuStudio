@@ -37825,3 +37825,474 @@ msgstr ""
 
 msgid "Invalid value"
 msgstr ""
+
+msgid "Something went wrong, but Bambu Studio kept running: %1%"
+msgstr ""
+
+msgid "Choose a printer"
+msgstr ""
+
+msgid "Printer: %s. Click to switch printer"
+msgstr ""
+
+msgid "Every feature of the application in one searchable list, with filters and what is not ready yet"
+msgstr ""
+
+msgid "Local Ollama suite"
+msgstr ""
+
+msgid "Local data only. Refresh runtime to inspect Ollama on this computer."
+msgstr ""
+
+msgid "Suite sections"
+msgstr ""
+
+msgid "Stop current operation"
+msgstr ""
+
+msgid "Saved suite data is invalid or unavailable. Existing files were retained."
+msgstr ""
+
+msgid "An operation is already running. Stop it or wait for its result."
+msgstr ""
+
+msgid "Working locally. Stop is available; progress will appear here."
+msgstr ""
+
+msgid "Models"
+msgstr ""
+
+msgid "Refresh runtime"
+msgstr ""
+
+msgid "Refresh official catalog"
+msgstr ""
+
+msgid "Catalog has not been verified."
+msgstr ""
+
+msgid "Search exact model, family, capability or quantization"
+msgstr ""
+
+msgid "Previous models"
+msgstr ""
+
+msgid "Next models"
+msgstr ""
+
+msgid "Select an installed model to inspect verified capabilities and hardware evidence."
+msgstr ""
+
+msgid "Use selected model for chat"
+msgstr ""
+
+msgid "Finish the current operation and inspect a verified installed local model first."
+msgstr ""
+
+msgid "Add selected tag to batch"
+msgstr ""
+
+msgid "Could not persist the batch item."
+msgstr ""
+
+msgid "Chat"
+msgstr ""
+
+msgid "Choose an installed local completion model in Models. Messages remain on this computer. Ordinary exports omit message content and attachments."
+msgstr ""
+
+msgid "Temperature, 0 to 2"
+msgstr ""
+
+msgid "Context, 512 to 32768"
+msgstr ""
+
+msgid "Output limit, 1 to 4096"
+msgstr ""
+
+msgid "Recommended balanced settings"
+msgstr ""
+
+msgid "Conservative short reply"
+msgstr ""
+
+msgid "System prompt"
+msgstr ""
+
+msgid "Send locally"
+msgstr ""
+
+msgid "Attach image"
+msgstr ""
+
+msgid "Select a PNG or JPEG only after verifying vision capability in Models. Image bytes are sent locally and are omitted from saved history."
+msgstr ""
+
+msgid "Default parameters: temperature 0.7, context 2048, output limit 512. These bounds are checked against the selected model. Stop cancels the active HTTP transfer."
+msgstr ""
+
+msgid "Saved sessions"
+msgstr ""
+
+msgid "Search saved sessions on this page"
+msgstr ""
+
+msgid "Rename session"
+msgstr ""
+
+msgid "Session rename could not be saved."
+msgstr ""
+
+msgid "Delete session"
+msgstr ""
+
+msgid "The selected local chat history will be permanently deleted. This cannot be undone."
+msgstr ""
+
+msgid "Session deletion failed. Existing data was retained."
+msgstr ""
+
+msgid "Export redacted session"
+msgstr ""
+
+msgid "Replace export file"
+msgstr ""
+
+msgid "The selected file will be replaced permanently."
+msgstr ""
+
+msgid "Redacted export saved. Message text, titles and attachments were omitted."
+msgstr ""
+
+msgid "Export could not be saved."
+msgstr ""
+
+msgid "Previous sessions"
+msgstr ""
+
+msgid "Next sessions"
+msgstr ""
+
+msgid "Image attachments need a selected model with verified vision capability. Open Models and inspect a vision model."
+msgstr ""
+
+msgid "Choose a local PNG or JPEG"
+msgstr ""
+
+msgid "One image is attached for the next message only. Its filename is not sent or saved."
+msgstr ""
+
+msgid "Attachment rejected: select an unchanged PNG or JPEG no larger than 768 KiB."
+msgstr ""
+
+msgid "Saved sessions could not be read. Existing files were retained."
+msgstr ""
+
+msgid "Finish the current operation, then select and inspect a model and choose Use selected model for chat."
+msgstr ""
+
+msgid "Chat is unavailable: verify completion capability, context metadata, and message limits in Models."
+msgstr ""
+
+msgid "Batch pulls"
+msgstr ""
+
+msgid "A batch schedules model downloads only. Each exact tag is persisted independently; interrupted transfers require installed-state reconciliation before retry."
+msgstr ""
+
+msgid "Previous items"
+msgstr ""
+
+msgid "Next items"
+msgstr ""
+
+msgid "Review and start batch"
+msgstr ""
+
+msgid "Transfer is unavailable until every selected tag has exact download metadata, destination disk preflight, and a reviewed transfer disclosure."
+msgstr ""
+
+msgid "Storage preflight is incomplete for uninstalled catalog entries. No model download will start from this surface until that evidence is available."
+msgstr ""
+
+msgid "Batch state could not be read. Existing files were retained."
+msgstr ""
+
+msgid "Launch profiles"
+msgstr ""
+
+msgid "Launch profiles belong to this application. Ollama does not launch other programs. Profiles cannot accept shell commands, scripts, or arbitrary environment values."
+msgstr ""
+
+msgid "Choose executable"
+msgstr ""
+
+msgid "Choose working folder"
+msgstr ""
+
+msgid "Choose local model file"
+msgstr ""
+
+msgid "Review preflight"
+msgstr ""
+
+msgid "Choose the registered inputs, then review preflight. Exact launch details appear here before launch."
+msgstr ""
+
+msgid "Launch reviewed profile"
+msgstr ""
+
+msgid "Complete executable, folder, model and hardware preflight first. Unknown hardware evidence prevents launch."
+msgstr ""
+
+msgid "Stop owned process and restore snapshot"
+msgstr ""
+
+msgid "Registration requires an exact approved executable identity. Launch uses an owned process job and explicit arguments, and snapshots before mutation. Unknown hardware evidence blocks launch. Runtime evidence remains pending for this packaged adapter."
+msgstr ""
+
+msgid "Troubleshooting"
+msgstr ""
+
+msgid "No service response: Ollama may be absent or stopped. Those states cannot be distinguished from a refused loopback connection. This build does not contain a verified Ollama installer or service-start adapter, so installation and startup are unavailable here."
+msgstr ""
+
+msgid "If Ollama is already installed, open its own desktop application, then use Refresh runtime. The suite never runs an arbitrary shell command, searches PATH, or downloads an unverified installer."
+msgstr ""
+
+msgid "Unhealthy API: refresh runtime and inspect the selected model again. An interrupted stream is incomplete. Storage shortage: free space in the configured model destination before reviewing the batch again."
+msgstr ""
+
+msgid "Catalog offline: the last verified snapshot and installed models remain available. The official HTML catalog currently supplies no verified total-count contract, so discovered entries are never labelled exhaustive."
+msgstr ""
+
+msgid "Unknown fit: usable GPU memory, driver/backend support, or context-memory evidence is missing. A model name is not hardware evidence. No execution guarantee is made."
+msgstr ""
+
+msgid "Retry runtime and return to Models"
+msgstr ""
+
+msgid "Select articles using their checkboxes before exporting."
+msgstr ""
+
+msgid "Export selected documentation"
+msgstr ""
+
+msgid "Documentation export could not be written."
+msgstr ""
+
+msgid "Selected documentation exported."
+msgstr ""
+
+msgid "No matching documentation articles."
+msgstr ""
+
+msgid "Cantonese translation is not available for this article. English source follows."
+msgstr ""
+
+msgid "The requested heading is unavailable in the selected article language."
+msgstr ""
+
+msgid "Bundled feature articles. External references never open automatically."
+msgstr ""
+
+msgid "Search article titles and text"
+msgstr ""
+
+msgid "Documentation categories and search results"
+msgstr ""
+
+msgid "Documentation article and table of contents"
+msgstr ""
+
+msgid "Copy selected articles"
+msgstr ""
+
+msgid "Select articles using their checkboxes before copying."
+msgstr ""
+
+msgid "Clipboard is unavailable."
+msgstr ""
+
+msgid "Selected documentation copied."
+msgstr ""
+
+msgid "Documentation could not be copied."
+msgstr ""
+
+msgid "Export selected articles"
+msgstr ""
+
+msgid "Close article tab"
+msgstr ""
+
+msgid "Open tools"
+msgstr ""
+
+msgid "it was sliced with a different ink, so it was not kept"
+msgstr ""
+
+msgid "Home Assistant: "
+msgstr ""
+
+msgid "API: "
+msgstr ""
+
+msgid "API"
+msgstr ""
+
+msgid "Home Assistant"
+msgstr ""
+
+msgid "local"
+msgstr ""
+
+msgid "Process draft"
+msgstr ""
+
+msgid "Ink preset draft"
+msgstr ""
+
+msgid "Printer preset draft"
+msgstr ""
+
+msgid "Discard this draft's unsaved changes?"
+msgstr ""
+
+msgid "Close draft"
+msgstr ""
+
+msgid "Edits stay in this draft until Apply. Saving a preset does not activate it."
+msgstr ""
+
+msgid "Search draft settings"
+msgstr ""
+
+msgid "Undo Apply"
+msgstr ""
+
+msgid "Open page or create draft"
+msgstr ""
+
+msgid "Existing pages remain shared views. Draft settings are independent."
+msgstr ""
+
+msgid "Search pages and draft types"
+msgstr ""
+
+msgid "New Process draft"
+msgstr ""
+
+msgid "New Ink preset draft"
+msgstr ""
+
+msgid "New printer preset draft"
+msgstr ""
+
+msgid "Open a project before creating a settings draft."
+msgstr ""
+
+msgid "Create draft"
+msgstr ""
+
+msgid "The target changed. Create a new draft from the current target before applying."
+msgstr ""
+
+msgid "Draft conflict"
+msgstr ""
+
+msgid "Apply these changed settings?\n"
+msgstr ""
+
+msgid "Apply draft"
+msgstr ""
+
+msgid "Apply could not finish. Previous settings were restored."
+msgstr ""
+
+msgid "Undo Apply is unavailable because the target settings changed."
+msgstr ""
+
+msgid "A preset with this name already exists."
+msgstr ""
+
+msgid "Save draft"
+msgstr ""
+
+msgid "Preset saved. The live selection is unchanged."
+msgstr ""
+
+msgid "The preset could not be saved. Your draft is retained."
+msgstr ""
+
+msgid "Not configured. No data has been sent."
+msgstr ""
+
+msgid "Enrollment required. No data has been sent."
+msgstr ""
+
+msgid "Invalid endpoint. Use an HTTPS origin without credentials or a path."
+msgstr ""
+
+msgid "Waiting for a delivery result."
+msgstr ""
+
+msgid "The server accepted the latest status update."
+msgstr ""
+
+msgid "Delivery failed. Previous acceptance is shown separately."
+msgstr ""
+
+msgid "Search status evidence"
+msgstr ""
+
+msgid "Retry delivery"
+msgstr ""
+
+msgid "No matching evidence."
+msgstr ""
+
+msgid "Endpoint"
+msgstr ""
+
+msgid "Configured privately"
+msgstr ""
+
+msgid "Not configured"
+msgstr ""
+
+msgid "Enrollment"
+msgstr ""
+
+msgid "Present"
+msgstr ""
+
+msgid "Last checked"
+msgstr ""
+
+msgid "Last accepted"
+msgstr ""
+
+msgid "Attempts"
+msgstr ""
+
+msgid "Accepted"
+msgstr ""
+
+msgid "Inbox receipts"
+msgstr ""
+
+msgid "Receipt counts do not apply replies to this application."
+msgstr ""
+
+msgid "Development inventory is measured before delivery."
+msgstr ""
+
+msgid "Repository inventory is not applicable to an installed application. Open model paths are not transmitted."
+msgstr ""
+
+msgid "Configure STATUS_HUB_URL and AGENT_INGEST_TOKEN in the trusted launch environment, then restart the application. Retry uses the current session. Endpoint values, credentials and response bodies are never displayed or exported."
+msgstr ""
+
+msgid "Delivery in progress"
+msgstr ""
