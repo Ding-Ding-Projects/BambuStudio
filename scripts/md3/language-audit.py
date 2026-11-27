@@ -156,6 +156,18 @@ def measure_settings_sections(probe, hwnd, language, out, audit_file, bilingual)
 
     rows = probe.probe()
     tabs = [r for r in rows if r.get('top') == hwnd and r.get('type', '').endswith('::TabStripButton')]
+    # A second, measured geometry may expose tabs that legitimately moved to
+    # overflow. Leave the original tuple's General receipt unchanged.
+    if any(not tab.get('on_screen') for tab in tabs):
+        frame = next((r for r in rows if r['kind'] == 'toplevel' and r['hwnd'] == probe.main), None)
+        current = next((r for r in rows if r['kind'] == 'toplevel' and r['hwnd'] == hwnd), None)
+        if frame and current and frame['rect']['h'] > current['rect']['h']:
+            bounds = frame['rect']
+            height = bounds['y'] + bounds['h'] - current['rect']['y']
+            if height > current['rect']['h']:
+                probe.command(f"resize {hwnd} {current['rect']['w']} {height}")
+                rows = probe.probe()
+                tabs = [r for r in rows if r.get('top') == hwnd and r.get('type', '').endswith('::TabStripButton')]
     if not tabs:
         raise SystemExit('No native Settings section buttons were found.')
     report = []

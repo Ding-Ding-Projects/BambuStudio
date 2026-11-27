@@ -39490,3 +39490,54 @@ msgstr ""
 
 msgid "Verifying and transferring the selected package..."
 msgstr ""
+
+msgid "Download incomplete."
+msgstr ""
+
+msgid "Installed Java content"
+msgstr ""
+
+msgid "Package"
+msgstr ""
+
+msgid "Directory"
+msgstr ""
+
+msgid "Enable or restore"
+msgstr ""
+
+msgid "Update from file..."
+msgstr ""
+
+msgid "Roll back version"
+msgstr ""
+
+msgid "Remove from server"
+msgstr ""
+
+msgid "Removed packages are kept separately for recovery. Changes take effect at the next server start."
+msgstr ""
+
+msgid "Select the compatible replacement for this package"
+msgstr ""
+
+msgid "Change %s in %s? A verified recovery copy of its current bytes will be kept."
+msgstr ""
+
+msgid "Applying"
+msgstr ""
+
+msgid "Preserving the selected file and applying the change..."
+msgstr ""
+
+msgid "Package changed. Review the server log after starting."
+msgstr ""
+
+msgid "Manage installed content..."
+msgstr ""
+
+msgid "Stop the server before changing installed content."
+msgstr ""
+
+msgid "Installed content"
+msgstr ""
