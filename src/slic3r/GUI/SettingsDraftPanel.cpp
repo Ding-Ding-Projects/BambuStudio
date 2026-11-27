@@ -57,8 +57,19 @@ SettingsDraftPanel::SettingsDraftPanel(wxWindow *parent, TabStrip *strip, std::f
     m_strip->Bind(EVT_TABSTRIP_CLOSE_REQUEST, [this](wxCommandEvent &e) {
         const auto id = std::string(e.GetString().ToUTF8());
         if (!m_store.find(id)) { m_strip->SetHidden(id, true); return; }
-        if (m_store.dirty(id) && md3_message_box(_L("Discard this draft's unsaved changes?"), _L("Close draft"),
-                                               wxYES_NO | wxNO_DEFAULT | wxICON_WARNING, this) != wxYES) return;
+        if (m_store.dirty(id)) {
+            if (md3_message_box(_L("Discard this draft's unsaved changes?"), _L("Close draft"),
+                                wxYES_NO | wxNO_DEFAULT | wxICON_WARNING, this) != wxYES)
+                return;
+            // A modal confirmation runs a nested event loop. Look up the draft again.
+            const auto *draft = m_store.find(id);
+            if (!draft) return;
+            if (!LocalConfigHistory::record_config("draft", id, "Discard settings draft", draft->config)) {
+                md3_message_box(_L("The draft could not be recorded in local history. It is still open."),
+                                _L("Close draft"), wxOK | wxICON_WARNING, this);
+                return;
+            }
+        }
         if (m_active == id) { ++m_view_generation; m_groups.clear(); GetSizer()->Clear(true); }
         m_store.erase(id); m_strip->RemoveTab(id); Persist();
         if (m_active == id) { m_active.clear(); m_show_page(false); }
