@@ -27,6 +27,9 @@ const cantonese = JSON.parse(
   readFileSync(`${localesDirectory}/yue_HK.json`, 'utf8'),
 ) as TranslationTable;
 
+// Fail when both catalogues are accidentally truncated or accidentally extended without a baseline review.
+assert.ok(Object.keys(english).length === 442, 'DeviceWeb English resources are incomplete');
+
 assert.deepEqual(languageFallbacks, {
   yue_HK: ['en'],
   bilingual_en_yue_HK: ['en'],
@@ -105,3 +108,5 @@ assert.equal(
   toInlineBilingual(bilingual['Remain {{percent}}%']),
   'Remain {{percent}}% / 剩餘 {{percent}}%',
 );
+
+console.log(`Verified ${Object.keys(english).length} DeviceWeb resources.`);

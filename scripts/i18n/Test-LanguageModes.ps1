@@ -66,14 +66,6 @@ function Invoke-Checked {
     }
 }
 
-function Get-InterpolationTokens {
-    param([Parameter(Mandatory)][string] $Value)
-
-    return @([regex]::Matches($Value, '\{\{\s*[^{}]+\s*\}\}') |
-        ForEach-Object { $_.Value } |
-        Sort-Object)
-}
-
 Write-Host 'Checking canonical language-mode identifiers...'
 Assert-True (Test-Path -LiteralPath $nativeHeader) "Missing native language-mode header '$nativeHeader'."
 $nativeHeaderText = Get-Content -LiteralPath $nativeHeader -Raw
@@ -190,24 +182,6 @@ finally {
 }
 
 Write-Host 'Checking DeviceWeb resource counts, parity and placeholders...'
-$deviceEnglish = Get-Content -LiteralPath (Join-Path $deviceRoot 'locales\en.json') -Raw | ConvertFrom-Json
-$deviceCantonese = Get-Content -LiteralPath (Join-Path $deviceRoot 'locales\yue_HK.json') -Raw | ConvertFrom-Json
-$englishKeys = @($deviceEnglish.PSObject.Properties.Name | Sort-Object)
-$cantoneseKeys = @($deviceCantonese.PSObject.Properties.Name | Sort-Object)
-Assert-True ($englishKeys.Count -eq 212) "Expected 212 DeviceWeb English resources, found $($englishKeys.Count)."
-Assert-True (($englishKeys -join "`n") -ceq ($cantoneseKeys -join "`n")) `
-    'DeviceWeb yue_HK keys do not exactly match the English resource keys.'
-
-foreach ($key in $englishKeys) {
-    $englishValue = [string] $deviceEnglish.PSObject.Properties[$key].Value
-    $cantoneseValue = [string] $deviceCantonese.PSObject.Properties[$key].Value
-    Assert-True (-not [string]::IsNullOrWhiteSpace($cantoneseValue)) "Empty DeviceWeb yue_HK value: '$key'."
-    $englishTokens = @(Get-InterpolationTokens -Value $englishValue)
-    $cantoneseTokens = @(Get-InterpolationTokens -Value $cantoneseValue)
-    Assert-True (($englishTokens -join "`n") -ceq ($cantoneseTokens -join "`n")) `
-        "DeviceWeb placeholder mismatch for '$key'."
-}
-
 $node = Get-Command node -ErrorAction SilentlyContinue
 Assert-True ($null -ne $node) 'Node.js is required to validate local web language modes.'
 Invoke-Checked -Command $node.Source `
@@ -222,4 +196,4 @@ Write-Host 'Checking ui-md3 language behavior and interpolation...'
 Invoke-Checked -Command $node.Source -Arguments @('--test', $uiMd3Test) `
     -FailureMessage 'ui-md3 language mode test failed'
 
-Write-Host "Language mode validation passed: $($coverage.translated_messages) native, $($englishKeys.Count) DeviceWeb and every legacy web translation (counted above)."
+Write-Host "Language mode validation passed: $($coverage.translated_messages) native, DeviceWeb and legacy web translations (counted above)."

@@ -1,6 +1,6 @@
 ---
 translation-of: lubricate-mode.md
-source-sha256: 95d1bd25a7e29e620caf0980095b8344ba88017e8297aa2470e68c8603ab26d7
+source-sha256: 0ed3d3bb9c42ae0b203f3128d748312be45191e9d8bf604487d2ba1895c37892
 review-status: agent-drafted
 ---
 
@@ -16,10 +16,12 @@ review-status: agent-drafted
 
 `src/libslic3r/GCode/LubricateRoutine.cpp` 入面嘅 `lubricate_routine_gcode()` 按打印機嘅可打印範圍同可打印高度寫出移動，每邊留 5 mm：
 
-1. `G90`，然後熱床去 Z 5 mm。
-2. 熱床用 F1500 落到底再升返上嚟，行兩轉，每段最多 25 mm。每段開始前，蜂鳴器（`M1006`）播旋律嘅下一個音。
-3. 打印頭用 F12000 行盡 X、行盡 Y，再行兩條對角線。
-4. `M400`，然後再行一次打印機自己嘅歸零指令，因為熱床同打印頭已經停喺第二度。
+1. 先執行 `G90`，再將熱床移到 Z 5 mm。
+2. 做兩個循環。每個循環先停定部機，播晒成首旋律一次（一個 `M1006 S1`、全部音符、一個 `M1006 W`，同 Bambu Lab 預設嘅開機音樂相同），之後用 F1200，分別以一個完整行程將熱床降到底同升返上嚟。
+3. 打印頭以 F12000 行完整條 X 軸、Y 軸同兩條對角線，再執行 `M400`。
+4. 重做打印機自己嘅歸零程序。H2C 會重做開始 G-code 裏面由 `M1009 Q1 L1` 到 `M1009 Q1 L0` 成段指令，先降低熱床同將打印頭停喺熱床上方，再同開機時一樣做 Z 軸歸零。
+
+雙打印頭型號（H2D、H2C）嘅 X、Y 行程會限制喺每個打印頭都到得到嘅共同範圍（`extruder_printable_area`），避免任何打印頭撞到行程極限。H2C 嘅 X 範圍係 30 至 320 mm。
 
 ## 每次開印
 
@@ -56,3 +58,5 @@ review-status: agent-drafted
 
 - [快速開印模式](express-print-mode.md)：另一個特殊模式選項，打印對話框入面嘅旋律列表就係照佢個掣嘅做法。
 - [打印機旋律](../device/printer-melody.md)：自己作曲，喺打印機播。
+
+2026-11-23 改寫後，已獨立編譯程序同核對 H2C 開始 G-code 嘅實際輸出；新版仍未喺實體打印機行過。

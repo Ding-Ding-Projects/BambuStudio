@@ -1,6 +1,6 @@
 ---
 translation-of: narration.md
-source-sha256: 68f8eda4205b9289fa81de2af06ae437dcc12a0406aa08f853e21e0653c92819
+source-sha256: 7f61c9b97e35208d9f2dbdbf74ceda6d95ca7d7063cd9f4a9cbbbc074abbd986
 review-status: agent-drafted
 ---
 
@@ -45,3 +45,16 @@ Windows 嘅自然語音同 OneCore 語音（香港粵語語音通常喺度）係
 ## 驗證
 
 `node tests/narration/narration.test.mjs` 會編譯並執行純邏輯檢查（語氣、狀態轉變、去重、靜音時段、專注輔助、軌道獨立、語音分類），加 `--negative` 會喺暫存副本逐項破壞九條規則，每項都一定要失敗。`node tests/narration/narration_wiring.test.mjs` 檢查事件來源、設定、翻譯完整度同建置接線。喺 Windows 實機編譯後嘅行為仍未驗證。
+
+
+## 本機佇列、語音同接線
+
+`say_tracks(english, cantonese, category)` 收取兩條獨立原文。`narrator_language` 可設為 `en`、`yue_HK` 或 `both`。雙語會等 SAPI 播完一段先播下一段。打印機狀態同錯誤會分開格式化兩種語言嘅範本。個人顯示用字唔會套用到語音。普通同類事件會取代仍在等候嘅舊事件，冷卻時間 20 秒。錯誤唔受冷卻限制，會喺目前事件（包括雙語嘅第二段）播完之後優先處理。最多等候 64 個事件、每個類別名最多 64 個位元組、每段最多 32768 個字元；佇列滿就明確拒絕加入。安靜狀態同讓屏幕閱讀器優先都會取消播放中同等候緊嘅語音。
+
+SAPI 用穩定嘅語音 ID 分辨英文同香港廣東話 `0c04`。選擇儲存喺 `narrator_voice_en` 同 `narrator_voice_yue`，空值代表自動。所選語音唔見咗會保留原有選擇，搵同語言替代；冇同語言語音就報未能使用。兩個語速設定 `narrator_rate_en`、`narrator_rate_yue` 同音高設定 `narrator_pitch_en`、`narrator_pitch_yue` 範圍都係 -10 至 10，預設 0。音高透過已轉義嘅 SAPI XML 設定，旁白文字唔可以注入標記。SAPI 冇跨平台可用嘅網絡能力欄位，介面會標明不明，唔保證離線使用。轉接器每 100 毫秒查播放完成，每三秒更新語音清單。`voices()`、`voice_status()`、`delivery_failed()` 分別提供最新清單、選擇狀態同送出失敗狀態。缺少該語言翻譯或者語音會如實標示。設定元件必須儲存已改選擇並記入本機設定歷史。
+
+`say_now()` 試聽需要明確操作，仍然會加入順序佇列。`set_quiet(quiet, screen_reader_active)` 接駁安靜時段、減少聲音同輔助技術。應用程式拆除前要喺 GUI 執行緒呼叫 `shutdown()`，停止計時器並釋放 COM 資源。
+
+已配置 `ha_speakers` 同連線嘅使用者可以用 Home Assistant 外部轉播。每段已選語言原文會透過 `HomeAssistant::speak_on_speakers` 轉送，即使本機冇嗰把 SAPI 聲音亦一樣。唔會先套用個人顯示用字。安靜同屏幕閱讀器優先會停用本機同轉播。轉接器送出 `tts.speak` 後回傳 `void`，冇每個播放裝置嘅完成回呼；網絡送達、播放成功同幾時播完都未能核實。不同裝置可能同時播放或者喺唔同時間播完，本機唔重疊嘅保證唔適用。`external_mirror_status()` 回傳 `Unconfigured` 或 `PlaybackCompletionUnavailable`，設定頁應列明差別。可靠追蹤每個播放裝置完成仍需另外整合。
+
+GUI 執行緒統一用 `TtsNarrator::narrate(Narration::Event)` 接收事件。純邏輯位於 `src/slic3r/GUI/Narration/`。`NarrationEvents.hpp` 每個事件最多只帶一個整數錯誤碼；`NarrationTransitions.hpp` 將相同狀態事件喺 30 秒內去重。階段 6 表示墨水用完、`0x0300400C` 表示取消工作、模組 `0x07` 表示墨水機，全部來自社群記錄，仍未喺硬件確認。`NarrationPolicy.hpp` 管理設定鍵同安靜判斷；`VoiceCatalog.hpp` 分類語言同整合聲音來源。三條軌道嘅設定鍵係 `narrator_track_printer`、`narrator_track_app`、`narrator_track_accessibility`。舊式 `say()` 同 `say_now()` 係仍然可用但已棄用嘅輔助軌包裝。驗證指令係 `node tests/narration/narration.test.mjs`（加 `--negative` 要求九個刻意破壞嘅版本都失敗），以及 `node tests/narration/narration_wiring.test.mjs`。真正 Windows 版本嘅原生行為仍未經觀察。
