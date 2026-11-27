@@ -64087,3 +64087,88 @@ msgstr "外掛程式、模組同指令碼會以伺服器權限執行。"
 #. review-status: agent-drafted
 msgid "Verifying and transferring the selected package..."
 msgstr "正在驗證同傳送所選套件…"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Download incomplete."
+msgstr "下載未完成。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Installed Java content"
+msgstr "已安裝嘅 Java 內容"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Package"
+msgstr "套件"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Directory"
+msgstr "目錄"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Enable or restore"
+msgstr "啟用或者還原"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Update from file..."
+msgstr "從檔案更新…"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Roll back version"
+msgstr "回復上一個版本"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Remove from server"
+msgstr "從伺服器移除"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Removed packages are kept separately for recovery. Changes take effect at the next server start."
+msgstr "移除嘅套件會另外保留，方便復原。變更會喺下次啟動伺服器時生效。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Select the compatible replacement for this package"
+msgstr "為呢個套件選擇相容嘅替代檔案"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Change %s in %s? A verified recovery copy of its current bytes will be kept."
+msgstr "要更改 %s（位置：%s）嗎？目前嘅檔案內容會保留一份經驗證嘅復原副本。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Applying"
+msgstr "正在套用"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Preserving the selected file and applying the change..."
+msgstr "正在保留所選檔案同套用變更…"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Package changed. Review the server log after starting."
+msgstr "套件已變更。啟動後請檢查伺服器日誌。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Manage installed content..."
+msgstr "管理已安裝內容…"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Stop the server before changing installed content."
+msgstr "更改已安裝內容之前，請先停止伺服器。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Installed content"
+msgstr "已安裝內容"
