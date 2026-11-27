@@ -31,6 +31,7 @@ inline const wxColour TextPrimary{MD3::Light::onSurface};   // default body text
 inline const wxColour TextSecondary{MD3::Light::onSurfaceVariant}; // slightly softer heading/label text
 inline const wxColour TextMuted{"#5c5f66"};     // secondary / placeholder (same hex as Grey700 below)
 inline const wxColour TextDisabled{"#9a9ba3"};  // disabled / inactive text
+inline const wxColour TextMutedBright{"#6B6B6C"}; // same gray as TextMuted, own (brighter) dark mapping
 
 // Pure white (card / dialog / hub fill)
 inline const wxColour White{MD3::Light::scLowest};

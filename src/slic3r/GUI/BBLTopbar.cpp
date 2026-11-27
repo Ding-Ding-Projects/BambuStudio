@@ -680,7 +680,8 @@ void BBLTopbarArt::DrawLabel(wxDC& dc, wxWindow* wnd, const wxAuiToolBarItem& it
     dc.SetFont(m_font);
     dc.SetTextForeground(StateColor::semantic(MD3::Role::OnSurface));
 
-    int textWidth = dc.GetTextExtent(item.GetLabel()).x;
+    const wxString label = wxControl::Ellipsize(item.GetLabel(), dc, wxELLIPSIZE_END, std::max(rect.width - 2, 0));
+    int textWidth = dc.GetTextExtent(label).x;
     wxFontMetrics fm = dc.GetFontMetrics();
     int textHeight = fm.ascent + fm.descent;
 
@@ -696,7 +697,7 @@ void BBLTopbarArt::DrawLabel(wxDC& dc, wxWindow* wnd, const wxAuiToolBarItem& it
         textX = rect.x + 1;
     }
     textY = rect.y + (rect.height - textHeight) / 2;
-    dc.DrawText(item.GetLabel(), textX, textY);
+    dc.DrawText(label, textX, textY);
     dc.DestroyClippingRegion();
 }
 
@@ -959,14 +960,14 @@ void BBLTopbar::Init(wxFrame* parent)
                                    wxEmptyString, wxITEM_NORMAL);
     m_history_item->SetHoverBitmap(topbar_history_chip_bitmap(this, m_history_branch, m_history_head, true));
     m_history_item->SetShortHelp(_L("Version history"));
-    this->AddSpacer(FromDIP(6));
+    AddDipSpacer(6);
 
     // §3.6 project chip: kept as the ID_TITLE label so the caption drag path
     // (OnMouseLeftDown / OnMouseLeftDClock) and update_responsive_title ellipsize
     // continue to work; the chip anatomy is painted in BBLTopbarArt::DrawLabel.
     m_title_item = this->AddLabel(ID_TITLE, "", FromDIP(TOPBAR_PROJECT_CHIP_MAX_W));
     m_title_item->SetAlignment(wxALIGN_CENTRE);
-    this->AddSpacer(FromDIP(6));
+    AddDipSpacer(6);
 
     // LAN model drop indicator: shown only while the option is on (see apply_lan_drop_visibility);
     // a click opens the invite dialog. Guarded on the Material Symbols face like the bell.
@@ -983,7 +984,7 @@ void BBLTopbar::Init(wxFrame* parent)
                                             wxEmptyString, wxITEM_NORMAL);
         // TRN: Tooltip / accessible name of the top-bar notification bell.
         m_notification_item->SetShortHelp(_L("Notifications"));
-        this->AddSpacer(FromDIP(6));
+        AddDipSpacer(6);
     }
 
     // §3.7 appearance / palette button (circular ghost). Guarded on the Material
@@ -994,14 +995,14 @@ void BBLTopbar::Init(wxFrame* parent)
             MaterialIcon::bitmap(this, MaterialIcon::Palette, 20, StateColor::semantic(MD3::Role::OnSurfaceVariant)),
             wxEmptyString, wxITEM_NORMAL);
         m_appearance_item->SetShortHelp(_L("Appearance"));
-        this->AddSpacer(FromDIP(6));
+        AddDipSpacer(6);
     }
 
     // Graphite shell language switch: English, Hong Kong Cantonese, bilingual.
     m_language_item = this->AddTool(ID_LANGUAGE, "", topbar_language_switch_bitmap(this, topbar_language_index()),
                                     wxEmptyString, wxITEM_NORMAL);
     m_language_item->SetShortHelp(_L("Language"));
-    this->AddSpacer(FromDIP(6));
+    AddDipSpacer(6);
 
     // Graphite shell update chip: hidden until SetUpdateReady() reports a downloaded update.
     m_update_item = this->AddTool(ID_UPDATE_READY, "", topbar_update_chip_bitmap(this, false), wxEmptyString, wxITEM_NORMAL);
@@ -1013,13 +1014,13 @@ void BBLTopbar::Init(wxFrame* parent)
     // §3.8: a 1px x 22px outline-variant separator sits immediately before the
     // window-control cluster (drawn by BBLTopbarArt::DrawSeparator).
     this->AddSeparator();
-    this->AddSpacer(FromDIP(4));
+    AddDipSpacer(4);
 
     wxBitmap iconize_bitmap = topbar_glyph_bitmap(this, MaterialIcon::Minimize, TOPBAR_WINDOW_ICON_SIZE,
                                                   MD3::Role::OnSurface, "topbar_min", TOPBAR_ICON_SIZE);
     wxAuiToolBarItem* iconize_btn = this->AddTool(wxID_ICONIZE_FRAME, "", iconize_bitmap);
 
-    this->AddSpacer(FromDIP(4));
+    AddDipSpacer(4);
 
     maximize_bitmap = topbar_glyph_bitmap(this, MaterialIcon::CropSquare, TOPBAR_WINDOW_BOX_SIZE,
                                           MD3::Role::OnSurface, "topbar_max", TOPBAR_ICON_SIZE);
@@ -1032,7 +1033,7 @@ void BBLTopbar::Init(wxFrame* parent)
         maximize_btn = this->AddTool(wxID_MAXIMIZE_FRAME, "", maximize_bitmap);
     }
 
-    this->AddSpacer(FromDIP(4));
+    AddDipSpacer(4);
 
     wxBitmap close_bitmap = topbar_glyph_bitmap(this, MaterialIcon::Close, TOPBAR_WINDOW_ICON_SIZE,
                                                 MD3::Role::OnSurface, "topbar_close", TOPBAR_ICON_SIZE);
@@ -1127,6 +1128,12 @@ void BBLTopbar::Init(wxFrame* parent)
         Refresh(false);
         event.Skip();
     });
+}
+
+void BBLTopbar::AddDipSpacer(int dip)
+{
+    // The DIP size is kept in the item's user data so Rescale() can recompute the pixels.
+    AddSpacer(FromDIP(dip))->SetUserData(dip);
 }
 
 BBLTopbar::~BBLTopbar()
@@ -1816,6 +1823,14 @@ void BBLTopbar::Rescale() {
     item->SetBitmap(topbar_glyph_bitmap(this, MaterialIcon::Close, TOPBAR_WINDOW_ICON_SIZE,
                                         MD3::Role::OnSurface, "topbar_close", TOPBAR_ICON_SIZE));
 
+    // Pixel widths fixed at creation keep the old monitor's scale; left stale, the toolbar's
+    // minimum width can exceed the frame and push the window buttons out of view.
+    // Only AddDipSpacer() sets user data on an item.
+    for (size_t i = 0; i < GetToolCount(); ++i) {
+        wxAuiToolBarItem *tool = FindToolByIndex(int(i));
+        if (tool->GetUserData() > 0)
+            tool->SetSpacerPixels(FromDIP(int(tool->GetUserData())));
+    }
     m_toolbar_h = FromDIP(MD3::Metrics::top_bar_height);
     SetMinSize({-1, m_toolbar_h});
     SetMaxSize({-1, m_toolbar_h});
@@ -1845,8 +1860,7 @@ void BBLTopbar::OnFullScreen(wxAuiToolBarEvent& event)
 #ifdef __WXMSW__
         HWND hWnd = m_frame->GetHandle();
         RECT      borderThickness;
-        SetRectEmpty(&borderThickness);
-        AdjustWindowRectEx(&borderThickness, GetWindowLongPtr(hWnd, GWL_STYLE), FALSE, 0);
+        Slic3r::GUI::get_window_frame_for_dpi(hWnd, GetWindowLongPtr(hWnd, GWL_STYLE), borderThickness);
         m_frame->SetMaxSize(size + wxSize{-borderThickness.left + borderThickness.right, -borderThickness.top + borderThickness.bottom});
 #endif //  __WXMSW__
         m_normalRect = m_frame->GetRect();

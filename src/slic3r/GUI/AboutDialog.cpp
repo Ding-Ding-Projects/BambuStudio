@@ -5,6 +5,7 @@
 #include "libslic3r_build_time.h"
 
 #include "libslic3r/Utils.hpp"
+#include "libslic3r/BuildInfo.hpp"
 #include "GUI.hpp"
 #include "GUI_App.hpp"
 #include "MainFrame.hpp"
@@ -17,6 +18,7 @@
 #include "Widgets/MD3HtmlWindow.hpp"
 #include "ChangelogDialog.hpp"
 #include "AppLogo/LogoRender.hpp"
+#include "Widgets/LinkLabel.hpp"
 
 #include <wx/clipbrd.h>
 #include <wx/image.h>
@@ -153,6 +155,7 @@ void CopyrightsDialog::fill_entries()
         { "libcurl",                                        "",      "https://curl.se/libcurl" },
         { "Libigl",                                         "",      "https://libigl.github.io" },
         { "libnest2d",                                      "",      "https://github.com/tamasmeszaros/libnest2d" },
+        { "MCUT",                                           "",      "https://cutdigital.github.io/mcut.site/" },
         { "Mesa 3D",                                        "",      "https://mesa3d.org" },
         { "Miniz",                                          "",      "https://github.com/richgel999/miniz" },
         { "Nanosvg",                                        "",      "https://github.com/memononen/nanosvg" },
@@ -417,74 +420,55 @@ AboutDialog::AboutDialog()
     text_list.push_back(_L("There many parts of the software that come from community contributions, so we're unable to list them one-by-one, and instead, they'll be attributed in the corresponding code comments."));
 
     text_sizer->Add( 0, 0, 0, wxTOP, FromDIP(33));
-    bool is_zh = wxGetApp().app_config->get("language") == "zh_CN";
-    for (int i = 0; i < text_list.size(); i++)
     {
-        auto staticText = new Label(this, Label::Body_12, wxEmptyString, wxALIGN_LEFT, wxSize(FromDIP(520), -1));
-        staticText->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
-        staticText->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
-        staticText->SetMinSize(wxSize(FromDIP(520), -1));
-        if (is_zh) {
-            wxString find_txt = "";
-            wxString count_txt = "";
-            for (auto  o = 0; o < text_list[i].length(); o++) {
-                auto size = staticText->GetTextExtent(count_txt);
-                if (size.x < FromDIP(506)) {
-                    find_txt += text_list[i][o];
-                    count_txt += text_list[i][o];
-                } else {
-                    find_txt += std::string("\n") + text_list[i][o];
-                    count_txt = text_list[i][o];
-                }
+        // One control per wrapped line so that every line, inside and between paragraphs, has the same pitch
+        wxClientDC dc(this);
+        dc.SetFont(Label::Body_12);
+        for (const wxString &paragraph : text_list) {
+            wxString wrapped;
+            Label::split_lines(dc, FromDIP(506), paragraph, wrapped);
+            for (const wxString &line : wxSplit(wrapped, '\n', '\0')) {
+                auto line_text = new wxStaticText(this, wxID_ANY, line, wxDefaultPosition, wxSize(FromDIP(520), FromDIP(21)), wxALIGN_LEFT | wxST_NO_AUTORESIZE);
+                line_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+                line_text->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
+                line_text->SetFont(Label::Body_12);
+                line_text->SetMinSize(wxSize(FromDIP(520), FromDIP(21)));
+                text_sizer->Add(line_text, 0, 0, 0);
             }
-            staticText->SetLabel(find_txt);
-        } else {
-            staticText->SetLabel(text_list[i]);
-            staticText->Wrap(FromDIP(520));
         }
-
-        text_sizer->Add( staticText, 0, wxUP | wxDOWN, FromDIP(3));
     }
 
     text_sizer_horiz->Add(text_sizer, 1, wxALL,0);
     ver_sizer->Add(text_sizer_horiz, 0, wxALL,0);
-    ver_sizer->Add( 0, 0, 0, wxTOP, FromDIP(43));
+    ver_sizer->Add( 0, 0, 0, wxTOP, FromDIP(22));
 
-    wxBoxSizer *copyright_ver_sizer = new wxBoxSizer(wxVERTICAL);
-    wxBoxSizer *copyright_hor_sizer = new wxBoxSizer(wxHORIZONTAL);
+    const auto make_link = [this](const wxString &label, const std::string &url) {
+        LinkLabel *link = new LinkLabel(this, label, url);
+        link->SeLinkLabelFColour(wxColour("#00AE42"));
+        link->SeLinkLabelBColour(*wxWHITE);
+        return link;
+    };
 
-    copyright_hor_sizer->Add(copyright_ver_sizer, 0, wxLEFT, FromDIP(20));
+    const bool         is_china    = wxGetApp().app_config->get("region") == "China";
+    const std::string  privacy_url = is_china ? "https://bambulab.cn/zh-cn/policies/privacy" : "https://bambulab.com/en/policies/privacy";
+    const std::string  terms_url   = is_china ? "https://bambulab.cn/zh-cn/policies/terms" : "https://bambulab.com/en/policies/terms";
 
-    Label *html_text = new Label(this, Label::Body_12, "Copyright(C) 2021-2025 Lunkuo All Rights Reserved");
-    html_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
-    html_text->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
+    wxBoxSizer *policy_sizer = new wxBoxSizer(wxHORIZONTAL);
+    policy_sizer->Add(make_link(_L("Privacy Policy"), privacy_url), 0, wxALIGN_CENTER_VERTICAL, 0);
+    policy_sizer->AddSpacer(FromDIP(32));
+    policy_sizer->Add(make_link(_L("Terms of Use"), terms_url), 0, wxALIGN_CENTER_VERTICAL, 0);
+    ver_sizer->Add(policy_sizer, 0, wxALIGN_CENTER_HORIZONTAL, 0);
+    ver_sizer->AddSpacer(FromDIP(25));
 
-    copyright_ver_sizer->Add(html_text, 0, wxALL , 0);
+    Label *copyright_text = new Label(this, Label::Body_14, "Copyright(C) 2021-2025 Lunkuo All Rights Reserved");
+    copyright_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
+    copyright_text->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
+    ver_sizer->Add(copyright_text, 0, wxALIGN_CENTER_HORIZONTAL, 0);
+    ver_sizer->AddSpacer(FromDIP(4));
 
-    m_html = new MD3HtmlWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHW_SCROLLBAR_NEVER /*NEVER*/);
-      {
-          wxFont font = get_default_font(this);
-          const int fs = font.GetPointSize()-1;
-          int size[] = {fs,fs,fs,fs,fs,fs,fs};
-          m_html->SetFonts(font.GetFaceName(), font.GetFaceName(), size);
-          m_html->SetMinSize(wxSize(FromDIP(-1), FromDIP(16)));
-          m_html->SetBorders(2);
-          m_html->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
-          // wxHtml owns its own colours: with no explicit link tone this page kept
-          // the default browser blue, which lands at ~1.2:1 on the dark surface.
-          const wxString text = wxString::Format(
-              "<html>"
-              "<body bgcolor=\"%s\" text=\"%s\" link=\"%s\">"
-              "<p style=\"text-align:left\"><a  href=\"www.bambulab.com\">www.bambulab.com</ a></p>"
-              "</body>"
-              "</html>",
-              md3_html_colour(MD3::Role::SurfaceContainerLowest),
-              md3_html_colour(MD3::Role::OnSurfaceVariant),
-              md3_html_colour(MD3::Role::Primary));
-          m_html->SetPage(text);
-          copyright_ver_sizer->Add(m_html, 0, wxEXPAND, 0);
-          m_html->Bind(wxEVT_HTML_LINK_CLICKED, &AboutDialog::onLinkClicked, this);
-      }
+    ver_sizer->Add(make_link("www.bambulab.com", "https://www.bambulab.com"), 0, wxALIGN_CENTER_HORIZONTAL, 0);
+    ver_sizer->AddSpacer(FromDIP(14));
+
     //Add "Portions copyright" button
     // MD3 outlined button (kit actions/Button): transparent interior + 1px Outline
     // ring, OnSurface label, pill radius (height/2) and a SurfaceContainerHigh
@@ -509,17 +493,9 @@ AboutDialog::AboutDialog()
         dialog.ShowModal();
     });
 
-    wxBoxSizer *copyright_button_ver = new wxBoxSizer(wxVERTICAL);
-    copyright_button_ver->Add( 0, 0, 0, wxTOP, FromDIP(10));
-    copyright_button_ver->Add(button_whats_new, 0, wxALL,0);
-    copyright_button_ver->Add( 0, 0, 0, wxTOP, FromDIP(8));
-    copyright_button_ver->Add(button_portions, 0, wxALL,0);
-
-    copyright_hor_sizer->AddStretchSpacer();
-    copyright_hor_sizer->Add(copyright_button_ver, 0, wxRIGHT, FromDIP(20));
-
-    ver_sizer->Add(copyright_hor_sizer, 0, wxEXPAND ,0);
-    ver_sizer->Add( 0, 0, 0, wxTOP, FromDIP(30));
+    ver_sizer->Add(button_whats_new, 0, wxALIGN_CENTER_HORIZONTAL | wxBOTTOM, FromDIP(8));
+    ver_sizer->Add(button_portions, 0, wxALIGN_CENTER_HORIZONTAL, 0);
+    ver_sizer->AddSpacer(FromDIP(38));
     button_portions->Bind(wxEVT_BUTTON, &AboutDialog::onCopyrightBtn, this);
 
     wxGetApp().UpdateDlgDarkUI(this);
@@ -535,11 +511,6 @@ void AboutDialog::on_dpi_changed(const wxRect &suggested_rect)
     m_logo_bitmap.msw_rescale();
     m_logo->SetBitmap(about_banner_with_logo(m_logo_bitmap.bmp()));
 
-    const wxFont& font = GetFont();
-    const int fs = font.GetPointSize() - 1;
-    int font_size[] = { fs, fs, fs, fs, fs, fs, fs };
-    m_html->SetFonts(font.GetFaceName(), font.GetFaceName(), font_size);
-
     const int& em = em_unit();
 
     msw_buttons_rescale(this, em, { wxID_CLOSE, m_copy_rights_btn_id });
@@ -549,20 +520,13 @@ void AboutDialog::on_dpi_changed(const wxRect &suggested_rect)
     if (m_btn_portions)
         m_btn_portions->Rescale();
 
-    m_html->SetMinSize(wxSize(-1, 16 * em));
-    m_html->Refresh();
+
 
     const wxSize& size = wxSize(65 * em, 30 * em);
 
     SetMinSize(size);
     Fit();
     Refresh();
-}
-
-void AboutDialog::onLinkClicked(wxHtmlLinkEvent &event)
-{
-    wxGetApp().open_browser_with_warning_dialog(event.GetLinkInfo().GetHref());
-    event.Skip(false);
 }
 
 void AboutDialog::onCloseDialog(wxEvent &)

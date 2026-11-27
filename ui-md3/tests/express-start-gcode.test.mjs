@@ -91,6 +91,7 @@ const families = [
   { match: /^Bambu Lab H2D /, prime: /^;=+\s*nozzle load line/, normal: ['M1006 S1', 'M982.2 S1', 'M972 S24', 'M972 S41', 'M972 S19', 'M972 S14', 'G383 O0', 'M970.3', 'M974'] },
   { match: /^Bambu Lab H2C /, prime: /^;=+\s*nozzle load line/, normal: ['M1006 S1', 'M982.2 S1', 'M972 S46', 'M972 S41', 'M972 S19', 'M972 S14', 'M970.3', 'M974'] },
   { match: /^Bambu Lab H2S /, prime: /^;=+\s*nozzle load line/, normal: ['M1006 S1', 'M982.2 S1', 'M972 S24', 'M972 S41', 'M972 S19', 'M970.3', 'M974'] },
+  { match: /^Bambu Lab P3C /, prime: /^;=+\s*nozzle load line/, normal: ['M1006 S1', 'M982.2 S1', 'M972 S24', 'M972 S26', 'M970.3', 'M974'] },
   { match: /^Bambu Lab P2S /, prime: /^;=+\s*nozzle load line/, normal: ['M1006 S1', 'M982.2 S1', 'M972 S24', 'M972 S42', 'M972 S19', 'M970.3', 'M974'] },
   { match: /^Bambu Lab X2D /, prime: /^;=+\s*nozzle load line/, normal: ['M1006 S1', 'M982.2 S1', 'M972 S24', 'M972 S26', 'M972 S19', 'G383 O0', 'M970.3', 'M974'] },
   { match: /^Bambu Lab H3C /, prime: /^;=+\s*nozzle load line/, normal: ['M1006 S1', 'M982.2 S1', 'M972 S24', 'M972 S41', 'M970.3', 'M974'] },
@@ -110,7 +111,13 @@ const checkTemplate = (name, gcode) => {
 
   const express = renderView(gcode, 'express');
   assert.equal(express[0], EXPRESS_COMMENT, `${name}: the express view starts with the express comment`);
+  // The new P3C keeps its chamber camera, bed presence, and foreign-object checks even in express mode.
+  const preserveP3CDetection = name.startsWith('Bambu Lab P3C ');
+  if (preserveP3CDetection) {
+    for (const id of ['S19', 'S24', 'S26', 'S30', 'S34']) assert.ok(express.some(line => line.startsWith(`M972 ${id} `)), `${name}: missing detection ${id}`);
+  }
   for (const line of express) {
+    if (preserveP3CDetection && (/^M972 (?:S19|S24|S26|S30|S34)\b/.test(line) || /^;=+\s*detection start/.test(line))) continue;
     assert.ok(!FORBIDDEN.test(line), `${name}: express view still runs "${line}"`);
     assert.ok(!SKIPPED_MARKERS.test(line), `${name}: express view still contains the section "${line}"`);
   }
@@ -136,7 +143,7 @@ const checkTemplate = (name, gcode) => {
 const names = templateFiles();
 
 test('every Bambu Lab start template is guarded for express print mode', () => {
-  assert.equal(names.length, 30, 'the 30 start templates are all checked');
+  assert.equal(names.length, 31, 'the 31 start templates are all checked');
   for (const name of names) checkTemplate(name, loadGcode(name));
 });
 

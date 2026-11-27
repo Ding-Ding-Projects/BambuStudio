@@ -12,7 +12,7 @@ import vm from 'node:vm';
 // any time (resources/web/guide/12, wired by GuideFrame in WebGuideDialog.cpp).
 
 const repoDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-const read = (relative) => readFileSync(path.join(repoDir, relative), 'utf8');
+const read = (relative) => readFileSync(path.join(repoDir, relative), 'utf8').replace(/\r\n/g, '\n');
 const stripComments = (text) => text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^[ \t]*\/\/.*$/gm, '');
 const stripMarkupComments = (text) => text.replace(/<!--[\s\S]*?-->/g, '');
 
@@ -47,18 +47,21 @@ const hostPayload = (english, cantonese, extra = {}) => ({
 
 const plain = (html) => html.replace(/<[^>]*>/g, '');
 
-test('the guide routes region -> funny levels -> experience programme, both ways', () => {
+test('the guide routes region -> funny levels -> consent -> experience programme, both ways', () => {
   const region = read(`${guide}/11/11.js`);
   assert.match(stripComments(region), /window\.location\.href="\.\.\/12\/index\.html\?region="\+encodeURIComponent\(RegionFinal\)/);
   assert.doesNotMatch(stripComments(region), /\.\.\/3\/index\.html/, 'the region page must not skip the funny-level step');
 
   const programme = stripMarkupComments(read(`${guide}/3/index.html`));
-  assert.match(programme, /id="PreBtn" onclick="window\.open\('\.\.\/12\/index\.html\?dir=back&amp;'\+GetGetStr\(\),'_self'\)"/);
+  assert.match(programme, /id="PreBtn" onclick="window\.open\('\.\.\/terms\/index\.html\?'\+GetGetStr\(\),'_self'\)"/);
 
+  const terms = read(`${guide}/terms/terms.js`);
+  assert.match(terms, /function Agree\(\)[\s\S]*?SendClauseChoice\('agree'\);[\s\S]*?\.\.\/3\/index\.html\?region=/);
+  assert.match(terms, /function GotoBack\(\)[\s\S]*?\.\.\/12\/index\.html\?dir=back&region=/);
   const sandbox = loadDisclosure('en');
   assert.equal(sandbox.FunnyDisclosureRoute('back', 'Europe'), '../11/index.html');
-  assert.equal(sandbox.FunnyDisclosureRoute('next', 'North America'), '../3/index.html?region=North%20America');
-  assert.equal(sandbox.FunnyDisclosureRoute('next', null), '../3/index.html');
+  assert.equal(sandbox.FunnyDisclosureRoute('next', 'North America'), '../terms/index.html?region=North%20America');
+  assert.equal(sandbox.FunnyDisclosureRoute('next', null), '../terms/index.html');
 });
 
 test('the step page loads the catalog and its logic and uses native, named controls', () => {

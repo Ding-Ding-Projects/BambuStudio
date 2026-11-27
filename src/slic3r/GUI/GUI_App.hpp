@@ -87,6 +87,8 @@ class TaskManager;
 
 namespace GUI{
 
+enum class WebRequestSource;
+
 class RemovableDriveManager;
 class OtherInstanceMessageHandler;
 class MainFrame;
@@ -291,6 +293,27 @@ private:
     // Faults the app survived, waiting for the workspace to be able to show them.
     std::vector<std::string> m_recovered_errors;
     int             m_recovered_error_count { 0 };
+    // Home shell paint is signaled from JS. GL init waits on that callback or a
+    // one-shot timer so post_init() does not pump the event loop from idle.
+    enum class HomeGlWait : unsigned char { Idle, WaitPaint, WaitPresent, Done };
+    HomeGlWait      m_home_gl_wait{ HomeGlWait::Idle };
+    bool            m_home_gl_slow_bootup{ false };
+    bool            m_home_gl_init_ran{ false };
+    wxTimer         m_home_gl_timer;
+    void            begin_home_gl_wait(bool slow_bootup);
+    void            on_home_shell_painted();
+    void            on_home_gl_timer(wxTimerEvent& evt);
+    void            run_deferred_gl_init();
+    // While true, Plater::on_config_change is a no-op. Held across MainFrame
+    // construction and load_current_presets, then cleared before Show().
+    // PlaterConfigChangeSuspend (GUI_App.cpp) is the only writer.
+    bool            m_plater_on_config_change_suspended { false };
+    friend class PlaterConfigChangeSuspend;
+    // Caller must already have released the suspend guard. Applies one
+    // full_config when apply_full_config is set, then the printer preset so
+    // the bed model and edge textures match a normal preset load. Skipped
+    // for the startup G-code viewer, whose update_layout() bed must stay 200x200.
+    void            finish_suspended_plater_config(bool apply_full_config);
     bool            m_app_conf_exists{ false };
     EAppMode        m_app_mode{ EAppMode::Editor };
     bool            m_is_recreating_gui{ false };
@@ -447,6 +470,7 @@ public:
     int             OnRun() override;
     int             OnExit() override;
     bool            initialized() const { return m_initialized; }
+    bool            plater_on_config_change_suspended() const { return m_plater_on_config_change_suspended; }
     inline bool     is_enable_multi_machine() { return this->app_config&& this->app_config->get("enable_multi_machine") == "true"; }
 
     std::map<std::string, bool> test_url_state;
@@ -628,7 +652,7 @@ public:
     void            request_user_handle(int online_login = 0);
     void            request_user_logout();
     int             request_user_unbind(std::string dev_id);
-    std::string     handle_web_request(std::string cmd);
+    std::string     handle_web_request(std::string cmd, WebRequestSource source);
     void            handle_script_message(std::string msg);
     void            request_model_download(wxString url);
     std::string     sanitize_download_url(const std::string& url);
@@ -1059,7 +1083,6 @@ bool is_support_filament(int extruder_id, bool strict_check = true);
 bool is_soluble_filament(int extruder_id);
 // check if the filament for model is in the list
 bool has_filaments(const std::vector<string>& model_filaments);
-std::vector<bool> has_filament_groups(const std::vector<std::vector<string>> &model_filament_groups);
 
 static std::vector<wxLanguage> s_supported_languages = {
     wxLANGUAGE_ENGLISH,

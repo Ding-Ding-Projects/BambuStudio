@@ -1050,7 +1050,7 @@ void CustomToggleButton::OnSize(wxSizeEvent& event) {
 
 // RichTooltipPopup implementation
 RichTooltipPopup::RichTooltipPopup(wxWindow* parent, const wxString& iconName, const wxString& text)
-    : wxPopupTransientWindow(parent, wxBORDER_NONE)
+    : wxPopupWindow(parent, wxBORDER_NONE)
     , m_text(text)
 {
     SetBackgroundColour(StateColor::semantic(MD3::Role::InverseSurface));
@@ -1105,7 +1105,7 @@ void RichTooltipPopup::ShowAtPosition(wxWindow* anchor)
     pos.y += anchorSize.GetHeight() + FromDIP(4);
     
     SetPosition(pos);
-    Popup();
+    Show();
 }
 
 ExpandButton::ExpandButton(wxWindow* parent,  std::string bmp, wxWindowID id, const wxPoint& pos, const wxSize& size)
@@ -1138,7 +1138,7 @@ ExpandButton::~ExpandButton()
     // Clean up tooltip popup to prevent memory leak
     if (m_tooltip_popup) {
         if (m_tooltip_popup->IsShown()) {
-            m_tooltip_popup->Dismiss();
+            m_tooltip_popup->Hide();
         }
         m_tooltip_popup->Destroy();
         m_tooltip_popup = nullptr;
@@ -1169,9 +1169,9 @@ void ExpandButton::ShowRichTooltip()
     
     // Clean up any existing popup before creating a new one to prevent memory leaks
     if (m_tooltip_popup) {
-        // Dismiss and destroy the existing popup
+        // Hide and destroy the existing popup
         if (m_tooltip_popup->IsShown()) {
-            m_tooltip_popup->Dismiss();
+            m_tooltip_popup->Hide();
         }
         m_tooltip_popup->Destroy();
         m_tooltip_popup = nullptr;
@@ -1185,9 +1185,9 @@ void ExpandButton::ShowRichTooltip()
 void ExpandButton::HideRichTooltip()
 {
     if (m_tooltip_popup) {
-        // Dismiss the popup if it's currently shown
+        // Hide the popup if it's currently shown
         if (m_tooltip_popup->IsShown()) {
-            m_tooltip_popup->Dismiss();
+            m_tooltip_popup->Hide();
         }
         // Destroy the popup to prevent memory leak
         m_tooltip_popup->Destroy();

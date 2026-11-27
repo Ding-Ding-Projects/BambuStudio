@@ -20,6 +20,7 @@ class ComboBox : public wxWindowWithItems<TextInput, wxItemContainer>
     bool     m_no_drop_icon = false;     // CB_NO_DROP_ICON: suppress the trailing chevron
     bool     m_chevron_shown = false;    // true when the trailing chevron glyph is the current icon
     bool     m_applying_chevron = false; // re-entry guard around applyDropChevron()'s SetIcon()->Rescale()
+    int      m_last_width = -1;
     wxString replace_text;
     wxString image_for_text;
     MD3::ColorScheme m_scheme = MD3::ColorScheme::Brand;
@@ -115,9 +116,18 @@ protected:
     void OnEdit() override;
     void render(wxDC &dc) override;
 
+    /**
+     * \brief Best size of a read-only combo: wide enough for its widest item
+     *
+     * \note An explicit ctor width still wins, as it becomes the min width.
+     *       An editable combo or CB_NO_TEXT keeps the base best size.
+     */
+    wxSize DoGetBestSize() const override;
+
     void sendComboBoxEvent();
     void sync_closed_suffix();
     void update_closed_suffix_reserve();
+    int  closed_suffix_reserve(const wxString &suffix) const;
 
 #ifdef __WIN32__
     WXLRESULT MSWWindowProc(WXUINT nMsg, WXWPARAM wParam, WXLPARAM lParam) override;
@@ -136,6 +146,7 @@ private:
     void mouseWheelMoved(wxMouseEvent &event);
     void keyDown(wxKeyEvent &event);
     void onMove(wxMoveEvent &event);
+    void onSize(wxSizeEvent &event);
 
     DECLARE_EVENT_TABLE()
 };

@@ -199,7 +199,7 @@ private:
     wxString bilingual_note;
 };
 
-class RichTooltipPopup : public wxPopupTransientWindow {
+class RichTooltipPopup : public wxPopupWindow {
 public:
     RichTooltipPopup(wxWindow* parent, const wxString& iconName, const wxString& text);
     void ShowAtPosition(wxWindow* anchor);

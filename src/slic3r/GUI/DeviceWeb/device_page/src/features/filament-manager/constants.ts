@@ -91,6 +91,7 @@ export function formatSlotLocation(
   t: (key: string, opts?: Record<string, unknown>) => string,
   trayLabel?: string,
   multiExternal = false,
+  amsId?: number,
 ): string | null {
   if (!deviceName) return null;
   // Slot 255 is the single external spool; amsType 0 is an external spool on a
@@ -103,8 +104,10 @@ export function formatSlotLocation(
   let amsTypeName: string | null = null;
   let slotLabel: string | null = null;
   if (isExternal) {
-    slotLabel = (multiExternal && slotId != null && slotId !== '' && slotId !== '255')
-      ? toInlineBilingual(t('External Spool {{n}}', { n: 256 - Number(slotId) }))
+    // External spools are addressed as (ams_id = virtual tray id 255/254, slot_id = "0"),
+    // so the external index comes from ams_id.
+    slotLabel = (multiExternal && amsId != null && amsId >= 0)
+      ? toInlineBilingual(t('External Spool {{n}}', { n: 256 - amsId }))
       : toInlineBilingual(t('External Spool'));
   } else {
     amsTypeName = (amsType != null && amsType >= 0)
@@ -122,7 +125,7 @@ export function formatSlotLocation(
 export function multiExternalDevIds(spools: Spool[]): Set<string> {
   const ids = new Set<string>();
   for (const s of spools) {
-    if (s.in_printer === true && s.ams_type === 0 && s.dev_id && s.slot_id !== '255') {
+    if (s.in_printer === true && s.ams_type === 0 && s.dev_id && s.ams_id != null && s.ams_id >= 0 && s.ams_id !== 255) {
       ids.add(s.dev_id);
     }
   }

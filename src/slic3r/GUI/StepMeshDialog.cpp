@@ -289,7 +289,7 @@ StepMeshDialog::StepMeshDialog(wxWindow* parent, Slic3r::Step& file, double line
     // "Don't show again" lives at the footer's leading edge; OK/Cancel become
     // kit pill footer Buttons (filled OK, text Cancel).
     m_checkbox = new LabeledCheckBox(this, _L("Don't show again"));
-    m_checkbox->SetForegroundColour(FONT_COLOR);
+    m_checkbox->SetForegroundColour(StateColor::darkModeColorFor(FONT_COLOR));
 
     m_button_ok = new Button(this, _L("OK"));
     m_button_ok->SetVariant(Button::Variant::Filled);
@@ -362,8 +362,8 @@ void StepMeshDialog::log_step_tree_structure()
 
 void StepMeshDialog::on_task_done(wxCommandEvent& event)
 {
-    // A queued completion from an older run must not join the task that
-    // replaced it, or re-enable OK while that run is still in progress.
+    // A queued completion from an older run must not overwrite the label or
+    // join the task that replaced it.
     if (event.GetInt() != m_mesh_generation)
         return;
     wxString text = event.GetString();
@@ -375,8 +375,6 @@ void StepMeshDialog::on_task_done(wxCommandEvent& event)
             m_task = nullptr;
         }
     }
-    if (m_button_ok)
-        m_button_ok->Enable(true);
 }
 
 void StepMeshDialog::stop_task()
@@ -399,15 +397,16 @@ void StepMeshDialog::update_mesh_number_text()
         return;
     wxString newText = wxString::Format(_L("Calculating, please wait..."));
     mesh_face_number_text->SetLabel(newText);
-    if (m_button_ok)
-        m_button_ok->Enable(false);
     stop_task();
+    // OK stays disabled until this run posts its result. The worker does not
+    // post when the cancel flag is set, so make sure the run starts with it clear.
+    m_file.m_stop_mesh.store(false);
     const int generation = ++m_mesh_generation;
     if (!m_task) {
         m_task = new boost::thread(Slic3r::create_thread([this, generation]() -> void {
             m_mesh_number = m_file.get_triangle_num(get_linear_defletion(), get_angle_defletion());
             // Cancel and a real zero both return 0. Only a finished, non-cancelled
-            // run posts, so a stop does not re-enable OK for the next run.
+            // run posts a completion event.
             if (m_file.m_stop_mesh.load())
                 return;
             wxString number_text = wxString::Format("%d", m_mesh_number);

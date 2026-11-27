@@ -281,10 +281,7 @@ void IMSlider::SetTicksValues(const Info &custom_gcode_per_print_z)
         // post_ticks_changed_event();
     }
 
-    const bool tool_change_disabled =
-        !m_can_change_color ||
-        multi_nozzle_diameter_mode_enabled(wxGetApp().preset_bundle->project_config);
-    if (m_ticks.has_tick_with_code(ToolChange) && tool_change_disabled) {
+    if (m_ticks.has_tick_with_code(ToolChange) && !m_can_change_color) {
         if (!wxGetApp().plater()->only_gcode_mode() && !wxGetApp().plater()->using_exported_file())
         {
             m_ticks.erase_all_ticks_with_code(ToolChange);
@@ -421,8 +418,7 @@ void IMSlider::add_custom_gcode(std::string custom_gcode)
 void IMSlider::add_code_as_tick(Type type, int selected_extruder)
 {
     if (m_selection == ssUndef) return;
-    if (type == ToolChange &&
-        multi_nozzle_diameter_mode_enabled(wxGetApp().preset_bundle->project_config))
+    if (type == ToolChange && !tool_changes_active())
         return;
     const int tick = m_selection == ssLower ? m_lower_value : m_higher_value;
 
@@ -893,7 +889,7 @@ bool IMSlider::horizontal_slider(const char* str_id, int* value, int v_min, int 
 }
 
 void IMSlider::draw_colored_band(const ImRect& groove, const ImRect& slideable_region) {
-    if (!m_ticks.has_tick_with_code(ToolChange))
+    if (!m_ticks.has_tick_with_code(ToolChange) || !tool_changes_active())
         return;
 
     ImRect main_band = groove;
@@ -968,7 +964,7 @@ void IMSlider::draw_colored_band(const ImRect& groove, const ImRect& slideable_r
     }
 }
 
-void IMSlider::draw_custom_label_block(const ImVec2 anchor, Type type)
+void IMSlider::draw_custom_label_block(const ImVec2 anchor, Type type, bool inactive)
 {
     wxString label;
     switch (type)
@@ -998,8 +994,8 @@ void IMSlider::draw_custom_label_block(const ImVec2 anchor, Type type)
     // Custom-gcode marker chip — MD3 ErrorContainer / OnErrorContainer pair.
     // The former hardcoded Warning fill (#FF6F00) + white label failed WCAG AA
     // in the light theme; the container / on-container roles guarantee AA in both.
-    const ImU32 chip_bg   = preview_color(MD3::Role::ErrorContainer, m_is_dark);
-    const ImU32 chip_text = preview_color(MD3::Role::OnErrorContainer, m_is_dark);
+    const ImU32 chip_bg   = preview_color(inactive ? MD3::Role::SurfaceContainerHigh : MD3::Role::ErrorContainer, m_is_dark);
+    const ImU32 chip_text = preview_color(inactive ? MD3::Role::OnSurfaceVariant : MD3::Role::OnErrorContainer, m_is_dark);
     ImVec2 block_pos = { anchor.x - text_size.x - padding.x * 2, anchor.y - text_size.y / 2 - padding.y };
     ImVec2 block_size = { text_size.x + padding.x * 2, text_size.y + padding.y * 2 };
     // Chip corner = MD3 pill radius (height / 2 token) instead of the magic 2px.
@@ -1120,7 +1116,7 @@ void IMSlider::draw_ticks(const ImRect& slideable_region) {
 
         //draw label block
         ImVec2 label_block_anchor = ImVec2(slideable_region.GetCenter().x - tick_offset.y, tick_pos);
-        draw_custom_label_block(label_block_anchor, tick_it->type);
+        draw_custom_label_block(label_block_anchor, tick_it->type, tick_it->type == ToolChange && !tool_changes_active());
 
         ++tick_it;
     }
@@ -1131,7 +1127,7 @@ void IMSlider::draw_ticks(const ImRect& slideable_region) {
     if (tick_it != m_ticks.ticks.end()) {
         //draw label block again, to keep it in front
         ImVec2 label_block_anchor = ImVec2(slideable_region.GetCenter().x - tick_offset.y, get_tick_pos(tick_it->tick));
-        draw_custom_label_block(label_block_anchor, tick_it->type);
+        draw_custom_label_block(label_block_anchor, tick_it->type, tick_it->type == ToolChange && !tool_changes_active());
 
         // draw delete icon (enlarged, glyph-centred hit rect for pointer targeting)
         ImVec2 icon_pos = ImVec2(slideable_region.GetCenter().x + icon_offset.x, get_tick_pos(tick_it->tick) - icon_offset.y);
@@ -1205,7 +1201,10 @@ void IMSlider::show_tooltip(const TickCode& tick, ImGuiID source){
         show_tooltip(_u8L("Pause:") + " \"" + gcode_type(PausePrint) + "\"" + time_str, source);
         break;
     case CustomGCode::ToolChange:
-        show_tooltip(_u8L("Change Filament") + time_str, source);
+        if (tool_changes_active())
+            show_tooltip(_u8L("Change Filament") + time_str, source);
+        else
+            show_tooltip(_u8L("Change Filament") + "\n" + _u8L("Does not take effect in multi-diameter mode.") + time_str, source);
         break;
     case CustomGCode::Template:
         show_tooltip(_u8L("Custom Template:") + " \"" + gcode_type(Template) + "\"" + time_str, source);
@@ -1344,7 +1343,7 @@ bool IMSlider::vertical_slider(const char* str_id, int* higher_value, int* lower
         // draw colored band
         draw_colored_band(groove, h_selected ? higher_slideable_region : lower_slideable_region);
 
-        if (!m_ticks.has_tick_with_code(ToolChange)) {
+        if (!m_ticks.has_tick_with_code(ToolChange) || !tool_changes_active()) {
             // draw scroll line
             ImRect scroll_line = ImRect(ImVec2(groove.Min.x, higher_handle_center.y), ImVec2(groove.Max.x, lower_handle_center.y));
             window->DrawList->AddRectFilled(scroll_line.Min, scroll_line.Max, handle_clr);
@@ -1750,7 +1749,7 @@ void IMSlider::render_add_menu()
 {
     const int extruder_num = int(m_extruder_colors.size());
     // Changing filament is unavailable in multi-nozzle-diameter mode.
-    const bool can_change_filament = m_can_change_color && !multi_nozzle_diameter_mode_enabled(wxGetApp().preset_bundle->project_config);
+    const bool can_change_filament = m_can_change_color && tool_changes_active();
     if (m_show_menu) ImGui::OpenPopup("slider_add_menu_popup");
     constrain_canvas_menu();
     if (!ImGui::BeginPopup("slider_add_menu_popup")) return;
@@ -1801,7 +1800,7 @@ void IMSlider::render_edit_menu(const TickCode& tick)
     constrain_canvas_menu();
     if (!ImGui::BeginPopup("slider_edit_menu_popup")) return;
     auto& imgui = *wxGetApp().imgui();
-    const bool can_change_filament = m_can_change_color && !multi_nozzle_diameter_mode_enabled(wxGetApp().preset_bundle->project_config);
+    const bool can_change_filament = m_can_change_color && tool_changes_active();
     std::vector<std::string> labels;
     switch (tick.type) {
     case CustomGCode::PausePrint: labels = {_u8L("Delete Pause")}; break;
@@ -2058,6 +2057,11 @@ std::string IMSlider::get_color_for_tool_change_tick(std::set<TickCode>::const_i
         return m_extruder_colors[current_extruder - 1]; // return a color for a specific extruder from the colors list
     }
     return "";
+}
+
+bool IMSlider::tool_changes_active() const
+{
+    return CustomGCode::tool_changes_active(wxGetApp().preset_bundle->project_config);
 }
 
 // Get active extruders for tick.

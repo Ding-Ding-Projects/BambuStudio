@@ -26987,9 +26987,6 @@ msgstr ""
 msgid "Home Assistant transport failed."
 msgstr ""
 
-msgid "Check the Bambu Lab integration logs and each affected printer's LAN connection. Then run Add my printers again. Already configured printers are skipped."
-msgstr ""
-
 #, possible-c-format, possible-boost-format
 msgid "Home Assistant returned HTTP %s."
 msgstr ""
@@ -36933,57 +36930,6 @@ msgstr ""
 msgid "Stopped after five minutes with the bed at %s °C. The fans are off; the printer may still be warm."
 msgstr ""
 
-msgid "Revision ancestry"
-msgstr ""
-
-msgid "Parent outside filter"
-msgstr ""
-
-msgid "This saved search contains an invalid date."
-msgstr ""
-
-msgid "Discard settings draft"
-msgstr ""
-
-msgid "Choose a separate file for the current-version export."
-msgstr ""
-
-msgid "Could not preserve pending project history."
-msgstr ""
-
-msgid "Use File > Export > Export current version only as 3MF to save a separate copy without history."
-msgstr ""
-
-msgid "The discarded draft could not be recorded in local history."
-msgstr ""
-
-msgid "The discarded preset changes could not be recorded in local history."
-msgstr ""
-
-msgid "Edit settings draft: %s"
-msgstr ""
-
-msgid "Discard preset changes"
-msgstr ""
-
-msgid "Restore settings draft"
-msgstr ""
-
-msgid "Create settings draft"
-msgstr ""
-
-msgid "Duplicate settings draft"
-msgstr ""
-
-msgid "Apply settings draft"
-msgstr ""
-
-msgid "Edit settings draft"
-msgstr ""
-
-msgid "Save draft as preset"
-msgstr ""
-
 msgid "When the infill pattern is 3D Honeycomb, Honeycomb, or Gyroid, the printer produces significant vibration and noise when printing at high acceleration. It is recommended to reduce the infill acceleration."
 msgstr ""
 
@@ -37038,6 +36984,7 @@ msgstr ""
 msgid "Current status: Installed, recordings can be saved."
 msgstr ""
 
+#, possible-c-format, possible-boost-format
 msgid "The set temperature exceeds the allowed range for this filament (%d°C–%d°C) and has been reset to %d°C."
 msgstr ""
 
@@ -37101,12 +37048,14 @@ msgstr ""
 msgid "The filament switcher is not ready."
 msgstr ""
 
+#, possible-c-format, possible-boost-format
 msgid "External Spool %d"
 msgstr ""
 
 msgid "External Spool"
 msgstr ""
 
+#, possible-c-format, possible-boost-format
 msgid "Note: %s"
 msgstr ""
 
@@ -37119,24 +37068,30 @@ msgstr ""
 msgid "Tips: Current grouping of slice result is not optimal. With the optimal grouping, "
 msgstr ""
 
+#, possible-boost-format
 msgid "save %1%g more filament and %2% more filament changes"
 msgstr ""
 
+#, possible-boost-format
 msgid "save %1%g more filament but add %2% filament changes"
 msgstr ""
 
+#, possible-boost-format
 msgid "save %2% more filament changes but use %1%g more filament"
 msgstr ""
 
 msgid "Compared to a printer with one nozzle, "
 msgstr ""
 
+#, possible-boost-format
 msgid "save %1%g filament and %2% filament changes."
 msgstr ""
 
+#, possible-boost-format
 msgid "save %1%g filament but add %2% filament changes."
 msgstr ""
 
+#, possible-boost-format
 msgid "save %2% filament changes but use %1%g more filament."
 msgstr ""
 
@@ -37146,6 +37101,7 @@ msgstr ""
 msgid "New Object"
 msgstr ""
 
+#, possible-c-format, possible-boost-format
 msgid "Bambu Lab %s"
 msgstr ""
 
@@ -37200,13 +37156,19 @@ msgstr ""
 msgid "Allows color penetration from this part's painted top and bottom surfaces to cross into adjacent parts."
 msgstr ""
 
-msgid "When on, color can penetrate continuously into adjacent parts of the same object.\nWhen off, the configured penetration depth is preserved but clipped at this part's boundary."
+msgid ""
+"When on, color can penetrate continuously into adjacent parts of the same object.\n"
+"When off, the configured penetration depth is preserved but clipped at this part's boundary."
 msgstr ""
 
+#, possible-c-format, possible-boost-format
 msgid "Filament %s uses a %s nozzle, which is not available on this printer. Add it or select an available nozzle."
 msgstr ""
 
 msgid "The object size in the file is very small. Would you like to import it using millimeters as the default unit?"
+msgstr ""
+
+msgid "Object too small"
 msgstr ""
 
 msgid "Filament changes on this plate do not take effect in multi-diameter mode. They take effect again after switching to single-diameter mode."
@@ -37239,6 +37201,7 @@ msgstr ""
 msgid "Wiki for more details"
 msgstr ""
 
+#, possible-c-format, possible-boost-format
 msgid "Filament in slots %s may not have been properly loaded to the PrintTool."
 msgstr ""
 
@@ -37251,7 +37214,9 @@ msgstr ""
 msgid "Exit the filament loading process?"
 msgstr ""
 
-msgid "This filament is not recommended for support base. \nAre you sure to use it for support base? \n"
+msgid ""
+"This filament is not recommended for support base. \n"
+"Are you sure to use it for support base? \n"
 msgstr ""
 
 msgid "Bed temperature when 3D Effect Plate is installed. Value 0 means the filament does not support to print on the 3D Effect Plate"
@@ -37266,6 +37231,8 @@ msgstr ""
 msgid "The selected models need repair before a Boolean operation can be performed."
 msgstr ""
 
+#. TRN: A model name in quotation marks, followed by "Repair now" or "Repaired" in the Mesh Boolean repair list.
+#, possible-boost-format
 msgid "\"%1%\""
 msgstr ""
 
@@ -37284,6 +37251,7 @@ msgstr ""
 msgid "Add AMS"
 msgstr ""
 
+#, possible-c-format, possible-boost-format
 msgid "Some project filaments are using the %s nozzle. Changing it will move them to 0.4 Standard. Change it anyway?"
 msgstr ""
 
@@ -37299,8 +37267,64 @@ msgstr ""
 msgid "Target printer"
 msgstr ""
 
+#, possible-c-format, possible-boost-format
 msgid "%s supports up to %d nozzles. Please reduce the matched nozzles and keep only %d to continue."
 msgstr ""
 
+#, possible-c-format, possible-boost-format
 msgid "%s doesn't support %s nozzles. Switched to %s nozzle."
+msgstr ""
+
+msgid "Check the Bambu Lab integration logs and each affected printer's LAN connection. Then run Add my printers again. Already configured printers are skipped."
+msgstr ""
+
+msgid "Revision ancestry"
+msgstr ""
+
+msgid "Parent outside filter"
+msgstr ""
+
+msgid "This saved search contains an invalid date."
+msgstr ""
+
+msgid "Discard settings draft"
+msgstr ""
+
+msgid "Choose a separate file for the current-version export."
+msgstr ""
+
+msgid "Could not preserve pending project history."
+msgstr ""
+
+msgid "Use File > Export > Export current version only as 3MF to save a separate copy without history."
+msgstr ""
+
+msgid "The discarded draft could not be recorded in local history."
+msgstr ""
+
+msgid "The discarded preset changes could not be recorded in local history."
+msgstr ""
+
+msgid "Edit settings draft: %s"
+msgstr ""
+
+msgid "Discard preset changes"
+msgstr ""
+
+msgid "Restore settings draft"
+msgstr ""
+
+msgid "Create settings draft"
+msgstr ""
+
+msgid "Duplicate settings draft"
+msgstr ""
+
+msgid "Apply settings draft"
+msgstr ""
+
+msgid "Edit settings draft"
+msgstr ""
+
+msgid "Save draft as preset"
 msgstr ""

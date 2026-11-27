@@ -23,6 +23,7 @@ add_executable(${_TEST_NAME}_tests
     test_png_io.cpp
     test_timeutils.cpp
     test_indexed_triangle_set.cpp
+    test_trianglemesh_slicer.cpp
     test_triangle_selector.cpp
     test_debounce.cpp
     test_emboss.cpp
@@ -72,3 +73,21 @@ add_executable(mesh_simplification_tests test_mesh_simplification.cpp)
 target_link_libraries(mesh_simplification_tests test_common libslic3r)
 set_property(TARGET mesh_simplification_tests PROPERTY FOLDER "tests")
 add_test(mesh_simplification_tests mesh_simplification_tests "[mesh_simplification]" ${CATCH_EXTRA_ARGS})
+
+# Narrow target: cut_mesh tests only (full libslic3r_tests has unrelated compile breaks).
+add_executable(libslic3r_cut_mesh_tests
+    cut_mesh_catch_main.cpp
+    test_trianglemesh_slicer.cpp)
+target_include_directories(libslic3r_cut_mesh_tests PRIVATE ${CMAKE_SOURCE_DIR}/tests)
+target_link_libraries(libslic3r_cut_mesh_tests PRIVATE test_common libslic3r)
+set_property(TARGET libslic3r_cut_mesh_tests PROPERTY FOLDER "tests")
+if (MSVC)
+    target_link_options(libslic3r_cut_mesh_tests PRIVATE /FORCE:UNRESOLVED)
+endif()
+add_test(libslic3r_cut_mesh_tests libslic3r_cut_mesh_tests ${CATCH_EXTRA_ARGS})
+
+# Keep the mesh boolean regressions runnable without the legacy full suite.
+add_executable(libslic3r_meshboolean_tests cut_mesh_catch_main.cpp test_meshboolean.cpp)
+target_link_libraries(libslic3r_meshboolean_tests PRIVATE test_common libslic3r)
+set_property(TARGET libslic3r_meshboolean_tests PROPERTY FOLDER "tests")
+add_test(NAME libslic3r_meshboolean_tests COMMAND libslic3r_meshboolean_tests "[MeshBoolean]" ${CATCH_EXTRA_ARGS})

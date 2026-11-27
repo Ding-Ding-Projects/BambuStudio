@@ -115,6 +115,15 @@
         padding-bottom: 10px;
         max-width:fit-content(1000px);
         margin: 0 auto;
+        /* Fit the viewport so only the table scrolls and the buttons stay visible */
+        box-sizing: border-box;
+        max-height: 100%;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .container > * {
+        flex-shrink: 0;
       }
 
       .tip-panel {
@@ -129,6 +138,8 @@
       .scroll-container {
         max-width: 100%;
         max-height: 500px;
+        flex: 0 1 auto;
+        min-height: 0;
         overflow: auto;
         border: 1px solid var(--md-outline-variant);
         border-radius: var(--md-radius-tiny);
@@ -536,6 +547,7 @@
       let m_curr_extruder_id = 0
       let m_min_flush_volumes = []
       let m_max_flush_volumes = []
+      let m_max_flush_volume_limit = []
       let m_min_flush_multiplier = 0.50
       let m_max_flush_multiplier = 3
       let m_default_matrix //系统默认矩阵
@@ -654,8 +666,8 @@
           return 0
         if (val < 0)
           return 0
-        if (val > m_max_flush_volumes[extruder_id])
-          return m_max_flush_volumes[extruder_id];
+        if (val > m_max_flush_volume_limit[extruder_id])
+          return m_max_flush_volume_limit[extruder_id];
         return val
       }
 
@@ -672,6 +684,7 @@
         });
         m_flush_multipiers = data.flush_multiplier.slice()
         m_max_flush_volumes = data.max_flush_volumes
+        m_max_flush_volume_limit = data.max_flush_volume_limit || data.max_flush_volumes
         m_min_flush_volumes = data.min_flush_volumes
         m_min_flush_multiplier = data.min_flush_multiplier
         m_max_flush_multiplier = data.max_flush_multiplier

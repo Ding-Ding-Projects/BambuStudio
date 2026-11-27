@@ -261,6 +261,7 @@ protected:
 
 #ifdef __WIN32__
     WXLRESULT MSWWindowProc(WXUINT nMsg, WXWPARAM wParam, WXLPARAM lParam) override;
+    void log_display_message(WXUINT nMsg, WXWPARAM wParam, WXLPARAM lParam);
 #endif
 
 public:
@@ -308,7 +309,8 @@ public:
         eUploadGcode         = 7,
         eExportAllSlicedFile = 8,
         ePrintMultiMachine   = 9,
-        eSendMultiApp        = 10
+        eSendMultiApp        = 10,
+        eSendMultiAppAll     = 11
     };
 
     void update_layout();
@@ -354,6 +356,7 @@ public:
     void        register_win32_callbacks();
     void        init_menubar_as_editor();
     bool        check_bbl_farm_client_installed();
+    bool        check_bbl_farm_client_support_send_all();
     void        init_menubar_as_gcodeviewer();
     void        update_menubar();
     void        update_calibration_button_status();
@@ -466,7 +469,8 @@ public:
     wxBoxSizer*           m_project_dock_sizer{ nullptr }; // strip + workspace; orientation follows the dock edge
     void                  place_project_tabbar();          // (re)insert the strip per its dock edge
     ProjectTabBar*        project_tabbar() { return m_project_tabbar; }
-    PrintHostQueueDialog* printhost_queue_dlg() { return m_printhost_queue_dlg; }
+    // Lazily constructed; first Show / upload / job-queue bind creates it.
+    PrintHostQueueDialog *printhost_queue_dlg();
     Plater*               m_plater { nullptr };
     //BBS: GUI refactor
     MonitorPanel*         m_monitor{ nullptr };
@@ -514,9 +518,11 @@ public:
     ParamsDialog*         m_param_dialog{ nullptr };
     //BBS
     SettingsDialog        m_settings_dialog;
-    DiffPresetDialog      diff_dialog;
+    // DiffPresetDialog deep-copies PresetBundle twice; create on first compare.
+    std::unique_ptr<DiffPresetDialog> m_diff_dialog;
+    DiffPresetDialog &diff_dialog();
     wxWindow*             m_plater_page{ nullptr };
-    PrintHostQueueDialog* m_printhost_queue_dlg;
+    PrintHostQueueDialog* m_printhost_queue_dlg{nullptr};
 
     // BBS
     mutable int m_print_select{ ePrintAll };

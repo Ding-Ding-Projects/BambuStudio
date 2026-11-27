@@ -35,6 +35,9 @@
 
 #include "../Utils/ColorSpaceConvert.hpp"
 #include "Widgets/Label.hpp"
+#ifdef __WXGTK3__
+#include <gtk/gtk.h>
+#endif
 #ifdef __WXOSX__
 #define wxOSX true
 #else
@@ -135,6 +138,16 @@ void Field::PostInitialize()
         this->enable();
 }
 
+wxString Field::undo_tooltip() const
+{
+    return m_undo_tooltip ? *m_undo_tooltip : wxString();
+}
+
+wxString Field::undo_to_sys_tooltip() const
+{
+    return m_undo_to_sys_tooltip ? *m_undo_to_sys_tooltip : wxString();
+}
+
 // Values of width to alignments of fields
 int Field::def_width()			{ return 8; }
 int Field::def_width_wider()	{ return 12; }
@@ -170,6 +183,19 @@ void Field::on_back_to_sys_value()
 /// Fires the enable or disable function, based on the input.
 
 void Field::toggle(bool en) { en && !m_opt.readonly ? enable() : disable(); }
+
+void Field::set_warning(const wxString &tooltip)
+{
+    if (m_warning == tooltip)
+        return;
+    const bool style_changed = m_warning.IsEmpty() != tooltip.IsEmpty();
+    m_warning = tooltip;
+    if (style_changed)
+        apply_warning_style(!m_warning.IsEmpty());
+    // The icon is painted by the control that hosts the field window
+    if (wxWindow *win = getWindow(); win && win->GetParent())
+        win->GetParent()->Refresh();
+}
 
 wxString Field::get_tooltip_text(const wxString &default_string)
 {
@@ -480,6 +506,54 @@ void release_window_pools()
     spools2.clear();
 }
 
+#ifdef __WXGTK3__
+// GtkTextLayout caches the display of one text line and clears that cache only when
+// the line is deleted while the layout is attached to the line's buffer. wxGTK's
+// Freeze() swaps a multiline control's buffer for a temporary one, so a SetValue()
+// while frozen (Tab pages freeze around rebuilds) can free the cached line without
+// telling the layout. The next cursor redraw then reads the freed line. Disabling
+// the main window for a modal ProgressDialog does such a redraw, which crashed
+// MakerWorld "Download and open" in _gtk_text_btree_find_line_top whenever the
+// process Others page, with the multiline post_process field, was selected.
+//
+// Asking GTK for the location of a valid iterator makes the layout rebuild its cache
+// for that line. It replaces a stale entry by comparing pointers only, without
+// dereferencing the freed line. Do this whenever the view changes buffers.
+class MultilineTextCtrl : public wxTextCtrl
+{
+public:
+    using wxTextCtrl::wxTextCtrl;
+
+protected:
+    void DoFreeze() override
+    {
+        wxTextCtrl::DoFreeze();
+        drop_stale_line_display();
+    }
+
+    void DoThaw() override
+    {
+        wxTextCtrl::DoThaw();
+        drop_stale_line_display();
+    }
+
+private:
+    void drop_stale_line_display()
+    {
+        GtkWidget *widget = GetConnectWidget();
+        if (widget == nullptr || !GTK_IS_TEXT_VIEW(widget))
+            return;
+        GtkTextView *view = GTK_TEXT_VIEW(widget);
+        GtkTextIter  start;
+        gtk_text_buffer_get_start_iter(gtk_text_view_get_buffer(view), &start);
+        GdkRectangle location;
+        gtk_text_view_get_iter_location(view, &start, &location);
+    }
+};
+#else
+using MultilineTextCtrl = wxTextCtrl;
+#endif
+
 template<typename T>
 struct Builder
 {
@@ -624,7 +698,11 @@ void TextCtrl::BUILD() {
 
 	// BBS: new param ui style
     // const long style = m_opt.multiline ? wxTE_MULTILINE : wxTE_PROCESS_ENTER/*0*/;
+#ifdef __WXGTK3__
+    static Builder<MultilineTextCtrl> builder1;
+#else
     static Builder<TextAreaEditor> builder1; // multi-line: the kit scrollbar
+#endif
     static Builder<::TextInput> builder2;
     auto temp = m_opt.multiline
         ? (wxWindow*)builder1.build(m_parent, wxID_ANY, "", wxDefaultPosition, size, wxTE_MULTILINE)
@@ -728,6 +806,7 @@ bool TextCtrl::value_was_changed()
     case coString:
     case coStrings:
     case coFloatOrPercent:
+    case coFloatsOrPercents:
         return boost::any_cast<std::string>(m_value) != boost::any_cast<std::string>(val);
     default:
         return true;
@@ -1044,8 +1123,9 @@ void SpinCtrl::BUILD() {
             // temp->GetText()->SetInsertionPointEnd();
 #endif
 #else
-            // update value for the control only if it was changed in respect to the Min/max values
-            if (tmp_value != (int)value) {
+            // update value for the control only if it was changed in respect to the Min/max values;
+            // an out-of-range listener needs the typed text, so it is clamped on commit instead
+            if (tmp_value != (int)value && !m_on_out_of_range) {
                 temp->SetValue(tmp_value);
                 temp->GetTextCtrl()->SetInsertionPointEnd();
             }
@@ -1054,9 +1134,24 @@ void SpinCtrl::BUILD() {
 	}), temp->GetTextCtrl()->GetId());
 
 	temp->SetToolTip(get_tooltip_text(text_value));
+    // Out-of-range values are reported from one of two places, never both:
+    //  - SpinInput::onTextEnter, for anything outside the spin box range;
+    //  - propagate_value() on macOS, for values below the minimum, because there the spin box
+    //    range starts at 0 (see min_val above) and so lets them through.
+    // Keep the two in step when changing either.
+    temp->SetOutOfRangeHandler([this](long entered) {
+        if (m_on_out_of_range)
+            m_on_out_of_range(m_opt_id, entered);
+    });
 
 	// recast as a wxWindow to fit the calling convention
 	window = dynamic_cast<wxWindow*>(temp);
+}
+
+void SpinCtrl::apply_warning_style(bool warning)
+{
+    if (auto *spin = dynamic_cast<SpinInput *>(window))
+        spin->SetWarning(warning);
 }
 
 void SpinCtrl::propagate_value()
@@ -1070,9 +1165,13 @@ void SpinCtrl::propagate_value()
             on_kill_focus();
 	} else {
 #ifdef __WXOSX__
-        // check input value for minimum
-        if (m_opt.min > 0.0 && tmp_value < m_opt.min) {
-            SpinInput* spin = static_cast<SpinInput*>(window);
+        // check input value for minimum; the spin box itself allows 0 here and tmp_value is already
+        // clamped, so the committed spin value is the one the user typed. This is the macOS half of
+        // the out-of-range reporting, see the note at SetOutOfRangeHandler in BUILD()
+        SpinInput* spin = static_cast<SpinInput*>(window);
+        if (m_opt.min > 0.0 && (tmp_value < m_opt.min || spin->GetValue() < m_opt.min)) {
+            if (m_on_out_of_range && spin->GetValue() < m_opt.min)
+                m_on_out_of_range(m_opt_id, spin->GetValue());
             spin->SetValue((int)std::clamp<double>(m_opt.min, INT_MIN, INT_MAX));
             // spin->GetText()->SetInsertionPointEnd(); // BBS
         }

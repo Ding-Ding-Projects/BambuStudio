@@ -96,7 +96,7 @@ void AMSSetting::create()
 
     m_sizer_Insert_material->Add(0, 0, 0, wxLEFT, FromDIP(12));
 
-    m_title_Insert_material_auto_read = new Label(m_panel_Insert_material, _L("Insertion update"));
+    m_title_Insert_material_auto_read = new Label(m_panel_Insert_material, _L("Read Filament on Insertion"));
 
     m_title_Insert_material_auto_read->SetFont(::Label::Head_15);
     m_title_Insert_material_auto_read->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
@@ -141,7 +141,7 @@ void AMSSetting::create()
     m_checkbox_starting_auto_read->Bind(wxEVT_TOGGLEBUTTON, &AMSSetting::on_starting_read, this);
     m_sizer_starting->Add(m_checkbox_starting_auto_read, 0, wxALIGN_CENTER_VERTICAL);
     m_sizer_starting->Add(0, 0, 0, wxLEFT, FromDIP(12));
-    m_title_starting_auto_read = new Label(m_panel_starting, _L("Power on update"));
+    m_title_starting_auto_read = new Label(m_panel_starting, _L("Read Filament on Startup"));
     m_title_starting_auto_read->SetFont(::Label::Head_15);
     m_title_starting_auto_read->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurface));
     m_title_starting_auto_read->Wrap(AMS_SETTING_BODY_WIDTH);
@@ -906,14 +906,12 @@ void AMSSettingArrangeAMSOrder::Update(const MachineObject* obj)
 
     const bool was_shown = IsShown();
     Show(show);
-#ifdef __WXOSX__
     if (was_shown != show) {
         if (wxWindow* top = wxGetTopLevelParent(this)) {
             top->Layout();
             top->Fit();
         }
     }
-#endif
 }
 
 void AMSSettingArrangeAMSOrder::OnBtnRearrangeClicked(wxCommandEvent& event)

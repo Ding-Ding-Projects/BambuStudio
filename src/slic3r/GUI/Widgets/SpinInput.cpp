@@ -7,6 +7,7 @@
 #include "../BilingualDecorator.hpp"
 
 #include <wx/dcgraph.h>
+#include <wx/recguard.h>
 #include <algorithm>
 
 namespace {
@@ -202,6 +203,31 @@ void SpinInput::SetTextColor(StateColor const &color)
 {
     text_color = color;
     state_handler.update_binds();
+}
+
+void SpinInput::SetWarning(bool warning)
+{
+    if (m_warning == warning)
+        return;
+    m_warning = warning;
+    if (warning) {
+        m_normal_border_color = border_color;
+        m_normal_text_color   = text_color;
+        // Only the active states turn orange; the disabled look stays as it was
+        StateColor border = border_color;
+        border.setColorForStates(ThemeColor::Warning, StateColor::Normal);
+        border.setColorForStates(ThemeColor::Warning, StateColor::Hovered);
+        StateColor text = text_color;
+        text.setColorForStates(ThemeColor::Warning, StateColor::Normal);
+        SetBorderColor(border);
+        SetTextColor(text);
+    } else {
+        SetBorderColor(m_normal_border_color);
+        SetTextColor(m_normal_text_color);
+    }
+    text_ctrl->SetForegroundColour(text_color.colorForStates(state_handler.states()));
+    text_ctrl->Refresh();
+    Refresh();
 }
 
 void SpinInput::SetSize(wxSize const &size)
@@ -442,6 +468,15 @@ void SpinInput::onTextEnter(wxCommandEvent &event)
 {
     long value;
     if (!text_ctrl->GetValue().ToLong(&value)) { value = val; }
+    if ((value < min || value > max) && m_out_of_range_handler) {
+        // A modal dialog shown by the handler takes the focus away, which commits again with the
+        // same text; skip that nested commit, this one clamps once the handler returns
+        static wxRecursionGuardFlag s_reporting_out_of_range;
+        wxRecursionGuard            guard(s_reporting_out_of_range);
+        if (guard.IsInside())
+            return;
+        m_out_of_range_handler(value);
+    }
     int normalized = (int)value;
     if (normalized < min) normalized = min;
     else if (normalized > max) normalized = max;

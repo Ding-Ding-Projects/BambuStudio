@@ -36,9 +36,10 @@ function HandleRegionlList(  pItem )
 {
 	m_OldRegion=pItem['region'];
 	
-	let nNum=$(".RegionItem[region='"+m_OldRegion+"']").length;
+	const selected = pItem['region_selected'] || m_OldRegion;
+	let nNum=$('.RegionItem').filter(function () { return $(this).attr('region') === selected; }).length;
 	if( nNum==1 )
-		ChooseRegion(m_OldRegion);
+		ChooseRegion(selected);
 }
 
 
@@ -53,7 +54,7 @@ function ChooseRegion( strRegion )
 function GotoPolicyPage()
 {
 	let ItemSelected=$('.RegionSelected')[0];
-	let RegionFinal=$(ItemSelected).attr("region");
+	let RegionFinal=$(ItemSelected).attr("region") || "Asia-Pacific";
 	
 	var tSend={};
 	tSend['sequence_id']=Math.round(new Date() / 1000);
