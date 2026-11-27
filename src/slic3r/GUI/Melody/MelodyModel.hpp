@@ -10,9 +10,8 @@
 // between `M1006 S1` and `M1006 W`. Read against the stock tunes, each line is
 // one time step with three voices: (A, B, L), (C, D, M) and (E, F, N) are the
 // pitch, the duration in ticks and the volume (0-100) of a voice, and a pitch
-// of 0 keeps that voice silent. Nothing documents the command, so the note
-// numbering (MIDI-style, 69 = A4 = 440 Hz) and the tick length are inferred;
-// the tick length is a user setting of the melody, used only for the preview.
+// of 0 keeps that voice silent. The editor stores MIDI pitches; the M1006
+// scale starts at C1 = 1. One firmware tick is ten milliseconds.
 
 #include <algorithm>
 #include <array>
@@ -49,7 +48,7 @@ struct MelodyStep
 struct Melody
 {
     std::string             name;
-    int                     tick_ms{50}; // preview only: milliseconds per tick
+    int                     tick_ms{10}; // preview only: milliseconds per tick
     std::vector<MelodyStep> steps;
 
     bool operator==(const Melody &o) const { return name == o.name && tick_ms == o.tick_ms && steps == o.steps; }
@@ -74,12 +73,13 @@ enum class MelodyProblem
     TooManySteps,
     NameTooLong,
     PitchOutOfRange,
+    PrinterPitchOutOfRange,
     TicksOutOfRange,
     VolumeOutOfRange,
     TickLengthOutOfRange,
 };
 
-inline MelodyProblem melody_validate(const Melody &melody)
+inline MelodyProblem melody_validate(const Melody &melody, bool for_printer = false)
 {
     if (melody.steps.empty()) return MelodyProblem::NoSteps;
     if (melody.steps.size() > static_cast<size_t>(MELODY_MAX_STEPS)) return MelodyProblem::TooManySteps;
@@ -88,6 +88,7 @@ inline MelodyProblem melody_validate(const Melody &melody)
     for (const MelodyStep &step : melody.steps)
         for (const MelodyVoice &voice : step.voices) {
             if (voice.pitch < 0 || voice.pitch > MELODY_MAX_PITCH) return MelodyProblem::PitchOutOfRange;
+            if (for_printer && voice.pitch != 0 && (voice.pitch < 24 || voice.pitch > 95)) return MelodyProblem::PrinterPitchOutOfRange;
             if (voice.ticks < 0 || voice.ticks > MELODY_MAX_TICKS) return MelodyProblem::TicksOutOfRange;
             if (voice.volume < 0 || voice.volume > MELODY_MAX_VOLUME) return MelodyProblem::VolumeOutOfRange;
         }
@@ -136,8 +137,11 @@ inline int melody_note_number(const std::string &text)
 
 // The block the printer plays: motors on, queue drained, the tune, then the
 // motors released again, inside markers the creator finds again on import.
+inline int melody_wire_pitch(int midi) { return midi == 0 ? 0 : midi - 23; }
+
 inline std::string melody_to_gcode(const Melody &melody)
 {
+    if (melody_validate(melody, true) != MelodyProblem::None) return {};
     std::ostringstream out;
     out << MELODY_START_MARKER << "\n";
     if (!melody.name.empty()) out << MELODY_NAME_PREFIX << melody.name << "\n";
@@ -146,9 +150,9 @@ inline std::string melody_to_gcode(const Melody &melody)
         const MelodyVoice &a = step.voices[0];
         const MelodyVoice &c = step.voices[1];
         const MelodyVoice &e = step.voices[2];
-        out << "M1006 A" << a.pitch << " B" << a.ticks << " L" << a.volume
-            << " C" << c.pitch << " D" << c.ticks << " M" << c.volume
-            << " E" << e.pitch << " F" << e.ticks << " N" << e.volume << "\n";
+        out << "M1006 A" << melody_wire_pitch(a.pitch) << " B" << a.ticks << " L" << a.volume
+            << " C" << melody_wire_pitch(c.pitch) << " D" << c.ticks << " M" << c.volume
+            << " E" << melody_wire_pitch(e.pitch) << " F" << e.ticks << " N" << e.volume << "\n";
     }
     out << "M1006 W\nM18\n" << MELODY_END_MARKER << "\n";
     return out.str();
@@ -194,7 +198,7 @@ inline bool melody_parse_gcode(const std::string &text, Melody &out)
         if (line.compare(0, 5, "M1006") != 0) continue;
         const size_t semicolon = line.find(';');
         if (semicolon != std::string::npos) line = line.substr(0, semicolon);
-        int values[9];
+        int values[9]{};
         bool have[9] = {false, false, false, false, false, false, false, false, false};
         static const char letters[9] = {'A', 'B', 'L', 'C', 'D', 'M', 'E', 'F', 'N'};
         std::istringstream words(line.substr(5));
@@ -210,7 +214,10 @@ inline bool melody_parse_gcode(const std::string &text, Melody &out)
                 }
         }
         bool complete = true;
-        for (bool h : have) complete = complete && h;
+        for (int k : {0, 3, 6}) {
+            complete = complete && have[k] && have[k + 1] && values[k] >= 0 && values[k] <= 72;
+            if (values[k] != 0) values[k] += 23;
+        }
         if (!complete) continue; // M1006 S1, M1006 W and partial lines
         MelodyStep step;
         step.voices[0] = {values[0], values[1], values[2]};
@@ -446,9 +453,11 @@ inline int melody_step_ms(const MelodyStep &step, int tick_ms)
 
 inline int melody_total_ms(const Melody &melody)
 {
-    int total = 0;
-    for (const MelodyStep &step : melody.steps) total += melody_step_ms(step, melody.tick_ms);
-    return total;
+    std::array<int, 3> elapsed{};
+    for (const MelodyStep &step : melody.steps)
+        for (size_t v = 0; v < elapsed.size(); ++v)
+            elapsed[v] += step.voices[v].ticks * melody.tick_ms;
+    return *std::max_element(elapsed.begin(), elapsed.end());
 }
 
 inline double melody_frequency(int pitch) { return 440.0 * std::pow(2.0, (pitch - 69) / 12.0); }
@@ -458,16 +467,17 @@ inline double melody_frequency(int pitch) { return 440.0 * std::pow(2.0, (pitch 
 // so the shape of a tune can be heard before it goes to a printer.
 inline std::vector<std::uint8_t> melody_render_wav(const Melody &melody, int sample_rate = 22050)
 {
-    std::vector<std::int16_t> samples;
-    for (const MelodyStep &step : melody.steps) {
-        const int step_ms = melody_step_ms(step, melody.tick_ms);
-        const size_t count = static_cast<size_t>(static_cast<long long>(sample_rate) * step_ms / 1000);
-        const size_t base = samples.size();
-        samples.resize(base + count, 0);
-        for (const MelodyVoice &voice : step.voices) {
+    auto sample_at = [&](int ms) { return static_cast<size_t>(static_cast<long long>(sample_rate) * ms / 1000); };
+    std::vector<std::int16_t> samples(sample_at(melody_total_ms(melody)), 0);
+    for (size_t channel = 0; channel < 3; ++channel) {
+        int elapsed = 0;
+        for (const MelodyStep &step : melody.steps) {
+            const MelodyVoice &voice = step.voices[channel];
+            const size_t base = sample_at(elapsed);
+            elapsed += voice.ticks * melody.tick_ms;
+            const size_t voice_count = sample_at(elapsed) - base;
             if (voice.pitch <= 0 || voice.volume <= 0 || voice.ticks <= 0) continue;
             const double freq = melody_frequency(voice.pitch);
-            const size_t voice_count = std::min(count, static_cast<size_t>(static_cast<long long>(sample_rate) * voice.ticks * melody.tick_ms / 1000));
             const double amplitude = 8000.0 * voice.volume / 100.0;
             for (size_t i = 0; i < voice_count; ++i) {
                 const double phase = std::fmod(static_cast<double>(i) * freq / sample_rate, 1.0);
@@ -539,9 +549,9 @@ inline const std::vector<MelodyPreset> &melody_presets()
          "M1006 A53 B10 L99 C53 D10 M99 E53 F10 N99\nM1006 A57 B10 L99 C57 D10 M99 E57 F10 N99\nM1006 A0 B15 L0 C0 D15 M0 E0 F15 N0\n"
          "M1006 A48 B10 L99 C48 D10 M99 E48 F10 N99\nM1006 A0 B15 L0 C0 D15 M0 E0 F15 N0\nM1006 A60 B10 L99 C60 D10 M99 E60 F10 N99\n"},
         {"c_major_scale", "C major scale",
-         "M1006 A48 B10 L100 C0 D10 M0 E0 F10 N0\nM1006 A50 B10 L100 C0 D10 M0 E0 F10 N0\nM1006 A52 B10 L100 C0 D10 M0 E0 F10 N0\n"
-         "M1006 A53 B10 L100 C0 D10 M0 E0 F10 N0\nM1006 A55 B10 L100 C0 D10 M0 E0 F10 N0\nM1006 A57 B10 L100 C0 D10 M0 E0 F10 N0\n"
-         "M1006 A59 B10 L100 C0 D10 M0 E0 F10 N0\nM1006 A60 B20 L100 C0 D20 M0 E0 F20 N0\n"},
+         "M1006 A37 B10 L100 C0 D10 M0 E0 F10 N0\nM1006 A39 B10 L100 C0 D10 M0 E0 F10 N0\nM1006 A41 B10 L100 C0 D10 M0 E0 F10 N0\n"
+         "M1006 A42 B10 L100 C0 D10 M0 E0 F10 N0\nM1006 A44 B10 L100 C0 D10 M0 E0 F10 N0\nM1006 A46 B10 L100 C0 D10 M0 E0 F10 N0\n"
+         "M1006 A48 B10 L100 C0 D10 M0 E0 F10 N0\nM1006 A49 B20 L100 C0 D20 M0 E0 F20 N0\n"},
     };
     return presets;
 }

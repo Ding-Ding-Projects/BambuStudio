@@ -6,6 +6,7 @@
 // tests/lubricate_routine.test.mjs compiles and runs it.
 #undef NDEBUG
 #include "../src/libslic3r/GCode/LubricateRoutine.cpp"
+#include "../src/slic3r/GUI/Melody/MelodyModel.hpp"
 #include <cassert>
 #include <filesystem>
 #include <fstream>
@@ -67,11 +68,12 @@ static void h2c_assertions(const std::string &start)
     const size_t rehome  = line_of(out, "G28 Z P0 T250 ; home again after lubricate mode");
     const size_t reclose = line_of(out, "M1009 Q1 L0", out.find("home again after lubricate mode"));
     const size_t done    = line_of(out, ";===== lubricate mode end =====");
-    CHECK(routine < reopen && reopen + 1 == rehome && rehome + 1 == reclose && reclose + 1 == done && done < end);
+    CHECK(routine < reopen && reopen < rehome && rehome + 1 == reclose && reclose + 1 == done && done < end);
     // The bed moves with a beep before each segment, the toolhead covers X, Y and both diagonals.
-    CHECK(out.find("G1 Z5.00 F1500") != std::string::npos);
-    CHECK(out.find("G1 Z320.00 F1500") != std::string::npos);
-    CHECK(out.find("M1006 A83 B20 L99 C83 D20 M99 E83 F20 N99") != std::string::npos);
+    CHECK(out.find("G90\nG1 X175 Y160 F30000\nG28 Z P0 T250 ; home again after lubricate mode") != std::string::npos);
+    CHECK(out.find("G1 Z5.00 F1200") != std::string::npos);
+    CHECK(out.find("G1 Z320.00 F1200") != std::string::npos);
+    CHECK(out.find("M1006 A48 B30 L99 C48 D30 M99 E48 F30 N99") != std::string::npos);
     CHECK(out.find("G1 X320.00 Y315.00") != std::string::npos);
     // Nothing of the template is lost, and no homing window is left open.
     CHECK(out.size() > start.size());
@@ -115,9 +117,25 @@ int main(int argc, char **argv)
         CHECK(out.find(";===== lubricate mode: full travel of every axis =====") != std::string::npos);
         CHECK(out.find(";===== lubricate mode end =====") != std::string::npos);
         CHECK(out.size() > start.size());
+        if (name == "Bambu Lab A1 0.4 nozzle template machine_start_gcode.json") {
+            Slic3r::GUI::Melody parsed;
+            CHECK(Slic3r::GUI::melody_parse_gcode(start, parsed));
+            const auto note = std::find_if(parsed.steps.begin(), parsed.steps.end(), [](const auto &step) {
+                return step.voices[1].pitch == 60 && step.voices[1].ticks == 10;
+            });
+            CHECK(note != parsed.steps.end());
+            CHECK(Slic3r::GUI::melody_to_gcode(parsed).find("C37 D10") != std::string::npos);
+        }
         if (name.find("H2C") != std::string::npos) h2c_assertions(start);
     }
     CHECK(templates >= 10);
+    const auto twinkle = start_melody_gcode("twinkle");
+    CHECK(twinkle.find("M17\nM400 S1\nM1006 S1\n") != std::string::npos);
+    CHECK(twinkle.find("M1006 A37 B40 L99") != std::string::npos);
+    CHECK(twinkle.find("M1006 A44 B80 L99") != std::string::npos);
+    CHECK(twinkle.find("M1006 A37 B80 L99") < twinkle.find("M1006 W"));
+    CHECK(start_melody_gcode("truck_backup").find("M1006 A0 B45 L0") != std::string::npos);
+    CHECK(start_melody_gcode("silent").empty());
     plain_assertions();
     std::cout << "lubricate routine: " << templates << " templates, " << assertions << " assertions passed\n";
     return 0;

@@ -48,6 +48,8 @@ X2D) gets `G28 ; home before lubricate mode` in front of the routine.
 
 ## The melody
 
+Each preset carries pitches and individual durations. The longer cadence notes in Twinkle and Ode to Joy are held for their scored time. Truck backing up keeps a silent interval between its beeps. The same score drives the start-only and lubrication sequences.
+
 The process option `lubricate_melody` holds the tune. It is chosen in the **Send print job**
 dialog, under the print options, in a list with a search field. The field takes plain text, or a
 regular expression with the `.*` toggle, and opens the shared regex builder from its tune button;

@@ -29116,7 +29116,7 @@ msgstr ""
 msgid "Tick length"
 msgstr ""
 
-msgid "How long one firmware tick lasts in the preview. The printer's own tick length is not documented; adjust this until the preview matches what the printer plays."
+msgid "How long one firmware tick lasts in the preview. The standard preview uses 10 milliseconds per tick."
 msgstr ""
 
 msgid "Start from"
@@ -39093,3 +39093,6 @@ msgstr ""
 
 msgid "Save draft as preset"
 msgstr ""
+
+msgid "Printer playback supports C1 through B6. Transpose notes outside this range before exporting."
+msgstr "Printer playback supports C1 through B6. Transpose notes outside this range before exporting."

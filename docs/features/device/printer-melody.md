@@ -16,7 +16,7 @@ M1006 W
 M18
 ```
 
-Read against the stock tunes, every `M1006` line is one time step with three voices: `A`, `B` and `L` are the note, the duration in ticks and the volume (0 to 100) of the first voice, `C`, `D` and `M` of the second and `E`, `F` and `N` of the third. A note of 0 keeps that voice silent. `M1006 S1` starts a sequence and `M1006 W` waits for it to finish; the motors are enabled before (`M17`) and released after (`M18`), which suggests the sound comes from the motors. Nothing documents the command: the note numbering (MIDI-style, 69 is A4 at 440 Hz) and the tick length are inferred, so the tick length is a setting of the melody that only the preview uses. Adjust it until the preview has the same pace as the printer.
+Read against the stock tunes, every `M1006` line is one time step with three voices: `A`, `B` and `L` are the note, the duration in ticks and the volume (0 to 100) of the first voice, `C`, `D` and `M` of the second and `E`, `F` and `N` of the third. A note of 0 keeps that voice silent. `M1006 S1` starts a sequence and `M1006 W` waits for it to finish; the motors are enabled before (`M17`) and released after (`M18`), which suggests the sound comes from the motors. The creator stores ordinary MIDI pitches and translates them at the G-code boundary. For example, middle C (MIDI 60) is encoded as 37. The A1 converter uses ten milliseconds per duration unit, with independent durations for the three voices. The default preview follows that timing. A saved custom preview speed still applies locally. Firmware timing on other models may vary. [Converter decoding and calibration](https://github.com/savecharlie/a1-jukebox/blob/9ccf08892dfb9df1e166c4f66155fbb94a31a685/m1006.py).
 
 ## The dialog
 
@@ -36,7 +36,7 @@ Footer actions:
 - **Add to start G-code** and **Add to end G-code** write the block, inside `;===== melody start =====` and `;===== melody end =====` markers, into the printer preset's start or end G-code. An earlier melody block is replaced, otherwise the block is appended. The usual custom G-code validation runs first, and the preset must be saved to keep the change.
 - **Save** and **Open** keep melodies as JSON files, by default under the application data directory's `melodies` folder; the last folder is remembered.
 
-A melody has at most 256 steps, notes up to 127, durations up to 255 ticks and volumes up to 100.
+Printer output supports C1 through B6. Existing melodies outside that range can be opened, edited, saved and previewed locally. A melody has at most 256 steps, MIDI pitches up to 127, durations up to 255 ticks and volumes up to 100.
 
 ## Express print mode
 

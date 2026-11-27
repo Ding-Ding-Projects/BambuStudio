@@ -45113,8 +45113,8 @@ msgstr "Tick 長度"
 
 #. reviewed-category: slicing-printing
 #. review-status: agent-drafted
-msgid "How long one firmware tick lasts in the preview. The printer's own tick length is not documented; adjust this until the preview matches what the printer plays."
-msgstr "預覽入面一個韌體 tick 嘅長度。打印機本身嘅 tick 長度冇文件記載；調校到預覽同打印機播放嘅一樣為止。"
+msgid "How long one firmware tick lasts in the preview. The standard preview uses 10 milliseconds per tick."
+msgstr "預覽入面一個韌體 tick 嘅長度。標準預覽每個 tick 係 10 毫秒。"
 
 #. reviewed-category: slicing-printing
 #. review-status: agent-drafted
@@ -60794,3 +60794,6 @@ msgstr "編輯設定草稿"
 #. review-status: agent-drafted
 msgid "Save draft as preset"
 msgstr "將草稿儲存為預設"
+
+msgid "Printer playback supports C1 through B6. Transpose notes outside this range before exporting."
+msgstr "打印機支援 C1 至 B6。匯出前請將超出範圍嘅音符移調。"

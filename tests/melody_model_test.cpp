@@ -28,13 +28,32 @@ static void import_assertions()
     Melody m;
     CHECK(melody_parse_gcode(X1_START, m));
     CHECK(m.steps.size() == 3);
+    CHECK(m.tick_ms == 10);
+    CHECK(melody_note_name(m.steps[0].voices[1].pitch) == "C4");
+    CHECK(melody_total_ms(m) == 300);
     CHECK(m.steps[0].voices[0] == (MelodyVoice{0, 10, 100}));
-    CHECK(m.steps[0].voices[1] == (MelodyVoice{37, 10, 60}));
-    CHECK(m.steps[0].voices[2] == (MelodyVoice{37, 10, 60}));
-    CHECK(m.steps[1].voices[0] == (MelodyVoice{46, 10, 100}));
-    CHECK(m.steps[1].voices[1] == (MelodyVoice{43, 10, 70}));
-    CHECK(m.steps[1].voices[2] == (MelodyVoice{39, 10, 100}));
+    CHECK(m.steps[0].voices[1] == (MelodyVoice{60, 10, 60}));
+    CHECK(m.steps[0].voices[2] == (MelodyVoice{60, 10, 60}));
+    CHECK(m.steps[1].voices[0] == (MelodyVoice{69, 10, 100}));
+    CHECK(m.steps[1].voices[1] == (MelodyVoice{66, 10, 70}));
+    CHECK(m.steps[1].voices[2] == (MelodyVoice{62, 10, 100}));
     CHECK(m.steps[2].voices[2] == (MelodyVoice{0, 10, 100}));
+    const auto stock_wav = melody_render_wav(m, 8000);
+    int rising = 0;
+    for (size_t i = 1; i < 800; ++i) {
+        const bool prev_negative = stock_wav[44 + 2 * (i-1) + 1] >= 128;
+        const bool negative = stock_wav[44 + 2 * i + 1] >= 128;
+        if (prev_negative && !negative) ++rising;
+    }
+    CHECK(rising == 26); // 261.6 Hz middle C over the 100 ms stock opening.
+    Melody old;
+    CHECK(melody_parse_notation("c0/4", old) == 0);
+    old.tick_ms = 75;
+    Melody loaded;
+    CHECK(melody_from_json(melody_to_json(old), loaded) && loaded == old);
+    CHECK(melody_validate(loaded) == MelodyProblem::None && melody_total_ms(loaded) == 300);
+    CHECK(melody_validate(loaded, true) == MelodyProblem::PrinterPitchOutOfRange);
+    CHECK(melody_to_gcode(loaded).empty());
     // Nothing to import.
     Melody none;
     CHECK(!melody_parse_gcode("G28\nM1006 S1\nM1006 W\n", none));
@@ -55,14 +74,14 @@ static void gcode_assertions()
     const std::string g = melody_to_gcode(m);
     CHECK(g ==
           ";===== melody start =====\n; melody name: Two notes\nM17\nM400 S1\nM1006 S1\n"
-          "M1006 A60 B10 L100 C64 D10 M80 E0 F10 N0\n"
-          "M1006 A67 B20 L100 C0 D20 M0 E0 F20 N0\n"
+          "M1006 A37 B10 L100 C41 D10 M80 E0 F10 N0\n"
+          "M1006 A44 B20 L100 C0 D20 M0 E0 F20 N0\n"
           "M1006 W\nM18\n;===== melody end =====\n");
     // The printer payload drops every comment line and keeps the commands in order.
     CHECK(melody_to_printer_gcode(m) ==
           "M17\nM400 S1\nM1006 S1\n"
-          "M1006 A60 B10 L100 C64 D10 M80 E0 F10 N0\n"
-          "M1006 A67 B20 L100 C0 D20 M0 E0 F20 N0\n"
+          "M1006 A37 B10 L100 C41 D10 M80 E0 F10 N0\n"
+          "M1006 A44 B20 L100 C0 D20 M0 E0 F20 N0\n"
           "M1006 W\nM18\n");
     // Round trip through the importer.
     Melody back;
@@ -192,6 +211,14 @@ static void preview_assertions()
     CHECK(wav[44] != 0 || wav[45] != 0);
     CHECK(wav[44 + 2 * 8000 + 100] == 0 && wav[44 + 2 * 8000 + 101] == 0);
     CHECK(melody_render_wav(Melody{}, 8000).size() == 44);
+    // The second channel's second note begins as soon as its five-tick rest ends.
+    m.steps[0].voices[0].volume = 0;
+    m.steps[1].voices[1] = {69, 12, 100};
+    CHECK(melody_total_ms(m) == 1700);
+    const auto staggered = melody_render_wav(m, 8000);
+    CHECK(staggered.size() == 44 + 2 * 13600);
+    CHECK(staggered[44 + 2 * 3999 + 1] == 0);
+    CHECK(staggered[44 + 2 * 4000 + 1] != 0);
 }
 
 static void preset_assertions()
@@ -206,6 +233,7 @@ static void preset_assertions()
     }
     CHECK(melody_from_preset(presets[0]).steps.size() == 17); // X1 start
     CHECK(melody_from_preset(presets[4]).steps.size() == 6);  // H2D start
+    CHECK(melody_from_preset(presets[6]).steps[0].voices[0].pitch == 60);
     CHECK(melody_from_preset(presets[6]).steps.size() == 8);  // scale
 }
 
