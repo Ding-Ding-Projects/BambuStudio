@@ -102,6 +102,8 @@ public:
         remote_setup=action(_L("Provision new SSH server..."),[this]{ provision(); });
         setup_button = action(_L("Install Bedrock ZIP..."), [this] { install(); });
         action(_L("Read EULA"), [] { wxLaunchDefaultBrowser("https://aka.ms/MinecraftEULA"); });
+        reconnect=action(_L("Reconnect owned SSH console"),[this]{start(true);});
+        disconnect=action(_L("Disconnect SSH console"),[this]{if(running && reconnectable && process){process->kill();append(_L("Closing the SSH connection. Reconnect to verify the remote process."));}});
         start_button = action(_L("Start server"), [this] { start(); });
         stop_button = action(_L("Stop server"), [this] { send("stop"); });
         action(_L("List players"), [this] { send("list"); });
@@ -270,7 +272,7 @@ private:
         profile->Enable(idle && target->GetSelection() != 0);
         remote_setup->Enable(idle && target->GetSelection()!=0);ssh_recovery->Enable(idle && target->GetSelection()!=0);ssh_content->Enable(idle && target->GetSelection()!=0);
         source_package->Enable(idle && target->GetSelection()!=0);remote_port->Enable(idle && target->GetSelection()!=0);
-        start_button->Enable(idle); stop_button->Enable(running); command->Enable(running);
+        reconnect->Enable(idle && target->GetSelection()!=0);disconnect->Enable(running && reconnectable);start_button->Enable(idle); stop_button->Enable(running); command->Enable(running);
     }
     void append(const wxString &line)
     {
@@ -285,9 +287,9 @@ private:
         }
         return true;
     }
-    void start()
+    void start(bool attach=false)
     {
-        if (running || !agree->GetValue()) { append(_L("Review the EULA and network permission first.")); return; }
+        if (running || (!attach && !agree->GetValue())) { append(_L("Review the EULA and network permission first.")); return; }
         std::vector<std::string> argv;
         const auto dir = folder->GetTextCtrl()->GetValue().ToStdString(wxConvUTF8);
         std::string cwd = wxGetCwd().ToStdString(wxConvUTF8);
@@ -304,32 +306,33 @@ private:
             wxString search, ssh;
             wxGetEnv("PATH", &search);
             if (!wxFindFileInPath(&ssh, search, "ssh.exe")) { append(_L("OpenSSH client was not found.")); return; }
-            argv = ssh_server_launch(ssh.ToStdString(wxConvUTF8), profile->GetTextCtrl()->GetValue().ToStdString(wxConvUTF8), dir, target->GetSelection() == 2, local_owner(false));
+            argv = attach ? ssh_server_reconnect(ssh.ToStdString(wxConvUTF8),profile->GetTextCtrl()->GetValue().ToStdString(wxConvUTF8),dir,target->GetSelection()==2,local_owner(false)) : ssh_server_launch(ssh.ToStdString(wxConvUTF8), profile->GetTextCtrl()->GetValue().ToStdString(wxConvUTF8), dir, target->GetSelection() == 2, local_owner(false));
             if (argv.empty()) { append(_L("Enter a configured SSH alias and an absolute POSIX server directory.")); return; }
         }
+        reconnectable=false;
         std::weak_ptr<bool> weak = lifetime;
         process = std::make_unique<ServerProcess>();
         std::string error;
         running = process->start(argv, cwd,
             [weak, this](const std::string &line) {
-                wxTheApp->CallAfter([this, weak, line] { if (!weak.expired()) append(wxString::FromUTF8(line)); });
+                wxTheApp->CallAfter([this, weak, line] { if (!weak.expired()) {if(line.rfind("Attached to verified managed session, PID ",0)==0){reconnectable=true;controls();}append(wxString::FromUTF8(line));} });
             },
             [weak, this](int code) {
                 wxTheApp->CallAfter([this, weak, code] {
                     if (weak.expired()) return;
-                    running = false; controls();
+                    running = false; reconnectable=false; controls();
                     append(wxString::Format(_L("Process exited with code %d."), code));
                 });
             }, &error);
         controls();
         append(running ? _L("Process launched. Watch the server output for readiness.") : wxString::FromUTF8(error));
     }
-    bool running = false, installing = false;
+    bool running = false, installing = false, reconnectable=false;
     ComboBox *target;
     TextInput *profile, *folder, *command, *source_package;
     SpinInput *remote_port;
     TextArea *console;
-    Button *browse, *start_button, *stop_button, *setup_button, *add_pack, *enable_pack, *remote_setup, *settings, *ssh_recovery, *ssh_content, *local_backup, *local_restore, *manage_packs;
+    Button *browse, *start_button, *stop_button, *setup_button, *add_pack, *enable_pack, *remote_setup, *settings, *ssh_recovery, *ssh_content, *local_backup, *local_restore, *manage_packs,*reconnect,*disconnect;
     LabeledCheckBox *agree;
     std::unique_ptr<ServerProcess> process;
     std::shared_ptr<bool> lifetime = std::make_shared<bool>(true);
