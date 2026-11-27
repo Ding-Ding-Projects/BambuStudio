@@ -11,12 +11,14 @@
 #include "../Widgets/LabeledCheckBox.hpp"
 #include "../Widgets/MD3DialogChrome.hpp"
 #include "../Widgets/TextArea.hpp"
+#include "../Widgets/SuperConfirmGate.hpp"
 #include <openssl/evp.h>
 #include <wx/app.h>
 #include <wx/dialog.h>
 #include <wx/filedlg.h>
 #include <wx/filefn.h>
 #include <wx/sizer.h>
+#include <wx/wrapsizer.h>
 #include <wx/utils.h>
 #include <condition_variable>
 #include <filesystem>
@@ -53,7 +55,8 @@ struct TransferState
     std::string             output;
 };
 
-TargetSettingsResult transfer(const WorldRecoveryTarget &target, const std::string &exe, const fs::path &pkg, const std::string &flavour, bool activate)
+TargetSettingsResult transfer(
+    const WorldRecoveryTarget &target, const std::string &exe, const fs::path &pkg, const std::string &flavour, bool activate, const nlohmann::json &selected)
 {
     std::error_code ec;
     auto            size = fs::file_size(pkg, ec);
@@ -119,11 +122,15 @@ TargetSettingsResult transfer(const WorldRecoveryTarget &target, const std::stri
             },
             &error))
         return {error, {}};
-    std::thread                deadline([&process, state] {
+    std::thread    deadline([&process, state] {
         std::unique_lock<std::mutex> guard(state->mutex);
         if (!state->signal.wait_for(guard, std::chrono::minutes(5), [&] { return state->done; })) process.kill();
     });
-    const nlohmann::json       header = {{"name", pkg.filename().u8string()}, {"size", size}, {"sha256", sum}, {"flavour", flavour}, {"activate", activate}};
+    nlohmann::json header = {{"name", pkg.filename().u8string()}, {"size", size}, {"sha256", sum}, {"flavour", flavour}, {"activate", activate}};
+    if (selected.is_object()) {
+        header["action"] = "update";
+        for (const auto *k : {"id", "state", "stamp"}) header[k] = selected.at(k);
+    }
     std::ifstream              input(pkg, std::ios::binary);
     std::uintmax_t             sent = 0;
     bool                       ok   = process.send(header.dump());
@@ -190,6 +197,16 @@ public:
         auto *install = new Button(this, _L("Transfer and install"));
         install->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { apply(); });
         body->Add(install, 0, wxALL, FromDIP(8));
+        inventory = new ComboBox(this, wxID_ANY, {}, wxDefaultPosition, wxDefaultSize, 0, nullptr, wxCB_READONLY);
+        body->Add(inventory, 0, wxEXPAND | wxALL, FromDIP(8));
+        auto *maintenance = new wxWrapSizer(wxHORIZONTAL);
+        for (auto a : {std::make_pair(_L("List installed content"), "list"), std::make_pair(_L("Enable"), "enable"), std::make_pair(_L("Disable"), "disable"),
+                       std::make_pair(_L("Remove from server"), "remove"), std::make_pair(_L("Roll back"), "rollback"), std::make_pair(_L("Update selected"), "update")}) {
+            auto *b = new Button(this, a.first);
+            b->Bind(wxEVT_BUTTON, [this, op = std::string(a.second), label = a.first](wxCommandEvent &) { maintenance_action(op, label); });
+            maintenance->Add(b, 0, wxALL, FromDIP(3));
+        }
+        body->Add(maintenance, 0, wxEXPAND | wxALL, FromDIP(6));
         status = new TextArea(this, _L("Plugins, mods and scripts execute with the server's permissions."), FromDIP(wxSize(500, 82)), wxTE_READONLY);
         body->Add(status, 0, wxEXPAND | wxALL, FromDIP(8));
         Bind(wxEVT_CLOSE_WINDOW, [this](wxCloseEvent &e) {
@@ -205,7 +222,69 @@ public:
     }
 
 private:
-    void apply()
+    void maintenance_action(const std::string &op, const wxString &label)
+    {
+        if (busy) return;
+        nlohmann::json entry;
+        if (op != "list") {
+            int n = inventory->GetSelection();
+            if (n < 0 || std::size_t(n) >= items.size()) return;
+            entry = items[std::size_t(n)];
+            SuperConfirmGate::Spec spec;
+            spec.action          = label;
+            spec.consequence     = wxString::Format(_L("Change the selected package %s on this target? Prior package versions are kept for rollback."),
+                                                    wxString::FromUTF8(entry.value("name", std::string())));
+            spec.completed_label = _L("Applying");
+            if (!SuperConfirmGate::Run(nullptr, spec)) return;
+        }
+        if (op == "update") {
+            apply(entry);
+            return;
+        }
+        wxString path, exe;
+        wxGetEnv("PATH", &path);
+        if (!wxFindFileInPath(&exe, path, target.container ? "docker.exe" : "ssh.exe")) {
+            status->SetValue(_L("The target client is unavailable."));
+            return;
+        }
+        nlohmann::json request = {{"action", op}};
+        if (entry.is_object())
+            for (auto k : {"id", "state", "stamp"}) request[k] = entry.at(k);
+        auto t                   = target;
+        auto program             = exe.ToStdString(wxConvUTF8);
+        busy                     = true;
+        std::weak_ptr<bool> weak = life;
+        std::thread([this, weak, t, program, request, op] {
+            auto reply = target_content_action(t, program, request);
+            wxTheApp->CallAfter([this, weak, reply = std::move(reply), op] {
+                if (weak.expired()) return;
+                busy = false;
+                if (!reply.error.empty()) {
+                    status->SetValue(wxString::FromUTF8(reply.error));
+                    return;
+                }
+                if (op != "list") {
+                    status->SetValue(wxString::FromUTF8(reply.result.dump(2)));
+                    return;
+                }
+                items.clear();
+                inventory->Clear();
+                if (reply.result.contains("packages") && reply.result["packages"].is_array())
+                    for (const auto &e : reply.result["packages"]) {
+                        if (!e.is_object()) continue;
+                        bool valid = true;
+                        for (auto k : {"id", "state", "stamp", "group", "name"})
+                            if (!e.contains(k) || !e[k].is_string()) valid = false;
+                        if (!valid) continue;
+                        items.push_back(e);
+                        inventory->Append(wxString::FromUTF8(e["group"].get<std::string>() + "/" + e["name"].get<std::string>() + " (" + e["state"].get<std::string>() + ")"));
+                    }
+                if (!items.empty()) inventory->SetSelection(0);
+                status->SetValue(wxString::Format(_L("Installed and recoverable packages: %d"), int(items.size())));
+            });
+        }).detach();
+    }
+    void apply(const nlohmann::json &selected = {})
     {
         if (busy || file.empty()) return;
         wxString env, exe;
@@ -221,8 +300,8 @@ private:
         auto                program = exe.ToStdString(wxConvUTF8), type = flavour->GetStringSelection().ToStdString(wxConvUTF8);
         bool                activate = target.bedrock && enable->GetValue();
         std::weak_ptr<bool> weak     = life;
-        std::thread([this, weak, t, program, pkg, type, activate] {
-            auto r = transfer(t, program, pkg, type, activate);
+        std::thread([this, weak, t, program, pkg, type, activate, selected] {
+            auto r = transfer(t, program, pkg, type, activate, selected);
             wxTheApp->CallAfter([this, weak, r = std::move(r)] {
                 if (weak.expired()) return;
                 busy = false;
@@ -230,14 +309,15 @@ private:
             });
         }).detach();
     }
-    WorldRecoveryTarget   target;
-    fs::path              file;
-    Label                *selection;
-    ComboBox             *flavour;
-    LabeledCheckBox      *enable;
-    TextArea             *status;
-    bool                  busy = false;
-    std::shared_ptr<bool> life = std::make_shared<bool>(true);
+    WorldRecoveryTarget         target;
+    fs::path                    file;
+    Label                      *selection;
+    ComboBox                   *flavour, *inventory;
+    std::vector<nlohmann::json> items;
+    LabeledCheckBox            *enable;
+    TextArea                   *status;
+    bool                        busy = false;
+    std::shared_ptr<bool>       life = std::make_shared<bool>(true);
 };
 } // namespace
 void show_target_content(wxWindow *parent, WorldRecoveryTarget target)
