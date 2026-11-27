@@ -89,7 +89,8 @@ struct ZipOutcome
 // under a temporary name, renamed when complete, then every file's CRC is
 // checked. session.lock is left out. progress gets (done, total) bytes.
 ZipOutcome write_zip(const std::string &root, const std::vector<std::string> &entries, const std::string &zip_path,
-                     const std::function<void(std::uint64_t, std::uint64_t)> &progress = {}, const std::atomic<bool> *cancel = nullptr);
+                     const std::function<void(std::uint64_t, std::uint64_t)> &progress = {}, const std::atomic<bool> *cancel = nullptr,
+                     const std::map<std::string,std::string> &memory_entries = {});
 // Extracts a backup into `target` (which must not exist yet). Names that would
 // land outside it are refused.
 ZipOutcome extract_zip(const std::string &zip_path, const std::string &target, const std::atomic<bool> *cancel = nullptr,

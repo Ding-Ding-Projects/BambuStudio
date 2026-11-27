@@ -4,6 +4,7 @@
 #include <random>
 #include "ServerSystem.hpp"
 #include "ContentInstaller.hpp"
+#include "LocalBedrockRecovery.hpp"
 #include "BedrockSettingsDialog.hpp"
 #include "BedrockDownloadsDialog.hpp"
 #include "WorldRecoveryDialog.hpp"
@@ -86,6 +87,8 @@ public:
             if(target->GetSelection()==0)show_bedrock_settings(this,dir);
             else show_target_settings(this,{false,target->GetSelection()==2,profile->GetTextCtrl()->GetValue().ToStdString(wxConvUTF8),dir,local_owner(false)});
         });
+        local_backup=action(_L("Back up local Bedrock worlds..."),[this]{local_recover(false);});
+        local_restore=action(_L("Restore local Bedrock backup separately..."),[this]{local_recover(true);});
         add_pack=action(_L("Install Bedrock pack..."),[this] { pack(false); });
         enable_pack=action(_L("Activate installed pack..."),[this] { pack(true); });
         ssh_content=action(_L("Install SSH content..."),[this]{show_target_content(this,{false,target->GetSelection()==2,
@@ -166,6 +169,40 @@ private:
         controls();append(installing?_L("Provisioning the selected remote server directory..."):wxString::FromUTF8(error));
     }
 
+    void local_recover(bool restore)
+    {
+        if(running||installing||target->GetSelection()!=0)return;
+        const auto dir=folder->GetTextCtrl()->GetValue().ToStdString(wxConvUTF8);
+        std::error_code ec;auto root=std::filesystem::canonical(std::filesystem::u8path(dir),ec);
+        if(ec || !std::filesystem::is_regular_file(root/"bedrock_server.exe",ec)){append(_L("Select a local Bedrock server directory."));return;}
+        std::string archive,destination;
+        if(restore){
+            wxFileDialog f(this,_L("Choose a Bedrock backup made for this server"),{},{},"ZIP (*.zip)|*.zip",wxFD_OPEN|wxFD_FILE_MUST_EXIST);
+            if(f.ShowModal()!=wxID_OK)return;archive=f.GetPath().ToStdString(wxConvUTF8);
+            wxDirDialog parent(this,_L("Choose a parent for a new restored directory"));if(parent.ShowModal()!=wxID_OK)return;
+            auto base=std::filesystem::canonical(std::filesystem::u8path(parent.GetPath().ToStdString(wxConvUTF8)),ec);
+            auto relative=base.lexically_relative(root);
+            if(ec || base==root || (!relative.empty() && !relative.is_absolute() && *relative.begin()!="..")){append(_L("Choose a restore destination outside the server."));return;}
+            destination=(base/(std::filesystem::u8path(archive).stem().u8string()+"-restored")).u8string();
+        }else{
+            wxFileDialog f(this,_L("Create a new Bedrock backup"),{},"bedrock-worlds.zip","ZIP (*.zip)|*.zip",wxFD_SAVE);
+            if(f.ShowModal()!=wxID_OK)return;archive=f.GetPath().ToStdString(wxConvUTF8);
+            auto dest=std::filesystem::weakly_canonical(std::filesystem::u8path(archive),ec);
+            const auto relative=dest.lexically_relative(root);
+            if(ec || (!relative.empty()&&!relative.is_absolute()&&*relative.begin()!="..")){append(_L("Save the backup outside the server directory."));return;}
+        }
+        installing=true;controls();std::weak_ptr<bool> weak=lifetime;append(_L("Verifying Bedrock recovery files..."));
+        std::thread([this,weak,restore,dir,archive,destination]{
+            ZipOutcome r;
+            if(!restore)r=backup_local_bedrock(dir,archive);
+            else if(!local_bedrock_archive(archive,dir))r.error="The selected archive is not a recognized backup of this server.";
+            else r=extract_zip(archive,destination,nullptr,128ULL*1024*1024*1024);
+            wxTheApp->CallAfter([this,weak,r,restore,archive,destination]{
+                if(weak.expired())return;installing=false;controls();
+                append(r.ok?wxString::Format(_L("Verified %d files at %s."),r.files,wxString::FromUTF8(restore?destination:archive)):wxString::FromUTF8(r.error));
+            });
+        }).detach();
+    }
     void pack(bool activate)
     {
         if (running || installing || target->GetSelection()!=0) return;
@@ -224,7 +261,7 @@ private:
         const bool idle = !running && !installing;
         target->Enable(idle); folder->Enable(idle); agree->Enable(idle);
         setup_button->Enable(idle && target->GetSelection() == 0);
-        settings->Enable(idle);
+        settings->Enable(idle);local_backup->Enable(idle && target->GetSelection()==0);local_restore->Enable(idle && target->GetSelection()==0);
         add_pack->Enable(idle && target->GetSelection() == 0); enable_pack->Enable(idle && target->GetSelection() == 0);
         browse->Enable(idle && target->GetSelection() == 0);
         profile->Enable(idle && target->GetSelection() != 0);
@@ -289,7 +326,7 @@ private:
     TextInput *profile, *folder, *command, *source_package;
     SpinInput *remote_port;
     TextArea *console;
-    Button *browse, *start_button, *stop_button, *setup_button, *add_pack, *enable_pack, *remote_setup, *settings, *ssh_recovery, *ssh_content;
+    Button *browse, *start_button, *stop_button, *setup_button, *add_pack, *enable_pack, *remote_setup, *settings, *ssh_recovery, *ssh_content, *local_backup, *local_restore;
     LabeledCheckBox *agree;
     std::unique_ptr<ServerProcess> process;
     std::shared_ptr<bool> lifetime = std::make_shared<bool>(true);
