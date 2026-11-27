@@ -174,7 +174,7 @@ const checks = {
     assert.match(can, /m_print_plate_idx == m_plater->get_partplate_list\(\)\.get_curr_plate_index\(\)/,
       'Slice again is offered only for the plate the Slice and print action slices');
     const slice = block(dialog, 'void SelectMachineDialog::slice_again_from_dialog()');
-    order(slice, ['can_slice_again_from_dialog()', 'EndModal(wxID_CLOSE);', 'request_slice_and_print()', 'MessageDialog(']);
+    order(slice, ['can_slice_again_from_dialog()', 'EndModal(wxID_CLOSE);', 'request_slice_and_print(true)', 'MessageDialog(']);
   },
 
   // In bilingual mode the message panel's label "message Slice again" found no
@@ -270,7 +270,7 @@ const checks = {
     const refresh = block(dialog, 'void SelectMachineDialog::refresh_quick_swap_controls()');
     order(refresh, ['button->Bind(wxEVT_BUTTON', 'm_pending_filaments_map[id] =', 'apply_quick_swap();']);
     const apply = block(dialog, 'void SelectMachineDialog::apply_quick_swap()');
-    order(apply, ['validate_print_setup_filament_maps(', 'EndModal(wxID_CLOSE)', 'apply_print_setup_filament_maps(', 'request_slice_and_print()']);
+    order(apply, ['validate_print_setup_filament_maps(', 'EndModal(wxID_CLOSE)', 'apply_print_setup_filament_maps(', 'request_slice_and_print(true)']);
     for (const method of ['on_lubricate_melody_selected', 'on_lubricate_mode_toggled']) {
       const edit = block(dialog, 'void SelectMachineDialog::' + method + '()');
       order(edit, ['can_slice_again_from_dialog()', 'tab->load_config(cfg);', 'slice_again_from_dialog();']);

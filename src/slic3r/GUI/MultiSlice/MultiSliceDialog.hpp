@@ -22,6 +22,7 @@ class wxStaticBitmap;
 
 namespace Slic3r::GUI {
 
+class SliceMotionPanel;
 class InkRow; // an ink's row in the list (defined in MultiSliceDialog.cpp)
 class Tag;
 
@@ -118,6 +119,7 @@ private:
     Label            *m_empty_text = nullptr;
     wxStaticBitmap   *m_summary_icon = nullptr;
     Label            *m_summary = nullptr;
+    SliceMotionPanel *m_slice_motion = nullptr;
     ProgressBar      *m_progress = nullptr;
     StaticBox        *m_dest_well = nullptr;
     Tag              *m_usb_tag = nullptr;

@@ -1,3 +1,4 @@
+#include "slic3r/GUI/SliceMotion.hpp"
 #include "MultiSliceDialog.hpp"
 #include "MultiSliceNames.hpp"
 
@@ -305,6 +306,8 @@ void MultiSliceDialog::build()
     GrowWithWrap(m_summary);
     summary_line->Add(m_summary, 1, wxALIGN_CENTER_VERTICAL);
     summary->Add(summary_line, 0, wxEXPAND);
+    m_slice_motion = new SliceMotionPanel(this);
+    summary->Add(m_slice_motion, 0, wxEXPAND);
     m_progress = new ProgressBar(this, wxID_ANY, 1, wxDefaultPosition, wxSize(-1, FromDIP(8)), false);
     m_progress->Hide();
     summary->Add(m_progress, 0, wxEXPAND | wxTOP, FromDIP(kProgressGap));
@@ -624,6 +627,7 @@ void MultiSliceDialog::update_summary()
         set_summary(wxString::Format(_L("%d inks chosen: %d sliced files will be saved."), chosen, chosen),
                     MaterialIcon::TaskAlt, MD3::Role::Primary, MD3::Role::OnSurface);
     }
+    if (show_progress) m_slice_motion->show_active(); else m_slice_motion->clear();
     m_progress->Show(show_progress);
     m_start->Enable(!m_running && chosen >= 2 && !m_folder.empty());
     Layout();

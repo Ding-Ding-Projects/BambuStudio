@@ -409,7 +409,7 @@ public:
     void        select_tab(size_t tab = size_t(-1));
     void        request_select_tab(TabPosition pos);
     void        show_print_preparation();
-    bool        request_slice_and_print();
+    bool        request_slice_and_print(bool dialog_reslice = false);
     bool        request_slice_and_send();
     int         get_calibration_curr_tab();
     void        select_view(const std::string& direction);

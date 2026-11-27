@@ -60794,3 +60794,18 @@ msgstr "編輯設定草稿"
 #. review-status: agent-drafted
 msgid "Save draft as preset"
 msgstr "將草稿儲存為預設"
+
+msgid "Model geometry"
+msgstr "模型幾何"
+
+msgid "Plate needs slicing"
+msgstr "打印板需要重新切片"
+
+msgid "Print order preview"
+msgstr "打印次序預覽"
+
+msgid "Reslicing / Model geometry"
+msgstr "重新切片 / 模型幾何"
+
+msgid "Slicing / Model geometry"
+msgstr "切片 / 模型幾何"

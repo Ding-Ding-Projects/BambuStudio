@@ -1,3 +1,4 @@
+#include "slic3r/GUI/SliceMotion.hpp"
 #include <wx/wrapsizer.h>
 #include "HumanDate.hpp"
 #include "MainFrame.hpp"
@@ -3178,7 +3179,7 @@ bool MainFrame::can_save() const
         m_plater->is_project_dirty() && !m_plater->using_exported_file() && !m_plater->only_gcode_mode();
 }
 
-bool MainFrame::request_slice_and_print()
+bool MainFrame::request_slice_and_print(bool dialog_reslice)
 {
     if (!m_plater || !m_slice_print_btn) return false;
     update_slice_print_status(eEventSliceUpdate);
@@ -3186,12 +3187,13 @@ bool MainFrame::request_slice_and_print()
     const auto* plate = m_plater->get_partplate_list().get_curr_plate();
     const auto index = m_plater->get_partplate_list().get_curr_plate_index();
     const auto model_id = m_plater->model().id();
-    CallAfter([this, plate, index, model_id] {
+    CallAfter([this, plate, index, model_id, dialog_reslice] {
         if (!m_plater || !m_slice_print_btn || m_plater->model().id() != model_id ||
             m_plater->get_partplate_list().get_curr_plate_index() != index ||
             m_plater->get_partplate_list().get_curr_plate() != plate) return;
         update_slice_print_status(eEventSliceUpdate);
         if (!m_slice_print_btn->IsEnabled()) return;
+        if (dialog_reslice) SliceMotion::request_dialog(*m_plater);
         wxCommandEvent event(wxEVT_BUTTON, m_slice_print_btn->GetId());
         event.SetEventObject(m_slice_print_btn);
         m_slice_print_btn->GetEventHandler()->ProcessEvent(event);
