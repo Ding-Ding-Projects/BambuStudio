@@ -80,7 +80,11 @@ public:
             return button;
         };
         action(_L("Official Bedrock versions..."),[this]{show_bedrock_distributions(this,[this](const std::string &dir){folder->GetTextCtrl()->SetValue(wxString::FromUTF8(dir));});});
-        settings=action(_L("Bedrock settings..."),[this]{show_bedrock_settings(this,folder->GetTextCtrl()->GetValue().ToStdString(wxConvUTF8));});
+        settings=action(_L("Server settings..."),[this]{
+            const auto dir=folder->GetTextCtrl()->GetValue().ToStdString(wxConvUTF8);
+            if(target->GetSelection()==0)show_bedrock_settings(this,dir);
+            else show_target_settings(this,{false,target->GetSelection()==2,profile->GetTextCtrl()->GetValue().ToStdString(wxConvUTF8),dir,local_owner(false)});
+        });
         add_pack=action(_L("Install Bedrock pack..."),[this] { pack(false); });
         enable_pack=action(_L("Activate installed pack..."),[this] { pack(true); });
         ssh_recovery=action(_L("SSH world recovery..."),[this]{
@@ -217,7 +221,7 @@ private:
         const bool idle = !running && !installing;
         target->Enable(idle); folder->Enable(idle); agree->Enable(idle);
         setup_button->Enable(idle && target->GetSelection() == 0);
-        settings->Enable(idle && target->GetSelection()==0);
+        settings->Enable(idle);
         add_pack->Enable(idle && target->GetSelection() == 0); enable_pack->Enable(idle && target->GetSelection() == 0);
         browse->Enable(idle && target->GetSelection() == 0);
         profile->Enable(idle && target->GetSelection() != 0);
