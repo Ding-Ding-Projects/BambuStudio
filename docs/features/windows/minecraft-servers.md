@@ -380,3 +380,17 @@ expression. Known fields expose the applicable switch, choice, integer or
 text control. Applying one field preserves unrelated lines and comments, and
 requires reloading if another process edited the file. Unrecognized keys,
 duplicates and protected values are not editable.
+
+**Create server** can import a trusted runnable server JAR instead of
+downloading Vanilla. Select the distribution, accept the EULA for the new
+server and choose a new or empty folder. Setup checks the runnable manifest
+and readback, preserves the distribution filename, and publishes its settings
+and server file without replacing existing files. Mojang creation lists all
+records from its manifest; some historical releases have no server download.
+
+**Native console > Official Bedrock versions** reads Microsoft's live index
+for Windows and Linux stable and preview distributions. Download a ZIP or
+install the selected Windows build after accepting the EULA. The UI validates
+the package contents, computes a SHA-256 and accepts an optional independently
+trusted expected hash. The index itself does not provide a historical catalog
+or publisher checksums.

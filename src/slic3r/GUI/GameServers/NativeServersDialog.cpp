@@ -5,6 +5,7 @@
 #include "ServerSystem.hpp"
 #include "ContentInstaller.hpp"
 #include "BedrockSettingsDialog.hpp"
+#include "BedrockDownloadsDialog.hpp"
 #include "../I18N.hpp"
 #include "../MsgDialog.hpp"
 #include "../Widgets/Button.hpp"
@@ -77,6 +78,7 @@ public:
             actions->Add(button, 0, wxALL, FromDIP(3));
             return button;
         };
+        action(_L("Official Bedrock versions..."),[this]{show_bedrock_distributions(this,[this](const std::string &dir){folder->GetTextCtrl()->SetValue(wxString::FromUTF8(dir));});});
         settings=action(_L("Bedrock settings..."),[this]{show_bedrock_settings(this,folder->GetTextCtrl()->GetValue().ToStdString(wxConvUTF8));});
         add_pack=action(_L("Install Bedrock pack..."),[this] { pack(false); });
         enable_pack=action(_L("Activate installed pack..."),[this] { pack(true); });
