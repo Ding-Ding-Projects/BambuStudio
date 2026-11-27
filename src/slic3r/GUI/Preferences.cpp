@@ -81,6 +81,7 @@
 #include <map>
 #include <memory>
 #include <wx/sizer.h>
+#include <wx/wrapsizer.h>
 #include <wx/slider.h>
 #include "Gizmos/GLGizmoBase.hpp"
 #include "OpenGLManager.hpp"
@@ -1838,8 +1839,10 @@ void PreferencesDialog::create()
     // Right-hand content pane: a top MD3 SearchField pill over the section book.
     auto *content_pane = new wxBoxSizer(wxVERTICAL);
     m_search = new SearchField(content_card, _L("Search settings"));
-    auto *search_row = new wxBoxSizer(wxHORIZONTAL);
-    search_row->Add(m_search, 1, wxALIGN_CENTER_VERTICAL);
+    // The input owns its full row. Translated filter and reset labels can be
+    // much wider than the input's fixed search and regex buttons combined.
+    content_pane->Add(m_search, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(16));
+    auto *search_actions = new wxWrapSizer(wxHORIZONTAL, wxREMOVE_LEADING_SPACES);
     m_changed_chip = new ::Button(content_card, _L("Changed by you"));
     m_changed_chip->SetVariant(::Button::Variant::Outlined);
     m_changed_chip->SetButtonSize(::Button::Size::Small);
@@ -1849,7 +1852,7 @@ void PreferencesDialog::create()
         refresh_changed_chip();
         apply_search_filter(m_search->GetValue());
     });
-    search_row->Add(m_changed_chip, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(8));
+    search_actions->Add(m_changed_chip, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(8));
     // Shown only while a setting read at startup waits for a restart.
     m_restart_chip = new ::Button(content_card, _L("Needs a restart"));
     m_restart_chip->SetVariant(::Button::Variant::Outlined);
@@ -1862,7 +1865,7 @@ void PreferencesDialog::create()
         apply_search_filter(m_search->GetValue());
     });
     m_restart_chip->Hide();
-    search_row->Add(m_restart_chip, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(8));
+    search_actions->Add(m_restart_chip, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, FromDIP(8));
     // Every setting of the section shown goes back to its built-in default,
     // behind the two-key confirmation (reset_section).
     m_reset_section = new ::Button(content_card, _L("Reset this section"));
@@ -1871,8 +1874,8 @@ void PreferencesDialog::create()
     m_reset_section->SetGlyph(MaterialIcon::SettingsBackupRestore);
     m_reset_section->SetToolTip(_L("Put every setting in this section back to its built-in default"));
     m_reset_section->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { reset_section(); });
-    search_row->Add(m_reset_section, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(8));
-    content_pane->Add(search_row, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(16));
+    search_actions->Add(m_reset_section, 0, wxALIGN_CENTER_VERTICAL);
+    content_pane->Add(search_actions, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(16));
     // Inline "no results" hint under the search pill; hidden until an active
     // query matches nothing (see apply_search_filter).
     m_search_empty_hint = new Label(content_card, _L("No settings match your search."));
