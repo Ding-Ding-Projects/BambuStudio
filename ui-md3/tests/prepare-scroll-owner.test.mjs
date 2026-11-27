@@ -77,3 +77,11 @@ test('a programmatic Prepare section switch returns the body from the draft edit
     const section = plater.slice(plater.indexOf('void Sidebar::apply_prepare_section('));
     assert.match(section, /if \(p->m_draft_panel && p->m_draft_panel->IsShown\(\)\)\s*p->m_draft_panel->Activate\(section\);\s*p->active_prepare_section = section;/);
 });
+
+test('the sidebar geometry check rejects a page taller than its notebook', async () => {
+    const probe = await read('LayoutProbe.cpp');
+    const block = probe.split('payload == L"sidebar-check"')[1].split('return ok;')[0];
+    assert.match(block, /page_bottom = page->GetScreenRect\(\)\.GetBottom\(\);/);
+    assert.match(block, /book_bottom = page->GetParent\(\)->GetScreenRect\(\)\.GetBottom\(\);/);
+    assert.match(block, /const bool ok = page_bottom <= book_bottom &&/);
+});
