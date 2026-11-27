@@ -34,7 +34,7 @@ await writeFile(path.join(runRoot, 'output-manifest.json'), manifest);
 await write('build-receipt.json', { sourceRevision: revision, outputManifestSha256: hash(manifest), command: 'node ui-md3/scripts/compose-site.mjs <owned-output>' });
 const serverPort = Number(args['server-port'] || 45681);
 const cdpPort = Number(args['cdp-port'] || 45682);
-const url = `http://127.0.0.1:${serverPort}/index.html`;
+const url = `http://127.0.0.1:${serverPort}/index.html#settings`;
 const desktop = 'BambuSiteWording' + Date.now();
 const quote = value => { assert.ok(!/["\r\n]/.test(value)); return '"' + value + '"'; };
 const cheap = (tool, values = {}) => {
@@ -88,17 +88,18 @@ async function evaluate(expression) {
 }
 try {
   await portUnused(serverPort); await portUnused(cdpPort);
-  const flags = [`--app=${url}`, `--user-data-dir=${profile}`, `--remote-debugging-port=${cdpPort}`, '--guest', '--disable-sync', '--disable-extensions', '--disable-component-extensions-with-background-pages', '--no-first-run', '--no-default-browser-check', '--edge-skip-compat-layer-relaunch', '--disable-features=msEdgeFirstRunExperience,msEdgeSignin,msEdgeSync'];
-  edge = cheap('launch_on_headless_desktop', { name: desktop, command: [args.edge, ...flags].map(quote).join(' ') });
-  ledger.edgePid = edge.pid;
-  ledger.edgeIdentity = identity(edge.pid);
-  // A live GUI process keeps the desktop attached while a console-free server
-  // is launched on the same lane. The first navigation is reloaded after ready.
+  // Start the local server first so Edge's sole target is the reviewed
+  // Settings URL from initial navigation through reload and capture.
   server = cheap('launch_on_headless_desktop', { name: desktop, command: [args.pythonw, path.join(repo, 'ui-md3/scripts/site-verification-server.py'), output, String(serverPort)].map(quote).join(' ') });
   ledger.serverPid = server.pid;
   ledger.serverIdentity = identity(server.pid);
   await write('ownership.json', ledger);
   await ready(url);
+  const flags = [`--app=${url}`, `--user-data-dir=${profile}`, `--remote-debugging-port=${cdpPort}`, '--guest', '--disable-sync', '--disable-extensions', '--disable-component-extensions-with-background-pages', '--no-first-run', '--no-default-browser-check', '--edge-skip-compat-layer-relaunch', '--disable-features=msEdgeFirstRunExperience,msEdgeSignin,msEdgeSync'];
+  edge = cheap('launch_on_headless_desktop', { name: desktop, command: [args.edge, ...flags].map(quote).join(' ') });
+  ledger.edgePid = edge.pid;
+  ledger.edgeIdentity = identity(edge.pid);
+  await write('ownership.json', ledger);
   await ready(`http://127.0.0.1:${cdpPort}/json/list`);
   const preflight = proof('preflight', 'initial');
   const targetReceipt = JSON.parse(await readFile(preflight, 'utf8'));
