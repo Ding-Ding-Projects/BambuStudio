@@ -1,5 +1,14 @@
 # Roadmap
 
+## Native integration and verification, 27 November 2026
+
+- [x] Verify the MCP/CLI payload in `md3-v338` against the released SBOM and close #53 under its accepted device scope.
+- [ ] Verify the combined v02.09.02.62 native build, launch and representative slice.
+- [ ] Exercise ordinary slicing, reslice-required and in-dialog reslicing with the exact selected models and emitted toolpaths, including cancellation, sequential printing and reduced motion.
+- [ ] Verify corrected melody playback in the built preview and in a newly exported print archive. Record physical playback separately.
+- [ ] Complete and verify the documented server-manager workflows for both editions across local process, local container, SSH process and SSH container targets.
+- [ ] Finish the remaining acceptance checks on #16, #36, #41, #43, #45, #51, #56, #60 and #61, and close each after its evidence is verified.
+
 ## Cool down after a print, 25 November 2026
 
 - [x] Add a Cool down card to the Device page with one switch, off by default.
