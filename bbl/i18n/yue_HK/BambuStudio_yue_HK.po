@@ -64172,3 +64172,183 @@ msgstr "更改已安裝內容之前，請先停止伺服器。"
 #. review-status: agent-drafted
 msgid "Installed content"
 msgstr "已安裝內容"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Showing previously observed official links from this computer. Refresh to check current availability."
+msgstr "而家顯示呢部電腦之前見過嘅官方連結。請重新整理，檢查目前係咪仍可使用。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Last listed"
+msgstr "上次列出"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Previously observed"
+msgstr "之前見過"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "No supported official releases were returned. Cached history was preserved."
+msgstr "官方冇回傳受支援嘅版本。快取嘅歷史記錄已保留。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Live links refreshed. Previously observed links are retained; the publisher does not supply checksums in this index."
+msgstr "已重新整理現有連結，之前見過嘅連結亦會保留。發佈方冇喺呢份索引提供校驗碼。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Restart schedule..."
+msgstr "重新啟動排程…"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Installed Bedrock packs"
+msgstr "已安裝嘅 Bedrock 套件"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Owned server restart schedule"
+msgstr "受管理伺服器嘅重新啟動排程"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Restart this running server daily"
+msgstr "每日重新啟動呢個運行中嘅伺服器"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Local hour"
+msgstr "本機時間（小時）"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Minute"
+msgstr "分鐘"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Warning before restart (minutes)"
+msgstr "重新啟動前提醒（分鐘）"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Runs while the server manager is active. Missed restarts are skipped."
+msgstr "只會喺伺服器管理器運作期間執行。錯過嘅重新啟動唔會補行。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "A schedule update is already in progress."
+msgstr "已有排程更新正在進行。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "The server has no matching local ownership receipt."
+msgstr "搵唔到同呢部伺服器相符嘅本機擁有權記錄。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Could not save the schedule."
+msgstr "未能儲存排程。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Back up local Bedrock worlds..."
+msgstr "備份本機 Bedrock 世界…"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Restore local Bedrock backup separately..."
+msgstr "將本機 Bedrock 備份還原到獨立位置…"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Manage installed Bedrock packs..."
+msgstr "管理已安裝嘅 Bedrock 套件…"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "SSH restart schedule..."
+msgstr "SSH 重新啟動排程…"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Reconnect owned SSH console"
+msgstr "重新連接受管理嘅 SSH 主控台"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Disconnect SSH console"
+msgstr "中斷 SSH 主控台連線"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Closing the SSH connection. Reconnect to verify the remote process."
+msgstr "正在關閉 SSH 連線。請重新連接以核實遠端程序。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Select a local Bedrock server directory."
+msgstr "請選擇本機 Bedrock 伺服器目錄。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Choose a Bedrock backup made for this server"
+msgstr "請揀一份為呢部伺服器建立嘅 Bedrock 備份"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Choose a parent for a new restored directory"
+msgstr "選擇新還原目錄嘅上層資料夾"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Choose a restore destination outside the server."
+msgstr "請揀伺服器目錄以外嘅還原目的地。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Create a new Bedrock backup"
+msgstr "建立新嘅 Bedrock 備份"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Save the backup outside the server directory."
+msgstr "請將備份儲存喺伺服器目錄以外。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Verifying Bedrock recovery files..."
+msgstr "正在驗證 Bedrock 復原檔案…"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Verified %d files at %s."
+msgstr "已驗證 %d 個檔案，位置係 %s。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "List installed content"
+msgstr "列出已安裝內容"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Roll back"
+msgstr "回復上一個版本"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Update selected"
+msgstr "更新所選項目"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Change the selected package %s on this target? Prior package versions are kept for rollback."
+msgstr "要喺呢個目標更改所選套件 %s 嗎？舊版套件會保留，方便回復。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Installed and recoverable packages: %d"
+msgstr "已安裝同可復原嘅套件：%d"

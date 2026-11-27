@@ -41391,3 +41391,111 @@ msgstr ""
 
 msgid "Installed content"
 msgstr ""
+
+msgid "Showing previously observed official links from this computer. Refresh to check current availability."
+msgstr ""
+
+msgid "Last listed"
+msgstr ""
+
+msgid "Previously observed"
+msgstr ""
+
+msgid "No supported official releases were returned. Cached history was preserved."
+msgstr ""
+
+msgid "Live links refreshed. Previously observed links are retained; the publisher does not supply checksums in this index."
+msgstr ""
+
+msgid "Restart schedule..."
+msgstr ""
+
+msgid "Installed Bedrock packs"
+msgstr ""
+
+msgid "Owned server restart schedule"
+msgstr ""
+
+msgid "Restart this running server daily"
+msgstr ""
+
+msgid "Local hour"
+msgstr ""
+
+msgid "Minute"
+msgstr ""
+
+msgid "Warning before restart (minutes)"
+msgstr ""
+
+msgid "Runs while the server manager is active. Missed restarts are skipped."
+msgstr ""
+
+msgid "A schedule update is already in progress."
+msgstr ""
+
+msgid "The server has no matching local ownership receipt."
+msgstr ""
+
+msgid "Could not save the schedule."
+msgstr ""
+
+msgid "Back up local Bedrock worlds..."
+msgstr ""
+
+msgid "Restore local Bedrock backup separately..."
+msgstr ""
+
+msgid "Manage installed Bedrock packs..."
+msgstr ""
+
+msgid "SSH restart schedule..."
+msgstr ""
+
+msgid "Reconnect owned SSH console"
+msgstr ""
+
+msgid "Disconnect SSH console"
+msgstr ""
+
+msgid "Closing the SSH connection. Reconnect to verify the remote process."
+msgstr ""
+
+msgid "Select a local Bedrock server directory."
+msgstr ""
+
+msgid "Choose a Bedrock backup made for this server"
+msgstr ""
+
+msgid "Choose a parent for a new restored directory"
+msgstr ""
+
+msgid "Choose a restore destination outside the server."
+msgstr ""
+
+msgid "Create a new Bedrock backup"
+msgstr ""
+
+msgid "Save the backup outside the server directory."
+msgstr ""
+
+msgid "Verifying Bedrock recovery files..."
+msgstr ""
+
+msgid "Verified %d files at %s."
+msgstr ""
+
+msgid "List installed content"
+msgstr ""
+
+msgid "Roll back"
+msgstr ""
+
+msgid "Update selected"
+msgstr ""
+
+msgid "Change the selected package %s on this target? Prior package versions are kept for rollback."
+msgstr ""
+
+msgid "Installed and recoverable packages: %d"
+msgstr ""
