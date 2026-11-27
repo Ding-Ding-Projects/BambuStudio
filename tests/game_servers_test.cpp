@@ -65,6 +65,7 @@ static void versions()
     CHECK(needs("1.20.4") == 17);
     CHECK(needs("1.20.5") == 21);
     CHECK(needs("1.21.4") == 21);
+    CHECK(needs("26.1.2") == 25);
     ServerVersion any;
     any.id = "1.12.2";
     CHECK(java_needed(any, 11) == 11);
@@ -565,6 +566,7 @@ static void sha1()
 
 #include "slic3r/GUI/GameServers/ContainerSetup.hpp"
 #include "slic3r/GUI/GameServers/NativeServerTarget.hpp"
+#include "slic3r/GUI/GameServers/ServerMetrics.hpp"
 
 static void containers()
 {
@@ -587,6 +589,13 @@ static void containers()
     CHECK(ssh_server_launch("ssh", "home-server", ".", false).empty());
     CHECK(ssh_server_launch("ssh", "home-server", "/srv/game", true).back().find("exec ./bedrock_server") != std::string::npos);
     CHECK(ssh_server_launch("ssh", "home-server", "/srv/my game", false).back().find("exec java -jar ./server.jar nogui") != std::string::npos);
+    CHECK(paper_one_minute_tps("TPS from last 1m, 5m, 15m: *20.0, 19.9, 19.8") == 20.0);
+    CHECK(!paper_one_minute_tps("<player> TPS from last 1m, 5m, 15m: 19.0, 19, 19"));
+    CHECK(!paper_one_minute_tps("TPS from last 1m, 5m, 15m: NaN, 19, 19"));
+    ServerMetrics metrics;
+    auto begun=ServerMetrics::Clock::now();
+    for (int t=0;t<3600;t++) metrics.sample(begun+std::chrono::seconds(t),200+t);
+    CHECK(metrics.memory.size() <= 361 && !metrics.memory.empty());
     setup.accepted = false;
     CHECK(container_create(setup).empty());
     CHECK(!container_field("--host"));
