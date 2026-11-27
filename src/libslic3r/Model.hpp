@@ -1854,6 +1854,8 @@ public:
     ModelObject* add_object(const char *name, const char *path, const TriangleMesh &mesh);
     ModelObject* add_object(const char *name, const char *path, TriangleMesh &&mesh);
     ModelObject* add_object(const ModelObject &other);
+    // Consume the last object in an exclusively owned, detached import model.
+    ModelObject* take_import_object(Model &donor);
     void         set_assembly_pos(ModelObject * model_object);
     void         delete_object(size_t idx);
     bool         delete_object(ObjectID id);
@@ -1928,6 +1930,7 @@ public:
     std::unique_ptr<CalibPressureAdvancePattern> calib_pa_pattern;
 
 private:
+    void back_up_added_object(ModelObject &object, ObjectID source_id);
     explicit Model(int) : ObjectBase(-1)
         {
         assert(this->id().invalid());

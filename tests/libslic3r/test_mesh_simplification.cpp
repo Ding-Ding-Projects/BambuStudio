@@ -1,6 +1,7 @@
 #include <catch_main.hpp>
 
 #include "libslic3r/MeshSimplification.hpp"
+#include "libslic3r/Model.hpp"
 #include <limits>
 #include <stdexcept>
 
@@ -86,4 +87,31 @@ TEST_CASE("Extent retention handles flat axes and rejects collapsed dimensions",
         CHECK_FALSE(retain_mesh_extents(mesh, BoundingBoxf3{}));
         CHECK(mesh.vertices == vertices);
     }
+}
+
+TEST_CASE("Detached import transfers complete object ownership with fresh IDs", "[mesh_simplification]")
+{
+    Model source, live;
+    auto *first = source.add_object("First", "first.stl", TriangleMesh(its_make_cube(10., 10., 10.)));
+    auto *second = source.add_object("Second", "second.stl", TriangleMesh(its_make_cube(12., 12., 12.)));
+    auto *instance = second->add_instance();
+    auto *volume = second->volumes.front();
+    const auto mesh = volume->get_mesh_shared_ptr();
+    const auto original_id = second->id();
+    const auto original_volume_id = volume->id();
+    const auto original_instance_id = instance->id();
+    REQUIRE(live.take_import_object(source) == second);
+    REQUIRE(source.objects.size() == 1);
+    CHECK(source.objects.front() == first);
+    REQUIRE(live.objects.size() == 1);
+    CHECK(second->get_model() == &live);
+    CHECK(second->id() != original_id);
+    CHECK(volume->id() != original_volume_id);
+    CHECK(instance->id() != original_instance_id);
+    CHECK(second->volumes.front() == volume);
+    CHECK(volume->get_mesh_shared_ptr() == mesh);
+    CHECK(second->instances.front() == instance);
+    CHECK(second->config.extruder() == 1);
+    CHECK_THROWS_AS(live.take_import_object(live), std::logic_error);
+    CHECK(source.objects.front() == first);
 }
