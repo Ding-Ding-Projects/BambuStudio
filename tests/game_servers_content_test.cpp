@@ -1,4 +1,5 @@
 #include "../src/slic3r/GUI/GameServers/ContentInstaller.hpp"
+#include "../src/slic3r/GUI/GameServers/ContentCatalog.hpp"
 #include "../src/slic3r/GUI/GameServers/ServerSystem.hpp"
 #include "libslic3r/miniz_extension.hpp"
 #include <filesystem>
@@ -44,6 +45,14 @@ int main(int argc, char **argv)
     const fs::path dir = fs::u8path(argv[1]), root = dir / "server";
     fs::create_directory(root);
     std::ofstream(root / "server.properties") << "level-name=world\n";
+    const auto projects = catalog_projects(R"({"hits":[{"project_id":"abc123","title":"Fixture"},{"project_id":"../bad","title":"bad"}]})");
+    check(projects.size() == 1, "invalid project id passed");
+    auto release = nlohmann::json::parse(R"([{"loaders":["paper"],"game_versions":["1.21.4"],"files":[{"filename":"plugin.jar","size":22,"url":"https://cdn.modrinth.com/data/p/v/plugin.jar","hashes":{"sha1":"0123456789012345678901234567890123456789"}}]}])");
+    check(catalog_files(release.dump(), "1.21.4", catalog_loaders("Paper")).size() == 1, "valid catalog package missing");
+    check(catalog_files(release.dump(), "1.21.4", catalog_loaders("Fabric")).empty(), "unmatched loader passed");
+    check(catalog_files(release.dump(), "1.21.5", catalog_loaders("Paper")).empty(), "unmatched version passed");
+    release[0]["files"][0]["url"]="https://example.org/example.jar";
+    check(catalog_files(release.dump(), "1.21.4", catalog_loaders("Paper")).empty(), "untrusted download origin passed");
     const auto plugin = dir / "test-plugin.jar", pack = dir / "pack.zip", mod = dir / "mod.jar";
     package(plugin, {{"plugin.yml", "name: fixture\n"}});
     package(mod, {{"fabric.mod.json", "{}"}});

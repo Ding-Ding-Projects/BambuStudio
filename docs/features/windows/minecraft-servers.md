@@ -297,3 +297,10 @@ a valid `pack.mcmeta` and `data/` tree goes in the configured world's
 `datapacks`. Publication checks the copied bytes and refuses an existing
 filename. The source is retained. Start the server and check its log for
 game-version compatibility, dependency errors and successful loading.
+
+**Browse catalog** searches the public Modrinth catalog by text, server version
+and loader, with 30 results per page. In regular-expression mode the pattern
+filters the current page locally. Select a project, show compatible packages,
+then choose the exact file to install. Only HTTPS downloads from the catalog's
+content host are accepted; the published SHA-1 and byte count must match
+before installation. An occupied filename is preserved.
