@@ -3,6 +3,7 @@
 
 #include <array>
 #include <functional>
+#include <optional>
 #include <vector>
 
 #include <wx/dialog.h>
@@ -63,6 +64,10 @@ public:
     // true only when the user completed both keys and the full slide. With a
     // null anchor the gate runs as a centred modal dialog instead.
     static bool Run(wxWindow *anchor, const Spec &spec);
+
+    // Return the actual native approval for services that independently verify it.
+    // Dismissing the modal or losing a valid presentation returns no state.
+    static std::optional<SuperConfirm::State> Review(wxWindow *owner, const Spec &spec);
 
     // Callback form: shows the gate non-modally and invokes `on_confirm`
     // exactly once on authorization, or `on_cancel` (if given) on any other

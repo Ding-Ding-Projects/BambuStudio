@@ -240,6 +240,18 @@ bool SuperConfirmGate::Run(wxWindow *anchor, const Spec &spec)
     return authorized;
 }
 
+std::optional<SuperConfirm::State> SuperConfirmGate::Review(wxWindow *owner, const Spec &spec)
+{
+    SuperConfirmGate dialog(nullptr, resolve_parent(owner), spec);
+    dialog.CenterOnParent();
+    const bool accepted = dialog.ShowModal() == wxID_OK &&
+                          dialog.m_presentation_available && dialog.state().may_fire();
+    dialog.restore_focus();
+    if (accepted)
+        return dialog.state();
+    return std::nullopt;
+}
+
 void SuperConfirmGate::Show(wxWindow *anchor, const Spec &spec,
                             std::function<void()> on_confirm,
                             std::function<void()> on_cancel)
