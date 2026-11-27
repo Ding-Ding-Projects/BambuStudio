@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "sourceCommit": "0a12cd0945b782fb28d02cfc0cd1c02ed1ee094b",
+  "executableSha256": "68b33481173e1b2653640fd5132e38512dc315dceb58c9fc7ca421e847d0514b",
+  "applicationDllSha256": "12710c0e5b61810b15ce33c1ad100431702e337ef52ee013fd1305d3876cc983",
+  "route": "Named hidden Windows desktop with locally installed Lowlevel, background edit and native layout-probe readback",
+  "profile": "Fresh fixture, English, light theme, comfortable density",
+  "expandedListHeightPx": 0,
+  "collapsedRowViewportHeightPx": 135,
+  "comparison": [
+    "Before: 0d66b894f92ce7001eaf046c5ec2927b0f08cdf2",
+    "Geometry summary",
+    "Model parts: 3",
+    "Objects: 4",
+    "Vertices: 16",
+    "Triangles: 24",
+    "",
+    "",
+    "After: b41f956e062244fd57fd09b761636e4fc234ef96",
+    "Geometry summary",
+    "Model parts: 2",
+    "Objects: 2"
+  ],
+  "restore": {
+    "beforeObjects": 2,
+    "outcome": "The selected version was not restored.",
+    "afterRollbackObjects": 0,
+    "selectedArchiveSha256": "05898633b0183f9bc69cd33837827ba1476b23fb925086264240f9ca98586e3c",
+    "embeddedModelParts": [
+      "3D/Objects/object_1.model"
+    ],
+    "normalReaderObjects": 1,
+    "normalReaderObjectName": "cube.stl"
+  },
+  "captures": [
+    {
+      "path": "history-compare-before-layout-fix.png",
+      "sha256": "7a9549d289918abaca03d901615182451f364aaf159169fa8578add028364859",
+      "dimensions": [
+        1470,
+        1140
+      ],
+      "captureTimestamp": "Unavailable"
+    },
+    {
+      "path": "timeline-before-heading-fix.png",
+      "sha256": "f2ce763b3a65efdbbc179e783d7136d0c5ac3d51648110ef2c914116814a1dfd",
+      "dimensions": [
+        1470,
+        1140
+      ],
+      "captureTimestamp": "Unavailable"
+    }
+  ],
+  "scope": "Pre-fix observations only. The normal reader was exercised on the same captured snapshot using the same binary. That successful control does not verify the later restore change."
+}
