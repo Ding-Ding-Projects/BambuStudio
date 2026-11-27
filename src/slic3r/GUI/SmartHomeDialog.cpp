@@ -998,6 +998,12 @@ void SmartHomeDialog::add_printers_to_home_assistant()
                 result += localized_stacked("Problems:");
                 for (const std::string &error : errors)
                     result += "\n- " + localized_printer_import_error(error);
+                if (std::any_of(errors.begin(), errors.end(), [](const std::string &error) {
+                        return has_suffix(error, ": HTTP 500");
+                    })) {
+                    result += "\n";
+                    result += localized_stacked("Check the Bambu Lab integration logs and each affected printer's LAN connection. Then run Add my printers again. Already configured printers are skipped.");
+                }
             }
 
             const NotificationManager::NotificationLevel level =

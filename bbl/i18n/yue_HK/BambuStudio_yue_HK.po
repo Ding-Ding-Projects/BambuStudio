@@ -2822,6 +2822,10 @@ msgid "Home Assistant transport failed."
 msgstr "Home Assistant 傳輸失敗。"
 
 #. reviewed-category: connection-offline
+msgid "Check the Bambu Lab integration logs and each affected printer's LAN connection. Then run Add my printers again. Already configured printers are skipped."
+msgstr "請查看 Bambu Lab 整合記錄，同埋檢查每部受影響打印機嘅區域網絡連線。之後再按「將打印機加入 Home Assistant」。已設定嘅打印機會自動略過。"
+
+#. reviewed-category: connection-offline
 msgid "Home Assistant returned HTTP %s."
 msgstr "Home Assistant 傳回 HTTP %s。"
 
