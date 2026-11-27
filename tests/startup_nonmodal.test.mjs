@@ -23,7 +23,19 @@ const downstream=[
   take(/auto loaded_idxs = load_model_objects\(model\.objects, is_project_file, false,\s+load_progress_callback, prepared \? &model : nullptr\);/),
   '(void)loaded_idxs;'
 ].join('\n');
+// Compile the actual archive routing. Crash recovery reads split components
+// from a backup directory; both history recovery paths require embedded parts.
+const loadProject = source.slice(source.indexOf('int Plater::load_project('));
+const strategyStart = loadProject.indexOf('    auto strategy = LoadStrategy::LoadModel | LoadStrategy::LoadConfig;');
+const strategyEnd = loadProject.indexOf('    // A non-Bambu 3MF', strategyStart);
+assert(strategyStart >= 0 && strategyEnd > strategyStart, 'Missing project archive routing');
+const archiveRouting = loadProject.slice(strategyStart, strategyEnd);
+const restore = source.slice(source.indexOf('bool Plater::restore_project_history_snapshot('));
+assert.match(restore, /history_context\.standalone_history_snapshot\s*=\s*true/);
+assert.match(restore, /load_project\(restored_path, original_saved_project, &selected_load_succeeded, true, history_context\)/);
+assert.match(restore, /load_project\(from_path\(boost::filesystem::path\(rollback_path.native\(\)\)\), original_saved_project,\s*&rollback_load_succeeded, true, history_context\)/);
 const fixture=readFileSync(path.join(root,'tests/startup_nonmodal_fixture.cpp'),'utf8')
+  .replace('// ACTUAL_ARCHIVE_ROUTING',archiveRouting)
   .replace('// ACTUAL_DETACHED_ADMISSION',admission)
   .replace('// ACTUAL_MANUAL_CLASSIFICATION',take(/if \(load_config && !context\.automatic\(\)\)/)+' { '+manualClassification[0]+' }')
   .replace('// ACTUAL_DOWNSTREAM',downstream)
