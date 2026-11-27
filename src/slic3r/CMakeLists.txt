@@ -1137,6 +1137,7 @@ list(APPEND SLIC3R_GUI_SOURCES
     GUI/GameServers/ServerSystem.hpp
     GUI/GameServers/ContentCatalogDialog.cpp
     GUI/GameServers/WorldJarData.cpp
+    GUI/GameServers/WorldRecoveryDialog.cpp
     GUI/GameServers/VersionReport.cpp
     GUI/GameServers/LocalJavaInstall.cpp
     GUI/GameServers/RconCredential.cpp
