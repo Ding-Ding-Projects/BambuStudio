@@ -54,7 +54,7 @@ function validate(read) {
   if (!/actions.show_filament_mgr_hint = false;/.test(read('src/slic3r/GUI/DeviceWeb/ViewModels/DevicePage/AmsControlWeb/ViewModelDisplayBuilder.cpp')))
     throw new Error('Embedded slot hints can be resurrected');
 }
-const read = file => fs.readFileSync(path.join(root, file), 'utf8');
+const read = file => fs.readFileSync(path.join(root, file), 'utf8').replace(/\r\n/g, '\n');
 validate(read);
 let mutations = 0;
 for (const [file, , name] of rules) {
