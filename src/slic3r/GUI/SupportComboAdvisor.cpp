@@ -96,7 +96,7 @@ wxString support_recommendation_dialog_text(const SupportComboRecommendation &re
     wxString msg_text = rec.model_material_display_name.empty() ?
         _L("When using support material for the support interface, We recommend the following settings:") :
         wxString::Format(_L("When using %s to support %s, We recommend the following settings:"),
-                         wxString::FromUTF8(rec.support_material_display_name), wxString::FromUTF8(rec.model_material_display_name));
+                         I18N::display_material_name(rec.support_material_display_name), I18N::display_material_name(rec.model_material_display_name));
     msg_text += "\n\n";
     for (const auto &key : conf.keys()) {
         const ConfigOption *opt = conf.option(key);
