@@ -6287,13 +6287,17 @@ void Sidebar::init_filament_combo(PlaterPresetComboBox **combo, const int filame
     edit_btn->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerHighest));
 
     wxWeakRef<PlaterPresetComboBox> menu_combo(combobox);
-    edit_btn->Bind(wxEVT_BUTTON, [this, edit_btn, menu_combo](wxCommandEvent) {
-        if (!menu_combo) return;
-        const int config_slot = menu_combo->get_filament_idx();
-        auto menu = p->plater->filament_action_menu(config_slot);
-        p->m_menu_filament_id = config_slot;
-        // Anchored below the button so the surface never covers its opener.
-        MD3::PopupMenuBelow(edit_btn, menu, true);
+    wxWeakRef<ScalableButton> menu_button(edit_btn);
+    edit_btn->Bind(wxEVT_BUTTON, [this, menu_button, menu_combo](wxCommandEvent &) {
+        // The popup runs a nested event loop. Let the row's native mouse
+        // event finish before any selected action can rebuild that row.
+        CallAfter([this, menu_button, menu_combo] {
+            if (!menu_button || !menu_combo || !menu_button->IsShownOnScreen()) return;
+            const int config_slot = menu_combo->get_filament_idx();
+            auto *menu = p->plater->filament_action_menu(config_slot);
+            p->m_menu_filament_id = config_slot;
+            MD3::PopupMenuBelow(menu_button.get(), menu, true);
+        });
     });
     combobox->edit_btn = edit_btn;
 
@@ -11458,12 +11462,25 @@ void Sidebar::delete_filament_with_confirm(size_t filament_id)
     wxWindow *anchor = this;
     for (auto *choice : p->combos_filament)
         if (choice->get_filament_idx() == static_cast<int>(resolved)) { anchor = choice; break; }
-    if (!SuperConfirmGate::Run(anchor, spec))
-        return;
-    if (presets != wxGetApp().preset_bundle->filament_presets) return;
-    const auto *current_mixed_flags = wxGetApp().preset_bundle->project_config.option<ConfigOptionBools>("filament_is_mixed");
-    if ((current_mixed_flags ? current_mixed_flags->values : std::vector<unsigned char>{}) != mixed_before_confirm) return;
-    delete_filament(resolved);
+    // Keep the displayed row and project as well as the value snapshot.
+    // An equal preset name is not sufficient identity after a row rebuild.
+    wxWeakRef<wxWindow> row(anchor);
+    const auto project = p->plater->model().id();
+    if (!SuperConfirmGate::Run(anchor, spec)) return;
+    CallAfter([this, row, project, resolved, presets, mixed_before_confirm] {
+        // wxMenu is still routing the command through the invoking control
+        // when the confirmation returns. Only mutate its rows after dispatch.
+        if (!row || p->plater->model().id() != project ||
+            presets != wxGetApp().preset_bundle->filament_presets)
+            return;
+        if (row.get() != this) {
+            auto *choice = dynamic_cast<PlaterPresetComboBox *>(row.get());
+            if (!choice || choice->get_filament_idx() != static_cast<int>(resolved)) return;
+        }
+        const auto *flags = wxGetApp().preset_bundle->project_config.option<ConfigOptionBools>("filament_is_mixed");
+        if ((flags ? flags->values : std::vector<unsigned char>{}) != mixed_before_confirm) return;
+        delete_filament(resolved);
+    });
 }
 
 void Sidebar::delete_mixed_filament_at(size_t panel_idx)
