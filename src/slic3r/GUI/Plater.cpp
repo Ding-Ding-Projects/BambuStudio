@@ -11465,9 +11465,10 @@ void Sidebar::delete_filament_with_confirm(size_t filament_id)
     // Keep the displayed row and project as well as the value snapshot.
     // An equal preset name is not sufficient identity after a row rebuild.
     wxWeakRef<wxWindow> row(anchor);
+    wxWeakRef<Sidebar> sidebar(this);
     const auto project = p->plater->model().id();
-    if (!SuperConfirmGate::Run(anchor, spec)) return;
-    CallAfter([this, row, project, resolved, presets, mixed_before_confirm] {
+    if (!SuperConfirmGate::Run(anchor, spec) || !sidebar) return;
+    sidebar->CallAfter([this, row, project, resolved, presets, mixed_before_confirm] {
         // wxMenu is still routing the command through the invoking control
         // when the confirmation returns. Only mutate its rows after dispatch.
         if (!row || p->plater->model().id() != project ||
