@@ -230,20 +230,53 @@ chunks, and must fail.
 
 ## Verification and remaining scope
 
-All eight edition/target combinations have partial management workflows. The
-matrix below identifies what each one actually does. The following capability
-groups remain incomplete.
+All eight edition/target pairs have partial implementation. **Zero of eight
+have complete playable acceptance evidence.** “Tested” below identifies the
+specific test performed. The tests do not establish that an authenticated
+player can join a running instance.
 
-| Capability | Implemented | Remaining acceptance |
-| --- | --- | --- |
-| Version discovery | Mojang Java manifest, selectable distribution and container version, exact JAR metadata | Archived Bedrock distribution discovery and sample verification by version |
-| Provisioning | Local Java and Bedrock, SSH-native package setup and both editions in Docker contexts | End-to-end playable installations for the complete edition/target matrix |
-| Content | Version/loader-filtered Modrinth catalog, local Java plugins/mods/data packs and local Bedrock resource and behavior packs | Dependency resolution, every target and runtime compatibility |
-| Console | Local and SSH-native process consoles, hash-bound command tree and typed argument checking | Unimplemented custom argument grammars and historical-version coverage |
-| Settings and credentials | Java properties, target-scoped client credential, authenticated process-bound loopback RCON | Complete Bedrock settings, remote credential and settings coverage |
-| Monitoring | Local process working set history, Paper/Purpur measured TPS | Equivalent target-specific monitoring and verified ready/play status |
-| World generation | Exact-JAR registry extraction, custom normal terrain pack, area selection, folder/ZIP writer | Additional distribution schemas and playable same-version reopen |
-| Recovery | Local Java backup and restore, isolated fixture exercises | Reversible restore and recovery evidence for every target |
+| Target and edition | Create, start, stop and console | Settings and runtime metrics | Content and world creation | Backup, restore and reconnect evidence |
+| --- | --- | --- | --- | --- |
+| Local process, Java | Mojang manifest and trusted runnable JAR setup; existing-folder adoption; managed Java process and console | Typed local properties; process memory history; supported Paper TPS; process-bound RCON client credential | Local JAR/ZIP and version-filtered Modrinth install; native generator with folder/ZIP output and exact-JAR terrain packs | Existing checked ZIP backup/restore. Official 1.21.4 metadata and pack writing tested. Server startup, generated-world reopen and player reconnect await authorized runtime acceptance. |
+| Local process, Bedrock | Official Windows stable/preview discovery and ZIP setup; controlled process, console and stop | Typed properties from installed server; confidential values protected. No native time-series metrics | Resource/behavior pack installation and explicit world registration; native world creation uses the dedicated server's own settings | Live local world backup/restore and a compatible Bedrock client session are unverified. |
+| Local Docker, Java | Version and eight loader selections; create/start/stop by owned ID; RCON adapter | Per-target property editor and Docker CPU, memory and PIDs | Distribution setup and server-side world creation. Bespoke terrain authoring is local-Java only | World snapshots and isolated recovery volume. Local create/start/stop tested with EULA false; no playable process asserted. |
+| Local Docker, Bedrock | Version selection; create/start/stop and Bedrock console adapter; separate NetherNet or RakNet mappings | Per-target property editor and Docker metrics | Image setup and first-start world creation; no Java terrain-pack generator | Local fixture verified one TCP and sixteen UDP bindings. Real helper tested synthetic Bedrock restore; no authenticated client join. |
+| SSH process, Java | Upload-independent provisioning from trusted runnable JAR already on target; managed owner marker, lock, console and graceful stop | Target file owner, revision and public property allowlist enforced; no remote time-series metrics | Native Java creation from selected distribution. Local-Java advanced world generator has no direct SSH execution | Official Java JAR copied and byte-compared over real SSH, EULA remained false. Synthetic world restore tested separately. Actual Java reconnect pending. |
+| SSH process, Bedrock | Provision trusted Linux ZIP on host; owner-bound native process and console | Target settings with the actual file owner and revision; no remote time-series metrics | Dedicated server creates worlds from its configured settings | Inert process fixture verified owner check, list and stop. Synthetic Bedrock backup/restore verified. Real distribution, pack enablement and client reconnect pending. |
+| SSH Docker, Java | Same owned-ID lifecycle and RCON adapter through a configured Docker SSH context | Target settings and CPU/memory/PID readout | Same container distribution setup as local Docker | Real SSH context exercised create/start/stop on a disposable container with EULA false. Network-disabled helper restored a synthetic world on the target. |
+| SSH Docker, Bedrock | Same edition-specific lifecycle and transport through selected SSH context | Target settings and Docker metrics | Same dedicated-server setup as local Docker | Bedrock helper snapshot/restore tested on the Linux target. No real SSH-context Bedrock service or playable session verified. |
+
+### Original gaps and residual work
+
+- **Distributions and versions.** Java creation lists every record returned by
+  Mojang and checks whether the selected version has a server download.
+  Microsoft's Bedrock index reports current Windows/Linux stable and preview
+  records. Its missing historical releases and missing publisher checksums
+  remain explicit. A local JAR can be installed without running a third-party
+  installer.
+- **Plugins and packs.** The local Java installer handles trusted plugins,
+  loader-specific mods and world data packs. The catalog filters by server
+  version and loader. Bedrock validates package UUIDs, versions and modules.
+  Complete dependency resolution, in-place update/removal and acceptance
+  against every real loader are incomplete.
+- **Commands and observability.** The selected Java JAR generates a
+  hash-bound Brigadier report. Supported primitive arguments and literal
+  paths are checked before sending. Selectors, registry arguments, SNBT
+  and plugin-added grammar still require the server parser. Paper-compatible
+  one-minute TPS and local working-set history have implemented paths;
+  unsupported variants do not display fabricated measurements.
+- **World authoring.** The Java generator supports direct area selection,
+  keyboard coordinates, bounded batches and source-derived normal terrain
+  settings. The official 1.21.4 data generator returned 84 command roots
+  and 1,095 blocks; its nested JAR supplied 65 biomes, 20 structure sets
+  and pack format 61. Additional distribution schemas, complete registry
+  coverage and playable same-version reopen remain unverified.
+- **Credentials and recovery.** The local Windows client vault is tested
+  with a disposable RCON endpoint, including a wrong-process refusal. The
+  server still uses its own configured credential. SSH and container
+  settings return only supported nonconfidential fields. Isolated backups
+  and restores have verified fixtures; a fixture is not production-world
+  recovery or an authenticated player login.
 
 ## Container servers
 
