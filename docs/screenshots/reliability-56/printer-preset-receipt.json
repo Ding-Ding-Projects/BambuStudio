@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "sourceCommit": "0a12cd0945b782fb28d02cfc0cd1c02ed1ee094b",
+  "executableSha256": "68b33481173e1b2653640fd5132e38512dc315dceb58c9fc7ca421e847d0514b",
+  "applicationDllSha256": "12710c0e5b61810b15ce33c1ad100431702e337ef52ee013fd1305d3876cc983",
+  "route": "Named hidden Windows desktop with locally installed Lowlevel, background edit and native layout-probe readback",
+  "profile": "Disposable profile with two offline printer presets and a synthetic cube.",
+  "nativePresetCardSequence": [
+    "Bambu Lab P1S",
+    "Bambu Lab X1 Carbon",
+    "Bambu Lab P1S"
+  ],
+  "modelObjectCounts": [
+    1,
+    1,
+    1
+  ],
+  "captures": [
+    {
+      "path": "printer-preset-before.png",
+      "sha256": "9451c5d3c321b45b194653425186810bbeea6309c1d2ae322d630c248df6f422",
+      "dimensions": [
+        600,
+        390
+      ],
+      "captureTimestamp": "Unavailable"
+    },
+    {
+      "path": "printer-preset-after.png",
+      "sha256": "9d0c139364291c3453912a4c3bee11c6bfe8c0618ac775d317d572a88b2c2ccb",
+      "dimensions": [
+        600,
+        390
+      ],
+      "captureTimestamp": "Unavailable"
+    }
+  ],
+  "scope": "Switching local printer presets through the native Prepare card. No physical device selection, print command or live camera."
+}
