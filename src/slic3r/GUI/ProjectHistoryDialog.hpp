@@ -26,6 +26,7 @@ class wxKeyEvent;
 class wxSizeEvent;
 class ComboBox;
 class wxTextCtrl;
+class wxDatePickerCtrl;
 
 namespace Slic3r::GUI {
 
@@ -139,8 +140,8 @@ private:
     std::size_t m_compare_index{0};
     std::vector<std::string> m_search_ids;
     ComboBox *m_category_filter{nullptr}, *m_status_filter{nullptr}, *m_store_filter{nullptr};
-    // The three filters are the inner editors of kit TextInput fields; m_detail is a kit TextAreaEditor.
-    wxTextCtrl *m_device_filter{nullptr}, *m_from_filter{nullptr}, *m_to_filter{nullptr}, *m_detail{nullptr};
+    wxTextCtrl *m_device_filter{nullptr}, *m_detail{nullptr};
+    wxDatePickerCtrl *m_from_filter{nullptr}, *m_to_filter{nullptr};
     Button *m_submit_button{nullptr}, *m_compare_button{nullptr}, *m_pin_button{nullptr}, *m_rerun_button{nullptr}, *m_delete_button{nullptr}, *m_clear_button{nullptr};
 
     std::future<ProjectHistoryListResult>    m_list_future;
