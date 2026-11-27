@@ -12,7 +12,17 @@ The [provenance manifest](provenance.json) records the package, executable, sour
 | Hong Kong Cantonese | [Narrow](yue_HK-light-comfortable.png) Â· [Wide](yue_HK-wide.png) Â· [Window](yue_HK-wide-window.png) |
 | Bilingual | [Narrow](bilingual_en_yue_HK-light-comfortable.png) Â· [Wide](bilingual_en_yue_HK-wide.png) Â· [Window](bilingual_en_yue_HK-wide-window.png) · [Tall](bilingual_en_yue_HK-tall.png) |
 
-In the wide English and Cantonese frames, both nozzle assignments and both grouping links are fully visible. The notification stack sits to the left of the grouping panel. The layer chip clears the thumbnail strip, the Time Estimation card fills its panel, and the intended purple playback controls remain visible. At narrow width notifications cover part of the dock while visible. The narrow frames cannot establish grouping-card clearance. These project-open/update notices differ from the two specific notifications in the original report. All three wide window images show the split-button arrows, the complete plate name on the Ink tab, and both assigned materials. The Objects list, the separate Plate Settings workflow and physical loading remain unverified. In the wide bilingual frame the panel has a scrollbar, and the lower grouping link falls below the visible area. At 1700 × 1200 the complete English and Cantonese Regroup ink link is visible beneath both nozzle assignments.
+In the wide English and Cantonese frames, both nozzle assignments and both grouping links are fully visible. The notification stack sits to the left of the grouping panel. The layer chip clears the thumbnail strip, the Time Estimation card fills its panel, and the intended purple playback controls remain visible. At narrow width notifications cover part of the dock while visible. The narrow frames cannot establish grouping-card clearance. These project-open/update notices differ from the two specific notifications in the original report. All three wide window images show the split-button arrows, the complete plate name on the Ink tab, and both assigned materials. Physical loading remains unverified. In the wide bilingual frame the panel has a scrollbar, and the lower grouping link falls below the visible area. At 1700 × 1200 the complete English and Cantonese Regroup ink link is visible beneath both nozzle assignments.
+
+## Sidebar verification
+
+The Objects tab and the separate Process → Objects → Plate Settings workflow were exercised in the released package. Each capture report identified the visible native settings page as `Slic3r::GUI::TabPrintPlate`. All three Objects views have a soft border without a native header row, and the selected plate name is fully readable in each settings view. English and bilingual show all four settings selectors. The Cantonese frame is shorter and shows the upper portion; the rows below its fold cannot be assessed from that image. None of these plate-selected frames verifies the separate Object Manipulation panel on an individual selected cup.
+
+| Mode | Objects list | Plate Settings |
+| --- | --- | --- |
+| English | [Objects](en-objects.png) | [Settings](en-prepare-plate-settings.png) |
+| Hong Kong Cantonese | [Objects](yue_HK-objects.png) | [Settings](yue_HK-prepare-plate-settings.png) |
+| Bilingual | [Objects](bilingual_en_yue_HK-objects.png) | [Settings](bilingual_en_yue_HK-prepare-plate-settings.png) |
 
 ## Reproduce
 

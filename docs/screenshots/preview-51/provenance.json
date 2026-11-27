@@ -123,6 +123,78 @@
       "language_mode": "bilingual_en_yue_HK",
       "theme": "light",
       "density": "comfortable"
+    },
+    {
+      "file": "en-objects.png",
+      "sha256": "f9f97f937c9d0250451a829e1853cf18871990ed5e677f27b6fa933c432cf172",
+      "image_pixels": [
+        2550,
+        1350
+      ],
+      "surface": "objects",
+      "language_mode": "en",
+      "theme": "light",
+      "density": "comfortable"
+    },
+    {
+      "file": "en-prepare-plate-settings.png",
+      "sha256": "5a33e7aa8a35b2d07228219fb0b949e86b1f18736c1eef86d7d471e9ef28a3e5",
+      "image_pixels": [
+        2550,
+        1350
+      ],
+      "surface": "prepare-plate-settings",
+      "language_mode": "en",
+      "theme": "light",
+      "density": "comfortable"
+    },
+    {
+      "file": "bilingual_en_yue_HK-objects.png",
+      "sha256": "1aac879e3b01d5d62f76b32517d49265479494a3d814c13f074b2a5674247f7d",
+      "image_pixels": [
+        2550,
+        1350
+      ],
+      "surface": "objects",
+      "language_mode": "bilingual_en_yue_HK",
+      "theme": "light",
+      "density": "comfortable"
+    },
+    {
+      "file": "bilingual_en_yue_HK-prepare-plate-settings.png",
+      "sha256": "2489cfa17baf34389ab5d73a2ccec28cfb4a295a77a2eecc694d4283b9628a19",
+      "image_pixels": [
+        2550,
+        1350
+      ],
+      "surface": "prepare-plate-settings",
+      "language_mode": "bilingual_en_yue_HK",
+      "theme": "light",
+      "density": "comfortable"
+    },
+    {
+      "file": "yue_HK-objects.png",
+      "sha256": "ebf3bc7e300ed75309de17a5ee9b69c0b9fb5a42184c9b6a5f5a775bf72bf97c",
+      "image_pixels": [
+        1700,
+        900
+      ],
+      "surface": "objects",
+      "language_mode": "yue_HK",
+      "theme": "light",
+      "density": "comfortable"
+    },
+    {
+      "file": "yue_HK-prepare-plate-settings.png",
+      "sha256": "139e9454311ff186959a0713b44dd64717a506aa991149319381b279ccf28368",
+      "image_pixels": [
+        1700,
+        900
+      ],
+      "surface": "prepare-plate-settings",
+      "language_mode": "yue_HK",
+      "theme": "light",
+      "density": "comfortable"
     }
   ]
 }
