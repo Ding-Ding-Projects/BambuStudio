@@ -1,0 +1,287 @@
+{
+  "source": "0a12cd0945b782fb28d02cfc0cd1c02ed1ee094b",
+  "binaries": {
+    "bambu-studio.exe": "68b33481173e1b2653640fd5132e38512dc315dceb58c9fc7ca421e847d0514b",
+    "BambuStudio.dll": "12710c0e5b61810b15ce33c1ad100431702e337ef52ee013fd1305d3876cc983",
+    "resources/i18n/yue_HK/BambuStudio.mo": "cf352553f8433d99cf63b46c26c359c49d5adb11cb86ea7243f55bdfb94b6944"
+  },
+  "layout": {
+    "English": {
+      "prepare": {
+        "language": "en",
+        "dark": false,
+        "density": "comfortable",
+        "dpiScale": 1.5,
+        "client": {
+          "w": 1780,
+          "h": 1189
+        },
+        "visibleControls": 92,
+        "flaggedControls": {
+          "text_clipped": 0,
+          "hint_clipped": 0,
+          "clipped_by_parent": 1,
+          "starved": 2,
+          "zero_sized": 1
+        }
+      },
+      "preferences-general": {
+        "language": "en",
+        "dark": false,
+        "density": "comfortable",
+        "dpiScale": 1.5,
+        "client": {
+          "w": 1148,
+          "h": 938
+        },
+        "visibleControls": 136,
+        "flaggedControls": {
+          "text_clipped": 2,
+          "hint_clipped": 1,
+          "clipped_by_parent": 0,
+          "starved": 2,
+          "zero_sized": 1
+        }
+      }
+    },
+    "Cantonese": {
+      "prepare": {
+        "language": "yue_HK",
+        "dark": false,
+        "density": "comfortable",
+        "dpiScale": 1.5,
+        "client": {
+          "w": 1780,
+          "h": 1189
+        },
+        "visibleControls": 92,
+        "flaggedControls": {
+          "text_clipped": 0,
+          "hint_clipped": 0,
+          "clipped_by_parent": 1,
+          "starved": 2,
+          "zero_sized": 1
+        }
+      },
+      "preferences-general": {
+        "language": "yue_HK",
+        "dark": false,
+        "density": "comfortable",
+        "dpiScale": 1.5,
+        "client": {
+          "w": 1148,
+          "h": 938
+        },
+        "visibleControls": 137,
+        "flaggedControls": {
+          "text_clipped": 1,
+          "hint_clipped": 0,
+          "clipped_by_parent": 0,
+          "starved": 0,
+          "zero_sized": 1
+        }
+      }
+    },
+    "Bilingual": {
+      "prepare": {
+        "language": "bilingual_en_yue_HK",
+        "dark": false,
+        "density": "comfortable",
+        "dpiScale": 1.5,
+        "client": {
+          "w": 1780,
+          "h": 1189
+        },
+        "visibleControls": 92,
+        "flaggedControls": {
+          "text_clipped": 0,
+          "hint_clipped": 0,
+          "clipped_by_parent": 1,
+          "starved": 2,
+          "zero_sized": 1
+        }
+      },
+      "preferences-general": {
+        "language": "bilingual_en_yue_HK",
+        "dark": false,
+        "density": "comfortable",
+        "dpiScale": 1.5,
+        "client": {
+          "w": 1148,
+          "h": 938
+        },
+        "visibleControls": 134,
+        "flaggedControls": {
+          "text_clipped": 2,
+          "hint_clipped": 1,
+          "clipped_by_parent": 1,
+          "starved": 2,
+          "zero_sized": 2
+        }
+      }
+    }
+  },
+  "bilingual": {
+    "prepare": {
+      "totals": {
+        "bilingual": 8,
+        "tooltip": 12,
+        "english_only": 1,
+        "no_translation": 2
+      },
+      "uniqueEnglishOnlyControls": 1
+    },
+    "preferences-general": {
+      "totals": {
+        "bilingual": 102,
+        "tooltip": 22,
+        "english_only": 3,
+        "no_translation": 24
+      },
+      "uniqueEnglishOnlyControls": 2
+    }
+  },
+  "settingsSections": [
+    {
+      "section": "Appearance (9)",
+      "status": "measured",
+      "client": {
+        "w": 1148,
+        "h": 1058
+      },
+      "dpiScale": 1.5,
+      "counts": {
+        "bilingual": 31,
+        "tooltip": 24,
+        "english_only": 0,
+        "no_translation": 12
+      }
+    },
+    {
+      "section": "Schedules (1)",
+      "status": "measured",
+      "client": {
+        "w": 1148,
+        "h": 1058
+      },
+      "dpiScale": 1.5,
+      "counts": {
+        "bilingual": 15,
+        "tooltip": 1,
+        "english_only": 0,
+        "no_translation": 5
+      }
+    },
+    {
+      "section": "General (21)",
+      "status": "measured",
+      "client": {
+        "w": 1148,
+        "h": 1058
+      },
+      "dpiScale": 1.5,
+      "counts": {
+        "bilingual": 47,
+        "tooltip": 5,
+        "english_only": 1,
+        "no_translation": 11
+      }
+    },
+    {
+      "section": "User (8)",
+      "status": "measured",
+      "client": {
+        "w": 1148,
+        "h": 1058
+      },
+      "dpiScale": 1.5,
+      "counts": {
+        "bilingual": 22,
+        "tooltip": 2,
+        "english_only": 0,
+        "no_translation": 7
+      }
+    },
+    {
+      "section": "3D (17)",
+      "status": "measured",
+      "client": {
+        "w": 1148,
+        "h": 1058
+      },
+      "dpiScale": 1.5,
+      "counts": {
+        "bilingual": 37,
+        "tooltip": 1,
+        "english_only": 0,
+        "no_translation": 14
+      }
+    },
+    {
+      "section": "Other (31)",
+      "status": "measured",
+      "client": {
+        "w": 1148,
+        "h": 1058
+      },
+      "dpiScale": 1.5,
+      "counts": {
+        "bilingual": 62,
+        "tooltip": 2,
+        "english_only": 1,
+        "no_translation": 17
+      }
+    },
+    {
+      "section": "LAN model drop (4)",
+      "status": "measured",
+      "client": {
+        "w": 1148,
+        "h": 1058
+      },
+      "dpiScale": 1.5,
+      "counts": {
+        "bilingual": 17,
+        "tooltip": 2,
+        "english_only": 0,
+        "no_translation": 6
+      }
+    },
+    {
+      "section": "Local status API (4)",
+      "status": "measured",
+      "client": {
+        "w": 1148,
+        "h": 1058
+      },
+      "dpiScale": 1.5,
+      "counts": {
+        "bilingual": 14,
+        "tooltip": 3,
+        "english_only": 0,
+        "no_translation": 4
+      }
+    },
+    {
+      "section": "Attention modes (8)",
+      "status": "measured",
+      "client": {
+        "w": 1148,
+        "h": 1058
+      },
+      "dpiScale": 1.5,
+      "counts": {
+        "bilingual": 21,
+        "tooltip": 1,
+        "english_only": 0,
+        "no_translation": 8
+      }
+    }
+  ],
+  "limits": [
+    "Only the measured native Prepare and Preferences surfaces are represented. The nine section measurements used an expanded dialog.",
+    "The earlier probe counts a child dialog twice in whole-application totals. The section counts are for the Preferences dialog only.",
+    "Counts marked no_translation refer to the live bilingual registry, and do not prove that a translation is missing from the file.",
+    "No post-repair native runtime verdict is represented."
+  ]
+}
