@@ -2044,6 +2044,7 @@ namespace Slic3r
                     return;
                 const Size cnv_size = wxGetApp().plater()->get_current_canvas3D()->get_canvas_size();
                 auto group_result = DevUtilBackend::GetNozzleGroupResult(wxGetApp().plater());
+                const bool show_nozzle_col = m_single_ext_multi_nozzle && group_result;
                 bool is_support_dynamic_nozzle_map = group_result && group_result->is_support_dynamic_nozzle_map();
                 bool is_show_left_right_result = is_support_dynamic_nozzle_map && wxGetApp().sidebar().is_fila_switch_ready();
                 ImGuiWrapper& imgui = *wxGetApp().imgui();
@@ -4491,7 +4492,7 @@ namespace Slic3r
             void BaseRenderer::render_legend_filament_group_card(float window_padding, float content_width)
             {
                 ImGuiWrapper& imgui = *wxGetApp().imgui();
-                auto link_text = [&imgui](const std::string& label, auto&& on_click, bool underline = true) {
+                auto link_text = [this, &imgui](const std::string& label, auto&& on_click, bool underline = true) {
                     const ImColor hyper_color(0, 174, 66, 255);
                     ImGui::PushStyleColor(ImGuiCol_Text, hyper_color.Value);
                     imgui.text(label.c_str());
