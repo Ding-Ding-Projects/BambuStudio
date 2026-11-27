@@ -999,12 +999,11 @@ if (WIN32)
         COMMENT "Compiling the English override catalog"
         VERBATIM
     )
-    # --allow-unreferenced keeps a build working while the English extraction
-    # lags; scripts/i18n/Test-LanguageModes.ps1 validates the catalogue strictly.
+    # The packaged catalog must cover every English source entry.
     add_custom_command(
         OUTPUT "${BBL_FORK_I18N_OUT}/yue_HK/BambuStudio.mo"
         COMMAND ${Python3_EXECUTABLE} "${BBL_L18N_DIR}/yue_HK/compile_translation.py"
-                --allow-unreferenced
+                --require-complete
                 --output "${BBL_FORK_I18N_OUT}/yue_HK/BambuStudio.mo"
         DEPENDS "${BBL_L18N_DIR}/yue_HK/BambuStudio_yue_HK.po" "${BBL_L18N_DIR}/yue_HK/coverage.json"
                 "${BBL_L18N_DIR}/yue_HK/compile_translation.py" "${BBL_L18N_DIR}/po_catalog.py"

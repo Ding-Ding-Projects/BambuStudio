@@ -343,7 +343,7 @@ jobs:
           if (-not (Test-Path -LiteralPath $catalog -PathType Leaf)) {
               throw 'The build did not install the Cantonese catalog.'
           }
-          python .\bbl\i18n\yue_HK\compile_translation.py --allow-unreferenced --output $catalog --check
+          python .\bbl\i18n\yue_HK\compile_translation.py --require-complete --output $catalog --check
           if ($LASTEXITCODE -ne 0) {
               throw "Verifying the installed Cantonese catalog failed with exit code $LASTEXITCODE."
           }
