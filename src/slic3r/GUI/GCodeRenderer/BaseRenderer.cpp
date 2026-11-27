@@ -4493,7 +4493,7 @@ namespace Slic3r
             {
                 ImGuiWrapper& imgui = *wxGetApp().imgui();
                 auto link_text = [this, &imgui](const std::string& label, auto&& on_click, bool underline = true) {
-                    const ImColor hyper_color(0, 174, 66, 255);
+                    const ImColor hyper_color(md3_imgui_color(MD3::Role::Primary, m_is_dark));
                     ImGui::PushStyleColor(ImGuiCol_Text, hyper_color.Value);
                     imgui.text(label.c_str());
                     ImGui::PopStyleColor();
@@ -4509,7 +4509,7 @@ namespace Slic3r
                             on_click();
                     }
                 };
-                auto draw_dash_line = [](ImDrawList* draw_list, int dash_length = 5, int gap_length = 3) {
+                auto draw_dash_line = [this](ImDrawList* draw_list, int dash_length = 5, int gap_length = 3) {
                     ImVec2 p1 = ImGui::GetCursorScreenPos();
                     ImVec2 p2 = ImVec2(p1.x + ImGui::GetContentRegionAvail().x, p1.y);
                     for (float i = p1.x; i < p2.x; i += (dash_length + gap_length)) {
