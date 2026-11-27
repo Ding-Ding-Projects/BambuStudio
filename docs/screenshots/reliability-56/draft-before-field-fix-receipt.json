@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "sourceCommit": "0a12cd0945b782fb28d02cfc0cd1c02ed1ee094b",
+  "executableSha256": "68b33481173e1b2653640fd5132e38512dc315dceb58c9fc7ca421e847d0514b",
+  "applicationDllSha256": "12710c0e5b61810b15ce33c1ad100431702e337ef52ee013fd1305d3876cc983",
+  "route": "Named hidden Windows desktop with locally installed Lowlevel, background edit and native layout-probe readback",
+  "profile": "Fresh fixture, English, light theme, comfortable density",
+  "steps": [
+    "Open New tab in Prepare sections",
+    "Select New Process draft",
+    "Activate the draft tab"
+  ],
+  "persistedDraftCount": 1,
+  "draftPanelShown": false,
+  "draftPanelDimensions": [
+    20,
+    20
+  ],
+  "draftSearchWidth": 0,
+  "lastBuiltGroup": "compatible_printers",
+  "expected": "The selected tab shows the detached editor and its actions.",
+  "observed": "The previous Prepare pane stayed visible.",
+  "capture": {
+    "path": "draft-before-field-fix.png",
+    "sha256": "045767c1c8d236732ad9c84fa1224097dd6ca81dca592f60912292969ef4f3d6",
+    "captureTimestamp": "Unavailable"
+  }
+}
