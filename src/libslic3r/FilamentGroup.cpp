@@ -428,7 +428,7 @@ namespace Slic3r
             int nonpreferred_count = 0;
             if (ctx.group_info.preferred_extruder >= 0) {
                 // A preference never makes an unprintable or over-capacity plan valid.
-                if (placeable_count != n || !size_ok)
+                if (!size_ok)
                     continue;
                 for (const auto& [extruder, nozzles] : ctx.nozzle_info.extruder_nozzle_list) {
                     int assigned = 0;
