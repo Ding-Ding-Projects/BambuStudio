@@ -282,6 +282,12 @@ TEST_CASE("Preferred physical nozzle respects capacity and printability", "[fila
     ctx.machine_info.max_group_size = {2, 3};
     ctx.model_info.unprintable_filaments[0].insert(3);
 
+    SECTION("explicit nozzle limits cannot be overridden by a preference") {
+        ctx.group_info.preferred_extruder = 0;
+        ctx.nozzle_info.per_nozzle_capacity = {1, 1};
+        REQUIRE_THROWS_AS(FilamentGroup(ctx).calc_filament_group(), Slic3r::RuntimeError);
+    }
+
     SECTION("left preference spills exactly two materials") {
         ctx.group_info.preferred_extruder = 0;
         auto map = FilamentGroup(ctx).calc_filament_group();
