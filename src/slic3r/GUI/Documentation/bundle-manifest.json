@@ -810,7 +810,7 @@
     {
       "route": "device/printer-melody.md",
       "title": "Printer melodies",
-      "sha256": "e508889b53deed6dc7574c0716bd842a6274d69a61bdab5059f39a6f9d9a3e6b"
+      "sha256": "b71a5d5a4a3492dbfda98cc32bceb9e838fb01e3f94d2c982f3f08f75f22002a"
     },
     {
       "route": "device/printer-melody.yue_HK.md",
@@ -1380,12 +1380,12 @@
     {
       "route": "releases/native-crash-symbols.md",
       "title": "Encrypted native crash symbols",
-      "sha256": "2ee5079d6e86f419b1b0d56023d7e0850e2c63cca68cdc889e66318198051981"
+      "sha256": "17b0a558c3b297453fec30038f862e7a10764b123f13911af3b7b3c060901b4b"
     },
     {
       "route": "releases/native-crash-symbols.yue_HK.md",
       "title": "加密原生崩潰符號",
-      "sha256": "282487f6bf65f2fc4c398173584394787857732e38ebde3fb2a7688c1288cafe"
+      "sha256": "8e1dff0bbb72b204a9d982ea7fa88b64917fb232e2ace5d285c706a6757ddbf6"
     },
     {
       "route": "releases/release-codenames.md",
@@ -1455,12 +1455,12 @@
     {
       "route": "settings-drafts.md",
       "title": "Independent settings drafts",
-      "sha256": "6202756677cc719b4951fa49438f5f4a86e7beb49703b43067bf06387ac50266"
+      "sha256": "94a25de706bdb117792cdcd51a2b0b8533e373a799c9e68e787ba199d2daab88"
     },
     {
       "route": "settings-drafts.yue_HK.md",
       "title": "獨立設定草稿",
-      "sha256": "d05a2780d29b6cbff5e60144af7c3482d1662488a5b3e9f3c5badcccf8ca9b29"
+      "sha256": "35c40fb323f9090c0ab5c235cae186f51e150d72a0f3b2a3809f87ce7d6c2dd3"
     },
     {
       "route": "status-hub/README.md",
@@ -1820,7 +1820,7 @@
     {
       "route": "windows/lubricate-mode.md",
       "title": "Lubricate mode and print melodies",
-      "sha256": "0ed3d3bb9c42ae0b203f3128d748312be45191e9d8bf604487d2ba1895c37892"
+      "sha256": "d00f1c0064c4c94e9bf325c3777a37df8fd79d843c530521453fe963f859752d"
     },
     {
       "route": "windows/lubricate-mode.yue_HK.md",
@@ -1890,7 +1890,7 @@
     {
       "route": "windows/minecraft-servers.md",
       "title": "Minecraft servers",
-      "sha256": "4166f6932750883ba9878a1a8f953bb6f908100bc083f4f939fed894e14fd651"
+      "sha256": "bf31c5260eea07af93582bdfad54f53586f96174f401caf033be8cf525c6faed"
     },
     {
       "route": "windows/minecraft-servers.yue_HK.md",
@@ -2050,12 +2050,12 @@
     {
       "route": "windows/smart-home.md",
       "title": "Smart home: printer handover, TTS narrator, and alert lights",
-      "sha256": "395aa57a3ef1ec5c75b54c7f930817f7ecf7ad923a3887a82e82a92b9536da07"
+      "sha256": "1fb117e43b3feef7bc7a5016990d6dde0098985cc1b4dd786497946621678aca"
     },
     {
       "route": "windows/smart-home.yue_HK.md",
       "title": "智能家居：打印機移交、TTS 語音播報同警告燈",
-      "sha256": "72bb9cebbde5b39d182558bae892ecbd9b66a8368ec12ff7eb0e23fe7e049a8a"
+      "sha256": "e50d3b6782be64b7cba34d1773d29e02d6f27737189b605aad591add2f4493ea"
     },
     {
       "route": "windows/software-gl-fallback.md",
@@ -2290,12 +2290,12 @@
     {
       "route": "workspace/print-setup-atlas.md",
       "title": "Print setup and storage transfer presentation",
-      "sha256": "f5776f0fce86ffb4976e07e7d654f88aa100db54a6241982399cb0f96f88bf09"
+      "sha256": "e6b44c1ca4cfebb34c5dd3f052b254d6fd7e18374c5a1ef5223f02a05c056219"
     },
     {
       "route": "workspace/print-setup-atlas.yue_HK.md",
       "title": "打印設定同儲存傳送外觀",
-      "sha256": "59e1b459a1ffbc034ca86cc128622679def632d68206c614108979c02c82f0a2"
+      "sha256": "85460a6a714c957c77587c769b8b99f02d32ca58174e6c792e3162a4b5e15688"
     },
     {
       "route": "workspace/project-tabs.md",
@@ -2310,12 +2310,12 @@
     {
       "route": "workspace/project-version-history.md",
       "title": "Project version history",
-      "sha256": "2a37fe0f580e2a391a3eca2571b7a3198aaf6fbb327156baafab2aa7affb2f83"
+      "sha256": "7097c57ebb20e8b7694213f5cd5f3aa8158a70c544141917c28a9fbf10b2a035"
     },
     {
       "route": "workspace/project-version-history.yue_HK.md",
       "title": "項目版本歷史",
-      "sha256": "01c568f2283165a0cc8fe0747b079c12a1b7823ed91e45b4a9de5465a9a6dd91"
+      "sha256": "bc76affc89cc9dd57e0bdeb944dc97a847ccb17e5cbcc56f6bde21aa42a7b5bb"
     },
     {
       "route": "workspace/readable-dates.md",
@@ -2410,7 +2410,7 @@
       "bytes": 16430
     }
   ],
-  "bundle_sha256": "4f8ddba680ea0f3a85faa93a1f9f896c934f5633c9c8cbfaff3dcf015ac01f7b",
+  "bundle_sha256": "fb19bb0c631c3c5bea40cb9ceca7dc1e676b9ed48ad3a018a7aff12a29fdf427",
   "unavailable_references": [
     {
       "source": "api/README.md",
@@ -2975,6 +2975,11 @@
     {
       "source": "device/live-charts.yue_HK.md",
       "target": "../../../design/local-tools-2026-11/README.md",
+      "kind": "link"
+    },
+    {
+      "source": "device/printer-melody.md",
+      "target": "https://github.com/savecharlie/a1-jukebox/blob/9ccf08892dfb9df1e166c4f66155fbb94a31a685/m1006.py",
       "kind": "link"
     },
     {
