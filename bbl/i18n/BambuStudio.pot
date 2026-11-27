@@ -37768,3 +37768,6 @@ msgstr ""
 
 msgid "%s nozzle · Connected"
 msgstr ""
+
+msgid "Invalid value"
+msgstr ""
