@@ -98,6 +98,10 @@ private:
     // Rebuild the baked history-chip bitmaps (idle + hover) from the current
     // branch/head + theme; safe to call before the item exists.
     void rebuild_history_chip();
+    /**
+     * \brief Add a fixed spacer of \p dip device-independent pixels that follows DPI changes in Rescale()
+     */
+    void AddDipSpacer(int dip);
 
     wxFrame* m_frame;
     wxAuiToolBarItem* m_brand_item;

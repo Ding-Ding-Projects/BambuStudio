@@ -178,7 +178,7 @@ function FunnyDisclosureRoute(direction, region)
 {
 	if (direction === 'back')
 		return '../11/index.html';
-	let target = '../3/index.html';
+	let target = '../terms/index.html';
 	if (region)
 		target += '?region=' + encodeURIComponent(region);
 	return target;

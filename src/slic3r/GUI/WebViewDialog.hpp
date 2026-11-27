@@ -40,6 +40,7 @@ class NetworkAgent;
 
 namespace GUI {
 
+enum class WebRequestSource;
 
 class MD3InfoBanner;
 
@@ -67,7 +68,7 @@ public:
     void OnTitleChanged(wxWebViewEvent &evt);
     void OnNewWindow(wxWebViewEvent& evt);
     void OnScriptMessage(wxWebViewEvent& evt);
-    bool IsAllowedScriptCommand(wxWebViewEvent& evt);
+    bool ResolveWebRequestSource(wxWebViewEvent& evt, WebRequestSource& source);
     void OnScriptResponseMessage(wxCommandEvent& evt);
     void OnViewSourceRequest(wxCommandEvent& evt);
     void OnViewTextRequest(wxCommandEvent& evt);
@@ -122,6 +123,9 @@ public:
     //LeftMenu
     std::string m_contentname {"home"}; // CurrentMenu
     bool        m_leftfirst;   // Left First Loaded
+    bool        m_home_shell_painted{ false }; // JS reported shell chrome after first paint
+    bool        is_home_shell_painted() const { return m_home_shell_painted; }
+    void        mark_home_shell_painted();
     void CheckMenuNewTag();
     void ShowMenuNewTag(std::string menuname, std::string show);
     void SetLeftMenuShow(std::string menuname, int show);

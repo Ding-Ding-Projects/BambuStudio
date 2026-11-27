@@ -253,6 +253,7 @@ var LangText={
 		"t285": "Engineering Plate",
 		"t286": "Smooth PEI Plate / High Temp Plate",
 		"t287": "Textured PEI Plate",
+		"t400": "3D Effect Plate",
 		"t288": "Nozzle",
 		"t289": "Initial layer",
 		"t290": "Other layers",
@@ -307,7 +308,14 @@ var LangText={
 		"wk13": "STEP Format",
 		"wk14": "Compared with STL, STEP brings more effective information. Thanks to the high accuracy of STEP, a lot of extrusion paths can be generated as arcs. STEP also includes the assembly relationship of each part of a model, which can be used to restore the assembly view after a model is split.",
 		"wk15": "3D Text",
-		"wk16": "With 3D Text tool, users can easily create various 3D text shapes in the project, making the model more personalized. Bambu Studio provides dozens of fonts and supports bold and italic styles to give text greater flexibility."
+		"wk16": "With 3D Text tool, users can easily create various 3D text shapes in the project, making the model more personalized. Bambu Studio provides dozens of fonts and supports bold and italic styles to give text greater flexibility.",
+		"t401": "Bambu Lab Terms of Use &amp; Privacy Policy",
+		"t402": "Thank you for choosing Bambu Lab. Please read these Terms before using Bambu Studio. By clicking “Agree”, you agree to the ",
+		"t403": "Bambu Lab Terms of Use",
+		"t404": " and acknowledge reading ",
+		"t405": "Privacy Policy",
+		"t406": ". If you do not agree to the Terms or read the Policy, you may not use Bambu Studio.",
+		"t407": "Decline"
 	},
 	"zh_CN": {
 		"t1": "欢迎使用Bambu Studio",
@@ -580,13 +588,21 @@ var LangText={
 		"t285": "工程材料打印板",
 		"t286": "光面PEI打印板 / 高温打印板",
 		"t287": "纹理PEI打印板",
+		"t400": "3D Effect Plate",
 		"t288": "喷嘴",
 		"t289": "首层",
 		"t290": "其它层",
 		"t291": "材料",
 		"t292": "温度",
 		"t293": "打印机未连接",
-		"t294": "无可用预设，请先添加可用耗材"
+		"t294": "无可用预设，请先添加可用耗材",
+		"t401": "Bambu Lab使用条款 &amp; 隐私政策",
+		"t402": "感谢您选择 Bambu Lab。使用Bambu Studio前，请阅读以下条款。点击“同意”即表示您同意",
+		"t403": "Bambu Lab使用条款",
+		"t404": "，并确认已阅读",
+		"t405": "Bambu Lab隐私政策",
+		"t406": "。如您不同意使用条款或未阅读隐私政策，将无法使用Bambu Studio相关服务。",
+		"t407": "拒绝"
 	},
 	"ja_JP": {
 		"t1": "Bambu Studioへようこそ",
@@ -3040,6 +3056,14 @@ var LangText={
 		"wk21": "Odkrywaj teraz"
 	},
 	"yue_HK": {
+		"t400": "3D 效果打印板",
+		"t401": "Bambu Lab 使用條款同私隱政策",
+		"t402": "多謝你選用 Bambu Lab。用 Bambu Studio 之前，請先細閱條款。撳「同意」即表示你同意",
+		"t403": "Bambu Lab 使用條款",
+		"t404": "，並確認你已經睇過",
+		"t405": "私隱政策",
+		"t406": "。如果你唔同意使用條款，或者未睇過私隱政策，就唔可以使用 Bambu Studio。",
+		"t407": "拒絕",
 		"t1": "歡迎使用 Bambu Studio",
 		"t2": "幾個步驟就設定好 Bambu Studio，一齊開始啦！",
 		"t3": "使用者協議",

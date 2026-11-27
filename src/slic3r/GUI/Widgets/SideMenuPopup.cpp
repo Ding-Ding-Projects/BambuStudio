@@ -81,6 +81,11 @@ void SidePopup::Popup(wxWindow* focus)
         }
     }
     invoker = focused ? focused : focus;
+    /* The popup is created on the primary monitor. Move it to the anchor's monitor before measuring:
+       landing on a monitor with another scale rescales the buttons and resizes the popup, which must
+       happen before the size and position below are computed, not after. */
+    if (focus)
+        Move(focus->ClientToScreen(wxPoint(0, focus->GetSize().y)));
     Create();
     auto drect = wxDisplay(GetParent()).GetGeometry();
     int screenwidth = drect.x + drect.width;

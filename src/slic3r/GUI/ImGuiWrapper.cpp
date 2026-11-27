@@ -862,15 +862,27 @@ bool ImGuiWrapper::update_mouse_data(wxMouseEvent& evt)
     io.MouseDown[0] = evt.LeftIsDown();
     io.MouseDown[1] = evt.RightIsDown();
     io.MouseDown[2] = evt.MiddleIsDown();
+    // Sync modifier keys before new_frame() so ImGui::UpdateMouseWheel() sees Shift+Wheel on the same event.
+    io.KeyShift = evt.ShiftDown();
+    io.KeyCtrl  = evt.ControlDown();
+    io.KeyAlt   = evt.AltDown();
+    io.KeySuper = evt.MetaDown();
+    io.KeyMods  = ImGui::GetMergedKeyModFlags();
     int wheel_delta = evt.GetWheelDelta();
     if (wheel_delta != 0) {
         int wheel_rotation = evt.GetWheelRotation();
-        if (wheel_rotation > 0)
-            io.MouseWheel = 1.f;
-        else if (wheel_rotation < 0)
-            io.MouseWheel = -1.f;
-        else
-            io.MouseWheel = 0.0f;
+        const float wheel = wheel_rotation > 0 ? 1.f : (wheel_rotation < 0 ? -1.f : 0.f);
+        if (evt.GetWheelAxis() == wxMOUSE_WHEEL_HORIZONTAL) {
+            // wxWidgets horizontal wheel is positive toward the right; ImGui's horizontal wheel is negative toward the right.
+            // When Shift is also held (e.g. macOS converts Shift+Wheel to a horizontal event), feed MouseWheel because
+            // ConfigMacOSXBehaviors is false and ImGui::UpdateMouseWheel swaps MouseWheel -> wheel_x under Shift.
+            if (io.KeyShift)
+                io.MouseWheel = -wheel;
+            else
+                io.MouseWheelH = -wheel;
+        } else {
+            io.MouseWheel = wheel;
+        }
     }
     unsigned buttons = (evt.LeftIsDown() ? 1 : 0) | (evt.RightIsDown() ? 2 : 0) | (evt.MiddleIsDown() ? 4 : 0);
     m_mouse_buttons = buttons;
@@ -1163,7 +1175,7 @@ void ImGuiWrapper::set_next_window_size(float x, float y, ImGuiCond cond)
 }
 
 /* BBL style widgets */
-bool ImGuiWrapper::bbl_combo_with_filter(const char* label, const std::string& preview_value, const std::vector<std::string>& all_items, std::vector<int>* filtered_items_idx, bool* is_filtered, float item_height)
+bool ImGuiWrapper::bbl_combo_with_filter(const char* label, const std::string& preview_value, const std::vector<std::string>& all_items, std::vector<int>* filtered_items_idx, bool* is_filtered, float item_height, float popup_width)
 {
     if (ImGui::GetCurrentWindow()->SkipItems) return false;
     filtered_items_idx->clear();
@@ -1180,7 +1192,7 @@ bool ImGuiWrapper::bbl_combo_with_filter(const char* label, const std::string& p
     const ImVec2 bottom = ImGui::GetItemRectMax();
     const float row_height = item_height > 0 ? item_height : ImGui::GetFrameHeightWithSpacing();
     const ImVec2 display = ImGui::GetIO().DisplaySize;
-    const float width = std::min(std::max(field_width, ImGui::GetFontSize() * 18.0f), std::max(1.0f, display.x - 16.0f));
+    const float width = std::min(std::max({field_width, popup_width, ImGui::GetFontSize() * 18.0f}), std::max(1.0f, display.x - 16.0f));
     ImGui::SetNextWindowPos(ImVec2(std::clamp(anchor.x, 0.0f, std::max(0.0f, display.x - width)), bottom.y), ImGuiCond_Appearing);
     ImGui::SetNextWindowSizeConstraints(ImVec2(width, 0), ImVec2(width, std::max(1.0f, display.y - 16.0f)));
     if (!ImGui::BeginPopup(label)) return false;

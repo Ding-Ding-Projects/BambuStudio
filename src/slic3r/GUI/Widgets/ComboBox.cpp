@@ -14,6 +14,7 @@ EVT_LEFT_DOWN(ComboBox::mouseDown)
 EVT_LEFT_DCLICK(ComboBox::mouseDown)
 //EVT_MOUSEWHEEL(ComboBox::mouseWheelMoved)
 EVT_KEY_DOWN(ComboBox::keyDown)
+EVT_SIZE(ComboBox::onSize)
 
 // catch paint events
 END_EVENT_TABLE()
@@ -107,7 +108,18 @@ ComboBox::ComboBox(wxWindow *parent,
         wxCommandEvent e(wxEVT_COMBOBOX_CLOSEUP);
         GetEventHandler()->ProcessEvent(e);
     });
+    // CHAR_HOOK reaches the focused combo before DPIDialog's handler, which
+    // closes the whole dialog on ESC. Close only the open dropdown instead.
+    Bind(wxEVT_CHAR_HOOK, [this](wxKeyEvent &e) {
+        if (e.GetKeyCode() == WXK_ESCAPE && drop_down)
+            drop.DismissAll();
+        else
+            e.Skip();
+    });
+    m_last_width = GetSize().x;
     for (int i = 0; i < n; ++i) Append(choices[i]);
+    // As native controls do: an explicit size becomes the min size, a -1 axis follows the best size.
+    SetInitialSize(size);
 }
 
 void ComboBox::SetColorScheme(MD3::ColorScheme scheme)
@@ -190,6 +202,7 @@ void ComboBox::Rescale()
     // guard breaks the SetIcon() -> Rescale() re-entry so this cannot recurse.
     if (m_chevron_shown)
         applyDropChevron();
+    InvalidateBestSize();
     update_closed_suffix_reserve();
 }
 
@@ -335,6 +348,7 @@ int ComboBox::Append(const wxString &text, const wxBitmap &bitmap, const wxStrin
     items.push_back(item);
     SetClientDataType(wxClientData_Void);
     drop.Invalidate(false, true);
+    InvalidateBestSize();
     return items.size() - 1;
 }
 
@@ -342,6 +356,7 @@ int ComboBox::SetItems(const std::vector<DropDown::Item>& the_items)
 {
     items = the_items;
     drop.Invalidate(false, true);
+    InvalidateBestSize();
     return items.size() - 1;
 }
 
@@ -350,6 +365,7 @@ void ComboBox::DoClear()
     applyDropChevron();
     items.clear();
     drop.Invalidate(true, true);
+    InvalidateBestSize();
     SetRightSuffix(wxEmptyString);
 }
 
@@ -358,6 +374,7 @@ void ComboBox::DoDeleteOneItem(unsigned int pos)
     if (pos >= items.size()) return;
     items.erase(items.begin() + pos);
     drop.Invalidate(true, true);
+    InvalidateBestSize();
 }
 
 unsigned int ComboBox::GetCount() const { return items.size(); }
@@ -377,6 +394,7 @@ void ComboBox::SetString(unsigned int n, wxString const &value)
     if (n >= items.size()) return;
     items[n].text = value;
     drop.Invalidate(false, true);
+    InvalidateBestSize();
     if (n == drop.GetSelection()) SetLabel(value);
 }
 
@@ -403,6 +421,7 @@ void ComboBox::SetItemSuffix(unsigned int n, wxString const &value)
     if (n >= items.size()) return;
     items[n].suffix = value;
     drop.Invalidate();
+    InvalidateBestSize();
     if ((int)n == drop.GetSelection())
         sync_closed_suffix();
 }
@@ -428,6 +447,7 @@ int ComboBox::DoInsertItems(const wxArrayStringsAdapter &items,
         ++pos;
     }
     drop.Invalidate(true, true);
+    InvalidateBestSize();
     return pos - 1;
 }
 
@@ -484,7 +504,7 @@ void ComboBox::keyDown(wxKeyEvent& event)
         case WXK_RETURN:
         case WXK_SPACE:
             if (drop_down) {
-                drop.DismissAndNotify();
+                drop.DismissAll();
             } else if (drop.HasDismissLongTime()) {
                 drop.autoPosition();
                 drop_down = true;
@@ -518,7 +538,22 @@ void ComboBox::keyDown(wxKeyEvent& event)
 void ComboBox::onMove(wxMoveEvent &event)
 {
     event.Skip();
-    drop.Hide();
+    drop.DismissAll();
+}
+
+void ComboBox::onSize(wxSizeEvent &event)
+{
+    event.Skip();
+    // TextInput::Create() can send size events before the popup is created.
+    if (!drop.GetParent())
+        return;
+    if (event.GetSize().x == m_last_width)
+        return;
+    m_last_width = event.GetSize().x;
+    // The dropdown caches its row width, including the combo's width. Recompute
+    // it after a width change and close any popup still anchored at the old size.
+    drop.Invalidate();
+    drop.DismissAll();
 }
 
 void ComboBox::OnEdit()
@@ -550,14 +585,34 @@ void ComboBox::SetRightSuffix(const wxString &suffix)
 
 void ComboBox::update_closed_suffix_reserve()
 {
-    if (m_closed_suffix.IsEmpty()) {
-        SetReservedRightWidth(0);
-        return;
+    SetReservedRightWidth(closed_suffix_reserve(m_closed_suffix));
+}
+
+int ComboBox::closed_suffix_reserve(const wxString &suffix) const
+{
+    if (suffix.IsEmpty())
+        return 0;
+    int w = 0, h = 0;
+    GetTextExtent(suffix, &w, &h, nullptr, nullptr, &::Label::Body_13);
+    return w + FromDIP(8) + FromDIP(12);
+}
+
+wxSize ComboBox::DoGetBestSize() const
+{
+    // Not applicable: the label is not drawn by this control.
+    if (text_off || GetTextCtrl()->IsShown())
+        return TextInput::DoGetBestSize();
+
+    // Mirrors TextInput::render: inset, drop arrow plus a fifth of it as gap, label, inset, suffix.
+    // Item icons and the second icon are not counted.
+    const int arrow  = (GetWindowStyle() & CB_NO_DROP_ICON) ? 0 : FromDIP(16);
+    const int chrome = 5 + int(arrow * 1.2) + 5;
+    int       width  = chrome;
+    for (const Item &item : items) {
+        const int label_w = GetTextExtent(item.text).x;
+        width = std::max(width, chrome + label_w + closed_suffix_reserve(item.suffix));
     }
-    wxClientDC dc(this);
-    dc.SetFont(::Label::Body_13);
-    const wxSize sSize = dc.GetTextExtent(m_closed_suffix);
-    SetReservedRightWidth(sSize.x + FromDIP(8) + FromDIP(12));
+    return {width, GetMinHeight()};
 }
 
 void ComboBox::sync_closed_suffix()

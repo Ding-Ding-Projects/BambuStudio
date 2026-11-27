@@ -43,6 +43,8 @@ set(SLIC3R_GUI_SOURCES
     GUI/Widgets/LabelGrowWithWrap.hpp
     GUI/Widgets/LinkLabel.cpp
     GUI/Widgets/LinkLabel.hpp
+    GUI/Widgets/RichTextLabel.cpp
+    GUI/Widgets/RichTextLabel.hpp
     GUI/Widgets/Scrollbar.cpp
     GUI/Widgets/Scrollbar.hpp
     GUI/Widgets/ScrolledWindow.cpp
@@ -220,6 +222,8 @@ set(SLIC3R_GUI_SOURCES
     GUI/Gizmos/GLGizmoPainterBase.hpp
     GUI/Gizmos/GLGizmoSimplify.cpp
     GUI/Gizmos/GLGizmoSimplify.hpp
+    GUI/Gizmos/GLGizmoSimplifyDialog.cpp
+    GUI/Gizmos/GLGizmoSimplifyDialog.hpp
     GUI/Gizmos/GLGizmoMmuSegmentation.cpp
     GUI/Gizmos/GLGizmoMmuSegmentation.hpp
     GUI/Gizmos/GLGizmoFuzzySkin.cpp
@@ -312,6 +316,8 @@ set(SLIC3R_GUI_SOURCES
     GUI/BedShapeDialog.hpp
     GUI/Plater.cpp
     GUI/Plater.hpp
+    GUI/PositionConfigImport.cpp
+    GUI/PositionConfigImport.hpp
     GUI/PartPlate.cpp
     GUI/PartPlate.hpp
     GUI/WipeTowerPlacement.cpp
@@ -391,6 +397,7 @@ set(SLIC3R_GUI_SOURCES
     GUI/Monitor.hpp
     GUI/WebViewDialog.cpp
     GUI/WebViewDialog.hpp
+    GUI/WebViewSecurity.hpp
     GUI/PrinterWebView.cpp
     GUI/PrinterWebView.hpp
     GUI/WebDownPluginDlg.hpp
@@ -492,6 +499,7 @@ set(SLIC3R_GUI_SOURCES
     GUI/UserManager.cpp
     GUI/HttpServer.hpp
     GUI/HttpServer.cpp
+    GUI/TicketLoginGuard.hpp
     Config/Snapshot.cpp
     Config/Snapshot.hpp
     Config/Version.cpp
@@ -505,6 +513,8 @@ set(SLIC3R_GUI_SOURCES
     GUI/ConfigWizard_private.hpp
     GUI/MsgDialog.cpp
     GUI/MsgDialog.hpp
+    GUI/AlertDialog.cpp
+    GUI/AlertDialog.hpp
     GUI/DownloadProgressDialog.hpp
     GUI/DownloadProgressDialog.cpp
     GUI/UpdateDialogs.cpp
@@ -600,6 +610,8 @@ set(SLIC3R_GUI_SOURCES
     GUI/DesktopIntegrationDialog.hpp
     GUI/DragCanvas.cpp
     GUI/DragCanvas.hpp
+    GUI/DualNozzleView.cpp
+    GUI/DualNozzleView.hpp
     GUI/ExtruderPanel.cpp
     GUI/ExtruderPanel.hpp
     GUI/ExtruderPanelGroup.cpp
@@ -640,6 +652,8 @@ set(SLIC3R_GUI_SOURCES
     GUI/AmsMappingPopupUpdate.cpp
     GUI/MaterialItemHotend.hpp
     GUI/MaterialItemHotend.cpp
+    GUI/DevSendPrintHelpers.h
+    GUI/DevSendPrintHelpers.cpp
     GUI/DevMappingHelpers.h
     GUI/DevMappingHelpers.cpp
     GUI/ReleaseNote.hpp

@@ -164,6 +164,7 @@ public:
 #endif
 
 private:
+    bool exchange_nozzle(int from, int to, const std::function<bool()>& still_ready, bool temper_check) const;
     void ParseRackInfoV1_0(const nlohmann::json& rack_info);
 
     int CtrlRackUpgrade(const std::string& module_str) const;

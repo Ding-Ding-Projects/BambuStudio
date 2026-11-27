@@ -325,7 +325,7 @@ ParamsPanel::ParamsPanel( wxWindow* parent, wxWindowID id, const wxPoint& pos, c
         m_compare_btn->SetToolTip(_L("Compare presets"));
         // a11y: icon-only control needs an accessible name for assistive tech.
         m_compare_btn->SetName(_L("Compare presets"));
-        m_compare_btn->Bind(wxEVT_BUTTON, ([this](wxCommandEvent e) { wxGetApp().mainframe->diff_dialog.show(); }));
+        m_compare_btn->Bind(wxEVT_BUTTON, ([this](wxCommandEvent e) { wxGetApp().mainframe->diff_dialog().show(); }));
 
         // MD3: object-settings table IconButton. 'table' is absent from the frozen
         // font, so draw the nearest available glyph (GridView); the "table" raster

@@ -21,6 +21,8 @@ static std::map<wxColour, wxColour> gDarkColors{
     {ThemeColor::Warning,     "#ffb77c"},
     {ThemeColor::Danger,      "#ffb4ab"},/*red*/
     {ThemeColor::Link,        "#479EF5"},/*blue*/
+    {ThemeColor::TextMutedBright, "#B7B7BB"}, // #fff @ 60% opacity over Grey300's dark mapping
+    {ThemeColor::Grey500,     "#53545A"},
     {ThemeColor::TextPrimary, MD3::Dark::onSurface},
     {ThemeColor::TextSecondary, MD3::Dark::onSurfaceVariant},
     {ThemeColor::TextMuted,     "#a8a9b3"},

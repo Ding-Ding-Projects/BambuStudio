@@ -83,7 +83,9 @@ void DropDown::Create(wxWindow *parent, long style)
     if ((style & DD_NO_CHECK_ICON) == 0)
         check_bitmap = ScalableBitmap(this, "checked", 16);
     arrow_bitmap = ScalableBitmap(this, "hms_arrow", 16);
-    synced_bitmap = ScalableBitmap(this, "badge", 14);
+    // Square corners to match the closed combo's own synced badge (Plater.cpp sets "badge_square"
+    // via SetBadgeIcon()) -- DD_ITEM_STYLE_SYNCED has no other consumer, so this is safe to hardcode.
+    synced_bitmap = ScalableBitmap(this, "badge_square", 14);
     text_off = style & DD_NO_TEXT;
 
     // BBS set default font
@@ -510,7 +512,7 @@ void DropDown::render(wxDC &dc)
         rcContent.width -= szBmp.x + 5;
     }
 
-    const int suffix_pad = FromDIP(8);
+    const int suffix_pad = FromDIP(16);
     int suffix_col = 0;
     if (!text_off) {
         dc.SetFont(::Label::Body_13);
@@ -706,7 +708,7 @@ void DropDown::messureSize()
         textSize.y = std::max(textSize.y, size1.y);
     }
     if (suffix_col > 0)
-        textSize.x += FromDIP(12) + suffix_col + FromDIP(8) + synced_badge_width();
+        textSize.x += FromDIP(12) + suffix_col + FromDIP(16) + synced_badge_width();
     if (!align_icon) iconSize.x = 0;
     wxSize szContent = textSize;
     if (szContent.x < FromDIP(120))
@@ -800,6 +802,12 @@ void DropDown::autoPosition()
     SetSize(placement.rect);
     rowSize.x = placement.rect.width;
     m_search->SetSize(FromDIP(8), FromDIP(8), std::max(1, placement.rect.width - FromDIP(16)), FromDIP(44));
+    const int row = selectedItem();
+    if (row >= 0) {
+        const int top = row * rowSize.y;
+        offset.y = std::min(offset.y, viewportHeight() - top - rowSize.y);
+        offset.y = std::max(offset.y, -top);
+    }
     offset.y = std::clamp(offset.y, std::min(0, viewportHeight() - static_cast<int>(count) * rowSize.y), 0);
 }
 
@@ -983,6 +991,25 @@ void DropDown::sendDropDownEvent()
         target->DismissAndNotify();
     if (target)
         target->GetEventHandler()->ProcessEvent(event);
+}
+
+void DropDown::DismissAll()
+{
+    if (mainDropDown) {
+        mainDropDown->DismissAll();
+        return;
+    }
+    // Ordinary Dismiss() deliberately keeps the main menu alive while its
+    // submenu is open. Owner changes must close both, regardless of the mouse.
+    if (subDropDown && subDropDown->IsShown())
+        subDropDown->PopupWindow::Dismiss();
+    if (IsShown())
+        DismissAndNotify();
+}
+
+void DropDown::DismissOnOwnerChange()
+{
+    DismissAll();
 }
 
 void DropDown::Dismiss()

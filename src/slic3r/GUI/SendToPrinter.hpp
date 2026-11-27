@@ -129,7 +129,6 @@ private:
     MD3Spinner *                        m_connect_spinner{nullptr};
 
     std::shared_ptr<SendJob>            m_send_job{nullptr};
-    std::vector<wxString>               m_bedtype_list;
     std::map<std::string, ::CheckBox*>  m_checkbox_list;
     std::vector<MachineObject*>         m_list;
     wxColour                            m_colour_def_color{ wxColour(255, 255, 255) };

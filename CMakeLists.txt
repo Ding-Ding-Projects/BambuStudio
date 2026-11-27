@@ -647,9 +647,14 @@ foreach(keyword ${BBL_XGETTEXT_KEYWORD_LINES})
     string(STRIP "${keyword}" keyword)
     list(APPEND BBL_XGETTEXT_KEYWORDS "--keyword=${keyword}")
 endforeach()
+# The source list is generated each time the target runs, so new files need no manual registration.
+set(I18N_SOURCE_LIST "${CMAKE_CURRENT_BINARY_DIR}/i18n_source_list.txt")
 add_custom_target(gettext_make_pot
+    COMMAND ${CMAKE_COMMAND} -DSOURCE_ROOT=${PROJECT_SOURCE_DIR} -DOUTPUT=${I18N_SOURCE_LIST}
+        -P ${PROJECT_SOURCE_DIR}/cmake/modules/GenerateI18nFileList.cmake
     COMMAND xgettext --no-wrap ${BBL_XGETTEXT_KEYWORDS} --add-comments=TRN --from-code=UTF-8 --no-location --debug --boost
-        -f "${BBL_L18N_DIR}/list.txt"
+        --language=C++
+        -f "${I18N_SOURCE_LIST}"
         -o "${BBL_L18N_DIR}/BambuStudio.pot"
 	COMMAND hintsToPot ${SLIC3R_RESOURCES_DIR} ${BBL_L18N_DIR}
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}

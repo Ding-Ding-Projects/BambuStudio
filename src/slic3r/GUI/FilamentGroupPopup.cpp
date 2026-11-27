@@ -415,7 +415,7 @@ void FilamentGroupPopup::UpdateNozzleLabels()
         switch (m_all_modes[idx]) {
             case fmmAutoForFlush:
                 if (single_ext_multi_nozzle) {
-                    label  = no_ams ? _L("Default") : _L("Filament-Saving Mode");
+                    label  = _L("Filament-Saving Mode");
                     detail = _L("Automatically and intelligently assigns filaments to minimize filament time consumption");
                 } else {
                     label  = _L("Filament-Saving Mode");
@@ -734,6 +734,8 @@ void FilamentGroupPopup::OnRadioBtn(int idx)
         m_mode = mode;
         SetFilamentMapMode(m_mode);
         set_preferred_filament_map_mode_for_current_printer(m_mode);
+        // The mode lives in the plate config, outside the project config comparison and the undo history.
+        plater_ref->mark_project_dirty();
         plater_ref->update();
         UpdateButtonStatus(idx);
     }

@@ -54,6 +54,7 @@ wgtDeviceNozzleRackUpgradeDlg::wgtDeviceNozzleRackUpgradeDlg(wxWindow* parent, c
     SetSizer(main_sizer);
     Layout();
     Fit();
+    CentreOnParent();
 
     wxGetApp().UpdateDlgDarkUI(this);
     MD3DialogCaption::Adopt(this, _L("Hotends Info"));

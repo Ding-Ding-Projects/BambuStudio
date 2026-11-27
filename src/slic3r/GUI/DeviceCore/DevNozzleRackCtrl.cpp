@@ -231,6 +231,33 @@ void DevNozzleRack::CtrlRackReadAll(bool gui_check) const
 
 bool DevNozzleRack::CtrlNozzleExchange(int from, int to, const std::function<bool()>& still_ready) const
 {
+    return exchange_nozzle(from, to, still_ready, true);
+}
+
+bool DevNozzleRack::exchange_nozzle(int from, int to, const std::function<bool()>& still_ready, bool temper_check) const
+{
+    // The printer checks the chamber only when a hotend is taken from the rack, whose positions start at 0x10
+    MachineObject* owner = m_nozzle_system->GetOwner();
+    if (temper_check && from >= 0x10) {
+        const DevNozzle nozzle = m_nozzle_system->GetNozzleByPosId(from);
+        if (nozzle.HasFilamentAtNozzleInlet()) {
+            const auto        slots       = nozzle.GetBindAmsSlots();
+            const std::string filament_id = slots.empty() ? std::string() : owner->get_filament_id(std::to_string(slots[0].first), std::to_string(slots[0].second));
+
+            std::function<void()> retry;
+            if (!still_ready) {
+                retry = [owner, from, to]() {
+                    if (auto rack = owner->GetNozzleRack()) {
+                        rack->exchange_nozzle(from, to, {}, false);
+                    }
+                };
+            }
+            if (!owner->check_chamber_soft_temp(MachineObject::ChamberSoftTempAction::TakeHotend, {filament_id}, std::move(retry))) {
+                return false;
+            }
+        }
+    }
+
     if (!CheckRackMoveWarningDlg() || (still_ready && !still_ready()))
     {
         return false;
@@ -241,7 +268,10 @@ bool DevNozzleRack::CtrlNozzleExchange(int from, int to, const std::function<boo
     j["print"]["sequence_id"] = std::to_string(MachineObject::m_sequence_id++);
     j["print"]["from"] = from;
     j["print"]["to"] = to;
-    return m_nozzle_system->GetOwner()->publish_json(j) == 0;
+    if (!temper_check) {
+        j["print"]["temper_check"] = false;
+    }
+    return owner->publish_json(j) == 0;
 }
 
 namespace {

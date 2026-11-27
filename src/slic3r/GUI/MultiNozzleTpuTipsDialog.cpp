@@ -28,7 +28,9 @@
 namespace Slic3r { namespace GUI {
 
 static const char        *DONT_SHOW_AGAIN_KEY = "no_show_tpu_tips";
-static const std::string  TPU_GUIDE_URL   = "https://e.bambulab.com/t?c=NslBZddIdsBrLEoG";
+// Temporarily disabled. Restore the guide jump by putting the URL back:
+// "https://e.bambulab.com/t?c=NslBZddIdsBrLEoG"
+static const std::string  TPU_GUIDE_URL   = "";
 static const int          CONTENT_WIDTH_DIP   = 460;
 static const char        *TIPS_IMAGE_NAME       = "tpu_tips";
 static const int          TIPS_IMAGE_HEIGHT_DIP = 204;
@@ -152,17 +154,18 @@ MultiNozzleTpuTipsDialog::MultiNozzleTpuTipsDialog(wxWindow *parent)
     main_sizer->Add(check_sizer, 0, wxLEFT | wxRIGHT | wxTOP, padding);
 
     auto *btn_sizer = new wxBoxSizer(wxHORIZONTAL);
-    m_guide_btn = new Button(this, _L("View User Guide"));
-    m_guide_btn->SetVariant(Button::Variant::Filled);
-    m_guide_btn->SetFont(Label::Body_14);
-    m_guide_btn->SetPaddingSize(wxSize(FromDIP(18), FromDIP(4)));
-    m_guide_btn->SetMinSize(wxSize(-1, FromDIP(BUTTON_HEIGHT_DIP)));
-    m_guide_btn->SetCornerRadius(MD3::Metrics::soft_radius(FromDIP(BUTTON_HEIGHT_DIP)));
-    m_guide_btn->Bind(wxEVT_BUTTON, [](wxCommandEvent &) {
-        if (!TPU_GUIDE_URL.empty())
+    if (!TPU_GUIDE_URL.empty()) {
+        m_guide_btn = new Button(this, _L("View User Guide"));
+        m_guide_btn->SetVariant(Button::Variant::Filled);
+        m_guide_btn->SetFont(Label::Body_14);
+        m_guide_btn->SetPaddingSize(wxSize(FromDIP(18), FromDIP(4)));
+        m_guide_btn->SetMinSize(wxSize(-1, FromDIP(BUTTON_HEIGHT_DIP)));
+        m_guide_btn->SetCornerRadius(MD3::Metrics::soft_radius(FromDIP(BUTTON_HEIGHT_DIP)));
+        m_guide_btn->Bind(wxEVT_BUTTON, [](wxCommandEvent &) {
             wxLaunchDefaultBrowser(wxString::FromUTF8(TPU_GUIDE_URL));
-    });
-    btn_sizer->Add(m_guide_btn, 0, wxALIGN_CENTER_VERTICAL);
+        });
+        btn_sizer->Add(m_guide_btn, 0, wxALIGN_CENTER_VERTICAL);
+    }
 
     m_confirm_btn = new Button(this, _L("I know risks, continue"));
     m_confirm_btn->SetVariant(Button::Variant::Outlined);

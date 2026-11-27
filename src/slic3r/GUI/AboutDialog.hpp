@@ -59,7 +59,6 @@ private:
 class AboutDialog : public DPIDialog
 {
     ScalableBitmap  m_logo_bitmap;
-    wxHtmlWindow*   m_html;
     wxStaticBitmap* m_logo;
     // The MD3 "Portions copyright" button, kept so on_dpi_changed can re-derive
     // its variant geometry (msw_buttons_rescale only handles native wxButtons).
@@ -74,7 +73,6 @@ protected:
     void on_dpi_changed(const wxRect &suggested_rect) override;
     
 private:
-    void onLinkClicked(wxHtmlLinkEvent &event);
     void onCloseDialog(wxEvent &);
     void onCopyrightBtn(wxEvent &);
     void onCopyToClipboard(wxEvent&);

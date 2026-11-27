@@ -3,6 +3,7 @@
 #include <limits>
 #include "DevExtruderSystem.h"
 #include "DevFilaSystem.h"
+#include "DevDryer.h"
 #include "DevFilaSwitch.h"
 #include "DevMcTask.hpp"
 
@@ -741,9 +742,32 @@ bool DevAms::IsAmsSlotPreLoadFilament(int slot_id) const
     return DevUtil::get_flag_bits(obj_->tray_exist_bits, bit) != 0;
 }
 
+// Prefer a non-drying zone, it reflects the AMS environment
+const DevAms::DevAmsZone* DevAms::FindEnvZone() const
+{
+    for (const auto& [_, zone] : m_zones) {
+        if (!zone.SupportDrying()) return &zone;
+    }
+    return m_zones.empty() ? nullptr : &m_zones.begin()->second;
+}
+
+float DevAms::GetCurrentTemperature() const
+{
+    if (m_current_temperature != INVALID_AMS_TEMPERATURE) return m_current_temperature;
+    const DevAmsZone* zone = FindEnvZone();
+    return zone ? zone->current_temperature : m_current_temperature;
+}
+
+int DevAms::GetHumidityPercent() const
+{
+    if (m_humidity_percent >= 0) return m_humidity_percent;
+    const DevAmsZone* zone = FindEnvZone();
+    return zone ? zone->humidity_percent : m_humidity_percent;
+}
+
 bool DevAms::SupportHumidityPercent() const
 {
-    return (m_ams_type == DevAmsType::N3F) || (m_ams_type == DevAmsType::N3S) || (m_ams_type == DevAmsType::ZMULTI_A);
+    return (m_ams_type == DevAmsType::N3F) || (m_ams_type == DevAmsType::N3S) || devAmsTypeUtil::IsRackAms(m_ams_type);
 }
 
 bool DevAms::SupportDrying() const
@@ -789,17 +813,38 @@ std::vector<int> DevAms::GetDryableZoneIds() const
     return zone_ids;
 }
 
+static bool is_active_dry_status(const std::optional<DevAms::DryStatus>& status)
+{
+    return status == DevAms::DryStatus::Checking
+        || status == DevAms::DryStatus::Drying
+        || status == DevAms::DryStatus::Error
+        || status == DevAms::DryStatus::CannotStopHeatOutofControl;
+}
+
 bool DevAms::AmsIsDrying()
 {
-    if (!GetDryStatus().has_value()) {
-        return false;
+    return is_active_dry_status(GetDryStatus());
+}
+
+bool DevAms::IsSlotDrying(int slot_id) const
+{
+    if (auto fila_sys = m_fila_system.lock()) {
+        for (const auto& [module_id, dryer_module] : fila_sys->GetDryerMgr().GetModules()) {
+            const auto& binding = dryer_module ? dryer_module->GetSlotBinding() : std::nullopt;
+            if (binding && binding->ams_id == m_ams_id && binding->slots.count(slot_id) != 0
+                && is_active_dry_status(dryer_module->GetState().dry_status)) {
+                return true;
+            }
+        }
     }
 
-    return GetDryStatus().value() == DevAms::DryStatus::Checking
-        || GetDryStatus().value() == DevAms::DryStatus::Drying
-        || GetDryStatus().value() == DevAms::DryStatus::Error
-        || GetDryStatus().value() == DevAms::DryStatus::CannotStopHeatOutofControl;
+    if (!IsDryableSlot(slot_id)) return false;
+    const auto zone = GetZoneBySlotId(slot_id);
+    if (zone && zone->dry_status.has_value()) return is_active_dry_status(zone->dry_status);
+    return is_active_dry_status(GetDryStatus());
 }
+
+DevFilaSystem::DevFilaSystem(MachineObject* owner) : m_owner(owner), m_dryer_mgr(std::make_unique<DevDryerMgr>(this)) {}
 
 DevFilaSystem::~DevFilaSystem()
 {
@@ -1114,47 +1159,6 @@ bool DevFilaSystem::CanShowFilamentBackup() const
     return m_auto_refill_mgr.CanShow();
 }
 
-bool DevFilaSystem::IsDryAreaInPrintUse(const std::string& ams_id, std::optional<int> zone_id) const
-{
-    if (!m_owner || !m_owner->is_in_printing()) {
-        return false;
-    }
-
-    const DevAms* ams = GetAmsById(ams_id);
-    if (!ams) {
-        return false;
-    }
-
-    auto is_in_dry_area = [ams, zone_id](int slot_id) {
-        if (!ams->IsDryableSlot(slot_id)) {
-            return false;
-        }
-        if (!zone_id) {
-            return true;
-        }
-        const auto zone = ams->GetZoneBySlotId(slot_id);
-        return zone && zone->zone_id == *zone_id;
-    };
-
-    // new firmware reports tray print_status directly
-    bool has_print_status = false;
-    for (const auto& [tray_id, tray] : ams->GetTrays()) {
-        if (!tray || !tray->print_status.has_value()) {
-            continue;
-        }
-        has_print_status = true;
-        try {
-            if (*tray->print_status != DevAmsTray::PrintStatus::Idle && is_in_dry_area(std::stoi(tray_id))) {
-                return true;
-            }
-        } catch (...) {
-            BOOST_LOG_TRIVIAL(warning) << "invalid " << KV(log_key::ams_id, ams_id) << " " << KV(log_key::tray_id, tray_id);
-        }
-    }
-    // old firmware without tray print_status: any printing counts as in use
-    return !has_print_status;
-}
-
 bool DevFilaSystem::HasSubAms() const
 {
     auto* nozzle_sys = m_owner ? m_owner->GetNozzleSystem() : nullptr;
@@ -1185,8 +1189,9 @@ std::optional<DevFilamentStep> DevFilaSystem::GetCurrentFilamentChangeStep() con
 }
 std::vector<DevFilamentStep> DevFilaSystem::GetCurrentFilamentChangeSteps() const
 {
-    if (m_owner->GetMcTask().IsValid() && m_filament_change_steps_multi.size() > m_owner->GetMcTask().GetSubStep() && m_filament_change_steps_multi.size() > 1) {
-        return m_filament_change_steps_multi[m_owner->GetMcTask().GetSubStep()];
+    auto mc_task = m_owner->GetMcTask();
+    if (GetFilamentChangingSlots().size() > 1 && m_filament_change_steps_multi.size() > mc_task.GetSubStep() && m_filament_change_steps_multi.size() > 1) {
+        return m_filament_change_steps_multi[mc_task.GetSubStep()];
     };
 
     return m_filament_change_steps;

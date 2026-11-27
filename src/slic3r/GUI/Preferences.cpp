@@ -37,6 +37,7 @@
 #include "BilingualRegistry.hpp"
 #include "UxProgramTermsDialog.hpp"
 #include "Widgets/StateColor.hpp"
+#include "Widgets/WebView.hpp"
 #include "libslic3r/AppConfig.hpp"
 #include "../Utils/ExternalEditor.hpp"
 #include <cassert>
@@ -1519,6 +1520,10 @@ wxBoxSizer *PreferencesDialog::create_item_checkbox(wxString title, wxWindow *pa
             }
         }
 
+        if (param == "enable_webview_devtools") {
+            WebView::ApplyDevToolsSetting();
+        }
+
         // webview  dump_vedio
         if (param == "internal_developer_mode") {
             m_internal_developer_mode_def = app_config->get("internal_developer_mode");
@@ -1563,6 +1568,11 @@ wxBoxSizer *PreferencesDialog::create_item_checkbox(wxString title, wxWindow *pa
 
         if (param == "enable_record_gcodeviewer_option_item"){
             SimpleEvent evt(EVT_ENABLE_GCODE_OPTION_ITEM_CHANGED);
+            wxPostEvent(wxGetApp().plater(), evt);
+        }
+
+        if (param == "show_objects_in_preview") {
+            SimpleEvent evt(EVT_OBJECTS_PREVIEW_CHANGED);
             wxPostEvent(wxGetApp().plater(), evt);
         }
 
@@ -4532,6 +4542,10 @@ wxWindow *PreferencesDialog::create_3d_tab()
     auto item_drag_to_move = create_item_checkbox(_L("Drag with left mouse button to move"), scrolled,
                                                    _L("If enabled, the left mouse button can move models by dragging; if disabled, the left button only selects or clicks."), 50,
                                                    "canvas_drag_to_move");
+    auto item_rotate_sensitivity = create_item_combobox(_L("Mouse rotation sensitivity"), scrolled,
+                                                          _L("Set the mouse rotation sensitivity, medium by default."),
+                                                          "rotate_sensitivity", {_L("Low"), _L("Medium"), _L("High")},
+                                                          {"low", "medium", "high"});
 
     std::vector<wxString> assemble_view_preview_options = {_L("Auto"), _L("Open"), _L("Close")};
     auto enable_assemble_view_preview = create_item_combobox(
@@ -4544,7 +4558,7 @@ wxWindow *PreferencesDialog::create_3d_tab()
                 wxGetApp().app_config->set_bool("enable_bvh", false);
         }, FromDIP(150), FromDIP(120));
 
-    float range_min = 1.0f, range_max = 2.5f;
+    float range_min = 1.0f, range_max = 3.5f;
     auto  item_grabber_size = create_item_range_input(_L("Grabber scale"), scrolled,
                                                       _L("Set grabber size for move,rotate,scale tool.") + _L("Value range") + ":[" + std::to_string(range_min) + "," +
                                                           std::to_string(range_max) + "]",
@@ -4570,10 +4584,13 @@ wxWindow *PreferencesDialog::create_3d_tab()
                                                  _L("Always show shells or not in preview view tab. If you change this value, you should reslice."), 50,
                                                  "show_shells_in_preview");
 
-    auto item_show_heat_soak_area = create_item_checkbox(
-        _L("Show bed heat soak area"), scrolled,
-        _L("Show the heated-bed preconditioning boundaries in the 3D view and preview."), 50,
-        "show_bed_heat_soak_area");
+    auto item_show_objects = create_item_checkbox(_L("Show Objects color scheme in preview"), scrolled,
+        _L("Color preview toolpaths by object. Disabled by default."),
+        50, "show_objects_in_preview");
+
+    auto item_show_heat_soak_area = create_item_checkbox(_L("Show Thermal Preconditioning Area"), scrolled,
+                                                         _L("Warn if a model extends beyond the thermal preconditioning area. Available only on printers that support this feature."), 50,
+                                                         "show_bed_heat_soak_area");
 
     auto item_step_mesh_setting = create_item_checkbox(_L("Show the step mesh parameter setting dialog."), scrolled,
                                                        _L("If enabled,a parameter settings dialog will appear during STEP file import."), 50, "enable_step_mesh_setting");
@@ -4599,12 +4616,13 @@ wxWindow *PreferencesDialog::create_3d_tab()
     auto flags = wxSizerFlags().Expand().Border(wxTOP, FromDIP(4));
 
     // ---- 3D Settings ----
-    sizer->Add(enable_assemble_view_preview, flags);
-    sizer->Add(item_grabber_size, flags);
-    sizer->Add(item_tooltip_offset, flags);
-    sizer->Add(item_toolbar_style, flags);
-    sizer->Add(item_show_shells, flags);
-    sizer->Add(item_show_heat_soak_area, flags);
+    sizer->Add(wrap_option_row(scrolled, enable_assemble_view_preview), flags);
+    sizer->Add(wrap_option_row(scrolled, item_grabber_size), flags);
+    sizer->Add(wrap_option_row(scrolled, item_tooltip_offset), flags);
+    sizer->Add(wrap_option_row(scrolled, item_toolbar_style), flags);
+    sizer->Add(wrap_option_row(scrolled, item_show_shells), flags);
+    sizer->Add(wrap_option_row(scrolled, item_show_objects), flags);
+    sizer->Add(wrap_option_row(scrolled, item_show_heat_soak_area), flags);
 #if !BBL_RELEASE_TO_PUBLIC
     auto item_show_bvh_bounds = create_item_checkbox(_L("Show assembly BVH primary bounds"), scrolled, _L("Display the BVH primary bounding box wireframe in assembly view."), 50,
                                                      "show_assembly_bvh_bounds");
@@ -4624,9 +4642,10 @@ wxWindow *PreferencesDialog::create_3d_tab()
     // ---- Mouse Settings ----
     sizer->Add(title_mouse, wxSizerFlags().Expand().Border(wxTOP, FromDIP(24)));
     sizer->AddSpacer(FromDIP(8));
-    sizer->Add(item_zoom_to_mouse, flags);
-    sizer->Add(item_reverse_mouse_wheel_zoom, flags);
-    sizer->Add(item_drag_to_move, flags);
+    sizer->Add(wrap_option_row(scrolled, item_zoom_to_mouse), flags);
+    sizer->Add(wrap_option_row(scrolled, item_reverse_mouse_wheel_zoom), flags);
+    sizer->Add(wrap_option_row(scrolled, item_drag_to_move), flags);
+    sizer->Add(wrap_option_row(scrolled, item_rotate_sensitivity), flags);
 
     // ---- Import Settings ----
     sizer->Add(title_import, wxSizerFlags().Expand().Border(wxTOP, FromDIP(24)));
@@ -5380,6 +5399,7 @@ void PreferencesDialog::on_reset_preferences()
         "zoom_to_mouse",
         "reverse_mouse_wheel_zoom",
         "canvas_drag_to_move",
+        "rotate_sensitivity",
         "enable_assemble_view_preview",
         "grabber_size_factor",
         "3d_middle_tooltip_offset_x",
@@ -5388,6 +5408,7 @@ void PreferencesDialog::on_reset_preferences()
         "show_shells_in_preview",
         "auto_simplify_import",
         "auto_simplify_import_detail",
+        "show_objects_in_preview",
         "enable_step_mesh_setting",
         "import_single_svg_and_split",
         "gamma_correct_in_import_obj",

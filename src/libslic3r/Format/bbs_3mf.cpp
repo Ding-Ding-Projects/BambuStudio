@@ -53,6 +53,7 @@ namespace pt = boost::property_tree;
 #include <Eigen/Dense>
 #include "miniz_extension.hpp"
 #include "nlohmann/json.hpp"
+#include "ExternalMixedFilament.hpp"
 
 #include "EmbossShape.hpp"
 #include "ExPolygonSerialize.hpp"
@@ -1489,6 +1490,9 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
 
         std::map<int, ModelVolume*> m_shared_meshes;
 
+        bool m_collect_external_mixed { false };
+        ExternalMixedFilamentInfo m_external_mixed;
+
         //BBS: plater related structures
         bool m_is_bbl_3mf { false };
         bool m_parsing_slice_info { false };
@@ -1537,6 +1541,10 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
         // Get volume color data
         const std::unordered_map<int, VolumeColorInfo>& get_volume_color_data() const { return m_volume_color_data; }
 
+        // Mixed filament data of a third-party project; only read when requested before loading.
+        void set_collect_external_mixed(bool collect) { m_collect_external_mixed = collect; }
+        const ExternalMixedFilamentInfo& get_external_mixed() const { return m_external_mixed; }
+
     private:
         void _destroy_xml_parser();
         void _stop_xml_parser(const std::string& msg = std::string());
@@ -1571,6 +1579,7 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
         void _extract_print_config_from_archive(mz_zip_archive& archive, const mz_zip_archive_file_stat& stat, DynamicPrintConfig& config, ConfigSubstitutionContext& subs_context, const std::string& archive_filename);
         //BBS: add project config file logic
         void _extract_project_config_from_archive(mz_zip_archive& archive, const mz_zip_archive_file_stat& stat, DynamicPrintConfig& config, ConfigSubstitutionContext& subs_context, Model& model);
+        void _extract_external_mixed_from_archive(mz_zip_archive& archive, const mz_zip_archive_file_stat& stat);
         //BBS: extract project embedded presets
         void _extract_project_embedded_presets_from_archive(mz_zip_archive& archive, const mz_zip_archive_file_stat& stat, std::vector<Preset*>&project_presets, Model& model, Preset::Type type, bool use_json = true);
 
@@ -1639,7 +1648,7 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
 
         bool _handle_start_shape_configuration(const char **attributes, unsigned int num_attributes);
 
-        bool _create_object_instance(std::string const & path, int object_id, const Transform3d& transform, const bool printable, unsigned int recur_counter);
+        bool _create_object_instance(std::string const & path, int object_id, const Transform3d& transform, const bool printable, const std::string& uuid, unsigned int recur_counter);
 
         void _apply_transform(ModelInstance& instance, const Transform3d& transform);
 
@@ -2325,6 +2334,9 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
                 if (!dont_load_config && boost::algorithm::iequals(name, BBS_PROJECT_CONFIG_FILE)) {
                     // extract slic3r print config file
                     _extract_project_config_from_archive(archive, stat, config, config_substitutions, model);
+                }
+                else if (m_collect_external_mixed && !m_is_bbl_3mf && boost::algorithm::iequals(name, BBS_PROJECT_CONFIG_FILE)) {
+                    _extract_external_mixed_from_archive(archive, stat);
                 }
                 else if (boost::algorithm::iequals(name, CUT_INFORMATION_FILE)) {
                     // extract object cut info
@@ -3116,6 +3128,38 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
             // that fail MakerWorld's "curve needs >= 2 points" check.
             if (auto* curve_opt = config.option<ConfigOptionStrings>("filament_mixed_gradient_curve"))
                 Slic3r::sanitize_mixed_gradient_curve_array(curve_opt->values);
+        }
+    }
+
+    // Only picks the physical colours / types and the mixed filament definitions out of a third-party
+    // project config; the rest of that config stays unloaded as before.
+    void _BBS_3MF_Importer::_extract_external_mixed_from_archive(mz_zip_archive& archive, const mz_zip_archive_file_stat& stat)
+    {
+        if (stat.m_uncomp_size == 0)
+            return;
+        std::string buffer((size_t)stat.m_uncomp_size, 0);
+        if (mz_zip_reader_extract_to_mem(&archive, stat.m_file_index, (void*)buffer.data(), (size_t)stat.m_uncomp_size, 0) == 0) {
+            BOOST_LOG_TRIVIAL(warning) << "external mixed filament: failed to read project config";
+            return;
+        }
+        try {
+            const nlohmann::json j = nlohmann::json::parse(buffer);
+            auto defs_it = j.find("mixed_filament_definitions");
+            auto colour_it = j.find("filament_colour");
+            if (defs_it == j.end() || !defs_it->is_string() || colour_it == j.end() || !colour_it->is_array())
+                return;
+            ExternalMixedFilamentInfo info;
+            info.definitions = defs_it->get<std::string>();
+            for (const auto& colour : *colour_it)
+                info.physical_colours.push_back(colour.is_string() ? colour.get<std::string>() : std::string());
+            auto type_it = j.find("filament_type");
+            if (type_it != j.end() && type_it->is_array())
+                for (const auto& type : *type_it)
+                    info.physical_types.push_back(type.is_string() ? type.get<std::string>() : std::string());
+            BOOST_LOG_TRIVIAL(info) << "external mixed filament: found definitions, physical_count=" << info.physical_colours.size();
+            m_external_mixed = std::move(info);
+        } catch (const std::exception& e) {
+            BOOST_LOG_TRIVIAL(warning) << "external mixed filament: invalid project config json, " << e.what();
         }
     }
 
@@ -4537,7 +4581,13 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
         Transform3d transform = bbs_get_transform_from_3mf_specs_string(bbs_get_attribute_value_string(attributes, num_attributes, TRANSFORM_ATTR));
         int printable = bbs_get_attribute_value_bool(attributes, num_attributes, PRINTABLE_ATTR);
 
-        return !m_load_model || _create_object_instance(path, object_id, transform, printable, 1);
+        // BBS: keep the build-item p:UUID so the created instance can be matched
+        // back to this object later (e.g. by the arrange config import).
+        std::string uuid = bbs_get_attribute_value_string(attributes, num_attributes, PUUID_ATTR);
+        if (uuid.empty())
+            uuid = bbs_get_attribute_value_string(attributes, num_attributes, PUUID_LOWER_ATTR);
+
+        return !m_load_model || _create_object_instance(path, object_id, transform, printable, uuid, 1);
     }
 
     bool _BBS_3MF_Importer::_handle_end_item()
@@ -4697,7 +4747,7 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
         return true;
     }
 
-    bool _BBS_3MF_Importer::_create_object_instance(std::string const & path, int object_id, const Transform3d& transform, const bool printable, unsigned int recur_counter)
+    bool _BBS_3MF_Importer::_create_object_instance(std::string const & path, int object_id, const Transform3d& transform, const bool printable, const std::string& uuid, unsigned int recur_counter)
     {
         static const unsigned int MAX_RECURSIONS = 10;
 
@@ -4734,6 +4784,7 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
                 return false;
             }
             instance->printable = printable;
+            instance->uuid      = uuid;
 
             m_instances.emplace_back(instance, transform);
 
@@ -4766,6 +4817,7 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
                 return false;
             }
             instance->printable = printable;
+            instance->uuid      = uuid;
 
             m_instances.emplace_back(instance, transform);
         }
@@ -8645,6 +8697,22 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
         return _add_file_to_archive(archive, BBS_PROJECT_CONFIG_FILE, temp_file);
     }
 
+    /**
+     * \brief Set the name of an embedded preset in its config
+     *
+     * \note A 3mf file names an embedded preset by its settings id key, not by the name field of the json file.
+     *       The config can still hold the name with the load suffix, so always set this key before a save.
+     */
+    static void set_settings_id(DynamicPrintConfig &config, Preset::Type type, const std::string &name)
+    {
+        if (type == Preset::TYPE_PRINT)
+            config.option<ConfigOptionString>("print_settings_id", true)->value = name;
+        else if (type == Preset::TYPE_FILAMENT)
+            config.option<ConfigOptionStrings>("filament_settings_id", true)->values = {name};
+        else if (type == Preset::TYPE_PRINTER)
+            config.option<ConfigOptionString>("printer_settings_id", true)->value = name;
+    }
+
     //BBS: add project embedded preset files
     bool _BBS_3MF_Exporter::_add_project_embedded_presets_to_archive(mz_zip_archive& archive, Model& model, std::vector<Preset*> project_presets)
     {
@@ -8660,9 +8728,11 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
 
             if (preset) {
                 preset->file = temp_path + std::string("/") + "_temp_1.config";
-                DynamicPrintConfig& config = preset->config;
-                //config.save(preset->file);
-                config.save_to_json(preset->file, preset->name, std::string("project"), preset->version.to_string());
+                // Write the name without the suffix that the 3mf load added. A copy keeps the caller's preset unchanged.
+                const std::string &name   = preset->name_for_3mf();
+                DynamicPrintConfig config = preset->config;
+                set_settings_id(config, preset->type, name);
+                config.save_to_json(preset->file, name, std::string("project"), preset->version.to_string());
 
                 std::string dest_file;
                 if (preset->type == Preset::TYPE_PRINT) {
@@ -9255,11 +9325,28 @@ void PlateData::parse_filament_info(GCodeProcessorResult *result)
                 std::string nozzle_diameters_str;
                 if (nozzle_diameter_option)
                     nozzle_diameters_str = nozzle_diameter_option->serialize();
-                // slice_filaments_info is ascending by slot and already carries each used filament's nozzle diameter.
-                if (multi_nozzle_diameter_mode_enabled(config) && nozzle_diameter_option != nullptr && !plate_data->slice_filaments_info.empty()) {
-                    const double diameter = plate_data->slice_filaments_info.front().nozzle_diameter;
-                    if (diameter > 0.)
-                        nozzle_diameters_str = ConfigOptionFloatsNullable(nozzle_diameter_option->values.size(), diameter).serialize();
+                // In multi-diameter mode the config's nozzle_diameter is only the slicing baseline: the diameter
+                // installed on each extruder, or the preset value for an extruder carrying several diameters
+                // (PresetBundle::full_fff_config()).
+                // Several extruders: each one the slice used reports the diameter of its used nozzle. An extruder the
+                // slice did not use keeps the baseline, and so does every extruder of a plate without a layered
+                // grouping result (G-code taken over from a loaded 3mf): one diameter for all of them would misreport
+                // extruders that carry different nozzles. The list holds one diameter per extruder, so an extruder
+                // that used several diameters reports the last one listed; no printer offering the mode has such an
+                // extruder yet.
+                // One extruder: it reports the diameter of its first filament, which slice_filaments_info lists
+                // ascending by slot.
+                if (multi_nozzle_diameter_mode_enabled(config) && nozzle_diameter_option != nullptr) {
+                    std::vector<double> diameters = nozzle_diameter_option->values;
+                    if (diameters.size() > 1) {
+                        if (plate_data->nozzle_group_result)
+                            for (const MultiNozzleUtils::NozzleInfo &nozzle : plate_data->nozzle_group_result->get_used_nozzles_in_extruder())
+                                if (nozzle.extruder_id >= 0 && size_t(nozzle.extruder_id) < diameters.size())
+                                    diameters[nozzle.extruder_id] = string_to_double_decimal_point(nozzle.diameter);
+                    } else if (!plate_data->slice_filaments_info.empty() && plate_data->slice_filaments_info.front().nozzle_diameter > 0.) {
+                        std::fill(diameters.begin(), diameters.end(), plate_data->slice_filaments_info.front().nozzle_diameter);
+                    }
+                    nozzle_diameters_str = ConfigOptionFloatsNullable(diameters).serialize();
                 }
 
                 stream << "    <" << METADATA_TAG << " " << KEY_ATTR << "=\"" << PRINTER_MODEL_ID_ATTR       << "\" " << VALUE_ATTR << "=\"" << plate_data->printer_model_id << "\"/>\n";
@@ -10020,6 +10107,15 @@ private:
     }
 
     ~_BBS_Backup_Manager() {
+#ifdef _WIN32
+        // Runs among BambuStudio.dll's static destructors, after ExitProcess has terminated the worker thread.
+        // If that thread died holding m_mutex, push_task() would wait forever. The thread is gone either way.
+        if (! m_mutex.try_lock()) {
+            m_thread.detach();
+            return;
+        }
+        m_mutex.unlock();
+#endif
         push_task({Exit});
         // Joining at static-destruction time can deadlock on Windows when the
         // worker never re-acquires the CRT/loader machinery it needs to exit
@@ -10221,7 +10317,7 @@ private:
 bool load_bbs_3mf(const char* path, DynamicPrintConfig* config, ConfigSubstitutionContext* config_substitutions, Model* model, PlateDataPtrs* plate_data_list, std::vector<Preset*>* project_presets,
                     bool* is_bbl_3mf, Semver* file_version, Import3mfProgressFn proFn, LoadStrategy strategy, BBLProject *project, int plate_id,
                     std::map<int, std::vector<std::string>>* color_group_map, VolumeColorInfoMap* volume_color_data,
-                    bool* has_textures, bool* has_unit)
+                    bool* has_textures, bool* has_unit, ExternalMixedFilamentInfo* external_mixed)
 {
     if (path == nullptr || config == nullptr || model == nullptr)
         return false;
@@ -10229,6 +10325,7 @@ bool load_bbs_3mf(const char* path, DynamicPrintConfig* config, ConfigSubstituti
     // All import should use "C" locales for number formatting.
     CNumericLocalesSetter locales_setter;
     _BBS_3MF_Importer importer;
+    importer.set_collect_external_mixed(external_mixed != nullptr);
     bool res = importer.load_model_from_file(path, *model, *plate_data_list, *project_presets, *config, *config_substitutions, strategy, is_bbl_3mf, *file_version, proFn, project, plate_id);
     importer.log_errors();
 
@@ -10248,6 +10345,9 @@ bool load_bbs_3mf(const char* path, DynamicPrintConfig* config, ConfigSubstituti
 
     if (has_unit != nullptr)
         *has_unit = importer.has_unit();
+
+    if (external_mixed != nullptr)
+        *external_mixed = importer.get_external_mixed();
 
     //BBS: remove legacy project logic currently
     //handle_legacy_project_loaded(importer.version(), *config);
