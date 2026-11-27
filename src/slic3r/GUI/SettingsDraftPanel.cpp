@@ -135,26 +135,85 @@ void SettingsDraftPanel::Rebuild() {
     GetSizer()->Add(search, 0, wxEXPAND | wxALL, FromDIP(8));
     auto *scroll = new MD3ScrolledWindow(this); scroll->SetScrollRate(0, FromDIP(12));
     auto *rows = new wxBoxSizer(wxVERTICAL); scroll->SetSizer(rows);
-    std::vector<std::pair<std::string, std::shared_ptr<ConfigOptionsGroup>>> fields;
+    std::vector<std::pair<std::string, wxWindow *>> fields;
+    const auto draft_id = m_active;
     for (const auto &key : draft->config.keys()) {
-        if (!draft->config.def()->get(key)) continue;
-        auto group = std::make_shared<ConfigOptionsGroup>(scroll, wxString::FromUTF8(key), &draft->config, false);
-        group->label_width = 15;
-        group->m_get_initial_config = [this] { return m_store.find(m_active)->baseline; };
-        group->m_on_change = [this, key](const t_config_option_key &, const boost::any &) {
-            Persist(SettingsDraftStore::permitted_key(key) ? "Edit settings draft: " + key : "Edit settings draft");
-        };
+        const auto *definition = draft->config.def()->get(key);
+        if (!definition || !SettingsDraftStore::permitted_key(key)) continue;
         const auto *vector = dynamic_cast<const ConfigOptionVectorBase *>(draft->config.option(key));
-        if (vector && vector->size() > 0) {
-            for (size_t i = 0; i < vector->size(); ++i) group->append_single_option_line(key, {}, int(i));
-        } else group->append_single_option_line(key);
-        group->activate(); group->reload_config();
-        rows->Add(group->sizer, 0, wxEXPAND | wxALL, FromDIP(4));
-        fields.emplace_back(key, group); m_groups.push_back(group);
+        // The preset editor handles these compound values outside OptionsGroup.
+        // Passing a complete string list to an indexed text control throws and
+        // previously left the selected draft tab displaying its previous page.
+        const bool compound = key == "compatible_printers" || key == "compatible_prints" ||
+            key == "printable_area" || key == "bed_exclude_area" || key == "thumbnail_size" ||
+            key == "wrapping_exclude_area" || definition->type == coPoint3 ||
+            definition->type == coPointsGroups || definition->type == coIntsGroups ||
+            definition->gui_type == ConfigOptionDef::GUIType::multi_variant ||
+            (vector && (vector->size() == 0 || definition->gui_flags == "serialized"));
+        auto *host = new wxPanel(scroll);
+        auto *layout = new wxBoxSizer(wxVERTICAL);
+        host->SetSizer(layout);
+        bool use_serialized = compound;
+        if (!use_serialized) {
+            try {
+                auto group = std::make_shared<ConfigOptionsGroup>(host, wxString::FromUTF8(key), &draft->config, false);
+                group->label_width = 15;
+                group->m_get_initial_config = [this, draft_id] { return m_store.find(draft_id)->baseline; };
+                group->m_on_change = [this, key, draft_id](const t_config_option_key &, const boost::any &) {
+                    Persist("Edit settings draft: " + key, draft_id);
+                };
+                if (vector) {
+                    for (size_t i = 0; i < vector->size(); ++i) group->append_single_option_line(key, {}, int(i));
+                } else group->append_single_option_line(key);
+                group->activate();
+                group->reload_config();
+                layout->Add(group->sizer, 0, wxEXPAND);
+                m_groups.push_back(group);
+            } catch (const std::bad_alloc &) {
+                throw;
+            } catch (const std::exception &) {
+                // A specialized field may have no general-purpose OptionsGroup
+                // adapter. Keep its actual typed value editable through the
+                // configuration parser instead of dropping the option or tab.
+                host->Destroy();
+                host = new wxPanel(scroll);
+                layout = new wxBoxSizer(wxVERTICAL);
+                host->SetSizer(layout);
+                use_serialized = true;
+            }
+        }
+        if (use_serialized) {
+            auto *edit = new Button(host, definition->label.empty() ? wxString::FromUTF8(key) : _(definition->label));
+            edit->SetName(wxString::FromUTF8(key));
+            layout->Add(edit, 0, wxEXPAND);
+            edit->Bind(wxEVT_BUTTON, [this, key, draft_id](wxCommandEvent &) {
+                auto *current = m_store.find(draft_id);
+                if (!current) return;
+                TextEntryDialog dialog(this, wxString::FromUTF8(key), _L("Edit settings draft"),
+                                       wxString::FromUTF8(current->config.opt_serialize(key)));
+                if (dialog.ShowModal() != wxID_OK) return;
+                current = m_store.find(draft_id);
+                if (!current) return;
+                try {
+                    DynamicPrintConfig parsed;
+                    parsed.set_deserialize_strict(key, std::string(dialog.GetValue().ToUTF8()));
+                    if (const auto *value = parsed.option(key))
+                        current->config.set_key_value(key, value->clone());
+                    else
+                        throw std::invalid_argument("Unknown setting");
+                } catch (const std::exception &) {
+                    md3_message_box(_L("Invalid value"), wxString::FromUTF8(key), wxOK | wxICON_WARNING, this);
+                    return;
+                }
+                Persist("Edit settings draft: " + key, draft_id);
+            });
+        }
+        rows->Add(host, 0, wxEXPAND | wxALL, FromDIP(4));
+        fields.emplace_back(key, host);
     }
     auto filter = [search, fields, scroll](const wxString &query) {
         auto matcher = MatcherForField(search);
-        for (const auto &field : fields) field.second->sizer->ShowItems(query.empty() || matcher(query, wxString::FromUTF8(field.first)));
+        for (const auto &field : fields) field.second->Show(query.empty() || matcher(query, wxString::FromUTF8(field.first)));
         scroll->GetSizer()->Layout(); scroll->FitInside();
     };
     search->SetValue(wxString::FromUTF8(draft->search_query));
