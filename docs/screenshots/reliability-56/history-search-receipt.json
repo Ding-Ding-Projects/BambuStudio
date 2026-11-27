@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "sourceCommit": "0a12cd0945b782fb28d02cfc0cd1c02ed1ee094b",
+  "executableSha256": "68b33481173e1b2653640fd5132e38512dc315dceb58c9fc7ca421e847d0514b",
+  "applicationDllSha256": "12710c0e5b61810b15ce33c1ad100431702e337ef52ee013fd1305d3876cc983",
+  "route": "Named hidden Windows desktop with locally installed Lowlevel, background edit and native layout-probe readback",
+  "profile": "Fresh fixture, English, light theme, comfortable density",
+  "submittedAtUtcMs": 1795807428194,
+  "individualCaptureTimestamps": "Unavailable",
+  "before": {
+    "nativeStatus": "2 versions saved on this device",
+    "selectVisible": 2
+  },
+  "after": {
+    "nativeStatus": "0 of 2 versions match the search",
+    "selectVisible": 0,
+    "query": "bambu56-no-such-version",
+    "submittedSearchPersisted": true
+  },
+  "captures": [
+    {
+      "path": "history-before-search.png",
+      "sha256": "b176469681b36c564ae8619df738dcff7e8d0017317a7b9d0bc5de8c0922ab5f",
+      "dimensions": [
+        1470,
+        1140
+      ]
+    },
+    {
+      "path": "history-after-search.png",
+      "sha256": "7b058f1b7b14e11fb21d6daa98ec90f14a9e827998c39699dabce91ffd6f16a9",
+      "dimensions": [
+        1470,
+        1140
+      ]
+    }
+  ],
+  "scope": "History filtering and saved search on this build. Subsequent changes to the calendar and graph require separate verification."
+}
