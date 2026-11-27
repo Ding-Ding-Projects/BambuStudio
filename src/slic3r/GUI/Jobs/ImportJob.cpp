@@ -167,6 +167,12 @@ void ImportJob::process(Ctl& ctl)
         // reader canceled before the worker's own flag was set.
         m_result.files.clear();
         m_result.originals.clear();
+        // The shared native progress indicator uses a negative percentage to
+        // hide an interrupted job. Queue it after the last worker update.
+        ctl.update_status(-1);
+    } catch (...) {
+        ctl.update_status(-1);
+        throw;
     }
 }
 
