@@ -22,19 +22,13 @@ round-trip checks before the metadata is atomically replaced. Invalid input
 leaves the existing file unchanged. A current file is not rewritten. The PO
 and compiled MO are never written by this command.
 
-Source membership is strict by default. Where the current integration build
-explicitly allows entries not yet in the English extraction, use the same
-option on both commands:
-
-```sh
-python bbl/i18n/yue_HK/refresh_coverage.py --allow-unreferenced
-python bbl/i18n/yue_HK/compile_translation.py --allow-unreferenced --check
-```
-
-Do not use that option to conceal missing source registrations. A deliberate
-`source-pending` entry remains subject to every other validation rule.
-Use `--require-complete` for the full English-to-Cantonese coverage audit;
-refreshing counts alone does not establish complete localization.
+Source membership is strict. Run `python scripts/i18n/update_catalogs.py --check`
+to compare the compiled native source inventory and hints with the template and
+both catalogs. The native build and the installed-file verification both use
+`--require-complete`; every English message needs a Cantonese translation.
+A deliberately annotated `source-pending` entry names its pending source and
+remains subject to all other checks. Refreshing counts alone does not establish
+source coverage, translation quality or correct display in the running application.
 Custom fixtures can specify `--po`, `--source`, and `--coverage`.
 
 Builds continue to validate the committed counts strictly. They do not invoke
