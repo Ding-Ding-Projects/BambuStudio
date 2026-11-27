@@ -90,7 +90,28 @@ struct Progress {
     bool Update(int){return false;}bool WasCancelled()const{return true;}
     void Show(bool){}void Hide(){}void Raise(){}
 };
+enum class LoadStrategy { LoadModel = 1, LoadConfig = 2, Silence = 4, Restore = 8 };
+constexpr LoadStrategy operator|(LoadStrategy left, LoadStrategy right) {
+    return static_cast<LoadStrategy>(static_cast<int>(left) | static_cast<int>(right));
+}
+constexpr bool operator&(LoadStrategy left, LoadStrategy right) {
+    return (static_cast<int>(left) & static_cast<int>(right)) != 0;
+}
+static void check_archive_routing(const std::string &originfile, ProjectLoadContext context,
+                                  bool expect_external_parts, bool expect_original_identity) {
+    // ACTUAL_ARCHIVE_ROUTING
+    assert((strategy & LoadStrategy::LoadModel) && (strategy & LoadStrategy::LoadConfig));
+    assert((strategy & LoadStrategy::Restore) == expect_external_parts);
+    assert(load_restore == expect_original_identity);
+}
 int main(){
+    ProjectLoadContext history;
+    history.standalone_history_snapshot = true;
+    check_archive_routing("-", {}, false, false);
+    check_archive_routing("<silence>", {}, false, false);
+    check_archive_routing("original.3mf", {}, true, true);
+    check_archive_routing("original.3mf", history, false, true);
+    check_archive_routing("", history, false, true);
     const auto automatic=ProjectLoadMode::AutomaticStartup;
     {Fixture f;ProjectRestoreResult result=ProjectRestoreResult::Failed;
      assert(!f.restore({automatic,&result}).empty()&&f.applied==1&&f.released==0);}
