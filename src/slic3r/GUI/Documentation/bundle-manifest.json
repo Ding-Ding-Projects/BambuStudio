@@ -1890,12 +1890,12 @@
     {
       "route": "windows/minecraft-servers.md",
       "title": "Minecraft servers",
-      "sha256": "031be64df0523c6d3dfe3bccc7d8ad53759eaf7e96798e1b224455bf00bcd41b"
+      "sha256": "0277467934ff4286561319f2aa6f5271b6a9b540203c0c689a455ad4bb8c3f87"
     },
     {
       "route": "windows/minecraft-servers.yue_HK.md",
       "title": "Minecraft 伺服器",
-      "sha256": "247da2a3666494367d4d7466e6d788e34ac653259386559f04a584d19af856f3"
+      "sha256": "331bf2ebb7ef8c18866f5426081ce0b2904dae0d3ecc057b65972c4e539192ec"
     },
     {
       "route": "windows/motion-temporal-capture.md",
@@ -2410,7 +2410,7 @@
       "bytes": 16430
     }
   ],
-  "bundle_sha256": "150e61c17b5565f8c324ef666e8ee64e75d04fabda7956701c491519dab6070e",
+  "bundle_sha256": "1c6f7d25876e0d75b58d604dea2a75c7e2ea9b586a142bb9d2bc2160b64a76ec",
   "unavailable_references": [
     {
       "source": "api/README.md",
