@@ -228,14 +228,22 @@ that cover the area exactly once), the library file and SHA-1. Its negative
 build rewrites every line of `server.properties` and plans batches of 17 x 17
 chunks, and must fail.
 
-## Not done yet
+## Verification and remaining scope
 
-Provisioning a new native server over SSH, installing native flavours other than
-Vanilla (they are recognised when adopted), the plugin and pack catalogue,
-checking commands against the version's command tree, the memory chart, ticks
-per second, keeping the remote console password in the Windows vault, dragging
-the generator's area on the preview, and the generator's sea level, lowest Y and
-height (they need a data pack) are designed but not built.
+All eight edition/target combinations have partial management workflows. The
+matrix below identifies what each one actually does. The following capability
+groups remain incomplete.
+
+| Capability | Implemented | Remaining acceptance |
+| --- | --- | --- |
+| Version discovery | Mojang Java manifest, selectable distribution and container version, exact JAR metadata | Archived Bedrock distribution discovery and sample verification by version |
+| Provisioning | Local Java and Bedrock, SSH-native package setup and both editions in Docker contexts | End-to-end playable installations for the complete edition/target matrix |
+| Content | Version/loader-filtered Modrinth catalog, local Java plugins/mods/data packs and local Bedrock resource and behavior packs | Dependency resolution, every target and runtime compatibility |
+| Console | Local and SSH-native process consoles, hash-bound command tree and typed argument checking | Unimplemented custom argument grammars and both container consoles |
+| Settings and credentials | Java properties, target-scoped client credential, authenticated process-bound loopback RCON | Complete Bedrock settings, remote credential and settings coverage |
+| Monitoring | Local process working set history, Paper/Purpur measured TPS | Equivalent target-specific monitoring and verified ready/play status |
+| World generation | Exact-JAR registry extraction, custom normal terrain pack, area selection, folder/ZIP writer | Additional distribution schemas and playable same-version reopen |
+| Recovery | Local Java backup and restore, isolated fixture exercises | Reversible restore and recovery evidence for every target |
 
 ## Container servers
 
@@ -263,7 +271,7 @@ context; the dialog takes no SSH password or private key.
 | --- | --- | --- |
 | Local process | Vanilla creation and existing Java server management | Trusted Windows ZIP installation, launch, console, stop |
 | Local container | Creation, listing, start and stop | Creation, listing, start and stop |
-| SSH process | Launch existing server.jar, console, stop | Launch existing Linux dedicated server, console, stop |
+| SSH process | Provision trusted JAR in a new directory, start, console, stop | Provision trusted Linux ZIP in a new directory, start, console, stop |
 | SSH container via Docker context | Creation, listing, start and stop implemented; end-to-end verification pending | Creation, listing, start and stop implemented; end-to-end verification pending |
 
 This target inventory covers eight edition and target combinations. All eight have
@@ -277,6 +285,16 @@ local Bedrock server, choose **Install Bedrock ZIP**, select a trusted Windows
 dedicated-server distribution, then its parent directory. The manager
 extracts into a new directory named after the ZIP and refuses an existing
 destination. Review its server.properties and network settings before start.
+
+For a new SSH installation, enter a trusted existing OpenSSH identity, the
+absolute package path on that host and a new absolute destination directory.
+**Provision new SSH server** checks the package and available filesystem,
+copies the Java server JAR or extracts the Bedrock Linux distribution, sets
+the port and records ownership. It refuses an existing destination. The Java
+setup binds to loopback and leaves the EULA unaccepted. Starting from the
+dialog after explicitly accepting the EULA activates that newly provisioned
+Java server. An owned remote launch verifies the installation marker and takes
+a per-instance lock. No SSH password or private key enters the manager.
 
 For an existing local Bedrock installation choose its directory. For an SSH
 process choose Java or Bedrock, an existing OpenSSH profile and an absolute
