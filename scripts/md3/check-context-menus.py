@@ -115,11 +115,16 @@ def main():
     def open_surface(surface):
         before = {w['handle'] for w in windows()}
         form = (sweep.cantonese_form(surface, cantonese) if cantonese else None) or surface
-        send(args.desktop, state['main'], command=f'invoke {form}')
-        # The dialog itself, not a popup it brings along (the gear shows a small
-        # "panel" before Preferences).
+        if surface == 'Preferences':
+            # A substring menu invocation matches Export preferences first.
+            cheap('win_send_keys', hwnd=state['main'], keys=['ctrl', 'p'])
+        else:
+            send(args.desktop, state['main'], command=f'invoke {form}')
+        expected_titles = {surface.casefold(), form.casefold()}
         return wait_for(lambda: next((w for w in windows() if w['handle'] not in before
-                                      and w['class'] == '#32770'), None), 15)
+                                      and w['class'] == '#32770'
+                                      and any(title in w.get('title', '').casefold()
+                                              for title in expected_titles)), None), 15)
 
     def text_fields(dialog):
         staged = os.path.join(staging, f'{state["pid"]}-{len(results)}.jsonl')
