@@ -20,7 +20,7 @@ assert(manualClassification,'Missing interactive project classification');
 const downstream=[
   take(/if \(\(!is_project_file\) && \(!load_old_project\)\)/)+' { ++import_heuristics; '+take(/deleted_objects = model\.removed_objects_with_zero_volume\(\);/)+' if(deleted_objects) ++modal_notices; }',
   'for(auto* model_object:model.objects) '+take(/model_object->ensure_on_bed\(is_project_file\);/),
-  take(/auto loaded_idxs = load_model_objects\(model\.objects, is_project_file, false,\s+load_progress_callback\);/),
+  take(/auto loaded_idxs = load_model_objects\(model\.objects, is_project_file, false,\s+load_progress_callback, prepared \? &model : nullptr\);/),
   '(void)loaded_idxs;'
 ].join('\n');
 const fixture=readFileSync(path.join(root,'tests/startup_nonmodal_fixture.cpp'),'utf8')
