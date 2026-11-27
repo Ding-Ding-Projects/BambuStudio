@@ -141,7 +141,7 @@ std::string without_vendor_melody(const std::string &gcode, bool finish)
                     }
                 } else if (armed && line == "M1006 S1") {
                     sequence = pos;
-                } else if (line != "M17" && line != "M400 S1") {
+                } else if (line != "M17" && line != "M400 S1" && line.compare(0, 5, "M104 ") != 0) {
                     armed = false;
                 }
             }

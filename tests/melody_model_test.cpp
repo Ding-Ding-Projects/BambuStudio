@@ -60,6 +60,10 @@ static void import_assertions()
     CHECK(sparse.steps[0].voices[1] == (MelodyVoice{60, 25, 80}));
     CHECK(sparse.steps[0].voices[0] == (MelodyVoice{0, 0, 0}));
     CHECK(sparse.steps[1].voices[0] == (MelodyVoice{0, 12, 0}));
+    Melody global_levels;
+    CHECK(melody_parse_gcode("M1006 S1\nM1006 L99 M85 N60\nM1006 A0 B0 C37 D10 E37 F10\n", global_levels));
+    CHECK(global_levels.steps[0].voices[1] == (MelodyVoice{60, 10, 85}));
+    CHECK(global_levels.steps[0].voices[2] == (MelodyVoice{60, 10, 60}));
     // Nothing to import.
     Melody none;
     CHECK(!melody_parse_gcode("G28\nM1006 S1\nM1006 W\n", none));

@@ -185,6 +185,7 @@ inline bool melody_parse_gcode(const std::string &text, Melody &out)
     std::istringstream in(text);
     std::string line;
     bool found = false;
+    std::array<int, 3> master_volume{100, 100, 100};
     while (std::getline(in, line)) {
         if (!line.empty() && line.back() == '\r') line.pop_back();
         size_t start = line.find_first_not_of(" \t");
@@ -213,6 +214,12 @@ inline bool melody_parse_gcode(const std::string &text, Melody &out)
                     if (end && *end == '\0') { values[k] = static_cast<int>(v); have[k] = true; }
                 }
         }
+        if (!have[0] && !have[3] && !have[6]) {
+            if (line == "M1006 S1") master_volume.fill(100);
+            for (size_t v = 0; v < 3; ++v)
+                if (have[3 * v + 2]) master_volume[v] = std::clamp(values[3 * v + 2], 0, 100);
+            continue;
+        }
         bool valid = true;
         bool any_event = false;
         for (int k : {0, 3, 6}) {
@@ -223,6 +230,7 @@ inline bool melody_parse_gcode(const std::string &text, Melody &out)
                 valid = false;
                 break;
             }
+            if (!have[k + 2] && values[k] != 0) values[k + 2] = master_volume[k / 3];
             if (values[k] != 0) values[k] += 23;
             any_event = true;
         }
