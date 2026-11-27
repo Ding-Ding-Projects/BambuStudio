@@ -92,7 +92,8 @@ ZipOutcome write_zip(const std::string &root, const std::vector<std::string> &en
                      const std::function<void(std::uint64_t, std::uint64_t)> &progress = {}, const std::atomic<bool> *cancel = nullptr);
 // Extracts a backup into `target` (which must not exist yet). Names that would
 // land outside it are refused.
-ZipOutcome extract_zip(const std::string &zip_path, const std::string &target, const std::atomic<bool> *cancel = nullptr);
+ZipOutcome extract_zip(const std::string &zip_path, const std::string &target, const std::atomic<bool> *cancel = nullptr,
+                       std::uint64_t byte_limit = UINT64_MAX);
 std::vector<std::string> zip_top_entries(const std::string &zip_path);
 
 // Copies a folder tree (for writing a generated world as a folder).

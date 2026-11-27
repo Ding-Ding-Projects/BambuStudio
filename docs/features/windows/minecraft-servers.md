@@ -230,15 +230,16 @@ chunks, and must fail.
 
 ## Not done yet
 
-Native servers over SSH, native Bedrock servers, installing native flavours other than
+Provisioning a new native server over SSH, installing native flavours other than
 Vanilla (they are recognised when adopted), the plugin and pack catalogue,
 checking commands against the version's command tree, the memory chart, ticks
 per second, keeping the remote console password in the Windows vault, dragging
 the generator's area on the preview, and the generator's sea level, lowest Y and
 height (they need a data pack) are designed but not built.
+
 ## Container servers
 
-Open **File > Minecraft servers > Container servers**. Enter an existing Docker
+Open **File > Minecraft servers > More targets > Container servers**. Enter an existing Docker
 context, either a local engine or an SSH context configured in the Docker CLI.
 Choose Java or Bedrock, the server version, the container image tag, the host
 port and, for Java, the distribution. Java offers Vanilla, Paper, Purpur,
@@ -260,11 +261,29 @@ context; the dialog takes no SSH password or private key.
 
 | Manager target | Java | Bedrock |
 | --- | --- | --- |
-| Local process | Vanilla creation and existing Java server management | Unbuilt |
+| Local process | Vanilla creation and existing Java server management | Trusted Windows ZIP installation, launch, console, stop |
 | Local container | Creation, listing, start and stop | Creation, listing, start and stop |
-| SSH process | Unbuilt | Unbuilt |
+| SSH process | Launch existing server.jar, console, stop | Launch existing Linux dedicated server, console, stop |
 | SSH container via Docker context | Creation, listing, start and stop implemented; end-to-end verification pending | Creation, listing, start and stop implemented; end-to-end verification pending |
 
-This target inventory covers eight edition and target combinations. Five have
-partial workflows and three have no implementation. Full version, operational,
+This target inventory covers eight edition and target combinations. All eight have
+partial workflows. Full version, operational,
 content installation, metrics and restore coverage is still pending.
+
+### Native process targets
+
+Open **More targets > Native console and Bedrock setup**. To provision a
+local Bedrock server, choose **Install Bedrock ZIP**, select a trusted Windows
+dedicated-server distribution, then its parent directory. The manager
+extracts into a new directory named after the ZIP and refuses an existing
+destination. Review its server.properties and network settings before start.
+
+For an existing local Bedrock installation choose its directory. For an SSH
+process choose Java or Bedrock, an existing OpenSSH profile and an absolute
+Linux server directory. The host must already be trusted and its identity
+must work without prompting. Java expects java on PATH, server.jar,
+server.properties and the server's own EULA configuration. Bedrock expects
+an executable bedrock_server and server.properties. Review network settings
+and accept the EULA before starting. The dialog streams output, supports
+single-line console commands and can send a graceful stop. A successful SSH
+process launch alone does not indicate that the game server has become ready.
