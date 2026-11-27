@@ -1,6 +1,7 @@
 #include "ServersPanel.hpp"
 #include "ContainerServersDialog.hpp"
 #include "ContentInstaller.hpp"
+#include "ContentLifecycleDialog.hpp"
 #include "ContentCatalogDialog.hpp"
 #include "NativeServersDialog.hpp"
 
@@ -1375,6 +1376,13 @@ void ServersPanel::Ui::build_overview(wxWindow *page)
     s->Add(ticks,0,wxBOTTOM,page->FromDIP(6));
     auto *row = new wxBoxSizer(wxHORIZONTAL);
     row->Add(text(page, Label::Head_13, _L("Recent events")), 1, wxALIGN_CENTER_VERTICAL);
+    auto *manage=button(page,_L("Manage installed content..."),GlyphServer,Button::Variant::Outlined);
+    manage->Bind(wxEVT_BUTTON,[this](wxCommandEvent &){
+        const auto *sv=server();if(!sv || busy)return;
+        if(Live::get().running(sv->id)){MessageDialog(self,_L("Stop the server before changing installed content."),_L("Installed content"),wxOK|wxICON_INFORMATION).ShowModal();return;}
+        show_java_content_inventory(self,sv->folder,sv->flavour);
+    });
+    row->Add(manage,0,wxRIGHT,page->FromDIP(8));
     auto *catalog = button(page, _L("Browse catalog..."), GlyphFind, Button::Variant::Outlined);
     catalog->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) {
         ServerRecord *sv = server();

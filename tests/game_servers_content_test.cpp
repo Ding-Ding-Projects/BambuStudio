@@ -5,6 +5,7 @@
 #include "../src/slic3r/GUI/GameServers/BedrockSettings.hpp"
 #include "../src/slic3r/GUI/GameServers/BedrockDistributions.hpp"
 #include "../src/slic3r/GUI/GameServers/LocalJavaInstall.hpp"
+#include "../src/slic3r/GUI/GameServers/ContentLifecycle.hpp"
 #include "../src/slic3r/GUI/GameServers/ServerSystem.hpp"
 #include "libslic3r/miniz_extension.hpp"
 #include <filesystem>
@@ -20,6 +21,13 @@ namespace Slic3r {
 bool open_zip_reader(mz_zip_archive *zip, const std::string &path) { return mz_zip_reader_init_file(zip, path.c_str(), 0) != 0; }
 bool close_zip_reader(mz_zip_archive *zip) { return mz_zip_reader_end(zip) != 0; }
 namespace GUI { namespace GameServers {
+bool read_file(const std::string &name,std::string &out,std::size_t limit){
+    std::ifstream f(fs::u8path(name),std::ios::binary);if(!f || fs::file_size(fs::u8path(name))>limit)return false;
+    out.assign(std::istreambuf_iterator<char>(f),{});return true;
+}
+bool write_file_atomic(const std::string &name,const std::string &data,std::string *){
+    std::ofstream f(fs::u8path(name),std::ios::binary);f.write(data.data(),std::streamsize(data.size()));return bool(f);
+}
 ServerFolder inspect_folder(const std::string &dir)
 {
     ServerFolder result;
@@ -111,6 +119,18 @@ int main(int argc, char **argv)
     check(fs::exists(root / "plugins" / plugin.filename()), "plugin destination");
     check(fs::exists(root / "mods" / mod.filename()), "mod destination");
     check(fs::exists(root / "world" / "datapacks" / pack.filename()), "pack destination");
+    auto selected_package=[&]{
+        for(auto e:list_installed_java_content(root))if(e.name==plugin.filename().string())return e;
+        throw std::runtime_error("package missing from active or recovery inventory");
+    };
+    const auto next=dir/"updated.jar";
+    package(next,{{"plugin.yml","name: fixture\nversion: 2\n"}});
+    check(change_installed_java_content(root,"Paper",selected_package(),"disable").empty(),"disable package");
+    check(selected_package().state=="disabled" && !fs::exists(root/"plugins"/plugin.filename()),"disabled package still active");
+    check(change_installed_java_content(root,"Paper",selected_package(),"update",next).empty(),"update disabled package");
+    check(change_installed_java_content(root,"Paper",selected_package(),"rollback").empty(),"restore prior version");
+    check(change_installed_java_content(root,"Paper",selected_package(),"remove").empty() && selected_package().state=="removed","remove package with recovery");
+    check(change_installed_java_content(root,"Paper",selected_package(),"enable").empty() && selected_package().state=="enabled","restore removed package");
     std::ofstream(root / "locked") << "yes";
     check(!install_java_content(root.u8string(), "Fabric", mod.u8string()).ok, "running world accepted");
     std::cout << "Content installation: three real ZIP/JAR installs and six ownership, loader and destination checks passed.\n";
