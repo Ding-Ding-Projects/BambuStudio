@@ -1,3 +1,9 @@
+---
+translation-of: attention-and-message-decoration.md
+source-sha256: d89193185de121ccb4a9e1d5159f62485c166eb3597503ae1e6191ab2b01d85f
+review-status: agent-drafted
+---
+
 # 專注介面調整同訊息裝飾
 
 集中現時項目、減少刺激、顯示經過時間、一次一件事同靜置提醒都係獨立開關，全部預設關閉並於此瀏覽器儲存。佢哋係介面調整，唔係診斷、醫療承諾、評分或自動任務推斷。
@@ -11,6 +17,8 @@
 訊息表情符號預設開啟，裝飾用 `aria-hidden=true`。事實文字、按鈕、標籤同無障礙名稱保持原樣；關閉即時移除並儲存。
 
 7 個調整及裝飾來源測試、24 個既有網頁測試同 11 個偏好及通知測試通過，共 42 個。五模式清單逐個移除都要變紅，還原後變綠。指令面板、歷史、共享 School 模式同實際瀏覽器證據仍未完成。
+
+每項調整都獨立，改一項唔會郁其他項。呢啲控制都可以喺設定搜尋到，搜尋欄旁邊有獨立嘅正規表達式編輯器。英文、廣東話同雙語都要保留確實嘅分鐘數同操作。驗證指令係 `node --test ui-md3/tests/site-attention.test.mjs ui-md3/tests/site.test.mjs ui-md3/tests/site-behaviour.test.mjs`。真實瀏覽器驗證要等隱藏啟動途徑修好，詳見[隱藏瀏覽器驗證](hidden-browser-verification.yue_HK.md)。
 
 ## 建議文章
 

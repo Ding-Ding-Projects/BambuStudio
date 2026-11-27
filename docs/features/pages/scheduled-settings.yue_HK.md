@@ -1,3 +1,9 @@
+---
+translation-of: scheduled-settings.md
+source-sha256: b941ab5c3da166c7c25af389e812ed15e002228eee187cca2b885aaa4b9a4354
+review-status: agent-drafted
+---
+
 # 訪客設定排程
 
 [English](scheduled-settings.md)
