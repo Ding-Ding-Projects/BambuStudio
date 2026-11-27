@@ -1,3 +1,4 @@
+#include "Widgets/DateRangePicker.hpp"
 #include "Export/ExportDialog.hpp"
 #include "HumanDate.hpp"
 #include "ChangelogDialog.hpp"
@@ -979,18 +980,18 @@ void ChangelogDialog::update_date_error()
     Layout();
 }
 
+void show_date_range_picker(wxWindow *anchor, const Changelog::DateRange &range,
+                            std::function<void(const Changelog::DateRange &)> on_change)
+{
+    auto *picker = new ChangelogCalendarPopup(wxGetTopLevelParent(anchor), range, std::move(on_change));
+    picker->ShowUnder(anchor);
+}
+
 void ChangelogDialog::open_calendar()
 {
-    // Rebuilt per open so it re-derives theme, DPI and the current range.
-    m_calendar = new ChangelogCalendarPopup(this, m_range, [this](const Changelog::DateRange &range) {
+    show_date_range_picker(m_calendar_button, m_range, [this](const Changelog::DateRange &range) {
         set_range(range, true);
     });
-    m_calendar->Bind(wxEVT_DESTROY, [this](wxWindowDestroyEvent &e) {
-        if (e.GetWindow() == m_calendar)
-            m_calendar = nullptr;
-        e.Skip();
-    });
-    m_calendar->ShowUnder(m_calendar_button);
 }
 
 // --- Copy / export ---------------------------------------------------------------

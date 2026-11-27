@@ -1,6 +1,7 @@
 #include <catch_main.hpp>
 
 #include "libslic3r/ProjectHistoryManager.hpp"
+#include "slic3r/GUI/CurrentVersionExport.hpp"
 #include "miniz/miniz.h"
 #include <git2.h>
 
@@ -693,3 +694,21 @@ TEST_CASE("Reopening a saved archive keeps newer local recovery history active",
 }
 
 } // namespace
+
+TEST_CASE("Current version export preserves the open portable archive and its aliases", "[project_history]")
+{
+    TemporaryTree tree;
+    const auto project = tree.path() / "project.3mf";
+    const auto alias = tree.path() / "alias.3mf";
+    const auto copy = tree.path() / "copy.3mf";
+    write_binary(project, {1});
+    fs::create_hard_link(project, alias);
+    using Slic3r::GUI::current_version_export_destination_allowed;
+    REQUIRE_FALSE(current_version_export_destination_allowed(project, {}));
+    REQUIRE_FALSE(current_version_export_destination_allowed(project, project));
+    REQUIRE_FALSE(current_version_export_destination_allowed(project, alias));
+    REQUIRE(current_version_export_destination_allowed(project, copy));
+    write_binary(copy, {2});
+    REQUIRE(current_version_export_destination_allowed(project, copy));
+    REQUIRE(current_version_export_destination_allowed({}, copy));
+}

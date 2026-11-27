@@ -81,18 +81,13 @@ void ImportJob::process(Ctl& ctl)
                 if (extension == ".amf") file.imperial_units = gamma;
             }
             check_cancel();
-            // Prepare recovery hulls off-thread too. Model copies share the
-            // immutable mesh/hull buffers; replacement below preserves them.
-            for (auto* object : file.model.objects)
-                for (auto* volume : object->volumes) {
-                    check_cancel();
-                    volume->calculate_convex_hull();
-                }
-            m_result.originals.emplace_back(file.model);
             size_t volume_count = 0, volume_index = 0;
             for (const auto* object : file.model.objects) volume_count += object->volumes.size();
             for (auto* object : file.model.objects) {
                 for (auto* volume : object->volumes) {
+                    check_cancel();
+                    // Prepare the original hull off-thread for scene attachment or recovery.
+                    volume->calculate_convex_hull();
                     check_cancel();
                     bool changed = false;
                     if (m_options.auto_simplify && should_simplify_mesh(volume->mesh().its.indices.size())) {
@@ -107,7 +102,11 @@ void ImportJob::process(Ctl& ctl)
                                 // Keep the quadric engine's error-limited coordinates.
                                 // Per-axis bounds rescaling would distort that result.
                                 check_cancel();
+                                auto original = volume->get_mesh_shared_ptr();
+                                auto original_hull = volume->get_convex_hull_shared_ptr();
                                 volume->set_mesh(std::move(reduced));
+                                m_result.originals.push_back({volume->get_mesh_shared_ptr(), std::move(original),
+                                                              std::move(original_hull)});
                                 volume->invalidate_convex_hull_2d();
                                 changed = true;
                                 ++m_result.simplified_volumes;
