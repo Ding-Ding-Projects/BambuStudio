@@ -1,6 +1,6 @@
 ---
 translation-of: live-readings.md
-source-sha256: b3c49036b38146f147599ab17c24ec7f4e11ca89b01361d1b8c0db7248384932
+source-sha256: 1f8ce7bd156fd663c589bd1e0e3b2a61c13002557ce1654071f2c2731575f2b7
 review-status: agent-drafted
 ---
 

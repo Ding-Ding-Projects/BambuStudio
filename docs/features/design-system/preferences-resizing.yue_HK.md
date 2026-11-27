@@ -1,6 +1,6 @@
 ---
 translation-of: preferences-resizing.md
-source-sha256: 635e6b3b30e2e386cc7fa0d16b8342c077eb8c2eb21f7a71d4d8274884a1e3a0
+source-sha256: b117223c0b8b225f8e4295721c2864f67f246b8ff07d1b4657da47eb5d92ab83
 review-status: agent-drafted
 ---
 

@@ -1,6 +1,6 @@
 ---
 translation-of: startup-project-recovery.md
-source-sha256: ee3edddc39a6bb884391711c2c4bc85a39df2dae2bbfb841d0f6725de37b72ea
+source-sha256: 3bf6d161b91012f5fc1bc7a1398faa79f819af3e5b4d824ed4373630d6e6d805
 review-status: agent-drafted
 ---
 

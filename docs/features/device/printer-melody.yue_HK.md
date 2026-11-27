@@ -1,6 +1,6 @@
 ---
 translation-of: printer-melody.md
-source-sha256: c82ab8442d31f524a3aaa1465c3bbf63db33db9b2f479115f231de502e209d10
+source-sha256: e508889b53deed6dc7574c0716bd842a6274d69a61bdab5059f39a6f9d9a3e6b
 review-status: agent-drafted
 ---
 
