@@ -5868,6 +5868,10 @@ void Sidebar::apply_prepare_section(const std::string &section) const
 {
     if (section != "ink" && section != "process" && section != "objects")
         return;
+    // Programmatic jumps, including a settings search result, skip the tab event.
+    // Hand the body back from the draft editor before showing the destination.
+    if (p->m_draft_panel && p->m_draft_panel->IsShown())
+        p->m_draft_panel->Activate(section);
     p->active_prepare_section = section;
     const bool process = section == "process";
     const bool objects = section == "objects";
