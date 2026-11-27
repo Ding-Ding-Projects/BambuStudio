@@ -371,7 +371,12 @@ bool copy_tree(const std::string &from, const std::string &to, std::string *erro
 Download fetch(const std::string &url, const std::function<void(std::uint64_t, std::uint64_t)> &progress, const std::atomic<bool> *cancel)
 {
     Download d;
-    auto     http = Http::get(url);
+    bool official=false;
+    for(const char *origin:{"https://piston-meta.mojang.com/","https://piston-data.mojang.com/","https://launchermeta.mojang.com/","https://launcher.mojang.com/","https://resources.download.minecraft.net/","https://s3.amazonaws.com/Minecraft.Download/"})
+        if(url.rfind(origin,0)==0){official=true;break;}
+    if(!official){d.error="Unsupported public Minecraft download origin.";return d;}
+    auto http=Http::get(url);
+    http.clear_headers().follow_redirects(false).size_limit(512ULL*1024*1024).timeout_max(180);
     http.timeout_connect(20)
         .on_progress([&](Http::Progress p, bool &stop) {
             if (progress) progress(p.dlnow, p.dltotal);
@@ -397,7 +402,7 @@ Download fetch(const std::string &url, const std::function<void(std::uint64_t, s
 }
 
 Download fetch_to_file(const std::string &url, const std::string &target_u8, const std::string &sha1,
-                       const std::function<void(std::uint64_t, std::uint64_t)> &progress, const std::atomic<bool> *cancel)
+                       const std::function<void(std::uint64_t, std::uint64_t)> &progress, const std::atomic<bool> *cancel, std::uint64_t expected_size)
 {
     const fs::path  target = fs::u8path(target_u8);
     std::error_code ec;
@@ -408,6 +413,7 @@ Download fetch_to_file(const std::string &url, const std::string &target_u8, con
     }
     Download d = fetch(url, progress, cancel);
     if (!d.ok) return d;
+    if(expected_size && d.bytes!=expected_size){d.ok=false;d.error="Download size does not match the publisher record.";d.body.clear();return d;}
     if (!sha1.empty() && sha1_hex(d.body) != lower(sha1)) {
         d.ok    = false;
         d.error = "The download does not match its SHA-1, so it was not kept.";

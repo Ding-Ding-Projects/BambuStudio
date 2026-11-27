@@ -111,7 +111,7 @@ struct Download
 Download fetch(const std::string &url, const std::function<void(std::uint64_t, std::uint64_t)> &progress = {}, const std::atomic<bool> *cancel = nullptr);
 // Fetches into `target` (never over an existing file) when the SHA-1 matches.
 Download fetch_to_file(const std::string &url, const std::string &target, const std::string &sha1,
-                       const std::function<void(std::uint64_t, std::uint64_t)> &progress = {}, const std::atomic<bool> *cancel = nullptr);
+                       const std::function<void(std::uint64_t, std::uint64_t)> &progress = {}, const std::atomic<bool> *cancel = nullptr, std::uint64_t expected_size = 0);
 constexpr const char *kManifestUrl = "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json";
 
 // A running server ------------------------------------------------------------

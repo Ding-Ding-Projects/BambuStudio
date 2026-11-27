@@ -4,6 +4,7 @@
 #include "../src/slic3r/GUI/GameServers/BedrockPack.hpp"
 #include "../src/slic3r/GUI/GameServers/BedrockSettings.hpp"
 #include "../src/slic3r/GUI/GameServers/BedrockDistributions.hpp"
+#include "../src/slic3r/GUI/GameServers/BedrockHistory.hpp"
 #include "../src/slic3r/GUI/GameServers/LocalJavaInstall.hpp"
 #include "../src/slic3r/GUI/GameServers/ContentLifecycle.hpp"
 #include "../src/slic3r/GUI/GameServers/LocalBedrockRecovery.hpp"
@@ -93,6 +94,11 @@ int main(int argc, char **argv) try
     check(change_bedrock_setting(bds,"server-port","19140") && bds.find("19140\r\n# retained")!=std::string::npos,"Bedrock line-ending preservation");
     const auto links=bedrock_distributions(R"({"result":{"links":[{"downloadType":"serverBedrockWindows","downloadUrl":"https://www.minecraft.net/bedrockdedicatedserver/bin-win/bedrock-server-1.26.66.1.zip"},{"downloadType":"serverBedrockLinux","downloadUrl":"https://example.org/tool.zip"}]}})");
     check(links.size()==1 && links[0].windows && links[0].version=="1.26.66.1","Bedrock download origin and version selection");
+    auto observed=merge_bedrock_history({},links,100);
+    auto other=links.front();other.version="1.26.68.1";other.file="bedrock-server-1.26.68.1.zip";other.url="https://www.minecraft.net/bedrockdedicatedserver/bin-win/"+other.file;
+    observed=merge_bedrock_history(observed,{other},200);
+    auto historical=read_bedrock_history(write_bedrock_history(observed));
+    check(historical.size()==2 && historical[0].current && !historical[1].current && historical[1].last==100,"observed Bedrock history lost previous source");
     const auto flavor=dir/"paper-1.21.4-99.jar", staged=dir/"setup-stage", fresh=dir/"new-server";
     package(flavor,{{"META-INF/MANIFEST.MF","Manifest-Version: 1.0\nMain-Class: io.papermc.paperclip.Paperclip\n"},{"version.json",R"({"id":"1.21.4","java_version":21})"}});
     fs::create_directory(staged);JarInfo inspected;std::string why;

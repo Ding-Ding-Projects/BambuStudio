@@ -478,3 +478,10 @@ settings. It excludes debugger passcodes, RCON passwords and transient
 database locks. A server-bound marker must match before restore. The new
 restore reads every file back against the ZIP's byte count and CRC. Existing
 archives and destination directories are preserved.
+
+Bedrock version refresh retains previously observed official download records
+with first- and last-seen times. Cached records can be viewed while offline;
+a historical link still has to answer before a package can be downloaded.
+Java acquisition verifies the manifest's version-record hash when available,
+the returned version ID, and the server file's published size and SHA-1.
+Requests clear unrelated client headers and use the approved public origins.
