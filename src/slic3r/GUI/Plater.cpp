@@ -16266,8 +16266,7 @@ std::vector<size_t> Plater::priv::load_files_now(const std::vector<fs::path>& in
                     // BBS: backup & restore
                     q->skip_thumbnail_invalid = true;
                     // Used to store color group mapping information in standard 3MF files
-                    std::map<int, std::vector<std::string>> color_group_map;
-                    VolumeColorInfoMap volume_color_data;
+                    // Keep these outputs in the per-file state used by the import and color adapters.
                     // Keep archive parsing and hull preparation detached too.
                     // This synchronous API retains its return contract while
                     // the modal progress owner pumps UI events and cancellation.
@@ -16277,7 +16276,7 @@ std::vector<size_t> Plater::priv::load_files_now(const std::vector<fs::path>& in
                     const LoadStrategy archive_strategy = strategy;
                     auto archive_future = std::async(std::launch::async, [&config_loaded, &config_substitutions,
                         &en_3mf_file_type, &plate_data, &project_presets, &file_version,
-                        &color_group_map, &volume_color_data, &has_3mf_textures, &has_3mf_unit, &archive_cancel, &archive_percent,
+                        &color_group_map, &volume_color_data, &has_3mf_textures, &has_file_unit, &external_mixed, &archive_cancel, &archive_percent,
                         archive_path, archive_strategy, stage_percent]() {
                         Model detached = Model::read_from_archive(archive_path, &config_loaded, &config_substitutions,
                             en_3mf_file_type, archive_strategy, &plate_data, &project_presets, &file_version,
@@ -16287,7 +16286,7 @@ std::vector<size_t> Plater::priv::load_files_now(const std::vector<fs::path>& in
                                 const int percent = stage_percent[safe_stage] + (total > 0 ?
                                     current * (stage_percent[safe_stage + 1] - stage_percent[safe_stage]) / total : 0);
                                 archive_percent.store(std::clamp(percent, 0, 100));
-                            }, nullptr, &color_group_map, &volume_color_data, &has_3mf_textures, &has_3mf_unit);
+                            }, nullptr, &color_group_map, &volume_color_data, &has_3mf_textures, &has_file_unit, &external_mixed);
                         for (auto* object : detached.objects)
                             for (auto* volume : object->volumes) {
                                 if (archive_cancel.load()) return Model{};
