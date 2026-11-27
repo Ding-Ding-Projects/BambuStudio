@@ -5093,7 +5093,7 @@ void SelectMachineDialog::update_show_status(MachineObject* obj_)
     if (show_motion) m_slice_motion->show_required(*m_plater, readiness.plate_index);
     else m_slice_motion->clear();
     m_thumbnailPanel->Show(!show_motion);
-    m_panel_image->Layout();
+    m_slice_motion->GetParent()->Layout();
 
     /*agent check and printer valid check*/
     NetworkAgent* agent = Slic3r::GUI::wxGetApp().getAgent();
