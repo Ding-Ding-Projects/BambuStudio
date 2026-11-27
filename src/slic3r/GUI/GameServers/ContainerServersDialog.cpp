@@ -1,4 +1,5 @@
 #include "ContainerServersDialog.hpp"
+#include "WorldRecoveryDialog.hpp"
 #include "ContainerSetup.hpp"
 #include "ServerSystem.hpp"
 #include "ServerModel.hpp"
@@ -101,6 +102,15 @@ public:
         action(_L("Read EULA"), [] { wxLaunchDefaultBrowser("https://aka.ms/MinecraftEULA"); });
         action(_L("Create"), [this] { create(); });
         action(_L("Refresh servers"), [this] { refresh(); });
+        action(_L("World recovery..."),[this] {
+            const auto id=selected_id();if(id.empty())return;
+            run({"inspect","--format","{{.Config.Image}}",id},[this,id](const Lines &lines){
+                if(lines.size()!=1)return;
+                const bool bedrock=lines.front().rfind("itzg/minecraft-bedrock-server:",0)==0;
+                if(!bedrock && lines.front().rfind("itzg/minecraft-server:",0)!=0)return;
+                show_world_recovery(this,{true,bedrock,target(),{},id});
+            });
+        });
         action(_L("Read metrics"), [this] { metrics(); });
         action(_L("Start selected"), [this] { control("start"); });
         action(_L("Stop selected"), [this] { control("stop"); });

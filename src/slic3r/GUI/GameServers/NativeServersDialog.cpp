@@ -6,6 +6,7 @@
 #include "ContentInstaller.hpp"
 #include "BedrockSettingsDialog.hpp"
 #include "BedrockDownloadsDialog.hpp"
+#include "WorldRecoveryDialog.hpp"
 #include "../I18N.hpp"
 #include "../MsgDialog.hpp"
 #include "../Widgets/Button.hpp"
@@ -82,6 +83,10 @@ public:
         settings=action(_L("Bedrock settings..."),[this]{show_bedrock_settings(this,folder->GetTextCtrl()->GetValue().ToStdString(wxConvUTF8));});
         add_pack=action(_L("Install Bedrock pack..."),[this] { pack(false); });
         enable_pack=action(_L("Activate installed pack..."),[this] { pack(true); });
+        ssh_recovery=action(_L("SSH world recovery..."),[this]{
+            show_world_recovery(this,{false,target->GetSelection()==2,profile->GetTextCtrl()->GetValue().ToStdString(wxConvUTF8),
+                folder->GetTextCtrl()->GetValue().ToStdString(wxConvUTF8),local_owner(false)});
+        });
         remote_setup=action(_L("Provision new SSH server..."),[this]{ provision(); });
         setup_button = action(_L("Install Bedrock ZIP..."), [this] { install(); });
         action(_L("Read EULA"), [] { wxLaunchDefaultBrowser("https://aka.ms/MinecraftEULA"); });
@@ -216,7 +221,7 @@ private:
         add_pack->Enable(idle && target->GetSelection() == 0); enable_pack->Enable(idle && target->GetSelection() == 0);
         browse->Enable(idle && target->GetSelection() == 0);
         profile->Enable(idle && target->GetSelection() != 0);
-        remote_setup->Enable(idle && target->GetSelection()!=0);
+        remote_setup->Enable(idle && target->GetSelection()!=0);ssh_recovery->Enable(idle && target->GetSelection()!=0);
         source_package->Enable(idle && target->GetSelection()!=0);remote_port->Enable(idle && target->GetSelection()!=0);
         start_button->Enable(idle); stop_button->Enable(running); command->Enable(running);
     }
@@ -277,7 +282,7 @@ private:
     TextInput *profile, *folder, *command, *source_package;
     SpinInput *remote_port;
     TextArea *console;
-    Button *browse, *start_button, *stop_button, *setup_button, *add_pack, *enable_pack, *remote_setup, *settings;
+    Button *browse, *start_button, *stop_button, *setup_button, *add_pack, *enable_pack, *remote_setup, *settings, *ssh_recovery;
     LabeledCheckBox *agree;
     std::unique_ptr<ServerProcess> process;
     std::shared_ptr<bool> lifetime = std::make_shared<bool>(true);

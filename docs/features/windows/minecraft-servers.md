@@ -394,3 +394,22 @@ install the selected Windows build after accepting the EULA. The UI validates
 the package contents, computes a SHA-256 and accepts an optional independently
 trusted expected hash. The index itself does not provide a historical catalog
 or publisher checksums.
+
+### Restore an SSH or container world separately
+
+For a newly provisioned native SSH server open **SSH world recovery**. For a
+container recorded by this installation, select it and open **World
+recovery**. Stop the owned server before **Create backup**. The snapshot
+captures world files, Bedrock packs and selected configuration/player lists.
+It excludes transient locks and strips the RCON password and Bedrock debugger
+passcode from the property file. Backups are private to the target; protect
+them as player data.
+
+Archive creation checks source stability and verifies ZIP CRCs. The receipt
+contains the archive name, file count and SHA-256. **Refresh backups** lists
+available snapshots. **Restore separately** requires a new directory and
+verifies every restored file against the manifest. An SSH restore names its
+new absolute path. A container restore names a new directory in the reported
+dedicated recovery volume. Neither route writes into the live world.
+Container recovery runs a network-disabled Python 3.13 Alpine helper with
+read-only server mounts and requires a usable image on the target engine.
