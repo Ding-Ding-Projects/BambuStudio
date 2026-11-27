@@ -19,6 +19,7 @@ public:
 };
 using wxPoint = int;
 constexpr int wxEVT_COMBOBOX = 1;
+constexpr int DD_ITEM_STYLE_SPLIT_ITEM = 1;
 constexpr int DD_ITEM_STYLE_DISABLED = 2;
 struct wxCommandEvent {
     int index = -1, id = 0; long revision = 0; void *data = nullptr, *object = nullptr; std::string text;
@@ -206,9 +207,10 @@ TEST_CASE("selection can destroy its popup after dismissal", "[native-lifecycle]
     root->handler.callback = [&, root](auto &) { REQUIRE_FALSE(root->IsShown()); ++calls; delete root; };
     root->sendDropDownEvent(); REQUIRE(calls == 1);
 }
-TEST_CASE("disabled and invalid rows dispatch nothing", "[native-lifecycle]") {
-    std::vector<Item> rows{{"P1S", nullptr, DD_ITEM_STYLE_DISABLED}}; DropDown root(rows); int calls = 0;
+TEST_CASE("disabled, separator and invalid rows dispatch nothing", "[native-lifecycle]") {
+    std::vector<Item> rows{{"P1S", nullptr, DD_ITEM_STYLE_DISABLED}, {"Section", nullptr, DD_ITEM_STYLE_SPLIT_ITEM}}; DropDown root(rows); int calls = 0;
     root.handler.callback = [&](auto &) { ++calls; }; root.sendDropDownEvent();
+    root.hover_item = 1; root.sendDropDownEvent();
     root.hover_item = -1; root.sendDropDownEvent();
     root.hover_item = 9; root.sendDropDownEvent(); REQUIRE(calls == 0); REQUIRE(root.IsShown());
 }
