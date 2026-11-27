@@ -33,6 +33,7 @@ namespace Slic3r::GUI {
 
 class Plater;
 class RevisionGraph;
+class TabStrip;
 
 // Presents the immutable, app-local Git history for the currently open
 // project. Git work stays on ProjectHistoryManager's serialized worker; this
@@ -144,6 +145,7 @@ private:
     ComboBox *m_category_filter{nullptr}, *m_status_filter{nullptr}, *m_store_filter{nullptr};
     wxTextCtrl *m_device_filter{nullptr}, *m_detail{nullptr};
     RevisionGraph *m_graph{nullptr};
+    TabStrip *m_view_tabs{nullptr};
     wxTextCtrl *m_from_filter{nullptr}, *m_to_filter{nullptr};
     Button *m_submit_button{nullptr}, *m_compare_button{nullptr}, *m_pin_button{nullptr}, *m_rerun_button{nullptr}, *m_delete_button{nullptr}, *m_clear_button{nullptr};
 

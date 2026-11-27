@@ -432,7 +432,7 @@ void ProjectHistoryDialog::create_ui()
     TabStrip::Options options;
     options.surface_key = "local-history"; options.surface_name = _L("Local history"); options.strip_name = _L("History views");
     options.default_edge = MD3::Tabs::DockEdge::Top; options.allow_close = false;
-    auto *tabs = new TabStrip(m_content_scroll, options);
+    auto *tabs = m_view_tabs = new TabStrip(m_content_scroll, options);
     tabs->AddTab("timeline", _L("Timeline")); tabs->AddTab("table", _L("Table")); tabs->AddTab("graph", _L("Git graph"));
     tabs->AddTab("compare", _L("Compare")); tabs->AddTab("searches", _L("Past searches"));
     tabs->LoadLayout(); tabs->Activate("timeline", false);
@@ -1699,6 +1699,8 @@ void ProjectHistoryDialog::set_view(const std::string &view)
 {
     if (view != "timeline" && view != "table" && view != "graph" && view != "compare" && view != "searches") return;
     m_view = view;
+    // Compare and rerunning a saved search can navigate without a tab click.
+    if (m_view_tabs->ActiveId() != view) m_view_tabs->Activate(view, false);
     const bool searches = view == "searches";
     m_graph->Show(view == "graph");
     m_detail->Show(view == "compare");
