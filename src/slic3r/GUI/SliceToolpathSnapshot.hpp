@@ -3,6 +3,7 @@
 #include "libslic3r/GCode/GCodeProcessor.hpp"
 #include <algorithm>
 #include <cmath>
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <vector>
@@ -31,7 +32,7 @@ struct SliceToolpathSnapshot {
     float min_x{}, min_y{}, max_x{}, max_y{};
 };
 
-// Read only a finalized result while its owner guarantees it remains stable. A
+// Read a stable, finalized result or a writer-owned prefix synchronously. A
 // snapshot owns all its coordinates; painting never touches mutable slicer data.
 inline std::shared_ptr<const SliceToolpathSnapshot>
 make_slice_toolpath_snapshot(SliceToolpathKey key, const GCodeProcessorResult& result,

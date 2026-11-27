@@ -707,6 +707,11 @@ class Run:
         self.save_window('project-opened', 'Opened project before slicing')
         if self.slice_plate('slice-project-plate'):
             self.preview_captures('project-preview', 'Active plate after slicing the supplied project')
+        if self.args.project_sidebar:
+            self.go_prepare()
+            if self.select_sidebar_tab(2, 'project-objects'):
+                self.save_window('project-objects', 'Objects list for the supplied project')
+                self.plate_settings(first_plate=True)
 
     def run(self):
         s = self.s
@@ -760,7 +765,7 @@ class Run:
                 self.resize(NARROW)
         self.plate_settings()
 
-    def plate_settings(self):
+    def plate_settings(self, first_plate=False):
         """Try to reach the plate settings page; it is the last step because the app may exit here."""
         s = self.s
         if not s.alive():
@@ -775,7 +780,8 @@ class Run:
             self.cannot('prepare-plate-settings', 'the Objects list is not on screen')
             return
         # The row of the second plate: the first plate row, its cubes, then the plate row itself.
-        s.click(listing['hwnd'], 100, 10 + 22 * (self.first_plate_cubes + 1), settle=2)
+        row_y = 10 if first_plate else 10 + 22 * (self.first_plate_cubes + 1)
+        s.click(listing['hwnd'], 100, row_y, settle=2)
         if not self.select_sidebar_tab(1, 'prepare-plate-settings'):
             return
         switch = next(iter(shown(s.probe(), type_contains='SwitchButton')), None)
@@ -787,12 +793,14 @@ class Run:
         if not s.alive():
             self.cannot('prepare-plate-settings',
                         'the application exited when the Global and Objects switch on the Process page was clicked '
-                        '(the second plate row was selected in the Objects list before)')
+                        '(a plate row was selected in the Objects list before)')
             return
-        self.save_window('prepare-plate-settings', 'Process page switched to Objects with the second plate selected')
+        self.save_window('prepare-plate-settings', 'Process page switched to Objects with a plate selected')
         # Which settings page the switch brought up: the plate's own page is TabPrintPlate.
         tabs = sorted({r.get('type') for r in shown(s.probe(), type_contains='Slic3r::GUI::Tab')})
         self.notes.append({'plate_settings_tabs_shown': tabs})
+        if 'Slic3r::GUI::TabPrintPlate' not in tabs:
+            self.cannot('prepare-plate-settings', 'The native plate settings page did not become visible')
 
 
 def main():
@@ -803,10 +811,13 @@ def main():
     ap.add_argument('--tuple', required=True, dest='tuple_id')
     ap.add_argument('--out', required=True)
     ap.add_argument('--project', help='Open and slice this existing 3MF instead of creating sample cubes')
+    ap.add_argument('--project-sidebar', action='store_true', help='Also inspect Objects and native Plate Settings for --project')
     ap.add_argument('--printer', default=PRINTER)
     ap.add_argument('--desktop', default='bspreview')
     ap.add_argument('--startup-timeout', type=float, default=240)
     args = ap.parse_args()
+    if args.project_sidebar and not args.project:
+        ap.error('--project-sidebar requires --project')
     if args.project:
         args.project = os.path.abspath(args.project)
         if not os.path.isfile(args.project) or not args.project.lower().endswith('.3mf'):
