@@ -18,11 +18,11 @@
 #include "slic3r/Utils/PrintHost.hpp"
 #include "libslic3r/GCode/GCodeProcessor.hpp"
 #include "PartPlate.hpp"
+#include "SliceToolpathSnapshot.hpp"
 
 namespace boost { namespace filesystem { class path; } }
 
 namespace Slic3r {
-namespace GUI { struct SliceToolpathSnapshot; }
 
 class DynamicPrintConfig;
 class Model;
@@ -314,8 +314,7 @@ private:
 	std::mutex 		 			m_mutex;
 	std::condition_variable		m_condition;
 	State m_state = STATE_INITIAL;
-    mutable std::mutex m_live_toolpath_mutex;
-    std::shared_ptr<const GUI::SliceToolpathSnapshot> m_live_toolpath;
+    GUI::LiveSliceToolpathMailbox m_live_toolpath;
     std::atomic<uint64_t> m_automation_generation{0};
     std::atomic<int> m_automation_outcome{0};
     std::atomic<bool> m_cancel_requested{false};

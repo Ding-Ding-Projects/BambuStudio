@@ -6,6 +6,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <mutex>
 #include <vector>
 
 namespace Slic3r::GUI {
@@ -30,6 +31,35 @@ struct SliceToolpathSnapshot {
     std::vector<SliceToolpathSegment> segments;
     std::size_t source_segment_count{};
     float min_x{}, min_y{}, max_x{}, max_y{};
+};
+
+// One worker owns each generation; the UI polls without retaining any worker buffers.
+class LiveSliceToolpathMailbox {
+public:
+    void begin(std::uint64_t generation, int plate_index) {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        m_generation = generation;
+        m_plate_index = plate_index;
+        m_latest.reset();
+    }
+
+    void publish(std::uint64_t generation, int plate_index, std::shared_ptr<const SliceToolpathSnapshot> snapshot) {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        if (generation != m_generation || plate_index != m_plate_index) return;
+        if (snapshot && (snapshot->key.generation != generation || snapshot->key.plate_index != plate_index)) return;
+        m_latest = std::move(snapshot);
+    }
+
+    std::shared_ptr<const SliceToolpathSnapshot> read(std::uint64_t generation, int plate_index) const {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        return generation == m_generation && plate_index == m_plate_index ? m_latest : nullptr;
+    }
+
+private:
+    mutable std::mutex m_mutex;
+    std::uint64_t m_generation{};
+    int m_plate_index{-1};
+    std::shared_ptr<const SliceToolpathSnapshot> m_latest;
 };
 
 // Read a stable, finalized result or a writer-owned prefix synchronously. A

@@ -33,7 +33,6 @@
 #include <boost/filesystem/operations.hpp>
 #include <boost/nowide/cstdio.hpp>
 #include "I18N.hpp"
-#include "SliceToolpathSnapshot.hpp"
 //#include "RemovableDriveManager.hpp"
 
 #include "slic3r/GUI/Plater.hpp"
@@ -203,11 +202,9 @@ std::string BackgroundSlicingProcess::output_filepath_for_project(const boost::f
 std::shared_ptr<const GUI::SliceToolpathSnapshot>
 BackgroundSlicingProcess::live_slice_toolpath(uint64_t generation, int plate_index) const
 {
-    std::lock_guard<std::mutex> lock(m_live_toolpath_mutex);
-    if (!m_live_toolpath || cancellation_requested() || generation != automation_generation() ||
-        m_live_toolpath->key.generation != generation || m_live_toolpath->key.plate_index != plate_index)
+    if (cancellation_requested() || generation != automation_generation())
         return {};
-    return m_live_toolpath;
+    return m_live_toolpath.read(generation, plate_index);
 }
 
 void BackgroundSlicingProcess::process_fff()
@@ -215,6 +212,7 @@ void BackgroundSlicingProcess::process_fff()
     assert(m_print == m_fff_print);
     const auto generation = automation_generation();
     const int plate_index = m_current_plate->get_index();
+    m_live_toolpath.begin(generation, plate_index);
     PresetBundle &preset_bundle = *wxGetApp().preset_bundle;
     m_fff_print->set_BBL_Printer(preset_bundle.printers.get_edited_preset().is_bbl_vendor_preset(&preset_bundle));
 	//BBS: add the logic to process from an existed gcode file
@@ -286,9 +284,8 @@ void BackgroundSlicingProcess::process_fff()
             next_time = now + std::chrono::milliseconds(250);
             next_count = count + std::max<std::size_t>(1, count / 8);
             auto snapshot = GUI::make_slice_toolpath_snapshot({generation, plate_index, result.id}, result);
-            std::lock_guard<std::mutex> lock(m_live_toolpath_mutex);
             if (generation == automation_generation() && !cancellation_requested())
-                m_live_toolpath = std::move(snapshot);
+                m_live_toolpath.publish(generation, plate_index, std::move(snapshot));
         };
         m_fff_print->export_gcode(m_temp_output_path, m_gcode_result,
             [this](const ThumbnailsParams& params) { return this->render_thumbnails(params); }, std::move(moves_written));
