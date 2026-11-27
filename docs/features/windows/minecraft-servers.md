@@ -470,3 +470,11 @@ loader's active extension; a removed package is moved out of the loading
 directory and can be restored. Updating verifies the replacement's loader
 descriptor and keeps the previous archive. **Roll back version** restores it.
 The operation rechecks the selected file before publication.
+
+Local Bedrock installations also expose **Back up local Bedrock worlds** and
+**Restore local Bedrock backup separately**. The native backup checks the
+world database locks and archives generated worlds, packs and selected
+settings. It excludes debugger passcodes, RCON passwords and transient
+database locks. A server-bound marker must match before restore. The new
+restore reads every file back against the ZIP's byte count and CRC. Existing
+archives and destination directories are preserved.

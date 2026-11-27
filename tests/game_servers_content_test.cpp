@@ -6,6 +6,7 @@
 #include "../src/slic3r/GUI/GameServers/BedrockDistributions.hpp"
 #include "../src/slic3r/GUI/GameServers/LocalJavaInstall.hpp"
 #include "../src/slic3r/GUI/GameServers/ContentLifecycle.hpp"
+#include "../src/slic3r/GUI/GameServers/LocalBedrockRecovery.hpp"
 #include "../src/slic3r/GUI/GameServers/ServerSystem.hpp"
 #include "libslic3r/miniz_extension.hpp"
 #include <filesystem>
@@ -18,7 +19,10 @@ namespace fs = std::filesystem;
 // Only the file-system world lock and GUI-side server period are substituted.
 // The production installer, ZIP parser, filesystem operations and hashing run unchanged.
 namespace Slic3r {
+std::string MZ_Archive::get_errorstr(mz_zip_error err){return mz_zip_get_error_string(err);}
 bool open_zip_reader(mz_zip_archive *zip, const std::string &path) { return mz_zip_reader_init_file(zip, path.c_str(), 0) != 0; }
+bool open_zip_writer(mz_zip_archive *zip,const std::string &path){return mz_zip_writer_init_file(zip,path.c_str(),0)!=0;}
+bool close_zip_writer(mz_zip_archive *zip){return mz_zip_writer_end(zip)!=0;}
 bool close_zip_reader(mz_zip_archive *zip) { return mz_zip_reader_end(zip) != 0; }
 namespace GUI { namespace GameServers {
 bool read_file(const std::string &name,std::string &out,std::size_t limit){
@@ -52,7 +56,7 @@ static void package(const fs::path &path, std::initializer_list<std::pair<std::s
     check(mz_zip_writer_finalize_archive(&zip) && mz_zip_writer_end(&zip), "finish archive");
 }
 
-int main(int argc, char **argv)
+int main(int argc, char **argv) try
 {
     if (argc != 2) return 2;
     const fs::path dir = fs::u8path(argv[1]), root = dir / "server";
@@ -96,6 +100,17 @@ int main(int argc, char **argv)
     std::ofstream(staged/"server.properties")<<"server-port=25565\n";std::ofstream(staged/"eula.txt")<<"eula=false\n";
     check(publish_server_setup(staged,fresh,flavor.filename().string(),why) && fs::exists(fresh/flavor.filename()),"new local server staging");
     check(!publish_server_setup(staged,fresh,flavor.filename().string(),why) && fs::exists(fresh/"eula.txt"),"existing installation overwritten");
+#ifdef _WIN32
+    const auto bedrock_dir=dir/"bedrock-local",archive=dir/"bedrock-backup.zip",restore=dir/"bedrock-restore";
+    fs::create_directories(bedrock_dir/"worlds"/"Example"/"db");std::ofstream(bedrock_dir/"bedrock_server.exe")<<"inert fixture";
+    std::ofstream(bedrock_dir/"worlds"/"Example"/"level.dat")<<"test metadata";std::ofstream(bedrock_dir/"worlds"/"Example"/"db"/"LOCK");
+    std::ofstream(bedrock_dir/"server.properties",std::ios::binary)<<"server-name=example\nscript-debugger-passcode=disposable-fixture\n";
+    {const auto snapshot=backup_local_bedrock(bedrock_dir.u8string(),archive.u8string());if(!snapshot.ok)throw std::runtime_error("native Bedrock snapshot: "+snapshot.error);}
+    check(local_bedrock_archive(archive.u8string(),bedrock_dir.u8string()) && !local_bedrock_archive(archive.u8string(),root.u8string()),"native Bedrock owner marker");
+    check(extract_zip(archive.u8string(),restore.u8string()).ok && !extract_zip(archive.u8string(),restore.u8string()).ok,"native verified separate restore");
+    std::string restored;check(read_file((restore/"server.properties").u8string(),restored,1024)&&restored=="server-name=example\n","restore protected properties exclusion");
+    check(fs::exists(restore/"worlds"/"Example"/"level.dat") && !fs::exists(restore/"worlds"/"Example"/"db"/"LOCK"),"restored world files and excluded live lock");
+#endif
     const auto pack_info = R"({"header":{"uuid":"ec9410a2-de16-4f98-8eec-9efa1319db18","version":[1,0,4]},"modules":[{"type":"data"},{"type":"script"}]})";
     check(bedrock_pack(pack_info).group == "behavior", "valid Bedrock behavior pack was rejected");
     check(bedrock_pack("{}").id.empty(), "missing Bedrock manifest accepted");
@@ -135,3 +150,5 @@ int main(int argc, char **argv)
     check(!install_java_content(root.u8string(), "Fabric", mod.u8string()).ok, "running world accepted");
     std::cout << "Content installation: three real ZIP/JAR installs and six ownership, loader and destination checks passed.\n";
 }
+
+catch(const std::exception &e){std::cerr<<"Content fixture: "<<e.what()<<"\n";return 1;}

@@ -1154,6 +1154,8 @@ list(APPEND SLIC3R_GUI_SOURCES
     GUI/GameServers/WorldJarData.cpp
     GUI/GameServers/WorldRecoveryDialog.cpp
     GUI/GameServers/VersionReport.cpp
+    GUI/GameServers/ServerArchive.cpp
+    GUI/GameServers/LocalBedrockRecovery.cpp
     GUI/GameServers/LocalJavaInstall.cpp
     GUI/GameServers/RconCredential.cpp
     GUI/GameServers/BedrockDownloadsDialog.cpp
