@@ -1,3 +1,4 @@
+#include "slic3r/GUI/SliceMotion.hpp"
 #include "ProjectTabBar.hpp"
 #include "Plater.hpp"
 #include "ElementLocks/LockService.hpp"
@@ -21339,6 +21340,7 @@ void Plater::priv::on_slicing_began()
     bool is_first_plate = m_cur_slice_plate == 0;
     bool slice_all = q->m_only_gcode ? m_slice_all_only_has_gcode : m_slice_all;
     bool need_change_dailytips = !(slice_all && !is_first_plate);
+    SliceMotion::begin(*q, partplate_list.get_curr_plate_index());
     notification_manager->set_slicing_progress_began();
     notification_manager->update_slicing_notif_dailytips(need_change_dailytips);
 }
@@ -21627,6 +21629,10 @@ void Plater::priv::on_process_completed(SlicingProcessCompletedEvent &evt)
     //BBS: set the current plater's slice result to valid
     if (!this->background_process.empty())
         this->background_process.get_current_plate()->update_slice_result_valid_state(evt.success());
+
+    if (has_error || evt.cancelled() || !evt.success()) SliceMotion::stop();
+    else if (auto *plate = background_process.get_current_plate())
+        SliceMotion::finish(*q, plate->get_index());
 
     // mesh stats per plate + GPU/OpenGL info
     if (!has_error && !evt.cancelled() && evt.success()) {

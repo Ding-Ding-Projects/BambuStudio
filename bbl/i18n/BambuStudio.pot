@@ -37331,3 +37331,18 @@ msgstr ""
 
 msgid "Printer playback supports C1 through B6. Transpose notes outside this range before exporting."
 msgstr ""
+
+msgid "Model geometry"
+msgstr ""
+
+msgid "Plate needs slicing"
+msgstr ""
+
+msgid "Print order preview"
+msgstr ""
+
+msgid "Reslicing / Model geometry"
+msgstr ""
+
+msgid "Slicing / Model geometry"
+msgstr ""

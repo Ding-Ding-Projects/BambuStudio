@@ -1120,6 +1120,7 @@ public:
     static BoundingBoxf3                   s_first_primary_bounds;
     // printable_only == false -> render also non printable volumes as grayed
     // parts_only == false -> render also sla support and pad
+    bool render_slice_motion_thumbnail(ThumbnailData &data, int plate);
     void render_thumbnail(ThumbnailData& thumbnail_data, unsigned int w, unsigned int h, const ThumbnailsParams& thumbnail_params,
                                  Camera::EType           camera_type,
                                  Camera::ViewAngleType   camera_view_angle_type = Camera::ViewAngleType::Iso,

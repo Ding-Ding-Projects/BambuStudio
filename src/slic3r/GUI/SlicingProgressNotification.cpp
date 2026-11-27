@@ -1,5 +1,8 @@
+#include "slic3r/GUI/SliceMotionDrawing.hpp"
 #include "SlicingProgressNotification.hpp"
 #include "PreviewLayout.hpp"
+#include "Widgets/MD3Motion.hpp"
+#include "PartPlate.hpp"
 #include "GLCanvas3D.hpp"
 #include "Plater.hpp"
 #include "GCodeViewer.hpp"
@@ -247,7 +250,11 @@ void NotificationManager::SlicingProgressNotification::render(GLCanvas3D& canvas
     const float status_icon_width = m_sp_state == SlicingProgressState::SP_COMPLETED ? 44.0f * scale : 0.0f;
     const float status_width = std::max(1.0f, progress_panel_width - 46.0f * scale - status_icon_width);
     const float status_height = ImGui::CalcTextSize(m_text1.c_str(), nullptr, false, status_width).y;
-    const float progress_panel_height = std::max(58.0f * scale, status_height + m_line_height + 18.0f * scale);
+    auto *plater = wxGetApp().plater();
+    const bool show_scene = plater && SliceMotion::active(*plater) &&
+        (m_sp_state == SlicingProgressState::SP_PROGRESS || m_sp_state == SlicingProgressState::SP_COMPLETED);
+    const float scene_height = show_scene ? std::min(110.f * scale, float(cnv_size.get_height()) * .17f) : 0.f;
+    const float progress_panel_height = scene_height + std::max(58.0f * scale, status_height + m_line_height + 18.0f * scale);
     m_window_height = progress_panel_height;
     if (!fit_to_stack(initial_y)) {
         ImGui::PopStyleVar(2);
@@ -302,12 +309,18 @@ void NotificationManager::SlicingProgressNotification::render(GLCanvas3D& canvas
 			if (ImGui::BeginChild(child_name.c_str(), ImVec2(progress_panel_width, progress_panel_height), false, child_window_flags)) {
 				ImVec2 child_window_pos = ImGui::GetWindowPos();
 				ImVec2 button_size = ImVec2(38.f, 38.f) * scale;
-				ImVec2 button_pos = child_window_pos + ImVec2(progress_panel_width - button_size.x, (progress_panel_height - button_size.y) / 2.0f);
+				ImVec2 button_pos = child_window_pos + ImVec2(progress_panel_width - button_size.x, (progress_panel_height - scene_height - button_size.y) / 2.0f);
 				float  margin_x = 8.0f * scale;
 				ImVec2 progress_bar_pos = child_window_pos + ImVec2(0, status_height + 10.0f * scale);
 				ImVec2 progress_bar_size = ImVec2(progress_panel_width - button_size.x - margin_x, 4.0f * scale);
 				ImVec2 text_pos = child_window_pos + ImVec2(0.0f, 6.0f * scale);
 
+                if (show_scene) {
+                    render_slice_scene(child_window_pos + ImVec2(0,progress_panel_height-scene_height),
+                                       ImVec2(progress_panel_width,scene_height));
+                    if (!MD3::Motion::reduced() && m_sp_state == SlicingProgressState::SP_PROGRESS)
+                        canvas.request_extra_frame();
+                }
 				render_text(text_pos);
 				render_close_button(button_pos, button_size);
 				if (m_sp_state == SlicingProgressState::SP_PROGRESS) {
@@ -334,6 +347,53 @@ void NotificationManager::SlicingProgressNotification::render(GLCanvas3D& canvas
 	restore_default_theme();
 	if (fading_pop)
 		ImGui::PopStyleColor(3);
+}
+
+void NotificationManager::SlicingProgressNotification::render_slice_scene(const ImVec2 &pos, const ImVec2 &size)
+{
+    auto *plater = wxGetApp().plater();
+    auto key = SliceMotion::identify(*plater, SliceMotion::plate_index());
+    const wxImage &image = SliceMotion::image();
+    if (!key || !image.IsOk()) return;
+    if (!(key == m_model_key)) {
+        m_model_texture.reset();
+        std::vector<unsigned char> rgba;
+        const size_t count = size_t(image.GetWidth()) * image.GetHeight();
+        rgba.reserve(4 * count);
+        for (size_t i=0; i<count; ++i) {
+            const auto *rgb = image.GetData() + 3*i;
+            rgba.insert(rgba.end(),rgb,rgb+3);
+            rgba.push_back(image.GetAlpha()[i]);
+        }
+        if (!m_model_texture.load_from_raw_data(std::move(rgba),image.GetWidth(),image.GetHeight())) return;
+        m_model_key = key;
+    }
+    auto *draw = ImGui::GetWindowDrawList();
+    const float h = std::max(1.f,size.y-ImGui::GetTextLineHeight());
+    const auto paths = SliceMotion::paths(*plater);
+    const float model_width = paths ? size.x * .5f : size.x;
+    const float side = std::min(h,model_width);
+    const ImVec2 top(pos.x+(model_width-side)*.5f,pos.y);
+    draw->PushClipRect(pos,pos+size,true);
+    draw->AddImage((ImTextureID)(intptr_t)m_model_texture.get_id(),top,top+ImVec2(side,side));
+    const auto accent = md3_notif_u32(MD3::Role::Primary, m_is_dark);
+    const auto point = [&](double x,double y) { return ImVec2(pos.x+size.x*x,pos.y+h*y); };
+    if (paths) draw_slice_paths(*paths,SliceMotion::seconds(),MD3::Motion::reduced(),
+        [&](double x,double y,double xx,double yy,bool head) {
+            draw->AddLine(point((1+x)*.5,y),point((1+xx)*.5,yy),accent,head ? 3.f : 1.f);
+        });
+    draw_slice_motion(SliceMotion::kind(),SliceMotion::seconds(),MD3::Motion::reduced(),
+        [&](double x,double y,double xx,double yy,int weight) {draw->AddLine(point(x,y),point(xx,yy),accent,float(weight));},
+        [&](double x,double y,double rx,double ry) {
+            for(int i=0;i<32;++i) {
+                const double a=i*6.28318530718/32., b=(i+1)*6.28318530718/32.;
+                draw->AddLine(point(x+rx*std::cos(a),y+ry*std::sin(a)),point(x+rx*std::cos(b),y+ry*std::sin(b)),accent,2.f);
+            }
+        });
+    const auto label = paths ? _u8L("Print order preview") : SliceMotion::kind()==SliceMotionKind::DialogRebuild ?
+        _u8L("Reslicing / Model geometry") : _u8L("Slicing / Model geometry");
+    draw->AddText(ImVec2(pos.x,pos.y+h),md3_notif_u32(MD3::Role::OnSurface,m_is_dark),label.c_str());
+    draw->PopClipRect();
 }
 
 void Slic3r::GUI::NotificationManager::SlicingProgressNotification::render_text(const ImVec2& pos)

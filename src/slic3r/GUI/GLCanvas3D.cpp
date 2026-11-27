@@ -3554,6 +3554,16 @@ void GLCanvas3D::render(bool only_init)
     m_render_stats.increment_fps_counter();
 }
 
+bool GLCanvas3D::render_slice_motion_thumbnail(ThumbnailData &data, int plate)
+{
+    if (!_set_current(true)) return false;
+    ThumbnailsParams params{{}, true, true, false, true, plate};
+    params.use_plate_box = false;
+    params.exact_plate_instances = true;
+    render_thumbnail(data, 192, 192, params, Camera::EType::Ortho, Camera::ViewAngleType::Iso_3);
+    return data.is_valid();
+}
+
 void GLCanvas3D::render_thumbnail(ThumbnailData &         thumbnail_data,
                                   unsigned int            w,
                                   unsigned int            h,
@@ -13559,7 +13569,15 @@ void GLCanvas3D::_render_thumbnail_internal(ThumbnailData& thumbnail_data, const
         BOOST_LOG_TRIVIAL(info) << boost::format("render_thumbnail: plate_idx %1% volumes size %2%, shader %3%, use_top_view=%4%, for_picking=%5%") % plate_idx %
             visible_volumes.size() % shader.get() % (int)camera_view_angle_type % for_picking;
     }
-    else {
+    else if (thumbnail_params.exact_plate_instances) {
+        const auto &instances = partplate_list.get_plate(thumbnail_params.plate_id)->get_obj_and_inst_set();
+        for (GLVolume *vol : volumes.volumes) {
+            if (vol && vol->printable && !vol->is_modifier && !vol->is_wipe_tower &&
+                vol->composite_id.volume_id >= 0 && instances.count({vol->object_idx(),vol->instance_idx()}))
+                visible_volumes.emplace_back(vol);
+        }
+        if (visible_volumes.empty()) { thumbnail_data.reset(); return; }
+    } else {
         visible_volumes = volumes.volumes;
     }
     //BoundingBoxf3 volumes_box = plate_build_volume;

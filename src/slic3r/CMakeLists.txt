@@ -192,6 +192,7 @@ set(SLIC3R_GUI_SOURCES
     GUI/OpenGLManager.cpp
     GUI/Selection.hpp
     GUI/Selection.cpp
+    GUI/SliceMotion.cpp
     GUI/SlicingProgressNotification.cpp
     GUI/SlicingProgressNotification.hpp
     GUI/Gizmos/GLGizmosManager.cpp

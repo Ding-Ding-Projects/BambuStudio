@@ -61334,3 +61334,28 @@ msgstr "%s 唔支援 %s 噴嘴。已切換至 %s 噴嘴。"
 #. review-status: agent-drafted
 msgid "Printer playback supports C1 through B6. Transpose notes outside this range before exporting."
 msgstr "打印機支援 C1 至 B6。匯出前請將超出範圍嘅音符移調。"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Model geometry"
+msgstr "模型幾何"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Plate needs slicing"
+msgstr "打印板需要重新切片"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Print order preview"
+msgstr "打印次序預覽"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Reslicing / Model geometry"
+msgstr "重新切片 / 模型幾何"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "Slicing / Model geometry"
+msgstr "切片 / 模型幾何"

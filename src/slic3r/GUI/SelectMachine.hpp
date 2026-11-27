@@ -267,6 +267,7 @@ private:
     void OnTipsButtonClicked(wxCommandEvent &event);
 };
 
+class SliceMotionPanel;
 class ThumbnailPanel : public wxPanel
 {
 public:
@@ -466,6 +467,7 @@ protected:
     Label*                              m_txt_warn_when_drying{ nullptr };
 
     PrinterInfoBox*                     m_printer_box { nullptr};
+    SliceMotionPanel *                  m_slice_motion{nullptr};
     PrinterMsgPanel *                   m_text_printer_msg{nullptr};
     Label*                              m_text_printer_msg_tips{ nullptr };
     wxStaticText*                       m_staticText_bed_title{ nullptr };

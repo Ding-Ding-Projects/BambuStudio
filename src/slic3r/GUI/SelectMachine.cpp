@@ -1,3 +1,4 @@
+#include "slic3r/GUI/SliceMotion.hpp"
 #include "PrintSetupLayout.hpp"
 #include "PrepareInspectorLayout.hpp"
 #include "SelectMachine.hpp"
@@ -409,6 +410,9 @@ SelectMachineDialog::SelectMachineDialog(Plater *plater)
     m_thumbnailPanel->SetMaxSize(wxSize(FromDIP(198), FromDIP(198)));
     m_thumbnailPanel->SetBackgroundColour(ThemeColor::White);
     m_sizer_thumbnail->Add(m_thumbnailPanel, 0, wxALIGN_CENTER, 0);
+    m_slice_motion = new SliceMotionPanel(m_panel_image);
+    m_slice_motion->SetMinSize(FromDIP(wxSize(198,198)));
+    m_sizer_thumbnail->Add(m_slice_motion, 1, wxEXPAND);
     m_panel_image->SetSizer(m_sizer_thumbnail);
     m_panel_image->Layout();
 
@@ -5150,6 +5154,12 @@ static wxString _get_ext_loc_str(const std::unordered_set<int>& extruders, int t
 void SelectMachineDialog::update_show_status(MachineObject* obj_)
 {
     m_pre_print_checker.clear();
+    const auto readiness = m_print_type == PrintFromType::FROM_NORMAL ? send_plate_readiness() : SendReadinessVerdict{};
+    const bool show_motion = m_print_type == PrintFromType::FROM_NORMAL && readiness.readiness == SendReadiness::NeedsSlice;
+    if (show_motion) m_slice_motion->show_required(*m_plater, readiness.plate_index);
+    else m_slice_motion->clear();
+    m_thumbnailPanel->Show(!m_slice_motion->IsShown());
+    m_panel_image->Layout();
 
     /*agent check and printer valid check*/
     NetworkAgent* agent = Slic3r::GUI::wxGetApp().getAgent();
@@ -6257,7 +6267,7 @@ void SelectMachineDialog::slice_again_from_dialog()
     if (!can_slice_again_from_dialog())
         return;
     EndModal(wxID_CLOSE);
-    if (!wxGetApp().mainframe->request_slice_and_print())
+    if (!wxGetApp().mainframe->request_slice_and_print(true))
         MessageDialog(wxGetApp().mainframe,
             _L("Slicing cannot start from here right now. Slice the plate in Prepare, then send it again."),
             _L("Send print job"), wxOK | wxICON_INFORMATION).ShowModal();
@@ -6283,7 +6293,7 @@ void SelectMachineDialog::apply_quick_swap()
             _L("Swap nozzle assignment"), wxOK | wxICON_WARNING).ShowModal();
         return;
     }
-    if (!wxGetApp().mainframe->request_slice_and_print())
+    if (!wxGetApp().mainframe->request_slice_and_print(true))
         MessageDialog(wxGetApp().mainframe,
             _L("The nozzle assignment was saved. Start slicing from Prepare when the slice action is available."),
             _L("Swap nozzle assignment"), wxOK | wxICON_INFORMATION).ShowModal();
