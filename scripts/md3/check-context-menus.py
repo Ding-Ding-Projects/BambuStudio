@@ -8,8 +8,7 @@ a "#32768" window still shows the native Undo / Cut / Copy / Paste menu.
 
 Like sweep-dialogs.py this runs through the lowlevel-computer-use cheap CLI on a
 hidden Win32 desktop: launch the executable with an isolated --datadir and the
-layout probe armed, open each surface (Smart home, and Preferences through the
-Preferences menu action), find its shown text fields in a probe dump, and ask each
+layout probe armed, open Smart home and the Settings navigation action, find its shown text fields in a probe dump, and ask each
 field for its menu twice: a right-click (a posted right button press and
 release, which Windows turns into the menu request) and the keyboard request
 (WM_CONTEXTMENU without a position, as the Menu key and Shift+F10 send it).
@@ -32,6 +31,9 @@ import os
 import shutil
 import sys
 import time
+import uuid
+
+from recapture import RAIL_NAMES, find_control
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 _spec = importlib.util.spec_from_file_location('sweep_dialogs', os.path.join(HERE, 'sweep-dialogs.py'))
@@ -116,8 +118,18 @@ def main():
         before = {w['handle'] for w in windows()}
         form = (sweep.cantonese_form(surface, cantonese) if cantonese else None) or surface
         if surface == 'Preferences':
-            # A substring menu invocation matches Export preferences first.
-            cheap('win_send_keys', hwnd=state['main'], keys=['ctrl', 'p'])
+            # Click the actual navigation action. The File menu also contains
+            # Export preferences, and a substring invocation selects that instead.
+            records = probe_records()
+            rail = next((r for r in records if r.get('name') in RAIL_NAMES
+                         and r.get('top') == state['main'] and r.get('on_screen')), None)
+            label = (sweep.cantonese_form('Settings', cantonese) if cantonese else None) or 'Settings'
+            button = find_control(records, label, rail['hwnd']) if rail else None
+            if not button or not {label, 'Settings'}.intersection((button.get('name'), button.get('label'))):
+                return None
+            rect = button['top_rect']
+            cheap('mouse_click', hwnd=state['main'], x=rect['x'] + rect['w'] // 2,
+                  y=rect['y'] + rect['h'] // 2)
         else:
             send(args.desktop, state['main'], command=f'invoke {form}')
         expected_titles = {surface.casefold(), form.casefold()}
@@ -126,16 +138,17 @@ def main():
                                       and any(part.strip().casefold() in expected_titles
                                               for part in w.get('title', '').splitlines())), None), 15)
 
-    def text_fields(dialog):
-        staged = os.path.join(staging, f'{state["pid"]}-{len(results)}.jsonl')
-        if os.path.exists(staged):
-            os.remove(staged)
+    def probe_records():
+        staged = os.path.join(staging, f'{state["pid"]}-{uuid.uuid4().hex}.jsonl')
         send(args.desktop, state['main'], dump=staged)
         if not wait_for(lambda: os.path.exists(staged) and
                         open(staged, encoding='utf-8').read().rstrip().endswith('{"kind":"end"}'), 30):
             return []
-        records = [json.loads(line) for line in open(staged, encoding='utf-8') if line.strip()]
-        return [r for r in records if r.get('kind') == 'window' and r.get('top') == dialog['handle']
+        with open(staged, encoding='utf-8') as stream:
+            return [json.loads(line) for line in stream if line.strip()]
+
+    def text_fields(dialog):
+        return [r for r in probe_records() if r.get('kind') == 'window' and r.get('top') == dialog['handle']
                 and r.get('class') == 'wxTextCtrl' and r.get('shown') and r.get('on_screen', True)
                 and r['rect']['w'] >= 20 and r['rect']['h'] >= 10]
 
