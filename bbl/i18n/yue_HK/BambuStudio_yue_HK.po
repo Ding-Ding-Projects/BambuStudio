@@ -62892,3 +62892,1138 @@ msgstr "請喺受信任嘅啟動環境設定 STATUS_HUB_URL 同 AGENT_INGEST_TOK
 #. review-status: agent-drafted
 msgid "Delivery in progress"
 msgstr "正在傳送"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "%.2f TPS (read %d s ago)"
+msgstr "%.2f TPS（%d 秒前讀取）"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "A version report checks supported argument types before sending a command."
+msgstr "版本報告會喺送出指令前檢查支援嘅參數類型。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Absolute path on the SSH host"
+msgstr "SSH 主機上嘅絕對路徑"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Activate installed pack..."
+msgstr "啟用已安裝套件…"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Allow connections from the target host's private LAN"
+msgstr "允許目標主機嘅私人區域網絡連線"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Apply selected change"
+msgstr "套用所選變更"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Aquifers"
+msgstr "含水層"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Authenticated. The server answered the player-list command."
+msgstr "驗證成功。伺服器已回應玩家清單指令。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Available on running Paper or Purpur servers."
+msgstr "適用於運行中嘅 Paper 或 Purpur 伺服器。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Back up a stopped container's world into its private backup volume. Restores go to a separate recovery volume. The helper uses Python 3.13 Alpine with its network disabled."
+msgstr "將已停止容器嘅世界備份到佢專用嘅備份卷。還原會使用另一個復原卷。輔助程序使用已停用網絡嘅 Python 3.13 Alpine。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Back up an owned SSH server while stopped. Restore into a new absolute directory on the same host."
+msgstr "由 SSH 伺服器停止運行後備份所管理嘅世界，並還原到同一主機上新嘅絕對路徑目錄。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Backups available: %d"
+msgstr "可用備份：%d"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Bedrock on SSH host"
+msgstr "SSH 主機上嘅 Bedrock"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Bedrock on this PC"
+msgstr "呢部電腦上嘅 Bedrock"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Bedrock server settings"
+msgstr "Bedrock 伺服器設定"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Bedrock transport"
+msgstr "Bedrock 傳輸方式"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Browse catalog..."
+msgstr "瀏覽目錄…"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Build version report"
+msgstr "建立版本報告"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Check command"
+msgstr "檢查指令"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Check the name, version, tag, IPv4 address, port, LAN permission and EULA acceptance."
+msgstr "請檢查名稱、版本、標籤、IPv4 位址、連接埠、區域網絡權限同 EULA 接納狀態。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Checking and installing the package"
+msgstr "正在檢查及安裝套件"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Checking the local server..."
+msgstr "正在檢查本機伺服器…"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Checking the package and extracting into a new server directory."
+msgstr "正在檢查套件，並解壓到新嘅伺服器目錄。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Choose a Mojang version or a trusted runnable local server JAR. Setup stages and verifies the files before publishing them to a new or empty directory."
+msgstr "揀一個 Mojang 版本，或者揀受信任、可執行嘅本機伺服器 JAR。安裝程序會先暫存同驗證檔案，再放入新目錄或者空目錄。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Choose a listed distribution. The publisher's index does not supply checksums."
+msgstr "請揀清單入面嘅發行版本。發佈方嘅索引冇提供校驗碼。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Choose a trusted Windows Bedrock Dedicated Server ZIP"
+msgstr "揀一個受信任嘅 Windows Bedrock 專用伺服器 ZIP"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Choose a trusted runnable server JAR"
+msgstr "揀一個受信任、可執行嘅伺服器 JAR"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Choose an SSH identity, absolute package and destination paths, and an installed OpenSSH client."
+msgstr "請揀 SSH 身分、套件同目的地嘅絕對路徑，以及已安裝嘅 OpenSSH 用戶端。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Choose an existing parent directory"
+msgstr "揀一個現有嘅上層目錄"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Choose an extracted Bedrock directory containing bedrock_server.exe and server.properties."
+msgstr "請揀已解壓嘅 Bedrock 目錄，入面要有 bedrock_server.exe 同 server.properties。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Choose local directory..."
+msgstr "選擇本機目錄…"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Choose the parent directory for the new server"
+msgstr "選擇新伺服器嘅上層目錄"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Choose trusted server JAR..."
+msgstr "選擇受信任嘅伺服器 JAR…"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Clear saved credential"
+msgstr "清除已儲存憑據"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Command for selected server"
+msgstr "所選伺服器嘅指令"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Command returned without output."
+msgstr "指令已完成，冇輸出。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Command sent. Bedrock writes its response to the server log."
+msgstr "指令已送出。Bedrock 會將回應寫入伺服器日誌。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Command tree loaded from the selected JAR."
+msgstr "已從所選 JAR 載入指令樹。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Command was not sent. Check that the server is running and enter one command line."
+msgstr "指令未有送出。請確認伺服器正在運行，並輸入一行指令。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Configured SSH host alias"
+msgstr "已設定嘅 SSH 主機別名"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Configured value"
+msgstr "已設定值"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Container and state"
+msgstr "容器同狀態"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Container created, but its local ownership record could not be saved. Container ID: "
+msgstr "容器已建立，但未能儲存本機擁有權記錄。容器 ID："
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Container image tag"
+msgstr "容器映像標籤"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Container servers"
+msgstr "容器伺服器"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Container servers..."
+msgstr "容器伺服器…"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Content catalog"
+msgstr "內容目錄"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Could not clear the saved credential."
+msgstr "未能清除已儲存嘅憑據。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Could not create a new world staging directory."
+msgstr "未能建立新嘅世界暫存目錄。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Could not create a separate setup directory."
+msgstr "未能建立獨立安裝目錄。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Could not establish ownership for this server path."
+msgstr "未能確認呢個伺服器路徑嘅擁有權。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Could not identify the selected server image."
+msgstr "未能識別所選伺服器映像。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Could not list backup volumes."
+msgstr "未能列出備份卷。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Create a new server directory at %s on %s from the selected package? The server will stay stopped."
+msgstr "要由所選套件喺 %s 建立新伺服器目錄（主機：%s）嗎？伺服器會保持停止。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Create backup"
+msgstr "建立備份"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Credential saved."
+msgstr "憑據已儲存。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Customize the normal overworld"
+msgstr "自訂一般主世界"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Docker CLI was not found on PATH."
+msgstr "喺 PATH 搵唔到 Docker CLI。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Docker context (local or SSH)"
+msgstr "Docker 環境（本機或 SSH）"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Docker exited with code %d."
+msgstr "Docker 已結束，退出碼係 %d。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Docker returned without a full container ID. Refresh before retrying."
+msgstr "Docker 冇回傳完整容器 ID。請重新整理再試。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Download ZIP"
+msgstr "下載 ZIP"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Downloading and verifying the package..."
+msgstr "正在下載同驗證套件…"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Downloading from the publisher over HTTPS..."
+msgstr "正在透過 HTTPS 從發佈方下載…"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Drag across the preview to select a chunk rectangle, or use the width, depth and centre controls."
+msgstr "喺預覽上拖曳可選取矩形區塊範圍，亦可以用闊度、深度同中心位置控制項調整。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Duplicate key"
+msgstr "重複鍵"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Edit %s. The server reads changes at startup."
+msgstr "編輯 %s。伺服器會喺啟動時讀取變更。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Edition"
+msgstr "版本類別"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Enable aquifers"
+msgstr "啟用含水層"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Enable ore veins"
+msgstr "啟用礦脈"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Enter a 64-digit SHA-256 or leave the field empty."
+msgstr "請輸入 64 位 SHA-256，或者將欄位留空。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Enter a configured Docker context name."
+msgstr "請輸入已設定嘅 Docker 環境名稱。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Enter a configured SSH alias and an absolute POSIX server directory."
+msgstr "請輸入已設定嘅 SSH 別名同伺服器嘅 POSIX 絕對路徑。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Enter a search term and use a server with a known version."
+msgstr "請輸入搜尋詞，並選用版本已知嘅伺服器。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Enter one command of up to 32767 bytes without control characters."
+msgstr "請輸入一條唔超過 32767 個位元組嘅指令，唔可以有控制字元。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Enter one server command."
+msgstr "請輸入一條伺服器指令。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Find a server setting"
+msgstr "搜尋伺服器設定"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "First of 16 NetherNet UDP ports"
+msgstr "16 個 NetherNet UDP 連接埠嘅第一個埠"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "General presets are shown. Read the selected JAR for exact registries and custom terrain."
+msgstr "目前顯示一般預設。要取得確實登記資料同自訂地形，請讀取所選 JAR。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Generate version report"
+msgstr "產生版本報告"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Generating version-bound server data"
+msgstr "正在產生對應版本嘅伺服器資料"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Height (multiple of 16)"
+msgstr "高度（16 嘅倍數）"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "I accept the Minecraft EULA and authorize this server to listen on its configured addresses."
+msgstr "我接受 Minecraft EULA，並授權呢個伺服器喺已設定嘅位址監聽。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "I accept the Minecraft EULA for the new server"
+msgstr "我接受新伺服器嘅 Minecraft EULA"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "I accept the Minecraft EULA for this download."
+msgstr "我接受今次下載嘅 Minecraft EULA。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Install %s for %s? Plugins and mods run code with the server's permissions."
+msgstr "要安裝 %s 畀 %s 使用嗎？外掛程式同模組會以伺服器權限執行程式碼。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Install %s? Server plugins and mods execute code with the server's permissions."
+msgstr "要安裝 %s 嗎？伺服器外掛程式同模組會以伺服器權限執行程式碼。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Install Bedrock ZIP..."
+msgstr "安裝 Bedrock ZIP…"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Install Bedrock pack..."
+msgstr "安裝 Bedrock 套件…"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Install content"
+msgstr "安裝內容"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Install on this PC"
+msgstr "喺呢部電腦安裝"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Install plugin, mod or data pack..."
+msgstr "安裝外掛程式、模組或者資料包…"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Install selected package"
+msgstr "安裝所選套件"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Installed setting"
+msgstr "已安裝版本嘅設定"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Installed. Check the server log on its next start."
+msgstr "已安裝。請喺下次啟動伺服器時檢查日誌。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Installed. Choose Activate installed pack to enable it in the configured world."
+msgstr "已安裝。請揀「啟用已安裝套件」，等已設定嘅世界使用佢。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Installed. Review the EULA and network settings before starting."
+msgstr "已安裝。啟動前請先檢查 EULA 同網絡設定。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Invalid container identity."
+msgstr "容器身分無效。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Java distribution"
+msgstr "Java 發行版本"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Java on SSH host"
+msgstr "SSH 主機上嘅 Java"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Java server settings"
+msgstr "Java 伺服器設定"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "LAN access"
+msgstr "區域網絡存取"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Legacy RakNet (UDP)"
+msgstr "舊版 RakNet（UDP）"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Linux"
+msgstr "Linux 系統"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "List players"
+msgstr "列出玩家"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Loaded %d biomes and %d structure sets from %s."
+msgstr "已載入 %d 個生態域同 %d 組結構，來源：%s。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Local RCON credential"
+msgstr "本機 RCON 憑據"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Local distribution"
+msgstr "本機發行版本"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Lowest Y (multiple of 16)"
+msgstr "最低 Y 座標（16 嘅倍數）"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Managed containers listed: %d"
+msgstr "已列出 %d 個受管理嘅容器"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "More targets..."
+msgstr "更多目標…"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Native console and Bedrock setup..."
+msgstr "原生主控台同 Bedrock 設定…"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Native server console"
+msgstr "原生伺服器主控台"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "NetherNet (TCP and UDP range)"
+msgstr "NetherNet（TCP 同 UDP 埠範圍）"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "New absolute restore directory on SSH host"
+msgstr "SSH 主機上新嘅還原目錄絕對路徑"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "New container name"
+msgstr "新容器名稱"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "New credential"
+msgstr "新憑據"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "New directory name in the recovery volume"
+msgstr "復原卷內嘅新目錄名稱"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "New server installed on the SSH host. Review its network settings and EULA before starting."
+msgstr "新伺服器已安裝喺 SSH 主機上。啟動之前請先檢查網絡設定同 EULA。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "No current metrics available."
+msgstr "暫時冇可用嘅即時指標。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "No owned backup volume is available."
+msgstr "冇可用、屬於呢部伺服器嘅備份卷。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "No recent measurement"
+msgstr "冇近期量度結果"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "No recovery receipt was returned."
+msgstr "冇收到復原結果記錄。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "No supported official distributions were listed."
+msgstr "清單冇列出受支援嘅官方發行版本。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Official Bedrock distributions"
+msgstr "官方 Bedrock 發行版本"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Official Bedrock versions..."
+msgstr "官方 Bedrock 版本…"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Official distribution"
+msgstr "官方發行版本"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "One-minute tick rate"
+msgstr "最近一分鐘嘅每秒遊戲刻數"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "OpenSSH client was not found."
+msgstr "搵唔到 OpenSSH 用戶端。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Optional SHA-256 from a trusted source"
+msgstr "來自可信來源嘅 SHA-256（選填）"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Ore veins"
+msgstr "礦脈"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Pack enabled for the next world start."
+msgstr "已啟用套件，下次啟動世界時生效。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Package installed. Start the server and check its startup log for compatibility."
+msgstr "套件已安裝。請啟動伺服器，並檢查啟動日誌以確認相容性。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Packages must match server version %s."
+msgstr "套件必須符合伺服器版本 %s。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Port for new SSH server"
+msgstr "新 SSH 伺服器嘅連接埠"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Port on target host"
+msgstr "目標主機嘅連接埠"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Process exited with code %d."
+msgstr "程序已結束，退出碼係 %d。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Process launched. Watch the server output for readiness."
+msgstr "程序已啟動。請睇伺服器輸出確認是否就緒。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Process memory"
+msgstr "程序記憶體"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Projects and compatible packages"
+msgstr "項目同相容套件"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Provision SSH server"
+msgstr "設定 SSH 伺服器"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Provision an owned SSH target first."
+msgstr "請先設定一個由呢個工具管理嘅 SSH 目標。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Provision new SSH server..."
+msgstr "設定新 SSH 伺服器…"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Provisioning the selected remote server directory..."
+msgstr "正在設定所選遠端伺服器目錄…"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "RCON credential..."
+msgstr "RCON 憑據…"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Read EULA"
+msgstr "閱讀 EULA"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Read Mojang version list"
+msgstr "讀取 Mojang 版本清單"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Read Paper tick rate"
+msgstr "讀取 Paper 遊戲刻速率"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Read generation registries from server JAR"
+msgstr "從伺服器 JAR 讀取生成登記資料"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Read metrics"
+msgstr "讀取指標"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Read official versions"
+msgstr "讀取官方版本"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Read the publisher's current stable and preview links. Historical downloads are available only when the publisher lists them."
+msgstr "讀取發佈方目前嘅穩定版同預覽版連結。只有發佈方有列出嘅歷史版本先可以下載。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Reading the catalog..."
+msgstr "正在讀取目錄…"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Reading the publisher's download index..."
+msgstr "正在讀取發佈方嘅下載索引…"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Reading the selected server JAR"
+msgstr "正在讀取所選伺服器 JAR"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Recent process memory usage"
+msgstr "近期程序記憶體用量"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Recovery action exited with code %d: %s"
+msgstr "復原操作已結束，退出碼係 %d：%s"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Refresh backups"
+msgstr "重新整理備份"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Refresh servers"
+msgstr "重新整理伺服器"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Refresh to list managed containers in this context."
+msgstr "請重新整理，列出呢個環境入面受管理嘅容器。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Reload file"
+msgstr "重新載入檔案"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Restore separately"
+msgstr "還原到獨立位置"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Review the EULA and network permission first."
+msgstr "請先閱讀 EULA，同埋檢查網絡權限。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Review the EULA. Local installation requires a Windows distribution."
+msgstr "請先閱讀 EULA。本機安裝需要 Windows 發行版本。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Run the data generator in this trusted server JAR to read its command tree and block registry? This runs Java code in a separate working directory."
+msgstr "要執行呢個受信任伺服器 JAR 入面嘅資料產生器，讀取指令樹同方塊登記資料嗎？呢個操作會喺獨立工作目錄執行 Java 程式碼。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "SSH provisioning exited with code %d: %s"
+msgstr "SSH 設定操作已結束，退出碼係 %d：%s"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "SSH world recovery..."
+msgstr "SSH 世界復原…"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Save credential"
+msgstr "儲存憑據"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Save the client credential for this server in Windows Credential Manager. The server's own RCON settings must match."
+msgstr "將呢部伺服器嘅用戶端憑據儲存到 Windows 憑據管理員。伺服器本身嘅 RCON 設定必須相符。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Saved %s. Computed SHA-256: %s"
+msgstr "已儲存 %s。計算所得 SHA-256：%s"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Saved client credential cleared."
+msgstr "已清除儲存嘅用戶端憑據。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Saved. The server will read the new value at startup."
+msgstr "已儲存。伺服器會喺啟動時讀取新值。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Sea level"
+msgstr "海平面高度"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Search Modrinth"
+msgstr "搜尋 Modrinth"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Select a backup and enter a new restore destination."
+msgstr "請揀一份備份，再輸入新嘅還原目的地。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Select a container recorded for this context."
+msgstr "請揀已喺呢個環境有記錄嘅容器。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Select a local Bedrock installation with a readable server.properties file."
+msgstr "請揀含有可讀取 server.properties 檔案嘅本機 Bedrock 安裝目錄。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Select a managed container first."
+msgstr "請先揀一個受管理嘅容器。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Select a setting from this installation."
+msgstr "請從呢個安裝版本揀一項設定。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Select a trusted Bedrock pack"
+msgstr "選擇受信任嘅 Bedrock 套件"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Select a trusted package for this server version"
+msgstr "選擇適用於呢個伺服器版本嘅受信任套件"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Select an extracted Bedrock dedicated server directory"
+msgstr "選擇已解壓嘅 Bedrock 專用伺服器目錄"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Select the installed pack manifest"
+msgstr "選擇已安裝套件嘅資訊清單"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Send command"
+msgstr "送出指令"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Server console command"
+msgstr "伺服器主控台指令"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Server content catalog"
+msgstr "伺服器內容目錄"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Server directory"
+msgstr "伺服器目錄"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Server settings..."
+msgstr "伺服器設定…"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Server version"
+msgstr "伺服器版本"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Show compatible packages"
+msgstr "顯示相容套件"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Showing %d of %d results on this page."
+msgstr "呢頁顯示 %d 項，共 %d 項。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Stable"
+msgstr "穩定版"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Start selected"
+msgstr "啟動所選項目"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Start server"
+msgstr "啟動伺服器"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Stop selected"
+msgstr "停止所選項目"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Stop server"
+msgstr "停止伺服器"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Stop the server before installing content."
+msgstr "安裝內容之前，請先停止伺服器。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Target"
+msgstr "目標"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Target host IPv4 address"
+msgstr "目標主機 IPv4 位址"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Test loopback login"
+msgstr "測試回環登入"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "That value is invalid for this setting."
+msgstr "呢個值唔適用於呢項設定。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "The credential could not be saved."
+msgstr "未能儲存憑據。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "The local ownership record is missing."
+msgstr "缺少本機擁有權記錄。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "The recovery report is unreadable."
+msgstr "未能讀取復原報告。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "The required target client is unavailable."
+msgstr "所需嘅目標用戶端暫時無法使用。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "The selected container is unavailable or still running."
+msgstr "所選容器暫時無法使用，或者仍然運行緊。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "The settings file changed. Reload it before editing."
+msgstr "設定檔已改變。編輯前請先重新載入。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "The target client is unavailable."
+msgstr "目標用戶端暫時無法使用。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "The target returned an incomplete recovery report."
+msgstr "目標回傳嘅復原報告唔完整。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "The target setting value is invalid."
+msgstr "目標設定值無效。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "The target settings report is invalid."
+msgstr "目標設定報告無效。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "This entry is preserved and cannot be edited here."
+msgstr "呢個項目會保留，唔可以喺呢度編輯。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "This image has no recognized console adapter."
+msgstr "冇可識別、適用於呢個映像嘅主控台轉接器。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Trusted remote server JAR or Bedrock ZIP"
+msgstr "受信任嘅遠端伺服器 JAR 或 Bedrock ZIP"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Unrecognized"
+msgstr "未能識別"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Use Mojang version instead"
+msgstr "改用 Mojang 版本"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Use multiples of 16 for lowest Y and height, with sea level inside the dimension."
+msgstr "最低 Y 座標同高度要用 16 嘅倍數，海平面要喺維度範圍內。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Version catalog"
+msgstr "版本目錄"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Version-specific terrain settings need the selected JAR's registries."
+msgstr "特定版本嘅地形設定需要所選 JAR 嘅登記資料。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Wait for installation or stop the server before closing."
+msgstr "請等安裝完成，或者停止伺服器先關閉。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Waiting for Docker..."
+msgstr "正在等候 Docker…"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Waiting for server measurement"
+msgstr "正在等候伺服器量度結果"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Waiting for the owned target..."
+msgstr "正在等候由呢個工具管理嘅目標…"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Waiting for the selected target..."
+msgstr "正在等候所選目標…"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "World backup and restore"
+msgstr "世界備份同還原"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "World data pack"
+msgstr "世界資料包"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "World recovery..."
+msgstr "世界復原…"

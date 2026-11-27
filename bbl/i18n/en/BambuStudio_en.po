@@ -40623,3 +40623,684 @@ msgstr ""
 
 msgid "Delete schedule rule"
 msgstr ""
+
+msgid "%.2f TPS (read %d s ago)"
+msgstr ""
+
+msgid "A version report checks supported argument types before sending a command."
+msgstr ""
+
+msgid "Absolute path on the SSH host"
+msgstr ""
+
+msgid "Activate installed pack..."
+msgstr ""
+
+msgid "Allow connections from the target host's private LAN"
+msgstr ""
+
+msgid "Apply selected change"
+msgstr ""
+
+msgid "Aquifers"
+msgstr ""
+
+msgid "Authenticated. The server answered the player-list command."
+msgstr ""
+
+msgid "Available on running Paper or Purpur servers."
+msgstr ""
+
+msgid "Back up a stopped container's world into its private backup volume. Restores go to a separate recovery volume. The helper uses Python 3.13 Alpine with its network disabled."
+msgstr ""
+
+msgid "Back up an owned SSH server while stopped. Restore into a new absolute directory on the same host."
+msgstr ""
+
+msgid "Backups available: %d"
+msgstr ""
+
+msgid "Bedrock on SSH host"
+msgstr ""
+
+msgid "Bedrock on this PC"
+msgstr ""
+
+msgid "Bedrock server settings"
+msgstr ""
+
+msgid "Bedrock transport"
+msgstr ""
+
+msgid "Browse catalog..."
+msgstr ""
+
+msgid "Build version report"
+msgstr ""
+
+msgid "Check command"
+msgstr ""
+
+msgid "Check the name, version, tag, IPv4 address, port, LAN permission and EULA acceptance."
+msgstr ""
+
+msgid "Checking and installing the package"
+msgstr ""
+
+msgid "Checking the local server..."
+msgstr ""
+
+msgid "Checking the package and extracting into a new server directory."
+msgstr ""
+
+msgid "Choose a Mojang version or a trusted runnable local server JAR. Setup stages and verifies the files before publishing them to a new or empty directory."
+msgstr ""
+
+msgid "Choose a listed distribution. The publisher's index does not supply checksums."
+msgstr ""
+
+msgid "Choose a trusted Windows Bedrock Dedicated Server ZIP"
+msgstr ""
+
+msgid "Choose a trusted runnable server JAR"
+msgstr ""
+
+msgid "Choose an SSH identity, absolute package and destination paths, and an installed OpenSSH client."
+msgstr ""
+
+msgid "Choose an existing parent directory"
+msgstr ""
+
+msgid "Choose an extracted Bedrock directory containing bedrock_server.exe and server.properties."
+msgstr ""
+
+msgid "Choose local directory..."
+msgstr ""
+
+msgid "Choose the parent directory for the new server"
+msgstr ""
+
+msgid "Choose trusted server JAR..."
+msgstr ""
+
+msgid "Clear saved credential"
+msgstr ""
+
+msgid "Command for selected server"
+msgstr ""
+
+msgid "Command returned without output."
+msgstr ""
+
+msgid "Command sent. Bedrock writes its response to the server log."
+msgstr ""
+
+msgid "Command tree loaded from the selected JAR."
+msgstr ""
+
+msgid "Command was not sent. Check that the server is running and enter one command line."
+msgstr ""
+
+msgid "Configured SSH host alias"
+msgstr ""
+
+msgid "Configured value"
+msgstr ""
+
+msgid "Container and state"
+msgstr ""
+
+msgid "Container created, but its local ownership record could not be saved. Container ID: "
+msgstr ""
+
+msgid "Container image tag"
+msgstr ""
+
+msgid "Container servers"
+msgstr ""
+
+msgid "Container servers..."
+msgstr ""
+
+msgid "Content catalog"
+msgstr ""
+
+msgid "Could not clear the saved credential."
+msgstr ""
+
+msgid "Could not create a new world staging directory."
+msgstr ""
+
+msgid "Could not create a separate setup directory."
+msgstr ""
+
+msgid "Could not establish ownership for this server path."
+msgstr ""
+
+msgid "Could not identify the selected server image."
+msgstr ""
+
+msgid "Could not list backup volumes."
+msgstr ""
+
+msgid "Create a new server directory at %s on %s from the selected package? The server will stay stopped."
+msgstr ""
+
+msgid "Create backup"
+msgstr ""
+
+msgid "Credential saved."
+msgstr ""
+
+msgid "Customize the normal overworld"
+msgstr ""
+
+msgid "Docker CLI was not found on PATH."
+msgstr ""
+
+msgid "Docker context (local or SSH)"
+msgstr ""
+
+msgid "Docker exited with code %d."
+msgstr ""
+
+msgid "Docker returned without a full container ID. Refresh before retrying."
+msgstr ""
+
+msgid "Download ZIP"
+msgstr ""
+
+msgid "Downloading and verifying the package..."
+msgstr ""
+
+msgid "Downloading from the publisher over HTTPS..."
+msgstr ""
+
+msgid "Drag across the preview to select a chunk rectangle, or use the width, depth and centre controls."
+msgstr ""
+
+msgid "Duplicate key"
+msgstr ""
+
+msgid "Edit %s. The server reads changes at startup."
+msgstr ""
+
+msgid "Edition"
+msgstr ""
+
+msgid "Enable aquifers"
+msgstr ""
+
+msgid "Enable ore veins"
+msgstr ""
+
+msgid "Enter a 64-digit SHA-256 or leave the field empty."
+msgstr ""
+
+msgid "Enter a configured Docker context name."
+msgstr ""
+
+msgid "Enter a configured SSH alias and an absolute POSIX server directory."
+msgstr ""
+
+msgid "Enter a search term and use a server with a known version."
+msgstr ""
+
+msgid "Enter one command of up to 32767 bytes without control characters."
+msgstr ""
+
+msgid "Enter one server command."
+msgstr ""
+
+msgid "Find a server setting"
+msgstr ""
+
+msgid "First of 16 NetherNet UDP ports"
+msgstr ""
+
+msgid "General presets are shown. Read the selected JAR for exact registries and custom terrain."
+msgstr ""
+
+msgid "Generate version report"
+msgstr ""
+
+msgid "Generating version-bound server data"
+msgstr ""
+
+msgid "Height (multiple of 16)"
+msgstr ""
+
+msgid "I accept the Minecraft EULA and authorize this server to listen on its configured addresses."
+msgstr ""
+
+msgid "I accept the Minecraft EULA for the new server"
+msgstr ""
+
+msgid "I accept the Minecraft EULA for this download."
+msgstr ""
+
+msgid "Install %s for %s? Plugins and mods run code with the server's permissions."
+msgstr ""
+
+msgid "Install %s? Server plugins and mods execute code with the server's permissions."
+msgstr ""
+
+msgid "Install Bedrock ZIP..."
+msgstr ""
+
+msgid "Install Bedrock pack..."
+msgstr ""
+
+msgid "Install content"
+msgstr ""
+
+msgid "Install on this PC"
+msgstr ""
+
+msgid "Install plugin, mod or data pack..."
+msgstr ""
+
+msgid "Install selected package"
+msgstr ""
+
+msgid "Installed setting"
+msgstr ""
+
+msgid "Installed. Check the server log on its next start."
+msgstr ""
+
+msgid "Installed. Choose Activate installed pack to enable it in the configured world."
+msgstr ""
+
+msgid "Installed. Review the EULA and network settings before starting."
+msgstr ""
+
+msgid "Invalid container identity."
+msgstr ""
+
+msgid "Java distribution"
+msgstr ""
+
+msgid "Java on SSH host"
+msgstr ""
+
+msgid "Java server settings"
+msgstr ""
+
+msgid "LAN access"
+msgstr ""
+
+msgid "Legacy RakNet (UDP)"
+msgstr ""
+
+msgid "Linux"
+msgstr ""
+
+msgid "List players"
+msgstr ""
+
+msgid "Loaded %d biomes and %d structure sets from %s."
+msgstr ""
+
+msgid "Local RCON credential"
+msgstr ""
+
+msgid "Local distribution"
+msgstr ""
+
+msgid "Lowest Y (multiple of 16)"
+msgstr ""
+
+msgid "Managed containers listed: %d"
+msgstr ""
+
+msgid "More targets..."
+msgstr ""
+
+msgid "Native console and Bedrock setup..."
+msgstr ""
+
+msgid "Native server console"
+msgstr ""
+
+msgid "NetherNet (TCP and UDP range)"
+msgstr ""
+
+msgid "New absolute restore directory on SSH host"
+msgstr ""
+
+msgid "New container name"
+msgstr ""
+
+msgid "New credential"
+msgstr ""
+
+msgid "New directory name in the recovery volume"
+msgstr ""
+
+msgid "New server installed on the SSH host. Review its network settings and EULA before starting."
+msgstr ""
+
+msgid "No current metrics available."
+msgstr ""
+
+msgid "No owned backup volume is available."
+msgstr ""
+
+msgid "No recent measurement"
+msgstr ""
+
+msgid "No recovery receipt was returned."
+msgstr ""
+
+msgid "No supported official distributions were listed."
+msgstr ""
+
+msgid "Official Bedrock distributions"
+msgstr ""
+
+msgid "Official Bedrock versions..."
+msgstr ""
+
+msgid "Official distribution"
+msgstr ""
+
+msgid "One-minute tick rate"
+msgstr ""
+
+msgid "OpenSSH client was not found."
+msgstr ""
+
+msgid "Optional SHA-256 from a trusted source"
+msgstr ""
+
+msgid "Ore veins"
+msgstr ""
+
+msgid "Pack enabled for the next world start."
+msgstr ""
+
+msgid "Package installed. Start the server and check its startup log for compatibility."
+msgstr ""
+
+msgid "Packages must match server version %s."
+msgstr ""
+
+msgid "Port for new SSH server"
+msgstr ""
+
+msgid "Port on target host"
+msgstr ""
+
+msgid "Process exited with code %d."
+msgstr ""
+
+msgid "Process launched. Watch the server output for readiness."
+msgstr ""
+
+msgid "Process memory"
+msgstr ""
+
+msgid "Projects and compatible packages"
+msgstr ""
+
+msgid "Provision SSH server"
+msgstr ""
+
+msgid "Provision an owned SSH target first."
+msgstr ""
+
+msgid "Provision new SSH server..."
+msgstr ""
+
+msgid "Provisioning the selected remote server directory..."
+msgstr ""
+
+msgid "RCON credential..."
+msgstr ""
+
+msgid "Read EULA"
+msgstr ""
+
+msgid "Read Mojang version list"
+msgstr ""
+
+msgid "Read Paper tick rate"
+msgstr ""
+
+msgid "Read generation registries from server JAR"
+msgstr ""
+
+msgid "Read metrics"
+msgstr ""
+
+msgid "Read official versions"
+msgstr ""
+
+msgid "Read the publisher's current stable and preview links. Historical downloads are available only when the publisher lists them."
+msgstr ""
+
+msgid "Reading the catalog..."
+msgstr ""
+
+msgid "Reading the publisher's download index..."
+msgstr ""
+
+msgid "Reading the selected server JAR"
+msgstr ""
+
+msgid "Recent process memory usage"
+msgstr ""
+
+msgid "Recovery action exited with code %d: %s"
+msgstr ""
+
+msgid "Refresh backups"
+msgstr ""
+
+msgid "Refresh servers"
+msgstr ""
+
+msgid "Refresh to list managed containers in this context."
+msgstr ""
+
+msgid "Reload file"
+msgstr ""
+
+msgid "Restore separately"
+msgstr ""
+
+msgid "Review the EULA and network permission first."
+msgstr ""
+
+msgid "Review the EULA. Local installation requires a Windows distribution."
+msgstr ""
+
+msgid "Run the data generator in this trusted server JAR to read its command tree and block registry? This runs Java code in a separate working directory."
+msgstr ""
+
+msgid "SSH provisioning exited with code %d: %s"
+msgstr ""
+
+msgid "SSH world recovery..."
+msgstr ""
+
+msgid "Save credential"
+msgstr ""
+
+msgid "Save the client credential for this server in Windows Credential Manager. The server's own RCON settings must match."
+msgstr ""
+
+msgid "Saved %s. Computed SHA-256: %s"
+msgstr ""
+
+msgid "Saved client credential cleared."
+msgstr ""
+
+msgid "Saved. The server will read the new value at startup."
+msgstr ""
+
+msgid "Sea level"
+msgstr ""
+
+msgid "Search Modrinth"
+msgstr ""
+
+msgid "Select a backup and enter a new restore destination."
+msgstr ""
+
+msgid "Select a container recorded for this context."
+msgstr ""
+
+msgid "Select a local Bedrock installation with a readable server.properties file."
+msgstr ""
+
+msgid "Select a managed container first."
+msgstr ""
+
+msgid "Select a setting from this installation."
+msgstr ""
+
+msgid "Select a trusted Bedrock pack"
+msgstr ""
+
+msgid "Select a trusted package for this server version"
+msgstr ""
+
+msgid "Select an extracted Bedrock dedicated server directory"
+msgstr ""
+
+msgid "Select the installed pack manifest"
+msgstr ""
+
+msgid "Send command"
+msgstr ""
+
+msgid "Server console command"
+msgstr ""
+
+msgid "Server content catalog"
+msgstr ""
+
+msgid "Server directory"
+msgstr ""
+
+msgid "Server settings..."
+msgstr ""
+
+msgid "Server version"
+msgstr ""
+
+msgid "Show compatible packages"
+msgstr ""
+
+msgid "Showing %d of %d results on this page."
+msgstr ""
+
+msgid "Stable"
+msgstr ""
+
+msgid "Start selected"
+msgstr ""
+
+msgid "Start server"
+msgstr ""
+
+msgid "Stop selected"
+msgstr ""
+
+msgid "Stop server"
+msgstr ""
+
+msgid "Stop the server before installing content."
+msgstr ""
+
+msgid "Target"
+msgstr ""
+
+msgid "Target host IPv4 address"
+msgstr ""
+
+msgid "Test loopback login"
+msgstr ""
+
+msgid "That value is invalid for this setting."
+msgstr ""
+
+msgid "The credential could not be saved."
+msgstr ""
+
+msgid "The local ownership record is missing."
+msgstr ""
+
+msgid "The recovery report is unreadable."
+msgstr ""
+
+msgid "The required target client is unavailable."
+msgstr ""
+
+msgid "The selected container is unavailable or still running."
+msgstr ""
+
+msgid "The settings file changed. Reload it before editing."
+msgstr ""
+
+msgid "The target client is unavailable."
+msgstr ""
+
+msgid "The target returned an incomplete recovery report."
+msgstr ""
+
+msgid "The target setting value is invalid."
+msgstr ""
+
+msgid "The target settings report is invalid."
+msgstr ""
+
+msgid "This entry is preserved and cannot be edited here."
+msgstr ""
+
+msgid "This image has no recognized console adapter."
+msgstr ""
+
+msgid "Trusted remote server JAR or Bedrock ZIP"
+msgstr ""
+
+msgid "Unrecognized"
+msgstr ""
+
+msgid "Use Mojang version instead"
+msgstr ""
+
+msgid "Use multiples of 16 for lowest Y and height, with sea level inside the dimension."
+msgstr ""
+
+msgid "Version catalog"
+msgstr ""
+
+msgid "Version-specific terrain settings need the selected JAR's registries."
+msgstr ""
+
+msgid "Wait for installation or stop the server before closing."
+msgstr ""
+
+msgid "Waiting for Docker..."
+msgstr ""
+
+msgid "Waiting for server measurement"
+msgstr ""
+
+msgid "Waiting for the owned target..."
+msgstr ""
+
+msgid "Waiting for the selected target..."
+msgstr ""
+
+msgid "World backup and restore"
+msgstr ""
+
+msgid "World data pack"
+msgstr ""
+
+msgid "World recovery..."
+msgstr ""
