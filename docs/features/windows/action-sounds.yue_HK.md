@@ -1,3 +1,9 @@
+---
+translation-of: action-sounds.md
+source-sha256: da27f6ebb201bcb0d13479040ec605c1bdf84e2e5e52bb2224b5276628af2d42
+review-status: agent-drafted
+---
+
 # 操作提示音
 
 喺 **設定 > 其他 > 音效** 開關短提示音。開關可以搜尋，亦會出現喺命令面板，
@@ -37,3 +43,7 @@
 
 呢啲測試唔代表原生裝置播放、真正重新啟動後設定保留，或者實際設定畫面已驗證。
 原生建置、本地化、鍵盤操作、重新啟動、靜音／音量、已安裝音檔同裝置不可用嘅實機驗證仍然待完成。
+
+可以用 `node tests/action_sounds_behavior.test.mjs` 重做行為測試，當中亦有手動安靜、專注輔助、停用播放同佇列滿額嘅情況。分別用 `--mutant=scheduled-cancel` 同 `--mutant=submit-admission` 移除編譯副本入面相應嘅保護，兩者都應該令斷言失敗。用 `node tests/action_sounds_outcomes.test.mjs` 重做結果測試。
+
+服務亦已用安裝好嘅 MSVC 同 Windows SDK 成功編譯成目的檔，只用編譯替身取代 GUI 設定存取。呢個結果證明實際平台宣告可以編譯，未有驗證完整程式連結或者播放。

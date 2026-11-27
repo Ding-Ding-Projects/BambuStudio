@@ -1,6 +1,6 @@
 ---
 translation-of: door-chime.md
-source-sha256: 0c694c17d072595e30ba6b22e74808b5753bed4a4ea80f04863ae92aab863406
+source-sha256: e0e5517fb30e5a40913aced98057fdc169c19e21f8aac8232283408cb95eb0f7
 review-status: agent-drafted
 ---
 

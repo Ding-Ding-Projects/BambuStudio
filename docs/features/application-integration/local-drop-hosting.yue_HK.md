@@ -1,3 +1,9 @@
+---
+translation-of: local-drop-hosting.md
+source-sha256: d17f93c09d1d7e0591b94886acdec7d3428783d0ab20d1ff5881f2b775dade49
+review-status: agent-drafted
+---
+
 # 啟動本機模型投遞伺服器
 
 本機啟動入口會拉取指定版本嘅容器映像、啟動現有 Compose 專案，再檢查服務健康狀態。
@@ -27,3 +33,5 @@ Docker、Compose、映像拉取、連接埠、健康檢查或者網絡網址有�
 目前原始碼仍在整合。PowerShell 語法、Compose 服務解析及實際啟動失敗路徑已驗證；
 原生管道、大小限制及取消操作測試已通過。完整程式編譯、實際配對、跨裝置連線、
 互動日誌鍵盤操作、映像發佈同已安裝版本仍待驗證。便攜設定精靈尚未交付。
+
+停止服務係獨立操作，指令係 `docker compose -f lan-model-drop/compose.yaml stop`。一般 Compose 檔會使用已發佈版本。本機開發可以明確執行 `docker compose -f lan-model-drop/compose.yaml -f lan-model-drop/compose.build.yaml up -d --build`；本機建置唔能夠證明已發佈映像可下載。

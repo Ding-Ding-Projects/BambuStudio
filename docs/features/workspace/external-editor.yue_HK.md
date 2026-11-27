@@ -1,6 +1,6 @@
 ---
 translation-of: external-editor.md
-source-sha256: df15243f5bdba04858cd80b8a64e91d3786655314b8b916551508aadbc430c23
+source-sha256: 4f1cf164a10d57755475081af11bbe8f27c1434a77b3aadf8245edc00ff38dfa
 review-status: agent-drafted
 ---
 
