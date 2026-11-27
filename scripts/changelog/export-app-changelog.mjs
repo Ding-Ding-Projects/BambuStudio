@@ -149,7 +149,7 @@ export async function main() {
   const serialized = `${JSON.stringify(payload, null, 2)}\n`;
 
   if (checkOnly) {
-    if (previous !== serialized) {
+    if (previous.replace(/\r\n/g, '\n') !== serialized) {
       console.error('resources/changelog/changelog.json is stale — rerun: node scripts/changelog/export-app-changelog.mjs');
       process.exit(1);
     }
