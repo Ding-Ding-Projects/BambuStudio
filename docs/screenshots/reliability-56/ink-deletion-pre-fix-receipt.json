@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "sourceCommit": "0a12cd0945b782fb28d02cfc0cd1c02ed1ee094b",
+  "executableSha256": "68b33481173e1b2653640fd5132e38512dc315dceb58c9fc7ca421e847d0514b",
+  "applicationDllSha256": "12710c0e5b61810b15ce33c1ad100431702e337ef52ee013fd1305d3876cc983",
+  "route": "Named hidden Windows desktop with locally installed Lowlevel, background edit and native layout-probe readback",
+  "profile": "Fresh fixture, English, light theme, comfortable density",
+  "slotCountBeforeAdd": 1,
+  "slotCountAfterAdd": 2,
+  "confirmedSlot": 2,
+  "fixturePreset": "Bambu PLA Basic @BBL X1C",
+  "confirmedStage": "Step 2 of 2: slide all the way to the end.",
+  "sliderGesture": {
+    "start": 33,
+    "end": 633,
+    "height": 66
+  },
+  "outcome": "Application exited with an access violation.",
+  "event": {
+    "provider": "Application Error",
+    "id": 1000,
+    "timeUtc": "2026-11-27T19:49:49.2519615Z",
+    "module": "BambuStudio.dll",
+    "exceptionCode": "c0000005",
+    "rva": "0x6b5d1b2",
+    "pdbGuid": "6CCDF0A7-C22A-45D7-AF64-3DF2EC2CB5AC",
+    "pdbAge": 144,
+    "resolvedFrame": "wxEvtHandler::ProcessEvent+0xa2",
+    "caller": "wxWindow::HandleMouseEvent+0xba"
+  },
+  "privacy": "Disposable local project. Original memory dump and debugger output are excluded.",
+  "capture": {
+    "path": "ink-slot-menu-before-crash.png",
+    "sha256": "9ffc306b7912927710bc533083d88db049897b0a54bf74b2abfc49b0e75ba0a2",
+    "dimensions": [
+      450,
+      431
+    ],
+    "captureTimestamp": "Unavailable"
+  },
+  "scope": "Pre-fix crash only. No repaired-build verdict."
+}
