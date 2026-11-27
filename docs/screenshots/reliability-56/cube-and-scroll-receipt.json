@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "sourceCommit": "0a12cd0945b782fb28d02cfc0cd1c02ed1ee094b",
+  "executableSha256": "68b33481173e1b2653640fd5132e38512dc315dceb58c9fc7ca421e847d0514b",
+  "applicationDllSha256": "12710c0e5b61810b15ce33c1ad100431702e337ef52ee013fd1305d3876cc983",
+  "route": "Named hidden Windows desktop with locally installed Lowlevel, background edit and native layout-probe readback",
+  "profile": "Fresh fixture, English, light theme, comfortable density",
+  "fixturePath": "tests/automation-fixtures/cube.stl",
+  "fixtureSha256": "f23402767f2ceb3e891c36a460b8ef5ca77704280f16970adb342e7741301d43",
+  "import": {
+    "beforeObjectCount": 0,
+    "afterObjectCount": 1,
+    "objectName": "cube.stl",
+    "instances": 1,
+    "activePlate": 0,
+    "printableInstances": 1,
+    "capture": {
+      "path": "imported-cube.png",
+      "sha256": "12c57dfbab229c19e2cec75243183f965f55852039a3bfb8a08c7d9f6cbac131",
+      "dimensions": [
+        700,
+        885
+      ],
+      "method": "OpenGL framebuffer readback from the running application",
+      "captureTimestamp": "Unavailable"
+    }
+  },
+  "prepareSidebar": {
+    "command": "scroll-end",
+    "controlType": "MD3ScrolledWindow",
+    "filamentHeaderScreenYBefore": 931,
+    "filamentHeaderScreenYAfter": 859,
+    "measurement": {
+      "client_h": 921,
+      "virtual_h": 982,
+      "content_h": 982,
+      "last_bottom": 982,
+      "ok": true
+    }
+  },
+  "limits": "One ordinary 12-triangle STL and a programmatic native scroll-to-end. No large-mesh import, cancellation, physical device or wheel-input verdict."
+}
