@@ -155,6 +155,8 @@ int main(int argc, char **argv)
     const std::string finish = ";=====printer finish  sound=========\nM17\nM400 S1\nM1006 S1\nM1006 A20 B7\nM1006 W\nM18\n";
     CHECK(without_vendor_melody(finish, true) == ";=====printer finish  sound=========\nM17\nM400 S1\nM18\n");
     CHECK(without_vendor_melody(finish, false) == finish);
+    const std::string older = ";=====start printer sound===\nM104 S140\nM17\nM400 S1\nM1006 S1\nM1006 L99 M99 N99\nM1006 A0 B0 C37 D10 E37 F10\nM1006 W\n";
+    CHECK(without_vendor_melody(older, false) == ";=====start printer sound===\nM104 S140\nM17\nM400 S1\n");
     const std::string unrelated = ";=====printer start sound===\nM1006 S1\nG28\nM1006 W\n";
     CHECK(without_vendor_melody(unrelated, false) == unrelated);
     plain_assertions();
