@@ -60809,3 +60809,12 @@ msgstr "重新切片 / 模型幾何"
 
 msgid "Slicing / Model geometry"
 msgstr "切片 / 模型幾何"
+
+msgid "Reslicing / Print order preview"
+msgstr "重新切片 / 打印次序預覽"
+
+msgid "Slicing / Print order preview"
+msgstr "切片 / 打印次序預覽"
+
+msgid "Sampled print order"
+msgstr "打印次序抽樣預覽"
