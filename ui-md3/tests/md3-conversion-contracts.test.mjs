@@ -916,7 +916,7 @@ test('session fonts are registered from a staged copy outside the install folder
   // registrars now register a copy under <data_dir>/fonts instead.
   const label = await read('Widgets', 'Label.cpp');
   assert.match(label, /^std::wstring stage_session_font\(const std::wstring &source\)/m, 'the staging helper exists');
-  assert.match(label, /boost::filesystem::path\(Slic3r::data_dir\(\)\) \/ "fonts"/, 'it stages under the data directory');
+  assert.match(label, /const boost::filesystem::path data\(Slic3r::data_dir\(\)\);\s*if \(!data\.empty\(\) && data\.is_absolute\(\)\) \{\s*dir = data \/ "fonts";/, 'it stages under the data directory');
   assert.match(label, /const std::wstring w = stage_session_font\(path\.ToStdWstring\(\)\);\s*\n\s*if \(::AddFontResourceExW\(w\.c_str\(\), 0, nullptr\) > 0\)/, 'the registrar registers the staged copy');
   assert.match(label, /::SendNotifyMessageW\(HWND_BROADCAST, WM_FONTCHANGE, 0, 0\);/, 'and broadcasts the removal');
   const icon = await read('Widgets', 'MaterialIcon.cpp');
