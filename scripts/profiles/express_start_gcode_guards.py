@@ -132,6 +132,15 @@ P2S_RULES = [
     rule("first homing checks", r"^M972 S24 P0$", r"^M972 S42 P0 T5000"),
 ] + H2_COMMON
 
+# P3C has one wipe station. Its bed presence, foreign-object, offset and camera
+# checks remain enabled in both modes, along with homing and heater waits.
+P3C_RULES = [
+    sound_rule(),
+    COG,
+    rule("wipe nozzle", r"^;=+\s*wipe nozzle start", r"^;=+\s*wipe nozzle end"),
+    rule("mech mode sweep", r"^;=+\s*mech mode sweep start", r"^;=+\s*mech mode sweep end"),
+]
+
 H3C_RULES = [
     sound_rule(),
     COG,
@@ -161,6 +170,7 @@ FAMILIES = [
     ("Bambu Lab H2C ", H2C_RULES),
     ("Bambu Lab H2S ", H2D_RULES),
     ("Bambu Lab P2S ", P2S_RULES),
+    ("Bambu Lab P3C ", P3C_RULES),
     ("Bambu Lab X2D ", X2D_RULES),
     ("Bambu Lab H3C ", H3C_RULES),
 ]

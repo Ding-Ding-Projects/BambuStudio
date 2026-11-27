@@ -2184,7 +2184,8 @@ GUI_App::GUI_App()
     {
         PERF_TRACE("startup.init_app_config");
 	//app config initializes early becasuse it is used in instance checking in BambuStudio.cpp
-    this->init_app_config();
+        this->init_app_config();
+    }
     if (app_config) {
         ::Label::initSysFont(I18N::resolve_language_mode(app_config->get("language")).font_language, false);
     }
