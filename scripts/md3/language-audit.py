@@ -143,12 +143,65 @@ def measure_surface(probe, hwnd, marker, language, report):
     return result
 
 
+def measure_settings_sections(probe, hwnd, language, out, audit_file, bilingual):
+    """Switch visible section tabs using their real HWNDs and prove the selected book page changed."""
+    def current_page(rows):
+        book = next((r for r in rows if r.get('top') == hwnd and r.get('type') == 'wxSimplebook'
+                     and r.get('on_screen') is True), None)
+        if book is None:
+            return None
+        pages = [r for r in rows if r.get('parent') == book['hwnd'] and r.get('on_screen') is True
+                 and r['rect']['w'] > 0 and r['rect']['h'] > 0]
+        return max(pages, key=lambda r: r['rect']['w'] * r['rect']['h'])['hwnd'] if pages else None
+
+    rows = probe.probe()
+    tabs = [r for r in rows if r.get('top') == hwnd and r.get('type', '').endswith('::TabStripButton')]
+    if not tabs:
+        raise SystemExit('No native Settings section buttons were found.')
+    report = []
+    visited = {}
+    for index, tab in enumerate(tabs, 1):
+        row = {'section': tab['name'], 'status': 'unverified'}
+        report.append(row)
+        if not tab.get('on_screen') or not tab.get('enabled'):
+            row['reason'] = 'Tab is hidden, overflowed or disabled.'
+            continue
+        old = current_page(rows)
+        button = tab['hwnd']
+        width, height = tab['rect']['w'], tab['rect']['h']
+        cheap('mouse_click', hwnd=button, x=width // 2, y=height // 2)
+        time.sleep(4)
+        rows = probe.probe()
+        new = current_page(rows)
+        if old is None or new is None or old == new or new in visited:
+            row['reason'] = 'The selected content page did not change to a distinct visible page.'
+            continue
+        visited[new] = tab['name']
+        stem = f'settings-section-{index:02d}'
+        row['layout'] = measure_surface(probe, hwnd, tab['name'], language, out / (stem + '-layout.json'))
+        if bilingual:
+            verdict = audit(probe.desktop, probe.main, audit_file, out / (stem + '-language.json'))
+            if verdict.get('mode') != 'bilingual' or not any(
+                    window['class'] == 'wxDialog' and ('Preferences' in window['title'] or '偏好設定' in window['title'])
+                    for window in verdict.get('windows', [])):
+                row['reason'] = 'The report did not contain the requested bilingual dialog.'
+                continue
+            row['languageCounts'] = next(w for w in verdict['windows'] if w['class'] == 'wxDialog'
+                                         and ('Preferences' in w['title'] or '偏好設定' in w['title']))
+        row['status'] = 'measured'
+    (out / 'settings-sections.json').write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n',
+                                                encoding='utf-8')
+    return report
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--exe', required=True)
     ap.add_argument('--datadir', required=True)
     ap.add_argument('--out', required=True)
     ap.add_argument('--desktop', default='bsaudit-' + uuid.uuid4().hex)
+    ap.add_argument('--all-settings', action='store_true',
+                    help='also visit each visible Settings section and report any hidden or unverified section')
     args = ap.parse_args()
     exe = Path(args.exe).resolve(strict=True)
     profile = Path(args.datadir).resolve(strict=True)
@@ -220,6 +273,13 @@ def main():
                 raise SystemExit('Preferences was absent from the audited windows.')
             summary['preferences-general'] = result['totals']
             labels.extend(result['english_only'])
+        if args.all_settings:
+            sections = measure_settings_sections(probe, prefs['handle'], language, out, audit_file, bilingual)
+            summary['settingsSections'] = [{'section': item['section'], 'status': item['status']}
+                                          for item in sections]
+            for item in sections:
+                if item.get('status') != 'measured' or item.get('languageCounts', {}).get('english_only', 0):
+                    labels.append(item['section'])
     finally:
         if process is not None:
             try:
@@ -233,7 +293,7 @@ def main():
         cheap('close_headless_desktop', name=args.desktop)
     print(json.dumps(summary))
     if labels:
-        raise SystemExit(f"{len(labels)} translated controls still show only English.")
+        raise SystemExit("See the saved reports for English-only controls or unverified Settings sections.")
 
 
 if __name__ == '__main__':

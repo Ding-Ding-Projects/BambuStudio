@@ -184,6 +184,12 @@ private:
 };
 
 namespace {
+wxString localized_stacked(const char *source)
+{
+    return I18N::render_localized_text_stacked(
+        I18N::translate_mode(source).finalize_without_arguments()).label;
+}
+
 
 // Make a switch take "true" or "false" the way a click does, so the row's own
 // handler (and every side effect it has) runs.
@@ -4207,10 +4213,6 @@ wxWindow *PreferencesDialog::create_general_tab()
         auto refresh = [runtime, mode_title, mode_status, enroll, replace, enable, unlock, scrolled, last_failed](int failed) {
             if (failed >= 0) *last_failed = failed != 0;
             mode_title->SetLabel(wxString::FromUTF8(runtime->mode().record().display_name));
-            const auto localized_stacked = [](const char *source) {
-                return I18N::render_localized_text_stacked(
-                    I18N::translate_mode(source).finalize_without_arguments()).label;
-            };
             wxString state = runtime->mode().suppressed() ? localized_stacked(L("Restricted presentation is active.")) : localized_stacked(L("Normal presentation is active."));
             if (runtime->mode().status() == PersonalModes::RecordStatus::Corrupt || runtime->mode().status() == PersonalModes::RecordStatus::Unavailable)
                 state += "\n" + localized_stacked(L("Shared record is unreadable. Restricted presentation remains active."));
@@ -4770,11 +4772,15 @@ wxWindow *PreferencesDialog::create_other_tab()
         status->SetName(cantonese ? _L("Effective Cantonese voice") : _L("Effective English voice"));
         auto refresh_status = [status, cantonese](int) {
             const auto effective = TtsNarrator::voice_status(cantonese);
-            wxString text = !effective.available ? _L("No installed voice can speak this language.") :
-                _L("Effective voice:") + " " + wxString(effective.effective_name);
-            if (effective.selected_missing) text += "\n" + _L("Selected voice is missing; the saved choice is kept.");
+            wxString text = !effective.available
+                ? localized_stacked(L("No installed voice can speak this language."))
+                : I18N::render_localized_text_stacked(I18N::translate_mode(L("Effective voice:")).format_each(
+                      [&effective](const wxString &prefix) { return prefix + " " + wxString(effective.effective_name); })).label;
+            if (effective.selected_missing)
+                text += "\n" + localized_stacked(L("Selected voice is missing; the saved choice is kept."));
             const bool network = Narration::classify_network(effective.effective_name) == Narration::NetworkCapability::NetworkBacked;
-            text += "\n" + (network ? _L("This voice uses an online service and may be silent when offline.") : _L("Voice network capability is unknown."));
+            text += "\n" + localized_stacked(network ? L("This voice uses an online service and may be silent when offline.")
+                                                   : L("Voice network capability is unknown."));
             status->SetLabel(text);
             status->Wrap(status->FromDIP(420));
             status->GetParent()->Layout();
