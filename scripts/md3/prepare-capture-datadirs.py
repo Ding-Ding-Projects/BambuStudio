@@ -25,6 +25,7 @@ keeps its downloads in its own "downloads" folder.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import shutil
@@ -49,7 +50,8 @@ def config_for(language: str, theme: str, density: str, downloads: str) -> dict:
             # Keep first-run chrome out of the capture: no update prompt, no
             # network plugin download, no privacy banner.
             "check_update": "false",
-            "installed_networking": "1",
+            "installed_networking": "0",
+            "single_instance": "false",
             "privacy_version": "1",
             "show_hints": "false",
         }
@@ -85,8 +87,9 @@ def main() -> int:
                 downloads = os.path.join(path, "downloads")
                 os.makedirs(downloads)
                 with open(os.path.join(path, "BambuStudio.conf"), "w", encoding="utf-8", newline="\n") as fh:
-                    json.dump(config_for(language, theme, density, downloads), fh, indent=4)
-                    fh.write("\n")
+                    body = json.dumps(config_for(language, theme, density, downloads), indent=4)
+                    checksum = hashlib.md5(body.encode("utf-8")).hexdigest().upper()
+                    fh.write(f"{body}\n# MD5 checksum {checksum}\n")
                 print(f"{tuple_id}\t{path}")
     return 0
 

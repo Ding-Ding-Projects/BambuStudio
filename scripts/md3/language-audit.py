@@ -21,6 +21,10 @@ import shutil
 import subprocess
 import sys
 import time
+import uuid
+from pathlib import Path
+
+import psutil
 
 DEFAULT_CHEAP = os.path.join(os.path.expanduser('~'), 'Documents', 'GitHub', 'lowlevel-computer-use-mcp', '.venv', 'Scripts', 'lowlevel-computer-use-cheap.exe')
 CHEAP = os.environ.get('LLCU_CHEAP', DEFAULT_CHEAP)
@@ -72,46 +76,65 @@ def main():
     ap.add_argument('--exe', required=True)
     ap.add_argument('--datadir', required=True)
     ap.add_argument('--out', required=True)
-    ap.add_argument('--desktop', default='bsaudit')
+    ap.add_argument('--desktop', default='bsaudit-' + uuid.uuid4().hex)
     args = ap.parse_args()
+    exe = Path(args.exe).resolve(strict=True)
+    profile = Path(args.datadir).resolve(strict=True)
+    if not (profile / 'BambuStudio.conf').is_file():
+        raise SystemExit('The synthetic bilingual profile is missing its configuration.')
     os.makedirs(args.out, exist_ok=True)
     os.environ['BAMBU_LAYOUT_PROBE'] = '1'
     os.environ['BAMBU_LAYOUT_PROBE_TAG'] = 'audit'
     audit_file = os.path.join(args.datadir, 'log', 'language-audit.json')
-    cheap('create_headless_desktop', name=args.desktop)
-    pid = cheap('launch_on_headless_desktop', name=args.desktop, command=f'"{args.exe}" --datadir "{args.datadir}"')['pid']
+    # launch_on_headless_desktop creates the named desktop. A separate one-shot
+    # create call cannot keep a handle alive after the cheap CLI exits.
+    command = subprocess.list2cmdline([str(exe), '--datadir', str(profile)])
+    pid = cheap('launch_on_headless_desktop', name=args.desktop, command=command)['pid']
+    process = None
     summary = {}
+    labels = []
     try:
+        candidate = psutil.Process(pid)
+        arguments = candidate.cmdline()
+        if Path(candidate.exe()).resolve() != exe or arguments[1:] != ['--datadir', str(profile)]:
+            raise SystemExit('Launched process does not match the target executable and profile.')
+        process = candidate
         frame = wait_window(args.desktop, pid, lambda w: w['class'] == 'wxWindowNR' and w['width'] >= 1000 and w['height'] >= 600, 240, 'the main frame')
         time.sleep(8)
         cheap('mouse_click', hwnd=frame['handle'], x=PREPARE[0], y=PREPARE[1])
         time.sleep(6)  # the decorator sweeps every shown window about every 3 s
         result = audit(args.desktop, frame['handle'], audit_file, os.path.join(args.out, 'language-audit--prepare.json'))
-        summary['prepare'] = result.get('totals')
+        if result.get('mode') != 'bilingual' or not result.get('windows') or any(
+                window['class'] != 'wxFrame' for window in result['windows']):
+            raise SystemExit('Prepare audit is blocked by another window or the wrong language.')
+        summary['prepare'] = result['totals']
+        labels.extend(result['english_only'])
         cheap('mouse_click', hwnd=frame['handle'], x=GEAR[0], y=GEAR[1])
         time.sleep(2.5)
-        prefs = wait_window(args.desktop, pid, lambda w: w['class'] == '#32770' and w['width'] >= 700 and w['height'] >= 560 and w['title'] != '', 20, 'Preferences')
+        prefs = wait_window(args.desktop, pid, lambda w: w['class'] == '#32770' and w['width'] >= 700 and w['height'] >= 560 and ('Preferences' in w['title'] or '偏好設定' in w['title']), 20, 'Preferences')
         cheap('mouse_click', hwnd=prefs['handle'], x=GENERAL[0], y=GENERAL[1])
         time.sleep(6)
         result = audit(args.desktop, frame['handle'], audit_file, os.path.join(args.out, 'language-audit--preferences-general.json'))
-        summary['preferences-general'] = result.get('totals')
+        if result.get('mode') != 'bilingual' or not any(
+                window['class'] == 'wxDialog' and ('Preferences' in window['title'] or '偏好設定' in window['title'])
+                for window in result.get('windows', [])):
+            raise SystemExit('Preferences was absent from the audited windows.')
+        summary['preferences-general'] = result['totals']
+        labels.extend(result['english_only'])
     finally:
-        try:
-            cheap('kill_process', pid=pid, force=True)
-        except SystemExit:
-            pass
-        try:
-            for w in cheap('list_headless_windows', name=args.desktop)['windows']:
-                if w['process_id'] != pid:
-                    try:
-                        cheap('kill_process', pid=w['process_id'], force=True)
-                    except SystemExit:
-                        pass
-        except SystemExit:
-            pass
-        time.sleep(2)
+        if process is not None:
+            try:
+                # psutil checks creation time as well as PID on termination.
+                process.terminate()
+                process.wait(timeout=10)
+            except psutil.NoSuchProcess:
+                pass
+        # Other windows may belong to unrelated processes. Never terminate
+        # their owners; only release our named desktop handle.
         cheap('close_headless_desktop', name=args.desktop)
     print(json.dumps(summary))
+    if labels:
+        raise SystemExit(f"{len(labels)} translated controls still show only English.")
 
 
 if __name__ == '__main__':

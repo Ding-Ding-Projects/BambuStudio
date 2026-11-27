@@ -39093,3 +39093,324 @@ msgstr ""
 
 msgid "Save draft as preset"
 msgstr ""
+
+msgid "When the infill pattern is 3D Honeycomb, Honeycomb, or Gyroid, the printer produces significant vibration and noise when printing at high acceleration. It is recommended to reduce the infill acceleration."
+msgstr ""
+
+msgid "Bed temperature for layers except the initial one. Value 0 means the filament does not support to print on the 3D Effect Plate"
+msgstr ""
+
+msgid "Bed temperature of the initial layer. Value 0 means the filament does not support to print on the 3D Effect Plate"
+msgstr ""
+
+msgid "3D Effect Plate"
+msgstr ""
+
+msgid "The z gap between the top support interface and object. -1 means auto: the gap follows the support nozzle, and is 0 for a support material combination."
+msgstr ""
+
+msgid "The z gap between the bottom support interface and object. -1 means auto: the gap follows the support nozzle, and is 0 for a support material combination."
+msgstr ""
+
+msgid "Embedded seam headroom"
+msgstr ""
+
+msgid "When a seam can be hidden inside the print (e.g. at the joint of two materials), prefer the seam position that leaves at least this much hidden wall in the printing direction before the wall becomes visible. This hides extrusion defects caused by unstable nozzle pressure after a filament change. Set to 0 to disable."
+msgstr ""
+
+msgid "Cross-part color penetration"
+msgstr ""
+
+msgid "Allow top and bottom surface color penetration from a part to cross into adjacent parts. When disabled, color penetration is kept inside the part itself."
+msgstr ""
+
+msgid "Drying Module"
+msgstr ""
+
+msgid "Read Filament on Insertion"
+msgstr ""
+
+msgid "Read Filament on Startup"
+msgstr ""
+
+msgid "Allow Live View Camera Recording"
+msgstr ""
+
+msgid "Records only during printing when external storage is inserted."
+msgstr ""
+
+msgid "Current status: Not installed, unable to save recordings."
+msgstr ""
+
+msgid "Allow BirdsEye Camera Recording"
+msgstr ""
+
+msgid "Current status: Installed, recordings can be saved."
+msgstr ""
+
+msgid "The set temperature exceeds the allowed range for this filament (%d°C–%d°C) and has been reset to %d°C."
+msgstr ""
+
+msgid "Continue taking"
+msgstr ""
+
+msgid "Continue loading"
+msgstr ""
+
+msgid "E1 Air Purifier"
+msgstr ""
+
+msgid "Optional Drying Module"
+msgstr ""
+
+msgid "Dry Module"
+msgstr ""
+
+msgid "Switch PrintTool"
+msgstr ""
+
+msgid "Purge Residual Filament"
+msgstr ""
+
+msgid "Cannot read all while upgrading"
+msgstr ""
+
+msgid "Chamber temperature is not editable."
+msgstr ""
+
+msgid "This control is currently unavailable."
+msgstr ""
+
+msgid "Hotend Rack Web Debug"
+msgstr ""
+
+msgid "Hotend rack is currently unavailable."
+msgstr ""
+
+msgid "Hotend rack is busy."
+msgstr ""
+
+msgid "Hotend rack cannot read all."
+msgstr ""
+
+msgid "In use"
+msgstr ""
+
+msgid "Edit nozzle"
+msgstr ""
+
+msgid "This side has no nozzle. Click Edit to add one."
+msgstr ""
+
+msgid "This nozzle has another diameter. Select it above to use it."
+msgstr ""
+
+msgid "Filament switcher"
+msgstr ""
+
+msgid "The filament switcher is not ready."
+msgstr ""
+
+msgid "External Spool %d"
+msgstr ""
+
+msgid "External Spool"
+msgstr ""
+
+msgid "Note: %s"
+msgstr ""
+
+msgid "Less"
+msgstr ""
+
+msgid "Total usage"
+msgstr ""
+
+msgid "Tips: Current grouping of slice result is not optimal. With the optimal grouping, "
+msgstr ""
+
+msgid "save %1%g more filament and %2% more filament changes"
+msgstr ""
+
+msgid "save %1%g more filament but add %2% filament changes"
+msgstr ""
+
+msgid "save %2% more filament changes but use %1%g more filament"
+msgstr ""
+
+msgid "Compared to a printer with one nozzle, "
+msgstr ""
+
+msgid "save %1%g filament and %2% filament changes."
+msgstr ""
+
+msgid "save %1%g filament but add %2% filament changes."
+msgstr ""
+
+msgid "save %2% filament changes but use %1%g more filament."
+msgstr ""
+
+msgid "Split as New Object"
+msgstr ""
+
+msgid "New Object"
+msgstr ""
+
+msgid "Bambu Lab %s"
+msgstr ""
+
+msgid "The selected part changed before repair could be applied."
+msgstr ""
+
+msgid "The repaired mesh is empty."
+msgstr ""
+
+msgid "The repaired mesh still has open or non-manifold edges."
+msgstr ""
+
+msgid "Mesh name:"
+msgstr ""
+
+msgid "Triangle count:"
+msgstr ""
+
+msgid "Colors and painting will be remapped to the new mesh, which may cause deviations or loss."
+msgstr ""
+
+msgid "Bold"
+msgstr ""
+
+msgid "Align objects"
+msgstr ""
+
+msgid "No details available"
+msgstr ""
+
+msgid "Failed to load more details"
+msgstr ""
+
+msgid "Does not take effect in multi-diameter mode."
+msgstr ""
+
+msgid "Send all to Bambu Farm Manager Client"
+msgstr ""
+
+msgid "Send all to BFMC"
+msgstr ""
+
+msgid "Show Log Folder"
+msgstr ""
+
+msgid "Camera preparing, please try again later..."
+msgstr ""
+
+msgid "Jump to: Sparse infill acceleration"
+msgstr ""
+
+msgid "Allows color penetration from this part's painted top and bottom surfaces to cross into adjacent parts."
+msgstr ""
+
+msgid "When on, color can penetrate continuously into adjacent parts of the same object.\nWhen off, the configured penetration depth is preserved but clipped at this part's boundary."
+msgstr ""
+
+msgid "Filament %s uses a %s nozzle, which is not available on this printer. Add it or select an available nozzle."
+msgstr ""
+
+msgid "The object size in the file is very small. Would you like to import it using millimeters as the default unit?"
+msgstr ""
+
+msgid "Filament changes on this plate do not take effect in multi-diameter mode. They take effect again after switching to single-diameter mode."
+msgstr ""
+
+msgid "Current printer firmware does not yet support large flushing volumes. The flushing volume set in the slicer may be limited."
+msgstr ""
+
+msgid "Mouse rotation sensitivity"
+msgstr ""
+
+msgid "Set the mouse rotation sensitivity, medium by default."
+msgstr ""
+
+msgid "Show Objects color scheme in preview"
+msgstr ""
+
+msgid "Color preview toolpaths by object. Disabled by default."
+msgstr ""
+
+msgid "Saved in single-diameter mode. Switch to single-diameter mode to use it."
+msgstr ""
+
+msgid "Saved in multi-diameter mode. Switch to multi-diameter mode to use it."
+msgstr ""
+
+msgid "Reduces prime waste and prints faster. May cause slight color mixing(only for H2C and Bambu Lab H3C external 1st/2nd Gen AMS nozzles) or small surface defects."
+msgstr ""
+
+msgid "Wiki for more details"
+msgstr ""
+
+msgid "Filament in slots %s may not have been properly loaded to the PrintTool."
+msgstr ""
+
+msgid "Cool Plate SuperTack"
+msgstr ""
+
+msgid "The name exceeds the maximum length:"
+msgstr ""
+
+msgid "Exit the filament loading process?"
+msgstr ""
+
+msgid "This filament is not recommended for support base. \nAre you sure to use it for support base? \n"
+msgstr ""
+
+msgid "Bed temperature when 3D Effect Plate is installed. Value 0 means the filament does not support to print on the 3D Effect Plate"
+msgstr ""
+
+msgid "Print temperature exceeds the recommended range. Use with caution."
+msgstr ""
+
+msgid "Print temperature is below the recommended range. Use with caution."
+msgstr ""
+
+msgid "The selected models need repair before a Boolean operation can be performed."
+msgstr ""
+
+msgid "\"%1%\""
+msgstr ""
+
+msgid "Repair now"
+msgstr ""
+
+msgid "Repaired"
+msgstr ""
+
+msgid "Before using Bambu Studio, please agree to the Terms of Use and acknowledge reading the Privacy Policy."
+msgstr ""
+
+msgid "Nozzle diameter mismatch after filament synchronization"
+msgstr ""
+
+msgid "Add AMS"
+msgstr ""
+
+msgid "Some project filaments are using the %s nozzle. Changing it will move them to 0.4 Standard. Change it anyway?"
+msgstr ""
+
+msgid "The printer model and settings in this 3MF file don't match the target printer. Do you want to adapt these slicing settings for the target printer?"
+msgstr ""
+
+msgid "Target Printer"
+msgstr ""
+
+msgid "Target Nozzle"
+msgstr ""
+
+msgid "Target printer"
+msgstr ""
+
+msgid "%s supports up to %d nozzles. Please reduce the matched nozzles and keep only %d to continue."
+msgstr ""
+
+msgid "%s doesn't support %s nozzles. Switched to %s nozzle."
+msgstr ""

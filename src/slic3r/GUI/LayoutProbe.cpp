@@ -670,7 +670,7 @@ void walk_for_audit(wxWindow *w, wxWindow *top, AuditCounts &counts, std::vector
         }
     }
     for (wxWindow *child : w->GetChildren())
-        if (child != nullptr && child->IsShown())
+        if (child != nullptr && child->IsShown() && !child->IsTopLevel())
             walk_for_audit(child, top, counts, defects);
 }
 
