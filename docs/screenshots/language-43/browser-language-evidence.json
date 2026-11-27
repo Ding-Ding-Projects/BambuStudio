@@ -30,7 +30,10 @@
       "sha256": "e631043ee60645d92a25366c875f9d122935bbc132df0c5b9a3571560ec55fac",
       "interactiveCount": 74,
       "unnamedInteractiveCount": 0,
-      "rootFound": true
+      "rootFound": true,
+      "bodyOverflow": false,
+      "imageWidth": 1440,
+      "imageHeight": 1000
     },
     {
       "name": "1440-en-dark",
@@ -46,7 +49,10 @@
       "sha256": "e3371d796b2b510cfcebb4b7c89866e4bb634104dd4bc9d834f513a592649f81",
       "interactiveCount": 74,
       "unnamedInteractiveCount": 0,
-      "rootFound": true
+      "rootFound": true,
+      "bodyOverflow": false,
+      "imageWidth": 1440,
+      "imageHeight": 1000
     },
     {
       "name": "1440-yue_HK-light",
@@ -62,7 +68,10 @@
       "sha256": "0647f5e71223c7d013d0ad2836fecc598d76b655f530a433d764d6615ab9c4c6",
       "interactiveCount": 73,
       "unnamedInteractiveCount": 0,
-      "rootFound": true
+      "rootFound": true,
+      "bodyOverflow": false,
+      "imageWidth": 1440,
+      "imageHeight": 1000
     },
     {
       "name": "1440-yue_HK-dark",
@@ -78,7 +87,10 @@
       "sha256": "cd8fbe46e57eb2691d7e8cff78325181b34963c1d79295e670749f8c3ff28f1f",
       "interactiveCount": 73,
       "unnamedInteractiveCount": 0,
-      "rootFound": true
+      "rootFound": true,
+      "bodyOverflow": false,
+      "imageWidth": 1440,
+      "imageHeight": 1000
     },
     {
       "name": "1440-bilingual_en_yue_HK-light",
@@ -94,7 +106,10 @@
       "sha256": "60d2a718083642ac1b4b24b95a3c225757c9c25bbef66fdee23edce4a6c4bc28",
       "interactiveCount": 74,
       "unnamedInteractiveCount": 0,
-      "rootFound": true
+      "rootFound": true,
+      "bodyOverflow": false,
+      "imageWidth": 1440,
+      "imageHeight": 1000
     },
     {
       "name": "1440-bilingual_en_yue_HK-dark",
@@ -110,7 +125,10 @@
       "sha256": "20448dd13f5bd9b12cad3491ebc20bb8f1183c023ebb5836b8fb13d9f0ac100e",
       "interactiveCount": 74,
       "unnamedInteractiveCount": 0,
-      "rootFound": true
+      "rootFound": true,
+      "bodyOverflow": false,
+      "imageWidth": 1440,
+      "imageHeight": 1000
     },
     {
       "name": "390-en-light",
@@ -126,7 +144,10 @@
       "sha256": "1923c0c32c87ab18e13d3b2c6fd7a959ffcbcbc290765c7c5c8de8795d861b7c",
       "interactiveCount": 68,
       "unnamedInteractiveCount": 0,
-      "rootFound": true
+      "rootFound": true,
+      "bodyOverflow": false,
+      "imageWidth": 390,
+      "imageHeight": 1000
     },
     {
       "name": "390-en-dark",
@@ -142,7 +163,10 @@
       "sha256": "c86a81bfd194c8d47a4344ff34e312f9d031d3b1160dfa75e202ee6a9c527186",
       "interactiveCount": 68,
       "unnamedInteractiveCount": 0,
-      "rootFound": true
+      "rootFound": true,
+      "bodyOverflow": false,
+      "imageWidth": 390,
+      "imageHeight": 1000
     },
     {
       "name": "390-yue_HK-light",
@@ -158,7 +182,10 @@
       "sha256": "696361d2f06ccfaf45b210dc1b54a47ef4d16cb20106e16e5918261856f2d56f",
       "interactiveCount": 68,
       "unnamedInteractiveCount": 0,
-      "rootFound": true
+      "rootFound": true,
+      "bodyOverflow": false,
+      "imageWidth": 390,
+      "imageHeight": 1000
     },
     {
       "name": "390-yue_HK-dark",
@@ -174,7 +201,10 @@
       "sha256": "29766c04d9dd8290692c66b8f6d2da34755a9a25d5162e0eaa73936d5e0f86a3",
       "interactiveCount": 68,
       "unnamedInteractiveCount": 0,
-      "rootFound": true
+      "rootFound": true,
+      "bodyOverflow": false,
+      "imageWidth": 390,
+      "imageHeight": 1000
     },
     {
       "name": "390-bilingual_en_yue_HK-light",
@@ -190,7 +220,10 @@
       "sha256": "b007170a49d83afd4d2a496ec7f5f791361bd60e4daf1942a3476255608bf0aa",
       "interactiveCount": 68,
       "unnamedInteractiveCount": 0,
-      "rootFound": true
+      "rootFound": true,
+      "bodyOverflow": false,
+      "imageWidth": 390,
+      "imageHeight": 1000
     },
     {
       "name": "390-bilingual_en_yue_HK-dark",
@@ -206,7 +239,10 @@
       "sha256": "bf664b1d3a8957874e39e260de7f58a40b3f7a4777c2a2d22489c2c8235e86d5",
       "interactiveCount": 68,
       "unnamedInteractiveCount": 0,
-      "rootFound": true
+      "rootFound": true,
+      "bodyOverflow": false,
+      "imageWidth": 390,
+      "imageHeight": 1000
     }
   ],
   "reviewedImages": [
