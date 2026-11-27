@@ -33,7 +33,7 @@ test('a native menu, or no menu at all, fails the run', () => {
 test('a surface is its dialog, not a popup that comes with it', () => {
   // The gear showed a 160 x 243 "panel" before Preferences, and the sweep measured
   // that popup instead of the dialog until md3-v162.
-  assert.match(checker, /and w\['class'\] == '#32770'\s+and any\(title in w\.get\('title'/);
+  assert.match(checker, /and w\['class'\] == '#32770'\s+and any\(part\.strip\(\)\.casefold\(\) in expected_titles/);
   assert.match(sweep, /found = wait_for\(lambda: next\(\(w for w in fresh\(\) if w\['class'\] == '#32770'\), None\), timeout\)/);
   assert.match(sweep, /cheap\('mouse_click', hwnd=main_hwnd, x=GEAR\[0\], y=GEAR\[1\]\)\s*tried\.append\('gear'\)\s*dialog = new_dialog\(15\)/);
 });

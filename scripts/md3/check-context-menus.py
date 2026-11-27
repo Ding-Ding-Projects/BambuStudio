@@ -123,8 +123,8 @@ def main():
         expected_titles = {surface.casefold(), form.casefold()}
         return wait_for(lambda: next((w for w in windows() if w['handle'] not in before
                                       and w['class'] == '#32770'
-                                      and any(title in w.get('title', '').casefold()
-                                              for title in expected_titles)), None), 15)
+                                      and any(part.strip().casefold() in expected_titles
+                                              for part in w.get('title', '').splitlines())), None), 15)
 
     def text_fields(dialog):
         staged = os.path.join(staging, f'{state["pid"]}-{len(results)}.jsonl')
