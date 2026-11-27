@@ -577,6 +577,10 @@ static void containers()
     CHECK(std::find(args.begin(), args.end(), "TYPE=PAPER") != args.end());
     CHECK(std::find(args.begin(), args.end(), "127.0.0.1:25566:25565/tcp") != args.end());
     setup.bedrock = true;
+    auto modern=container_create(setup);
+    CHECK(std::find(modern.begin(), modern.end(), "127.0.0.1:25566:19132/tcp")!=modern.end());
+    CHECK(std::find(modern.begin(), modern.end(), "127.0.0.1:19140-19155:19140-19155/udp")!=modern.end());
+    setup.nethernet=false;
     auto bedrock = container_create(setup);
     CHECK(std::find(bedrock.begin(), bedrock.end(), "127.0.0.1:25566:19132/udp") != bedrock.end());
     setup.bind = "192.168.2.4";
