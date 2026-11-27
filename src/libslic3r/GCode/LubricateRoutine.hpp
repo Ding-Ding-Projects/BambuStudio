@@ -46,6 +46,12 @@ struct LubricateArea
 // chosen tune plays on every print. Empty for Silent.
 std::string start_melody_gcode(const std::string &melody_id);
 
+// Remove only a named vendor sound sequence. Leave positioning, synchronization,
+// motor state and unmarked custom code in their original order.
+std::string without_vendor_melody(const std::string &gcode, bool finish);
+bool has_creator_melody(const std::string &gcode);
+std::string apply_print_start_melody(const std::string &gcode, const std::string &melody_id);
+
 // The routine on its own. It assumes a homed machine and leaves it homed again
 // with `rehome` (a whole G28 line), or with a plain G28 when that is empty.
 std::string lubricate_routine_gcode(const LubricateArea &area, const std::string &rehome = std::string());

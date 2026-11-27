@@ -104,6 +104,60 @@ std::string start_melody_gcode(const std::string &melody_id)
     return "; start melody: " + std::string(melody.id) + "\nM17\nM400 S1\n" + tune_block(melody.notes);
 }
 
+bool has_creator_melody(const std::string &gcode)
+{
+    const size_t start = gcode.find(";===== melody start =====");
+    return start != std::string::npos && gcode.find(";===== melody end =====", start) != std::string::npos;
+}
+
+std::string without_vendor_melody(const std::string &gcode, bool finish)
+{
+    const std::string marker = finish ? "printerfinishsound" : "printerstartsound";
+    bool armed = false;
+    size_t sequence = std::string::npos;
+    for (size_t pos = 0; pos < gcode.size();) {
+        const size_t newline = gcode.find('\n', pos);
+        const size_t next = newline == std::string::npos ? gcode.size() : newline + 1;
+        std::string line = gcode.substr(pos, next - pos);
+        const size_t first = line.find_first_not_of(" \t\r\n");
+        if (first != std::string::npos) {
+            line.erase(0, first);
+            if (line.front() == ';') {
+                if (sequence == std::string::npos) {
+                    line.erase(std::remove_if(line.begin(), line.end(), [](char c) {
+                        return c == ';' || c == '=' || c == ' ' || c == '\t' || c == '\r' || c == '\n';
+                    }), line.end());
+                    armed = line == marker || (!finish && line == "startprintersound");
+                }
+            } else {
+                const size_t comment = line.find(';');
+                if (comment != std::string::npos) line.erase(comment);
+                line.erase(line.find_last_not_of(" \t\r\n") + 1);
+                if (sequence != std::string::npos) {
+                    if (line == "M1006 W") return gcode.substr(0, sequence) + gcode.substr(next);
+                    if (line.compare(0, 6, "M1006 ") != 0) {
+                        sequence = std::string::npos;
+                        armed = false;
+                    }
+                } else if (armed && line == "M1006 S1") {
+                    sequence = pos;
+                } else if (line != "M17" && line != "M400 S1") {
+                    armed = false;
+                }
+            }
+        }
+        pos = next;
+    }
+    return gcode;
+}
+
+std::string apply_print_start_melody(const std::string &gcode, const std::string &melody_id)
+{
+    const std::string prepared = without_vendor_melody(gcode, false);
+    if (has_creator_melody(prepared)) return prepared;
+    return start_melody_gcode(melody_id) + prepared;
+}
+
 std::string lubricate_routine_gcode(const LubricateArea &area, const std::string &rehome)
 {
     const double x0 = area.min_x + edge_margin, x1 = area.max_x - edge_margin;

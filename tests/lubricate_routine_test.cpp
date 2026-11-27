@@ -20,11 +20,11 @@ static int assertions = 0;
 
 // The machine_start_gcode string of a template file, unescaped. Enough JSON for
 // these files: \n, \t, \", \\ and \/.
-static std::string start_gcode_of(const std::filesystem::path &file)
+static std::string template_gcode(const std::filesystem::path &file, const std::string &field)
 {
     std::ifstream in(file, std::ios::binary);
     const std::string text((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
-    const size_t key = text.find("\"machine_start_gcode\"");
+    const size_t key = text.find("\"" + field + "\"");
     if (key == std::string::npos) return std::string();
     size_t i = text.find('"', text.find(':', key)) + 1;
     std::string out;
@@ -108,8 +108,15 @@ int main(int argc, char **argv)
     size_t templates = 0;
     for (const auto &entry : std::filesystem::directory_iterator(machines)) {
         const std::string name = entry.path().filename().string();
+        if (name.find("template machine_end_gcode") != std::string::npos) {
+            const auto end = template_gcode(entry.path(), "machine_end_gcode");
+            if (end.find("M1006 S1") != std::string::npos) {
+                CHECK(without_vendor_melody(end, true).find("M1006 S1") == std::string::npos);
+                CHECK(without_vendor_melody(end, false) == end);
+            }
+        }
         if (name.find("template machine_start_gcode") == std::string::npos) continue;
-        const std::string start = start_gcode_of(entry.path());
+        const std::string start = template_gcode(entry.path(), "machine_start_gcode");
         if (start.empty()) continue;
         ++templates;
         const std::string out = insert_lubricate_routine(start, h2c_area());
@@ -117,6 +124,15 @@ int main(int argc, char **argv)
         CHECK(out.find(";===== lubricate mode: full travel of every axis =====") != std::string::npos);
         CHECK(out.find(";===== lubricate mode end =====") != std::string::npos);
         CHECK(out.size() > start.size());
+        if (start.find("M1006 S1") != std::string::npos) {
+            const auto once = apply_print_start_melody(start, "twinkle");
+            const size_t begin = once.find("M1006 S1");
+            CHECK(begin != std::string::npos && once.find("M1006 S1", begin + 1) == std::string::npos);
+            CHECK(apply_print_start_melody(start, "silent").find("M1006 S1") == std::string::npos);
+            const std::string creator = ";===== melody start =====\nM1006 S1\nM1006 W\n;===== melody end =====\n";
+            const auto authored = apply_print_start_melody(start + creator, "twinkle");
+            CHECK(authored.find(creator) != std::string::npos && authored.find("; start melody: twinkle") == std::string::npos);
+        }
         if (name == "Bambu Lab A1 0.4 nozzle template machine_start_gcode.json") {
             Slic3r::GUI::Melody parsed;
             CHECK(Slic3r::GUI::melody_parse_gcode(start, parsed));
@@ -136,6 +152,11 @@ int main(int argc, char **argv)
     CHECK(twinkle.find("M1006 A37 B80 L99") < twinkle.find("M1006 W"));
     CHECK(start_melody_gcode("truck_backup").find("M1006 A0 B45 L0") != std::string::npos);
     CHECK(start_melody_gcode("silent").empty());
+    const std::string finish = ";=====printer finish  sound=========\nM17\nM400 S1\nM1006 S1\nM1006 A20 B7\nM1006 W\nM18\n";
+    CHECK(without_vendor_melody(finish, true) == ";=====printer finish  sound=========\nM17\nM400 S1\nM18\n");
+    CHECK(without_vendor_melody(finish, false) == finish);
+    const std::string unrelated = ";=====printer start sound===\nM1006 S1\nG28\nM1006 W\n";
+    CHECK(without_vendor_melody(unrelated, false) == unrelated);
     plain_assertions();
     std::cout << "lubricate routine: " << templates << " templates, " << assertions << " assertions passed\n";
     return 0;
