@@ -5,6 +5,7 @@
 #include "VocabularyDrop.hpp"
 #include "SettingsDraftUndo.hpp"
 #include "Jobs/ImportJob.hpp"
+#include "CurrentVersionExport.hpp"
 #include "Widgets/MD3ScrolledWindow.hpp"
 #include "Widgets/LinkLabel.hpp"
 #include "Widgets/ProgressBar.hpp"
@@ -28727,6 +28728,8 @@ int Plater::save_project(bool saveAs)
     // made immutable, leave both the document and its identity untouched.
     if (!p->flush_project_history_pending(L("Project edit before save"), true, true)) {
         BOOST_LOG_TRIVIAL(error) << "Project save refused because its preceding history boundary is not durable";
+        MessageDialog(this, _L("Could not preserve pending project history.") + " " +
+                      _L("Use File > Export > Export current version only as 3MF to save a separate copy without history."), _L("Save project"), wxOK | wxICON_WARNING).ShowModal();
         return wxID_CANCEL;
     }
     // we got the real file from here
@@ -28774,7 +28777,8 @@ int Plater::save_project(bool saveAs)
         stdfs::remove(history_free_snapshot, cleanup_error);
     } catch (const std::exception &ex) {
         BOOST_LOG_TRIVIAL(error) << "Project save retained its previous archive and pending recovery snapshot: " << ex.what();
-        MessageDialog(this, _L("Failed to save the project and its version history. The previous project file was preserved."),
+        MessageDialog(this, _L("Failed to save the project and its version history. The previous project file was preserved.") + " " +
+                      _L("Use File > Export > Export current version only as 3MF to save a separate copy without history."),
                       _L("Save project"), wxOK | wxICON_WARNING).ShowModal();
         return wxID_CANCEL;
     }
@@ -31854,13 +31858,16 @@ void Plater::send_gcode_finish(wxString name)
 void Plater::export_core_3mf()
 {
     wxString path = p->get_export_file(FT_3MF);
-    if (path.empty()) { return; }
-    if (!p->flush_project_history_pending(L("Project edit before current-version export"), true, true)) {
-        MessageDialog(this, _L("Could not preserve pending project history. The current version was not exported."),
+    if (path.empty() || path == "<cancel>") return;
+    // This export does not change project identity or retire pending history.
+    // Keep it available even when the local history store cannot be written.
+    const stdfs::path destination = stdfs::u8path(into_u8(path));
+    const auto project = get_project_filename(".3mf");
+    if (!current_version_export_destination_allowed(stdfs::u8path(into_u8(project)), destination)) {
+        MessageDialog(this, _L("Choose a separate file for the current-version export."),
                       _L("Export current version"), wxOK | wxICON_WARNING).ShowModal();
         return;
     }
-    const stdfs::path destination = stdfs::u8path(into_u8(path));
     const stdfs::path staged = destination.parent_path() /
         (destination.filename().u8string() + ".pending-current-export-" + std::to_string(wxGetProcessId()) + "-" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()) + ".3mf");

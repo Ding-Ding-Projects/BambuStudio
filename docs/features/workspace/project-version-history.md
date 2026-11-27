@@ -48,7 +48,7 @@ synced or pushed anywhere; no `.git` appears in the user's own folders.
   archive remains intact.
 - **Current-version export**: File > Export > Export current version only as 3MF
   writes the current model and settings without either portable-history entry.
-  It flushes pending captures first, validates the staged ZIP, and atomically
+  It works independently of pending history and requires a separate destination from the open project. It validates the staged ZIP and atomically
   publishes it. On failure, the previous destination and pending export remain
   available. Reopening a saved archive in the same app profile retains a newer
   local autosave as the active version when it descends from the embedded head;
