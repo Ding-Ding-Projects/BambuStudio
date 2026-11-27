@@ -33,6 +33,7 @@
 #include <boost/filesystem/operations.hpp>
 #include <boost/nowide/cstdio.hpp>
 #include "I18N.hpp"
+#include "SliceToolpathSnapshot.hpp"
 //#include "RemovableDriveManager.hpp"
 
 #include "slic3r/GUI/Plater.hpp"
@@ -199,9 +200,21 @@ std::string BackgroundSlicingProcess::output_filepath_for_project(const boost::f
 
 // This function may one day be merged into the Print, but historically the print was separated
 // from the G-code generator.
+std::shared_ptr<const GUI::SliceToolpathSnapshot>
+BackgroundSlicingProcess::live_slice_toolpath(uint64_t generation, int plate_index) const
+{
+    std::lock_guard<std::mutex> lock(m_live_toolpath_mutex);
+    if (!m_live_toolpath || cancellation_requested() || generation != automation_generation() ||
+        m_live_toolpath->key.generation != generation || m_live_toolpath->key.plate_index != plate_index)
+        return {};
+    return m_live_toolpath;
+}
+
 void BackgroundSlicingProcess::process_fff()
 {
     assert(m_print == m_fff_print);
+    const auto generation = automation_generation();
+    const int plate_index = m_current_plate->get_index();
     PresetBundle &preset_bundle = *wxGetApp().preset_bundle;
     m_fff_print->set_BBL_Printer(preset_bundle.printers.get_edited_preset().is_bbl_vendor_preset(&preset_bundle));
 	//BBS: add the logic to process from an existed gcode file
@@ -260,7 +273,25 @@ void BackgroundSlicingProcess::process_fff()
 
 		//BBS: add plate index into render params
 		m_temp_output_path = this->get_current_plate()->get_tmp_gcode_path();
-		m_fff_print->export_gcode(m_temp_output_path, m_gcode_result, [this](const ThumbnailsParams& params) { return this->render_thumbnails(params); });
+		// The serial output stage owns the growing processor result. Throttle by
+        // both wall time and geometric growth, so repeated scans cost O(N) in total.
+        auto moves_written = [this, generation, plate_index, next_count = std::size_t{2},
+                              next_time = std::chrono::steady_clock::time_point{}]
+                             (const GCodeProcessorResult& result) mutable {
+            const auto count = result.moves.size();
+            if (count < next_count || generation != automation_generation() || cancellation_requested())
+                return;
+            const auto now = std::chrono::steady_clock::now();
+            if (now < next_time) return;
+            next_time = now + std::chrono::milliseconds(250);
+            next_count = count + std::max<std::size_t>(1, count / 8);
+            auto snapshot = GUI::make_slice_toolpath_snapshot({generation, plate_index, result.id}, result);
+            std::lock_guard<std::mutex> lock(m_live_toolpath_mutex);
+            if (generation == automation_generation() && !cancellation_requested())
+                m_live_toolpath = std::move(snapshot);
+        };
+        m_fff_print->export_gcode(m_temp_output_path, m_gcode_result,
+            [this](const ThumbnailsParams& params) { return this->render_thumbnails(params); }, std::move(moves_written));
 		finalize_gcode();
 		BOOST_LOG_TRIVIAL(info) << boost::format("export gcode finished");
 	}

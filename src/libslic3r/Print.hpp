@@ -924,7 +924,7 @@ public:
     void                process(std::unordered_map<std::string, long long>* slice_time = nullptr, bool use_cache = false) override;
     // Exports G-code into a file name based on the path_template, returns the file path of the generated G-code file.
     // If preview_data is not null, the preview_data is filled in for the G-code visualization (not used by the command line Slic3r).
-    std::string         export_gcode(const std::string& path_template, GCodeProcessorResult* result, ThumbnailsGeneratorCallback thumbnail_cb = nullptr);
+    std::string         export_gcode(const std::string& path_template, GCodeProcessorResult* result, ThumbnailsGeneratorCallback thumbnail_cb = nullptr, GCodeMoveObserver moves_written = {});
     //return 0 means successful
     int                 export_cached_data(const std::string& dir_path, int& obj_cnt_exported, bool with_space=false);
     int                 load_cached_data(const std::string& directory);
