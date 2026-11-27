@@ -62517,3 +62517,378 @@ msgstr "硬件配合程度不明：缺少可用 GPU 記憶體、驅動程式／�
 #. review-status: agent-drafted
 msgid "Retry runtime and return to Models"
 msgstr "重試執行環境並返回「模型」"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Select articles using their checkboxes before exporting."
+msgstr "匯出前請先勾選要匯出嘅文章。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Export selected documentation"
+msgstr "匯出所選文件"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Documentation export could not be written."
+msgstr "未能寫入匯出文件。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Selected documentation exported."
+msgstr "已匯出所選文件。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "No matching documentation articles."
+msgstr "冇相符嘅文件文章。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Cantonese translation is not available for this article. English source follows."
+msgstr "呢篇文章暫時冇廣東話翻譯，以下係英文原文。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "The requested heading is unavailable in the selected article language."
+msgstr "所選文章語言入面搵唔到指定標題。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Bundled feature articles. External references never open automatically."
+msgstr "隨程式附送嘅功能文章，外部參照唔會自動開啟。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Search article titles and text"
+msgstr "搜尋文章標題同正文"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Documentation categories and search results"
+msgstr "文件分類同搜尋結果"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Documentation article and table of contents"
+msgstr "文件文章同目錄"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Copy selected articles"
+msgstr "複製所選文章"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Select articles using their checkboxes before copying."
+msgstr "複製前請先勾選要複製嘅文章。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Clipboard is unavailable."
+msgstr "剪貼簿暫時無法使用。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Selected documentation copied."
+msgstr "已複製所選文件。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Documentation could not be copied."
+msgstr "未能複製文件。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Export selected articles"
+msgstr "匯出所選文章"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Close article tab"
+msgstr "關閉文章分頁"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Open tools"
+msgstr "開啟工具"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "it was sliced with a different ink, so it was not kept"
+msgstr "因為用咗唔同墨水切片，所以冇保留"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Home Assistant: "
+msgstr "Home Assistant 家居自動化："
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "API: "
+msgstr "API 介面："
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "API"
+msgstr "API 介面"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Home Assistant"
+msgstr "Home Assistant 家居自動化"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "local"
+msgstr "本機"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Process draft"
+msgstr "流程草稿"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Ink preset draft"
+msgstr "墨水預設草稿"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Printer preset draft"
+msgstr "打印機預設草稿"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Discard this draft's unsaved changes?"
+msgstr "要放棄呢份草稿未儲存嘅變更嗎？"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Close draft"
+msgstr "關閉草稿"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Edits stay in this draft until Apply. Saving a preset does not activate it."
+msgstr "編輯內容會留喺草稿，直至你撳「套用」。儲存預設唔會自動啟用佢。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Search draft settings"
+msgstr "搜尋草稿設定"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Undo Apply"
+msgstr "復原套用"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Open page or create draft"
+msgstr "開啟頁面或者建立草稿"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Existing pages remain shared views. Draft settings are independent."
+msgstr "現有頁面繼續共用同一個檢視，草稿設定各自獨立。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Search pages and draft types"
+msgstr "搜尋頁面同草稿類型"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "New Process draft"
+msgstr "新增流程草稿"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "New Ink preset draft"
+msgstr "新增墨水預設草稿"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "New printer preset draft"
+msgstr "新增打印機預設草稿"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Open a project before creating a settings draft."
+msgstr "請先開啟項目，再建立設定草稿。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Create draft"
+msgstr "建立草稿"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The target changed. Create a new draft from the current target before applying."
+msgstr "目標已經改變。套用之前，請由目前目標重新建立草稿。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Draft conflict"
+msgstr "草稿衝突"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Apply these changed settings?\n"
+msgstr "要套用呢啲已更改嘅設定嗎？\n"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Apply draft"
+msgstr "套用草稿"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Apply could not finish. Previous settings were restored."
+msgstr "未能完成套用，已還原之前嘅設定。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Undo Apply is unavailable because the target settings changed."
+msgstr "目標設定已經改變，未能復原今次套用。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "A preset with this name already exists."
+msgstr "同名預設已經存在。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Save draft"
+msgstr "儲存草稿"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Preset saved. The live selection is unchanged."
+msgstr "已儲存預設，目前選擇保持不變。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "The preset could not be saved. Your draft is retained."
+msgstr "未能儲存預設，草稿仍然保留。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Not configured. No data has been sent."
+msgstr "尚未設定，冇傳送任何資料。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Enrollment required. No data has been sent."
+msgstr "需要登記，冇傳送任何資料。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Invalid endpoint. Use an HTTPS origin without credentials or a path."
+msgstr "端點無效。請用 HTTPS 來源位址，唔可以包含憑據或者路徑。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Waiting for a delivery result."
+msgstr "等候傳送結果。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "The server accepted the latest status update."
+msgstr "伺服器已接受最近一次狀態更新。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Delivery failed. Previous acceptance is shown separately."
+msgstr "傳送失敗。之前獲接受嘅記錄會分開顯示。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Search status evidence"
+msgstr "搜尋狀態證據"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Retry delivery"
+msgstr "重試傳送"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "No matching evidence."
+msgstr "冇相符證據。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Endpoint"
+msgstr "端點"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Configured privately"
+msgstr "已私下設定"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Not configured"
+msgstr "尚未設定"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Enrollment"
+msgstr "登記"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Present"
+msgstr "已提供"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Last checked"
+msgstr "上次檢查"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Last accepted"
+msgstr "上次獲接受"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Attempts"
+msgstr "嘗試次數"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Accepted"
+msgstr "已接受"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Inbox receipts"
+msgstr "收件匣收據"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Receipt counts do not apply replies to this application."
+msgstr "收據數目唔代表已將回覆套用到呢個應用程式。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Development inventory is measured before delivery."
+msgstr "開發清單會喺傳送前量度。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Repository inventory is not applicable to an installed application. Open model paths are not transmitted."
+msgstr "已安裝嘅應用程式唔適用於原始碼儲存庫清單。已開啟模型嘅路徑唔會傳送。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Configure STATUS_HUB_URL and AGENT_INGEST_TOKEN in the trusted launch environment, then restart the application. Retry uses the current session. Endpoint values, credentials and response bodies are never displayed or exported."
+msgstr "請喺受信任嘅啟動環境設定 STATUS_HUB_URL 同 AGENT_INGEST_TOKEN，再重新啟動應用程式。重試會沿用目前工作階段。端點值、憑據同回應內容絕不會顯示或者匯出。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Delivery in progress"
+msgstr "正在傳送"

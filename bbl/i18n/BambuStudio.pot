@@ -38017,3 +38017,228 @@ msgstr ""
 
 msgid "Retry runtime and return to Models"
 msgstr ""
+
+msgid "Select articles using their checkboxes before exporting."
+msgstr ""
+
+msgid "Export selected documentation"
+msgstr ""
+
+msgid "Documentation export could not be written."
+msgstr ""
+
+msgid "Selected documentation exported."
+msgstr ""
+
+msgid "No matching documentation articles."
+msgstr ""
+
+msgid "Cantonese translation is not available for this article. English source follows."
+msgstr ""
+
+msgid "The requested heading is unavailable in the selected article language."
+msgstr ""
+
+msgid "Bundled feature articles. External references never open automatically."
+msgstr ""
+
+msgid "Search article titles and text"
+msgstr ""
+
+msgid "Documentation categories and search results"
+msgstr ""
+
+msgid "Documentation article and table of contents"
+msgstr ""
+
+msgid "Copy selected articles"
+msgstr ""
+
+msgid "Select articles using their checkboxes before copying."
+msgstr ""
+
+msgid "Clipboard is unavailable."
+msgstr ""
+
+msgid "Selected documentation copied."
+msgstr ""
+
+msgid "Documentation could not be copied."
+msgstr ""
+
+msgid "Export selected articles"
+msgstr ""
+
+msgid "Close article tab"
+msgstr ""
+
+msgid "Open tools"
+msgstr ""
+
+msgid "it was sliced with a different ink, so it was not kept"
+msgstr ""
+
+msgid "Home Assistant: "
+msgstr ""
+
+msgid "API: "
+msgstr ""
+
+msgid "API"
+msgstr ""
+
+msgid "Home Assistant"
+msgstr ""
+
+msgid "local"
+msgstr ""
+
+msgid "Process draft"
+msgstr ""
+
+msgid "Ink preset draft"
+msgstr ""
+
+msgid "Printer preset draft"
+msgstr ""
+
+msgid "Discard this draft's unsaved changes?"
+msgstr ""
+
+msgid "Close draft"
+msgstr ""
+
+msgid "Edits stay in this draft until Apply. Saving a preset does not activate it."
+msgstr ""
+
+msgid "Search draft settings"
+msgstr ""
+
+msgid "Undo Apply"
+msgstr ""
+
+msgid "Open page or create draft"
+msgstr ""
+
+msgid "Existing pages remain shared views. Draft settings are independent."
+msgstr ""
+
+msgid "Search pages and draft types"
+msgstr ""
+
+msgid "New Process draft"
+msgstr ""
+
+msgid "New Ink preset draft"
+msgstr ""
+
+msgid "New printer preset draft"
+msgstr ""
+
+msgid "Open a project before creating a settings draft."
+msgstr ""
+
+msgid "Create draft"
+msgstr ""
+
+msgid "The target changed. Create a new draft from the current target before applying."
+msgstr ""
+
+msgid "Draft conflict"
+msgstr ""
+
+msgid "Apply these changed settings?\n"
+msgstr ""
+
+msgid "Apply draft"
+msgstr ""
+
+msgid "Apply could not finish. Previous settings were restored."
+msgstr ""
+
+msgid "Undo Apply is unavailable because the target settings changed."
+msgstr ""
+
+msgid "A preset with this name already exists."
+msgstr ""
+
+msgid "Save draft"
+msgstr ""
+
+msgid "Preset saved. The live selection is unchanged."
+msgstr ""
+
+msgid "The preset could not be saved. Your draft is retained."
+msgstr ""
+
+msgid "Not configured. No data has been sent."
+msgstr ""
+
+msgid "Enrollment required. No data has been sent."
+msgstr ""
+
+msgid "Invalid endpoint. Use an HTTPS origin without credentials or a path."
+msgstr ""
+
+msgid "Waiting for a delivery result."
+msgstr ""
+
+msgid "The server accepted the latest status update."
+msgstr ""
+
+msgid "Delivery failed. Previous acceptance is shown separately."
+msgstr ""
+
+msgid "Search status evidence"
+msgstr ""
+
+msgid "Retry delivery"
+msgstr ""
+
+msgid "No matching evidence."
+msgstr ""
+
+msgid "Endpoint"
+msgstr ""
+
+msgid "Configured privately"
+msgstr ""
+
+msgid "Not configured"
+msgstr ""
+
+msgid "Enrollment"
+msgstr ""
+
+msgid "Present"
+msgstr ""
+
+msgid "Last checked"
+msgstr ""
+
+msgid "Last accepted"
+msgstr ""
+
+msgid "Attempts"
+msgstr ""
+
+msgid "Accepted"
+msgstr ""
+
+msgid "Inbox receipts"
+msgstr ""
+
+msgid "Receipt counts do not apply replies to this application."
+msgstr ""
+
+msgid "Development inventory is measured before delivery."
+msgstr ""
+
+msgid "Repository inventory is not applicable to an installed application. Open model paths are not transmitted."
+msgstr ""
+
+msgid "Configure STATUS_HUB_URL and AGENT_INGEST_TOKEN in the trusted launch environment, then restart the application. Retry uses the current session. Endpoint values, credentials and response bodies are never displayed or exported."
+msgstr ""
+
+msgid "Delivery in progress"
+msgstr ""
