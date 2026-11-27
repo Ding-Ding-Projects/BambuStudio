@@ -304,3 +304,12 @@ filters the current page locally. Select a project, show compatible packages,
 then choose the exact file to install. Only HTTPS downloads from the catalog's
 content host are accepted; the published SHA-1 and byte count must match
 before installation. An occupied filename is preserved.
+
+In the local **Native console and Bedrock setup** dialog, **Install Bedrock
+pack** accepts a trusted .mcpack or ZIP with a validated root manifest. It
+expands into the server's behavior_packs or resource_packs directory under its
+UUID. To activate it, stop the world, choose **Activate installed pack** and
+select that pack's manifest. The manager checks the database lock, preserves
+existing registrations and adds the selected ID and version to the configured
+world's pack list. The next world start loads the pack. Mixed multi-pack
+archives and automatic dependency installation are not supported.

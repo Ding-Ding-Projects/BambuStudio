@@ -10,4 +10,6 @@ struct ContentInstallResult {
 
 ContentInstallResult install_java_content(const std::string &server_folder, const std::string &flavour,
                                           const std::string &archive);
+ContentInstallResult install_bedrock_content(const std::string &folder, const std::string &archive);
+ContentInstallResult activate_bedrock_content(const std::string &folder, const std::string &manifest);
 }}}

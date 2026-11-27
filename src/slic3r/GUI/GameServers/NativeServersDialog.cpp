@@ -1,6 +1,7 @@
 #include "NativeServersDialog.hpp"
 #include "NativeServerTarget.hpp"
 #include "ServerSystem.hpp"
+#include "ContentInstaller.hpp"
 #include "../I18N.hpp"
 #include "../Widgets/Button.hpp"
 #include "../Widgets/ComboBox.hpp"
@@ -67,6 +68,8 @@ public:
             actions->Add(button, 0, wxALL, FromDIP(3));
             return button;
         };
+        add_pack=action(_L("Install Bedrock pack..."),[this] { pack(false); });
+        enable_pack=action(_L("Activate installed pack..."),[this] { pack(true); });
         setup_button = action(_L("Install Bedrock ZIP..."), [this] { install(); });
         action(_L("Read EULA"), [] { wxLaunchDefaultBrowser("https://aka.ms/MinecraftEULA"); });
         start_button = action(_L("Start server"), [this] { start(); });
@@ -94,6 +97,26 @@ public:
         MD3DialogCaption::Adopt(this); CentreOnParent(); controls();
     }
 private:
+    void pack(bool activate)
+    {
+        if (running || installing || target->GetSelection()!=0) return;
+        wxFileDialog pick(this,activate ? _L("Select the installed pack manifest") : _L("Select a trusted Bedrock pack"),
+                          folder->GetTextCtrl()->GetValue(),{},activate ? "manifest.json|manifest.json" : "Bedrock pack (*.mcpack;*.zip)|*.mcpack;*.zip",
+                          wxFD_OPEN|wxFD_FILE_MUST_EXIST);
+        if (pick.ShowModal()!=wxID_OK) return;
+        const auto dir=folder->GetTextCtrl()->GetValue().ToStdString(wxConvUTF8), file=pick.GetPath().ToStdString(wxConvUTF8);
+        installing=true; controls();
+        std::weak_ptr<bool> weak=lifetime;
+        std::thread([this,weak,dir,file,activate] {
+            auto result=activate ? activate_bedrock_content(dir,file) : install_bedrock_content(dir,file);
+            wxTheApp->CallAfter([this,weak,result,activate] {
+                if (weak.expired()) return;
+                installing=false; controls();
+                append(result.ok ? (activate ? _L("Pack enabled for the next world start.") : _L("Installed. Choose Activate installed pack to enable it in the configured world.")) : wxString::FromUTF8(result.message));
+            });
+        }).detach();
+    }
+
     void install()
     {
         if (running || installing || target->GetSelection() != 0) return;
@@ -132,6 +155,7 @@ private:
         const bool idle = !running && !installing;
         target->Enable(idle); folder->Enable(idle); agree->Enable(idle);
         setup_button->Enable(idle && target->GetSelection() == 0);
+        add_pack->Enable(idle && target->GetSelection() == 0); enable_pack->Enable(idle && target->GetSelection() == 0);
         browse->Enable(idle && target->GetSelection() == 0);
         profile->Enable(idle && target->GetSelection() != 0);
         start_button->Enable(idle); stop_button->Enable(running); command->Enable(running);
@@ -192,7 +216,7 @@ private:
     ComboBox *target;
     TextInput *profile, *folder, *command;
     TextArea *console;
-    Button *browse, *start_button, *stop_button, *setup_button;
+    Button *browse, *start_button, *stop_button, *setup_button, *add_pack, *enable_pack;
     LabeledCheckBox *agree;
     std::unique_ptr<ServerProcess> process;
     std::shared_ptr<bool> lifetime = std::make_shared<bool>(true);

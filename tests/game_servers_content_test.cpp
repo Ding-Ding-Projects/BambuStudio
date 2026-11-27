@@ -1,5 +1,6 @@
 #include "../src/slic3r/GUI/GameServers/ContentInstaller.hpp"
 #include "../src/slic3r/GUI/GameServers/ContentCatalog.hpp"
+#include "../src/slic3r/GUI/GameServers/BedrockPack.hpp"
 #include "../src/slic3r/GUI/GameServers/ServerSystem.hpp"
 #include "libslic3r/miniz_extension.hpp"
 #include <filesystem>
@@ -45,6 +46,9 @@ int main(int argc, char **argv)
     const fs::path dir = fs::u8path(argv[1]), root = dir / "server";
     fs::create_directory(root);
     std::ofstream(root / "server.properties") << "level-name=world\n";
+    const auto pack_info = R"({"header":{"uuid":"ec9410a2-de16-4f98-8eec-9efa1319db18","version":[1,0,4]},"modules":[{"type":"data"},{"type":"script"}]})";
+    check(bedrock_pack(pack_info).group == "behavior", "valid Bedrock behavior pack was rejected");
+    check(bedrock_pack("{}").id.empty(), "missing Bedrock manifest accepted");
     const auto projects = catalog_projects(R"({"hits":[{"project_id":"abc123","title":"Fixture"},{"project_id":"../bad","title":"bad"}]})");
     check(projects.size() == 1, "invalid project id passed");
     auto release = nlohmann::json::parse(R"([{"loaders":["paper"],"game_versions":["1.21.4"],"files":[{"filename":"plugin.jar","size":22,"url":"https://cdn.modrinth.com/data/p/v/plugin.jar","hashes":{"sha1":"0123456789012345678901234567890123456789"}}]}])");
