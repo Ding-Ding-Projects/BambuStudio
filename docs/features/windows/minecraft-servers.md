@@ -343,3 +343,12 @@ greedy text. Unsupported argument parsers and plugin-only commands are
 identified; the running server remains their authority. Invalid arguments
 from a supported parser are stopped before sending. A generated block
 registry supplies the generator's block picker.
+
+**Read generation registries from server JAR** reads the installed distribution
+without executing it. Supported vanilla JARs and version bundles supply their
+own biomes, structure sets, normal preset, noise settings, dimension type and
+data-pack format. **Customize the normal overworld** controls sea level, lowest
+Y, height, aquifers and ore veins. The generated world includes its own data
+pack. Its overworld references the customized settings, while original noise
+graphs and the other dimensions are preserved. Unsupported distribution
+formats report why exact data could not be read.

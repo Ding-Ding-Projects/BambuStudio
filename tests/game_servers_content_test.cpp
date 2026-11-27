@@ -1,5 +1,6 @@
 #include "../src/slic3r/GUI/GameServers/ContentInstaller.hpp"
 #include "../src/slic3r/GUI/GameServers/ContentCatalog.hpp"
+#include "../src/slic3r/GUI/GameServers/WorldJarData.hpp"
 #include "../src/slic3r/GUI/GameServers/BedrockPack.hpp"
 #include "../src/slic3r/GUI/GameServers/ServerSystem.hpp"
 #include "libslic3r/miniz_extension.hpp"
@@ -46,6 +47,30 @@ int main(int argc, char **argv)
     const fs::path dir = fs::u8path(argv[1]), root = dir / "server";
     fs::create_directory(root);
     std::ofstream(root / "server.properties") << "level-name=world\n";
+    const auto fixture = dir / "version.jar";
+    package(fixture, {
+        {"version.json",R"({"id":"1.21.4","pack_version":{"data":61}})"},
+        {"data/minecraft/worldgen/biome/plains.json","{}"},
+        {"data/minecraft/worldgen/structure_set/villages.json","{}"},
+        {"data/minecraft/worldgen/world_preset/normal.json",R"({"dimensions":{"minecraft:overworld":{"type":"minecraft:overworld","generator":{"type":"minecraft:noise","settings":"minecraft:overworld"}},"minecraft:the_nether":{"keep":true}}})"},
+        {"data/minecraft/worldgen/noise_settings/overworld.json",R"({"sea_level":63,"noise":{"min_y":-64,"height":384},"noise_router":{"keep":true},"aquifers_enabled":true,"ore_veins_enabled":true})"},
+        {"data/minecraft/dimension_type/overworld.json",R"({"min_y":-64,"height":384,"logical_height":384})"}});
+    const auto jar=read_world_jar(fixture.u8string());
+    check(jar.error.empty() && jar.pack_format==61 && jar.biomes.size()==1 && jar.structure_sets.size()==1, "versioned metadata extraction");
+    VerticalWorld options;
+    options.sea=12;options.min_y=-96;options.height=320;options.ore_veins=false;
+    check(write_vertical_pack(jar,options,dir/"custom-world").empty(),"write generated data pack");
+    const auto output=dir/"custom-world"/"datapacks"/"bambustudio-generated";
+    const auto noise=nlohmann::json::parse(std::ifstream(output/"data"/"bambustudio"/"worldgen"/"noise_settings"/"configured.json"));
+    check(noise["noise"]["min_y"]==-96 && noise["sea_level"]==12 && !noise["ore_veins_enabled"].get<bool>() && noise["noise_router"]["keep"]==true,"noise copy and overrides");
+    check(!write_vertical_pack(jar,options,dir/"custom-world").empty(),"overwrite of existing data pack");
+    options.min_y=-95;check(!write_vertical_pack(jar,options,dir/"invalid-world").empty(),"unaligned dimension");
+    if(const char *official=std::getenv("BAMBU_TEST_OFFICIAL_SERVER_JAR")){
+        auto actual=read_world_jar(official);
+        check(actual.version=="1.21.4" && actual.pack_format==61 && actual.biomes.size()==65 && actual.structure_sets.size()==20,"official 1.21.4 metadata");
+        options.min_y=-96;check(write_vertical_pack(actual,options,dir/"official-world").empty(),"official template pack output");
+        std::cout<<"Official 1.21.4 nested JAR: 65 biomes, 20 structure sets, pack format 61 and custom overworld pack verified.\n";
+    }
     const auto pack_info = R"({"header":{"uuid":"ec9410a2-de16-4f98-8eec-9efa1319db18","version":[1,0,4]},"modules":[{"type":"data"},{"type":"script"}]})";
     check(bedrock_pack(pack_info).group == "behavior", "valid Bedrock behavior pack was rejected");
     check(bedrock_pack("{}").id.empty(), "missing Bedrock manifest accepted");
