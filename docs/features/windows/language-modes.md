@@ -212,3 +212,16 @@ buttons paired again, the same audit counts 8 and 42 labels showing both languag
 with the Cantonese in their tooltip, and still no English-only label. Other surfaces have not
 been audited that way yet. The drafted Cantonese still needs independent human review, most
 importantly for safety-critical print, account, networking, and destructive flows.
+
+### Source extraction and native status verification
+
+Run `python scripts/i18n/update_catalogs.py --check` to compare real gettext messages from the native source trees, registered additional inputs and bundled hints against the template, English catalog and Cantonese catalog. It runs in a temporary directory and preserves translation overrides. The language-mode check also checks drafted wording, document source hashes, changelog identities, case-sensitive DeviceWeb keys, legacy web keys and both language tracks. A catalog count on its own does not establish that a live label uses its translation.
+
+The bilingual audit at source `0a12cd0945b782fb28d02cfc0cd1c02ed1ee094b` used the built DLL with SHA-256 `12710c0e5b61810b15ce33c1ad100431702e337ef52ee013fd1305d3876cc983`. It used a fresh offline X1 Carbon preset on a hidden desktop, clicked the actual Prepare and Settings controls, and confirmed the Add ink and General Settings contents before accepting the reports.
+
+| Audited state | Bilingual labels | Cantonese in tooltip | Translated but English-only | No registered translation |
+| --- | ---: | ---: | ---: | ---: |
+| Prepare | 8 | 12 | 1 | 2 |
+| Preferences > General, including the parent frame | 102 | 22 | 3 | 24 |
+
+Two distinct controls remained English-only: the nozzle/connection label and the presentation/monitoring status. The latter appeared twice under the same window handle because this build traversed the dialog both as its own top-level window and as a child of its parent. The source corrections format the nozzle and connection together in each language, render every status component bilingually and count nested top-level windows only once. A successful rerun needs a build containing those corrections. The probe does not count an unexpected modal, a splash window, or a missing General section as success. This two-surface result cannot establish complete coverage or a clipping verdict for other states.
