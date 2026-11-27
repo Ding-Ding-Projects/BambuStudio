@@ -1,5 +1,9 @@
 #include "BedrockSettingsDialog.hpp"
 #include "BedrockSettings.hpp"
+#include "TargetSettings.hpp"
+#include <wx/app.h>
+#include <wx/filefn.h>
+#include <wx/utils.h>
 #include "ServerSystem.hpp"
 #include "../I18N.hpp"
 #include "../Widgets/Button.hpp"
@@ -20,13 +24,19 @@ namespace {
 class BedrockSettingsDialog final : public wxDialog
 {
 public:
-    BedrockSettingsDialog(wxWindow *parent, std::string dir)
-        : wxDialog(parent, wxID_ANY, _L("Bedrock server settings"), wxDefaultPosition, wxDefaultSize, wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER)
+    BedrockSettingsDialog(wxWindow *parent, std::string dir, std::optional<WorldRecoveryTarget> target = {})
+        : wxDialog(parent,
+                   wxID_ANY,
+                   target && !target->bedrock ? _L("Java server settings") : _L("Bedrock server settings"),
+                   wxDefaultPosition,
+                   wxDefaultSize,
+                   wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER)
         , root(std::filesystem::u8path(dir))
         , file(root / "server.properties")
+        , remote(std::move(target))
     {
         auto *body = new wxBoxSizer(wxVERTICAL);
-        search     = new SearchField(this, _L("Find a Bedrock setting"));
+        search     = new SearchField(this, _L("Find a server setting"));
         body->Add(search, 0, wxEXPAND | wxALL, FromDIP(8));
         list = new MD3DataViewListCtrl(this, wxID_ANY, wxDefaultPosition, FromDIP(wxSize(560, 230)), wxDV_SINGLE | wxDV_ROW_LINES);
         list->AppendTextColumn(_L("Installed setting"), wxDATAVIEW_CELL_INERT, FromDIP(320));
@@ -45,7 +55,9 @@ public:
         auto *close   = new Button(this, _L("Close"));
         reload->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { load(); });
         apply->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { save(); });
-        close->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { EndModal(wxID_CLOSE); });
+        close->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) {
+            if (!pending) EndModal(wxID_CLOSE);
+        });
         buttons->Add(reload, 0, wxRIGHT, FromDIP(5));
         buttons->Add(apply, 0, wxRIGHT, FromDIP(5));
         buttons->AddStretchSpacer();
@@ -62,8 +74,86 @@ public:
     }
 
 private:
+    BedrockField field(const std::string &key) const
+    {
+        if (!remote || remote->bedrock) return bedrock_field(key);
+        const auto *spec = find_property(key);
+        if (!spec) return {};
+        switch (spec->type) {
+        case PropertyType::Bool: return {BedrockValue::Bool};
+        case PropertyType::Port: return {BedrockValue::Integer, {}, 1, 65535};
+        case PropertyType::Int:
+            if (spec->min < std::numeric_limits<int>::min() || spec->max > std::numeric_limits<int>::max()) return {BedrockValue::Text};
+            return {BedrockValue::Integer, {}, int(spec->min), int(spec->max)};
+        case PropertyType::Enum: return {BedrockValue::Choice, spec->values};
+        case PropertyType::Password: return {BedrockValue::Protected};
+        default: return {BedrockValue::Text};
+        }
+    }
+    void request(nlohmann::json message)
+    {
+        if (pending || !remote) return;
+        wxString env, exe;
+        wxGetEnv("PATH", &env);
+        if (!wxFindFileInPath(&exe, env, remote->container ? "docker.exe" : "ssh.exe")) {
+            note->SetLabel(_L("The target client is unavailable."));
+            return;
+        }
+        std::vector<std::string> keys;
+        auto                     add = [&](const std::string &k) {
+            if (field(k).kind != BedrockValue::Protected && k.find("secret") == std::string::npos && k.find("password") == std::string::npos &&
+                k.find("token") == std::string::npos && k.find("passcode") == std::string::npos && k.find("private-key") == std::string::npos &&
+                k.find("api-key") == std::string::npos)
+                keys.push_back(k);
+        };
+        if (remote->bedrock) {
+            for (const auto &x : bedrock_fields()) add(x.first);
+        } else {
+            for (const auto &x : property_specs()) add(x.key);
+        }
+        message["keys"]          = keys;
+        auto target              = *remote;
+        auto program             = exe.ToStdString(wxConvUTF8);
+        pending                  = true;
+        std::weak_ptr<bool> weak = life;
+        note->SetLabel(_L("Waiting for the owned target..."));
+        std::thread([this, target, program, message = std::move(message), weak] {
+            auto reply = target_settings(target, program, message);
+            wxTheApp->CallAfter([this, weak, reply = std::move(reply)] {
+                if (weak.expired()) return;
+                pending = false;
+                if (!reply.error.empty()) {
+                    note->SetLabel(wxString::FromUTF8(reply.error));
+                    return;
+                }
+                if (reply.result.value("saved", false)) {
+                    load();
+                    return;
+                }
+                if (!reply.result.contains("revision") || !reply.result["revision"].is_string() || !reply.result.contains("settings") || !reply.result["settings"].is_array()) {
+                    note->SetLabel(_L("The target settings report is invalid."));
+                    return;
+                }
+                revision = reply.result["revision"].get<std::string>();
+                rows.clear();
+                for (const auto &entry : reply.result["settings"]) {
+                    if (!entry.is_object() || !entry.contains("key") || !entry["key"].is_string() || !entry.contains("value") || !entry["value"].is_string()) continue;
+                    auto key = entry["key"].get<std::string>(), val = entry["value"].get<std::string>();
+                    auto kind = field(key).kind;
+                    if (kind == BedrockValue::Unknown || kind == BedrockValue::Protected) continue;
+                    if (!remote->bedrock) val = unescape_property(val);
+                    rows.push_back({key, val, 0, 0, entry.value("duplicate", false)});
+                }
+                filter();
+            });
+        }).detach();
+    }
     void load()
     {
+        if (remote) {
+            request({{"mode", "read"}});
+            return;
+        }
         std::error_code ec;
         std::string     fresh;
         if (!root.is_absolute() || !std::filesystem::is_regular_file(root / "bedrock_server.exe", ec) || std::filesystem::is_symlink(file, ec) ||
@@ -87,7 +177,7 @@ private:
             if (!SearchField::textMatches(search->GetValue(), key, search->IsRegexEnabled(), search->IsCaseSensitive(), search->IsWholeWord(), search->IsMultiline())) continue;
             wxVector<wxVariant> values;
             values.push_back(wxVariant(key));
-            const auto kind = bedrock_field(r.key).kind;
+            const auto kind = field(r.key).kind;
             values.push_back(wxVariant(r.duplicate                     ? _L("Duplicate key") :
                                        kind == BedrockValue::Unknown   ? _L("Unrecognized") :
                                        kind == BedrockValue::Protected ? _L("Protected") :
@@ -105,7 +195,7 @@ private:
     void select()
     {
         auto       r    = selected();
-        const auto f    = r ? bedrock_field(r->key) : BedrockField{};
+        const auto f    = r ? field(r->key) : BedrockField{};
         const bool edit = r && !r->duplicate && f.kind != BedrockValue::Protected && f.kind != BedrockValue::Unknown;
         boolean->Show(edit && f.kind == BedrockValue::Bool);
         choices->Show(edit && f.kind == BedrockValue::Choice);
@@ -138,7 +228,7 @@ private:
     {
         auto r = selected();
         if (!r) return;
-        const auto  f = bedrock_field(r->key);
+        const auto  f = field(r->key);
         std::string value;
         if (f.kind == BedrockValue::Bool)
             value = boolean->GetValue() ? "true" : "false";
@@ -148,6 +238,14 @@ private:
             value = std::to_string(number->GetValue());
         else
             value = input->GetTextCtrl()->GetValue().ToStdString(wxConvUTF8);
+        if (remote) {
+            if (pending || !bedrock_value_allowed(f, value) || (!remote->bedrock && (!find_property(r->key) || !property_problem(*find_property(r->key), value).empty()))) {
+                note->SetLabel(_L("The target setting value is invalid."));
+                return;
+            }
+            request({{"mode", "write"}, {"key", r->key}, {"value", remote->bedrock ? value : escape_property(value, false)}, {"revision", revision}});
+            return;
+        }
         std::string current;
         if (!read_file(file.u8string(), current, 1024 * 1024) || current != raw) {
             note->SetLabel(_L("The settings file changed. Reload it before editing."));
@@ -165,7 +263,12 @@ private:
         load();
         note->SetLabel(_L("Saved. The server will read the new value at startup."));
     }
-    std::filesystem::path       root, file;
+    std::filesystem::path              root, file;
+    std::optional<WorldRecoveryTarget> remote;
+    std::string                        revision;
+    bool                               pending = false;
+    std::shared_ptr<bool>              life    = std::make_shared<bool>(true);
+
     std::string                 raw;
     std::vector<BedrockSetting> rows;
     std::vector<std::size_t>    visible;
@@ -179,6 +282,11 @@ private:
     Button                     *apply;
 };
 } // namespace
+void show_target_settings(wxWindow *parent, WorldRecoveryTarget target)
+{
+    BedrockSettingsDialog dlg(parent, {}, std::move(target));
+    dlg.ShowModal();
+}
 void show_bedrock_settings(wxWindow *parent, const std::string &folder)
 {
     BedrockSettingsDialog dlg(parent, folder);

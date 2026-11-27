@@ -1157,6 +1157,7 @@ list(APPEND SLIC3R_GUI_SOURCES
     GUI/GameServers/LocalJavaInstall.cpp
     GUI/GameServers/RconCredential.cpp
     GUI/GameServers/BedrockDownloadsDialog.cpp
+    GUI/GameServers/TargetSettings.cpp
     GUI/GameServers/BedrockSettings.cpp
     GUI/GameServers/BedrockSettingsDialog.cpp
     GUI/GameServers/BedrockContent.cpp

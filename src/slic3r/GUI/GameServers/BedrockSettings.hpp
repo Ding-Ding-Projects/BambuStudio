@@ -16,6 +16,7 @@ struct BedrockField
     std::vector<std::string> choices;
     int                      low = 0, high = 2147483647;
 };
+const std::map<std::string,BedrockField> &bedrock_fields();
 BedrockField bedrock_field(const std::string &key);
 bool         bedrock_value_allowed(const BedrockField &field, const std::string &value);
 struct BedrockSetting

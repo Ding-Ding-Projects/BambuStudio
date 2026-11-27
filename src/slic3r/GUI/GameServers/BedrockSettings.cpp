@@ -2,7 +2,7 @@
 #include <cerrno>
 #include <limits>
 namespace Slic3r { namespace GUI { namespace GameServers {
-BedrockField bedrock_field(const std::string &key)
+const std::map<std::string, BedrockField> &bedrock_fields()
 {
     using T                                                 = BedrockValue;
     static const std::map<std::string, BedrockField> fields = {
@@ -68,10 +68,18 @@ BedrockField bedrock_field(const std::string &key)
                                                    "diagnostics-capture-auto-start",
                                                    "enable-script-content-log",
                                                    "content-log-console-output-enabled"};
-    auto                               found    = fields.find(key);
-    if (found != fields.end()) return found->second;
-    if (booleans.count(key)) return {T::Bool};
-    return {};
+    static const auto                  all      = [] {
+        auto schema = fields;
+        for (const auto &name : booleans) schema.emplace(name, BedrockField{T::Bool});
+        return schema;
+    }();
+    return all;
+}
+BedrockField bedrock_field(const std::string &key)
+{
+    const auto &fields = bedrock_fields();
+    auto        p      = fields.find(key);
+    return p == fields.end() ? BedrockField{} : p->second;
 }
 bool bedrock_value_allowed(const BedrockField &f, const std::string &s)
 {

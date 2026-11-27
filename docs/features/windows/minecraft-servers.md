@@ -413,3 +413,10 @@ new absolute path. A container restore names a new directory in the reported
 dedicated recovery volume. Neither route writes into the live world.
 Container recovery runs a network-disabled Python 3.13 Alpine helper with
 read-only server mounts and requires a usable image on the target engine.
+
+**Server settings** also works for Java and Bedrock in an owned native SSH
+directory or recorded container. It reads only supported nonconfidential keys
+and sends an edit on standard input. Remote writes require an idle owned
+instance and a matching file revision. The helper preserves mode, group,
+comments, line endings and unedited values. Container configuration writes
+use the file owner's numeric identity and a network-disabled helper.
