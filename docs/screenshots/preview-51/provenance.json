@@ -51,6 +51,66 @@
       "language_mode": "en",
       "theme": "light",
       "density": "comfortable"
+    },
+    {
+      "file": "en-wide-window.png",
+      "sha256": "ea41dcf816227679352a12deb54cd5c62792759973ff4007294c7291d5441423",
+      "image_pixels": [
+        2550,
+        1350
+      ],
+      "surface": "window",
+      "language_mode": "en",
+      "theme": "light",
+      "density": "comfortable"
+    },
+    {
+      "file": "yue_HK-wide-window.png",
+      "sha256": "40adddff251568204aa99451119ef0ddaffc822cfef83c6c65b4ed6452c4f95f",
+      "image_pixels": [
+        2550,
+        1350
+      ],
+      "surface": "window",
+      "language_mode": "yue_HK",
+      "theme": "light",
+      "density": "comfortable"
+    },
+    {
+      "file": "yue_HK-wide.png",
+      "sha256": "8743c5b0591526fa8df89b0b299b3ca9f205e714742f373f77931fac3977cf1c",
+      "image_pixels": [
+        1450,
+        1035
+      ],
+      "surface": "canvas",
+      "language_mode": "yue_HK",
+      "theme": "light",
+      "density": "comfortable"
+    },
+    {
+      "file": "bilingual_en_yue_HK-wide-window.png",
+      "sha256": "d23f5554f2ff65f661298dbf2a32d906a2058f6bd9267b4a5bf7a5208bfa81f9",
+      "image_pixels": [
+        2550,
+        1350
+      ],
+      "surface": "window",
+      "language_mode": "bilingual_en_yue_HK",
+      "theme": "light",
+      "density": "comfortable"
+    },
+    {
+      "file": "bilingual_en_yue_HK-wide.png",
+      "sha256": "cf5b46b9140fff2af5e9481fea52850c7365e290882271843141797dce6b1118",
+      "image_pixels": [
+        1450,
+        1035
+      ],
+      "surface": "canvas",
+      "language_mode": "bilingual_en_yue_HK",
+      "theme": "light",
+      "density": "comfortable"
     }
   ]
 }
