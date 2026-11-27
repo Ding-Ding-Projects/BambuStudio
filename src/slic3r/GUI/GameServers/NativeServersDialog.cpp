@@ -310,12 +310,20 @@ private:
             if (argv.empty()) { append(_L("Enter a configured SSH alias and an absolute POSIX server directory.")); return; }
         }
         reconnectable=false;
+        const bool managed_candidate=target->GetSelection()!=0 && !local_owner(false).empty();
+        auto first_line=std::make_shared<bool>(true);
         std::weak_ptr<bool> weak = lifetime;
         process = std::make_unique<ServerProcess>();
         std::string error;
         running = process->start(argv, cwd,
-            [weak, this](const std::string &line) {
-                wxTheApp->CallAfter([this, weak, line] { if (!weak.expired()) {if(line.rfind("Attached to verified managed session, PID ",0)==0){reconnectable=true;controls();}append(wxString::FromUTF8(line));} });
+            [weak,this,managed_candidate,first_line](const std::string &line) {
+                const bool attached=managed_candidate && *first_line && line.rfind("Attached to verified managed session, PID ",0)==0;
+                *first_line=false;
+                wxTheApp->CallAfter([this,weak,line,attached] {
+                    if(weak.expired())return;
+                    if(attached){reconnectable=true;controls();}
+                    append(wxString::FromUTF8(line));
+                });
             },
             [weak, this](int code) {
                 wxTheApp->CallAfter([this, weak, code] {

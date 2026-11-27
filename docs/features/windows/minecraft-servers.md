@@ -506,7 +506,7 @@ fixture exercised seven state transitions on a disposable local world.
 Local Java has the existing backup-before-version-switch and scheduling
 workflow. Other targets have explicit creation and lifecycle controls.
 Complete distribution upgrades, server-version rollback, scheduler parity,
-cross-target world migration, remote process reattachment after disconnect,
+cross-target world migration, reconnect for unowned or attached-only processes,
 proxy/backend topology editing and every extension-specific configuration
 surface have not been verified or implemented across the matrix. Package
 rollback restores package bytes and managed registrations; it does not
@@ -518,3 +518,20 @@ plugin source projects. All eight playable acceptance cells remain open until
 their actual service starts, compatible clients join and reconnect, and
 saved worlds reopen on the same version. Disposable backend fixtures and
 source compilation are recorded separately.
+
+### Reconnect an owned native SSH console
+
+On a Linux host with tmux, **Start server** launches a provisioned native
+instance in a private session. **Disconnect SSH console** closes only its
+client connection. Enter the same SSH profile and server directory and choose
+**Reconnect owned SSH console**. Reconnecting does not launch a second
+process or accept the EULA. Before control the manager checks the host boot
+ID, owner marker, working directory, private socket inode, tmux and pane PIDs
+and process start time. Unavailable or mismatched evidence keeps the remote
+state unknown. The console shows bounded pane snapshots. Hosts without tmux
+retain attached-only operation with reconnect explicitly unavailable.
+
+An isolated tmux 3.5a fixture verified detach, reconnect to the original
+process, a console round trip and graceful exit. Duplicate starts, a wrong
+owner and a stale process record were refused. This confirms process identity
+and continuity, independently of game-client login or world playability.
