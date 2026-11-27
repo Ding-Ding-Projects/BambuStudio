@@ -1,6 +1,6 @@
 ---
 translation-of: native-crash-symbols.md
-source-sha256: 2ee5079d6e86f419b1b0d56023d7e0850e2c63cca68cdc889e66318198051981
+source-sha256: 17b0a558c3b297453fec30038f862e7a10764b123f13911af3b7b3c060901b4b
 review-status: agent-drafted
 ---
 
@@ -11,7 +11,7 @@ review-status: agent-drafted
 至少 3072 位元嘅 RSA SubjectPublicKeyInfo PEM 公開金鑰。私人金鑰只留喺受保護嘅
 本地儲存，絕對唔好交畀工作流程。
 
-呢個模式保留 Release 最佳化，啟用 PDB 同 `/FS`，唔讀取亦唔儲存應用程式建置快取。
+呢個模式用 Ninja 嘅 `RelWithDebInfo` 同 `SLIC3R_MSVC_PDB=ON`，喺最佳化物件檔加入原始碼行號，唔讀取亦唔儲存應用程式建置快取。
 編譯器 launcher 會清空，sccache 亦會停用，避免含符號嘅編譯輸出寫入快取。
 依賴套件前綴仍然可以重用，但原生程式要完整重新編譯。工作流程照常產生無簽署嘅
 Squirrel 發佈；符號模式唔會加入測試或者 lint。

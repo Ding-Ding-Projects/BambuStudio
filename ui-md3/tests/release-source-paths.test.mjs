@@ -46,11 +46,12 @@ set(facts "\${CMAKE_BINARY_DIR}/facts")
 file(WRITE "\${facts}/c_flags" "\${CMAKE_C_FLAGS}")
 file(WRITE "\${facts}/cxx_flags" "\${CMAKE_CXX_FLAGS}")
 get_directory_property(options COMPILE_OPTIONS)
+get_directory_property(linkOptions LINK_OPTIONS)
+file(WRITE "\${facts}/link_options" "\${linkOptions}")
 list(JOIN options "\\n" options_text)
 file(WRITE "\${facts}/compile_options" "\${options_text}")
 file(WRITE "\${facts}/path_flags" "\${_bambu_path_flags}")
 file(WRITE "\${facts}/policy" "\${BAMBU_RELEASE_SOURCE_PATH_POLICY}")
-file(WRITE "\${facts}/exe_linker_flags" "\${CMAKE_EXE_LINKER_FLAGS}")
 # Re-embed the flags the way libpng's genout template and the original OCCT
 # package config do, then parse the generated code.
 file(WRITE "\${CMAKE_BINARY_DIR}/reembed.cmake.in" [=[
@@ -94,8 +95,8 @@ function configure(route) {
     return {
       result, source, binary,
       cFlags: fact('c_flags'), cxxFlags: fact('cxx_flags'), pathFlags: fact('path_flags'),
-      policy: fact('policy'), exeLinkerFlags: fact('exe_linker_flags'),
-      options: fact('compile_options')?.split('\n') ?? [],
+      policy: fact('policy'), linkOptions: fact('link_options'),
+      options: fact('compile_options')?.split(/\r?\n/) ?? [],
     };
   } finally {
     rmSync(directory, { recursive: true, force: true });
@@ -146,7 +147,7 @@ for (const route of ['application', 'dependency']) {
     assert.ok(lengths.every(Number.isInteger), 'every root has a forward-slash spelling');
     assert.deepEqual(lengths, [...lengths].sort((a, b) => b - a), 'longer physical prefixes are emitted first');
     assert.equal(fixture.policy, 'msvc-pathmap-v1');
-    assert.match(fixture.exeLinkerFlags, /\/PDBALTPATH:%_PDB%/);
+    assert.equal(fixture.linkOptions, '/PDBALTPATH:$<TARGET_PDB_FILE_NAME:$<TARGET_PROPERTY:NAME>>');
     // Producers built outside CMake still read the same map as one quoted
     // command-line string through the _CL_ environment variable.
     assert.ok(fixture.pathFlags.startsWith('/experimental:deterministic /pathmap:"'));

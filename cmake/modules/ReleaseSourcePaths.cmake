@@ -79,8 +79,9 @@ if(MSVC AND (CMAKE_C_COMPILER_ID STREQUAL "MSVC" OR CMAKE_CXX_COMPILER_ID STREQU
     # _bambu_path_flags keeps the same mapping as one quoted command-line
     # string for producers built outside CMake that read it through the _CL_
     # environment variable (OpenSSL). It must not be added to a flag variable.
-    foreach(_bambu_link_kind EXE SHARED MODULE)
-        string(APPEND CMAKE_${_bambu_link_kind}_LINKER_FLAGS " /PDBALTPATH:%_PDB%")
-    endforeach()
+    # Resolve the actual output basename before MSBuild escapes linker options.
+    # A literal %_PDB% can arrive at link.exe as %%_PDB%% and leave percent
+    # signs in CodeView, preventing the debugger from finding the adjacent PDB.
+    add_link_options("/PDBALTPATH:$<TARGET_PDB_FILE_NAME:$<TARGET_PROPERTY:NAME>>")
     set(BAMBU_RELEASE_SOURCE_PATH_POLICY "msvc-pathmap-v1" CACHE INTERNAL "Native release source-path policy")
 endif()
