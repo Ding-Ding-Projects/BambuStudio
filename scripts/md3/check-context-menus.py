@@ -9,7 +9,7 @@ a "#32768" window still shows the native Undo / Cut / Copy / Paste menu.
 Like sweep-dialogs.py this runs through the lowlevel-computer-use cheap CLI on a
 hidden Win32 desktop: launch the executable with an isolated --datadir and the
 layout probe armed, open each surface (Smart home, and Preferences through the
-caption bar's gear), find its shown text fields in a probe dump, and ask each
+Preferences menu action), find its shown text fields in a probe dump, and ask each
 field for its menu twice: a right-click (a posted right button press and
 release, which Windows turns into the menu request) and the keyboard request
 (WM_CONTEXTMENU without a position, as the Menu key and Shift+F10 send it).
@@ -40,7 +40,17 @@ _spec.loader.exec_module(sweep)
 cheap, send, wait_for = sweep.cheap, sweep.send, sweep.wait_for
 
 NATIVE_MENU_CLASS = '#32768'
+SURFACES = ('Smart home', 'Preferences')
+INPUT_ROUTES = ('right-click', 'keyboard')
 WM_CONTEXTMENU, WM_ACTIVATE, WM_CANCELMODE = 0x007B, 0x0006, 0x001F
+
+
+def complete_coverage(results, fields):
+    required = {(surface, field, route) for surface in SURFACES
+                for field in range(1, fields + 1) for route in INPUT_ROUTES}
+    passed = {(r.get('surface'), r.get('field_index'), r.get('how')) for r in results
+              if r.get('result') == 'material menu'}
+    return bool(required) and passed == required and len(results) == len(required)
 
 
 def post(desktop, hwnd, msg, wparam=0, lparam=0):
@@ -104,11 +114,8 @@ def main():
 
     def open_surface(surface):
         before = {w['handle'] for w in windows()}
-        if surface == 'gear':
-            cheap('mouse_click', hwnd=state['main'], x=sweep.GEAR[0], y=sweep.GEAR[1])
-        else:
-            form = (sweep.cantonese_form(surface, cantonese) if cantonese else None) or surface
-            send(args.desktop, state['main'], command=f'invoke {form}')
+        form = (sweep.cantonese_form(surface, cantonese) if cantonese else None) or surface
+        send(args.desktop, state['main'], command=f'invoke {form}')
         # The dialog itself, not a popup it brings along (the gear shows a small
         # "panel" before Preferences).
         return wait_for(lambda: next((w for w in windows() if w['handle'] not in before
@@ -129,7 +136,7 @@ def main():
 
     try:
         start()
-        for surface in ('Smart home', 'gear'):
+        for surface in SURFACES:
             dialog = open_surface(surface)
             if not dialog:
                 results.append({'surface': surface, 'result': 'surface did not open'})
@@ -138,8 +145,11 @@ def main():
             time.sleep(5)
             fields = text_fields(dialog)[:args.fields]
             print(f'  {surface}: "{dialog.get("title", "")}", {len(fields)} text field(s) tried', flush=True)
+            if len(fields) < args.fields:
+                results.append({'surface': surface, 'result': 'fewer visible fields than requested',
+                                'expected': args.fields, 'observed': len(fields)})
             for n, field in enumerate(fields, 1):
-                for how in ('right-click', 'keyboard'):
+                for how in INPUT_ROUTES:
                     before = {w['handle'] for w in windows()}
                     if how == 'right-click':
                         cheap('mouse_click', hwnd=field['hwnd'], x=min(12, field['rect']['w'] - 2),
@@ -148,7 +158,7 @@ def main():
                         post(args.desktop, field['hwnd'], WM_CONTEXTMENU, field['hwnd'], 0xFFFFFFFF)
                     popup = wait_for(lambda: next((w for w in windows() if w['handle'] not in before
                                                    and w['width'] >= 40 and w['height'] >= 30), None), 6)
-                    row = {'surface': surface, 'field': field.get('name', ''), 'hwnd': field['hwnd'], 'how': how}
+                    row = {'surface': surface, 'field': field.get('name', ''), 'field_index': n, 'hwnd': field['hwnd'], 'how': how}
                     if not popup:
                         row['result'] = 'no menu opened'
                     else:
@@ -156,7 +166,9 @@ def main():
                         png = os.path.join(args.out, f'context-menu-{sweep.slug(surface)}-{n}-{how}--{args.tuple_id}.png')
                         cheap('screenshot', hwnd=popup['handle'], output_path=png)
                         native = popup['class'] == NATIVE_MENU_CLASS
-                        row.update({'result': 'native menu' if native else 'material menu', 'class': popup['class'],
+                        result = ('native menu' if native else
+                                  'material menu' if popup['class'] == 'wxWindowNR' else 'unexpected popup')
+                        row.update({'result': result, 'class': popup['class'],
                                     'size': [popup['width'], popup['height']], 'screenshot': png})
                         gone = lambda: all(w['handle'] != popup['handle'] for w in windows())
                         # A Material menu closes when it is deactivated; a native one when
@@ -167,15 +179,17 @@ def main():
                             row['close'] = 'still open; app restarted'
                             results.append(row)
                             print(f'    field {n} {how}: {row["result"]} ({row.get("class")}); restarting', flush=True)
+                            # No handle from this dialog is safe to reuse after a restart.
+                            # End this surface here and let the missing request fail coverage.
                             stop()
-                            start()
-                            dialog = open_surface(surface)
-                            if not dialog:
-                                break
-                            time.sleep(5)
-                            continue
+                            if surface != 'Preferences':
+                                start()
+                            dialog = None
+                            break
                     results.append(row)
                     print(f'    field {n} {how}: {row["result"]} ({row.get("class", "-")})', flush=True)
+                if not dialog:
+                    break
             if dialog:
                 send(args.desktop, state['main'], command=f'close {dialog["handle"]}')
                 time.sleep(2)
@@ -190,8 +204,9 @@ def main():
         json.dump(report, fh, ensure_ascii=False, indent=1)
     tried = [r for r in results if 'how' in r]
     material = [r for r in tried if r['result'] == 'material menu']
-    print(f'{len(material)} of {len(tried)} menu requests opened the Material menu; report {out_json}')
-    return 0 if tried and len(material) == len(tried) else 1
+    expected = len(SURFACES) * args.fields * len(INPUT_ROUTES)
+    print(f'{len(material)} of {expected} required requests opened the Material menu; report {out_json}')
+    return 0 if complete_coverage(results, args.fields) else 1
 
 
 if __name__ == '__main__':

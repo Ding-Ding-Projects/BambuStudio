@@ -16,7 +16,8 @@ const checker = (await readFile(path.join(repoDir, 'scripts', 'md3', 'check-cont
 const sweep = (await readFile(path.join(repoDir, 'scripts', 'md3', 'sweep-dialogs.py'), 'utf8')).replace(/\r\n/g, '\n');
 
 test('both ways of asking for a menu are tried on every field', () => {
-  assert.match(checker, /for how in \('right-click', 'keyboard'\):/);
+  assert.match(checker, /INPUT_ROUTES = \('right-click', 'keyboard'\)/);
+  assert.match(checker, /for how in INPUT_ROUTES:/);
   assert.match(checker, /cheap\('mouse_click', hwnd=field\['hwnd'\],[^;]*?button='right'\)/);
   assert.match(checker, /post\(args\.desktop, field\['hwnd'\], WM_CONTEXTMENU, field\['hwnd'\], 0xFFFFFFFF\)/,
     'the Menu key and Shift+F10 send the request without a position');
@@ -25,8 +26,8 @@ test('both ways of asking for a menu are tried on every field', () => {
 test('a native menu, or no menu at all, fails the run', () => {
   assert.match(checker, /NATIVE_MENU_CLASS = '#32768'/);
   assert.match(checker, /row\['result'\] = 'no menu opened'/);
-  assert.match(checker, /'result': 'native menu' if native else 'material menu'/);
-  assert.match(checker, /return 0 if tried and len\(material\) == len\(tried\) else 1/);
+  assert.match(checker, /'material menu' if popup\['class'\] == 'wxWindowNR' else 'unexpected popup'/);
+  assert.match(checker, /return 0 if complete_coverage\(results, args.fields\) else 1/);
 });
 
 test('a surface is its dialog, not a popup that comes with it', () => {
