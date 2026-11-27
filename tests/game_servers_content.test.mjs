@@ -14,16 +14,17 @@ const run = (cmd, args) => {
 const includes = ['src', 'src/miniz', 'src/nlohmann'].map(p => (win ? '/I' : '-I') + path.join(root,p));
 const model = path.join(root,'src/slic3r/GUI/GameServers/ServerModel.cpp');
 const install = path.join(root,'src/slic3r/GUI/GameServers/ContentInstaller.cpp');
+const world = path.join(root,'src/slic3r/GUI/GameServers/WorldJarData.cpp');
 const test = path.join(root,'tests/game_servers_content_test.cpp');
 const miniz = path.join(root,'src/miniz/miniz.c');
 const exe = path.join(work, 'content.exe');
 try {
   if (win) {
     run('cl.exe', ['/nologo','/c','/O2',...includes,miniz,'/Fominiz.obj']);
-    run('cl.exe', ['/nologo','/std:c++17','/EHsc',...includes,test,model,install,'miniz.obj','/Fe:'+exe]);
+    run('cl.exe', ['/nologo','/std:c++17','/EHsc',...includes,test,model,install,world,'miniz.obj','/Fe:'+exe]);
   } else {
     run(process.env.CC || 'cc', ['-O2','-c',miniz,'-o','miniz.o']);
-    run(process.env.CXX || 'c++', ['-std=c++17',...includes,test,model,install,'miniz.o','-o',exe]);
+    run(process.env.CXX || 'c++', ['-std=c++17',...includes,test,model,install,world,'miniz.o','-o',exe]);
   }
   run(exe,[work]);
 } finally {

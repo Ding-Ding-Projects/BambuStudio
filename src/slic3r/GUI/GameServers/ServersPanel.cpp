@@ -7,6 +7,9 @@
 #include "ServerModel.hpp"
 #include "ServerSystem.hpp"
 #include "ServerMetrics.hpp"
+#include "CommandReport.hpp"
+#include "VersionReport.hpp"
+#include "WorldJarData.hpp"
 #include "AreaSelection.hpp"
 #include "RconCredential.hpp"
 
@@ -890,6 +893,27 @@ struct ServersPanel::Ui
 
     // Console
     TextArea   *console = nullptr;
+    Label *command_verdict = nullptr;
+    std::map<std::string, VersionReport> reports;
+    std::string selected_jar()
+    {
+        auto *sv=server();
+        if(!sv) return {};
+        auto path=fs::u8path(sv->folder)/fs::u8path(sv->launch.jar);
+        std::error_code ec;
+        if(!sv->launch.jar.empty() && fs::is_regular_file(path,ec)) return path.u8string();
+        auto found=inspect_folder(sv->folder);
+        return found.jar.empty()?std::string():(fs::u8path(sv->folder)/fs::u8path(found.jar)).u8string();
+    }
+    void build_report();
+    CommandCheck check_command(const std::string &plain)
+    {
+        auto *sv=server();
+        if(!sv) return {CommandVerdict::Unavailable,"Select a server."};
+        auto it=reports.find(sv->id);
+        if(it==reports.end() || !it->second.matches(selected_jar())) return {CommandVerdict::Unavailable,"Build the report from this server JAR to check arguments."};
+        return check_command_report(it->second.commands,plain);
+    }
     TextInput  *command = nullptr;
 
     // Properties
@@ -937,6 +961,15 @@ struct ServersPanel::Ui
     Label           *sc_next = nullptr;
 
     // World generator
+    std::map<std::string,WorldJarData> jar_data;
+    std::string registry_owner;
+    std::vector<std::string> biome_ids;
+    wxWrapSizer *gen_set_grid=nullptr;
+    Label *gen_registry_status=nullptr;
+    LabeledCheckBox *custom_terrain=nullptr,*custom_aquifers=nullptr,*custom_ores=nullptr;
+    SpinInput *custom_sea=nullptr,*custom_min=nullptr,*custom_height=nullptr;
+    void read_world_data();
+    void sync_world_controls();
     GeneratorSettings gen;
     Label           *gen_version = nullptr, *gen_summary = nullptr, *gen_problems = nullptr, *gen_progress = nullptr;
     TextInput       *gen_seed = nullptr, *gen_output = nullptr;
@@ -1443,11 +1476,56 @@ void ServersPanel::Ui::refresh_overview()
 
 // ---- Console -----------------------------------------------------------------
 
+void ServersPanel::Ui::build_report()
+{
+    auto *sv=server();
+    const auto path=selected_jar();
+    if(!sv || busy || path.empty()) return;
+    if(MessageDialog(self,_L("Run the data generator in this trusted server JAR to read its command tree and block registry? This runs Java code in a separate working directory."),
+                     _L("Generate version report"),wxYES_NO|wxNO_DEFAULT|wxICON_INFORMATION).ShowModal()!=wxID_YES) return;
+    const auto id=sv->id;
+    const auto f=inspect_folder(sv->folder);
+    const auto java=pick_java(Live::get().javas(),java_needed({sv->version,f.info.data_version,{}},f.info.java_version));
+    auto cache=(fs::u8path(data_dir())/"minecraft-version-reports").u8string();
+    std::weak_ptr<bool> weak=alive;
+    set_busy(true,_L("Generating version-bound server data"));
+    std::thread([this,weak,id,path,java,cache] {
+        auto result=build_version_report(path,java,cache);
+        wxTheApp->CallAfter([this,weak,id,result=std::move(result)]() mutable {
+            if(weak.expired()) return;
+            set_busy(false);
+            const auto error=result.error;
+            if(error.empty()) reports[id]=std::move(result);
+            if(selected==id) {
+                command_verdict->SetLabel(error.empty()?_L("Command tree loaded from the selected JAR."):u8(error));
+                if(error.empty() && !reports[id].blocks.empty()) {
+                    gen_block->Clear();
+                    for(const auto &b : reports[id].blocks) gen_block->Append(u8(b));
+                    gen_block->SetSelection(0);
+                }
+            }
+        });
+    }).detach();
+}
+
 void ServersPanel::Ui::build_console(wxWindow *page)
 {
     auto *s = new wxBoxSizer(wxVERTICAL);
     console = new TextArea(page, wxEmptyString, wxDefaultSize, wxTE_READONLY | wxTE_RICH2);
     console->SetMonospace(true);
+    auto *tools=new wxWrapSizer(wxHORIZONTAL);
+    auto *report=button(page,_L("Build version report"),GlyphRefresh);
+    report->Bind(wxEVT_BUTTON,[this](wxCommandEvent &){build_report();});tools->Add(report,0,wxRIGHT,page->FromDIP(6));
+    auto *check=button(page,_L("Check command"),GlyphFind);
+    check->Bind(wxEVT_BUTTON,[this](wxCommandEvent &) {
+        auto cmd=into_u8(command->GetTextCtrl()->GetValue().Trim().Trim(false));
+        if(!cmd.empty() && cmd.front()=='/') cmd.erase(0,1);
+        command_verdict->SetLabel(u8(check_command(cmd).reason));
+    });
+    tools->Add(check,0);
+    s->Add(tools,0,wxBOTTOM,page->FromDIP(6));
+    command_verdict=text(page,Label::Body_12,_L("A version report checks supported argument types before sending a command."),true);
+    s->Add(command_verdict,0,wxEXPAND | wxBOTTOM,page->FromDIP(6));
     s->Add(console, 1, wxEXPAND);
     auto *row = new wxBoxSizer(wxHORIZONTAL);
     command = new TextInput(page, wxEmptyString, wxEmptyString, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER);
@@ -1460,6 +1538,9 @@ void ServersPanel::Ui::build_console(wxWindow *page)
             MessageDialog(self, _L("Enter one command of up to 32767 bytes without control characters."), _L("Console"), wxOK | wxICON_INFORMATION).ShowModal();
             return;
         }
+        const auto checked=check_command(plain);
+        command_verdict->SetLabel(u8(checked.reason));
+        if(checked.verdict==CommandVerdict::Invalid) return;
         if (!Live::get().send(server()->id, plain)) {
             MessageDialog(self, _L("The server is not running."), _L("Console"), wxOK | wxICON_INFORMATION).ShowModal();
             return;
@@ -2086,7 +2167,7 @@ void ServersPanel::Ui::read_manifest()
             Manifest m;
             if (!d.ok || !parse_manifest(d.body, m)) {
                 if (!d.cancelled)
-                    MessageDialog(self, wxString::Format(_L("The version list could not be read: %s"), u8(d.error.empty() ? "not a version list" : d.error)), _L("Versions"),
+                    MessageDialog(self, wxString::Format(_L("The version list could not be read: %s"), (d.error.empty() ? _L("not a version list") : u8(d.error))), _L("Versions"),
                                   wxOK | wxICON_WARNING)
                         .ShowModal();
                 return;
@@ -2432,6 +2513,11 @@ void ServersPanel::Ui::build_generator(wxWindow *page)
     const int cw = page->FromDIP(180);
     gen_version = text(w, Label::Body_13, wxEmptyString, true);
     f->Add(gen_version, 0, wxBOTTOM, page->FromDIP(10));
+    auto *read_registry=button(w,_L("Read generation registries from server JAR"),GlyphRefresh);
+    read_registry->Bind(wxEVT_BUTTON,[this](wxCommandEvent &){read_world_data();});
+    f->Add(read_registry,0,wxBOTTOM,page->FromDIP(6));
+    gen_registry_status=text(w,Label::Body_12,_L("Version-specific terrain settings need the selected JAR's registries."),true);
+    f->Add(gen_registry_status,0,wxEXPAND|wxBOTTOM,page->FromDIP(6));
     auto *grid = new wxFlexGridSizer(2, page->FromDIP(8), page->FromDIP(12));
     const auto row = [&](const wxString &label, wxWindow *control) {
         grid->Add(text(w, Label::Body_13, label), 0, wxALIGN_CENTER_VERTICAL);
@@ -2452,12 +2538,23 @@ void ServersPanel::Ui::build_generator(wxWindow *page)
     grid->Add(seed_row, 0);
     gen_preset = choice(w, {_L("Normal"), _L("Flat"), _L("Large biomes"), _L("Amplified"), _L("Single biome")}, 0, cw);
     row(_L("World type"), gen_preset);
+    custom_terrain=new LabeledCheckBox(w,_L("Customize the normal overworld"));
+    row(_L("World data pack"),custom_terrain);
+    custom_sea=new SpinInput(w,{}, {},wxDefaultPosition,wxSize(cw,-1),0,-2032,2031,63);
+    custom_min=new SpinInput(w,{}, {},wxDefaultPosition,wxSize(cw,-1),0,-2032,2016,-64);
+    custom_height=new SpinInput(w,{}, {},wxDefaultPosition,wxSize(cw,-1),0,16,4064,384);
+    row(_L("Sea level"),custom_sea);row(_L("Lowest Y (multiple of 16)"),custom_min);row(_L("Height (multiple of 16)"),custom_height);
+    custom_aquifers=new LabeledCheckBox(w,_L("Enable aquifers"));custom_aquifers->SetValue(true);
+    custom_ores=new LabeledCheckBox(w,_L("Enable ore veins"));custom_ores->SetValue(true);
+    row(_L("Aquifers"),custom_aquifers);row(_L("Ore veins"),custom_ores);
+    custom_terrain->Bind(wxEVT_CHECKBOX,[this](wxCommandEvent &){read_generator();});
+    for(auto *n:{custom_sea,custom_min,custom_height})n->Bind(wxEVT_SPINCTRL,[this](wxCommandEvent &){read_generator();});
     gen_mode = choice(w, {_L("Survival"), _L("Creative"), _L("Adventure")}, 0, cw);
     row(_L("Mode"), gen_mode);
     gen_difficulty = choice(w, {_L("Peaceful"), _L("Easy"), _L("Normal"), _L("Hard")}, 2, cw);
     row(_L("Difficulty"), gen_difficulty);
     std::vector<wxString> biomes;
-    for (const NamedId &b : overworld_biomes()) biomes.push_back(tr(b.label));
+    for (const NamedId &b : overworld_biomes()) {biomes.push_back(tr(b.label));biome_ids.push_back(b.id);}
     gen_biome = choice(w, biomes, 0, cw);
     row(_L("Biome (flat and single biome)"), gen_biome);
     f->Add(grid, 0, wxBOTTOM, page->FromDIP(8));
@@ -2540,6 +2637,7 @@ void ServersPanel::Ui::build_generator(wxWindow *page)
     fl->Add(flat_checks, 0, wxTOP, page->FromDIP(6));
     fl->Add(text(gen_flat, Label::Head_13, _L("Structures in the flat world")), 0, wxTOP, page->FromDIP(10));
     auto *sets = new wxWrapSizer(wxHORIZONTAL);
+    gen_set_grid=sets;
     for (const NamedId &sid : structure_sets()) {
         auto *c = new LabeledCheckBox(gen_flat, tr(sid.label));
         c->SetValue(sid.id == "minecraft:villages" || sid.id == "minecraft:strongholds");
@@ -2643,8 +2741,66 @@ void ServersPanel::Ui::build_generator(wxWindow *page)
     page->Bind(wxEVT_TIMER, [this](wxTimerEvent &) { generation_tick(); }, gen_timer.GetId());
 }
 
+void ServersPanel::Ui::read_world_data()
+{
+    auto *sv=server();const auto jar=selected_jar();
+    if(!sv || busy || jar.empty())return;
+    std::weak_ptr<bool> weak=alive;const auto id=sv->id;
+    set_busy(true,_L("Reading the selected server JAR"));
+    std::thread([this,weak,id,jar] {
+        auto data=read_world_jar(jar);
+        wxTheApp->CallAfter([this,weak,id,data=std::move(data)]() mutable {
+            if(weak.expired())return;
+            set_busy(false);jar_data[id]=std::move(data);
+            if(id==selected){registry_owner.clear();sync_world_controls();read_generator();}
+        });
+    }).detach();
+}
+
+void ServersPanel::Ui::sync_world_controls()
+{
+    if(!gen_registry_status || !gen_set_grid || registry_owner==selected)return;
+    registry_owner=selected;
+    auto it=jar_data.find(selected);
+    const bool exact=it!=jar_data.end() && it->second.matches(selected_jar());
+    const wxString note=exact ? wxString::Format(_L("Loaded %d biomes and %d structure sets from %s."),int(it->second.biomes.size()),
+                                     int(it->second.structure_sets.size()),u8(it->second.version)) :
+                         it!=jar_data.end() && !it->second.error.empty() ? u8(it->second.error) : _L("General presets are shown. Read the selected JAR for exact registries and custom terrain.");
+    gen_registry_status->SetLabel(note);
+    gen_biome->Clear();biome_ids.clear();
+    if(exact){for(const auto &b:it->second.biomes){biome_ids.push_back(b);gen_biome->Append(u8(b));}}
+    else {for(const auto &b:overworld_biomes()){biome_ids.push_back(b.id);gen_biome->Append(tr(b.label));}}
+    const auto plains=std::find(biome_ids.begin(),biome_ids.end(),"minecraft:plains");
+    if(!biome_ids.empty())gen_biome->SetSelection(plains==biome_ids.end()?0:int(plains-biome_ids.begin()));
+    gen_set_grid->Clear(true);gen_sets.clear();
+    auto add=[this](const std::string &id,const wxString &label) {
+        auto *box=new LabeledCheckBox(gen_flat,label);box->SetValue(id=="minecraft:villages" || id=="minecraft:strongholds");
+        box->Bind(wxEVT_CHECKBOX,[this](wxCommandEvent &){read_generator();});
+        gen_set_grid->Add(box,0,wxRIGHT|wxBOTTOM,gen_flat->FromDIP(8));gen_sets.push_back({id,box});
+    };
+    if(exact){for(const auto &id:it->second.structure_sets)add(id,u8(id));}
+    else {for(const auto &v:structure_sets())add(v.id,tr(v.label));}
+    gen_block->Clear();
+    const auto report=reports.find(selected);
+    if(report!=reports.end() && report->second.matches(selected_jar()) && !report->second.blocks.empty())
+        for(const auto &b:report->second.blocks)gen_block->Append(u8(b));
+    else for(const auto &b:flat_blocks())gen_block->Append(u8(b.id));
+    if(gen_block->GetCount())gen_block->SetSelection(0);
+    custom_terrain->SetValue(false);
+    if(exact){
+        const auto &n=it->second.noise,&d=it->second.dimension;
+        if(n.contains("sea_level") && n["sea_level"].is_number_integer())custom_sea->SetValue(n["sea_level"].get<int>());
+        if(d.contains("min_y") && d["min_y"].is_number_integer())custom_min->SetValue(d["min_y"].get<int>());
+        if(d.contains("height") && d["height"].is_number_integer())custom_height->SetValue(d["height"].get<int>());
+        if(n.contains("aquifers_enabled") && n["aquifers_enabled"].is_boolean())custom_aquifers->SetValue(n["aquifers_enabled"].get<bool>());
+        if(n.contains("ore_veins_enabled") && n["ore_veins_enabled"].is_boolean())custom_ores->SetValue(n["ore_veins_enabled"].get<bool>());
+    }
+    gen_flat->Layout();
+}
+
 void ServersPanel::Ui::refresh_generator_version()
 {
+    sync_world_controls();
     ServerRecord *sv = server();
     const bool    has = sv && !sv->version.empty();
     gen.version = has ? sv->version : "";
@@ -2697,7 +2853,7 @@ void ServersPanel::Ui::read_generator()
     gen.preset      = presets[std::clamp(gen_preset->GetSelection(), 0, 4)];
     gen.gamemode    = modes[std::clamp(gen_mode->GetSelection(), 0, 2)];
     gen.difficulty  = difficulties[std::clamp(gen_difficulty->GetSelection(), 0, 3)];
-    gen.biome       = overworld_biomes()[std::size_t(std::clamp(gen_biome->GetSelection(), 0, int(overworld_biomes().size()) - 1))].id;
+    if(!biome_ids.empty())gen.biome=biome_ids[std::size_t(std::clamp(gen_biome->GetSelection(),0,int(biome_ids.size())-1))];
     gen.structures  = gen_structures->GetValue();
     gen.hardcore    = gen_hardcore->GetValue();
     gen.lakes       = gen_lakes->GetValue();
@@ -2724,6 +2880,15 @@ void ServersPanel::Ui::read_generator()
     for (const Message &m : generator_problems(gen)) problems << say(m) << "\n";
     if (!gen_eula->GetValue()) problems << _L("Accept the EULA for this run to make the world.") << "\n";
     if (!processes_supported()) problems << _L("Making a world runs a server, which needs Windows in this build.") << "\n";
+    const auto data=jar_data.find(selected);
+    const bool exact=data!=jar_data.end() && data->second.error.empty() && data->second.pack_format>0 && gen.preset==WorldPreset::Normal;
+    custom_terrain->Enable(exact);
+    if(!exact)custom_terrain->SetValue(false);
+    const bool custom=exact && custom_terrain->GetValue();
+    custom_sea->Enable(custom);custom_min->Enable(custom);custom_height->Enable(custom);custom_aquifers->Enable(custom);custom_ores->Enable(custom);
+    if(custom && (custom_min->GetValue()%16 || custom_height->GetValue()%16 || custom_min->GetValue()+custom_height->GetValue()>2032 ||
+                   custom_sea->GetValue()<custom_min->GetValue() || custom_sea->GetValue()>=custom_min->GetValue()+custom_height->GetValue()))
+        problems << _L("Use multiples of 16 for lowest Y and height, with sea level inside the dimension.") << "\n";
     gen_problems->SetLabel(problems.Trim());
     gen_problems->Wrap(self->FromDIP(640));
     const bool running_now = gen_run && gen_run->step != Run::Step::Done && gen_run->step != Run::Step::Failed && gen_run->step != Run::Step::Cancelled;
@@ -2768,13 +2933,26 @@ void ServersPanel::Ui::generate()
     for (fs::directory_iterator it(out_dir, ec), end; !ec && it != end; it.increment(ec)) taken.push_back(it->path().filename().u8string());
     const std::string out_name = unique_name(run->zip ? base_name + ".zip" : base_name, taken);
     run->output = (out_dir / fs::u8path(out_name)).u8string();
-    run->temp   = (fs::u8path(data_dir()) / "minecraft-world-runs" / fs::u8path(now_stamp())).u8string();
-    fs::create_directories(fs::u8path(run->temp), ec);
+    const auto stage_root=fs::u8path(data_dir())/"minecraft-world-runs";
+    fs::create_directories(stage_root,ec);
+    run->temp=(stage_root/(now_stamp()+"-"+std::to_string(std::random_device{}()))).u8string();
+    if(ec || !fs::create_directory(fs::u8path(run->temp),ec)){
+        MessageDialog(self,_L("Could not create a new world staging directory."),_L("World generator"),wxOK|wxICON_WARNING).ShowModal();return;
+    }
     fs::create_directories(out_dir, ec);
     // This run's own folder: the EULA the person just accepted, and settings
     // that keep everyone else out.
     PropertiesFile props;
     for (const auto &[k, val] : generator_properties(gen, port)) props.set(k, val);
+    if(custom_terrain->GetValue()){
+        auto it=jar_data.find(selected);
+        const auto actual=(fs::u8path(sv->folder)/fs::u8path(jar)).u8string();
+        const auto options=VerticalWorld{custom_sea->GetValue(),custom_min->GetValue(),custom_height->GetValue(),custom_aquifers->GetValue(),custom_ores->GetValue()};
+        const auto world=fs::u8path(run->temp)/fs::u8path(props.get("level-name").value_or("world"));
+        const std::string problem=it!=jar_data.end() && it->second.matches(actual) ? write_vertical_pack(it->second,options,world) : "The JAR changed. Read its registries again.";
+        if(!problem.empty()){fs::remove_all(fs::u8path(run->temp),ec);MessageDialog(self,u8(problem),_L("World generator"),wxOK|wxICON_WARNING).ShowModal();return;}
+        props.set("level-type","bambustudio:configured");props.set("initial-enabled-packs","vanilla,file/bambustudio-generated");
+    }
     std::string error;
     if (!write_file_atomic((fs::u8path(run->temp) / "eula.txt").u8string(), eula_text(true, into_u8(wxDateTime::Now().FormatISOCombined())), &error) ||
         !write_file_atomic((fs::u8path(run->temp) / "server.properties").u8string(), write_properties(props), &error)) {
