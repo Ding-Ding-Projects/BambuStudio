@@ -115,17 +115,22 @@ def main():
         time.sleep(2)
 
     def open_surface(surface):
+        records = probe_records()
+        frame = next((r for r in records if r.get('kind') == 'window' and r.get('hwnd') == state['main']), None)
+        if not frame or not frame.get('enabled'):
+            state['surface_reason'] = 'main workspace is unavailable or disabled by a modal dialog'
+            return None
+        state['surface_reason'] = 'surface did not open'
         before = {w['handle'] for w in windows()}
         form = (sweep.cantonese_form(surface, cantonese) if cantonese else None) or surface
         if surface == 'Preferences':
             # Click the actual navigation action. The File menu also contains
             # Export preferences, and a substring invocation selects that instead.
-            records = probe_records()
             rail = next((r for r in records if r.get('name') in RAIL_NAMES
                          and r.get('top') == state['main'] and r.get('on_screen')), None)
             label = (sweep.cantonese_form('Settings', cantonese) if cantonese else None) or 'Settings'
             button = find_control(records, label, rail['hwnd']) if rail else None
-            if not button or not {label, 'Settings'}.intersection((button.get('name'), button.get('label'))):
+            if not button or not button.get('enabled') or not {label, 'Settings'}.intersection((button.get('name'), button.get('label'))):
                 return None
             rect = button['top_rect']
             cheap('mouse_click', hwnd=state['main'], x=rect['x'] + rect['w'] // 2,
@@ -149,7 +154,7 @@ def main():
 
     def text_fields(dialog):
         return [r for r in probe_records() if r.get('kind') == 'window' and r.get('top') == dialog['handle']
-                and r.get('class') == 'wxTextCtrl' and r.get('shown') and r.get('on_screen', True)
+                and r.get('class') == 'wxTextCtrl' and r.get('enabled') and r.get('shown') and r.get('on_screen', True)
                 and r['rect']['w'] >= 20 and r['rect']['h'] >= 10]
 
     try:
@@ -157,8 +162,8 @@ def main():
         for surface in SURFACES:
             dialog = open_surface(surface)
             if not dialog:
-                results.append({'surface': surface, 'result': 'surface did not open'})
-                print(f'  {surface}: did not open', flush=True)
+                results.append({'surface': surface, 'result': state['surface_reason']})
+                print(f"  {surface}: {state['surface_reason']}", flush=True)
                 continue
             time.sleep(5)
             fields = text_fields(dialog)[:args.fields]
