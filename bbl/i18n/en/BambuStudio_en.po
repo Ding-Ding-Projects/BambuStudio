@@ -39042,3 +39042,27 @@ msgstr ""
 
 msgid "Stopped after five minutes with the bed at %s °C. The fans are off; the printer may still be warm."
 msgstr ""
+
+msgid "Revision ancestry"
+msgstr ""
+
+msgid "Parent outside filter"
+msgstr ""
+
+msgid "This saved search contains an invalid date."
+msgstr ""
+
+msgid "The draft could not be recorded in local history. It is still open."
+msgstr ""
+
+msgid "Discard settings draft"
+msgstr ""
+
+msgid "Choose a separate file for the current-version export."
+msgstr ""
+
+msgid "Could not preserve pending project history."
+msgstr ""
+
+msgid "Use File > Export > Export current version only as 3MF to save a separate copy without history."
+msgstr ""
