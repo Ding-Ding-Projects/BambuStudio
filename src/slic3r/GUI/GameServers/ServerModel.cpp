@@ -221,6 +221,7 @@ bool at_least(const std::string &id, const std::string &release)
 int java_needed(const ServerVersion &v, int recorded)
 {
     if (recorded > 0) return recorded;
+    if (at_least(v, "26.1")) return 25;
     if (at_least(v, "1.20.5")) return 21;
     if (at_least(v, "1.18")) return 17;
     if (at_least(v, "1.17")) return 16;

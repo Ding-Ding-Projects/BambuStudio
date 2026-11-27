@@ -70,7 +70,7 @@ int compare_releases(const std::string &a, const std::string &b);
 // The Java feature version a server needs: from the version's own record when
 // known (version.json java_version, or javaVersion.majorVersion in the Mojang
 // version record), otherwise by release: 8 before 1.17, 16 for 1.17, 17 up to
-// 1.20.4, 21 from 1.20.5.
+// 1.20.4, 21 from 1.20.5, 25 from 26.1.
 int java_needed(const ServerVersion &v, int recorded = 0);
 // "17.0.10" -> 17, "1.8.0_402" -> 8, "21" -> 21; 0 when it cannot be read.
 int java_feature_version(const std::string &version_text);

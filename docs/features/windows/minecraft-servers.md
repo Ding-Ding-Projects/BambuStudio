@@ -313,3 +313,19 @@ select that pack's manifest. The manager checks the database lock, preserves
 existing registrations and adds the selected ID and version to the configured
 world's pack list. The next world start loads the pack. Mixed multi-pack
 archives and automatic dependency installation are not supported.
+
+The local Java overview charts the process working set from real samples.
+While the overview is visible it samples at most every five seconds; the
+background timer samples every thirty seconds. The chart retains thirty
+minutes for the current run. **Read Paper tick rate** asks a running Paper or
+Purpur console for its one-minute TPS figure. Unrecognized responses and
+stale readings are shown as unavailable. The value is measured by the
+server, independently of the configured tick-rate target.
+
+In **Properties > RCON credential**, save or clear the client credential for
+the selected local Java server in Windows Credential Manager. The control
+never displays the stored value. **Test loopback login** checks that the
+connected peer is the selected running server process before authenticating,
+then requests a player list without displaying the response. Saving a client
+credential does not enable RCON or change the password that the server itself
+reads from server.properties.

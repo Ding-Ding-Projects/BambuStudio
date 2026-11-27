@@ -6,6 +6,8 @@
 
 #include "ServerModel.hpp"
 #include "ServerSystem.hpp"
+#include "ServerMetrics.hpp"
+#include "RconCredential.hpp"
 
 #include "../DocsBrowserDialog.hpp"
 #include "../FeatureFinder/LocalToolsActivity.hpp"
@@ -192,6 +194,7 @@ protected:
 
 struct RunState
 {
+    ServerMetrics metrics;
     std::unique_ptr<ServerProcess> process;
     enum class Phase { Stopped, Starting, Running, Stopping } phase = Phase::Stopped;
     std::deque<std::string>                          console;
@@ -311,6 +314,14 @@ public:
         ++r.total_lines;
         while (r.console.size() > 3000) r.console.pop_front();
         const LogEvent e     = parse_log_line(line);
+        const auto now = ServerMetrics::Clock::now();
+        if (r.metrics.requested != ServerMetrics::Clock::time_point{} && now - r.metrics.requested < std::chrono::seconds(15)) {
+            if (const auto value = paper_one_minute_tps(e.text)) {
+                r.metrics.tps = value;
+                r.metrics.last_tps = now;
+                r.metrics.requested = {};
+            }
+        }
         bool           state = false;
         switch (e.kind) {
         case LogEvent::Kind::Started:
@@ -423,6 +434,7 @@ public:
             record(s->name, "Start", start_error, "Failed");
             return false;
         }
+        r.metrics         = {};
         r.phase           = RunState::Phase::Starting;
         r.started         = std::time(nullptr);
         r.java            = launch.java;
@@ -551,6 +563,7 @@ public:
         const std::time_t now = std::time(nullptr);
         for (ServerRecord &s : library.servers) {
             RunState &r = runs[s.id];
+            if (running(s.id)) r.metrics.sample(ServerMetrics::Clock::now(), r.process->memory_bytes());
             if (s.schedule.backup_on && !r.backing_up && now >= r.backup_retry_at) {
                 // The first automatic backup is one period after the schedule starts.
                 if (s.last_backup == 0) s.last_backup = now;
@@ -836,6 +849,8 @@ struct ServersPanel::Ui
     Button              *busy_cancel = nullptr;
 
     // Overview
+    wxPanel *ov_chart = nullptr;
+    Label *ov_tps = nullptr;
     Label               *ov_state = nullptr, *ov_players = nullptr, *ov_memory = nullptr, *ov_up = nullptr, *ov_version = nullptr, *ov_java = nullptr,
           *ov_backup = nullptr, *ov_restart = nullptr;
     MD3DataViewListCtrl *ov_events = nullptr;
@@ -1229,13 +1244,55 @@ void ServersPanel::Ui::build_overview(wxWindow *page)
     };
     card(_L("State"), ov_state);
     card(_L("Players"), ov_players);
-    card(_L("Memory"), ov_memory);
+    card(_L("Process memory"), ov_memory);
+    card(_L("One-minute tick rate"), ov_tps);
     card(_L("Up for"), ov_up);
     card(_L("Version"), ov_version);
     card(_L("Java"), ov_java);
     card(_L("Next backup"), ov_backup);
     card(_L("Next restart"), ov_restart);
     s->Add(cards, 0, wxEXPAND);
+    ov_chart = new wxPanel(page);
+    ov_chart->SetName(_L("Recent process memory usage"));
+    ov_chart->SetMinSize(wxSize(-1,page->FromDIP(65)));
+    ov_chart->SetBackgroundStyle(wxBG_STYLE_PAINT);
+    ov_chart->Bind(wxEVT_PAINT, [this](wxPaintEvent &) {
+        wxAutoBufferedPaintDC dc(ov_chart);
+        dc.SetBackground(wxBrush(role(MD3::Role::SurfaceContainerLow))); dc.Clear();
+        auto *sv = server();
+        if (!sv) return;
+        const auto &samples = Live::get().runs[sv->id].metrics.memory;
+        if (samples.size()<2) return;
+        std::uint64_t peak=1;
+        for (const auto &point : samples) peak=std::max(peak,point.bytes);
+        const auto span=std::chrono::duration<double>(samples.back().when-samples.front().when).count();
+        const auto sz=ov_chart->GetClientSize();
+        if (span<=0 || sz.x<4 || sz.y<4) return;
+        dc.SetPen(wxPen(role(MD3::Role::Primary),ov_chart->FromDIP(2)));
+        wxPoint last;
+        for (const auto &point : samples) {
+            const auto t=std::chrono::duration<double>(point.when-samples.front().when).count();
+            wxPoint pos(1+int((sz.x-3)*t/span),sz.y-2-int((sz.y-3)*double(point.bytes)/double(peak)));
+            if (&point!=&samples.front()) dc.DrawLine(last,pos);
+            last=pos;
+        }
+    });
+    s->Add(ov_chart,0,wxEXPAND | wxBOTTOM,page->FromDIP(6));
+    auto *ticks=button(page,_L("Read Paper tick rate"),GlyphRefresh);
+    ticks->Bind(wxEVT_BUTTON,[this](wxCommandEvent &) {
+        auto *sv=server();
+        if (!sv) return;
+        if ((sv->flavour!="Paper" && sv->flavour!="Purpur") || !Live::get().running(sv->id)) {
+            ov_tps->SetLabel(_L("Available on running Paper or Purpur servers."));return;
+        }
+        auto &m=Live::get().runs[sv->id].metrics;
+        m.tps.reset();
+        if (Live::get().send(sv->id,"tps")) {
+            m.requested=ServerMetrics::Clock::now();
+            ov_tps->SetLabel(_L("Waiting for server measurement"));
+        }
+    });
+    s->Add(ticks,0,wxBOTTOM,page->FromDIP(6));
     auto *row = new wxBoxSizer(wxHORIZONTAL);
     row->Add(text(page, Label::Head_13, _L("Recent events")), 1, wxALIGN_CENTER_VERTICAL);
     auto *catalog = button(page, _L("Browse catalog..."), GlyphFind, Button::Variant::Outlined);
@@ -1326,7 +1383,15 @@ void ServersPanel::Ui::refresh_overview()
     }
     ov_players->SetLabel(on ? players : wxString::FromUTF8("\xE2\x80\x93"));
     const std::uint64_t mem = on ? r.process->memory_bytes() : 0;
-    ov_memory->SetLabel(on && mem ? wxString::Format(_L("%s of %d GB"), size_text(mem), std::max(1, s->launch.memory_max_mb / 1024)) : wxString::FromUTF8("\xE2\x80\x93"));
+    const auto metric_time=ServerMetrics::Clock::now();
+    if (on) r.metrics.sample(metric_time,mem);
+    ov_memory->SetLabel(on && mem ? size_text(mem) : _L("Unavailable"));
+    if (on && r.metrics.tps && metric_time-r.metrics.last_tps<std::chrono::minutes(5))
+        ov_tps->SetLabel(wxString::Format(_L("%.2f TPS (read %d s ago)"), *r.metrics.tps,
+            int(std::chrono::duration_cast<std::chrono::seconds>(metric_time-r.metrics.last_tps).count())));
+    else if (on && metric_time-r.metrics.requested<std::chrono::seconds(15)) ov_tps->SetLabel(_L("Waiting for server measurement"));
+    else ov_tps->SetLabel(_L("No recent measurement"));
+    ov_chart->Refresh();
     ov_up->SetLabel(on ? duration_text(std::time(nullptr) - r.started) : wxString::FromUTF8("\xE2\x80\x93"));
     ov_version->SetLabel(s->version.empty() ? _L("Not read yet") : u8(s->flavour + " " + s->version));
     ov_java->SetLabel(on ? u8(leaf(fs::u8path(r.java).parent_path().parent_path().u8string())) : (s->java_choice == "auto" ? _L("Picked at start") : u8(s->java_choice)));
@@ -1434,6 +1499,49 @@ void ServersPanel::Ui::build_properties(wxWindow *page)
     props_search->GetTextCtrl()->Bind(wxEVT_TEXT, [this](wxCommandEvent &) { filter_properties(); });
     top->Add(props_search, 0, wxRIGHT, page->FromDIP(8));
     top->AddStretchSpacer(1);
+    auto *vault=button(page,_L("RCON credential..."),GlyphServer,Button::Variant::Outlined);
+    vault->Bind(wxEVT_BUTTON,[this](wxCommandEvent &) {
+        auto *sv=server();
+        if (!sv) return;
+        const auto identity=sv->id + "\n" + sv->folder;
+        Dialog dlg(self,_L("Local RCON credential"));
+        dlg.body->Add(text(&dlg,Label::Body_13,_L("Save the client credential for this server in Windows Credential Manager. The server's own RCON settings must match."),true),0,wxBOTTOM,dlg.FromDIP(8));
+        auto *password=new TextInput(&dlg,wxEmptyString,wxEmptyString,wxEmptyString,wxDefaultPosition,wxDefaultSize,wxTE_PASSWORD);
+        password->GetTextCtrl()->SetHint(_L("New credential"));dlg.body->Add(password,0,wxEXPAND | wxBOTTOM,dlg.FromDIP(8));
+        auto *actions=new wxWrapSizer(wxHORIZONTAL);
+        auto *save=button(&dlg,_L("Save credential"),0), *test=button(&dlg,_L("Test loopback login"),0), *clear=button(&dlg,_L("Clear saved credential"),0);
+        for(auto *b:{save,test,clear}) actions->Add(b,0,wxRIGHT,dlg.FromDIP(5));
+        dlg.body->Add(actions,0,wxEXPAND);
+        auto *status=text(&dlg,Label::Body_12,wxEmptyString,true);dlg.body->Add(status,0,wxTOP,dlg.FromDIP(8));
+        save->Bind(wxEVT_BUTTON,[&,password,status](wxCommandEvent &) {
+            auto supplied=into_u8(password->GetTextCtrl()->GetValue());
+            const bool ok=save_rcon_credential(identity,supplied);
+            std::fill(supplied.begin(),supplied.end(),'\0');
+            if(ok) password->GetTextCtrl()->Clear();
+            status->SetLabel(ok?_L("Credential saved."):_L("The credential could not be saved."));
+        });
+        clear->Bind(wxEVT_BUTTON,[&,status](wxCommandEvent &) {
+            status->SetLabel(clear_rcon_credential(identity)?_L("Saved client credential cleared."):_L("Could not clear the saved credential."));
+        });
+        const auto cfg=inspect_folder(sv->folder);
+        const auto port=std::atoi(cfg.properties.get("rcon.port").value_or("25575").c_str());
+        const bool enabled=cfg.properties.get("enable-rcon").value_or("false")=="true";
+        const auto pid=Live::get().running(sv->id) ? Live::get().runs[sv->id].process->pid() : 0;
+        test->Enable(enabled && port>0 && port<=65535 && pid!=0);
+        std::shared_ptr<bool> open=std::make_shared<bool>(true);
+        test->Bind(wxEVT_BUTTON,[test,status,identity,port,pid,weak=std::weak_ptr<bool>(open)](wxCommandEvent &) {
+            test->Disable();status->SetLabel(_L("Checking the local server..."));
+            std::thread([test,status,identity,port,pid,weak] {
+                std::string reason;const bool ok=verify_local_rcon(identity,port,pid,reason);
+                wxTheApp->CallAfter([test,status,weak,ok,reason] {
+                    if(weak.expired()) return;
+                    test->Enable();status->SetLabel(ok?_L("Authenticated. The server answered the player-list command."):u8(reason));
+                });
+            }).detach();
+        });
+        dlg.finish(_L("Close"));dlg.ShowModal();open.reset();
+    });
+    top->Add(vault,0,wxRIGHT,page->FromDIP(8));
     auto *undo = button(page, _L("Undo last save"), 0, Button::Variant::Text);
     undo->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) {
         ServerRecord *sv = server();
