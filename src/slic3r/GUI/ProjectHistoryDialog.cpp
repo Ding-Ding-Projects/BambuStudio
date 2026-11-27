@@ -51,9 +51,7 @@
 
 #include <wx/dataview.h>
 #include <wx/datetime.h>
-#include <wx/datectrl.h>
-#include <wx/stattext.h>
-#include <wx/dateevt.h>
+#include "Widgets/DateRangePicker.hpp"
 #include <wx/dcclient.h>
 #include <wx/dirdlg.h>
 #include <wx/display.h>
@@ -166,6 +164,9 @@ wxString translate_known_history_reason(const wxString &reason)
     static const wxString known[] = {
         "Project edit",
         "Project settings changed",
+        L("Discard settings draft"),
+        L("Edit settings draft"),
+        L("Save draft as preset"),
         "Assembly undo or redo",
         "Undo or redo",
         "Autosave before closing project",
@@ -463,29 +464,36 @@ void ProjectHistoryDialog::create_ui()
     m_device_filter = device_field->GetTextCtrl(); m_device_filter->SetHint(_L("Device identifier")); m_device_filter->SetName(_L("Device identifier"));
     m_store_filter = new ComboBox(filter_body, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, wxCB_READONLY);
     m_store_filter->Append(_L("Current project")); m_store_filter->SetSelection(0);
-    auto date_field = [&](const wxString &label, wxDatePickerCtrl *&picker) {
-        auto *group = new wxPanel(filter_body);
-        auto *layout = new wxBoxSizer(wxVERTICAL);
-        layout->Add(new wxStaticText(group, wxID_ANY, label), 0, wxBOTTOM, FromDIP(2));
-        picker = new wxDatePickerCtrl(group, wxID_ANY, wxDefaultDateTime, wxDefaultPosition,
-                                      wxDefaultSize, wxDP_DROPDOWN | wxDP_ALLOWNONE | wxDP_SHOWCENTURY);
-        picker->SetName(label);
-        picker->SetValue(wxDefaultDateTime);
-        layout->Add(picker, 0, wxEXPAND);
-        group->SetSizer(layout);
-        return group;
-    };
-    auto *from_field = date_field(_L("From"), m_from_filter);
-    auto *to_field = date_field(_L("Through"), m_to_filter);
+    auto *from_field = new TextInput(filter_body, wxEmptyString, wxEmptyString, wxEmptyString);
+    m_from_filter = from_field->GetTextCtrl(); m_from_filter->SetHint(_L("From YYYY-MM-DD")); m_from_filter->SetName(_L("From YYYY-MM-DD"));
+    auto *to_field = new TextInput(filter_body, wxEmptyString, wxEmptyString, wxEmptyString);
+    m_to_filter = to_field->GetTextCtrl(); m_to_filter->SetHint(_L("Through YYYY-MM-DD")); m_to_filter->SetName(_L("Through YYYY-MM-DD"));
     for (auto *control : std::vector<wxWindow*>{m_category_filter, m_status_filter, device_field, m_store_filter, from_field, to_field}) {
+        // Wide enough for the longest hint, "Through YYYY-MM-DD", at any scale.
         control->SetMinSize(wxSize(FromDIP(170), -1));
         filters->Add(control, 1, wxEXPAND);
     }
     for (ComboBox *choice : {m_category_filter, m_status_filter, m_store_filter})
         choice->Bind(wxEVT_COMBOBOX, [this](wxCommandEvent &) { populate_versions(); update_selection(); });
-    for (auto *field : {m_from_filter, m_to_filter})
-        field->Bind(wxEVT_DATE_CHANGED, [this](wxDateEvent &) { populate_versions(); update_selection(); });
-    m_device_filter->Bind(wxEVT_TEXT, [this](wxCommandEvent &) { populate_versions(); update_selection(); });
+    for (wxTextCtrl *field : {m_device_filter, m_from_filter, m_to_filter})
+        field->Bind(wxEVT_TEXT, [this](wxCommandEvent &) { populate_versions(); update_selection(); });
+    auto *calendar = new Button(filter_body, wxEmptyString);
+    calendar->SetIconButton(Button::IconShape::Square, FromDIP(40));
+    calendar->SetGlyph(MaterialIcon::Schedule);
+    calendar->SetName(_L("Pick dates on a calendar"));
+    calendar->SetToolTip(_L("Pick dates on a calendar"));
+    calendar->Bind(wxEVT_BUTTON, [this, calendar](wxCommandEvent &) {
+        Changelog::DateRange range;
+        range.from = Changelog::CivilDate::from_iso(m_from_filter->GetValue().ToStdString());
+        range.to = Changelog::CivilDate::from_iso(m_to_filter->GetValue().ToStdString());
+        show_date_range_picker(calendar, range, [this](const Changelog::DateRange &picked) {
+            m_from_filter->ChangeValue(picked.from ? wxString::FromUTF8(picked.from->to_iso()) : wxString());
+            m_to_filter->ChangeValue(picked.to ? wxString::FromUTF8(picked.to->to_iso()) : wxString());
+            populate_versions();
+            update_selection();
+        });
+    });
+    filters->Add(calendar, 0, wxALIGN_CENTER);
     m_submit_button = new Button(filter_body, _L("Search")); m_submit_button->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { submit_search(); });
     filters->Add(m_submit_button, 0, wxEXPAND); filter_sizer->Add(filters, 0, wxEXPAND | wxALL, FromDIP(8));
     list_sizer->Add(m_filters->GetSectionSizer(), 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, FromDIP(8));
@@ -940,10 +948,10 @@ void ProjectHistoryDialog::update_active_filters()
             active.push_back(choice->GetStringSelection());
     if (!m_device_filter->GetValue().IsEmpty())
         active.push_back(CollapsibleFilterBar::FilterLabel(_L("Device identifier"), m_device_filter->GetValue()));
-    if (m_from_filter->GetValue().IsValid())
-        active.push_back(CollapsibleFilterBar::FilterLabel(_L("From"), m_from_filter->GetValue().FormatDate()));
-    if (m_to_filter->GetValue().IsValid())
-        active.push_back(CollapsibleFilterBar::FilterLabel(_L("To"), m_to_filter->GetValue().FormatDate()));
+    if (!m_from_filter->GetValue().empty())
+        active.push_back(CollapsibleFilterBar::FilterLabel(_L("From"), m_from_filter->GetValue()));
+    if (!m_to_filter->GetValue().empty())
+        active.push_back(CollapsibleFilterBar::FilterLabel(_L("To"), m_to_filter->GetValue()));
     // The git graph shows a single store at a time.
     if (m_view == "graph" && !m_store_filter->GetStringSelection().IsEmpty())
         active.push_back(m_store_filter->GetStringSelection());
@@ -961,11 +969,12 @@ void ProjectHistoryDialog::populate_versions()
     SearchField::MatchPass matcher(m_search_field->GetValue(),m_search_field->IsRegexEnabled(),m_search_field->IsCaseSensitive(),m_search_field->IsWholeWord(),m_search_field->IsMultiline());
     static const char *categories[]={"","project","preferences","preset","draft","printer","appearance","schedules"};static const char *states[]={"","active","unknown","resolved"};
     const int category=std::max(0,m_category_filter->GetSelection()),status=std::max(0,m_status_filter->GetSelection());
-    const auto from = m_from_filter->GetValue();
-    const auto to = m_to_filter->GetValue();
-    if (from.IsValid() && to.IsValid() && from > to) {
+    const auto from = HumanDate::calendar(m_from_filter->GetValue());
+    const auto to = HumanDate::calendar(m_to_filter->GetValue());
+    if ((!m_from_filter->GetValue().empty() && !from.IsValid()) ||
+        (!m_to_filter->GetValue().empty() && !to.IsValid()) || (from.IsValid() && to.IsValid() && from > to)) {
         if (m_view == "graph") m_graph->set_rows({});
-        set_status(_L("The start date must be on or before the end date."));
+        set_status(_L("Enter valid dates in YYYY-MM-DD order, with From before Through."));
         m_syncing_selection = false;
         return;
     }
@@ -1679,10 +1688,11 @@ void ProjectHistoryDialog::submit_search()
     record.view = m_view == "searches" ? "timeline" : m_view;
     record.category = std::to_string(m_category_filter->GetSelection()); record.status = std::to_string(m_status_filter->GetSelection());
     record.device = m_device_filter->GetValue().ToUTF8().data();
-    const auto from = m_from_filter->GetValue();
-    const auto to = m_to_filter->GetValue();
-    if (from.IsValid() && to.IsValid() && from > to) {
-        set_status(_L("The start date must be on or before the end date."));
+    const auto from = HumanDate::calendar(m_from_filter->GetValue());
+    const auto to = HumanDate::calendar(m_to_filter->GetValue());
+    if ((!m_from_filter->GetValue().empty() && !from.IsValid()) ||
+        (!m_to_filter->GetValue().empty() && !to.IsValid()) || (from.IsValid() && to.IsValid() && from > to)) {
+        set_status(_L("Enter valid dates in YYYY-MM-DD order, with From before Through."));
         return;
     }
     if (from.IsValid()) record.from = from.FormatISODate().ToStdString();
@@ -1743,8 +1753,8 @@ void ProjectHistoryDialog::rerun_search()
             return;
         }
         m_device_filter->ChangeValue(wxString::FromUTF8(record.device));
-        m_from_filter->SetValue(from);
-        m_to_filter->SetValue(to);
+        m_from_filter->ChangeValue(wxString::FromUTF8(record.from));
+        m_to_filter->ChangeValue(wxString::FromUTF8(record.to));
         set_view(record.view); return;
     }
 }
