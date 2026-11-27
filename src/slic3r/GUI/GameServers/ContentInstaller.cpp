@@ -62,6 +62,21 @@ bool inside(const fs::path &root, const fs::path &path)
 }
 }
 
+std::string validate_java_replacement(const fs::path &src,const std::string &flavour,const std::string &group)
+{
+    std::error_code ec;
+    if(fs::file_size(src,ec)>1024ULL*1024*1024 || ec)return "The source is unavailable or oversized.";
+    ContentManifest manifest;if(!inspect(src,manifest))return "The package metadata could not be read.";
+    auto has=[&](const char *key){return manifest.names.count(key)!=0;};
+    const bool paper=flavour=="Paper"||flavour=="Purpur";
+    if(group=="plugins" && src.extension()==".jar" && ((paper&&has("paper-plugin.yml"))||((paper||flavour=="Spigot")&&has("plugin.yml"))))return {};
+    if(group=="mods" && src.extension()==".jar" && ((flavour=="Fabric"&&has("fabric.mod.json"))||(flavour=="Forge"&&has("META-INF/mods.toml"))||
+       (flavour=="NeoForge"&&has("META-INF/neoforge.mods.toml"))||(flavour=="Quilt"&&has("quilt.mod.json"))))return {};
+    if(group=="datapacks" && src.extension()==".zip" && manifest.data){
+        auto meta=nlohmann::json::parse(manifest.pack_meta,nullptr,false);if(meta.is_object()&&meta.contains("pack")&&meta["pack"].is_object())return {};
+    }
+    return "Package descriptor does not match the selected loader and content type.";
+}
 ContentInstallResult install_java_content(const std::string &server_folder, const std::string &flavour, const std::string &archive)
 {
     std::error_code ec;

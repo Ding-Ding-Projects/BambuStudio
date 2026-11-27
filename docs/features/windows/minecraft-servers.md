@@ -462,3 +462,11 @@ the package, checks its descriptor, refuses incompatible content and preserves
 unrelated files. The Linux container helper has no network access, uses the
 server file owner's identity and mounts only the selected container's volumes.
 The receipt reports actual installation and any outstanding activation.
+
+**Overview > Manage installed content** lists the selected local Java server's
+plugins, mods and data packs, including older installations. Choose the exact
+file to disable, enable, update or remove. A disabled JAR/ZIP leaves the
+loader's active extension; a removed package is moved out of the loading
+directory and can be restored. Updating verifies the replacement's loader
+descriptor and keeps the previous archive. **Roll back version** restores it.
+The operation rechecks the selected file before publication.
