@@ -14,6 +14,7 @@ import {
 // copy-paste (or i18next-parser seeding English as the "default value") is
 // caught instead of silently shipping English-only copy in Cantonese mode.
 const IDENTICAL_TRANSLATION_ALLOWLIST = new Set([
+  'TPU285', // Manufacturer's hotend type identifier.
   'HTTP', 'HTTPS', 'RFID', 'C++↔Web', 'Bambu Lab', 'AMS',
 ]);
 
