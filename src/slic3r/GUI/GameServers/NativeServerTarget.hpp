@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include "RemoteServerSetup.hpp"
+#include "ManagedSshSession.hpp"
 
 namespace Slic3r { namespace GUI { namespace GameServers {
 
@@ -63,12 +64,11 @@ inline std::vector<std::string> ssh_server_launch(const std::string &ssh,const s
     const std::string path=shell_path(folder);
     if(path.empty() || (!owner.empty() && !ownership_id(owner))) return {};
     std::string launch=bedrock?"test -x ./bedrock_server && LD_LIBRARY_PATH=. exec ./bedrock_server":"test -f ./server.jar && exec java -jar ./server.jar nogui";
-    std::string check="test ! -e .bambustudio-native";
-    if(!owner.empty()) {
-        check="test -f .bambustudio-native && test \"$(cat .bambustudio-native)\" = "+owner;
-        if(!bedrock) launch="if grep -qx 'eula=false' eula.txt; then printf 'eula=true\\n' > eula.txt || exit 1; fi; "+launch;
-        launch="exec flock -n .bambustudio-run.lock sh -c "+shell_literal(launch);
-    }
-    return ssh_invocation(ssh,profile,"cd "+path+" && test -f ./server.properties && "+check+" && "+launch);
+    if(!owner.empty())return ssh_invocation(ssh,profile,"exec python3 -c "+shell_literal(managed_ssh_session)+" "+path+" "+owner+(bedrock?" bedrock start":" java start"));
+    return ssh_invocation(ssh,profile,"cd "+path+" && test -f ./server.properties && test ! -e .bambustudio-native && "+launch);
+}
+inline std::vector<std::string> ssh_server_reconnect(const std::string &ssh,const std::string &profile,const std::string &folder,bool bedrock,const std::string &owner){
+    if(!ownership_id(owner) || shell_path(folder).empty())return {};
+    return ssh_invocation(ssh,profile,"exec python3 -c "+shell_literal(managed_ssh_session)+" "+shell_path(folder)+" "+owner+(bedrock?" bedrock attach":" java attach"));
 }
 }}}
