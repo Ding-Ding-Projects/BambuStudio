@@ -7,11 +7,9 @@ namespace Slic3r::GUI {
 namespace {
 class ImportCanceled final : public std::exception {};
 
-bool has_topology_metadata(const Model& model, const ModelObject& object, const ModelVolume& volume)
+bool has_topology_metadata(const ModelVolume& volume)
 {
-    return model.texture_mesh || object.is_cut() ||
-           std::any_of(object.volumes.begin(), object.volumes.end(), [](const auto* other) { return !other->is_model_part(); }) ||
-           volume.is_fdm_support_painted() || volume.is_fuzzy_skin_facets_painted() || volume.is_seam_painted() ||
+    return volume.is_fdm_support_painted() || volume.is_fuzzy_skin_facets_painted() || volume.is_seam_painted() ||
            volume.is_mm_painted() || volume.emboss_shape.has_value() || volume.is_cut_connector();
 }
 
@@ -84,19 +82,26 @@ void ImportJob::process(Ctl& ctl)
             size_t volume_count = 0, volume_index = 0;
             for (const auto* object : file.model.objects) volume_count += object->volumes.size();
             for (auto* object : file.model.objects) {
+                const bool protected_object = file.model.texture_mesh || object->is_cut() ||
+                    std::any_of(object->volumes.begin(), object->volumes.end(),
+                                [](const auto *volume) { return !volume->is_model_part(); });
                 for (auto* volume : object->volumes) {
                     check_cancel();
+                    auto volume_progress = [&](int percentage) {
+                        return 50 + static_cast<int>((volume_index * 50 + percentage / 2) / volume_count);
+                    };
+                    report(volume_progress(0), m_options.preparing_text);
                     // Prepare the original hull off-thread for scene attachment or recovery.
                     volume->calculate_convex_hull();
                     check_cancel();
                     bool changed = false;
                     if (m_options.auto_simplify && should_simplify_mesh(volume->mesh().its.indices.size())) {
-                        if (has_topology_metadata(file.model, *object, *volume)) {
+                        if (protected_object || has_topology_metadata(*volume)) {
                             ++m_result.skipped_volumes;
                         } else {
                             auto reduced = volume->mesh().its;
                             if (simplify_mesh(reduced, m_options.simplification, check_cancel, [&](int percent) {
-                                report(50 + static_cast<int>((volume_index * 40 + percent * 40 / 100) / std::max<size_t>(1, volume_count)),
+                                report(volume_progress(std::clamp(percent, 0, 100) * 9 / 10),
                                        m_options.simplifying_text);
                             })) {
                                 // Keep the quadric engine's error-limited coordinates.
@@ -113,7 +118,7 @@ void ImportJob::process(Ctl& ctl)
                             }
                         }
                     }
-                    report(90, m_options.preparing_text);
+                    report(volume_progress(90), m_options.preparing_text);
                     // Convex hull computation is expensive for dense original
                     // geometry too. Do it before attaching to the live scene.
                     if (changed) volume->calculate_convex_hull();
