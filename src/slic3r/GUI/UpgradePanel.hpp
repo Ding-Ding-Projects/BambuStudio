@@ -126,7 +126,7 @@ protected:
     /* drying module info */
     wxBoxSizer*            m_drying_module_sizer = nullptr;
     wxStaticBitmap*        m_drying_module_img = nullptr;
-    wxStaticLine*          m_drying_module_line_above = nullptr;
+    wxPanel*               m_drying_module_line_above = nullptr;
     uiDeviceUpdateVersion* m_drying_module_version = nullptr;
 
     /* air_pump info*/

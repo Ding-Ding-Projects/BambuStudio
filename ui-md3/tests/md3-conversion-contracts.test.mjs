@@ -834,7 +834,8 @@ test('the gizmo object-manipulation panels draw every value field through the ki
   assert.match(src, /^inline bool md3_value_input\(ImGuiWrapper \*imgui, bool dark,/m, 'the helper exists');
   const raw = (src.match(/ImGui::BBLInputDouble\(/g) || []).length;
   assert.equal(raw, 1, 'only the helper calls BBLInputDouble directly');
-  assert.equal((src.match(/md3_value_input\(imgui_wrapper, m_is_dark_mode, /g) || []).length, 15, 'all fifteen value fields use it');
+  assert.match(src, /for \(int axis = 0; axis < 3; \+\+axis\) \{[^}]*md3_value_input\(imgui_wrapper, m_is_dark_mode, label_values\[0\]\[axis\]/, 'all three position axes use the kit input');
+  assert.equal((src.match(/md3_value_input\(imgui_wrapper, m_is_dark_mode, /g) || []).length, 13, 'the axis loop and twelve individual fields use the kit input');
   assert.equal((src.match(/ImGui::PushStyleColor\(ImGuiCol_FrameBg, md3_imvec4\(MD3::Role::SurfaceContainerHighest, m_is_dark_mode\)\);/g) || []).length, 3, 'each of the three windows paints filled fields');
 });
 

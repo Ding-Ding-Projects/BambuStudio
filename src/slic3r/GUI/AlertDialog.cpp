@@ -1,3 +1,5 @@
+#include "slic3r/GUI/Widgets/MaterialIcon.hpp"
+#include "slic3r/GUI/Widgets/MD3DialogChrome.hpp"
 #include "AlertDialog.hpp"
 
 #include <algorithm>
@@ -46,36 +48,12 @@ constexpr int ICON_TEXT_GAP   = 4;
 constexpr int CHECKBOX_GAP    = 9;
 constexpr int TEXT_MAX_HEIGHT = 320; // the message scrolls beyond this
 
-StateColor filled(const wxColour &normal, const wxColour &hovered, const wxColour &pressed)
-{
-    return StateColor(std::pair<wxColour, int>(pressed, StateColor::Pressed),
-                      std::pair<wxColour, int>(hovered, StateColor::Hovered),
-                      std::pair<wxColour, int>(normal, StateColor::Normal));
-}
-
 void style_button(Button *btn, AlertButtonRole role)
 {
     switch (role) {
-    case AlertButtonRole::Primary: {
-        const StateColor bg = filled(ThemeColor::BrandGreen, ThemeColor::BrandGreenHovered, ThemeColor::BrandGreenPressed);
-        btn->SetBackgroundColor(bg);
-        btn->SetBorderColor(bg);
-        btn->SetTextColor(StateColor(ThemeColor::WhiteFixed));
-        break;
-    }
-    case AlertButtonRole::Danger: {
-        // No hover / pressed shades: the theme has no tokens for them
-        const StateColor bg(ThemeColor::Danger);
-        btn->SetBackgroundColor(bg);
-        btn->SetBorderColor(bg);
-        btn->SetTextColor(StateColor(ThemeColor::WhiteFixed));
-        break;
-    }
-    case AlertButtonRole::Secondary:
-        btn->SetBackgroundColor(filled(ThemeColor::White, ThemeColor::Grey300, ThemeColor::Grey400));
-        btn->SetBorderColor(StateColor(ThemeColor::TextMuted));
-        btn->SetTextColor(StateColor(ThemeColor::TextMuted));
-        break;
+    case AlertButtonRole::Primary:   btn->SetVariant(Button::Variant::Filled); break;
+    case AlertButtonRole::Danger:    btn->SetVariant(Button::Variant::Danger); break;
+    case AlertButtonRole::Secondary: btn->SetVariant(Button::Variant::Outlined); break;
     }
 }
 
@@ -277,7 +255,7 @@ struct AlertDialog::Impl
     // Icon size and spacing of a warning row follow the current DPI
     void update_warning_row(const WarningRow &row)
     {
-        row.icon->SetBitmap(create_scaled_bitmap("warning", dlg, WARNING_ICON_SIZE));
+        row.icon->SetBitmap(MaterialIcon::bitmap(dlg, MaterialIcon::Warning, WARNING_ICON_SIZE, StateColor::semantic(MD3::Role::Error)));
         // Centre the icon on the first text line
         const int icon_offset = std::max(0, (Label::Body_14.GetPixelSize().y - dlg->FromDIP(WARNING_ICON_SIZE)) / 2);
         row.row->GetItem(row.icon)->SetBorder(icon_offset);
@@ -365,6 +343,7 @@ AlertDialog::AlertDialog(wxWindow *parent, const wxString &title, const wxString
     });
 
     m_impl->build();
+    MD3DialogCaption::Adopt(this);
     m_impl->set_message(message);
 }
 

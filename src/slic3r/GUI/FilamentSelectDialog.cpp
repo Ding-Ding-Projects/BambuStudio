@@ -1,3 +1,4 @@
+#include "Widgets/Tag.hpp"
 #include "FilamentSelectDialog.hpp"
 #include "Widgets/MD3ScrolledWindow.hpp"
 #include "AMSMaterialsSetting.hpp"  // AMS_MATERIALS_SETTING_GREY* colour constants
@@ -257,7 +258,6 @@ inline wxColour dlg_chip_sel_bg()  { return wxGetApp().dark_mode() ? wxColour(0x
 inline wxColour dlg_chip_border()  { return wxGetApp().dark_mode() ? wxColour(0x50,0x52,0x54) : wxColour(220,220,220); }
 inline wxColour dlg_row_hl()       { return wxGetApp().dark_mode() ? wxColour(0x24,0x5C,0x3A) : wxColour(238,248,242); }
 inline wxColour dlg_brand_sel_bg() { return wxGetApp().dark_mode() ? wxColour(0x4A,0x4C,0x4E) : wxColour(240,240,240); }
-inline wxColour dlg_badge_bg()     { return wxGetApp().dark_mode() ? wxColour(0x1A,0x2E,0x22) : wxColour(219,244,228); }
 inline wxColour dlg_search_border(){ return wxGetApp().dark_mode() ? wxColour(0x50,0x52,0x54) : wxColour(238,238,238); }
 inline wxColour dlg_text_primary()  { return wxGetApp().dark_mode() ? wxColour(0xF0,0xF0,0xF0) : AMS_MATERIALS_SETTING_GREY900; }
 inline wxColour dlg_text_secondary(){ return wxGetApp().dark_mode() ? wxColour(0xC8,0xCA,0xCC) : AMS_MATERIALS_SETTING_GREY800; }
@@ -958,15 +958,11 @@ wxWindow* FilamentSelectDialog::make_spool_row(wxWindow* parent, const FilamentS
     // longest badge label), so badges are never cut off and columns line up.
     const int badge_col_w  = m_badge_col_w > 0 ? m_badge_col_w : FromDIP(88);
     const int badge_margin = FromDIP(8);
-    auto make_badge = [&](const wxString& text, const wxColour& fg, const wxColour& bg) {
-        auto* badge = new Button(row, text);
-        badge->SetFont(Label::Body_12);
-        badge->SetVariant(Button::Variant::Tonal);
-        badge->SetPaddingSize(wxSize(FromDIP(6), FromDIP(2)));
-        badge->SetBackgroundColor(sc(bg));
-        badge->SetTextColor(sc(fg));
-        badge->SetBorderColor(sc(fg));
-        badge->SetCanFocus(false);
+    auto make_badge = [&](const wxString& text, Tag::Kind kind) {
+        auto* badge = new Tag(row);
+        badge->SetText(text);
+        badge->SetName(text);
+        badge->SetKind(kind);
         badge->SetMinSize(wxSize(badge_col_w, -1));
         badge->SetMaxSize(wxSize(badge_col_w, -1));
         h->Add(badge, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, badge_margin);
@@ -974,11 +970,11 @@ wxWindow* FilamentSelectDialog::make_spool_row(wxWindow* parent, const FilamentS
     };
     if (sp.in_printer) {
         // In use: dimmed with the row; the tooltip carries the full location.
-        auto* badge = make_badge(_L("In use"), dlg_text_dimmed(), dlg_bg());
+        auto* badge = make_badge(_L("In use"), Tag::Kind::Neutral);
         const wxString location = in_use_location(sp, m_multi_ext_devs.count(sp.dev_id) > 0);
         if (!location.empty()) badge->SetToolTip(location);
     } else if (is_recent && !dimmed) {
-        make_badge(_L("Recently used"), wxColour(0, 174, 66), dlg_badge_bg());
+        make_badge(_L("Recently used"), Tag::Kind::Green);
     } else {
         auto* placeholder = new wxPanel(row, wxID_ANY, wxDefaultPosition, wxSize(badge_col_w, -1));
         placeholder->SetBackgroundColour(dlg_bg());

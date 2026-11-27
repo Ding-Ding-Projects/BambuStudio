@@ -7,8 +7,8 @@
 #include <wx/string.h>
 
 class wxSizer;
-class wxSlider;
-class wxGauge;
+class Slider;
+class ProgressBar;
 class wxStaticText;
 
 class Button;
@@ -73,7 +73,7 @@ private:
     wxSizer    *m_ratio_row       = nullptr; // slider row of the decimate ratio method
     LevelSlider *m_detail_slider  = nullptr;
     wxStaticText *m_detail_caption = nullptr;
-    wxSlider   *m_ratio_slider    = nullptr;
+    Slider     *m_ratio_slider    = nullptr;
     TextInput  *m_ratio_input     = nullptr;
     wxStaticText *m_ratio_unit    = nullptr;
     wxStaticText *m_result_label  = nullptr;
@@ -83,7 +83,7 @@ private:
     wxSizer    *m_preserve_row    = nullptr; // checkbox and label of "Keep all painting"
     WrappedText *m_preserve_hint  = nullptr; // what keeping the painting does
     WrappedText *m_warning        = nullptr;
-    wxGauge    *m_gauge           = nullptr;
+    ProgressBar *m_gauge           = nullptr;
     wxStaticText *m_gauge_text    = nullptr;
     Button     *m_apply_button    = nullptr;
     Button     *m_cancel_button   = nullptr;

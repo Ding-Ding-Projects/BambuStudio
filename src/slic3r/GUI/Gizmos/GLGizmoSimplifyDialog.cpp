@@ -1,3 +1,6 @@
+#include "slic3r/GUI/Widgets/MD3DialogChrome.hpp"
+#include "slic3r/GUI/Widgets/Slider.hpp"
+#include "slic3r/GUI/Widgets/ProgressBar.hpp"
 #include "GLGizmoSimplifyDialog.hpp"
 #include "GLGizmoSimplify.hpp"
 
@@ -61,7 +64,7 @@ std::array<wxString, 5> detail_captions()
 
 wxStaticText* create_label(wxWindow *parent, const wxString &text, const wxFont &font, const wxColour &colour)
 {
-    auto label = new wxStaticText(parent, wxID_ANY, text);
+    auto label = new Label(parent, text);
     label->SetFont(font);
     label->SetForegroundColour(colour);
     return label;
@@ -238,6 +241,7 @@ SimplifyDialog::SimplifyDialog(GLGizmoSimplify &owner)
     SetBackgroundColour(ThemeColor::White);
 
     create_controls();
+    MD3DialogCaption::Adopt(this);
     apply_sizes();
     Bind(wxEVT_CLOSE_WINDOW, &SimplifyDialog::on_close, this);
     Bind(wxEVT_CHAR_HOOK, &SimplifyDialog::on_char_hook, this);
@@ -323,7 +327,7 @@ void SimplifyDialog::create_controls()
 
     // Decimate ratio: slider, then the value box and unit centred in the space left after it.
     auto ratio_sizer = new wxBoxSizer(wxHORIZONTAL);
-    m_ratio_slider = new wxSlider(m_block, wxID_ANY, 50, 0, 100, wxDefaultPosition, wxDefaultSize, wxSL_HORIZONTAL);
+    m_ratio_slider = new Slider(m_block, 50, 0, 100);
     ratio_sizer->Add(m_ratio_slider, 0, wxALIGN_CENTER_VERTICAL);
     ratio_sizer->AddStretchSpacer(1);
     m_ratio_input = new TextInput(m_block, wxEmptyString, wxEmptyString, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_CENTER);
@@ -340,9 +344,9 @@ void SimplifyDialog::create_controls()
         if (! m_ratio_input->GetTextCtrl()->GetValue().ToDouble(&value)) return;
         m_owner->on_dialog_ratio_changed(std::clamp(static_cast<float>(value), 0.f, 100.f));
     };
-    m_ratio_slider->Bind(wxEVT_SLIDER, [this](wxCommandEvent &) {
+    m_ratio_slider->SetOnChange([this](int value) {
         if (m_updating || m_owner == nullptr) return;
-        m_owner->on_dialog_ratio_changed(static_cast<float>(m_ratio_slider->GetValue()));
+        m_owner->on_dialog_ratio_changed(static_cast<float>(value));
     });
     m_ratio_input->GetTextCtrl()->Bind(wxEVT_TEXT_ENTER, [apply_ratio](wxCommandEvent &) { apply_ratio(); });
     m_ratio_input->GetTextCtrl()->Bind(wxEVT_KILL_FOCUS, [apply_ratio](wxFocusEvent &e) { apply_ratio(); e.Skip(); });
@@ -409,40 +413,22 @@ void SimplifyDialog::create_controls()
 
     // Preview progress on the left, Apply and Cancel on the right: one row, as in the design.
     auto button_sizer = new wxBoxSizer(wxHORIZONTAL);
-    m_gauge = new wxGauge(this, wxID_ANY, 100, wxDefaultPosition, wxDefaultSize, wxGA_HORIZONTAL | wxGA_SMOOTH);
+    m_gauge = new ProgressBar(this, wxID_ANY, 100);
     button_sizer->Add(m_gauge, 0, wxALIGN_CENTER_VERTICAL);
     m_gauge_text = create_label(this, wxEmptyString, Label::Body_13, LABEL_COLOR);
     button_sizer->Add(m_gauge_text, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, row_gap);
     button_sizer->AddStretchSpacer(1);
 
-    // Same colors as the OK and Cancel buttons of TipsDialog, plus a disabled state: Apply is disabled
-    // while the preview is computed. Text size per the design (12 px), as most dialogs' buttons (Body_12).
-    StateColor btn_bg_green(std::pair<wxColour, int>(ThemeColor::TextDisabled, StateColor::Disabled),
-                            std::pair<wxColour, int>(ThemeColor::BrandGreenPressed, StateColor::Pressed),
-                            std::pair<wxColour, int>(ThemeColor::BrandGreenHovered, StateColor::Hovered),
-                            std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
-    StateColor btn_bd_green(std::pair<wxColour, int>(ThemeColor::TextDisabled, StateColor::Disabled),
-                            std::pair<wxColour, int>(ThemeColor::BrandGreen, StateColor::Normal));
-    StateColor btn_text_green(std::pair<wxColour, int>(ThemeColor::WhiteFixed, StateColor::Normal));
     m_apply_button = new Button(this, _L("Apply"));
-    m_apply_button->SetBackgroundColor(btn_bg_green);
-    m_apply_button->SetBorderColor(btn_bd_green);
-    m_apply_button->SetTextColor(btn_text_green);
+    m_apply_button->SetVariant(Button::Variant::Filled);
     m_apply_button->SetFont(Label::Body_12);
     m_apply_button->SetCornerRadius(FromDIP(12));
     m_apply_button->EnableTooltipEvenDisabled();
     m_apply_button->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { if (m_owner) m_owner->on_dialog_apply(); });
     button_sizer->Add(m_apply_button, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, row_gap);
 
-    StateColor btn_bg_white(std::pair<wxColour, int>(ThemeColor::Grey400, StateColor::Pressed),
-                            std::pair<wxColour, int>(ThemeColor::Grey300, StateColor::Hovered),
-                            std::pair<wxColour, int>(ThemeColor::White, StateColor::Normal));
-    StateColor btn_bd_white(std::pair<wxColour, int>(ThemeColor::TextPrimary, StateColor::Normal));
-    StateColor btn_text_white(std::pair<wxColour, int>(ThemeColor::TextPrimary, StateColor::Normal));
     m_cancel_button = new Button(this, _L("Cancel"));
-    m_cancel_button->SetBackgroundColor(btn_bg_white);
-    m_cancel_button->SetBorderColor(btn_bd_white);
-    m_cancel_button->SetTextColor(btn_text_white);
+    m_cancel_button->SetVariant(Button::Variant::Outlined);
     m_cancel_button->SetFont(Label::Body_12);
     m_cancel_button->SetCornerRadius(FromDIP(12));
     m_cancel_button->EnableTooltipEvenDisabled();

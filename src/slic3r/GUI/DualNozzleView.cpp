@@ -69,12 +69,7 @@ NozzleSlot nozzle_of(int extruder)
 /// \brief Text, fill and border of a picker button, selected or not.
 void style_pick(Button *button, bool selected)
 {
-    const wxColour fill   = selected ? ThemeColor::BrandGreen : ThemeColor::White;
-    const wxColour border = selected ? ThemeColor::BrandGreen : ThemeColor::Grey400;
-    const wxColour text   = selected ? ThemeColor::WhiteFixed : ThemeColor::TextPrimary;
-    button->SetBackgroundColor(StateColor(std::pair{fill, int(StateColor::Normal)}));
-    button->SetBorderColor(StateColor(std::pair{border, int(StateColor::Normal)}));
-    button->SetTextColor(StateColor(std::pair{text, int(StateColor::Normal)}));
+    button->SetVariant(selected ? Button::Variant::Filled : Button::Variant::Outlined);
     button->Refresh();
 }
 } // namespace
