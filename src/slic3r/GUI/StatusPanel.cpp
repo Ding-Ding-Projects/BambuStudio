@@ -2886,7 +2886,7 @@ wxBoxSizer *StatusBasePanel::create_machine_control_page(wxWindow *parent)
     m_parts_btn->SetMinSize(wxSize(-1, FromDIP(26)));
     m_parts_btn->SetCornerRadius(FromDIP(13));
 
-    m_filament_hotend_web_dlg_btn = new Button(m_action_holder, "Hotend&Filament");
+    m_filament_hotend_web_dlg_btn = new Button(m_action_holder, _L("Hotend and Ink"));
     m_filament_hotend_web_dlg_btn->SetBackgroundColor(btn_bg_green);
     m_filament_hotend_web_dlg_btn->SetBorderColor(btn_bd_green);
     m_filament_hotend_web_dlg_btn->SetTextColor(device_primary_button_text());
@@ -2895,7 +2895,7 @@ wxBoxSizer *StatusBasePanel::create_machine_control_page(wxWindow *parent)
     m_filament_hotend_web_dlg_btn->SetCornerRadius(FromDIP(13));
     m_filament_hotend_web_dlg_btn->Hide();
 
-    m_filament_hotend_html_dlg_btn = new Button(m_action_holder, "Hotend&Filament (HTML)");
+    m_filament_hotend_html_dlg_btn = new Button(m_action_holder, _L("Hotend and Ink (HTML)"));
     m_filament_hotend_html_dlg_btn->SetBackgroundColor(btn_bg_green);
     m_filament_hotend_html_dlg_btn->SetBorderColor(btn_bd_green);
     m_filament_hotend_html_dlg_btn->SetTextColor(device_primary_button_text());

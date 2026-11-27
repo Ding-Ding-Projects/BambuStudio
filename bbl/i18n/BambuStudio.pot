@@ -37346,3 +37346,479 @@ msgstr ""
 
 msgid "Slicing / Model geometry"
 msgstr ""
+
+msgid "A new secret was generated locally. Reveal the QR or manual key, pair it, then type a current code before creating the lock."
+msgstr ""
+
+msgid "A set number of minutes"
+msgstr ""
+
+msgid "Account"
+msgstr ""
+
+msgid "Active payload decryption access was removed. Metadata remains; external copies are outside this operation."
+msgstr ""
+
+msgid "Add manual SHA-1 / 6-digit / 30-second entry"
+msgstr ""
+
+msgid "Advance selected tickets"
+msgstr ""
+
+msgid "Already unlocked."
+msgstr ""
+
+msgid "Application-data folder"
+msgstr ""
+
+msgid "Apply date filters"
+msgstr ""
+
+msgid "Authenticator entries"
+msgstr ""
+
+msgid "Backspace"
+msgstr ""
+
+msgid "Both revisions belong to the same identity."
+msgstr ""
+
+msgid "Camera parameters loaded locally. Confirm with a current code before saving."
+msgstr ""
+
+msgid "Clear answer"
+msgstr ""
+
+msgid "Codes use this computer's clock. Clock accuracy is not verified; check the operating-system time if a code is rejected."
+msgstr ""
+
+msgid "Compare two selected revisions"
+msgstr ""
+
+msgid "Confirm and add authenticator"
+msgstr ""
+
+msgid "Confirm new history password"
+msgstr ""
+
+msgid "Copy current code"
+msgstr ""
+
+msgid "Copy recovery folder"
+msgstr ""
+
+msgid "Create local ticket"
+msgstr ""
+
+msgid "Create protected history"
+msgstr ""
+
+msgid "Create this element's lock"
+msgstr ""
+
+msgid "Credential changed"
+msgstr ""
+
+msgid "Current TOTP code to confirm"
+msgstr ""
+
+msgid "Current code to confirm pairing"
+msgstr ""
+
+msgid "Description (do not include credentials)"
+msgstr ""
+
+msgid "Enter this element's PIN."
+msgstr ""
+
+msgid "Enter this element's current TOTP code."
+msgstr ""
+
+msgid "Enter this element's password."
+msgstr ""
+
+msgid "Export local tickets"
+msgstr ""
+
+msgid "Export redacted entries"
+msgstr ""
+
+msgid "Export this redacted history page"
+msgstr ""
+
+msgid "Fictional severity"
+msgstr ""
+
+msgid "Forgotten answer"
+msgstr ""
+
+msgid "Forgotten your password? Open Support Tickets"
+msgstr ""
+
+msgid "From date (YYYY-MM-DD, local time)"
+msgstr ""
+
+msgid "Generate a local pairing secret"
+msgstr ""
+
+msgid "Generated pairing uses SHA-1, six digits and a 30-second period. The QR and manual key are registration-only and are never saved as images."
+msgstr ""
+
+msgid "Hide registration QR and manual key"
+msgstr ""
+
+msgid "History has its own credential. Snapshots remain encrypted; this view never reveals authenticator secrets, passwords, PINs or codes."
+msgstr ""
+
+msgid "History is locked."
+msgstr ""
+
+msgid "History is locked. Enter its independent password, or create it explicitly if no history exists."
+msgstr ""
+
+msgid "History label (256 UTF-8 bytes maximum)"
+msgstr ""
+
+msgid "History operation did not complete. Existing data is retained."
+msgstr ""
+
+msgid "History password"
+msgstr ""
+
+msgid "Import QR from clipboard image"
+msgstr ""
+
+msgid "Import QR from image"
+msgstr ""
+
+msgid "Issuer"
+msgstr ""
+
+msgid "Label selected identity"
+msgstr ""
+
+msgid "Labelled"
+msgstr ""
+
+msgid "Local data reset"
+msgstr ""
+
+msgid "Local element"
+msgstr ""
+
+msgid "Lock again"
+msgstr ""
+
+msgid "Lock history now"
+msgstr ""
+
+msgid "Manual base32 secret"
+msgstr ""
+
+msgid "Matching settings: "
+msgstr ""
+
+msgid "Missing authenticator"
+msgstr ""
+
+msgid "Move selected entry down"
+msgstr ""
+
+msgid "Move selected entry up"
+msgstr ""
+
+msgid "New PIN (4 to 32 digits)"
+msgstr ""
+
+msgid "New password (8 to 1024 UTF-8 bytes)"
+msgstr ""
+
+msgid "Next code: "
+msgstr ""
+
+msgid "Next history page"
+msgstr ""
+
+msgid "No live identity restore dispatcher is registered. Encrypted history remains intact."
+msgstr ""
+
+msgid "No matching authenticator entries."
+msgstr ""
+
+msgid "No matching local tickets."
+msgstr ""
+
+msgid "No matching settings."
+msgstr ""
+
+msgid "No verified local camera decoder is registered."
+msgstr ""
+
+msgid "Nothing is sent anywhere. No ticket exists outside this machine. No network request is made, no data is collected, and nobody is reading it."
+msgstr ""
+
+msgid "One-time manual setup key"
+msgstr ""
+
+msgid "Open application-data folder"
+msgstr ""
+
+msgid "PIN plus TOTP"
+msgstr ""
+
+msgid "PIN plus password"
+msgstr ""
+
+msgid "PNG or JPEG (*.png;*.jpg;*.jpeg)|*.png;*.jpg;*.jpeg"
+msgstr ""
+
+msgid "Pairing URI (kept local)"
+msgstr ""
+
+msgid "Password plus PIN plus TOTP"
+msgstr ""
+
+msgid "Password plus TOTP"
+msgstr ""
+
+msgid "Payload access removed"
+msgstr ""
+
+msgid "Previous history page"
+msgstr ""
+
+msgid "Protected history was created. Existing histories are never overwritten by this action."
+msgstr ""
+
+msgid "QR parameters loaded locally. Enter a current code to confirm before saving."
+msgstr ""
+
+msgid "Read selected label"
+msgstr ""
+
+msgid "Recovery folder"
+msgstr ""
+
+msgid "Redacted history revisions"
+msgstr ""
+
+msgid "Redacted identity history"
+msgstr ""
+
+msgid "Registration QR code. The manual setup key is available beside it."
+msgstr ""
+
+msgid "Remove access to selected payloads"
+msgstr ""
+
+msgid "Remove active decryption access to the selected payloads. Their history metadata remains. Backups, vault copies and storage journals may retain recoverable material; this does not guarantee forensic erasure."
+msgstr ""
+
+msgid "Remove authenticator entries"
+msgstr ""
+
+msgid "Remove local tickets"
+msgstr ""
+
+msgid "Remove selected entries"
+msgstr ""
+
+msgid "Remove selected tickets"
+msgstr ""
+
+msgid "Renamed"
+msgstr ""
+
+msgid "Restore local identity"
+msgstr ""
+
+msgid "Restore selected revision"
+msgstr ""
+
+msgid "Restored"
+msgstr ""
+
+msgid "Reveal registration QR and manual key"
+msgstr ""
+
+msgid "Save selected entry labels"
+msgstr ""
+
+msgid "Scan QR with camera"
+msgstr ""
+
+msgid "Search authenticator entries"
+msgstr ""
+
+msgid "Search local support tickets"
+msgstr ""
+
+msgid "Search lock settings"
+msgstr ""
+
+msgid "Search redacted history metadata"
+msgstr ""
+
+msgid "Select a QR image"
+msgstr ""
+
+msgid "Select an entry to show its current code."
+msgstr ""
+
+msgid "Select one available entry."
+msgstr ""
+
+msgid "Selected authenticator entries will be removed from this device. Their encrypted history is retained."
+msgstr ""
+
+msgid "Selected local ticket records will be removed. Application data will not be deleted."
+msgstr ""
+
+msgid "Show next code"
+msgstr ""
+
+msgid "Show protected history capacity"
+msgstr ""
+
+msgid "Submit answer"
+msgstr ""
+
+msgid "Support Tickets is not registered. The recovery folder above remains available."
+msgstr ""
+
+msgid "TOTP pairing URI for this element"
+msgstr ""
+
+msgid "The bundled isolated QR image decoder is unavailable. Use a pairing URI or manual entry."
+msgstr ""
+
+msgid "The bundled isolated clipboard-image decoder is unavailable."
+msgstr ""
+
+msgid "The element is now locked."
+msgstr ""
+
+msgid "The folder was opened. This application did not delete anything."
+msgstr ""
+
+msgid "The live owner completed and recorded the restore."
+msgstr ""
+
+msgid "The local desk reviewed the manual. Resolution: open the application-data folder and delete it yourself to reset."
+msgstr ""
+
+msgid "The local operation did not complete. No success was recorded."
+msgstr ""
+
+msgid "The native two-key confirmation service is unavailable. No payload access will be removed."
+msgstr ""
+
+msgid "The selected identity will be restored through its live owner and recorded as a new revision. Existing history is retained."
+msgstr ""
+
+msgid "The shared export service is unavailable."
+msgstr ""
+
+msgid "Their recorded actions differ. Snapshot contents are omitted."
+msgstr ""
+
+msgid "Their recorded actions match. Snapshot contents are omitted."
+msgstr ""
+
+msgid "These revisions belong to different identities."
+msgstr ""
+
+msgid "This is a toy lock, and the recovery folder is shown above."
+msgstr ""
+
+msgid "This is a toy lock, not a security boundary. To reset, close the application and delete its local application-data folder yourself:"
+msgstr ""
+
+msgid "This surface only"
+msgstr ""
+
+msgid "Through date (YYYY-MM-DD, local time)"
+msgstr ""
+
+msgid "Unlock answer"
+msgstr ""
+
+msgid "Unlock history for five minutes"
+msgstr ""
+
+msgid "Unlock minutes"
+msgstr ""
+
+msgid "Unlocked. Activate the target again to use it."
+msgstr ""
+
+msgid "Until the application closes"
+msgstr ""
+
+msgid "Up to eight local tickets are retained. Descriptions are limited to 160 UTF-8 bytes."
+msgstr ""
+
+msgid "Zero"
+msgstr ""
+
+msgid "active event keys"
+msgstr ""
+
+msgid "retained removal records"
+msgstr ""
+
+msgid "revisions shown on this page. Labels and snapshot contents are omitted."
+msgstr ""
+
+msgid "seconds before another attempt. The recovery folder remains available."
+msgstr ""
+
+msgid "seconds remaining"
+msgstr ""
+
+msgid "Select the launch working directory"
+msgstr ""
+
+msgid "Select the registered executable"
+msgstr ""
+
+msgid "Select a local GGUF model"
+msgstr ""
+
+msgid "not a version list"
+msgstr ""
+
+msgid "Hotend and Ink"
+msgstr ""
+
+msgid "Hotend and Ink (HTML)"
+msgstr ""
+
+msgid "Native executable"
+msgstr ""
+
+msgid "GGUF model"
+msgstr ""
+
+msgctxt "extruder side"
+msgid "L"
+msgstr ""
+
+msgctxt "extruder side"
+msgid "R"
+msgstr ""
+
+msgid "%s nozzle · Idle"
+msgstr ""
+
+msgid "%s nozzle · Connected"
+msgstr ""
+
+msgid "Reslicing / Print order preview"
+msgstr ""
+
+msgid "Slicing / Print order preview"
+msgstr ""
+
+msgid "Sampled print order"
+msgstr ""

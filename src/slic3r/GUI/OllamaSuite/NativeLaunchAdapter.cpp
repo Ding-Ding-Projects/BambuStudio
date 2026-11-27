@@ -221,7 +221,7 @@ std::string receipt() {
     for (unsigned char c : bytes) { result += digits[c >> 4]; result += digits[c & 15]; } return result;
 }
 struct Selection { std::wstring path; bool cancelled = false; };
-Selection pick(void* owner, bool folder, bool executable) {
+Selection pick(void* owner, bool folder, bool executable, const std::wstring& title, const std::wstring& filter_label) {
     const HRESULT initialized = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
     if (FAILED(initialized) && initialized != RPC_E_CHANGED_MODE) return {};
     IFileOpenDialog* dialog = nullptr; Selection selection;
@@ -229,8 +229,8 @@ Selection pick(void* owner, bool folder, bool executable) {
         DWORD options = FOS_FORCEFILESYSTEM | FOS_PATHMUSTEXIST | FOS_NOCHANGEDIR | FOS_DONTADDTORECENT;
         options |= folder ? FOS_PICKFOLDERS : FOS_FILEMUSTEXIST;
         dialog->SetOptions(options);
-        dialog->SetTitle(folder ? L"Select the launch working directory" : executable ? L"Select the registered executable" : L"Select a local GGUF model");
-        const COMDLG_FILTERSPEC filter = executable ? COMDLG_FILTERSPEC{L"Native executable", L"*.exe"} : COMDLG_FILTERSPEC{L"GGUF model", L"*.gguf"};
+        dialog->SetTitle(title.c_str());
+        const COMDLG_FILTERSPEC filter = {filter_label.c_str(), executable ? L"*.exe" : L"*.gguf"};
         if (!folder) dialog->SetFileTypes(1, &filter);
         const HRESULT result = dialog->Show(static_cast<HWND>(owner));
         selection.cancelled = result == HRESULT_FROM_WIN32(ERROR_CANCELLED);
@@ -413,14 +413,14 @@ bool NativeLaunchAdapter::available() const {
 #endif
 }
 std::string NativeLaunchAdapter::unavailable_reason() const { return m->reason; }
-NativePickerResult NativeLaunchAdapter::pick_executable(LaunchKind kind, void* owner) {
+NativePickerResult NativeLaunchAdapter::pick_executable(LaunchKind kind, void* owner, const std::wstring& title, const std::wstring& filter) {
     NativePickerResult result;
 #ifdef _WIN32
     if (!available()) { result.diagnostic = m->reason; return result; }
     if (!NativeLaunchDetail::supported_kind(kind)) { result.diagnostic = NativeLaunchDetail::profile_unavailable_reason(kind); return result; }
     m->stop_requested.store(false, std::memory_order_relaxed);
     const auto epoch = m->cancellation.load(std::memory_order_relaxed);
-    const auto selected = pick(owner, false, true); result.cancelled = selected.cancelled;
+    const auto selected = pick(owner, false, true, title, filter); result.cancelled = selected.cancelled;
     if (selected.path.empty()) { result.diagnostic = selected.cancelled ? "Selection cancelled." : "Executable selection was unavailable."; return result; }
     Handle file(CreateFileW(selected.path.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr));
     const auto path = file.valid() ? canonical(file.value) : L"";
@@ -446,16 +446,16 @@ NativePickerResult NativeLaunchAdapter::pick_executable(LaunchKind kind, void* o
     m->registrations.emplace(evidence.picker_receipt, Impl::Registration{evidence, true, kind});
     result.evidence = std::move(evidence); result.diagnostic = "Executable identity registered for this session.";
 #else
-    (void)kind; (void)owner; result.diagnostic = m->reason;
+    (void)kind; (void)owner; (void)title; (void)filter; result.diagnostic = m->reason;
 #endif
     return result;
 }
-NativePickerResult NativeLaunchAdapter::pick_model_file(void* owner) {
+NativePickerResult NativeLaunchAdapter::pick_model_file(void* owner, const std::wstring& title, const std::wstring& filter) {
     NativePickerResult result;
 #ifdef _WIN32
     if (!available()) { result.diagnostic = m->reason; return result; }
     const auto epoch = m->cancellation.load(std::memory_order_relaxed);
-    const auto selected = pick(owner, false, false); result.cancelled = selected.cancelled;
+    const auto selected = pick(owner, false, false, title, filter); result.cancelled = selected.cancelled;
     if (selected.path.empty()) { result.diagnostic = selected.cancelled ? "Selection cancelled." : "Model selection was unavailable."; return result; }
     Handle file(CreateFileW(selected.path.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr));
     const auto path = file.valid() ? canonical(file.value) : L"";
@@ -469,21 +469,21 @@ NativePickerResult NativeLaunchAdapter::pick_model_file(void* owner) {
     m->registrations.emplace(evidence.picker_receipt, Impl::Registration{evidence, false, LaunchKind::LlamaServer});
     result.evidence = std::move(evidence); result.diagnostic = "Model file identity registered for this session.";
 #else
-    (void)owner; result.diagnostic = m->reason;
+    (void)owner; (void)title; (void)filter; result.diagnostic = m->reason;
 #endif
     return result;
 }
-NativeDirectoryResult NativeLaunchAdapter::pick_working_directory(void* owner) {
+NativeDirectoryResult NativeLaunchAdapter::pick_working_directory(void* owner, const std::wstring& title) {
     NativeDirectoryResult result;
 #ifdef _WIN32
     if (!available()) { result.diagnostic = m->reason; return result; }
-    const auto selected = pick(owner, true, false); result.cancelled = selected.cancelled;
+    const auto selected = pick(owner, true, false, title, {}); result.cancelled = selected.cancelled;
     Handle directory(selected.path.empty() ? INVALID_HANDLE_VALUE : CreateFileW(selected.path.c_str(), FILE_READ_ATTRIBUTES, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, nullptr));
     const auto path = directory.valid() ? canonical(directory.value) : L"";
     if (path.empty()) { result.diagnostic = selected.cancelled ? "Selection cancelled." : "Choose an existing local working directory."; return result; }
     result.path = utf8(path); result.diagnostic = "Working directory selected.";
 #else
-    (void)owner; result.diagnostic = m->reason;
+    (void)owner; (void)title; result.diagnostic = m->reason;
 #endif
     return result;
 }

@@ -32,6 +32,12 @@
 
 namespace Slic3r::GUI {
 namespace {
+std::wstring picker_text(const char* source)
+{
+    return I18N::render_localized_text_compact(
+        I18N::translate_mode(source).finalize_without_arguments()).label.ToStdWstring();
+}
+
 using namespace Slic3r::OllamaSuite;
 using Model = Slic3r::OllamaSuite::Model;
 wxString u8(const std::string &s) { return wxString::FromUTF8(s.c_str()); }
@@ -465,12 +471,12 @@ private:
         for(std::size_t i=0;i<m_profiles.size();++i) {
             note(p,s,u8(m_profiles[i].name)); if(!NativeLaunchDetail::supported_kind(m_profiles[i].kind))note(p,s,u8(NativeLaunchDetail::profile_unavailable_reason(m_profiles[i].kind)));auto *row=new wxWrapSizer(wxHORIZONTAL);
             auto *executable=action(p,row,_L("Choose executable"),[this,i] { {std::lock_guard<std::mutex> lock(m_state.mutex);if(m_state.busy)return;m_state.launch_plan.reset();}
-                auto result=m_launcher->pick_executable(m_profiles[i].kind,GetHandle()); if(result.evidence)m_profiles[i].executable=result.evidence; if(!result.cancelled)m_status->SetLabel(u8(result.diagnostic)); });
+                auto result=m_launcher->pick_executable(m_profiles[i].kind, GetHandle(), picker_text(L("Select the registered executable")), picker_text(L("Native executable"))); if(result.evidence)m_profiles[i].executable=result.evidence; if(!result.cancelled)m_status->SetLabel(u8(result.diagnostic)); });
             executable->Enable(m_launcher->available()&&NativeLaunchDetail::supported_kind(m_profiles[i].kind));executable->SetToolTip(u8(NativeLaunchDetail::profile_unavailable_reason(m_profiles[i].kind)));
             action(p,row,_L("Choose working folder"),[this,i] { {std::lock_guard<std::mutex> lock(m_state.mutex);if(m_state.busy)return;m_state.launch_plan.reset();}
-                auto result=m_launcher->pick_working_directory(GetHandle()); if(result.path)m_profiles[i].working_directory=*result.path; if(!result.cancelled)m_status->SetLabel(u8(result.diagnostic)); });
+                auto result=m_launcher->pick_working_directory(GetHandle(), picker_text(L("Select the launch working directory"))); if(result.path)m_profiles[i].working_directory=*result.path; if(!result.cancelled)m_status->SetLabel(u8(result.diagnostic)); });
             if(m_profiles[i].kind==LaunchKind::LlamaServer) action(p,row,_L("Choose local model file"),[this,i] { {std::lock_guard<std::mutex> lock(m_state.mutex);if(m_state.busy)return;m_state.launch_plan.reset();}
-                auto result=m_launcher->pick_model_file(GetHandle()); if(result.evidence)m_profiles[i].model_file=result.evidence; if(!result.cancelled)m_status->SetLabel(u8(result.diagnostic)); });
+                auto result=m_launcher->pick_model_file(GetHandle(), picker_text(L("Select a local GGUF model")), picker_text(L("GGUF model"))); if(result.evidence)m_profiles[i].model_file=result.evidence; if(!result.cancelled)m_status->SetLabel(u8(result.diagnostic)); });
             action(p,row,_L("Review preflight"),[this,i] { {std::lock_guard<std::mutex> lock(m_state.mutex);if(m_state.busy)return;if(m_state.selected)m_profiles[i].model_tag=m_state.selected->name;m_state.launch_plan.reset();}
                 auto profile=m_profiles[i]; start([this,profile] { auto result=LaunchProfileRegistry::prepare(profile,*m_launcher); std::string report;
                     if(result.plan) { const auto &preview=result.plan->preview(); report="Launch preflight passed. Review exact local execution:\n"+preview.executable+"\nWorking folder: "+preview.working_directory+"\nArguments:"; for(const auto &arg:preview.arguments)report+="\n"+arg; report+="\nEnvironment keys:";for(const auto &[key,value]:preview.environment)report+=" "+key; }

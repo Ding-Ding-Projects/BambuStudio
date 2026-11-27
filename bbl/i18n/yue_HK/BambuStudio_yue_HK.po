@@ -61360,11 +61360,794 @@ msgstr "重新切片 / 模型幾何"
 msgid "Slicing / Model geometry"
 msgstr "切片 / 模型幾何"
 
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
 msgid "Reslicing / Print order preview"
 msgstr "重新切片 / 打印次序預覽"
 
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
 msgid "Slicing / Print order preview"
 msgstr "切片 / 打印次序預覽"
 
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
 msgid "Sampled print order"
 msgstr "打印次序抽樣預覽"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "A new secret was generated locally. Reveal the QR or manual key, pair it, then type a current code before creating the lock."
+msgstr "已喺本機產生新密鑰。請顯示 QR 碼或者手動密鑰，完成配對，再輸入當前驗證碼先建立鎖。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "A set number of minutes"
+msgstr "指定分鐘數"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Account"
+msgstr "帳戶"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Active payload decryption access was removed. Metadata remains; external copies are outside this operation."
+msgstr "已移除內容嘅現用解密權限。中繼資料仍會保留，外部副本唔受今次操作影響。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Add manual SHA-1 / 6-digit / 30-second entry"
+msgstr "手動加入 SHA-1／六位數／30 秒項目"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Advance selected tickets"
+msgstr "將所選工單推進至下一階段"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Already unlocked."
+msgstr "已經解鎖。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Application-data folder"
+msgstr "應用程式資料夾"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Apply date filters"
+msgstr "套用日期篩選"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Authenticator entries"
+msgstr "驗證器項目"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Backspace"
+msgstr "退格"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Both revisions belong to the same identity."
+msgstr "兩個修訂屬於同一個身分。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Camera parameters loaded locally. Confirm with a current code before saving."
+msgstr "已喺本機載入相機參數。儲存前請輸入當前驗證碼確認。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Clear answer"
+msgstr "清除答案"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Codes use this computer's clock. Clock accuracy is not verified; check the operating-system time if a code is rejected."
+msgstr "驗證碼使用呢部電腦嘅時鐘。時鐘準確度未經核實；如果驗證碼被拒絕，請檢查作業系統時間。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Compare two selected revisions"
+msgstr "比較兩個所選修訂"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Confirm and add authenticator"
+msgstr "確認並加入驗證器"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Confirm new history password"
+msgstr "確認新歷史記錄密碼"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Copy current code"
+msgstr "複製當前驗證碼"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Copy recovery folder"
+msgstr "複製復原資料夾路徑"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Create local ticket"
+msgstr "建立本機工單"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Create protected history"
+msgstr "建立受保護歷史記錄"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Create this element's lock"
+msgstr "為呢個元件建立鎖"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Credential changed"
+msgstr "憑據已更改"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Current TOTP code to confirm"
+msgstr "輸入當前 TOTP 驗證碼以確認"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Current code to confirm pairing"
+msgstr "輸入當前驗證碼以確認配對"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Description (do not include credentials)"
+msgstr "描述（唔好包含憑據）"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Enter this element's PIN."
+msgstr "請輸入呢個元件嘅 PIN。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Enter this element's current TOTP code."
+msgstr "請輸入呢個元件嘅當前 TOTP 驗證碼。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Enter this element's password."
+msgstr "請輸入呢個元件嘅密碼。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Export local tickets"
+msgstr "匯出本機工單"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Export redacted entries"
+msgstr "匯出已遮蔽嘅項目"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Export this redacted history page"
+msgstr "匯出呢頁已遮蔽嘅歷史記錄"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Fictional severity"
+msgstr "模擬嚴重程度"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Forgotten answer"
+msgstr "忘記答案"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Forgotten your password? Open Support Tickets"
+msgstr "忘記密碼？開啟支援工單"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "From date (YYYY-MM-DD, local time)"
+msgstr "開始日期（YYYY-MM-DD，本機時間）"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Generate a local pairing secret"
+msgstr "喺本機產生配對密鑰"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Generated pairing uses SHA-1, six digits and a 30-second period. The QR and manual key are registration-only and are never saved as images."
+msgstr "配對使用 SHA-1、六位數驗證碼，週期為 30 秒。QR 碼同手動密鑰只供登記，絕不會儲存成圖片。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Hide registration QR and manual key"
+msgstr "隱藏登記 QR 碼同手動密鑰"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "History has its own credential. Snapshots remain encrypted; this view never reveals authenticator secrets, passwords, PINs or codes."
+msgstr "歷史記錄有獨立憑據。快照保持加密，呢個畫面唔會顯示驗證器密鑰、密碼、PIN 或者驗證碼。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "History is locked."
+msgstr "歷史記錄已鎖定。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "History is locked. Enter its independent password, or create it explicitly if no history exists."
+msgstr "歷史記錄已鎖定。請輸入獨立密碼；如果仲未有歷史記錄，可以明確建立一份。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "History label (256 UTF-8 bytes maximum)"
+msgstr "歷史標籤（最多 256 個 UTF-8 位元組）"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "History operation did not complete. Existing data is retained."
+msgstr "歷史操作未完成。現有資料仍然保留。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "History password"
+msgstr "歷史記錄密碼"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Import QR from clipboard image"
+msgstr "從剪貼簿圖片匯入 QR 碼"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Import QR from image"
+msgstr "從圖片匯入 QR 碼"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Issuer"
+msgstr "簽發者"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Label selected identity"
+msgstr "為所選身分加標籤"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Labelled"
+msgstr "已加標籤"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Local data reset"
+msgstr "重設本機資料"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Local element"
+msgstr "本機元件"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Lock again"
+msgstr "重新鎖定"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Lock history now"
+msgstr "立即鎖定歷史記錄"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Manual base32 secret"
+msgstr "手動輸入嘅 Base32 密鑰"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Matching settings: "
+msgstr "相符設定："
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Missing authenticator"
+msgstr "缺少驗證器"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Move selected entry down"
+msgstr "將所選項目下移"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Move selected entry up"
+msgstr "將所選項目上移"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "New PIN (4 to 32 digits)"
+msgstr "新 PIN（4 至 32 位數字）"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "New password (8 to 1024 UTF-8 bytes)"
+msgstr "新密碼（8 至 1024 個 UTF-8 位元組）"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Next code: "
+msgstr "下一個驗證碼："
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Next history page"
+msgstr "下一頁歷史記錄"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "No live identity restore dispatcher is registered. Encrypted history remains intact."
+msgstr "未有登記可還原現用身分嘅分派器。加密歷史記錄保持完整。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "No matching authenticator entries."
+msgstr "冇相符嘅驗證器項目。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "No matching local tickets."
+msgstr "冇相符嘅本機工單。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "No matching settings."
+msgstr "冇相符設定。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "No verified local camera decoder is registered."
+msgstr "未有登記已驗證嘅本機相機解碼器。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Nothing is sent anywhere. No ticket exists outside this machine. No network request is made, no data is collected, and nobody is reading it."
+msgstr "唔會傳送任何內容。工單只存在喺呢部電腦，唔會發出網絡請求、收集資料或者交畀任何人閱讀。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "One-time manual setup key"
+msgstr "一次性手動設定密鑰"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Open application-data folder"
+msgstr "開啟應用程式資料夾"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "PIN plus TOTP"
+msgstr "PIN 加 TOTP"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "PIN plus password"
+msgstr "PIN 加密碼"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "PNG or JPEG (*.png;*.jpg;*.jpeg)|*.png;*.jpg;*.jpeg"
+msgstr "PNG 或 JPEG 圖片 (*.png;*.jpg;*.jpeg)|*.png;*.jpg;*.jpeg"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Pairing URI (kept local)"
+msgstr "配對 URI（只保留喺本機）"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Password plus PIN plus TOTP"
+msgstr "密碼加 PIN 再加 TOTP"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Password plus TOTP"
+msgstr "密碼加 TOTP"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Payload access removed"
+msgstr "已移除內容存取權限"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Previous history page"
+msgstr "上一頁歷史記錄"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Protected history was created. Existing histories are never overwritten by this action."
+msgstr "已建立受保護歷史記錄。呢個操作絕不會覆寫現有歷史。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "QR parameters loaded locally. Enter a current code to confirm before saving."
+msgstr "已喺本機載入 QR 參數。儲存前請輸入當前驗證碼確認。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Read selected label"
+msgstr "讀取所選標籤"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Recovery folder"
+msgstr "復原資料夾"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Redacted history revisions"
+msgstr "已遮蔽嘅歷史修訂"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Redacted identity history"
+msgstr "已遮蔽嘅身分歷史"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Registration QR code. The manual setup key is available beside it."
+msgstr "登記用 QR 碼。旁邊亦提供手動設定密鑰。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Remove access to selected payloads"
+msgstr "移除所選內容嘅存取權限"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Remove active decryption access to the selected payloads. Their history metadata remains. Backups, vault copies and storage journals may retain recoverable material; this does not guarantee forensic erasure."
+msgstr "移除所選內容嘅現用解密權限。歷史中繼資料仍會保留。備份、憑據庫副本同儲存日誌仍可能保留可復原資料，唔保證法證級清除。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Remove authenticator entries"
+msgstr "移除驗證器項目"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Remove local tickets"
+msgstr "移除本機工單"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Remove selected entries"
+msgstr "移除所選項目"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Remove selected tickets"
+msgstr "移除所選工單"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Renamed"
+msgstr "已改名"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Restore local identity"
+msgstr "還原本機身分"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Restore selected revision"
+msgstr "還原所選修訂"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Restored"
+msgstr "已還原"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Reveal registration QR and manual key"
+msgstr "顯示登記 QR 碼同手動密鑰"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Save selected entry labels"
+msgstr "儲存所選項目嘅標籤"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Scan QR with camera"
+msgstr "用相機掃描 QR 碼"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Search authenticator entries"
+msgstr "搜尋驗證器項目"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Search local support tickets"
+msgstr "搜尋本機支援工單"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Search lock settings"
+msgstr "搜尋鎖定設定"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Search redacted history metadata"
+msgstr "搜尋已遮蔽嘅歷史中繼資料"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Select a QR image"
+msgstr "選擇 QR 碼圖片"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Select an entry to show its current code."
+msgstr "揀一個項目先可以顯示佢嘅當前驗證碼。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Select one available entry."
+msgstr "請揀一個可用項目。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Selected authenticator entries will be removed from this device. Their encrypted history is retained."
+msgstr "所選驗證器項目會由呢部裝置移除，加密歷史仍會保留。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Selected local ticket records will be removed. Application data will not be deleted."
+msgstr "所選本機工單記錄會被移除，應用程式資料唔會刪除。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Show next code"
+msgstr "顯示下一個驗證碼"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Show protected history capacity"
+msgstr "顯示受保護歷史記錄容量"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Submit answer"
+msgstr "提交答案"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Support Tickets is not registered. The recovery folder above remains available."
+msgstr "未有登記支援工單功能，上面嘅復原資料夾仍然可以用。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "TOTP pairing URI for this element"
+msgstr "呢個元件嘅 TOTP 配對 URI"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The bundled isolated QR image decoder is unavailable. Use a pairing URI or manual entry."
+msgstr "隨程式提供嘅隔離 QR 圖片解碼器用唔到。請用配對 URI 或者手動輸入。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The bundled isolated clipboard-image decoder is unavailable."
+msgstr "隨程式提供嘅隔離剪貼簿圖片解碼器用唔到。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The element is now locked."
+msgstr "元件已鎖定。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The folder was opened. This application did not delete anything."
+msgstr "資料夾已開啟。應用程式冇刪除任何資料。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The live owner completed and recorded the restore."
+msgstr "管理現用身分嘅元件已完成還原並記錄結果。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The local desk reviewed the manual. Resolution: open the application-data folder and delete it yourself to reset."
+msgstr "本機模擬支援台已查閱手冊。處理方法：開啟應用程式資料夾，再自行刪除該資料夾以重設。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The local operation did not complete. No success was recorded."
+msgstr "本機操作未完成，冇記錄成功結果。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The native two-key confirmation service is unavailable. No payload access will be removed."
+msgstr "原生雙重確認服務暫時無法使用，唔會移除任何內容存取權限。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The selected identity will be restored through its live owner and recorded as a new revision. Existing history is retained."
+msgstr "所選身分會經管理現用身分嘅元件還原，並記為新修訂。現有歷史仍會保留。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The shared export service is unavailable."
+msgstr "共用匯出服務暫時無法使用。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Their recorded actions differ. Snapshot contents are omitted."
+msgstr "兩筆記錄嘅動作唔同，快照內容已省略。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Their recorded actions match. Snapshot contents are omitted."
+msgstr "兩筆記錄嘅動作相同，快照內容已省略。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "These revisions belong to different identities."
+msgstr "兩個修訂屬於唔同身分。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "This is a toy lock, and the recovery folder is shown above."
+msgstr "呢個係示範鎖，上面已列出復原資料夾。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "This is a toy lock, not a security boundary. To reset, close the application and delete its local application-data folder yourself:"
+msgstr "呢個示範鎖唔提供安全隔離。如要重設，請關閉應用程式，再自行刪除以下本機應用程式資料夾："
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "This surface only"
+msgstr "只限呢個介面"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Through date (YYYY-MM-DD, local time)"
+msgstr "截止日期（YYYY-MM-DD，本機時間）"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Unlock answer"
+msgstr "解鎖答案"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Unlock history for five minutes"
+msgstr "解鎖歷史記錄五分鐘"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Unlock minutes"
+msgstr "解鎖維持分鐘數"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Unlocked. Activate the target again to use it."
+msgstr "已解鎖。請再次啟用目標先可以使用。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Until the application closes"
+msgstr "直至關閉應用程式"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Up to eight local tickets are retained. Descriptions are limited to 160 UTF-8 bytes."
+msgstr "最多保留八筆本機工單。每個描述最多 160 個 UTF-8 位元組。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Zero"
+msgstr "零"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "active event keys"
+msgstr "把現用事件密鑰"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "retained removal records"
+msgstr "筆保留嘅移除記錄"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "revisions shown on this page. Labels and snapshot contents are omitted."
+msgstr "個修訂顯示喺呢一頁，已省略標籤同快照內容。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "seconds before another attempt. The recovery folder remains available."
+msgstr "秒後先可以再試。復原資料夾仍然可用。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "seconds remaining"
+msgstr "秒後到期"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Select the launch working directory"
+msgstr "選擇啟動用嘅工作目錄"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Select the registered executable"
+msgstr "選擇已登記嘅執行檔"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Select a local GGUF model"
+msgstr "選擇本機 GGUF 模型"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "not a version list"
+msgstr "唔係版本清單"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Hotend and Ink"
+msgstr "熱端同墨水"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Hotend and Ink (HTML)"
+msgstr "熱端同墨水（HTML）"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Native executable"
+msgstr "原生執行檔"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "GGUF model"
+msgstr "GGUF 模型"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgctxt "extruder side"
+msgid "L"
+msgstr "左"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgctxt "extruder side"
+msgid "R"
+msgstr "右"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "%s nozzle · Idle"
+msgstr "%s 噴嘴 · 閒置"
+
+#. reviewed-category: slicing-printing
+#. review-status: agent-drafted
+msgid "%s nozzle · Connected"
+msgstr "%s 噴嘴 · 已連線"

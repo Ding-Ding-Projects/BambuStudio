@@ -358,5 +358,25 @@
     "file": "src/slic3r/GUI/NotificationManager.cpp",
     "literal": "T",
     "reason": "The literal shortcut-key letter in the \"Cancel upload\" tooltip's Ctrl+T hint (built as _u8L(\"Cancel upload\") + \" \" + shortkey_ctrl_prefix() + \"T\"), not prose. A keyboard shortcut letter names the physical key and is not translated."
+  },
+  {
+    "file": "src/slic3r/GUI/Base64Toolkit/Base64ToolkitPanel.cpp",
+    "literal": "sha256 ",
+    "reason": "The checksum prefix identifies the SHA-256 digest and remains unchanged when displayed or copied."
+  },
+  {
+    "file": "src/slic3r/GUI/ScheduledSettings/Panel.cpp",
+    "literal": "Every day already includes this day",
+    "reason": "Panel::tr receives this English source and its explicit Cantonese translation together. The shared scheduled-settings renderer chooses the current language."
+  },
+  {
+    "file": "src/slic3r/GUI/ScheduledSettings/Panel.cpp",
+    "literal": "Value from this local rule",
+    "reason": "Panel::tr receives this English source and its explicit Cantonese translation together. The shared scheduled-settings renderer chooses the current language."
+  },
+  {
+    "file": "src/slic3r/GUI/ScheduledSettings/Panel.cpp",
+    "literal": "Not in this rule. Choose a value and add it explicitly.",
+    "reason": "Panel::tr receives this English source and its explicit Cantonese translation together. The shared scheduled-settings renderer chooses the current language."
   }
 ]

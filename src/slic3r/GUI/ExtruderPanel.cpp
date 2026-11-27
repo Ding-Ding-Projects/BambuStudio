@@ -799,7 +799,7 @@ wxString slot_label(int extruder_count, int extruder, int slot, int slots_on_ext
 {
     if (extruder_count < 2) return wxString::Format("%d", slot + 1);
 
-    const wxString side = extruder == 0 ? "L" : "R";
+    const wxString side = extruder == 0 ? _CTX(L_CONTEXT("L", "extruder side"), "extruder side") : _CTX(L_CONTEXT("R", "extruder side"), "extruder side");
     return slots_on_extruder == 1 ? side : wxString::Format("%s%d", side, slot + 1);
 }
 
