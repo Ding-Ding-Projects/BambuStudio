@@ -3205,11 +3205,12 @@ void GCode::_do_export(Print& print, GCodeOutputStream &file, ThumbnailsGenerato
         area.max_z  = print.config().printable_height.value;
         area.buzzer = is_BBL_Printer();
         area.melody = print.config().lubricate_melody.value;
+        if (area.buzzer) machine_start_gcode = without_vendor_melody(machine_start_gcode, false);
         machine_start_gcode = insert_lubricate_routine(machine_start_gcode, area);
     } else if (is_BBL_Printer()) {
         // Without lubricate mode the chosen melody still plays, once, as the first thing the
         // printer does, in every mode (Express print mode included).
-        machine_start_gcode = start_melody_gcode(print.config().lubricate_melody.value) + machine_start_gcode;
+        machine_start_gcode = apply_print_start_melody(machine_start_gcode, print.config().lubricate_melody.value);
     }
     if (print.config().gcode_flavor != gcfKlipper) {
         // Set bed temperature if the start G-code does not contain any bed temp control G-codes.
@@ -3655,7 +3656,9 @@ void GCode::_do_export(Print& print, GCodeOutputStream &file, ThumbnailsGenerato
                 file.writeln(this->placeholder_parser_process("filament_end_gcode", end_gcode, extruder_id, &config));
             }
         }
-        file.writeln(this->placeholder_parser_process("machine_end_gcode", print.config().machine_end_gcode, m_writer.filament()->id(), &config));
+        std::string end_gcode = this->placeholder_parser_process("machine_end_gcode", print.config().machine_end_gcode, m_writer.filament()->id(), &config);
+        if (is_BBL_Printer() && has_creator_melody(end_gcode)) end_gcode = without_vendor_melody(end_gcode, true);
+        file.writeln(end_gcode);
     }
     file.write(m_writer.update_progress(m_layer_count, m_layer_count, true)); // 100%
     file.write(m_writer.postamble());
