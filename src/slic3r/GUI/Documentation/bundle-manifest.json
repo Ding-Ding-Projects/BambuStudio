@@ -815,7 +815,7 @@
     {
       "route": "device/printer-melody.yue_HK.md",
       "title": "打印機旋律",
-      "sha256": "27edee75ab083fba0c8d88cd58e6cc0f4f3f5be77e1561f00e68b015fd4c5096"
+      "sha256": "6b85dae499151e187b9a8d50de1f65b84c242bac35d1234fb1991fe80f220ea0"
     },
     {
       "route": "device/rack-cold-pull.md",
@@ -1825,7 +1825,7 @@
     {
       "route": "windows/lubricate-mode.yue_HK.md",
       "title": "潤滑模式同打印旋律",
-      "sha256": "7af727a6a3f07c9094b3fc9c92be6b276aa49474e13f8db94ff40162f3c24ba0"
+      "sha256": "35df3e250836f27e08efe71c26c081a55f0a5631c346e67d69884222358465f8"
     },
     {
       "route": "windows/material-context-menus.md",
@@ -1890,12 +1890,12 @@
     {
       "route": "windows/minecraft-servers.md",
       "title": "Minecraft servers",
-      "sha256": "81a6039735be801c64f05dfa3163416a70c32444f1d724b60143a51e5be0fbd0"
+      "sha256": "031be64df0523c6d3dfe3bccc7d8ad53759eaf7e96798e1b224455bf00bcd41b"
     },
     {
       "route": "windows/minecraft-servers.yue_HK.md",
       "title": "Minecraft 伺服器",
-      "sha256": "ea44aa6d955bc892a0ef58053b06e27927b5dd0949af70ffaffd2b40179d3783"
+      "sha256": "247da2a3666494367d4d7466e6d788e34ac653259386559f04a584d19af856f3"
     },
     {
       "route": "windows/motion-temporal-capture.md",
@@ -2295,7 +2295,7 @@
     {
       "route": "workspace/print-setup-atlas.yue_HK.md",
       "title": "打印設定同儲存傳送外觀",
-      "sha256": "85460a6a714c957c77587c769b8b99f02d32ca58174e6c792e3162a4b5e15688"
+      "sha256": "003d9651a3a8210b34894b72f41597fe438673acaced191c8e27fcd93fd9ee01"
     },
     {
       "route": "workspace/project-tabs.md",
@@ -2410,7 +2410,7 @@
       "bytes": 16430
     }
   ],
-  "bundle_sha256": "1de890dfba3e7d3d6eccdf68dfbc3968940015d749dbdf1725e50ab34057663b",
+  "bundle_sha256": "150e61c17b5565f8c324ef666e8ee64e75d04fabda7956701c491519dab6070e",
   "unavailable_references": [
     {
       "source": "api/README.md",
@@ -2979,6 +2979,11 @@
     },
     {
       "source": "device/printer-melody.md",
+      "target": "https://github.com/savecharlie/a1-jukebox/blob/9ccf08892dfb9df1e166c4f66155fbb94a31a685/m1006.py",
+      "kind": "link"
+    },
+    {
+      "source": "device/printer-melody.yue_HK.md",
       "target": "https://github.com/savecharlie/a1-jukebox/blob/9ccf08892dfb9df1e166c4f66155fbb94a31a685/m1006.py",
       "kind": "link"
     },
