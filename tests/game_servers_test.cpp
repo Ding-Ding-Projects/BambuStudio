@@ -209,6 +209,13 @@ static void folder_files()
     CHECK(parse_players(write_allowlist({kit}), round) && round[0].uuid == "u2" && round[0].level == 0);
     kit.reason = "griefing";
     CHECK(parse_players(write_bans({kit}), round) && round[0].reason == "griefing" && round[0].expires == "forever");
+    CHECK(valid_console_command("say hello"));
+    CHECK(valid_console_command(std::string(32767, 'a')));
+    CHECK(!valid_console_command(std::string(32768, 'a')));
+    CHECK(!valid_console_command(""));
+    CHECK(!valid_console_command("say hello\rlist"));
+    CHECK(!valid_console_command("say hello\nlist"));
+    CHECK(!valid_console_command(std::string("a\0b", 3)));
     CHECK(valid_player_name("Mei_2"));
     CHECK(!valid_player_name("Me"));
     CHECK(!valid_player_name("seventeen_letters"));
