@@ -567,6 +567,7 @@ static void sha1()
 #include "slic3r/GUI/GameServers/ContainerSetup.hpp"
 #include "slic3r/GUI/GameServers/NativeServerTarget.hpp"
 #include "slic3r/GUI/GameServers/ServerMetrics.hpp"
+#include "slic3r/GUI/GameServers/AreaSelection.hpp"
 
 static void containers()
 {
@@ -596,6 +597,10 @@ static void containers()
     auto begun=ServerMetrics::Clock::now();
     for (int t=0;t<3600;t++) metrics.sample(begun+std::chrono::seconds(t),200+t);
     CHECK(metrics.memory.size() <= 361 && !metrics.memory.empty());
+    const auto region = select_chunk_area(-16, 32, 100, 100, 299, 299, 0, 0, 300, 300, 10);
+    CHECK(region.width == 100 && region.depth == 100 && region.x == -16 && region.z == 32);
+    const auto single = select_chunk_area(0, 0, 2, 2, 50, 50, 50, 50, 200, 200, 0);
+    CHECK(single.width == 1 && single.depth == 1 && single.x == -16 && single.z == -16);
     setup.accepted = false;
     CHECK(container_create(setup).empty());
     CHECK(!container_field("--host"));

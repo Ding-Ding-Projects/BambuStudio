@@ -7,6 +7,7 @@
 #include "ServerModel.hpp"
 #include "ServerSystem.hpp"
 #include "ServerMetrics.hpp"
+#include "AreaSelection.hpp"
 #include "RconCredential.hpp"
 
 #include "../DocsBrowserDialog.hpp"
@@ -755,10 +756,28 @@ private:
 class AreaPreview : public wxPanel
 {
 public:
-    explicit AreaPreview(wxWindow *parent) : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxSize(parent->FromDIP(300), parent->FromDIP(300)))
+    AreaPreview(wxWindow *parent, std::function<void(const AreaSelection &)> select) : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxSize(parent->FromDIP(300), parent->FromDIP(300)))
     {
+        m_select=std::move(select);
         SetBackgroundStyle(wxBG_STYLE_PAINT);
+        SetToolTip(_L("Drag across the preview to select a chunk rectangle, or use the width, depth and centre controls."));
         Bind(wxEVT_PAINT, [this](wxPaintEvent &) { paint(); });
+        Bind(wxEVT_LEFT_DOWN,[this](wxMouseEvent &e) {
+            if (!IsEnabled()) return;
+            m_anchor=m_cursor=e.GetPosition();m_drag=true;CaptureMouse();Refresh();
+        });
+        Bind(wxEVT_MOTION,[this](wxMouseEvent &e) { if (m_drag) {m_cursor=e.GetPosition();Refresh();} });
+        Bind(wxEVT_MOUSE_CAPTURE_LOST,[this](wxMouseCaptureLostEvent &) { m_drag=false;Refresh(); });
+        Bind(wxEVT_LEFT_UP,[this](wxMouseEvent &e) {
+            if(!m_drag) return;
+            m_drag=false;
+            if(HasCapture()) ReleaseMouse();
+            auto sz=GetClientSize();
+            const int w=m_g.width_chunks>0?m_g.width_chunks:100, d=m_g.depth_chunks>0?m_g.depth_chunks:100;
+            auto rect=select_chunk_area(m_g.centre_x,m_g.centre_z,w,d,m_anchor.x,m_anchor.y,e.GetX(),e.GetY(),sz.x,sz.y,FromDIP(12));
+            if(rect.width && rect.depth) m_select(rect);
+            Refresh();
+        });
     }
     void set(const GeneratorSettings &g, std::size_t done)
     {
@@ -774,6 +793,13 @@ private:
         const wxSize          sz = GetClientSize();
         dc.SetBackground(wxBrush(role(MD3::Role::SurfaceContainerLow)));
         dc.Clear();
+        const auto outline=[&] {
+            if(!m_drag) return;
+            dc.SetBrush(*wxTRANSPARENT_BRUSH);
+            dc.SetPen(wxPen(role(MD3::Role::Primary),FromDIP(2)));
+            dc.DrawRectangle(std::min(m_anchor.x,m_cursor.x),std::min(m_anchor.y,m_cursor.y),
+                             std::abs(m_anchor.x-m_cursor.x)+1,std::abs(m_anchor.y-m_cursor.y)+1);
+        };
         const int w = std::max(1, m_g.width_chunks), d = std::max(1, m_g.depth_chunks);
         const int pad = FromDIP(12);
         const double cell = std::min(double(sz.x - 2 * pad) / w, double(sz.y - 2 * pad) / d);
@@ -784,6 +810,7 @@ private:
             const wxString t = _L("Only the spawn area");
             const wxSize   ts = dc.GetTextExtent(t);
             dc.DrawText(t, (sz.x - ts.x) / 2, (sz.y - ts.y) / 2);
+            outline();
             return;
         }
         // Batches made so far, filled.
@@ -812,7 +839,11 @@ private:
         dc.SetBrush(wxBrush(role(MD3::Role::Primary)));
         dc.SetPen(*wxTRANSPARENT_PEN);
         dc.DrawCircle(ox + int(w * cell / 2), oz + int(d * cell / 2), std::max(3, FromDIP(4)));
+        outline();
     }
+    wxPoint m_anchor,m_cursor;
+    bool m_drag=false;
+    std::function<void(const AreaSelection &)> m_select;
     GeneratorSettings m_g;
     std::size_t       m_done = 0;
 };
@@ -2526,8 +2557,8 @@ void ServersPanel::Ui::build_generator(wxWindow *page)
         out = new SpinInput(w, wxEmptyString, wxEmptyString, wxDefaultPosition, wxSize(page->FromDIP(96), -1), 0, lo, hi, v);
         area->Add(out, 0, wxRIGHT, page->FromDIP(12));
     };
-    area_spin(_L("Width"), 0, 1000, 0, gen_width);
-    area_spin(_L("Depth"), 0, 1000, 0, gen_depth);
+    area_spin(_L("Width"), 0, 1000, 100, gen_width);
+    area_spin(_L("Depth"), 0, 1000, 100, gen_depth);
     area_spin(_L("Centre X"), -29999984, 29999984, 0, gen_cx);
     area_spin(_L("Centre Z"), -29999984, 29999984, 0, gen_cz);
     f->Add(area, 0, wxTOP, page->FromDIP(6));
@@ -2588,7 +2619,12 @@ void ServersPanel::Ui::build_generator(wxWindow *page)
     form_win->SetSizer(f);
     outer->Add(form_win, 1, wxEXPAND | wxRIGHT, page->FromDIP(12));
     auto *side = new wxBoxSizer(wxVERTICAL);
-    gen_preview = new AreaPreview(page);
+    gen_preview = new AreaPreview(page,[this](const AreaSelection &r) {
+        if (gen_run && gen_run->process && gen_run->process->running()) return;
+        gen_width->SetValue(r.width);gen_depth->SetValue(r.depth);
+        gen_cx->SetValue(r.x);gen_cz->SetValue(r.z);
+        read_generator();
+    });
     side->Add(gen_preview, 0);
     side->Add(text(page, Label::Body_12, _L("Thin lines every 4 chunks; thick lines mark the batches of 16 x 16 chunks the server makes one after another."), true), 0, wxTOP,
               page->FromDIP(6));

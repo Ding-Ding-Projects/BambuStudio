@@ -329,3 +329,8 @@ connected peer is the selected running server process before authenticating,
 then requests a player list without displaying the response. Saving a client
 credential does not enable RCON or change the password that the server itself
 reads from server.properties.
+
+The generator starts at 100 × 100 chunks. Drag across the preview to select a
+smaller rectangle from the displayed area. The width, depth and center fields
+mirror the selected chunk coordinates and remain available for keyboard use.
+Setting the dimensions to zero generates the spawn area only.
