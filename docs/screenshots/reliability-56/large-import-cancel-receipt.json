@@ -50,7 +50,25 @@
         885
       ],
       "captureTimestamp": "Unavailable"
+    },
+    {
+      "path": "restored-original-meshes.png",
+      "sha256": "cb36f682f6c0cbdeef2e1445ea4f27a42abebd03aeb1b594974124786174320a",
+      "dimensions": [
+        700,
+        885
+      ],
+      "captureTimestamp": "Unavailable"
     }
   ],
-  "limits": "One synthetic STL on this host and initial candidate. No strict response-time bound and no later repaired-build result."
+  "limits": "One synthetic STL on this host and initial candidate. No strict response-time bound and no later repaired-build result.",
+  "originalGeometryRecovery": {
+    "sphereCopies": 2,
+    "cubeCopies": 2,
+    "simplifiedTotalFacets": 36364,
+    "restoredTotalFacets": 2070744,
+    "expectedTotalFacets": 2070744,
+    "inputSha256AfterRestore": "3184bf139a7645688fdd9cec8138f1b3a1097fdfa90b4e27a57f207618bbc598",
+    "nativeMessage": "Original imported geometry restored. Undo can restore the simplified meshes."
+  }
 }
