@@ -4623,13 +4623,13 @@ wxWindow *PreferencesDialog::create_3d_tab()
     auto flags = wxSizerFlags().Expand().Border(wxTOP, FromDIP(4));
 
     // ---- 3D Settings ----
-    sizer->Add(wrap_option_row(scrolled, enable_assemble_view_preview), flags);
-    sizer->Add(wrap_option_row(scrolled, item_grabber_size), flags);
-    sizer->Add(wrap_option_row(scrolled, item_tooltip_offset), flags);
-    sizer->Add(wrap_option_row(scrolled, item_toolbar_style), flags);
-    sizer->Add(wrap_option_row(scrolled, item_show_shells), flags);
-    sizer->Add(wrap_option_row(scrolled, item_show_objects), flags);
-    sizer->Add(wrap_option_row(scrolled, item_show_heat_soak_area), flags);
+    sizer->Add(enable_assemble_view_preview, flags);
+    sizer->Add(item_grabber_size, flags);
+    sizer->Add(item_tooltip_offset, flags);
+    sizer->Add(item_toolbar_style, flags);
+    sizer->Add(item_show_shells, flags);
+    sizer->Add(item_show_objects, flags);
+    sizer->Add(item_show_heat_soak_area, flags);
 #if !BBL_RELEASE_TO_PUBLIC
     auto item_show_bvh_bounds = create_item_checkbox(_L("Show assembly BVH primary bounds"), scrolled, _L("Display the BVH primary bounding box wireframe in assembly view."), 50,
                                                      "show_assembly_bvh_bounds");
@@ -4649,10 +4649,10 @@ wxWindow *PreferencesDialog::create_3d_tab()
     // ---- Mouse Settings ----
     sizer->Add(title_mouse, wxSizerFlags().Expand().Border(wxTOP, FromDIP(24)));
     sizer->AddSpacer(FromDIP(8));
-    sizer->Add(wrap_option_row(scrolled, item_zoom_to_mouse), flags);
-    sizer->Add(wrap_option_row(scrolled, item_reverse_mouse_wheel_zoom), flags);
-    sizer->Add(wrap_option_row(scrolled, item_drag_to_move), flags);
-    sizer->Add(wrap_option_row(scrolled, item_rotate_sensitivity), flags);
+    sizer->Add(item_zoom_to_mouse, flags);
+    sizer->Add(item_reverse_mouse_wheel_zoom, flags);
+    sizer->Add(item_drag_to_move, flags);
+    sizer->Add(item_rotate_sensitivity, flags);
 
     // ---- Import Settings ----
     sizer->Add(title_import, wxSizerFlags().Expand().Border(wxTOP, FromDIP(24)));
