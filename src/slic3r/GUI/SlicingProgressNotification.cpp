@@ -380,9 +380,11 @@ void NotificationManager::SlicingProgressNotification::render_slice_scene(const 
     const auto accent = md3_notif_u32(MD3::Role::Primary, m_is_dark);
     const auto point = [&](double x,double y) { return ImVec2(pos.x+size.x*x,pos.y+h*y); };
     const bool still = MD3::Motion::reduced() || m_sp_state == SlicingProgressState::SP_COMPLETED;
-    if (paths) draw_slice_paths(*paths,SliceMotion::seconds(),still,
+    if (paths) draw_slice_paths(SliceMotion::projection(paths),SliceMotion::seconds(),still,
         [&](double x,double y,double xx,double yy,bool head) {
-            draw->AddLine(point((1+x)*.5,y),point((1+xx)*.5,yy),accent,head ? 3.f : 1.f);
+            const ImVec2 path_top(pos.x+model_width+(model_width-side)/2.f,pos.y+(h-side)/2.f);
+            draw->AddLine(path_top+ImVec2(float(x)*side,float(y)*side),
+                          path_top+ImVec2(float(xx)*side,float(yy)*side),accent,head ? 3.f : 1.f);
         });
     draw_slice_motion(SliceMotion::kind(),SliceMotion::seconds(),still,
         [&](double x,double y,double xx,double yy,int weight) {
