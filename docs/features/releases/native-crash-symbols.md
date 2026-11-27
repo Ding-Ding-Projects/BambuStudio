@@ -6,7 +6,7 @@ branch with `debug-symbols=true` and `symbol-public-key` containing a reviewed
 RSA SubjectPublicKeyInfo PEM public key of at least 3072 bits. Keep its private
 counterpart in protected local storage. Never supply a private key to the workflow.
 
-This mode keeps Release optimization, enables compiler PDB generation and `/FS`,
+This mode selects Ninja `RelWithDebInfo` with `SLIC3R_MSVC_PDB=ON`, embeds source-line information in optimized objects,
 and bypasses application build-cache restoration and saving. Compiler launchers
 are cleared and sccache is disabled for this mode, so symbol-bearing compiler
 outputs cannot be written into its cache. The dependency prefix
