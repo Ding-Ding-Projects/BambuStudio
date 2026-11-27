@@ -16,6 +16,8 @@
 #include <wx/zipstrm.h>
 #include <wx/wrapsizer.h>
 #include "Widgets/MD3DataView.hpp"
+#include "Widgets/MD3ScrolledWindow.hpp"
+#include <unordered_map>
 
 #include "Export/ExportDatasets.hpp"
 #include "Export/ExportDialog.hpp"
@@ -62,6 +64,86 @@
 #include <wx/variant.h>
 
 namespace Slic3r::GUI {
+
+// The list above the diagram remains keyboard-accessible and exposes revision details.
+class RevisionGraph final : public MD3ScrolledWindow
+{
+public:
+    struct Row {
+        std::string id;
+        std::vector<std::string> parents;
+        wxString label;
+    };
+    explicit RevisionGraph(wxWindow *parent) : MD3ScrolledWindow(parent)
+    {
+        SetName(_L("Revision ancestry"));
+        SetScrollRate(0, FromDIP(16));
+    }
+
+    void set_rows(std::vector<Row> rows)
+    {
+        m_rows = std::move(rows);
+        m_indices.clear();
+        for (size_t i = 0; i < m_rows.size(); ++i)
+            m_indices.emplace(m_rows[i].id, static_cast<int>(i));
+        SetVirtualSize(-1, std::max(1, static_cast<int>(m_rows.size())) * row_height());
+        Refresh();
+    }
+
+    void OnDraw(wxDC &dc) override
+    {
+        const int height = row_height();
+        const int node_x = FromDIP(28);
+        const int label_x = FromDIP(52);
+        dc.SetFont(GetFont());
+        dc.SetTextForeground(StateColor::semantic(MD3::Role::OnSurface));
+        if (m_rows.empty()) {
+            dc.DrawText(_L("No versions in the selected store."), FromDIP(8), FromDIP(8));
+            return;
+        }
+
+        int left, top;
+        CalcUnscrolledPosition(0, 0, &left, &top);
+        const int bottom = top + GetClientSize().y;
+        const wxColour accent = StateColor::semantic(MD3::Role::Primary);
+        const wxPen line(accent, FromDIP(2));
+        dc.SetPen(line);
+        // Adjacent parents share the spine. Longer links bend to its left so
+        // they never imply ancestry through all intervening revisions.
+        for (size_t i = 0; i < m_rows.size(); ++i) {
+            const int y = static_cast<int>(i) * height + height / 2;
+            for (const auto &parent : m_rows[i].parents) {
+                const auto found = m_indices.find(parent);
+                if (found == m_indices.end()) continue;
+                const int end_y = found->second * height + height / 2;
+                if (std::max(y, end_y) < top || std::min(y, end_y) > bottom) continue;
+                if (std::abs(y - end_y) == height) dc.DrawLine(node_x, y, node_x, end_y);
+                else {
+                    const int bend = FromDIP(9);
+                    dc.DrawLine(node_x, y, bend, y);
+                    dc.DrawLine(bend, y, bend, end_y);
+                    dc.DrawLine(bend, end_y, node_x, end_y);
+                }
+            }
+        }
+        dc.SetBrush(wxBrush(accent));
+        for (int i = std::max(0, top / height); i < static_cast<int>(m_rows.size()) && i * height < bottom; ++i) {
+            const auto &row = m_rows[i];
+            const int y = i * height + height / 2;
+            dc.DrawCircle(node_x, y, FromDIP(4));
+            wxString caption = row.label;
+            for (const auto &parent : row.parents)
+                if (!m_indices.count(parent))
+                    caption += "   " + _L("Parent outside filter") + " " + wxString::FromUTF8(parent.substr(0, 12));
+            dc.DrawText(wxControl::Ellipsize(caption, dc, wxELLIPSIZE_END, std::max(1, GetClientSize().x - label_x)),
+                        label_x, y - dc.GetCharHeight() / 2);
+        }
+    }
+private:
+    int row_height() const { return std::max(FromDIP(30), GetCharHeight() + FromDIP(8)); }
+    std::vector<Row> m_rows;
+    std::unordered_map<std::string, int> m_indices;
+};
 
 namespace {
 
@@ -425,6 +507,9 @@ void ProjectHistoryDialog::create_ui()
     md3_style_data_view(m_version_list);
     list_sizer->Add(m_version_list, 1, wxEXPAND | wxALL, FromDIP(8));
 
+    m_graph = new RevisionGraph(m_list_card);
+    m_graph->Hide();
+    list_sizer->Add(m_graph, 1, wxEXPAND | wxALL, FromDIP(8));
     m_detail = new TextAreaEditor(m_list_card, wxID_ANY, wxEmptyString, wxDefaultPosition, FromDIP(wxSize(400, 120)), wxTE_MULTILINE | wxTE_READONLY);
     m_detail->Hide(); list_sizer->Add(m_detail, 1, wxEXPAND | wxALL, FromDIP(8));
     auto *history_actions = new wxWrapSizer(wxHORIZONTAL);
@@ -535,6 +620,7 @@ void ProjectHistoryDialog::apply_theme()
     const wxColour outline       = StateColor::semantic(MD3::Role::OutlineVariant);
 
     SetBackgroundColour(surface);
+    m_graph->SetBackgroundColour(list_surface);
     m_title_label->SetForegroundColour(text);
     m_subtitle_label->SetForegroundColour(secondary);
     m_project_label->SetForegroundColour(text);
@@ -878,11 +964,12 @@ void ProjectHistoryDialog::populate_versions()
     const auto from = m_from_filter->GetValue();
     const auto to = m_to_filter->GetValue();
     if (from.IsValid() && to.IsValid() && from > to) {
+        if (m_view == "graph") m_graph->set_rows({});
         set_status(_L("The start date must be on or before the end date."));
         m_syncing_selection = false;
         return;
     }
-    wxString graph;
+    std::vector<RevisionGraph::Row> graph;
     for(std::size_t i=0;i<m_versions.size()&&i<m_origins.size();++i){
         const auto &version=m_versions[i];const auto &origin=m_origins[i];
         if(category && origin.category!=categories[category] && !(category==5&&origin.category=="printer_transition"))continue;
@@ -899,9 +986,10 @@ void ProjectHistoryDialog::populate_versions()
         row.push_back(wxVariant(origin.category=="printer"?wxString::FromUTF8(origin.status):format_size(version.snapshot_size)));
         m_version_list->AppendItem(row);m_filtered_rows.push_back(i);
 
-        if(m_view=="graph"){graph+="o "+wxString::FromUTF8(version.commit_id)+"  "+display_message(version.message)+"\n";for(const auto &parent:version.parent_ids)graph+="|  -> "+wxString::FromUTF8(parent)+"\n";if(version.parent_ids.empty())graph+=_L("Root commit")+"\n";}
+        if (m_view == "graph")
+            graph.push_back({version.commit_id, version.parent_ids, id + "  " + display_message(version.message)});
     }
-    if(m_view=="graph")m_detail->SetValue(graph.empty()?_L("No versions in the selected store."):graph);
+    if (m_view == "graph") m_graph->set_rows(std::move(graph));
     update_history_status();
     apply_bulk_to_list();
 }
@@ -1571,7 +1659,8 @@ void ProjectHistoryDialog::set_view(const std::string &view)
     if (view != "timeline" && view != "table" && view != "graph" && view != "compare" && view != "searches") return;
     m_view = view;
     const bool searches = view == "searches";
-    m_detail->Show(view == "graph" || view == "compare");
+    m_graph->Show(view == "graph");
+    m_detail->Show(view == "compare");
     for (Button *button : {m_pin_button, m_rerun_button, m_delete_button, m_clear_button}) button->Show(searches);
     m_compare_button->Show(!searches);
     m_restore_button->Show(!searches);
