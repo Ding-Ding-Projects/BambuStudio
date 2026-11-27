@@ -189,7 +189,7 @@ CameraPopup::CameraPopup(wxWindow *parent)
         pdc.Clear();
         wxGCDC dc(pdc);
         dc.SetPen(*wxTRANSPARENT_PEN);
-        dc.SetBrush(wxBrush(wxGetApp().dark_mode() ? *wxWHITE : TEXT_COL));
+        dc.SetBrush(wxBrush(StateColor::semantic(MD3::Role::OnSurface)));
         const wxSize sz = storage_dot->GetClientSize();
         dc.DrawEllipse(0, 0, sz.x, sz.y);
     });
