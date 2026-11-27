@@ -9,6 +9,7 @@
 #include "BedrockDownloadsDialog.hpp"
 #include "ContentLifecycleDialog.hpp"
 #include "WorldRecoveryDialog.hpp"
+#include "ManagedSchedules.hpp"
 #include "TargetContentDialog.hpp"
 #include "../I18N.hpp"
 #include "../MsgDialog.hpp"
@@ -102,6 +103,8 @@ public:
         remote_setup=action(_L("Provision new SSH server..."),[this]{ provision(); });
         setup_button = action(_L("Install Bedrock ZIP..."), [this] { install(); });
         action(_L("Read EULA"), [] { wxLaunchDefaultBrowser("https://aka.ms/MinecraftEULA"); });
+        schedule=action(_L("SSH restart schedule..."),[this]{show_managed_schedule(this,{false,target->GetSelection()==2,
+            profile->GetTextCtrl()->GetValue().ToStdString(wxConvUTF8),folder->GetTextCtrl()->GetValue().ToStdString(wxConvUTF8),local_owner(false)});});
         reconnect=action(_L("Reconnect owned SSH console"),[this]{start(true);});
         disconnect=action(_L("Disconnect SSH console"),[this]{if(running && reconnectable && process){process->kill();append(_L("Closing the SSH connection. Reconnect to verify the remote process."));}});
         start_button = action(_L("Start server"), [this] { start(); });
@@ -272,6 +275,7 @@ private:
         profile->Enable(idle && target->GetSelection() != 0);
         remote_setup->Enable(idle && target->GetSelection()!=0);ssh_recovery->Enable(idle && target->GetSelection()!=0);ssh_content->Enable(idle && target->GetSelection()!=0);
         source_package->Enable(idle && target->GetSelection()!=0);remote_port->Enable(idle && target->GetSelection()!=0);
+        schedule->Enable(target->GetSelection()!=0 && !installing);
         reconnect->Enable(idle && target->GetSelection()!=0);disconnect->Enable(running && reconnectable);start_button->Enable(idle); stop_button->Enable(running); command->Enable(running);
     }
     void append(const wxString &line)
@@ -340,7 +344,7 @@ private:
     TextInput *profile, *folder, *command, *source_package;
     SpinInput *remote_port;
     TextArea *console;
-    Button *browse, *start_button, *stop_button, *setup_button, *add_pack, *enable_pack, *remote_setup, *settings, *ssh_recovery, *ssh_content, *local_backup, *local_restore, *manage_packs,*reconnect,*disconnect;
+    Button *browse, *start_button, *stop_button, *setup_button, *add_pack, *enable_pack, *remote_setup, *settings, *ssh_recovery, *ssh_content, *local_backup, *local_restore, *manage_packs,*reconnect,*disconnect,*schedule;
     LabeledCheckBox *agree;
     std::unique_ptr<ServerProcess> process;
     std::shared_ptr<bool> lifetime = std::make_shared<bool>(true);

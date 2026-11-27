@@ -1,5 +1,6 @@
 #include "ContainerServersDialog.hpp"
 #include "WorldRecoveryDialog.hpp"
+#include "ManagedSchedules.hpp"
 #include "TargetContentDialog.hpp"
 #include "BedrockSettingsDialog.hpp"
 #include "ContainerSetup.hpp"
@@ -110,6 +111,14 @@ public:
                 if(lines.size()!=1)return;const bool bedrock=lines.front().rfind("itzg/minecraft-bedrock-server:",0)==0;
                 if(!bedrock && lines.front().rfind("itzg/minecraft-server:",0)!=0)return;
                 show_target_content(this,{true,bedrock,target(),{},id});
+            });
+        });
+        action(_L("Restart schedule..."),[this]{
+            const auto id=selected_id();if(id.empty())return;
+            run({"inspect","--format","{{.Config.Image}}",id},[this,id](const Lines &lines){
+                if(lines.size()!=1)return;const bool bedrock=lines.front().rfind("itzg/minecraft-bedrock-server:",0)==0;
+                if(!bedrock&&lines.front().rfind("itzg/minecraft-server:",0)!=0)return;
+                show_managed_schedule(this,{true,bedrock,target(),{},id});
             });
         });
         action(_L("Server settings..."),[this]{

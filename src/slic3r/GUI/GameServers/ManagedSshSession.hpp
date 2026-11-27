@@ -6,7 +6,7 @@ from pathlib import Path
 
 def main():
     root=Path(sys.argv[1]).resolve(strict=True);owner,edition,op=sys.argv[2:5]
-    if not re.fullmatch("[a-f0-9]{32}",owner) or edition not in ("java","bedrock") or op not in ("start","attach","inspect"):
+    if not re.fullmatch("[a-f0-9]{32}",owner) or edition not in ("java","bedrock") or op not in ("start","attach","inspect","restart","warn"):
         raise ValueError("Invalid managed-session target.")
     marker=root/".bambustudio-native"
     if marker.is_symlink() or marker.read_text(encoding="ascii")!=owner:raise ValueError("Server ownership does not match.")
@@ -15,19 +15,21 @@ def main():
     runner=r"""
 import fcntl,os,sys
 from pathlib import Path
-root=Path.cwd();owner,edition=sys.argv[1:3]
+root=Path.cwd();owner,edition,consent_mode=sys.argv[1:4]
 if (root/".bambustudio-native").read_text()!=owner or not (root/"server.properties").is_file():sys.exit(21)
 lock=os.open(".bambustudio-run.lock",os.O_NOFOLLOW|os.O_CREAT|os.O_RDWR,0o600)
 fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB);os.set_inheritable(lock,True)
 if edition=="bedrock":
     os.environ["LD_LIBRARY_PATH"]=".";os.execv("./bedrock_server",["./bedrock_server"])
-if (root/"eula.txt").read_text().strip()=="eula=false":(root/"eula.txt").write_text("eula=true\n")
+if (root/"eula.txt").read_text().strip()=="eula=false":
+    if consent_mode!="interactive":sys.exit(22)
+    (root/"eula.txt").write_text("eula=true\n")
 os.execvp("java",["java","-jar","./server.jar","nogui"])
 """
     if not shutil.which("tmux"):
         if op!="start":raise ValueError("Reconnect requires tmux on this host. No process state was inferred.")
         print("tmux is unavailable; using the original attached-only SSH lifecycle.",flush=True)
-        os.execv(sys.executable,[sys.executable,"-c",runner,owner,edition])
+        os.execv(sys.executable,[sys.executable,"-c",runner,owner,edition,"interactive"])
     key=hashlib.sha256((str(root)+"\0"+owner).encode()).hexdigest()[:24]
     runtime=Path("/tmp")/("bambu-server-"+str(os.geteuid())+"-"+key)
     runtime.mkdir(mode=0o700,exist_ok=True)
@@ -61,13 +63,26 @@ os.execvp("java",["java","-jar","./server.jar","nogui"])
         if v[3]!="1" and (stamp(int(v[2]))!=m["start"] or Path("/proc",v[2],"cwd").resolve()!=root):
             raise ValueError("Process ownership changed; control refused.")
         return v
-    if op=="start":
+    restart=op=="restart"
+    if restart:
+        old=verify()
+        if old[3]=="1":raise ValueError("Scheduled restart skipped: the managed server is stopped.")
+        if edition=="java" and not any(line.strip()=="eula=true" for line in (root/"eula.txt").read_text().splitlines()):
+            raise ValueError("Scheduled restart skipped: prior Java EULA acceptance was not found.")
+        tm(["send-keys","-t",old[1],"-l","--","stop"]);tm(["send-keys","-t",old[1],"Enter"])
+        end=time.monotonic()+60
+        while time.monotonic()<end:
+            time.sleep(0.25);stopped=verify()
+            if stopped[3]=="1":break
+        else:raise ValueError("Graceful stop did not complete; no replacement was started.")
+        if stopped[4]!="0":raise ValueError("Server exited unsuccessfully; no replacement was started.")
+    if op=="start" or restart:
         old=pane()
         if old:
             old=verify()
             if old[3]!="1":raise ValueError("This owned session is active. Reconnect to it instead.")
             tm(["kill-session","-t","server"])
-        tm(["new-session","-d","-s","server","-x","160","-y","42","-c",str(root),sys.executable,"-c",runner,owner,edition])
+        tm(["new-session","-d","-s","server","-x","160","-y","42","-c",str(root),sys.executable,"-c",runner,owner,edition,"scheduled" if restart else "interactive"])
         tm(["set-option","-t","server","@bambu_owner",owner]);tm(["set-window-option","-t","server:0","remain-on-exit","on"])
         v=pane();pid=int(v[2])
         data={"owner":owner,"root":str(root),"edition":edition,"boot":boot,"pane":v[1],"pid":pid,"start":stamp(pid),"tmux_pid":int(v[5]),"socket":sock.stat().st_ino}
@@ -75,6 +90,15 @@ os.execvp("java",["java","-jar","./server.jar","nogui"])
         with os.fdopen(fd,"w") as out:json.dump(data,out);out.flush();os.fsync(out.fileno())
         os.replace(tmp,record)
     v=verify()
+    if restart:
+        if v[3]=="1":raise ValueError("Replacement already exited; game readiness is unverified.")
+        print("Verified replacement process PID "+v[2]+". Game readiness has not been checked.",flush=True);return 0
+    if op=="warn":
+        minutes=int(sys.argv[5])
+        if not 1<=minutes<=30:raise ValueError("Invalid warning interval.")
+        if v[3]=="1":raise ValueError("Stopped servers do not receive warnings.")
+        tm(["send-keys","-t",v[1],"-l","--","say Scheduled server restart in "+str(minutes)+" minute(s)."]);tm(["send-keys","-t",v[1],"Enter"])
+        print("Warning sent to verified owned console.");return 0
     if op=="inspect":
         print("Owned managed process "+("exited with code "+v[4] if v[3]=="1" else "is running (PID "+v[2]+")")+".");return 0
     print("Attached to verified managed session, PID "+v[2]+". Console output is a bounded pane snapshot.",flush=True)

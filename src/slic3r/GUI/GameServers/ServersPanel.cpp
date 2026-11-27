@@ -7,6 +7,7 @@
 
 #include "ServerModel.hpp"
 #include "ServerSystem.hpp"
+#include "ManagedSchedules.hpp"
 #include "ServerMetrics.hpp"
 #include "CommandReport.hpp"
 #include "VersionReport.hpp"
@@ -253,6 +254,7 @@ public:
         if (read_file(manifest_cache(), text, 32 * 1024 * 1024)) parse_manifest(text, manifest); // the list as last read
         m_timer = new LiveTimer();
         m_timer->Start(30 * 1000);
+        poll_managed_schedules();
     }
     void save()
     {
@@ -566,6 +568,7 @@ public:
     void tick()
     {
         if (closing) return;
+        poll_managed_schedules();
         const std::time_t now = std::time(nullptr);
         for (ServerRecord &s : library.servers) {
             RunState &r = runs[s.id];

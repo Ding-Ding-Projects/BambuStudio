@@ -17,7 +17,7 @@ struct Result
     std::condition_variable signal;
     std::string             output;
 };
-std::pair<int, std::string> execute(const std::vector<std::string> &args, const std::string &stdin_line)
+std::pair<int, std::string> execute(const std::vector<std::string> &args, const std::string &stdin_line,int timeout_seconds=60)
 {
     ServerProcess p;
     auto          state = std::make_shared<Result>();
@@ -40,9 +40,9 @@ std::pair<int, std::string> execute(const std::vector<std::string> &args, const 
         return {-1, "Could not send the selected settings request."};
     }
     std::unique_lock<std::mutex> lock(state->mutex);
-    if (!state->signal.wait_for(lock, std::chrono::seconds(60), [&] { return state->done; })) {
+    if (!state->signal.wait_for(lock, std::chrono::seconds(timeout_seconds), [&] { return state->done; })) {
         p.kill();
-        return {-1, "The target did not answer within 60 seconds."};
+        return {-1, "The target exceeded its operation timeout."};
     }
     return {state->code, state->output};
 }
@@ -57,6 +57,10 @@ TargetSettingsResult result(const std::pair<int, std::string> &op)
 }
 } // namespace
 
+std::pair<int,std::string> run_target_cli(const std::vector<std::string> &args,const std::string &stdin_line,int timeout_seconds)
+{
+    return execute(args,stdin_line,std::clamp(timeout_seconds,1,120));
+}
 TargetSettingsResult target_settings(const WorldRecoveryTarget &t, const std::string &exe, nlohmann::json request)
 {
     if (!request.is_object() || !request.contains("mode") || !request["mode"].is_string()) return {"Invalid settings action.", {}};
