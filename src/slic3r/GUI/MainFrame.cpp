@@ -2264,6 +2264,11 @@ void MainFrame::show_option(bool show)
     if (m_main_sizer)
         m_main_sizer->Layout();
     Layout();
+    // The notebook page is sized separately from its controller. Its earlier
+    // selection event can see the old client height while the frame is laying
+    // out the newly visible bar. Refit the selected page after native layout.
+    if (m_tabpanel)
+        m_tabpanel->PostSizeEvent();
 }
 
 namespace {
@@ -2483,6 +2488,7 @@ void MainFrame::update_prepare_action_bar_content()
         if (m_prepare_action_bar->GetMinSize().GetHeight() != height) {
             m_prepare_action_bar->SetMinSize(wxSize(-1, height));
             if (m_main_sizer) m_main_sizer->Layout();
+            if (m_tabpanel) m_tabpanel->PostSizeEvent();
         }
     }
     m_prepare_action_bar->Refresh(false);

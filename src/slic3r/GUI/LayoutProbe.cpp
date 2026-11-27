@@ -1015,7 +1015,14 @@ bool handle_command(const std::wstring &payload)
             int last_bottom = 0;
             for (wxSizerItem *item : sw->GetSizer()->GetChildren())
                 if (item->IsShown()) last_bottom = std::max(last_bottom, item->GetRect().GetBottom() + 1);
-            const bool ok = vy >= content_h && std::abs(last_bottom - vy) <= 2;
+            // A correct virtual height still hides the last rows if the page
+            // extends below its notebook, behind the plate action bar.
+            auto *page = wxGetApp().plater();
+            if (!page || !page->GetParent()) return false;
+            const int page_bottom = page->GetScreenRect().GetBottom();
+            const int book_bottom = page->GetParent()->GetScreenRect().GetBottom();
+            const bool ok = page_bottom <= book_bottom &&
+                            vy >= content_h && std::abs(last_bottom - vy) <= 2;
             BOOST_LOG_TRIVIAL(info) << "LayoutProbe: sidebar-check client_h=" << client_h
                                     << " virtual_h=" << vy << " content_h=" << content_h
                                     << " last_bottom=" << last_bottom << (ok ? " ok" : " DEFECT");
@@ -1027,6 +1034,7 @@ bool handle_command(const std::wstring &payload)
                 boost::nowide::ofstream out(out_path.string());
                 out << "{\"client_h\":" << client_h << ",\"virtual_h\":" << vy
                     << ",\"content_h\":" << content_h << ",\"last_bottom\":" << last_bottom
+                    << ",\"page_bottom\":" << page_bottom << ",\"book_bottom\":" << book_bottom
                     << ",\"ok\":" << (ok ? "true" : "false") << "}\n";
             }
             return ok;
