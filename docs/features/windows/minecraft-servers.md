@@ -373,3 +373,10 @@ graphs and the other dimensions are preserved. Unsupported distribution
 formats report why exact data could not be read.
 
 Container actions include bounded single-line console commands and Docker CPU, memory and process counts. Java uses the image’s RCON client. Bedrock uses its command helper, which writes the response to the server log.
+
+**Native console and Bedrock setup > Bedrock settings** reads the selected
+installation's actual property keys. Search supports text and a local regular
+expression. Known fields expose the applicable switch, choice, integer or
+text control. Applying one field preserves unrelated lines and comments, and
+requires reloading if another process edited the file. Unrecognized keys,
+duplicates and protected values are not editable.
