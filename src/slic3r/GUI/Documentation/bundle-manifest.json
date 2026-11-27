@@ -53,6 +53,11 @@
       "sha256": "23fc98c6c08322674a29a0f7d834015c03d5c82530c1e8db900f061f1dede011"
     },
     {
+      "route": "appearance/native-rendering.yue_HK.md",
+      "title": "原生外觀繪製",
+      "sha256": "2907dcb05dd9412ca2750d43ca713a4cc601d944e3c96406b56806b27f74b74c"
+    },
+    {
       "route": "application-integration/README.md",
       "title": "Native service integration",
       "sha256": "1fd998943e0d0035f36f6a281ca086d8bc183278b0033f721907addcee32106d"
@@ -65,7 +70,7 @@
     {
       "route": "application-integration/lan-model-drop-site.yue_HK.md",
       "title": "LAN 模型投遞網站",
-      "sha256": "be25fb21fbb31534cbf5ab5877360efbd925e1fb0562739d10368073c40c0bdf"
+      "sha256": "dccb24fed385d4beb57cf54503079bd39b8d08a669e4a6e0ac67f45ec6f2eff8"
     },
     {
       "route": "application-integration/lan-model-drop.md",
@@ -75,7 +80,7 @@
     {
       "route": "application-integration/lan-model-drop.yue_HK.md",
       "title": "LAN 模型投遞",
-      "sha256": "cc363b83ca116c50762d851c2c154012da7d1cbd09d42422f531a928740e7c11"
+      "sha256": "d9182724cb820d515e346df22b374e25c0032e7322a93e74e739d1351c5860fa"
     },
     {
       "route": "application-integration/local-drop-hosting.md",
@@ -85,12 +90,17 @@
     {
       "route": "application-integration/local-drop-hosting.yue_HK.md",
       "title": "啟動本機模型投遞伺服器",
-      "sha256": "a598e5004a8edbefd4dfd944514fa54758c39a51e2f8f48b1fdaab1bf4538f9f"
+      "sha256": "68b8fb3ebe068b901aeb730658ef016020125dd56a2de9c116815b32d290f8a5"
     },
     {
       "route": "application-integration/surface-registry.md",
       "title": "Native surface registry",
       "sha256": "dd4f42d155f2f6473b4870ea0897a864dc6580b869d3039f99b19a7c2a11c031"
+    },
+    {
+      "route": "application-integration/surface-registry.yue_HK.md",
+      "title": "原生介面登記表",
+      "sha256": "b5e0e86b4d92ea968cf56f6d45c1bcc77a48c3213c3ab46790db192d85f0cb24"
     },
     {
       "route": "automation/README.md",
@@ -251,6 +261,11 @@
       "route": "changelog/safety-and-export.md",
       "title": "Changelog completeness",
       "sha256": "727fb475beff03720efe9172780953955d708ff3e2539ad4ad953333ec601faa"
+    },
+    {
+      "route": "changelog/safety-and-export.yue_HK.md",
+      "title": "更新紀錄完整度",
+      "sha256": "2f98034c43f16f91ba437581b5acbe9afb78bb95b884ec17d42b58f1839a45c1"
     },
     {
       "route": "converter/README.md",
@@ -600,7 +615,7 @@
     {
       "route": "design-system/preferences-resizing.yue_HK.md",
       "title": "可調整大小的偏好設定視窗",
-      "sha256": "bf60548dd4641c4f5582218caea2ab8e79f3ab5780b02b72885d4f9e6752c672"
+      "sha256": "8faba1312f5e60ce8b7a87174a718430d80df924de349ec98683368443806852"
     },
     {
       "route": "design-system/prepare-inspector-atlas.md",
@@ -750,7 +765,7 @@
     {
       "route": "device/door-chime.yue_HK.md",
       "title": "門鈴",
-      "sha256": "8f75b727b9d9037d86f43b4436177a20ef22d0d2d03525d29d9af8d732e67d4f"
+      "sha256": "83009f0e37213d50ccf277c20ac4ab208f22c924bc96801f643bf0c788851842"
     },
     {
       "route": "device/farm-lan.md",
@@ -780,7 +795,7 @@
     {
       "route": "device/live-readings.yue_HK.md",
       "title": "打印機即時讀數同打印機選項",
-      "sha256": "5fcbfbf1ab1a4626871f0a157c7d6b3eebcbb8f26c2ff3ae1575440017594855"
+      "sha256": "b751388836490de9fd12b6ac52c01cf358bef1ac85286dc2e5fd13f22a4e91a2"
     },
     {
       "route": "device/print-cooldown.md",
@@ -800,7 +815,7 @@
     {
       "route": "device/printer-melody.yue_HK.md",
       "title": "打印機旋律",
-      "sha256": "ef7fd706cc1537cfc0a20c70b530983767a8c86343f09026a5cfc16b6ecd339f"
+      "sha256": "27edee75ab083fba0c8d88cd58e6cc0f4f3f5be77e1561f00e68b015fd4c5096"
     },
     {
       "route": "device/rack-cold-pull.md",
@@ -841,6 +856,11 @@
       "route": "documentation/offline-reader.md",
       "title": "Native offline article browser",
       "sha256": "ff9300100b7cccd427675882bba6181a29375f807c4bc5938afd15af5b6fe436"
+    },
+    {
+      "route": "documentation/offline-reader.yue_HK.md",
+      "title": "離線文件閱讀器",
+      "sha256": "0bf30a3c34cc1f524be05a4a708ad144a29cb02f23b919a140d5ddca9d03262a"
     },
     {
       "route": "downloads/README.md",
@@ -928,14 +948,29 @@
       "sha256": "989c1efa82fb002eecc068192bd4f0c540fdeb12dfbb4015fbdc6f619af6c7b4"
     },
     {
+      "route": "local-security/identity-history.yue_HK.md",
+      "title": "加密本機身分歷史",
+      "sha256": "ff8b014737dfb2e910b73bd2c44ecaaf533853c3d050d58fc6224d8b17ff2216"
+    },
+    {
       "route": "local-security/native-integration.md",
       "title": "Native local-security integration",
       "sha256": "9512c7b7654a25534e9c5a544b8971ac7e88770a6ebca8e7a8dc281bd25f9dce"
     },
     {
+      "route": "local-security/native-integration.yue_HK.md",
+      "title": "原生本機安全服務整合",
+      "sha256": "b45ccf23310fdf24169c60d83d554357faa3cde2f9146e6ef2e857e47ca3dc22"
+    },
+    {
       "route": "local-security/qr-pairing.md",
       "title": "Local authenticator QR pairing",
       "sha256": "e6137ada85e8483fcbc7c614a02357839ddbcac97b0b0c5674838ee4062ea2bd"
+    },
+    {
+      "route": "local-security/qr-pairing.yue_HK.md",
+      "title": "本機驗證器 QR 配對",
+      "sha256": "2fb68106e41cffd3bb9759c24621d238f5d8528099fe54a043b8a0a2794a9a87"
     },
     {
       "route": "local-security/unlock-ladder.md",
@@ -986,6 +1021,11 @@
       "route": "notifications/safety-and-export.md",
       "title": "Notification history",
       "sha256": "bcfa1c5c0031e70560f8cba0ec431478fd336b443496332ddff3c019d6b60e02"
+    },
+    {
+      "route": "notifications/safety-and-export.yue_HK.md",
+      "title": "通知記錄",
+      "sha256": "55b529619d8ef2e54b12193e7cc9becf55001976d5d013b96e44cc3cc4a43f3b"
     },
     {
       "route": "ollama-suite/README.md",
@@ -1040,7 +1080,7 @@
     {
       "route": "pages/attention-and-message-decoration.yue_HK.md",
       "title": "專注介面調整同訊息裝飾",
-      "sha256": "c6347bd30916acd3b6eec4a0308f7bcfef1b3c07e9eb21434f42b1f2c01cbb0f"
+      "sha256": "c3b27356d1a3d49e5a47990a3fdb65cf8c0c7e441852fd2b38a86bd0ec2feeb1"
     },
     {
       "route": "pages/changelog-viewer.md",
@@ -1070,7 +1110,7 @@
     {
       "route": "pages/destructive-confirmation.yue_HK.md",
       "title": "雙鑰匙破壞性確認",
-      "sha256": "a8758fce674968c515eb3a07468a948c94db4649eed7b1c00941489116874bfc"
+      "sha256": "e37837d622d3aec00e163130171fa8ff65ab6c88be9c3ab6e9a9ddcb98e9c07c"
     },
     {
       "route": "pages/dim-sum-surprise.md",
@@ -1090,12 +1130,17 @@
     {
       "route": "pages/event-narration.yue_HK.md",
       "title": "瀏覽器事件旁白",
-      "sha256": "ab201fc0102e29ba88140df806ef677a428920d07fb751f4de6a24435734b1fc"
+      "sha256": "4e22cfcf880515010b1cd17cde504e76ff5726e55dfde106b240956206da4a3e"
     },
     {
       "route": "pages/hidden-browser-verification.md",
       "title": "Hidden browser verification",
       "sha256": "d0a44f82dc62eaaed54d1dfa773f0ac354ff89912c2eaec72e0444aeed68c043"
+    },
+    {
+      "route": "pages/hidden-browser-verification.yue_HK.md",
+      "title": "隱藏瀏覽器驗證",
+      "sha256": "b1eff5a647d7232a84bcd7a4fec1e746a36751bc225ed814c9ec0a255d93fc9e"
     },
     {
       "route": "pages/language-and-funny-levels.md",
@@ -1125,7 +1170,7 @@
     {
       "route": "pages/personal-wording.yue_HK.md",
       "title": "本機個人用字",
-      "sha256": "2767353d04b7ec5440311f235213fa0c14b97957f404889f6923d959f3a6922b"
+      "sha256": "4ba281f8bc7b00b394317eea2413fa77c3de2000f12ddf851071ec952561c33b"
     },
     {
       "route": "pages/regex-builder.md",
@@ -1145,7 +1190,7 @@
     {
       "route": "pages/scheduled-settings.yue_HK.md",
       "title": "訪客設定排程",
-      "sha256": "34b763ec41168c0245e25988d2c4f932c94773a59559236ad3fe14647aca9ff1"
+      "sha256": "060605a6782419e38134e101a38e74b41085135d1d4b0dd485864b56dabb58fd"
     },
     {
       "route": "pages/settings-and-appearance.md",
@@ -1178,14 +1223,29 @@
       "sha256": "916ea53419643ba7fa37984d6a0c9bd287fa74c17d62c1ceb061a81575f77a49"
     },
     {
+      "route": "personal-modes/attention.yue_HK.md",
+      "title": "專注輔助",
+      "sha256": "fa1d18cabc5e68bd88b35c24e7190d481b00a71b8202fd2870b353215840f982"
+    },
+    {
       "route": "personal-modes/funny-default.md",
       "title": "Funny-level defaults and existing preferences",
       "sha256": "00fe1bb73d38f67ae2f4ec05f79ecd51efad84c30e60c65b52a8abc0ee7e3e35"
     },
     {
+      "route": "personal-modes/funny-default.yue_HK.md",
+      "title": "趣味程度嘅預設值同已有偏好",
+      "sha256": "a731604b6b16f9b32bc04ae48a9ac1ddb3119150fa6f6f348dbb3504dd9a969c"
+    },
+    {
       "route": "personal-modes/integration.md",
       "title": "Application integration checklist",
       "sha256": "c55d4cc9f08eb7d344777afa9f7170a5850020a5edd7fced3e828d492fb8f081"
+    },
+    {
+      "route": "personal-modes/integration.yue_HK.md",
+      "title": "應用程式整合清單",
+      "sha256": "e58071935af0594a785dc4516f744c11b31e35439263816d4bb7e77de616b9cf"
     },
     {
       "route": "personal-modes/narration.md",
@@ -1195,12 +1255,17 @@
     {
       "route": "personal-modes/narration.yue_HK.md",
       "title": "旁白：逐段播放、事件同語音揀選",
-      "sha256": "cd6177c95a62d4e1c4d86938ce65360406652b0887f4bd1e4864a804ef0ee870"
+      "sha256": "ff003a220a02471e4ba3f403e87ddce561ccbfd3d42f86b29198291c2ccb946b"
     },
     {
       "route": "personal-modes/school-mode.md",
       "title": "Shared presentation mode",
       "sha256": "43817633dc51a98ad37ba9c5e4bf50a4e17cc3d3b815e950f6b97a674537c59a"
+    },
+    {
+      "route": "personal-modes/school-mode.yue_HK.md",
+      "title": "共用顯示模式",
+      "sha256": "05bf68588856903a693031fcf4f4ec8f1175eebb9e742fd519b4da855d2f5335"
     },
     {
       "route": "prepare/README.md",
@@ -1340,7 +1405,7 @@
     {
       "route": "releases/windows-build-from-source.yue_HK.md",
       "title": "從源碼構建（Windows 安裝程式）",
-      "sha256": "3940739cb36a545dc6ee9a5044d92543527a35405f64deb9d4a06edd9d34714a"
+      "sha256": "00c3518ee30faac2c55dec1826108753002cf2d1c0860759ccf448a5af8e3e9e"
     },
     {
       "route": "releases/windows-native-installer.md",
@@ -1360,7 +1425,7 @@
     {
       "route": "releases/windows-one-click-build.yue_HK.md",
       "title": "一鍵 Windows 構建和安裝程式",
-      "sha256": "b751d6297045ea3088f788fdcd5d5e40468bec44b2c0e8d19d9aa14922d5275b"
+      "sha256": "21212cf0a7e71c3651896ecb48268c32c933478db5db7be757c7cd53599fe1b5"
     },
     {
       "route": "releases/windows-release-supply-chain.md",
@@ -1420,7 +1485,7 @@
     {
       "route": "windows/action-sounds.yue_HK.md",
       "title": "操作提示音",
-      "sha256": "a319ac8c8f5daf201007d52f363a4deed08089a6eaeadad3c9bf4d43dc678db8"
+      "sha256": "fcb21a004a9126f4f5ed8dd27d557253640c0da77f625fee7d8d4d4281b137b5"
     },
     {
       "route": "windows/ai-filament-scanner.md",
@@ -1760,7 +1825,7 @@
     {
       "route": "windows/lubricate-mode.yue_HK.md",
       "title": "潤滑模式同打印旋律",
-      "sha256": "b309b9ab5a83f8df4598cea21785750c3fb27d585e3de00f0ec5fe163ffbd541"
+      "sha256": "7af727a6a3f07c9094b3fc9c92be6b276aa49474e13f8db94ff40162f3c24ba0"
     },
     {
       "route": "windows/material-context-menus.md",
@@ -2020,7 +2085,7 @@
     {
       "route": "windows/startup-project-recovery.yue_HK.md",
       "title": "復原啟動時無法重新開啟的專案",
-      "sha256": "a49b26416b6e30cd1dfedb335495a62943eccc5c1bc3137e9fde2fa34df4e48d"
+      "sha256": "55d87fcf2da9086d836a5a46f73f214ca849f43df498fbebf08ed8a2cbffd4f3"
     },
     {
       "route": "windows/stop-print-interlock.md",
@@ -2160,7 +2225,7 @@
     {
       "route": "workspace/external-editor.yue_HK.md",
       "title": "外部編輯器",
-      "sha256": "fc7d3109fcbc5381ff34367fbe92d611388041f6c22410c894dde82604fc68cb"
+      "sha256": "6d13f117918e8c158130eb41648f9ff599d0498481763bc63023b6dbd8713b36"
     },
     {
       "route": "workspace/fan-motion.md",
@@ -2345,7 +2410,7 @@
       "bytes": 16430
     }
   ],
-  "bundle_sha256": "8071cb031fa29a3e523ed0b00d7c41be4101ad51f9a80cc8d0936b65bdbfbcb7",
+  "bundle_sha256": "4f8ddba680ea0f3a85faa93a1f9f896c934f5633c9c8cbfaff3dcf015ac01f7b",
   "unavailable_references": [
     {
       "source": "api/README.md",
