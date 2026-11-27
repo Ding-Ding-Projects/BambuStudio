@@ -72,3 +72,8 @@ test('embedded headers remeasure their natural height without constraining stand
     assert.match(fit, /SetMinSize\(wxSize\(-1, header_height\)\)/);
     assert.match(fit, /SetMaxSize\(wxSize\(-1, header_height\)\)/);
 });
+
+test('a programmatic Prepare section switch returns the body from the draft editor', () => {
+    const section = plater.slice(plater.indexOf('void Sidebar::apply_prepare_section('));
+    assert.match(section, /if \(p->m_draft_panel && p->m_draft_panel->IsShown\(\)\)\s*p->m_draft_panel->Activate\(section\);\s*p->active_prepare_section = section;/);
+});

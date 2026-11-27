@@ -100,7 +100,7 @@ test('the step page loads the catalog and its logic and uses native, named contr
 
 test('GuideFrame answers, persists and resets through the shared model', () => {
   const source = read('src/slic3r/GUI/WebGuideDialog.cpp');
-  const code = stripComments(source);
+  const code = stripComments(source).replace(/\r\n/g, '\n');
   assert.match(code, /#include "FirstRunFunnyDisclosure\.hpp"/);
   assert.match(code, /#include "PersonalModes\/SchoolMode\.hpp"/);
   assert.match(code, /static_assert\(Disclosure::LEVEL_MIN == I18N::FUNNY_LEVEL_MIN/);

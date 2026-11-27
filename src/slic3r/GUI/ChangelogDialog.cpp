@@ -678,6 +678,7 @@ std::string ChangelogDialog::search_description() const
     if (m_search->IsRegexEnabled())  flags.Add("regex");
     if (m_search->IsCaseSensitive()) flags.Add("case-sensitive");
     if (m_search->IsWholeWord())     flags.Add("whole word");
+    if (m_search->IsRegexEnabled() && m_search->IsMultiline()) flags.Add("multiline");
     if (!flags.empty())
         description += " (" + wxJoin(flags, ',') + ")";
     return description.ToUTF8().data();
