@@ -12330,7 +12330,7 @@ public:
     std::vector<size_t> load_files_now(const std::vector<fs::path>& input_files, LoadStrategy strategy, bool ask_multi,
                                        bool *successful_3mf_loaded, PreparedImport* prepared, ProjectLoadContext context);
     std::vector<size_t> load_model_objects(const ModelObjectPtrs& model_objects, bool allow_negative_z = false,
-                                           bool split_object = false, LoadProgressCallback progress_callback = {});
+                                           bool split_object = false, LoadProgressCallback progress_callback = {}, Model *import_donor = nullptr);
 
     struct TextureImportResult {
         Slic3r::PaintedMesh               painted;
@@ -16616,7 +16616,7 @@ std::vector<size_t> Plater::priv::load_files_now(const std::vector<fs::path>& in
             if (prepared || !texture_import_result.painted.face_colors.empty())
                 load_progress_callback = object_progress_cb;
             auto loaded_idxs = load_model_objects(model.objects, is_project_file, false,
-                                                  load_progress_callback);
+                                                  load_progress_callback, prepared ? &model : nullptr);
             if (!dlg_cont) {
                 q->skip_thumbnail_invalid = false;
                 return empty_result;
@@ -16722,11 +16722,12 @@ std::vector<size_t> Plater::priv::load_files_now(const std::vector<fs::path>& in
                 return empty_result;
             }
         } else {
-            // This must be an .stl or .obj file, which may contain a maximum of one volume.
-            for (const ModelObject *model_object : model.objects) {
-                new_model->add_object(*model_object);
-
-                BOOST_LOG_TRIVIAL(debug) << boost::format("added object %1%")%model_object->name;
+            const bool transfer = prepared && !model.is_need_backup();
+            const size_t count = model.objects.size();
+            if (transfer) std::reverse(model.objects.begin(), model.objects.end());
+            for (size_t index = 0; index < count; ++index) {
+                auto *added = transfer ? new_model->take_import_object(model) : new_model->add_object(*model.objects[index]);
+                BOOST_LOG_TRIVIAL(debug) << boost::format("added object %1%") % added->name;
                 wxString msg = wxString::Format(_L("Loading file: %s"), from_path(real_filename));
                 dlg_cont     = dlg.Update(progress_percent, msg);
                 if (!dlg_cont) {
@@ -16753,7 +16754,7 @@ std::vector<size_t> Plater::priv::load_files_now(const std::vector<fs::path>& in
                 dlg_cont = dlg_cont && dlg.Update(percent, message);
                 return dlg_cont;
             };
-        auto loaded_idxs = load_model_objects(new_model->objects, false, false, batch_progress);
+        auto loaded_idxs = load_model_objects(new_model->objects, false, false, batch_progress, prepared ? new_model.get() : nullptr);
         if (!dlg_cont) {
             q->skip_thumbnail_invalid = false;
             return empty_result;
@@ -16911,7 +16912,7 @@ std::vector<size_t> Plater::priv::load_files_now(const std::vector<fs::path>& in
  #define AUTOPLACEMENT_ON_LOAD
 
 std::vector<size_t> Plater::priv::load_model_objects(const ModelObjectPtrs& model_objects, bool allow_negative_z,
-                                                     bool split_object, LoadProgressCallback progress_callback)
+                                                     bool split_object, LoadProgressCallback progress_callback, Model *import_donor)
 {
     PERF_TRACE("load_model_objects");
     const Vec3d bed_size = Slic3r::to_3d(this->bed.build_volume().bounding_volume2d().size(), 1.0) - 2.0 * Vec3d::Ones();
@@ -16931,15 +16932,22 @@ std::vector<size_t> Plater::priv::load_model_objects(const ModelObjectPtrs& mode
 #endif /* AUTOPLACEMENT_ON_LOAD */
     if (!update_load_progress(0, _L("Importing model to project...")))
         return obj_idxs;
-    for (ModelObject *model_object : model_objects) {
+    // A prepared file is disposable after publication. Preserve order while
+    // transferring each object without copying its painted facets,
+    // per-volume configuration, instances or other potentially large data.
+    if (import_donor && (import_donor->is_need_backup() || &import_donor->objects != &model_objects))
+        import_donor = nullptr;
+    const size_t count = model_objects.size();
+    if (import_donor) std::reverse(import_donor->objects.begin(), import_donor->objects.end());
+    for (size_t i = 0; i < count; ++i) {
         if (!update_load_progress(5, _L("Importing model to project...")))
             return obj_idxs;
-        auto *object = model.add_object(*model_object);
+        auto *object = import_donor ? model.take_import_object(*import_donor) : model.add_object(*model_objects[i]);
         object->sort_volumes(true);
         std::string object_name = object->name.empty() ? fs::path(object->input_file).filename().string() : object->name;
         obj_idxs.push_back(obj_count++);
 
-        if (model_object->instances.empty()) {
+        if (object->instances.empty()) {
 #ifdef AUTOPLACEMENT_ON_LOAD
             object->center_around_origin();
             new_instances.emplace_back(object->add_instance());

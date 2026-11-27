@@ -628,19 +628,39 @@ ModelObject* Model::add_object(const ModelObject &other)
     if (!new_object->config.has("extruder") || new_object->config.extruder() == 0)
         new_object->config.set_key_value("extruder", new ConfigOptionInt(1));
     this->objects.push_back(new_object);
-    // BBS: backup
-    if (need_backup) {
-        if (auto model = other.get_model()) {
-            auto iter = object_backup_id_map.find(other.id().id);
-            if (iter != object_backup_id_map.end()) {
-                object_backup_id_map.emplace(new_object->id().id, iter->second);
-                object_backup_id_map.erase(iter);
-                return new_object;
-            }
-        }
-        Slic3r::save_object_mesh(*new_object);
-    }
+    back_up_added_object(*new_object, other.get_model() ? other.id() : ObjectID{});
     return new_object;
+}
+
+void Model::back_up_added_object(ModelObject &object, ObjectID source_id)
+{
+    if (!need_backup) return;
+    if (source_id.valid()) {
+        auto previous = object_backup_id_map.find(source_id.id);
+        if (previous != object_backup_id_map.end()) {
+            object_backup_id_map.emplace(object.id().id, previous->second);
+            object_backup_id_map.erase(previous);
+            return;
+        }
+    }
+    Slic3r::save_object_mesh(object);
+}
+
+ModelObject* Model::take_import_object(Model &donor)
+{
+    if (this == &donor || donor.need_backup || donor.objects.empty())
+        throw std::logic_error("Expected a nonempty detached import model");
+    ModelObject *object = donor.objects.back();
+    const ObjectID source_id = object->id();
+    if (!object->config.has("extruder") || object->config.extruder() == 0)
+        object->config.set_key_value("extruder", new ConfigOptionInt(1));
+    object->assign_new_unique_ids_recursive();
+    // Append first: if allocation throws, the detached model still owns it.
+    objects.push_back(object);
+    donor.objects.pop_back();
+    object->set_model(this);
+    back_up_added_object(*object, source_id);
+    return object;
 }
 
 void Model::set_assembly_pos(ModelObject *model_object)
