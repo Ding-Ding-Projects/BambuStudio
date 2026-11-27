@@ -1135,6 +1135,7 @@ list(APPEND SLIC3R_GUI_SOURCES
     GUI/GameServers/ServerModel.hpp
     GUI/GameServers/ServerSystem.cpp
     GUI/GameServers/ServerSystem.hpp
+    GUI/GameServers/ContainerServersDialog.cpp
     GUI/GameServers/ServersPanel.cpp
     GUI/GameServers/ServersPanel.hpp
     GUI/ElementLocks/LockModel.cpp

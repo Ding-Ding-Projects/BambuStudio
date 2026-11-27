@@ -230,9 +230,41 @@ chunks, and must fail.
 
 ## Not done yet
 
-Docker, servers over SSH, Bedrock servers, installing flavours other than
+Native servers over SSH, native Bedrock servers, installing native flavours other than
 Vanilla (they are recognised when adopted), the plugin and pack catalogue,
 checking commands against the version's command tree, the memory chart, ticks
 per second, keeping the remote console password in the Windows vault, dragging
 the generator's area on the preview, and the generator's sea level, lowest Y and
 height (they need a data pack) are designed but not built.
+## Container servers
+
+Open **File > Minecraft servers > Container servers**. Enter an existing Docker
+context, either a local engine or an SSH context configured in the Docker CLI.
+Choose Java or Bedrock, the server version, the container image tag, the host
+port and, for Java, the distribution. Java offers Vanilla, Paper, Purpur,
+Spigot, Fabric, Forge, NeoForge and Quilt. Version and processor support
+depend on the selected image and distribution.
+
+Create requires acceptance of the Minecraft EULA. It creates a stopped
+container with a fresh persistent data volume. Java maps TCP 25565. Bedrock
+maps UDP 19132. Both default to host loopback. For LAN play, enter the target
+host's private IPv4 address and explicitly enable LAN connections. Start the
+selected container, then refresh to read Docker's reported state. Stopping a
+container preserves its world. A running container may still be downloading
+or starting its game server.
+
+Only containers whose immutable IDs this installation recorded for the
+selected context appear in the list. A matching container label on its own
+does not confer control. Docker handles the SSH connection through the named
+context; the dialog takes no SSH password or private key.
+
+| Manager target | Java | Bedrock |
+| --- | --- | --- |
+| Local process | Vanilla creation and existing Java server management | Unbuilt |
+| Local container | Creation, listing, start and stop | Creation, listing, start and stop |
+| SSH process | Unbuilt | Unbuilt |
+| SSH container via Docker context | Creation, listing, start and stop implemented; end-to-end verification pending | Creation, listing, start and stop implemented; end-to-end verification pending |
+
+This target inventory covers eight edition and target combinations. Five have
+partial workflows and three have no implementation. Full version, operational,
+content installation, metrics and restore coverage is still pending.
