@@ -24,6 +24,12 @@ The Objects tab and the separate Process → Objects → Plate Settings workflow
 | Hong Kong Cantonese | [Objects](yue_HK-objects.png) | [Settings](yue_HK-prepare-plate-settings.png) |
 | Bilingual | [Objects](bilingual_en_yue_HK-objects.png) | [Settings](bilingual_en_yue_HK-prepare-plate-settings.png) |
 
+## Remaining reproduction conditions
+
+* An additional [English selected-cup frame](en-selected-cup.png) shows a real cup row selected. In a [bilingual selected-cup frame](bilingual_en_yue_HK-selected-cup.png), the native Move control was clicked and the sidebar was scrolled. The layout probe reported the Object manipulation header off-screen with a zero-by-zero rectangle. Neither frame establishes a visible manipulation grid. The corresponding Cantonese run did not reach the sidebar controls.
+* The native plug-in-update notice follows a vendor synchronization that supplies a valid, newer bundle. The isolated release profiles produced no matching notification. An update-enabled check using the authentic installed plug-in did not reach the main frame before its 240-second deadline. An ordinary application-update notification is visible in the wide captures.
+* The original report abbreviates the clogging message. The shipped catalogue includes separate CF/high-flow nozzle checks, low-temperature residue checks, and engineering-material profile guidance. Both test filaments were ordinary PLA with standard nozzles. No physical hotend, connected printer, update manifest or notification was simulated to claim reproduction.
+
 ## Reproduce
 
 Run the commands below from the source root in PowerShell. Set `$exe` to the installed executable and `$root` to a fresh, task-owned folder. The driver replaces its destination profile, so keep that path separate from any user profile.
