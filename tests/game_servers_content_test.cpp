@@ -2,6 +2,7 @@
 #include "../src/slic3r/GUI/GameServers/ContentCatalog.hpp"
 #include "../src/slic3r/GUI/GameServers/WorldJarData.hpp"
 #include "../src/slic3r/GUI/GameServers/BedrockPack.hpp"
+#include "../src/slic3r/GUI/GameServers/BedrockSettings.hpp"
 #include "../src/slic3r/GUI/GameServers/ServerSystem.hpp"
 #include "libslic3r/miniz_extension.hpp"
 #include <filesystem>
@@ -71,6 +72,11 @@ int main(int argc, char **argv)
         options.min_y=-96;check(write_vertical_pack(actual,options,dir/"official-world").empty(),"official template pack output");
         std::cout<<"Official 1.21.4 nested JAR: 65 biomes, 20 structure sets, pack format 61 and custom overworld pack verified.\n";
     }
+    std::string bds="server-port=19132\r\n# retained\r\nscript-debugger-passcode=fixture\r\nfuture-key=private\r\ndifficulty=easy\r\ndifficulty=normal\r\n";
+    const auto settings=read_bedrock_settings(bds);
+    check(settings.size()==4 && settings[1].value.empty() && settings[2].value.empty(),"protected or unknown BDS value exposed");
+    check(!change_bedrock_setting(bds,"difficulty","hard") && !change_bedrock_setting(bds,"server-port","99999"),"unsafe Bedrock setting accepted");
+    check(change_bedrock_setting(bds,"server-port","19140") && bds.find("19140\r\n# retained")!=std::string::npos,"Bedrock line-ending preservation");
     const auto pack_info = R"({"header":{"uuid":"ec9410a2-de16-4f98-8eec-9efa1319db18","version":[1,0,4]},"modules":[{"type":"data"},{"type":"script"}]})";
     check(bedrock_pack(pack_info).group == "behavior", "valid Bedrock behavior pack was rejected");
     check(bedrock_pack("{}").id.empty(), "missing Bedrock manifest accepted");

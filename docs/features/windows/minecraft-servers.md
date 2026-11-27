@@ -239,7 +239,7 @@ groups remain incomplete.
 | Version discovery | Mojang Java manifest, selectable distribution and container version, exact JAR metadata | Archived Bedrock distribution discovery and sample verification by version |
 | Provisioning | Local Java and Bedrock, SSH-native package setup and both editions in Docker contexts | End-to-end playable installations for the complete edition/target matrix |
 | Content | Version/loader-filtered Modrinth catalog, local Java plugins/mods/data packs and local Bedrock resource and behavior packs | Dependency resolution, every target and runtime compatibility |
-| Console | Local and SSH-native process consoles, hash-bound command tree and typed argument checking | Unimplemented custom argument grammars and both container consoles |
+| Console | Local and SSH-native process consoles, hash-bound command tree and typed argument checking | Unimplemented custom argument grammars and historical-version coverage |
 | Settings and credentials | Java properties, target-scoped client credential, authenticated process-bound loopback RCON | Complete Bedrock settings, remote credential and settings coverage |
 | Monitoring | Local process working set history, Paper/Purpur measured TPS | Equivalent target-specific monitoring and verified ready/play status |
 | World generation | Exact-JAR registry extraction, custom normal terrain pack, area selection, folder/ZIP writer | Additional distribution schemas and playable same-version reopen |
@@ -255,8 +255,9 @@ Spigot, Fabric, Forge, NeoForge and Quilt. Version and processor support
 depend on the selected image and distribution.
 
 Create requires acceptance of the Minecraft EULA. It creates a stopped
-container with a fresh persistent data volume. Java maps TCP 25565. Bedrock
-maps UDP 19132. Both default to host loopback. For LAN play, enter the target
+container with a fresh persistent data volume. Java maps TCP 25565. Current Bedrock NetherNet maps TCP 19132 for signaling
+and sixteen UDP ports for gameplay. The default UDP range is 19140 through
+19155 and the first host port is configurable. Legacy RakNet maps UDP 19132. Both default to host loopback. For LAN play, enter the target
 host's private IPv4 address and explicitly enable LAN connections. Start the
 selected container, then refresh to read Docker's reported state. Stopping a
 container preserves its world. A running container may still be downloading
@@ -370,3 +371,12 @@ Y, height, aquifers and ore veins. The generated world includes its own data
 pack. Its overworld references the customized settings, while original noise
 graphs and the other dimensions are preserved. Unsupported distribution
 formats report why exact data could not be read.
+
+Container actions include bounded single-line console commands and Docker CPU, memory and process counts. Java uses the image’s RCON client. Bedrock uses its command helper, which writes the response to the server log.
+
+**Native console and Bedrock setup > Bedrock settings** reads the selected
+installation's actual property keys. Search supports text and a local regular
+expression. Known fields expose the applicable switch, choice, integer or
+text control. Applying one field preserves unrelated lines and comments, and
+requires reloading if another process edited the file. Unrecognized keys,
+duplicates and protected values are not editable.

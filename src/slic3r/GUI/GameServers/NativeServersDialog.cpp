@@ -4,6 +4,7 @@
 #include <random>
 #include "ServerSystem.hpp"
 #include "ContentInstaller.hpp"
+#include "BedrockSettingsDialog.hpp"
 #include "../I18N.hpp"
 #include "../MsgDialog.hpp"
 #include "../Widgets/Button.hpp"
@@ -76,6 +77,7 @@ public:
             actions->Add(button, 0, wxALL, FromDIP(3));
             return button;
         };
+        settings=action(_L("Bedrock settings..."),[this]{show_bedrock_settings(this,folder->GetTextCtrl()->GetValue().ToStdString(wxConvUTF8));});
         add_pack=action(_L("Install Bedrock pack..."),[this] { pack(false); });
         enable_pack=action(_L("Activate installed pack..."),[this] { pack(true); });
         remote_setup=action(_L("Provision new SSH server..."),[this]{ provision(); });
@@ -208,6 +210,7 @@ private:
         const bool idle = !running && !installing;
         target->Enable(idle); folder->Enable(idle); agree->Enable(idle);
         setup_button->Enable(idle && target->GetSelection() == 0);
+        settings->Enable(idle && target->GetSelection()==0);
         add_pack->Enable(idle && target->GetSelection() == 0); enable_pack->Enable(idle && target->GetSelection() == 0);
         browse->Enable(idle && target->GetSelection() == 0);
         profile->Enable(idle && target->GetSelection() != 0);
@@ -272,7 +275,7 @@ private:
     TextInput *profile, *folder, *command, *source_package;
     SpinInput *remote_port;
     TextArea *console;
-    Button *browse, *start_button, *stop_button, *setup_button, *add_pack, *enable_pack, *remote_setup;
+    Button *browse, *start_button, *stop_button, *setup_button, *add_pack, *enable_pack, *remote_setup, *settings;
     LabeledCheckBox *agree;
     std::unique_ptr<ServerProcess> process;
     std::shared_ptr<bool> lifetime = std::make_shared<bool>(true);

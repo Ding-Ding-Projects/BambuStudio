@@ -33,7 +33,8 @@
 namespace Slic3r { namespace GUI { namespace GameServers {
 namespace {
 
-class ContainerServersDialog final : public wxDialog {
+class ContainerServersDialog final : public wxDialog
+{
 public:
     explicit ContainerServersDialog(wxWindow *parent)
         : wxDialog(parent, wxID_ANY, _L("Container servers"), wxDefaultPosition, wxDefaultSize, wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER)
@@ -50,12 +51,24 @@ public:
         name = new TextInput(this, "my-server");
         field(_L("New container name"), name);
         edition = new ComboBox(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, wxCB_READONLY);
-        edition->Append("Java"); edition->Append("Bedrock"); edition->SetSelection(0);
+        edition->Append("Java");
+        edition->Append("Bedrock");
+        edition->SetSelection(0);
         field(_L("Edition"), edition);
         flavour = new ComboBox(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, wxCB_READONLY);
         for (auto type : {"VANILLA", "PAPER", "PURPUR", "SPIGOT", "FABRIC", "FORGE", "NEOFORGE", "QUILT"}) flavour->Append(type);
         flavour->SetSelection(0);
         field(_L("Java distribution"), flavour);
+        transport = new ComboBox(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, wxCB_READONLY);
+        transport->Append(_L("NetherNet (TCP and UDP range)"));
+        transport->Append(_L("Legacy RakNet (UDP)"));
+        transport->SetSelection(0);
+        field(_L("Bedrock transport"), transport);
+        transport->Disable();
+        udp_first = new SpinInput(this, {}, {}, wxDefaultPosition, wxDefaultSize, 0, 1, 65520, 19140);
+        field(_L("First of 16 NetherNet UDP ports"), udp_first);
+        udp_first->Disable();
+        transport->Bind(wxEVT_COMBOBOX, [this](wxCommandEvent &) { udp_first->Enable(edition->GetSelection() == 1 && transport->GetSelection() == 0); });
         version = new TextInput(this, "LATEST");
         field(_L("Server version"), version);
         tag = new TextInput(this, "latest");
@@ -69,6 +82,8 @@ public:
         edition->Bind(wxEVT_COMBOBOX, [this](wxCommandEvent &) {
             const bool bedrock = edition->GetSelection() == 1;
             flavour->Enable(!bedrock);
+            transport->Enable(bedrock);
+            udp_first->Enable(bedrock && transport->GetSelection() == 0);
             port->SetValue(bedrock ? 19132 : 25565);
         });
         body->Add(grid, 0, wxEXPAND | wxALL, FromDIP(12));
@@ -78,7 +93,7 @@ public:
         list->AppendTextColumn(_L("Container and state"), wxDATAVIEW_CELL_INERT, FromDIP(480));
         body->Add(list, 1, wxEXPAND | wxALL, FromDIP(12));
         auto *actions = new wxWrapSizer(wxHORIZONTAL);
-        auto action = [&](const wxString &label, std::function<void()> fn) {
+        auto  action  = [&](const wxString &label, std::function<void()> fn) {
             auto *btn = new Button(this, label);
             btn->Bind(wxEVT_BUTTON, [fn](wxCommandEvent &) { fn(); });
             actions->Add(btn, 0, wxALL, FromDIP(3));
@@ -86,14 +101,30 @@ public:
         action(_L("Read EULA"), [] { wxLaunchDefaultBrowser("https://aka.ms/MinecraftEULA"); });
         action(_L("Create"), [this] { create(); });
         action(_L("Refresh servers"), [this] { refresh(); });
+        action(_L("Read metrics"), [this] { metrics(); });
         action(_L("Start selected"), [this] { control("start"); });
         action(_L("Stop selected"), [this] { control("stop"); });
         body->Add(actions, 0, wxEXPAND | wxLEFT, FromDIP(9));
+        auto *command_line = new wxBoxSizer(wxHORIZONTAL);
+        command            = new TextInput(this, wxEmptyString, wxEmptyString, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER);
+        command->GetTextCtrl()->SetHint(_L("Command for selected server"));
+        command_line->Add(command, 1, wxRIGHT, FromDIP(6));
+        auto *send_button = new Button(this, _L("Send command"));
+        command_line->Add(send_button);
+        send_button->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) { send_command(); });
+        command->GetTextCtrl()->Bind(wxEVT_TEXT_ENTER, [this](wxCommandEvent &) { send_command(); });
+        body->Add(command_line, 0, wxEXPAND | wxALL, FromDIP(8));
         status = new TextArea(this, _L("Refresh to list managed containers in this context."), FromDIP(wxSize(520, 85)), wxTE_READONLY);
         body->Add(status, 0, wxEXPAND | wxALL, FromDIP(12));
-        context->GetTextCtrl()->Bind(wxEVT_TEXT, [this](wxCommandEvent &) { ids.clear(); list->DeleteAllItems(); });
+        context->GetTextCtrl()->Bind(wxEVT_TEXT, [this](wxCommandEvent &) {
+            ids.clear();
+            list->DeleteAllItems();
+        });
         Bind(wxEVT_CLOSE_WINDOW, [this](wxCloseEvent &e) {
-            if (active && e.CanVeto()) { e.Veto(); return; }
+            if (active && e.CanVeto()) {
+                e.Veto();
+                return;
+            }
             e.Skip();
         });
         SetEscapeId(wxID_NONE);
@@ -109,18 +140,27 @@ private:
     void run(std::vector<std::string> args, std::function<void(const Lines &)> done)
     {
         if (active) return;
-        if (!container_field(target())) { status->SetValue(_L("Enter a configured Docker context name.")); return; }
+        if (!container_field(target())) {
+            status->SetValue(_L("Enter a configured Docker context name."));
+            return;
+        }
         wxString path, exe;
         wxGetEnv("PATH", &path);
-        if (!wxFindFileInPath(&exe, path, "docker.exe")) { status->SetValue(_L("Docker CLI was not found on PATH.")); return; }
+        if (!wxFindFileInPath(&exe, path, "docker.exe")) {
+            status->SetValue(_L("Docker CLI was not found on PATH."));
+            return;
+        }
         const std::string original = target();
         args.insert(args.begin(), {exe.ToStdString(wxConvUTF8), "--context", original});
-        auto out = std::make_shared<Lines>();
+        auto                out  = std::make_shared<Lines>();
         std::weak_ptr<bool> weak = lifetime;
-        process = std::make_unique<ServerProcess>();
+        process                  = std::make_unique<ServerProcess>();
         std::string error;
-        bool ok = process->start(args, wxGetCwd().ToStdString(wxConvUTF8),
-            [out](const std::string &line) { if (out->size() < 512) out->push_back(line.substr(0, 1000)); },
+        bool        ok = process->start(
+            args, wxGetCwd().ToStdString(wxConvUTF8),
+            [out](const std::string &line) {
+                if (out->size() < 512) out->push_back(line.substr(0, 1000));
+            },
             [this, weak, original, out, done](int code) {
                 wxTheApp->CallAfter([this, weak, original, out, done, code]() {
                     if (weak.expired()) return;
@@ -131,18 +171,17 @@ private:
                         wxString msg = wxString::Format(_L("Docker exited with code %d."), code);
                         for (const auto &line : *out) msg += "\n" + wxString::FromUTF8(line);
                         status->SetValue(msg);
-                    } else done(*out);
+                    } else
+                        done(*out);
                 });
-            }, &error);
+            },
+            &error);
         active = ok;
         context->Enable(!ok);
         status->SetValue(ok ? _L("Waiting for Docker...") : wxString::FromUTF8(error));
     }
 
-    std::filesystem::path receipt(const std::string &id) const
-    {
-        return std::filesystem::u8path(Slic3r::data_dir()) / "minecraft-container-ids" / sha1_hex(target()) / id;
-    }
+    std::filesystem::path receipt(const std::string &id) const { return std::filesystem::u8path(Slic3r::data_dir()) / "minecraft-container-ids" / sha1_hex(target()) / id; }
 
     bool owned(const std::string &id) const
     {
@@ -152,29 +191,35 @@ private:
 
     void refresh()
     {
-        run({"ps", "--all", "--no-trunc", "--filter", "label=org.bambustudio.minecraft=1", "--format", "{{.ID}}\t{{.Names}}\t{{.Status}}"},
-            [this](const Lines &out) {
-                list->DeleteAllItems(); ids.clear();
-                for (const std::string &line : out) {
-                    const auto split = line.find('\t');
-                    if (split == std::string::npos || !owned(line.substr(0, split))) continue;
-                    ids.push_back(line.substr(0, split)); wxVector<wxVariant> row;
-                    row.push_back(wxVariant(wxString::FromUTF8(line.substr(split + 1)))); list->AppendItem(row);
-                }
-                status->SetValue(wxString::Format(_L("Managed containers listed: %d"), int(ids.size())));
-            });
+        run({"ps", "--all", "--no-trunc", "--filter", "label=org.bambustudio.minecraft=1", "--format", "{{.ID}}\t{{.Names}}\t{{.Status}}"}, [this](const Lines &out) {
+            list->DeleteAllItems();
+            ids.clear();
+            for (const std::string &line : out) {
+                const auto split = line.find('\t');
+                if (split == std::string::npos || !owned(line.substr(0, split))) continue;
+                ids.push_back(line.substr(0, split));
+                wxVector<wxVariant> row;
+                row.push_back(wxVariant(wxString::FromUTF8(line.substr(split + 1))));
+                list->AppendItem(row);
+            }
+            status->SetValue(wxString::Format(_L("Managed containers listed: %d"), int(ids.size())));
+        });
     }
 
     void create()
     {
         auto args = container_create({name->GetTextCtrl()->GetValue().ToStdString(wxConvUTF8), version->GetTextCtrl()->GetValue().ToStdString(wxConvUTF8),
-            flavour->GetStringSelection().ToStdString(wxConvUTF8), tag->GetTextCtrl()->GetValue().ToStdString(wxConvUTF8),
-            port->GetValue(), edition->GetSelection() == 1, eula->GetValue(), bind_address->GetTextCtrl()->GetValue().ToStdString(wxConvUTF8), lan_allowed->GetValue()});
-        if (args.empty()) { status->SetValue(_L("Check the name, version, tag, IPv4 address, port, LAN permission and EULA acceptance.")); return; }
+                                      flavour->GetStringSelection().ToStdString(wxConvUTF8), tag->GetTextCtrl()->GetValue().ToStdString(wxConvUTF8), port->GetValue(),
+                                      edition->GetSelection() == 1, eula->GetValue(), bind_address->GetTextCtrl()->GetValue().ToStdString(wxConvUTF8), lan_allowed->GetValue(),
+                                      transport->GetSelection() == 0, udp_first->GetValue()});
+        if (args.empty()) {
+            status->SetValue(_L("Check the name, version, tag, IPv4 address, port, LAN permission and EULA acceptance."));
+            return;
+        }
         run(std::move(args), [this](const Lines &out) {
             for (auto it = out.rbegin(); it != out.rend(); ++it) {
                 if (!container_id(*it)) continue;
-                const auto path = receipt(*it);
+                const auto      path = receipt(*it);
                 std::error_code ec;
                 std::filesystem::create_directories(path.parent_path(), ec);
                 if (ec || !write_file_atomic(path.u8string(), *it) || !owned(*it)) {
@@ -188,27 +233,88 @@ private:
         });
     }
 
+    std::string selected_id()
+    {
+        const int n = list->GetSelectedRow();
+        if (n < 0 || std::size_t(n) >= ids.size() || !owned(ids[std::size_t(n)])) {
+            status->SetValue(_L("Select a container recorded for this context."));
+            return {};
+        }
+        return ids[std::size_t(n)];
+    }
+    void metrics()
+    {
+        const auto id = selected_id();
+        if (id.empty()) return;
+        run({"stats", "--no-stream", "--format", "CPU {{.CPUPerc}} | RAM {{.MemUsage}} | PIDs {{.PIDs}}", id},
+            [this](const Lines &out) { status->SetValue(out.empty() ? _L("No current metrics available.") : wxString::FromUTF8(out.back())); });
+    }
+    void send_command()
+    {
+        auto id = selected_id();
+        if (id.empty()) return;
+        auto text = command->GetTextCtrl()->GetValue().ToStdString(wxConvUTF8);
+        if (!text.empty() && text.front() == '/') text.erase(0, 1);
+        if (!valid_console_command(text)) {
+            status->SetValue(_L("Enter one server command."));
+            return;
+        }
+        run({"inspect", "--format", "{{.Config.Image}}", id}, [this, id, text](const Lines &image) {
+            if (image.size() != 1) {
+                status->SetValue(_L("Could not identify the selected server image."));
+                return;
+            }
+            const bool bedrock = image.front().rfind("itzg/minecraft-bedrock-server:", 0) == 0;
+            if (!bedrock && image.front().rfind("itzg/minecraft-server:", 0) != 0) {
+                status->SetValue(_L("This image has no recognized console adapter."));
+                return;
+            }
+            run({"exec", id, bedrock ? "send-command" : "rcon-cli", text}, [this, bedrock](const Lines &out) {
+                command->GetTextCtrl()->Clear();
+                if (bedrock) {
+                    status->SetValue(_L("Command sent. Bedrock writes its response to the server log."));
+                    return;
+                }
+                wxString reply;
+                for (const auto &line : out) {
+                    reply += wxString::FromUTF8(line) + "\n";
+                    if (reply.size() > 8192) break;
+                }
+                status->SetValue(reply.empty() ? _L("Command returned without output.") : reply);
+            });
+        });
+    }
     void control(const std::string &verb)
     {
         const int n = list->GetSelectedRow();
-        if (n < 0 || std::size_t(n) >= ids.size()) { status->SetValue(_L("Select a managed container first.")); return; }
-        if (!owned(ids[std::size_t(n)])) { status->SetValue(_L("The local ownership record is missing.")); return; }
+        if (n < 0 || std::size_t(n) >= ids.size()) {
+            status->SetValue(_L("Select a managed container first."));
+            return;
+        }
+        if (!owned(ids[std::size_t(n)])) {
+            status->SetValue(_L("The local ownership record is missing."));
+            return;
+        }
         run({verb, ids[std::size_t(n)]}, [this](const Lines &) { refresh(); });
     }
 
-    TextInput *context, *name, *version, *tag;
-    TextArea *status;
-    bool active = false;
-    TextInput *bind_address;
-    LabeledCheckBox *lan_allowed;
-    ComboBox *edition, *flavour;
-    SpinInput *port;
-    LabeledCheckBox *eula;
-    MD3DataViewListCtrl *list;
-    Lines ids;
+    TextInput                     *context, *name, *version, *tag;
+    TextArea                      *status;
+    bool                           active = false;
+    TextInput                     *bind_address, *command;
+    LabeledCheckBox               *lan_allowed;
+    ComboBox                      *edition, *flavour, *transport;
+    SpinInput                     *port, *udp_first;
+    LabeledCheckBox               *eula;
+    MD3DataViewListCtrl           *list;
+    Lines                          ids;
     std::unique_ptr<ServerProcess> process;
-    std::shared_ptr<bool> lifetime = std::make_shared<bool>(true);
+    std::shared_ptr<bool>          lifetime = std::make_shared<bool>(true);
 };
+} // namespace
+void show_container_servers(wxWindow *parent)
+{
+    ContainerServersDialog dlg(parent);
+    dlg.ShowModal();
 }
-void show_container_servers(wxWindow *parent) { ContainerServersDialog dlg(parent); dlg.ShowModal(); }
-}}}
+}}} // namespace Slic3r::GUI::GameServers
