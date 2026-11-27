@@ -195,6 +195,30 @@
       "language_mode": "yue_HK",
       "theme": "light",
       "density": "comfortable"
+    },
+    {
+      "file": "en-selected-cup.png",
+      "sha256": "5982ff6ca039c4d31f72927950a3c69bda3a71c4791daaaea95b1e9ae0c00125",
+      "image_pixels": [
+        2550,
+        1626
+      ],
+      "surface": "selected cup",
+      "language_mode": "en",
+      "theme": "light",
+      "density": "comfortable"
+    },
+    {
+      "file": "bilingual_en_yue_HK-selected-cup.png",
+      "sha256": "dcc52dd0984eaace69ee8577d0e969e314fb9e9130c485b5c81f3c8bad761a32",
+      "image_pixels": [
+        2550,
+        1626
+      ],
+      "surface": "selected cup",
+      "language_mode": "bilingual_en_yue_HK",
+      "theme": "light",
+      "density": "comfortable"
     }
   ]
 }
