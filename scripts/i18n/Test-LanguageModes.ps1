@@ -138,6 +138,9 @@ else {
 }
 
 try {
+    Invoke-Checked -Command $pythonCommand `
+        -Arguments ($pythonPrefix + @((Join-Path $repoRoot 'scripts\i18n\update_catalogs.py'), '--check')) `
+        -FailureMessage 'Some native source messages are missing from the language catalogs'
     # Strict: every Cantonese key must exist in the English extraction, except
     # entries marked '#. source-pending:' with the place their source lives.
     Invoke-Checked -Command $pythonCommand `

@@ -1800,12 +1800,12 @@
     {
       "route": "windows/language-modes.md",
       "title": "English, Hong Kong Cantonese, and bilingual modes",
-      "sha256": "6a4025177b4629436b162a5ad19a052b2b81cc285fd07222881d44f0b1944b38"
+      "sha256": "b5f1b0d39adac429b6177a66bb79db5ed987fc8553be2924b049c4f3c4983a8f"
     },
     {
       "route": "windows/language-modes.yue_HK.md",
       "title": "英文、香港粵語同雙語模式",
-      "sha256": "06d9fd198c4cc9fb1971ca7d3a611a23b6f44b68d62de4e2da1f11f7e19084c8"
+      "sha256": "7a3fc050de498aaf230d57e4218b75da72ae24019f5d263d26a61b4dfe954e6f"
     },
     {
       "route": "windows/local-tools.md",
@@ -1890,7 +1890,7 @@
     {
       "route": "windows/minecraft-servers.md",
       "title": "Minecraft servers",
-      "sha256": "bf31c5260eea07af93582bdfad54f53586f96174f401caf033be8cf525c6faed"
+      "sha256": "e1462cecd88f915556895374ed5ebb5a18eac375ea539f294c62b96f73710ce5"
     },
     {
       "route": "windows/minecraft-servers.yue_HK.md",
@@ -2410,7 +2410,7 @@
       "bytes": 16430
     }
   ],
-  "bundle_sha256": "fb19bb0c631c3c5bea40cb9ceca7dc1e676b9ed48ad3a018a7aff12a29fdf427",
+  "bundle_sha256": "3c67589c3bdf40e9ddbf2a513816043690b5462100ce73f6d39463598919afc7",
   "unavailable_references": [
     {
       "source": "api/README.md",

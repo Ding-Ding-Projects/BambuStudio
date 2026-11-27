@@ -9,7 +9,8 @@ Steps:
    bootstrap under ``%LOCALAPPDATA%\\gettext-iconv``, or ``PATH``). When none is
    found, download the pinned portable release from its canonical GitHub
    release, verify its SHA-256, and unpack it user-scoped.
-2. Run xgettext over ``bbl/i18n/list.txt`` with the keywords in
+2. Run xgettext over the native source trees and the additional inputs in
+   ``bbl/i18n/list.txt`` with the keywords in
    ``bbl/i18n/xgettext-keywords.txt`` (the same flags as the CMake
    ``gettext_make_pot`` target) into ``bbl/i18n/BambuStudio.pot``, then append
    the ``[hint:*]`` texts from ``resources/data/*hints.ini`` exactly as the
@@ -100,27 +101,38 @@ def read_keywords() -> list[str]:
     return keywords
 
 
-def run_xgettext(gettext_bin: Path, output: Path, *, locations: bool) -> None:
-    command = [
-        str(gettext_bin / "xgettext"),
-        "--no-wrap",
-        "--add-comments=TRN",
-        "--from-code=UTF-8",
-        "--debug",
-        "--boost",
-        *[f"--keyword={keyword}" for keyword in read_keywords()],
-        "-f", str(I18N_DIR / "list.txt"),
-        "-o", str(output),
-    ]
-    if not locations:
-        command.insert(1, "--no-location")
-    result = subprocess.run(command, cwd=REPO_ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace")
+def run_xgettext(gettext_bin: Path, output: Path, *, locations: bool) -> int:
+    registered = set((I18N_DIR / "list.txt").read_text(encoding="utf-8").splitlines())
+    extensions = {".cpp", ".cc", ".cxx", ".c", ".hpp", ".h", ".hxx", ".mm"}
+    for directory in ("src/slic3r", "src/libslic3r"):
+        for source in (REPO_ROOT / directory).rglob("*"):
+            if source.suffix in extensions and source.is_file():
+                registered.add(source.relative_to(REPO_ROOT).as_posix())
+    with tempfile.TemporaryDirectory() as scratch:
+        sources = Path(scratch) / "native-files.txt"
+        sources.write_text("\n".join(sorted(registered)) + "\n", encoding="utf-8")
+        command = [
+            str(gettext_bin / "xgettext"),
+            "--no-wrap",
+            "--add-comments=TRN",
+            "--from-code=UTF-8",
+            "--debug",
+            "--boost",
+            *[f"--keyword={keyword}" for keyword in read_keywords()],
+            "-f", str(sources),
+            "-o", str(output),
+        ]
+        if not locations:
+            command.insert(1, "--no-location")
+        result = subprocess.run(command, cwd=REPO_ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace")
     if result.returncode != 0:
         sys.stderr.write(result.stderr)
         raise SystemExit(f"xgettext failed with exit code {result.returncode}")
     warnings = [line for line in result.stderr.splitlines() if "warning" in line.lower()]
     if warnings:
         log(f"xgettext reported {len(warnings)} warnings (first: {warnings[0]})")
+
+    return len(registered)
 
 
 def append_hints(pot: Path) -> int:
@@ -177,15 +189,40 @@ def merge_into_english(pot: Path, english_po: Path) -> tuple[int, int]:
     return len(new), len(stale)
 
 
+def check_source_coverage(gettext_bin: Path) -> int:
+    """Check real compiler inputs independently of the maintained gettext list."""
+    with tempfile.TemporaryDirectory() as scratch:
+        extracted = Path(scratch) / "messages.pot"
+        source_count = run_xgettext(gettext_bin, extracted, locations=False)
+        append_hints(extracted)
+        expected = {entry.key for entry in parse_po(extracted) if not entry.is_header}
+    verdict = 0
+    for catalog in (I18N_DIR / "BambuStudio.pot", I18N_DIR / "en/BambuStudio_en.po",
+                    I18N_DIR / "yue_HK/BambuStudio_yue_HK.po"):
+        present = {entry.key for entry in parse_po(catalog) if not entry.is_header}
+        missing = expected - present
+        if missing:
+            log(f"{catalog.relative_to(REPO_ROOT)} is missing {len(missing)} extracted messages")
+            for context, msgid in sorted(missing, key=lambda pair: (pair[0] or "", pair[1])):
+                print(f"  {context or '(default)'}: {msgid!r}")
+            verdict = 1
+    if not verdict:
+        log(f"Verified {len(expected)} messages from {source_count} native source files and the hint inventory.")
+    return verdict
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--gettext-bin")
+    parser.add_argument("--check", action="store_true", help="check complete source extraction without changing the catalogs")
     parser.add_argument("--located-pot", type=Path, help="also write an extraction with source locations here")
     parser.add_argument("--report-missing", type=Path, help="write messages without a Cantonese entry as JSON")
     args = parser.parse_args()
 
     gettext_bin = find_gettext(args.gettext_bin)
     log(f"Using GNU gettext from {gettext_bin}")
+    if args.check:
+        return check_source_coverage(gettext_bin)
     pot = I18N_DIR / "BambuStudio.pot"
     run_xgettext(gettext_bin, pot, locations=False)
     hints = append_hints(pot)
