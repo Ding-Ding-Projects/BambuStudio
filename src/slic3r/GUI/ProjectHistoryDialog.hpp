@@ -18,6 +18,8 @@ class CollapsibleFilterBar;
 class Label;
 class SearchField;
 class StaticBox;
+class MD3ScrolledWindow;
+class wxFlexGridSizer;
 class wxCloseEvent;
 class wxCommandEvent;
 class wxDataViewEvent;
@@ -165,6 +167,8 @@ private:
     StaticBox              *m_info_card{nullptr};
     StaticBox              *m_failure_card{nullptr};
     StaticBox              *m_list_card{nullptr};
+    MD3ScrolledWindow      *m_content_scroll{nullptr};
+    wxFlexGridSizer        *m_filter_grid{nullptr};
     CollapsibleFilterBar   *m_filters{nullptr};
     SearchField            *m_search_field{nullptr};
     wxDataViewListCtrl     *m_version_list{nullptr};
