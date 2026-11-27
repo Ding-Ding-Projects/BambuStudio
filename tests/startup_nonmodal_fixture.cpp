@@ -64,7 +64,8 @@ struct Fixture {
     int file_version=10,applied=0,released=0;
     bool is_project_file=false,exercise_downstream=false,load_config=true,load_old_project=false;
     int import_heuristics=0,modal_notices=0,deleted_objects=0;
-    std::vector<int> load_model_objects(const std::vector<Object*>& objects,bool allow_negative_z,bool,int){
+    std::vector<int> load_model_objects(const std::vector<Object*>& objects,bool allow_negative_z,bool,int,Model *donor){
+        assert(donor == nullptr); // Startup restores are never detached mesh jobs.
         for(auto* object:objects){ // ACTUAL_OBJECT_PLACEMENT
         }
         return {1};
@@ -77,6 +78,7 @@ struct Fixture {
         // ACTUAL_DETACHED_ADMISSION
         if(exercise_downstream){
             int load_progress_callback=0;
+            constexpr bool prepared=false;
             // ACTUAL_MANUAL_CLASSIFICATION
             // ACTUAL_DOWNSTREAM
         }
