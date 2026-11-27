@@ -453,3 +453,12 @@ and sends an edit on standard input. Remote writes require an idle owned
 instance and a matching file revision. The helper preserves mode, group,
 comments, line endings and unedited values. Container configuration writes
 use the file owner's numeric identity and a network-disabled helper.
+
+**Install SSH content** and the container **Install target content** action
+transfer a selected local JAR, ZIP or .mcpack to an owned stopped server.
+Select the installed Java distribution or, for Bedrock, whether to activate
+the pack. The target verifies the complete streamed SHA-256 before reading
+the package, checks its descriptor, refuses incompatible content and preserves
+unrelated files. The Linux container helper has no network access, uses the
+server file owner's identity and mounts only the selected container's volumes.
+The receipt reports actual installation and any outstanding activation.

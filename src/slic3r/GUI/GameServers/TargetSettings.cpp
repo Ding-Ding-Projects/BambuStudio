@@ -59,7 +59,8 @@ TargetSettingsResult result(const std::pair<int, std::string> &op)
 TargetSettingsResult target_settings(const WorldRecoveryTarget &t, const std::string &exe, nlohmann::json request)
 {
     if (!request.is_object() || !request.contains("mode") || !request["mode"].is_string()) return {"Invalid settings action.", {}};
-    const bool write = request["mode"] == "write";
+    const bool owner_for_write = request["mode"] == "write-identity";
+    const bool write           = request["mode"] == "write" || owner_for_write;
     if (!t.container) {
         if (!ownership_id(t.owner) || shell_path(t.server_folder).empty()) return {"The selected SSH directory has no local ownership record.", {}};
         auto args = ssh_invocation(exe, t.profile, "exec python3 -c " + shell_literal(target_settings_script) + " " + shell_path(t.server_folder) + " " + t.owner + " ssh");
@@ -82,6 +83,7 @@ TargetSettingsResult target_settings(const WorldRecoveryTarget &t, const std::st
     if (user.size() > 24 || colon == std::string::npos || colon == 0 || colon + 1 == user.size() || user.find(':', colon + 1) != std::string::npos ||
         user.find_first_not_of("0123456789:") != std::string::npos)
         return {"The target reported an invalid file owner.", {}};
+    if (owner_for_write) return who;
     return result(execute(args(user, write), request.dump()));
 }
 }}} // namespace Slic3r::GUI::GameServers
