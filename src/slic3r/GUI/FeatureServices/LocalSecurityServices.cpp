@@ -4,6 +4,7 @@
 #include "../LocalSecurity/IdentityHistoryPanel.hpp"
 #include "../GUI_App.hpp"
 #include "../MainFrame.hpp"
+#include "../Widgets/SuperConfirmGate.hpp"
 #include "../I18N.hpp"
 #include "../Plater.hpp"
 #include "../NotificationManager.hpp"
@@ -49,6 +50,16 @@ LocalSecurityUI::Hooks hooks(wxWindow* parent)
         dataset.prose = text;
         dataset.file_stem = "local-security-redacted";
         ExportDialog::run(weak.get(), std::move(dataset));
+    };
+    result.confirm_retention = [](wxWindow* owner, const wxString& consequence,
+                                  const std::vector<wxString>& revisions,
+                                  std::function<void(SuperConfirm::State)> confirm) {
+        SuperConfirmGate::Spec spec;
+        spec.action = _L("Remove access to selected payloads");
+        spec.consequence = consequence;
+        spec.affected = revisions;
+        if (auto approval = SuperConfirmGate::Review(owner, spec))
+            confirm(std::move(*approval));
     };
     result.open_support = [] {
         auto* frame = wxGetApp().mainframe;
