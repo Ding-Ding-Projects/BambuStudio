@@ -334,3 +334,12 @@ The generator starts at 100 × 100 chunks. Drag across the preview to select a
 smaller rectangle from the displayed area. The width, depth and center fields
 mirror the selected chunk coordinates and remain available for keyboard use.
 Setting the dimensions to zero generates the spawn area only.
+
+**Console > Build version report** runs the selected JAR's built-in data
+generator with a three-minute limit in an isolated directory. The cache key
+is the JAR's SHA-1. **Check command** uses its Brigadier command tree to check
+literal paths, redirects, booleans, bounded numeric arguments, strings and
+greedy text. Unsupported argument parsers and plugin-only commands are
+identified; the running server remains their authority. Invalid arguments
+from a supported parser are stopped before sending. A generated block
+registry supplies the generator's block picker.

@@ -7,6 +7,8 @@
 #include "ServerModel.hpp"
 #include "ServerSystem.hpp"
 #include "ServerMetrics.hpp"
+#include "CommandReport.hpp"
+#include "VersionReport.hpp"
 #include "AreaSelection.hpp"
 #include "RconCredential.hpp"
 
@@ -890,6 +892,27 @@ struct ServersPanel::Ui
 
     // Console
     TextArea   *console = nullptr;
+    Label *command_verdict = nullptr;
+    std::map<std::string, VersionReport> reports;
+    std::string selected_jar()
+    {
+        auto *sv=server();
+        if(!sv) return {};
+        auto path=fs::u8path(sv->folder)/fs::u8path(sv->launch.jar);
+        std::error_code ec;
+        if(!sv->launch.jar.empty() && fs::is_regular_file(path,ec)) return path.u8string();
+        auto found=inspect_folder(sv->folder);
+        return found.jar.empty()?std::string():(fs::u8path(sv->folder)/fs::u8path(found.jar)).u8string();
+    }
+    void build_report();
+    CommandCheck check_command(const std::string &plain)
+    {
+        auto *sv=server();
+        if(!sv) return {CommandVerdict::Unavailable,"Select a server."};
+        auto it=reports.find(sv->id);
+        if(it==reports.end() || !it->second.matches(selected_jar())) return {CommandVerdict::Unavailable,"Build the report from this server JAR to check arguments."};
+        return check_command_report(it->second.commands,plain);
+    }
     TextInput  *command = nullptr;
 
     // Properties
@@ -1443,11 +1466,56 @@ void ServersPanel::Ui::refresh_overview()
 
 // ---- Console -----------------------------------------------------------------
 
+void ServersPanel::Ui::build_report()
+{
+    auto *sv=server();
+    const auto path=selected_jar();
+    if(!sv || busy || path.empty()) return;
+    if(MessageDialog(self,_L("Run the data generator in this trusted server JAR to read its command tree and block registry? This runs Java code in a separate working directory."),
+                     _L("Generate version report"),wxYES_NO|wxNO_DEFAULT|wxICON_INFORMATION).ShowModal()!=wxID_YES) return;
+    const auto id=sv->id;
+    const auto f=inspect_folder(sv->folder);
+    const auto java=pick_java(Live::get().javas(),java_needed({sv->version,f.info.data_version,{}},f.info.java_version));
+    auto cache=(fs::u8path(data_dir())/"minecraft-version-reports").u8string();
+    std::weak_ptr<bool> weak=alive;
+    set_busy(true,_L("Generating version-bound server data"));
+    std::thread([this,weak,id,path,java,cache] {
+        auto result=build_version_report(path,java,cache);
+        wxTheApp->CallAfter([this,weak,id,result=std::move(result)]() mutable {
+            if(weak.expired()) return;
+            set_busy(false);
+            const auto error=result.error;
+            if(error.empty()) reports[id]=std::move(result);
+            if(selected==id) {
+                command_verdict->SetLabel(error.empty()?_L("Command tree loaded from the selected JAR."):u8(error));
+                if(error.empty() && !reports[id].blocks.empty()) {
+                    gen_block->Clear();
+                    for(const auto &b : reports[id].blocks) gen_block->Append(u8(b));
+                    gen_block->SetSelection(0);
+                }
+            }
+        });
+    }).detach();
+}
+
 void ServersPanel::Ui::build_console(wxWindow *page)
 {
     auto *s = new wxBoxSizer(wxVERTICAL);
     console = new TextArea(page, wxEmptyString, wxDefaultSize, wxTE_READONLY | wxTE_RICH2);
     console->SetMonospace(true);
+    auto *tools=new wxWrapSizer(wxHORIZONTAL);
+    auto *report=button(page,_L("Build version report"),GlyphRefresh);
+    report->Bind(wxEVT_BUTTON,[this](wxCommandEvent &){build_report();});tools->Add(report,0,wxRIGHT,page->FromDIP(6));
+    auto *check=button(page,_L("Check command"),GlyphFind);
+    check->Bind(wxEVT_BUTTON,[this](wxCommandEvent &) {
+        auto cmd=into_u8(command->GetTextCtrl()->GetValue().Trim().Trim(false));
+        if(!cmd.empty() && cmd.front()=='/') cmd.erase(0,1);
+        command_verdict->SetLabel(u8(check_command(cmd).reason));
+    });
+    tools->Add(check,0);
+    s->Add(tools,0,wxBOTTOM,page->FromDIP(6));
+    command_verdict=text(page,Label::Body_12,_L("A version report checks supported argument types before sending a command."),true);
+    s->Add(command_verdict,0,wxEXPAND | wxBOTTOM,page->FromDIP(6));
     s->Add(console, 1, wxEXPAND);
     auto *row = new wxBoxSizer(wxHORIZONTAL);
     command = new TextInput(page, wxEmptyString, wxEmptyString, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER);
@@ -1460,6 +1528,9 @@ void ServersPanel::Ui::build_console(wxWindow *page)
             MessageDialog(self, _L("Enter one command of up to 32767 bytes without control characters."), _L("Console"), wxOK | wxICON_INFORMATION).ShowModal();
             return;
         }
+        const auto checked=check_command(plain);
+        command_verdict->SetLabel(u8(checked.reason));
+        if(checked.verdict==CommandVerdict::Invalid) return;
         if (!Live::get().send(server()->id, plain)) {
             MessageDialog(self, _L("The server is not running."), _L("Console"), wxOK | wxICON_INFORMATION).ShowModal();
             return;
@@ -2086,7 +2157,7 @@ void ServersPanel::Ui::read_manifest()
             Manifest m;
             if (!d.ok || !parse_manifest(d.body, m)) {
                 if (!d.cancelled)
-                    MessageDialog(self, wxString::Format(_L("The version list could not be read: %s"), u8(d.error.empty() ? "not a version list" : d.error)), _L("Versions"),
+                    MessageDialog(self, wxString::Format(_L("The version list could not be read: %s"), (d.error.empty() ? _L("not a version list") : u8(d.error))), _L("Versions"),
                                   wxOK | wxICON_WARNING)
                         .ShowModal();
                 return;
