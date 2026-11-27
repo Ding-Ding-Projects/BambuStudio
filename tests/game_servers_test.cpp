@@ -563,6 +563,33 @@ static void sha1()
     CHECK(chunked.hex() == "34aa973cd4c4daa4f61eeb2bdbad27316534016f");
 }
 
+#include "slic3r/GUI/GameServers/ContainerSetup.hpp"
+
+static void containers()
+{
+    ContainerSetup setup{"first", "1.21.4", "PAPER", "java21", 25566, false, true};
+    const auto args = container_create(setup);
+    CHECK(std::find(args.begin(), args.end(), "TYPE=PAPER") != args.end());
+    CHECK(std::find(args.begin(), args.end(), "127.0.0.1:25566:25565/tcp") != args.end());
+    setup.bedrock = true;
+    auto bedrock = container_create(setup);
+    CHECK(std::find(bedrock.begin(), bedrock.end(), "127.0.0.1:25566:19132/udp") != bedrock.end());
+    setup.bind = "192.168.2.4";
+    CHECK(container_create(setup).empty());
+    setup.lan_allowed = true;
+    CHECK(!container_create(setup).empty());
+    CHECK(!container_bind_address("0.0.0.0"));
+    CHECK(!container_bind_address("192.168.300.4"));
+    CHECK(!container_bind_address("192.168.1.4:25565"));
+    CHECK(!container_bind_address("8.8.8.8"));
+    setup.accepted = false;
+    CHECK(container_create(setup).empty());
+    CHECK(!container_field("--host"));
+    CHECK(!container_field("name with spaces"));
+    CHECK(!container_id("my-server"));
+    CHECK(container_id(std::string(64, 'a')));
+}
+
 int main()
 {
     versions();
@@ -572,6 +599,7 @@ int main()
     console();
     mojang();
     launching();
+    containers();
     backups_and_schedules();
     generator();
     library();

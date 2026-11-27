@@ -1,4 +1,5 @@
 #include "ServersPanel.hpp"
+#include "ContainerServersDialog.hpp"
 
 #include "ServerModel.hpp"
 #include "ServerSystem.hpp"
@@ -1003,6 +1004,7 @@ void ServersPanel::Ui::build()
         head->Add(b, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, p->FromDIP(8));
         return b;
     };
+    head_button(_L("Container servers..."), GlyphServer, Button::Variant::Outlined, [this]() { show_container_servers(self); });
     head_button(_L("Find and adopt..."), GlyphFind, Button::Variant::Outlined, [this]() { adopt(); });
     head_button(_L("Create server..."), GlyphAdd, Button::Variant::Filled, [this]() { create_server(); });
     head_button(_L("How it works"), GlyphHelp, Button::Variant::Text, []() { DocsBrowserDialog::ShowArticle(wxGetApp().mainframe, kGuide); });
