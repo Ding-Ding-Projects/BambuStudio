@@ -39400,3 +39400,39 @@ msgstr ""
 
 msgid "World recovery..."
 msgstr ""
+
+msgid "Install target content..."
+msgstr ""
+
+msgid "Install SSH content..."
+msgstr ""
+
+msgid "Install target content"
+msgstr ""
+
+msgid "Select a trusted content package to transfer to %s."
+msgstr ""
+
+msgid "Choose package..."
+msgstr ""
+
+msgid "No package selected."
+msgstr ""
+
+msgid "Select trusted server content"
+msgstr ""
+
+msgid "Installed Java distribution"
+msgstr ""
+
+msgid "Activate the Bedrock pack in the configured world"
+msgstr ""
+
+msgid "Transfer and install"
+msgstr ""
+
+msgid "Plugins, mods and scripts execute with the server's permissions."
+msgstr ""
+
+msgid "Verifying and transferring the selected package..."
+msgstr ""

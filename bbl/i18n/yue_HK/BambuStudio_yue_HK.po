@@ -64027,3 +64027,63 @@ msgstr "世界資料包"
 #. review-status: agent-drafted
 msgid "World recovery..."
 msgstr "世界復原…"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Install target content..."
+msgstr "安裝目標內容…"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Install SSH content..."
+msgstr "經 SSH 安裝內容…"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Install target content"
+msgstr "安裝目標內容"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Select a trusted content package to transfer to %s."
+msgstr "揀一個受信任嘅內容套件傳送到 %s。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Choose package..."
+msgstr "選擇套件…"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "No package selected."
+msgstr "未選擇套件。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Select trusted server content"
+msgstr "選擇受信任嘅伺服器內容"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Installed Java distribution"
+msgstr "已安裝嘅 Java 發行版本"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Activate the Bedrock pack in the configured world"
+msgstr "喺已設定嘅世界啟用 Bedrock 套件"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Transfer and install"
+msgstr "傳送並安裝"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Plugins, mods and scripts execute with the server's permissions."
+msgstr "外掛程式、模組同指令碼會以伺服器權限執行。"
+
+#. reviewed-category: connection-offline
+#. review-status: agent-drafted
+msgid "Verifying and transferring the selected package..."
+msgstr "正在驗證同傳送所選套件…"
