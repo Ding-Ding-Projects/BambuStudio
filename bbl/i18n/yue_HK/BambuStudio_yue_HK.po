@@ -60705,3 +60705,43 @@ msgstr "已經涼咗。風扇熄咗，部機涼到可以開門。"
 #: src/slic3r/GUI/PrintCooldown/PrintCooldownCard.cpp
 msgid "Stopped after five minutes with the bed at %s °C. The fans are off; the printer may still be warm."
 msgstr "五分鐘到，停咗，熱床仲有 %s °C。風扇熄咗，部機可能仲暖。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Revision ancestry"
+msgstr "修訂承繼關係"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Parent outside filter"
+msgstr "上層修訂唔喺篩選範圍內"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "This saved search contains an invalid date."
+msgstr "呢個已儲存搜尋包含無效日期。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The draft could not be recorded in local history. It is still open."
+msgstr "草稿未能寫入本機歷史記錄，仍然保持開啟。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Discard settings draft"
+msgstr "放棄設定草稿"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Choose a separate file for the current-version export."
+msgstr "請揀另一個檔案匯出目前版本。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Could not preserve pending project history."
+msgstr "未能保留尚待寫入嘅項目歷史記錄。"
+
+#. reviewed-category: file-actions
+#. review-status: agent-drafted
+msgid "Use File > Export > Export current version only as 3MF to save a separate copy without history."
+msgstr "如要另存一份唔包含歷史嘅副本，請揀「檔案 > 匯出 > 只將目前版本匯出為 3MF」。"
