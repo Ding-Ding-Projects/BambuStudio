@@ -1,6 +1,6 @@
 ---
 translation-of: settings-drafts.md
-source-sha256: 6202756677cc719b4951fa49438f5f4a86e7beb49703b43067bf06387ac50266
+source-sha256: 94a25de706bdb117792cdcd51a2b0b8533e373a799c9e68e787ba199d2daab88
 review-status: agent-drafted
 ---
 
