@@ -5,6 +5,15 @@
 #include "libslic3r/Utils.hpp"
 #include <filesystem>
 #include "../I18N.hpp"
+#include "../Widgets/Button.hpp"
+#include "../Widgets/ComboBox.hpp"
+#include "../Widgets/Label.hpp"
+#include "../Widgets/LabeledCheckBox.hpp"
+#include "../Widgets/MD3DataView.hpp"
+#include "../Widgets/MD3DialogChrome.hpp"
+#include "../Widgets/SpinInput.hpp"
+#include "../Widgets/TextArea.hpp"
+#include "../Widgets/TextInput.hpp"
 
 #include <wx/app.h>
 #include <wx/button.h>
@@ -33,44 +42,44 @@ public:
         auto *grid = new wxFlexGridSizer(2, FromDIP(6), FromDIP(12));
         grid->AddGrowableCol(1);
         auto field = [&](const wxString &label, wxWindow *control) {
-            grid->Add(new wxStaticText(this, wxID_ANY, label), 0, wxALIGN_CENTER_VERTICAL);
+            grid->Add(new Label(this, Label::Body_13, label), 0, wxALIGN_CENTER_VERTICAL);
             grid->Add(control, 1, wxEXPAND);
         };
-        context = new wxTextCtrl(this, wxID_ANY, "default");
+        context = new TextInput(this, "default");
         field(_L("Docker context (local or SSH)"), context);
-        name = new wxTextCtrl(this, wxID_ANY, "my-server");
+        name = new TextInput(this, "my-server");
         field(_L("New container name"), name);
-        edition = new wxChoice(this, wxID_ANY);
+        edition = new ComboBox(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, wxCB_READONLY);
         edition->Append("Java"); edition->Append("Bedrock"); edition->SetSelection(0);
         field(_L("Edition"), edition);
-        flavour = new wxChoice(this, wxID_ANY);
+        flavour = new ComboBox(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, nullptr, wxCB_READONLY);
         for (auto type : {"VANILLA", "PAPER", "PURPUR", "SPIGOT", "FABRIC", "FORGE", "NEOFORGE", "QUILT"}) flavour->Append(type);
         flavour->SetSelection(0);
         field(_L("Java distribution"), flavour);
-        version = new wxTextCtrl(this, wxID_ANY, "LATEST");
+        version = new TextInput(this, "LATEST");
         field(_L("Server version"), version);
-        tag = new wxTextCtrl(this, wxID_ANY, "latest");
+        tag = new TextInput(this, "latest");
         field(_L("Container image tag"), tag);
-        bind_address = new wxTextCtrl(this, wxID_ANY, "127.0.0.1");
+        bind_address = new TextInput(this, "127.0.0.1");
         field(_L("Target host IPv4 address"), bind_address);
-        lan_allowed = new wxCheckBox(this, wxID_ANY, _L("Allow connections from the target host's private LAN"));
+        lan_allowed = new LabeledCheckBox(this, _L("Allow connections from the target host's private LAN"));
         field(_L("LAN access"), lan_allowed);
-        port = new wxSpinCtrl(this, wxID_ANY);
-        port->SetRange(1, 65535); port->SetValue(25565);
+        port = new SpinInput(this, wxEmptyString, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, 1, 65535, 25565);
         field(_L("Port on target host"), port);
-        edition->Bind(wxEVT_CHOICE, [this](wxCommandEvent &) {
+        edition->Bind(wxEVT_COMBOBOX, [this](wxCommandEvent &) {
             const bool bedrock = edition->GetSelection() == 1;
             flavour->Enable(!bedrock);
             port->SetValue(bedrock ? 19132 : 25565);
         });
         body->Add(grid, 0, wxEXPAND | wxALL, FromDIP(12));
-        eula = new wxCheckBox(this, wxID_ANY, _L("I accept the Minecraft EULA for the new server"));
+        eula = new LabeledCheckBox(this, _L("I accept the Minecraft EULA for the new server"));
         body->Add(eula, 0, wxLEFT | wxRIGHT, FromDIP(12));
-        list = new wxListBox(this, wxID_ANY, wxDefaultPosition, FromDIP(wxSize(520, 120)));
+        list = new MD3DataViewListCtrl(this, wxID_ANY, wxDefaultPosition, FromDIP(wxSize(520, 120)), wxDV_SINGLE | wxDV_ROW_LINES);
+        list->AppendTextColumn(_L("Container and state"), wxDATAVIEW_CELL_INERT, FromDIP(480));
         body->Add(list, 1, wxEXPAND | wxALL, FromDIP(12));
         auto *actions = new wxWrapSizer(wxHORIZONTAL);
         auto action = [&](const wxString &label, std::function<void()> fn) {
-            auto *btn = new wxButton(this, wxID_ANY, label);
+            auto *btn = new Button(this, label);
             btn->Bind(wxEVT_BUTTON, [fn](wxCommandEvent &) { fn(); });
             actions->Add(btn, 0, wxALL, FromDIP(3));
         };
@@ -80,22 +89,22 @@ public:
         action(_L("Start selected"), [this] { control("start"); });
         action(_L("Stop selected"), [this] { control("stop"); });
         body->Add(actions, 0, wxEXPAND | wxLEFT, FromDIP(9));
-        status = new wxTextCtrl(this, wxID_ANY, _L("Refresh to list managed containers in this context."), wxDefaultPosition,
-                                FromDIP(wxSize(520, 85)), wxTE_MULTILINE | wxTE_READONLY);
+        status = new TextArea(this, _L("Refresh to list managed containers in this context."), FromDIP(wxSize(520, 85)), wxTE_READONLY);
         body->Add(status, 0, wxEXPAND | wxALL, FromDIP(12));
-        context->Bind(wxEVT_TEXT, [this](wxCommandEvent &) { ids.clear(); list->Clear(); });
+        context->GetTextCtrl()->Bind(wxEVT_TEXT, [this](wxCommandEvent &) { ids.clear(); list->DeleteAllItems(); });
         Bind(wxEVT_CLOSE_WINDOW, [this](wxCloseEvent &e) {
             if (active && e.CanVeto()) { e.Veto(); return; }
             e.Skip();
         });
         SetEscapeId(wxID_NONE);
         SetSizerAndFit(body);
+        MD3DialogCaption::Adopt(this);
         CentreOnParent();
     }
 
 private:
     using Lines = std::vector<std::string>;
-    std::string target() const { return context->GetValue().ToStdString(wxConvUTF8); }
+    std::string target() const { return context->GetTextCtrl()->GetValue().ToStdString(wxConvUTF8); }
 
     void run(std::vector<std::string> args, std::function<void(const Lines &)> done)
     {
@@ -145,11 +154,12 @@ private:
     {
         run({"ps", "--all", "--no-trunc", "--filter", "label=org.bambustudio.minecraft=1", "--format", "{{.ID}}\t{{.Names}}\t{{.Status}}"},
             [this](const Lines &out) {
-                list->Clear(); ids.clear();
+                list->DeleteAllItems(); ids.clear();
                 for (const std::string &line : out) {
                     const auto split = line.find('\t');
                     if (split == std::string::npos || !owned(line.substr(0, split))) continue;
-                    ids.push_back(line.substr(0, split)); list->Append(wxString::FromUTF8(line.substr(split + 1)));
+                    ids.push_back(line.substr(0, split)); wxVector<wxVariant> row;
+                    row.push_back(wxVariant(wxString::FromUTF8(line.substr(split + 1)))); list->AppendItem(row);
                 }
                 status->SetValue(wxString::Format(_L("Managed containers listed: %d"), int(ids.size())));
             });
@@ -157,9 +167,9 @@ private:
 
     void create()
     {
-        auto args = container_create({name->GetValue().ToStdString(wxConvUTF8), version->GetValue().ToStdString(wxConvUTF8),
-            flavour->GetStringSelection().ToStdString(wxConvUTF8), tag->GetValue().ToStdString(wxConvUTF8),
-            port->GetValue(), edition->GetSelection() == 1, eula->IsChecked(), bind_address->GetValue().ToStdString(wxConvUTF8), lan_allowed->IsChecked()});
+        auto args = container_create({name->GetTextCtrl()->GetValue().ToStdString(wxConvUTF8), version->GetTextCtrl()->GetValue().ToStdString(wxConvUTF8),
+            flavour->GetStringSelection().ToStdString(wxConvUTF8), tag->GetTextCtrl()->GetValue().ToStdString(wxConvUTF8),
+            port->GetValue(), edition->GetSelection() == 1, eula->GetValue(), bind_address->GetTextCtrl()->GetValue().ToStdString(wxConvUTF8), lan_allowed->GetValue()});
         if (args.empty()) { status->SetValue(_L("Check the name, version, tag, IPv4 address, port, LAN permission and EULA acceptance.")); return; }
         run(std::move(args), [this](const Lines &out) {
             for (auto it = out.rbegin(); it != out.rend(); ++it) {
@@ -180,20 +190,21 @@ private:
 
     void control(const std::string &verb)
     {
-        const int n = list->GetSelection();
+        const int n = list->GetSelectedRow();
         if (n < 0 || std::size_t(n) >= ids.size()) { status->SetValue(_L("Select a managed container first.")); return; }
         if (!owned(ids[std::size_t(n)])) { status->SetValue(_L("The local ownership record is missing.")); return; }
         run({verb, ids[std::size_t(n)]}, [this](const Lines &) { refresh(); });
     }
 
-    wxTextCtrl *context, *name, *version, *tag, *status;
+    TextInput *context, *name, *version, *tag;
+    TextArea *status;
     bool active = false;
-    wxTextCtrl *bind_address;
-    wxCheckBox *lan_allowed;
-    wxChoice *edition, *flavour;
-    wxSpinCtrl *port;
-    wxCheckBox *eula;
-    wxListBox *list;
+    TextInput *bind_address;
+    LabeledCheckBox *lan_allowed;
+    ComboBox *edition, *flavour;
+    SpinInput *port;
+    LabeledCheckBox *eula;
+    MD3DataViewListCtrl *list;
     Lines ids;
     std::unique_ptr<ServerProcess> process;
     std::shared_ptr<bool> lifetime = std::make_shared<bool>(true);

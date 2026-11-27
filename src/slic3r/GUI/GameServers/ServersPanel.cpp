@@ -1,5 +1,6 @@
 #include "ServersPanel.hpp"
 #include "ContainerServersDialog.hpp"
+#include "NativeServersDialog.hpp"
 
 #include "ServerModel.hpp"
 #include "ServerSystem.hpp"
@@ -32,6 +33,7 @@
 #include <wx/dcbuffer.h>
 #include <wx/dirdlg.h>
 #include <wx/filedlg.h>
+#include <wx/menu.h>
 #include <wx/scrolwin.h>
 #include <wx/simplebook.h>
 #include <wx/sizer.h>
@@ -1004,7 +1006,14 @@ void ServersPanel::Ui::build()
         head->Add(b, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, p->FromDIP(8));
         return b;
     };
-    head_button(_L("Container servers..."), GlyphServer, Button::Variant::Outlined, [this]() { show_container_servers(self); });
+    head_button(_L("More targets..."), GlyphServer, Button::Variant::Outlined, [this]() {
+        wxMenu targets;
+        auto *native = targets.Append(wxID_ANY, _L("Native console and Bedrock setup..."));
+        auto *containers = targets.Append(wxID_ANY, _L("Container servers..."));
+        const int choice = self->GetPopupMenuSelectionFromUser(targets);
+        if (choice == native->GetId()) show_native_servers(self);
+        if (choice == containers->GetId()) show_container_servers(self);
+    });
     head_button(_L("Find and adopt..."), GlyphFind, Button::Variant::Outlined, [this]() { adopt(); });
     head_button(_L("Create server..."), GlyphAdd, Button::Variant::Filled, [this]() { create_server(); });
     head_button(_L("How it works"), GlyphHelp, Button::Variant::Text, []() { DocsBrowserDialog::ShowArticle(wxGetApp().mainframe, kGuide); });

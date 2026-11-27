@@ -465,14 +465,20 @@ bool safe_entry(const std::string &name)
     std::replace(normal.begin(), normal.end(), '\\', '/');
     std::istringstream in(normal);
     std::string        part;
-    while (std::getline(in, part, '/'))
-        if (part == "..") return false;
+    while (std::getline(in, part, '/')) {
+        if (part.empty() || part == ".") continue;
+        if (part.back() == '.' || part.back() == ' ' || part.find_first_of("<>\"|?*") != std::string::npos ||
+            std::any_of(part.begin(), part.end(), [](unsigned char c) { return c < 32; })) return false;
+        const auto stem = lower(part.substr(0, part.find('.')));
+        if (stem == "con" || stem == "prn" || stem == "nul" || stem == "aux" ||
+            (stem.size() == 4 && (stem.substr(0, 3) == "com" || stem.substr(0, 3) == "lpt") && stem[3] >= '0' && stem[3] <= '9')) return false;
+    }
     return true;
 }
 
 } // namespace
 
-ZipOutcome extract_zip(const std::string &zip_path, const std::string &target_u8, const std::atomic<bool> *cancel)
+ZipOutcome extract_zip(const std::string &zip_path, const std::string &target_u8, const std::atomic<bool> *cancel, std::uint64_t byte_limit)
 {
     ZipOutcome      r;
     const fs::path  target = fs::u8path(target_u8);
@@ -486,7 +492,12 @@ ZipOutcome extract_zip(const std::string &zip_path, const std::string &target_u8
         r.error = "Could not open the backup.";
         return r;
     }
-    fs::create_directories(target, ec);
+    if (!target.parent_path().empty()) fs::create_directories(target.parent_path(), ec);
+    if (ec || !fs::create_directory(target, ec)) {
+        close_zip_reader(&zip);
+        r.error = "The destination folder could not be created exclusively.";
+        return r;
+    }
     const mz_uint count  = mz_zip_reader_get_num_files(&zip);
     bool          failed = false;
     for (mz_uint i = 0; i < count && !failed; ++i) {
@@ -497,6 +508,7 @@ ZipOutcome extract_zip(const std::string &zip_path, const std::string &target_u8
         }
         mz_zip_archive_file_stat st{};
         if (!mz_zip_reader_file_stat(&zip, i, &st)) { r.error = "The backup is damaged."; failed = true; break; }
+        if (st.m_uncomp_size > byte_limit - r.bytes) { r.error = "The archive exceeds the extraction limit."; failed = true; break; }
         const std::string name = st.m_filename;
         if (!safe_entry(name)) { r.error = "The backup names a file outside its folder: " + name; failed = true; break; }
         const fs::path out = target / fs::u8path(name);

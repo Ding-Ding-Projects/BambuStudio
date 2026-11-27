@@ -564,6 +564,7 @@ static void sha1()
 }
 
 #include "slic3r/GUI/GameServers/ContainerSetup.hpp"
+#include "slic3r/GUI/GameServers/NativeServerTarget.hpp"
 
 static void containers()
 {
@@ -582,6 +583,10 @@ static void containers()
     CHECK(!container_bind_address("192.168.300.4"));
     CHECK(!container_bind_address("192.168.1.4:25565"));
     CHECK(!container_bind_address("8.8.8.8"));
+    CHECK(ssh_server_launch("ssh", "-bad-option", "/srv/game", false).empty());
+    CHECK(ssh_server_launch("ssh", "home-server", ".", false).empty());
+    CHECK(ssh_server_launch("ssh", "home-server", "/srv/game", true).back().find("exec ./bedrock_server") != std::string::npos);
+    CHECK(ssh_server_launch("ssh", "home-server", "/srv/my game", false).back().find("exec java -jar ./server.jar nogui") != std::string::npos);
     setup.accepted = false;
     CHECK(container_create(setup).empty());
     CHECK(!container_field("--host"));
