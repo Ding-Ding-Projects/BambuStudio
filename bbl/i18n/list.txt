@@ -481,3 +481,6 @@ src/slic3r/GUI/Widgets/MappingRow.cpp
 src/slic3r/GUI/ExtruderHelpers.cpp
 src/slic3r/GUI/SyncAmsDialog.cpp
 src/slic3r/GUI/VocabularyDrop.cpp
+src/slic3r/GUI/LocalSecurity/IdentityHistoryPanel.cpp
+src/slic3r/GUI/LocalSecurity/SecurityPanels.cpp
+src/slic3r/GUI/OllamaSuite/OllamaSuiteDialog.cpp
