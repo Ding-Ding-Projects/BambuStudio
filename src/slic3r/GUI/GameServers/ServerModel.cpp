@@ -721,6 +721,12 @@ std::string write_bans(const std::vector<Player> &players)
     return j.dump(2);
 }
 
+bool valid_console_command(const std::string &command)
+{
+    return !command.empty() && command.size() <= 32767 &&
+           std::none_of(command.begin(), command.end(), [](unsigned char ch) { return ch < 0x20 || ch == 0x7f; });
+}
+
 bool valid_player_name(const std::string &name)
 {
     if (name.size() < 3 || name.size() > 16) return false;

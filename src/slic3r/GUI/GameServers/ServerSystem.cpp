@@ -757,7 +757,7 @@ bool ServerProcess::start(const std::vector<std::string> &argv, const std::strin
 
 bool ServerProcess::send(const std::string &command)
 {
-    if (!m->alive || !m->in_write) return false;
+    if (!valid_console_command(command) || !m->alive || !m->in_write) return false;
     std::lock_guard<std::mutex> lock(m->write_mutex);
     const std::string           line = command + "\n";
     DWORD                       wrote = 0;

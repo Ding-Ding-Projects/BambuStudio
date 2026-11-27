@@ -1308,6 +1308,10 @@ void ServersPanel::Ui::build_console(wxWindow *page)
         const std::string cmd = into_u8(command->GetTextCtrl()->GetValue().Trim().Trim(false));
         if (cmd.empty() || !server()) return;
         const std::string plain = cmd[0] == '/' ? cmd.substr(1) : cmd;
+        if (!valid_console_command(plain)) {
+            MessageDialog(self, _L("Enter one command of up to 32767 bytes without control characters."), _L("Console"), wxOK | wxICON_INFORMATION).ShowModal();
+            return;
+        }
         if (!Live::get().send(server()->id, plain)) {
             MessageDialog(self, _L("The server is not running."), _L("Console"), wxOK | wxICON_INFORMATION).ShowModal();
             return;

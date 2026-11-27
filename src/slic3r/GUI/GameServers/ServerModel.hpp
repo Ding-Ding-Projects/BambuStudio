@@ -160,6 +160,7 @@ bool        parse_players(const std::string &json, std::vector<Player> &out);
 std::string write_allowlist(const std::vector<Player> &players);
 std::string write_operators(const std::vector<Player> &players);
 std::string write_bans(const std::vector<Player> &players);
+bool valid_console_command(const std::string &command);
 bool        valid_player_name(const std::string &name); // 3 to 16 of A-Z a-z 0-9 _
 const char *operator_level_meaning(int level);           // what level 1 to 4 allows, English
 
