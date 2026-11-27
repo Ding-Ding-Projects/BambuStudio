@@ -433,7 +433,7 @@ void MediaPlayCtrl::SetMachineObject(MachineObject* obj)
         m_remote_proto = 0;
         m_device_busy = false;
     }
-    const bool eligible = obj && obj->is_info_ready() && obj->m_push_count > 0 && obj->has_ipcam;
+    const bool eligible = obj && obj->is_info_ready() && obj->m_push_count > 0 && m_ipcam_ready_state == DevCamera::IPCAM_READY;
     Enable(eligible);
     m_was_eligible = eligible;
     if (IsShownOnScreen() && !m_view_active) {
