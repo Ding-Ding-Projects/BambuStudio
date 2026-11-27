@@ -11,6 +11,7 @@
 namespace Slic3r::GUI {
 class Plater;
 struct SliceToolpathSnapshot;
+struct ProjectedSlicePath;
 enum class SliceMotionKind;
 
 struct SliceMotionKey {
@@ -28,6 +29,7 @@ public:
     static void clear_request();
     static void begin(Plater &plater, int plate);
     static void stop();
+    static const ProjectedSlicePath &projection(const std::shared_ptr<const SliceToolpathSnapshot> &paths);
     static void finish(Plater &plater, int index);
     static std::shared_ptr<const SliceToolpathSnapshot> paths(Plater &plater);
     static bool active(Plater &plater);

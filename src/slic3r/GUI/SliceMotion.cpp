@@ -19,6 +19,8 @@ uint64_t request_number{};
 SliceMotionKind origin = SliceMotionKind::Ordinary;
 wxImage current_image;
 Clock::time_point began;
+std::weak_ptr<const SliceToolpathSnapshot> projected_source;
+ProjectedSlicePath projected_path;
 std::shared_ptr<const SliceToolpathSnapshot> finalized;
 }
 
@@ -74,6 +76,15 @@ void SliceMotion::begin(Plater &plater, int index)
     began = Clock::now();
 }
 
+const ProjectedSlicePath &SliceMotion::projection(const std::shared_ptr<const SliceToolpathSnapshot> &paths)
+{
+    if (projected_source.lock() != paths) {
+        projected_path = paths ? project_slice_paths(*paths) : ProjectedSlicePath{};
+        projected_source = paths;
+    }
+    return projected_path;
+}
+
 void SliceMotion::stop() { toast.reset(); finalized.reset(); current_image = wxImage{}; }
 void SliceMotion::finish(Plater &plater, int index)
 {
@@ -81,7 +92,7 @@ void SliceMotion::finish(Plater &plater, int index)
     auto *plate = plater.get_partplate_list().get_plate(index);
     const auto *result = plate->get_gcode_result();
     if (plate->is_slice_result_valid() && result)
-        finalized = make_slice_toolpath_snapshot({toast->generation,index,result->id}, *result, 4096);
+        finalized = make_slice_toolpath_snapshot({toast->generation,index,result->id}, *result);
 }
 std::shared_ptr<const SliceToolpathSnapshot> SliceMotion::paths(Plater &plater)
 {
@@ -167,9 +178,10 @@ void SliceMotionPanel::paint(wxPaintEvent &)
     const wxColour accent = wxSystemSettings::GetColour(wxSYS_COLOUR_HIGHLIGHT);
     dc.SetBrush(*wxTRANSPARENT_BRUSH);
     const double elapsed = required ? std::chrono::duration<double>(Clock::now()-m_start).count() : SliceMotion::seconds();
-    if (paths) draw_slice_paths(*paths,elapsed,MD3::Motion::reduced(),[&](double x,double y,double xx,double yy,bool head) {
+    if (paths) draw_slice_paths(SliceMotion::projection(paths),elapsed,MD3::Motion::reduced(),[&](double x,double y,double xx,double yy,bool head) {
         dc.SetPen(wxPen(accent,FromDIP(head ? 3 : 1)));
-        dc.DrawLine(model_w+x*model_w,y*h,model_w+xx*model_w,yy*h);
+        dc.DrawLine(model_w+(w-model_w-side)/2+x*side,(h-side)/2+y*side,
+                        model_w+(w-model_w-side)/2+xx*side,(h-side)/2+yy*side);
     });
     draw_slice_motion(required ? SliceMotionKind::Required : SliceMotion::kind(),elapsed,MD3::Motion::reduced(),
         [&](double x,double y,double x2,double y2,int weight) {
