@@ -111,6 +111,18 @@
       "language_mode": "bilingual_en_yue_HK",
       "theme": "light",
       "density": "comfortable"
+    },
+    {
+      "file": "bilingual_en_yue_HK-tall.png",
+      "sha256": "689e76495babbcd4d78ae115b757276444784a493d0444a7d47fb59b9115c1e8",
+      "image_pixels": [
+        1450,
+        1311
+      ],
+      "surface": "canvas",
+      "language_mode": "bilingual_en_yue_HK",
+      "theme": "light",
+      "density": "comfortable"
     }
   ]
 }
