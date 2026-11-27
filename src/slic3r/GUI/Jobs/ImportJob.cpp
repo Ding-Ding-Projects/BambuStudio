@@ -1,6 +1,9 @@
 #include "ImportJob.hpp"
 #include <boost/algorithm/string.hpp>
 #include <algorithm>
+#include <array>
+#include <boost/filesystem/fstream.hpp>
+#include <sstream>
 #include <stdexcept>
 
 namespace Slic3r::GUI {
@@ -13,6 +16,32 @@ bool has_topology_metadata(const ModelVolume& volume)
            volume.is_mm_painted() || volume.emboss_shape.has_value() || volume.is_cut_connector();
 }
 
+}
+
+void read_stl_designer_metadata(const boost::filesystem::path &path, std::string &model_id,
+                                std::string &country, std::string &maker_name,
+                                std::string &maker_region, std::string &maker_id)
+{
+    boost::filesystem::ifstream input(path, std::ios::binary);
+    std::array<char, 80> header{};
+    if (!input.read(header.data(), header.size()) || header.front() == ' ' || header.front() == '\0')
+        return;
+    const std::string text(header.begin(), std::find(header.begin(), header.end(), '\0'));
+    std::istringstream parts(text);
+    std::string part;
+    while (std::getline(parts, part, '&')) {
+        std::istringstream fields(part);
+        std::string type, first, second, third, extra;
+        if (!(fields >> type >> first >> second >> third) || (fields >> extra)) continue;
+        if (type == "MW") {
+            model_id = second;
+            country = third;
+        } else if (type == "ML") {
+            maker_region = first;
+            maker_name = second;
+            maker_id = third;
+        }
+    }
 }
 
 ImportJob::ImportJob(std::vector<boost::filesystem::path> paths, ImportJobOptions options, Completion completion)
@@ -77,6 +106,9 @@ void ImportJob::process(Ctl& ctl)
                         report(total > 0 ? current * 50 / total : 0, m_options.reading_text);
                     });
                 if (extension == ".amf") file.imperial_units = gamma;
+                if (extension == ".stl" && file.designer_model_id.empty())
+                    read_stl_designer_metadata(path, file.designer_model_id, file.designer_country_code,
+                                               file.makerlab_name, file.makerlab_region, file.makerlab_id);
             }
             check_cancel();
             size_t volume_count = 0, volume_index = 0;

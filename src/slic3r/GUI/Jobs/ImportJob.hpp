@@ -8,6 +8,11 @@
 
 namespace Slic3r::GUI {
 
+// Read optional designer data from the fixed-size STL header. Missing data is ignored.
+void read_stl_designer_metadata(const boost::filesystem::path &path, std::string &model_id,
+                                std::string &country, std::string &maker_name,
+                                std::string &maker_region, std::string &maker_id);
+
 // All inputs are captured on the UI thread. No live scene or application
 // configuration is accessed by process(). Dialog callbacks are explicitly
 // dispatched through Ctl::call_on_main_thread by the reader.
