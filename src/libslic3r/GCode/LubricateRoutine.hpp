@@ -6,15 +6,17 @@
 
 namespace Slic3r {
 
-// A tune for the buzzer while the bed moves: one note before each bed segment,
-// repeating from the start when the travel is longer than the tune. Notes are
-// MIDI note numbers (69 = A4, 440 Hz); 0 is a rest. Every tune is either a
-// public-domain melody or a plain original pattern.
+struct LubricateNote
+{
+    int midi; // 0 is a rest
+    int ticks; // hundredths of a second
+};
+
 struct LubricateMelody
 {
     const char      *id;   // stored in the `lubricate_melody` option
     const char      *name; // English display name, translated by the GUI
-    std::vector<int> notes;
+    std::vector<LubricateNote> notes;
 };
 
 // The melody library, the default (truck backing up) first.

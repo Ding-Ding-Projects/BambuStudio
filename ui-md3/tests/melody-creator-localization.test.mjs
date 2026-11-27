@@ -88,17 +88,17 @@ test('every preset the model ships is shown with a translated name', async () =>
   }
 });
 
-test('the dialog plays through the printer gcode route, guards an active print, and is reachable from the File menu', async () => {
+test('the dialog plays through the printer gcode route, guards an active print, and is reachable from the Tools menu', async () => {
   const dialog = stripComments(await read(DIALOG));
   assert.match(dialog, /if \(obj->is_in_printing\(\)\) \{ update_status\(_L\("The printer is printing\. Play the melody when it is idle\."\), true\); return; \}/);
-  assert.match(dialog, /obj->publish_gcode\(melody_to_gcode\(m_melody\)\)/);
+  assert.match(dialog, /obj->publish_gcode\(melody_to_printer_gcode\(m_melody\)\)/);
   assert.match(dialog, /Tab::validate_custom_gcode\(field_name, gcode\)/);
   assert.match(dialog, /wxGetApp\(\)\.get_tab\(Preset::TYPE_PRINTER\)/);
   // The MD3 scrolled body and the kit dialog shell are included directly (dialog-header-includes rule).
   assert.match(dialog, /#include "\.\.\/Widgets\/MD3ScrolledWindow\.hpp"/);
   assert.match(await read(HEADER), /#include "\.\.\/Widgets\/MD3Dialog\.hpp"/);
   const mainframe = stripComments(await read('src/slic3r/GUI/MainFrame.cpp'));
-  assert.match(mainframe, /append_menu_item\(fileMenu, wxID_ANY, _L\("Melody creator"\) \+ dots,[\s\S]{0,400}MelodyCreatorDialog\(this\)\.ShowModal\(\);/);
+  assert.match(mainframe, /append_menu_item\(toolsMenu, wxID_ANY, _L\("Melody creator"\) \+ dots,[\s\S]{0,400}MelodyCreatorDialog\(this\)\.ShowModal\(\);/);
 });
 
 test('each contract rejects the defect it pins', async () => {

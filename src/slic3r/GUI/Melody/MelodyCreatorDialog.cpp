@@ -65,6 +65,7 @@ wxString problem_text(MelodyProblem problem)
     case MelodyProblem::TooManySteps: return wxString::Format(_L("A melody can have at most %d steps."), MELODY_MAX_STEPS);
     case MelodyProblem::NameTooLong: return wxString::Format(_L("The name can have at most %d characters."), static_cast<int>(MELODY_MAX_NAME));
     case MelodyProblem::PitchOutOfRange: return _L("Every note must be between C#-1 and G9, or empty for silence.");
+    case MelodyProblem::PrinterPitchOutOfRange: return _L("Printer playback supports C1 through B6. Transpose notes outside this range before exporting.");
     case MelodyProblem::TicksOutOfRange: return wxString::Format(_L("Every duration must be between 0 and %d ticks."), MELODY_MAX_TICKS);
     case MelodyProblem::VolumeOutOfRange: return _L("Every volume must be between 0 and 100.");
     case MelodyProblem::TickLengthOutOfRange:
@@ -137,16 +138,16 @@ MelodyCreatorDialog::MelodyCreatorDialog(wxWindow *parent)
 
         auto *tick_col = new wxBoxSizer(wxVERTICAL);
         tick_col->Add(make_label(_L("Tick length (ms, preview only)")), 0, wxBOTTOM, FromDIP(4));
-        int saved_tick = MELODY_MIN_TICK_MS;
+        int saved_tick = m_melody.tick_ms;
         if (AppConfig *cfg = wxGetApp().app_config) {
             const std::string s = cfg->get(APP_CONFIG_SECTION, "tick_ms");
-            saved_tick = s.empty() ? 50 : std::atoi(s.c_str());
+            saved_tick = s.empty() ? m_melody.tick_ms : std::atoi(s.c_str());
         }
         m_melody.tick_ms = std::max(MELODY_MIN_TICK_MS, std::min(MELODY_MAX_TICK_MS, saved_tick));
         m_tick_ms = new SpinInput(host, wxString::Format("%d", m_melody.tick_ms), wxEmptyString, wxDefaultPosition, wxSize(FromDIP(110), -1), 0,
                                   MELODY_MIN_TICK_MS, MELODY_MAX_TICK_MS, m_melody.tick_ms);
         m_tick_ms->SetName(_L("Tick length"));
-        m_tick_ms->SetToolTip(_L("How long one firmware tick lasts in the preview. The printer's own tick length is not documented; adjust this until the preview matches what the printer plays."));
+        m_tick_ms->SetToolTip(_L("How long one firmware tick lasts in the preview. The standard preview uses 10 milliseconds per tick."));
         m_tick_ms->Bind(wxEVT_SPINCTRL, [this](wxCommandEvent &e) { read_name_and_tick(); e.Skip(); });
         m_tick_ms->Bind(wxEVT_TEXT, [this](wxCommandEvent &e) { read_name_and_tick(); e.Skip(); });
         tick_col->Add(m_tick_ms, 0);
@@ -322,9 +323,9 @@ void MelodyCreatorDialog::on_cell_changed(wxGridEvent &event)
     update_status();
 }
 
-bool MelodyCreatorDialog::melody_ready(wxString &why) const
+bool MelodyCreatorDialog::melody_ready(wxString &why, bool for_printer) const
 {
-    const MelodyProblem problem = melody_validate(m_melody);
+    const MelodyProblem problem = melody_validate(m_melody, for_printer);
     why = problem_text(problem);
     return problem == MelodyProblem::None;
 }
@@ -507,7 +508,7 @@ void MelodyCreatorDialog::choose_printer(int index)
 void MelodyCreatorDialog::play_on_printer()
 {
     wxString why;
-    if (!melody_ready(why)) { update_status(why, true); return; }
+    if (!melody_ready(why, true)) { update_status(why, true); return; }
     DeviceManager *dev = wxGetApp().getDeviceManager();
     MachineObject *obj = dev ? dev->get_selected_machine() : nullptr;
     if (!obj) { update_status(_L("Choose a printer in the Printer list first."), true); return; }
@@ -525,7 +526,7 @@ void MelodyCreatorDialog::play_on_printer()
 void MelodyCreatorDialog::copy_gcode()
 {
     wxString why;
-    if (!melody_ready(why)) { update_status(why, true); return; }
+    if (!melody_ready(why, true)) { update_status(why, true); return; }
     if (wxTheClipboard->Open()) {
         wxTheClipboard->SetData(new wxTextDataObject(wxString::FromUTF8(melody_to_gcode(m_melody))));
         wxTheClipboard->Close();
@@ -538,7 +539,7 @@ void MelodyCreatorDialog::copy_gcode()
 void MelodyCreatorDialog::insert_into_printer_gcode(const char *key, const wxString &field_name)
 {
     wxString why;
-    if (!melody_ready(why)) { update_status(why, true); return; }
+    if (!melody_ready(why, true)) { update_status(why, true); return; }
     PresetBundle *bundle = wxGetApp().preset_bundle;
     Tab          *tab    = wxGetApp().get_tab(Preset::TYPE_PRINTER);
     if (!bundle || !tab) { update_status(_L("The printer settings are not available right now."), true); return; }

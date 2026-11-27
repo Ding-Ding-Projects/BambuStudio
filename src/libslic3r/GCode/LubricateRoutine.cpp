@@ -17,10 +17,6 @@ constexpr double z_near_nozzle = 5.;
 constexpr int z_feed  = 1200;
 constexpr int xy_feed = 12000;
 constexpr int cycles  = 2;
-// Note and rest lengths in M1006 duration units, as in the Bambu Lab start tunes.
-constexpr int note_len = 10;
-constexpr int rest_len = 15;
-
 std::string fmt(double v)
 {
     std::ostringstream out;
@@ -33,13 +29,13 @@ std::string fmt(double v)
 // One queued note on all three buzzer channels, the same line shape as the start
 // tune of the Bambu Lab profiles. A rest queues silence of the same shape, so the
 // rhythm of the tune survives.
-std::string note(int pitch)
+std::string note(const LubricateNote &event)
 {
-    if (pitch <= 0) {
-        const std::string d = std::to_string(rest_len);
+    const std::string d = std::to_string(event.ticks);
+    if (event.midi == 0) {
         return "M1006 A0 B" + d + " L0 C0 D" + d + " M0 E0 F" + d + " N0\n";
     }
-    const std::string n = std::to_string(pitch), d = std::to_string(note_len);
+    const std::string n = std::to_string(event.midi - 23);
     return "M1006 A" + n + " B" + d + " L99 C" + n + " D" + d + " M99 E" + n + " F" + d + " N99\n";
 }
 
@@ -47,13 +43,13 @@ std::string note(int pitch)
 // it and wait, exactly like the start tune in the Bambu Lab profiles. Queuing one
 // note with a wait before every bed segment broke the tune into separate beeps and
 // made the bed stop and start between segments.
-std::string tune_block(const std::vector<int> &notes)
+std::string tune_block(const std::vector<LubricateNote> &notes)
 {
     if (notes.empty())
         return std::string();
     std::string out = "M1006 S1\n";
-    for (int pitch : notes)
-        out += note(pitch);
+    for (const auto &event : notes)
+        out += note(event);
     out += "M1006 W\n";
     return out;
 }
@@ -73,22 +69,20 @@ bool is_full_homing_line(const std::string &line)
 
 const std::vector<LubricateMelody> &lubricate_melodies()
 {
-    // Buzzer note numbers in the range the Bambu Lab start tunes use (about 48 to
-    // 61): 48 is C, 50 D, 52 E, 53 F, 55 G, 57 A, 59 B, 60 high C. 0 is a rest.
-    // Higher numbers than the profiles use came out as unrelated tones.
+    // Explicit MIDI pitches and centisecond durations retain the score across both print paths.
     static const std::vector<LubricateMelody> melodies{
         // The beeper of a reversing truck: beep, pause, beep.
-        {"truck_backup", "Truck backing up", {59, 0, 59, 0, 59, 0, 59, 0}},
-        {"two_tone_siren", "Two-tone siren", {57, 52, 57, 52, 57, 52}},
-        {"rising_chirp", "Rising chirp", {48, 52, 55, 60, 0, 48, 52, 55, 60}},
+        {"truck_backup", "Truck backing up", {{71, 30}, {0, 45}, {71, 30}, {0, 45}, {71, 30}, {0, 45}, {71, 30}, {0, 45}}},
+        {"two_tone_siren", "Two-tone siren", {{69, 30}, {64, 30}, {69, 30}, {64, 30}, {69, 30}, {64, 30}}},
+        {"rising_chirp", "Rising chirp", {{60, 12}, {64, 12}, {67, 12}, {72, 24}, {0, 18}, {60, 12}, {64, 12}, {67, 12}, {72, 24}}},
         // Beethoven, Symphony No. 9 (public domain).
-        {"ode_to_joy", "Ode to Joy", {52, 52, 53, 55, 55, 53, 52, 50, 48, 48, 50, 52, 52, 50, 50, 0}},
+        {"ode_to_joy", "Ode to Joy", {{64, 40}, {64, 40}, {65, 40}, {67, 40}, {67, 40}, {65, 40}, {64, 40}, {62, 40}, {60, 40}, {60, 40}, {62, 40}, {64, 40}, {64, 60}, {62, 20}, {62, 80}}},
         // Traditional (public domain).
-        {"twinkle", "Twinkle, Twinkle, Little Star", {48, 48, 55, 55, 57, 57, 55, 0, 53, 53, 52, 52, 50, 50, 48, 0}},
+        {"twinkle", "Twinkle, Twinkle, Little Star", {{60, 40}, {60, 40}, {67, 40}, {67, 40}, {69, 40}, {69, 40}, {67, 80}, {65, 40}, {65, 40}, {64, 40}, {64, 40}, {62, 40}, {62, 40}, {60, 80}}},
         // Beethoven, Bagatelle No. 25 (public domain).
-        {"fur_elise", "Fur Elise", {52, 51, 52, 51, 52, 47, 50, 48, 45, 0}},
+        {"fur_elise", "Fur Elise", {{76, 20}, {75, 20}, {76, 20}, {75, 20}, {76, 20}, {71, 20}, {74, 20}, {72, 20}, {69, 60}}},
         // The Westminster Quarters (public domain).
-        {"westminster", "Westminster chimes", {52, 48, 50, 43, 0, 43, 50, 52, 48, 0}},
+        {"westminster", "Westminster chimes", {{64, 55}, {60, 55}, {62, 55}, {55, 110}, {0, 55}, {55, 55}, {62, 55}, {64, 55}, {60, 110}}},
         {"silent", "Silent", {}},
     };
     return melodies;
@@ -107,7 +101,7 @@ std::string start_melody_gcode(const std::string &melody_id)
     const LubricateMelody &melody = lubricate_melody(melody_id);
     if (melody.notes.empty())
         return std::string();
-    return "; start melody: " + std::string(melody.id) + "\n" + tune_block(melody.notes);
+    return "; start melody: " + std::string(melody.id) + "\nM17\nM400 S1\n" + tune_block(melody.notes);
 }
 
 std::string lubricate_routine_gcode(const LubricateArea &area, const std::string &rehome)

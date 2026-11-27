@@ -38,7 +38,7 @@ private:
     void read_name_and_tick();
     void on_cell_changed(wxGridEvent &event);
     void update_status(const wxString &message = wxEmptyString, bool problem = false);
-    bool melody_ready(wxString &why) const;
+    bool melody_ready(wxString &why, bool for_printer = false) const;
     int  selected_step() const;
     void select_step(int index);
 
