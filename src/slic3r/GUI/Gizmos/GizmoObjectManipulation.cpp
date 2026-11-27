@@ -1036,7 +1036,7 @@ void GizmoObjectManipulation::set_init_rotation(const Geometry::Transformation &
     for (int axis = 0; axis < 3; ++axis) {
         ImGui::SetCursorPos(ImVec2(axis_x + axis * (input_w + axis_gap), input_y));
         ImGui::PushItemWidth(input_w);
-        ImGui::BBLInputDouble(label_values[0][axis], &display_position[axis], 0.0f, 0.0f, "%.2f", 0, true);
+        md3_value_input(imgui_wrapper, m_is_dark_mode, label_values[0][axis], &display_position[axis], 0.0f, 0.0f, "%.2f", 0, true);
         ImGui::PopItemWidth();
     }
     ImGui::SetCursorPos(ImVec2(axis_x + 3.f * input_w + 2.f * axis_gap + px(8.f), input_y + (frame_h - text_h) * 0.5f));

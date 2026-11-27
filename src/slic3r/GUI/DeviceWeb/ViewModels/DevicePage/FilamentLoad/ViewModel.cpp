@@ -1,3 +1,5 @@
+#include "slic3r/GUI/Widgets/TextArea.hpp"
+#include "slic3r/GUI/Widgets/MD3DialogChrome.hpp"
 #include "ViewModel.hpp"
 
 #include "ViewModelActions.hpp"
@@ -46,13 +48,14 @@ void open_filament_load_debug_dialog()
     wxWindow* parent = wxGetApp().mainframe;
     FilamentLoadDebugDialog dlg(parent);
     auto* sizer = new wxBoxSizer(wxVERTICAL);
-    auto* text = new wxTextCtrl(&dlg, wxID_ANY,
+    auto* text = new TextArea(&dlg,
                                 wxString::FromUTF8(filament_load_debug_snapshot().dump(2)),
-                                wxDefaultPosition, wxDefaultSize,
-                                wxTE_MULTILINE | wxTE_READONLY | wxTE_DONTWRAP);
+                                wxDefaultSize,
+                                wxTE_READONLY | wxTE_DONTWRAP);
     sizer->Add(text, 1, wxEXPAND | wxALL, dlg.FromDIP(8));
     dlg.SetSizer(sizer);
     dlg.Layout();
+    MD3DialogCaption::Adopt(&dlg);
     dlg.ShowModal();
 }
 

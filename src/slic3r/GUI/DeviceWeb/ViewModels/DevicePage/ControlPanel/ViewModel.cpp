@@ -1,3 +1,4 @@
+#include "slic3r/GUI/Widgets/MD3DialogChrome.hpp"
 #include "ViewModel.hpp"
 
 #include "Schema.hpp"
@@ -50,6 +51,7 @@ void open_control_panel_debug_dialog()
     sizer->Add(host, 1, wxEXPAND);
     dlg.SetSizer(sizer);
     dlg.Layout();
+    MD3DialogCaption::Adopt(&dlg);
     dlg.ShowModal();
 }
 

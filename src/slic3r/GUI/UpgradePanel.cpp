@@ -622,8 +622,8 @@ void MachineInfoPanel::createHotendAmsWidgets(wxBoxSizer* main_left_sizer)
 
 void MachineInfoPanel::createDryingModuleWidgets(wxBoxSizer* main_left_sizer)
 {
-    m_drying_module_line_above = new wxStaticLine(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_HORIZONTAL);
-    m_drying_module_line_above->SetBackgroundColour(wxColour(206, 206, 206));
+    m_drying_module_line_above = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, FromDIP(1)));
+    m_drying_module_line_above->SetBackgroundColour(StateColor::semantic(MD3::Role::OutlineVariant));
 
     m_drying_module_img = new wxStaticBitmap(this, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxSize(FromDIP(200), FromDIP(200)));
     m_drying_module_img->SetBitmap(m_img_drying_module.bmp());

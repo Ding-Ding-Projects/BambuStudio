@@ -1,3 +1,4 @@
+#include "MaterialIcon.hpp"
 #include "SyncPresetWithPrinterDialog.hpp"
 #include "MaterialIcon.hpp"
 
@@ -399,12 +400,12 @@ bool is_tpu_volume_type(NozzleVolumeType type)
     return type == NozzleVolumeType::nvtTPU285 || type == NozzleVolumeType::nvtTPUHighFlow;
 }
 
-wxPanel *make_status_hint_panel(wxWindow *parent, const char *icon_name, const wxColour &text_color, const wxString &text, Label **out_label = nullptr)
+wxPanel *make_status_hint_panel(wxWindow *parent, MaterialIcon::Glyph glyph, const wxColour &text_color, const wxString &text, Label **out_label = nullptr)
 {
     auto *panel = new wxPanel(parent);
     panel->SetBackgroundColour(parent->GetBackgroundColour());
 
-    auto *icon = new wxStaticBitmap(panel, wxID_ANY, create_scaled_bitmap(icon_name, panel, 16));
+    auto *icon = new wxStaticBitmap(panel, wxID_ANY, MaterialIcon::bitmap(panel, glyph, 16, text_color));
     auto *label = new Label(panel, text);
     label->SetFont(Label::Body_14);
     label->SetForegroundColour(C(text_color));
@@ -912,7 +913,7 @@ wxWindow *SyncPresetWithPrinterDialog::build_nozzle_limit_hint(wxWindow *parent)
     const wxString target_name = m_info.target_model_name.IsEmpty() ? wxString(_L("Target printer")) : m_info.target_model_name;
     wxPanel *panel = make_status_hint_panel(
         parent,
-        "error",
+        MaterialIcon::Error,
         ThemeColor::Danger,
         wxString::Format(_L("%s supports up to %d nozzles. Please reduce the matched nozzles and keep only %d to continue."),
                          target_name, m_info.max_distinct_nozzles, m_info.max_distinct_nozzles));
@@ -924,7 +925,7 @@ wxWindow *SyncPresetWithPrinterDialog::build_tpu_fallback_hint(wxWindow *parent)
 {
     wxPanel *panel = make_status_hint_panel(
         parent,
-        "warning",
+        MaterialIcon::Warning,
         ThemeColor::Warning,
         wxEmptyString,
         &m_tpu_fallback_label);
@@ -936,7 +937,7 @@ wxWindow *SyncPresetWithPrinterDialog::build_detail_loss_hint(wxWindow *parent)
 {
     return make_status_hint_panel(
         parent,
-        "warning",
+        MaterialIcon::Warning,
         ThemeColor::Warning,
         _L("Using a larger nozzle after adapting the settings may reduce fine details in your model. Please proceed with caution."));
 }

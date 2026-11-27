@@ -428,7 +428,7 @@ AboutDialog::AboutDialog()
             wxString wrapped;
             Label::split_lines(dc, FromDIP(506), paragraph, wrapped);
             for (const wxString &line : wxSplit(wrapped, '\n', '\0')) {
-                auto line_text = new wxStaticText(this, wxID_ANY, line, wxDefaultPosition, wxSize(FromDIP(520), FromDIP(21)), wxALIGN_LEFT | wxST_NO_AUTORESIZE);
+                auto line_text = new Label(this, line, wxALIGN_LEFT | wxST_NO_AUTORESIZE, wxSize(FromDIP(520), FromDIP(21)));
                 line_text->SetForegroundColour(StateColor::semantic(MD3::Role::OnSurfaceVariant));
                 line_text->SetBackgroundColour(StateColor::semantic(MD3::Role::SurfaceContainerLowest));
                 line_text->SetFont(Label::Body_12);
