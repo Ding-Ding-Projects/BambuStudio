@@ -1984,7 +1984,7 @@ BoundingBoxf GCode::first_layer_projection(const Print& print) const
     return bbox;
 }
 
-void GCode::do_export(Print* print, const char* path, GCodeProcessorResult* result, ThumbnailsGeneratorCallback thumbnail_cb)
+void GCode::do_export(Print* print, const char* path, GCodeProcessorResult* result, ThumbnailsGeneratorCallback thumbnail_cb, GCodeMoveObserver moves_written)
 {
     PROFILE_CLEAR();
 
@@ -2038,7 +2038,7 @@ void GCode::do_export(Print* print, const char* path, GCodeProcessorResult* resu
     path_tmp += ".tmp";
 
     m_processor.initialize(path_tmp);
-    GCodeOutputStream file(boost::nowide::fopen(path_tmp.c_str(), "wb"), m_processor);
+    GCodeOutputStream file(boost::nowide::fopen(path_tmp.c_str(), "wb"), m_processor, std::move(moves_written));
     if (! file.is_open()) {
         BOOST_LOG_TRIVIAL(error) << std::string("G-code export to ") + PathSanitizer::sanitize(path) + " failed.\nCannot open the file for writing.\n" << std::endl;
         if (!fs::exists(folder)) {
@@ -7142,6 +7142,8 @@ void GCode::GCodeOutputStream::write(const char *what)
             m_write_errno = errno;
         //FIXME don't allocate a string, maybe process a batch of lines?
         m_processor.process_buffer(std::string(gcode));
+        if (m_moves_written && m_write_errno == 0 && ::ferror(f) == 0)
+            m_moves_written(m_processor.result());
     }
 }
 

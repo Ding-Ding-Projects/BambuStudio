@@ -22,6 +22,7 @@
 namespace boost { namespace filesystem { class path; } }
 
 namespace Slic3r {
+namespace GUI { struct SliceToolpathSnapshot; }
 
 class DynamicPrintConfig;
 class Model;
@@ -172,6 +173,7 @@ public:
 	// Start the background processing. Returns false if the background processing was already running.
 	bool start();
     // A generation changes for every new native run or invalidated workspace.
+    std::shared_ptr<const GUI::SliceToolpathSnapshot> live_slice_toolpath(uint64_t generation, int plate_index) const;
     uint64_t automation_generation() const { return m_automation_generation.load(); }
     // 0 idle/invalidated, 1 running, 2 completed, 3 failed, 4 cancelled.
     int automation_outcome() const { return m_automation_outcome.load(); }
@@ -312,6 +314,8 @@ private:
 	std::mutex 		 			m_mutex;
 	std::condition_variable		m_condition;
 	State m_state = STATE_INITIAL;
+    mutable std::mutex m_live_toolpath_mutex;
+    std::shared_ptr<const GUI::SliceToolpathSnapshot> m_live_toolpath;
     std::atomic<uint64_t> m_automation_generation{0};
     std::atomic<int> m_automation_outcome{0};
     std::atomic<bool> m_cancel_requested{false};
