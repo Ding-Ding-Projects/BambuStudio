@@ -1149,6 +1149,7 @@ list(APPEND SLIC3R_GUI_SOURCES
     GUI/GameServers/BedrockSettings.cpp
     GUI/GameServers/BedrockSettingsDialog.cpp
     GUI/GameServers/BedrockContent.cpp
+    GUI/GameServers/BedrockLifecycle.cpp
     GUI/GameServers/ContentLifecycle.cpp
     GUI/GameServers/ContentLifecycleDialog.cpp
     GUI/GameServers/ContentInstaller.cpp

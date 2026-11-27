@@ -1,5 +1,6 @@
 #include "ContentLifecycleDialog.hpp"
 #include "ContentLifecycle.hpp"
+#include "BedrockLifecycle.hpp"
 #include "../I18N.hpp"
 #include "../Widgets/Button.hpp"
 #include "../Widgets/MD3DataView.hpp"
@@ -18,10 +19,16 @@ namespace {
 class Packages final : public wxDialog
 {
 public:
-    Packages(wxWindow *p, std::string dir, std::string type)
-        : wxDialog(p, wxID_ANY, _L("Installed Java content"), wxDefaultPosition, wxDefaultSize, wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER)
+    Packages(wxWindow *p, std::string dir, std::string type, bool is_bedrock = false)
+        : wxDialog(p,
+                   wxID_ANY,
+                   is_bedrock ? _L("Installed Bedrock packs") : _L("Installed Java content"),
+                   wxDefaultPosition,
+                   wxDefaultSize,
+                   wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER)
         , folder(std::filesystem::u8path(dir))
         , flavour(std::move(type))
+        , bedrock(is_bedrock)
     {
         auto *body = new wxBoxSizer(wxVERTICAL);
         list       = new MD3DataViewListCtrl(this, wxID_ANY, wxDefaultPosition, FromDIP(wxSize(540, 200)), wxDV_SINGLE | wxDV_ROW_LINES);
@@ -56,7 +63,7 @@ public:
 private:
     void load()
     {
-        rows = list_installed_java_content(folder);
+        rows = bedrock ? list_local_bedrock_content(folder) : list_installed_java_content(folder);
         list->DeleteAllItems();
         for (const auto &e : rows) {
             wxVector<wxVariant> v;
@@ -73,7 +80,8 @@ private:
         auto                  entry = rows[std::size_t(i)];
         std::filesystem::path src;
         if (op == "update") {
-            wxFileDialog d(this, _L("Select the compatible replacement for this package"), {}, {}, "JAR / ZIP (*.jar;*.zip)|*.jar;*.zip", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+            wxFileDialog d(this, _L("Select the compatible replacement for this package"), {}, {},
+                           bedrock ? "Bedrock pack (*.mcpack;*.zip)|*.mcpack;*.zip" : "JAR / ZIP (*.jar;*.zip)|*.jar;*.zip", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
             if (d.ShowModal() != wxID_OK) return;
             src = std::filesystem::u8path(d.GetPath().ToStdString(wxConvUTF8));
         }
@@ -88,8 +96,8 @@ private:
         auto                root = folder;
         auto                type = flavour;
         std::weak_ptr<bool> weak = life;
-        std::thread([this, weak, entry, root, type, src, op] {
-            auto error = change_installed_java_content(root, type, entry, op, src);
+        std::thread([this, weak, entry, root, type, src, op, is_bedrock = bedrock] {
+            auto error = is_bedrock ? change_local_bedrock_content(root, entry, op, src) : change_installed_java_content(root, type, entry, op, src);
             wxTheApp->CallAfter([this, weak, error] {
                 if (weak.expired()) return;
                 busy = false;
@@ -98,6 +106,7 @@ private:
             });
         }).detach();
     }
+    bool                              bedrock = false;
     std::filesystem::path             folder;
     std::string                       flavour;
     bool                              busy = false;
@@ -107,6 +116,11 @@ private:
     std::shared_ptr<bool>             life = std::make_shared<bool>(true);
 };
 } // namespace
+void show_bedrock_content_inventory(wxWindow *parent, const std::string &root)
+{
+    Packages d(parent, root, {}, true);
+    d.ShowModal();
+}
 void show_java_content_inventory(wxWindow *parent, const std::string &root, const std::string &flavour)
 {
     Packages d(parent, root, flavour);

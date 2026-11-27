@@ -7,6 +7,7 @@
 #include "LocalBedrockRecovery.hpp"
 #include "BedrockSettingsDialog.hpp"
 #include "BedrockDownloadsDialog.hpp"
+#include "ContentLifecycleDialog.hpp"
 #include "WorldRecoveryDialog.hpp"
 #include "TargetContentDialog.hpp"
 #include "../I18N.hpp"
@@ -89,6 +90,7 @@ public:
         });
         local_backup=action(_L("Back up local Bedrock worlds..."),[this]{local_recover(false);});
         local_restore=action(_L("Restore local Bedrock backup separately..."),[this]{local_recover(true);});
+        manage_packs=action(_L("Manage installed Bedrock packs..."),[this]{show_bedrock_content_inventory(this,folder->GetTextCtrl()->GetValue().ToStdString(wxConvUTF8));});
         add_pack=action(_L("Install Bedrock pack..."),[this] { pack(false); });
         enable_pack=action(_L("Activate installed pack..."),[this] { pack(true); });
         ssh_content=action(_L("Install SSH content..."),[this]{show_target_content(this,{false,target->GetSelection()==2,
@@ -262,6 +264,7 @@ private:
         target->Enable(idle); folder->Enable(idle); agree->Enable(idle);
         setup_button->Enable(idle && target->GetSelection() == 0);
         settings->Enable(idle);local_backup->Enable(idle && target->GetSelection()==0);local_restore->Enable(idle && target->GetSelection()==0);
+        manage_packs->Enable(idle && target->GetSelection()==0);
         add_pack->Enable(idle && target->GetSelection() == 0); enable_pack->Enable(idle && target->GetSelection() == 0);
         browse->Enable(idle && target->GetSelection() == 0);
         profile->Enable(idle && target->GetSelection() != 0);
@@ -326,7 +329,7 @@ private:
     TextInput *profile, *folder, *command, *source_package;
     SpinInput *remote_port;
     TextArea *console;
-    Button *browse, *start_button, *stop_button, *setup_button, *add_pack, *enable_pack, *remote_setup, *settings, *ssh_recovery, *ssh_content, *local_backup, *local_restore;
+    Button *browse, *start_button, *stop_button, *setup_button, *add_pack, *enable_pack, *remote_setup, *settings, *ssh_recovery, *ssh_content, *local_backup, *local_restore, *manage_packs;
     LabeledCheckBox *agree;
     std::unique_ptr<ServerProcess> process;
     std::shared_ptr<bool> lifetime = std::make_shared<bool>(true);

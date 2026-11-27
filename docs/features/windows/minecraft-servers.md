@@ -237,14 +237,14 @@ player can join a running instance.
 
 | Target and edition | Create, start, stop and console | Settings and runtime metrics | Content and world creation | Backup, restore and reconnect evidence |
 | --- | --- | --- | --- | --- |
-| Local process, Java | Mojang manifest and trusted runnable JAR setup; existing-folder adoption; managed Java process and console | Typed local properties; process memory history; supported Paper TPS; process-bound RCON client credential | Local JAR/ZIP and version-filtered Modrinth install; native generator with folder/ZIP output and exact-JAR terrain packs | Existing checked ZIP backup/restore. Official 1.21.4 metadata and pack writing tested. Server startup, generated-world reopen and player reconnect await authorized runtime acceptance. |
-| Local process, Bedrock | Official Windows stable/preview discovery and ZIP setup; controlled process, console and stop | Typed properties from installed server; confidential values protected. No native time-series metrics | Resource/behavior pack installation and explicit world registration; native world creation uses the dedicated server's own settings | Live local world backup/restore and a compatible Bedrock client session are unverified. |
-| Local Docker, Java | Version and eight loader selections; create/start/stop by owned ID; RCON adapter | Per-target property editor and Docker CPU, memory and PIDs | Distribution setup and server-side world creation. Bespoke terrain authoring is local-Java only | World snapshots and isolated recovery volume. Local create/start/stop tested with EULA false; no playable process asserted. |
-| Local Docker, Bedrock | Version selection; create/start/stop and Bedrock console adapter; separate NetherNet or RakNet mappings | Per-target property editor and Docker metrics | Image setup and first-start world creation; no Java terrain-pack generator | Local fixture verified one TCP and sixteen UDP bindings. Real helper tested synthetic Bedrock restore; no authenticated client join. |
-| SSH process, Java | Upload-independent provisioning from trusted runnable JAR already on target; managed owner marker, lock, console and graceful stop | Target file owner, revision and public property allowlist enforced; no remote time-series metrics | Native Java creation from selected distribution. Local-Java advanced world generator has no direct SSH execution | Official Java JAR copied and byte-compared over real SSH, EULA remained false. Synthetic world restore tested separately. Actual Java reconnect pending. |
-| SSH process, Bedrock | Provision trusted Linux ZIP on host; owner-bound native process and console | Target settings with the actual file owner and revision; no remote time-series metrics | Dedicated server creates worlds from its configured settings | Inert process fixture verified owner check, list and stop. Synthetic Bedrock backup/restore verified. Real distribution, pack enablement and client reconnect pending. |
-| SSH Docker, Java | Same owned-ID lifecycle and RCON adapter through a configured Docker SSH context | Target settings and CPU/memory/PID readout | Same container distribution setup as local Docker | Real SSH context exercised create/start/stop on a disposable container with EULA false. Network-disabled helper restored a synthetic world on the target. |
-| SSH Docker, Bedrock | Same edition-specific lifecycle and transport through selected SSH context | Target settings and Docker metrics | Same dedicated-server setup as local Docker | Bedrock helper snapshot/restore tested on the Linux target. No real SSH-context Bedrock service or playable session verified. |
+| Local process, Java | Mojang manifest and trusted runnable JAR setup; existing-folder adoption; managed Java process and console | Typed local properties; process memory history; supported Paper TPS; process-bound RCON client credential | Local JAR/ZIP and version-filtered Modrinth install; explicit file enable, disable, update, rollback and recoverable removal. Native world generator writes folder/ZIP output and exact-JAR terrain packs | Existing checked ZIP backup/restore. Official 1.21.4 metadata and pack writing tested. Server startup, generated-world reopen and player reconnect await authorized runtime acceptance. |
+| Local process, Bedrock | Official Windows stable/preview discovery and ZIP setup; controlled process, console and stop | Typed properties from installed server; confidential values protected. No native time-series metrics | Resource/behavior pack installation, multi-world registration and reversible package maintenance. Native world creation uses the dedicated server’s own settings | Native Windows file-level snapshot/restore tested, including marker, CRC, readback and protected-field checks; a real joined and reopened Bedrock world is unverified. |
+| Local Docker, Java | Version and eight loader selections; create/start/stop by owned ID; RCON adapter | Per-target property editor and Docker CPU, memory and PIDs | Distribution setup and server-side world creation; custom package install, update, rollback, disable, remove and restore. Bespoke terrain authoring is local-Java only | World snapshots and isolated recovery volume. Local create/start/stop tested with EULA false; no playable process asserted. |
+| Local Docker, Bedrock | Version selection; create/start/stop and Bedrock console adapter; separate NetherNet or RakNet mappings | Per-target property editor and Docker metrics | Image setup, pack/registration maintenance and first-start world creation; no Java terrain-pack generator | Local fixture verified one TCP and sixteen UDP bindings. Real helper tested synthetic Bedrock restore; no authenticated client join. |
+| SSH process, Java | Upload-independent provisioning from trusted runnable JAR already on target; managed owner marker, lock, console and graceful stop | Target file owner, revision and public property allowlist enforced; no remote time-series metrics | Native Java creation from selected distribution, custom package installation and reversible maintenance. Local-Java advanced world generator has no direct SSH execution | Official Java JAR copied and byte-compared over real SSH, EULA remained false. Synthetic world restore tested separately. Actual Java reconnect pending. |
+| SSH process, Bedrock | Provision trusted Linux ZIP on host; owner-bound native process and console | Target settings with the actual file owner and revision; no remote time-series metrics | Dedicated server creates worlds from its configured settings. Selectable packs have reversible installation and registration | Inert process fixture verified owner check, list and stop. Synthetic Bedrock backup/restore verified. Real distribution, pack enablement and client reconnect pending. |
+| SSH Docker, Java | Same owned-ID lifecycle and RCON adapter through a configured Docker SSH context | Target settings and CPU/memory/PID readout | Same container distribution and package maintenance as local Docker | Real SSH context exercised create/start/stop on a disposable container with EULA false. Network-disabled helper restored a synthetic world on the target. |
+| SSH Docker, Bedrock | Same edition-specific lifecycle and transport through selected SSH context | Target settings and Docker metrics | Same dedicated-server setup and pack registration/maintenance as local Docker | Bedrock helper snapshot/restore tested on the Linux target. No real SSH-context Bedrock service or playable session verified. |
 
 ### Original gaps and residual work
 
@@ -257,8 +257,7 @@ player can join a running instance.
 - **Plugins and packs.** The local Java installer handles trusted plugins,
   loader-specific mods and world data packs. The catalog filters by server
   version and loader. Bedrock validates package UUIDs, versions and modules.
-  Complete dependency resolution, in-place update/removal and acceptance
-  against every real loader are incomplete.
+  All eight edition/target paths now have install, enable/disable, update, rollback and removal mechanisms for their supported content. Automatic dependency resolution, complete extension-specific configuration and acceptance against every real loader remain incomplete.
 - **Commands and observability.** The selected Java JAR generates a
   hash-bound Brigadier report. Supported primitive arguments and literal
   paths are checked before sending. Selectors, registry arguments, SNBT
@@ -493,3 +492,29 @@ previous revision on the target. Removed files stay in a separate recovery
 directory. The target rechecks selection identity and modification state.
 Bedrock updates match the pack UUID and group and preserve existing world
 activation where supported.
+
+
+**Manage installed Bedrock packs** handles eligible local UUID-scoped resource
+and behavior packs. Disable and removal preserve the package and save which
+worlds referenced it. Updating a pack checks its UUID and module group, keeps
+the old revision and updates existing world registrations. A rollback restores
+the old package and matching registration versions. The native Windows
+fixture exercised seven state transitions on a disposable local world.
+
+### Runtime and authoring boundaries
+
+Local Java has the existing backup-before-version-switch and scheduling
+workflow. Other targets have explicit creation and lifecycle controls.
+Complete distribution upgrades, server-version rollback, scheduler parity,
+cross-target world migration, remote process reattachment after disconnect,
+proxy/backend topology editing and every extension-specific configuration
+surface have not been verified or implemented across the matrix. Package
+rollback restores package bytes and managed registrations; it does not
+reverse world data modified by a running server or plugin.
+
+The advanced Java terrain authoring surface runs locally. Custom runnable
+JARs and game packs can be installed, but the manager does not build arbitrary
+plugin source projects. All eight playable acceptance cells remain open until
+their actual service starts, compatible clients join and reconnect, and
+saved worlds reopen on the same version. Disposable backend fixtures and
+source compilation are recorded separately.
