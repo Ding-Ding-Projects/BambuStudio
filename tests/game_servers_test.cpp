@@ -569,6 +569,8 @@ static void sha1()
 #include "slic3r/GUI/GameServers/ServerMetrics.hpp"
 #include "slic3r/GUI/GameServers/CommandReport.hpp"
 #include "slic3r/GUI/GameServers/AreaSelection.hpp"
+#include "slic3r/GUI/GameServers/ManagedSchedules.hpp"
+#include "slic3r/GUI/GameServers/ManagedContainerLifecycle.hpp"
 
 static void containers()
 {
@@ -611,6 +613,31 @@ static void containers()
     CHECK(check_command_report(report,"rate 21").verdict==CommandVerdict::Invalid);
     CHECK(check_command_report(report,"rate text").verdict==CommandVerdict::Invalid);
     CHECK(check_command_report(report,"plugin-command").verdict==CommandVerdict::Unavailable);
+    auto dry_cycle=[](const std::vector<std::string> &states,std::vector<std::string> &verbs){
+        std::size_t n=0;auto elapsed=std::chrono::steady_clock::time_point{};
+        auto cli=[&](std::vector<std::string> argv){verbs.push_back(argv.front());
+            if(argv[0]=="inspect"){return std::make_pair(0,states[std::min(n++,states.size()-1)]+"|itzg/minecraft-server:java21\n");}
+            return std::make_pair(0,std::string());
+        };
+        return managed_container_restart("owned",false,false,0,cli,[&]{return elapsed;},[&]{elapsed+=std::chrono::seconds(10);});
+    };
+    std::vector<std::string> calls;
+    CHECK(dry_cycle({"exited|0|old"},calls).find("Skipped")!=std::string::npos && calls.size()==1);
+    calls.clear();
+    CHECK(dry_cycle({"running|0|old","exited|0|old","running|0|new"},calls).find("Replacement container process")!=std::string::npos);
+    CHECK(std::count(calls.begin(),calls.end(),"start")==1 && std::count(calls.begin(),calls.end(),"kill")==0);
+    calls.clear();
+    CHECK(dry_cycle({"running|0|old","exited|1|old"},calls).find("Unsuccessful exit")!=std::string::npos && std::count(calls.begin(),calls.end(),"start")==0);
+    calls.clear();
+    CHECK(dry_cycle({"running|0|old"},calls).find("Graceful stop did not complete")!=std::string::npos && std::count(calls.begin(),calls.end(),"start")==0);
+    ManagedSchedule event;
+    event.schedule.restart_on=true;event.schedule.warn_minutes=5;event.next=10000;
+    CHECK(managed_schedule_due(event,9699,false)==ScheduleIntent::None);
+    CHECK(managed_schedule_due(event,9700,false)==ScheduleIntent::Warn);
+    CHECK(managed_schedule_due(event,9800,false)==ScheduleIntent::None);
+    CHECK(managed_schedule_due(event,10000,false)==ScheduleIntent::Restart && event.next>10000);
+    event.next=10000;CHECK(managed_schedule_due(event,10001,true)==ScheduleIntent::Missed);
+    event.next=10000;CHECK(managed_schedule_due(event,10100,false)==ScheduleIntent::Missed);
     setup.accepted = false;
     CHECK(container_create(setup).empty());
     CHECK(!container_field("--host"));

@@ -504,7 +504,7 @@ fixture exercised seven state transitions on a disposable local world.
 ### Runtime and authoring boundaries
 
 Local Java has the existing backup-before-version-switch and scheduling
-workflow. Other targets have explicit creation and lifecycle controls.
+workflow. Managed container targets and provisioned native SSH targets with tmux also have persistent daily restart schedules. Other unsupported schedules remain manual.
 Complete distribution upgrades, server-version rollback, scheduler parity,
 cross-target world migration, reconnect for unowned or attached-only processes,
 proxy/backend topology editing and every extension-specific configuration
@@ -535,3 +535,31 @@ An isolated tmux 3.5a fixture verified detach, reconnect to the original
 process, a console round trip and graceful exit. Duplicate starts, a wrong
 owner and a stale process record were refused. This confirms process identity
 and continuity, independently of game-client login or world playability.
+
+
+### Daily restarts for owned target instances
+
+**Restart schedule** on a recorded container, and **SSH restart schedule**
+on a provisioned native SSH server, enable a daily restart at a local hour
+and minute with an optional 0–30 minute warning. The existing server-manager
+timer and calendar calculate due times while the application is running and
+the manager is initialized. The schedule and next due time persist. The
+dispatcher advances the stored due time under a per-target interprocess lock
+before sending an action. Overdue starts are skipped after shutdown or a long
+suspend. A stopped server is not started by this schedule.
+
+At execution the manager rechecks its local ownership receipt and the exact
+remote instance. Container operations retain the configured Docker context
+and immutable container ID. SSH operations require a live verified tmux
+session and a previously accepted EULA for Java. Both send a normal console
+warning and graceful stop. A failed or timed-out stop prevents a replacement
+start. Automatic restarts by the container engine are distinguished from a
+manager start. The recorded verdict distinguishes a verified replacement
+process from authenticated game readiness.
+
+Disposable local fixtures exercised the real restart adapter with both Java
+and Bedrock image identities, without launching either game. A separate
+tmux fixture verified a scheduled warning, changed process identity on a
+successful restart, and refusal to restart an already stopped instance.
+Cross-target scheduled backups, production-host scheduling and playable
+reconnect after a scheduled restart remain outside that proof.

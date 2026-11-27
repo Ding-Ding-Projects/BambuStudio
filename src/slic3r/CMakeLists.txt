@@ -1145,6 +1145,7 @@ list(APPEND SLIC3R_GUI_SOURCES
     GUI/GameServers/RconCredential.cpp
     GUI/GameServers/BedrockDownloadsDialog.cpp
     GUI/GameServers/TargetContentDialog.cpp
+    GUI/GameServers/ManagedSchedules.cpp
     GUI/GameServers/TargetSettings.cpp
     GUI/GameServers/BedrockSettings.cpp
     GUI/GameServers/BedrockSettingsDialog.cpp
