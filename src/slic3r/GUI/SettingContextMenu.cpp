@@ -285,7 +285,7 @@ void append_setting_items(wxMenu &menu, wxWindow *owner, OptionsGroup *group, co
         const int type = cog->config_type();
         add_action(menu, _L("Compare with other presets..."), _L("Open the preset comparison for this kind of preset"), [type]() {
             const bool known = type == Preset::TYPE_PRINT || type == Preset::TYPE_FILAMENT || type == Preset::TYPE_PRINTER;
-            if (wxGetApp().mainframe) wxGetApp().mainframe->diff_dialog.show(known ? Preset::Type(type) : Preset::TYPE_INVALID);
+            if (wxGetApp().mainframe) wxGetApp().mainframe->diff_dialog().show(known ? Preset::Type(type) : Preset::TYPE_INVALID);
         });
     }
     wxWeakRef<wxWindow> anchor(owner);
