@@ -118,7 +118,8 @@ std::string write_vertical_pack(const WorldJarData &jar,const VerticalWorld &o,c
        !noise.contains("sea_level") || !noise.contains("aquifers_enabled") || !noise.contains("ore_veins_enabled"))
         return "The selected version's overworld format is unsupported.";
     auto &over=preset["dimensions"]["minecraft:overworld"];
-    if(over.value("type",std::string())!="minecraft:overworld" || over["generator"].value("settings",std::string())!="minecraft:overworld")
+    if(!over.is_object() || !over.contains("type") || over["type"]!="minecraft:overworld" || !over["generator"].is_object() ||
+       !over["generator"].contains("settings") || over["generator"]["settings"]!="minecraft:overworld")
         return "The selected version's normal preset uses an unsupported generator.";
     over["type"]="bambustudio:configured";over["generator"]["settings"]="bambustudio:configured";
     dim["min_y"]=o.min_y;dim["height"]=o.height;dim["logical_height"]=o.height;

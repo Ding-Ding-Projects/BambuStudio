@@ -3,6 +3,8 @@
 #include "../src/slic3r/GUI/GameServers/WorldJarData.hpp"
 #include "../src/slic3r/GUI/GameServers/BedrockPack.hpp"
 #include "../src/slic3r/GUI/GameServers/BedrockSettings.hpp"
+#include "../src/slic3r/GUI/GameServers/BedrockDistributions.hpp"
+#include "../src/slic3r/GUI/GameServers/LocalJavaInstall.hpp"
 #include "../src/slic3r/GUI/GameServers/ServerSystem.hpp"
 #include "libslic3r/miniz_extension.hpp"
 #include <filesystem>
@@ -77,6 +79,15 @@ int main(int argc, char **argv)
     check(settings.size()==4 && settings[1].value.empty() && settings[2].value.empty(),"protected or unknown BDS value exposed");
     check(!change_bedrock_setting(bds,"difficulty","hard") && !change_bedrock_setting(bds,"server-port","99999"),"unsafe Bedrock setting accepted");
     check(change_bedrock_setting(bds,"server-port","19140") && bds.find("19140\r\n# retained")!=std::string::npos,"Bedrock line-ending preservation");
+    const auto links=bedrock_distributions(R"({"result":{"links":[{"downloadType":"serverBedrockWindows","downloadUrl":"https://www.minecraft.net/bedrockdedicatedserver/bin-win/bedrock-server-1.26.66.1.zip"},{"downloadType":"serverBedrockLinux","downloadUrl":"https://example.org/tool.zip"}]}})");
+    check(links.size()==1 && links[0].windows && links[0].version=="1.26.66.1","Bedrock download origin and version selection");
+    const auto flavor=dir/"paper-1.21.4-99.jar", staged=dir/"setup-stage", fresh=dir/"new-server";
+    package(flavor,{{"META-INF/MANIFEST.MF","Manifest-Version: 1.0\nMain-Class: io.papermc.paperclip.Paperclip\n"},{"version.json",R"({"id":"1.21.4","java_version":21})"}});
+    fs::create_directory(staged);JarInfo inspected;std::string why;
+    check(copy_runnable_server(flavor,staged/flavor.filename(),inspected,why) && inspected.flavour==Flavour::Paper,"runnable Paper import");
+    std::ofstream(staged/"server.properties")<<"server-port=25565\n";std::ofstream(staged/"eula.txt")<<"eula=false\n";
+    check(publish_server_setup(staged,fresh,flavor.filename().string(),why) && fs::exists(fresh/flavor.filename()),"new local server staging");
+    check(!publish_server_setup(staged,fresh,flavor.filename().string(),why) && fs::exists(fresh/"eula.txt"),"existing installation overwritten");
     const auto pack_info = R"({"header":{"uuid":"ec9410a2-de16-4f98-8eec-9efa1319db18","version":[1,0,4]},"modules":[{"type":"data"},{"type":"script"}]})";
     check(bedrock_pack(pack_info).group == "behavior", "valid Bedrock behavior pack was rejected");
     check(bedrock_pack("{}").id.empty(), "missing Bedrock manifest accepted");

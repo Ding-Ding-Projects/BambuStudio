@@ -10,6 +10,7 @@
 #include "CommandReport.hpp"
 #include "VersionReport.hpp"
 #include "WorldJarData.hpp"
+#include "LocalJavaInstall.hpp"
 #include "AreaSelection.hpp"
 #include "RconCredential.hpp"
 
@@ -640,7 +641,7 @@ class CreateDialog : public Dialog
 public:
     CreateDialog(wxWindow *parent, const Manifest &manifest) : Dialog(parent, _L("Create a Minecraft server"))
     {
-        auto *lead = text(this, Label::Body_13, _L("Downloads the official server file from Mojang, checks its SHA-1, and sets up a new folder. Nothing outside that folder changes."), true);
+        auto *lead = text(this, Label::Body_13, _L("Choose a Mojang version or a trusted runnable local server JAR. Setup stages and verifies the files before publishing them to a new or empty directory."), true);
         lead->Wrap(FromDIP(600));
         body->Add(lead, 0, wxBOTTOM, FromDIP(12));
         auto *grid = new wxFlexGridSizer(2, FromDIP(8), FromDIP(12));
@@ -652,13 +653,26 @@ public:
         m_name = new TextInput(this, _L("My server"), wxEmptyString, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(320), -1));
         row(_L("Name"), m_name);
         std::vector<wxString> versions;
-        for (const ManifestVersion &v : manifest.versions)
-            if (v.type == "release") {
-                versions.push_back(u8(v.id));
-                m_ids.push_back(v.id);
-            }
-        m_version = choice(this, versions, 0, FromDIP(200));
+        int first_release=-1;
+        for (const ManifestVersion &v : manifest.versions) {
+            if(first_release<0 && v.type=="release")first_release=int(versions.size());
+            versions.push_back(u8(v.id+" ("+v.type+")"));m_ids.push_back(v.id);
+        }
+        m_version = choice(this, versions, first_release<0?0:first_release, FromDIP(200));
         row(_L("Version"), m_version);
+        auto *read_versions=button(this,_L("Read Mojang version list"),GlyphRefresh,Button::Variant::Text);
+        read_versions->Bind(wxEVT_BUTTON,[this](wxCommandEvent &){EndModal(wxID_REFRESH);});
+        row(_L("Version catalog"),read_versions);
+        auto *local=button(this,_L("Choose trusted server JAR..."),GlyphFolder);
+        local->Bind(wxEVT_BUTTON,[this,local](wxCommandEvent &){
+            wxFileDialog pick(this,_L("Choose a trusted runnable server JAR"),{},{},"JAR (*.jar)|*.jar",wxFD_OPEN|wxFD_FILE_MUST_EXIST);
+            if(pick.ShowModal()!=wxID_OK)return;
+            m_local=into_u8(pick.GetPath());local->SetLabel(u8(leaf(m_local)));m_version->Disable();refresh();
+        });
+        row(_L("Local distribution"),local);
+        auto *official=button(this,_L("Use Mojang version instead"),GlyphRefresh,Button::Variant::Text);
+        official->Bind(wxEVT_BUTTON,[this,local](wxCommandEvent &){m_local.clear();local->SetLabel(_L("Choose trusted server JAR..."));m_version->Enable();refresh();});
+        row(_L("Official distribution"),official);
         const wxString start = u8((fs::u8path(into_u8(wxStandardPaths::Get().GetDocumentsDir())) / "Minecraft servers").u8string());
         auto *where = new wxBoxSizer(wxHORIZONTAL);
         m_parent = new TextInput(this, start, wxEmptyString, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(320), -1));
@@ -695,6 +709,7 @@ public:
         refresh();
     }
 
+    std::string local() const {return m_local;}
     std::string name() const { return into_u8(m_name->GetTextCtrl()->GetValue()).empty() ? "server" : into_u8(m_name->GetTextCtrl()->GetValue()); }
     std::string version() const { const int i = m_version->GetSelection(); return i >= 0 && i < int(m_ids.size()) ? m_ids[std::size_t(i)] : ""; }
     std::string folder() const { return (fs::u8path(into_u8(m_parent->GetTextCtrl()->GetValue())) / fs::u8path(safe_file_name(name()))).u8string(); }
@@ -708,7 +723,7 @@ private:
         const bool      exists = fs::exists(fs::u8path(folder()), ec) && !fs::is_empty(fs::u8path(folder()), ec);
         m_note->SetLabel(exists ? _L("That folder already has files in it; choose another name.")
                                 : wxString::Format(_L("The server goes into %s."), u8(folder())));
-        ok->Enable(m_eula->GetValue() && !exists && !version().empty());
+        ok->Enable(m_eula->GetValue() && !exists && (!version().empty() || !m_local.empty()));
         Layout();
     }
     TextInput               *m_name = nullptr, *m_parent = nullptr;
@@ -717,6 +732,7 @@ private:
     LabeledCheckBox         *m_eula = nullptr;
     Label                   *m_note = nullptr;
     std::vector<std::string> m_ids;
+    std::string m_local;
 };
 
 // Found server folders, each to adopt or not. Adopting changes nothing in the folder.
@@ -1046,7 +1062,7 @@ struct ServersPanel::Ui
     void restore();
     void delete_backup();
     void remove_server();
-    void read_manifest();
+    void read_manifest(bool create_after=false);
     void switch_version();
     void players_add();
     void players_remove();
@@ -2153,15 +2169,15 @@ void ServersPanel::Ui::refresh_versions()
     versions_note->Wrap(self->FromDIP(760));
 }
 
-void ServersPanel::Ui::read_manifest()
+void ServersPanel::Ui::read_manifest(bool create_after)
 {
     if (busy) return;
     set_busy(true, _L("Reading the Mojang version list"));
     std::weak_ptr<bool> guard = alive;
     auto                stop  = cancel;
-    std::thread([this, guard, stop]() {
+    std::thread([this, guard, stop, create_after]() {
         Download d = fetch(kManifestUrl, {}, stop.get());
-        wxTheApp->CallAfter([this, guard, d]() {
+        wxTheApp->CallAfter([this, guard, d, create_after]() {
             if (guard.expired()) return;
             set_busy(false);
             Manifest m;
@@ -2176,6 +2192,7 @@ void ServersPanel::Ui::read_manifest()
             Live::get().manifest_read = std::time(nullptr);
             write_file_atomic(Live::get().manifest_cache(), d.body);
             refresh_versions();
+            if(create_after)create_server();
         });
     }).detach();
 }
@@ -3243,71 +3260,54 @@ void ServersPanel::Ui::create_server()
 {
     if (busy) return;
     Live &live = Live::get();
-    if (live.manifest.versions.empty()) {
-        MessageDialog(self, _L("Read the Mojang version list first (Versions, Read the Mojang list), so there is a version to choose."), _L("Create server"),
-                      wxOK | wxICON_INFORMATION)
-            .ShowModal();
-        read_manifest();
-        return;
-    }
     CreateDialog dlg(self, live.manifest);
-    if (dlg.ShowModal() != wxID_OK) return;
-    const std::string name = dlg.name(), version = dlg.version(), folder = dlg.folder();
-    const int         memory = dlg.memory(), port = dlg.port();
-    const ManifestVersion *mv = nullptr;
-    for (const ManifestVersion &v : live.manifest.versions)
-        if (v.id == version) mv = &v;
-    if (!mv) return;
-    std::error_code ec;
-    fs::create_directories(fs::u8path(folder), ec);
-    if (ec) {
-        MessageDialog(self, wxString::Format(_L("The folder could not be made: %s"), u8(ec.message())), _L("Create server"), wxOK | wxICON_WARNING).ShowModal();
-        return;
-    }
-    set_busy(true, wxString::Format(_L("Creating %s"), u8(name)));
-    busy_step->SetLabel(_L("Reading the version record"));
-    std::weak_ptr<bool> guard = alive;
-    auto                stop  = cancel;
-    fetch_server_jar(
-        mv->url, (fs::u8path(folder) / "server.jar").u8string(), stop,
-        [this, guard](std::uint64_t a, std::uint64_t t) {
-            wxTheApp->CallAfter([this, guard, a, t]() {
-                if (!guard.expired()) busy_step->SetLabel(wxString::Format(_L("Downloading: %s of %s"), size_text(a), size_text(t)));
-            });
-        },
-        [this, guard, name, version, folder, memory, port](bool ok, std::string error, VersionRecord) {
-            wxTheApp->CallAfter([this, guard, name, version, folder, memory, port, ok, error]() {
-                if (guard.expired()) return;
-                set_busy(false);
-                Live &live = Live::get();
-                if (!ok) {
-                    if (!error.empty()) MessageDialog(self, u8(error), _L("Create server"), wxOK | wxICON_WARNING).ShowModal();
-                    live.record(name, "Create", version + ": " + error, error.empty() ? "Cancelled" : "Failed");
-                    return;
-                }
-                // The EULA was accepted in the dialog; the first settings are the port and the name.
-                PropertiesFile props;
-                props.set("server-port", std::to_string(port));
-                props.set("motd", name);
-                write_file_atomic((fs::u8path(folder) / "eula.txt").u8string(), eula_text(true, into_u8(wxDateTime::Now().FormatISOCombined())));
-                write_file_atomic((fs::u8path(folder) / "server.properties").u8string(), write_properties(props));
-                ServerRecord s;
-                s.name                 = name;
-                s.id                   = live.library.unique_id(name);
-                s.folder               = folder;
-                s.launch.jar           = "server.jar";
-                s.launch.memory_min_mb = std::min(1024, memory);
-                s.launch.memory_max_mb = memory;
-                s.version              = version;
-                s.flavour              = "Vanilla";
-                live.library.servers.push_back(s);
-                live.record(name, "Create", version, "Done");
-                live.save();
-                selected = s.id;
-                refresh_list();
-                refresh_detail();
-            });
+    const int decision=dlg.ShowModal();
+    if(decision==wxID_REFRESH){read_manifest(true);return;}
+    if(decision!=wxID_OK)return;
+    const std::string name=dlg.name(),chosen=dlg.version(),folder=dlg.folder(),local=dlg.local();
+    const int memory=dlg.memory(),port=dlg.port();
+    std::string url;
+    for(const auto &v:live.manifest.versions)if(v.id==chosen)url=v.url;
+    if(local.empty() && url.empty())return;
+    const fs::path target=fs::u8path(folder);
+    std::error_code ec;fs::create_directories(target.parent_path(),ec);
+    const fs::path stage=target.parent_path()/(".bambu-server-setup-"+std::to_string(std::random_device{}()));
+    if(ec || !fs::create_directory(stage,ec)){MessageDialog(self,_L("Could not create a separate setup directory."),_L("Create server"),wxOK|wxICON_WARNING).ShowModal();return;}
+    const std::string jar=local.empty()?"server.jar":fs::u8path(local).filename().u8string();
+    set_busy(true,wxString::Format(_L("Creating %s"),u8(name)));
+    std::weak_ptr<bool> weak=alive;
+    auto stop=cancel;
+    const auto accepted_stamp=into_u8(wxDateTime::Now().FormatISOCombined());
+    const auto finish=[this,weak,name,chosen,folder,memory,port,stage,target,jar,local,stop,accepted_stamp](bool ok,std::string error,JarInfo info) {
+        std::string version=local.empty()?chosen:info.version;
+        if(ok && !stop->load()){
+            PropertiesFile props;props.set("server-port",std::to_string(port));props.set("motd",name);
+            ok=write_file_atomic((stage/"eula.txt").u8string(),eula_text(true,accepted_stamp),&error) &&
+               write_file_atomic((stage/"server.properties").u8string(),write_properties(props),&error) &&
+               publish_server_setup(stage,target,jar,error);
+        }else ok=false;
+        std::error_code ignored;fs::remove_all(stage,ignored);
+        wxTheApp->CallAfter([this,weak,name,folder,memory,jar,version,ok,error,info,local] {
+            if(weak.expired())return;
+            set_busy(false);auto &live=Live::get();
+            if(!ok){
+                if(!error.empty())MessageDialog(self,u8(error),_L("Create server"),wxOK|wxICON_WARNING).ShowModal();
+                live.record(name,"Create",error,error.empty()?"Cancelled":"Failed");return;
+            }
+            ServerRecord record;record.name=name;record.id=live.library.unique_id(name);record.folder=folder;record.launch.jar=jar;
+            record.launch.memory_min_mb=std::min(1024,memory);record.launch.memory_max_mb=memory;record.version=version;
+            record.flavour=local.empty()?"Vanilla":flavour_name(info.flavour);
+            live.library.servers.push_back(record);live.record(name,"Create",version,"Done");live.save();
+            selected=record.id;refresh_list();refresh_detail();
         });
+    };
+    if(!local.empty()){
+        std::thread([local,stage,jar,finish]{JarInfo info;std::string error;bool ok=copy_runnable_server(fs::u8path(local),stage/fs::u8path(jar),info,error);finish(ok,error,info);}).detach();
+    }else{
+        fetch_server_jar(url,(stage/fs::u8path(jar)).u8string(),stop,
+            [this,weak](std::uint64_t a,std::uint64_t t){wxTheApp->CallAfter([this,weak,a,t]{if(!weak.expired())busy_step->SetLabel(wxString::Format(_L("Downloading: %s of %s"),size_text(a),size_text(t)));});},
+            [finish](bool ok,std::string error,VersionRecord){finish(ok,error,{});});
+    }
 }
 
 // ---------------------------------------------------------------------------
