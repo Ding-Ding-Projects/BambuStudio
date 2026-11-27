@@ -5092,7 +5092,7 @@ void SelectMachineDialog::update_show_status(MachineObject* obj_)
     const bool show_motion = m_print_type == PrintFromType::FROM_NORMAL && readiness.readiness == SendReadiness::NeedsSlice;
     if (show_motion) m_slice_motion->show_required(*m_plater, readiness.plate_index);
     else m_slice_motion->clear();
-    m_thumbnailPanel->Show(!m_slice_motion->IsShown());
+    m_thumbnailPanel->Show(!show_motion);
     m_panel_image->Layout();
 
     /*agent check and printer valid check*/

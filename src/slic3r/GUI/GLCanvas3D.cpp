@@ -8413,6 +8413,8 @@ void GLCanvas3D::render_thumbnail_framebuffer(const std::shared_ptr<OpenGLManage
          // end fxaa pass
     }
 
+    // An exact-plate request may find no drawable instances after filtering.
+    if (!thumbnail_data.is_valid()) return;
     p_ogl_manager->read_pixel(write_to_framebuffer_name, 0, 0, w, h, EPixelFormat::RGBA, EPixelDataType::UByte, (void*)thumbnail_data.pixels.data());
 
     const auto& p_fb = p_ogl_manager->get_frame_buffer(thumbnail_fb_name);
