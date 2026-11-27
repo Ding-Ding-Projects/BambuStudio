@@ -11,7 +11,7 @@
 namespace Slic3r::GUI {
 class Plater;
 struct SliceToolpathSnapshot;
-enum class SliceMotionKind { Ordinary, DialogRebuild, Required };
+enum class SliceMotionKind;
 
 struct SliceMotionKey {
     size_t model, plate, epoch;
@@ -25,6 +25,7 @@ public:
     static std::optional<SliceMotionKey> identify(Plater &plater, int index);
     static wxImage geometry(Plater &plater, const SliceMotionKey &key);
     static void request_dialog(Plater &plater);
+    static void clear_request();
     static void begin(Plater &plater, int plate);
     static void stop();
     static void finish(Plater &plater, int index);

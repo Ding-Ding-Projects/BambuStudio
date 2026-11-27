@@ -1,4 +1,5 @@
-#include "slic3r/GUI/SliceMotionDrawing.hpp"
+#include "SliceMotionDrawing.hpp"
+#include "SliceToolpathSnapshot.hpp"
 #include "SlicingProgressNotification.hpp"
 #include "PreviewLayout.hpp"
 #include "Widgets/MD3Motion.hpp"
@@ -319,7 +320,7 @@ void NotificationManager::SlicingProgressNotification::render(GLCanvas3D& canvas
                     render_slice_scene(child_window_pos + ImVec2(0,progress_panel_height-scene_height),
                                        ImVec2(progress_panel_width,scene_height));
                     if (!MD3::Motion::reduced() && m_sp_state == SlicingProgressState::SP_PROGRESS)
-                        canvas.request_extra_frame();
+                        canvas.schedule_extra_frame(50);
                 }
 				render_text(text_pos);
 				render_close_button(button_pos, button_size);
@@ -378,20 +379,26 @@ void NotificationManager::SlicingProgressNotification::render_slice_scene(const 
     draw->AddImage((ImTextureID)(intptr_t)m_model_texture.get_id(),top,top+ImVec2(side,side));
     const auto accent = md3_notif_u32(MD3::Role::Primary, m_is_dark);
     const auto point = [&](double x,double y) { return ImVec2(pos.x+size.x*x,pos.y+h*y); };
-    if (paths) draw_slice_paths(*paths,SliceMotion::seconds(),MD3::Motion::reduced(),
+    const bool still = MD3::Motion::reduced() || m_sp_state == SlicingProgressState::SP_COMPLETED;
+    if (paths) draw_slice_paths(*paths,SliceMotion::seconds(),still,
         [&](double x,double y,double xx,double yy,bool head) {
             draw->AddLine(point((1+x)*.5,y),point((1+xx)*.5,yy),accent,head ? 3.f : 1.f);
         });
-    draw_slice_motion(SliceMotion::kind(),SliceMotion::seconds(),MD3::Motion::reduced(),
-        [&](double x,double y,double xx,double yy,int weight) {draw->AddLine(point(x,y),point(xx,yy),accent,float(weight));},
+    draw_slice_motion(SliceMotion::kind(),SliceMotion::seconds(),still,
+        [&](double x,double y,double xx,double yy,int weight) {
+            draw->AddLine(point(x,y),point(xx,yy),md3_notif_u32(MD3::Role::Surface,m_is_dark),float(weight+2));
+            draw->AddLine(point(x,y),point(xx,yy),accent,float(weight));
+        },
         [&](double x,double y,double rx,double ry) {
             for(int i=0;i<32;++i) {
                 const double a=i*6.28318530718/32., b=(i+1)*6.28318530718/32.;
                 draw->AddLine(point(x+rx*std::cos(a),y+ry*std::sin(a)),point(x+rx*std::cos(b),y+ry*std::sin(b)),accent,2.f);
             }
         });
-    const auto label = paths ? _u8L("Print order preview") : SliceMotion::kind()==SliceMotionKind::DialogRebuild ?
-        _u8L("Reslicing / Model geometry") : _u8L("Slicing / Model geometry");
+    const bool sampled = paths && paths->segments.size() < paths->source_segment_count;
+    const bool rebuilding = SliceMotion::kind()==SliceMotionKind::DialogRebuild;
+    const auto label = sampled ? _u8L("Sampled print order") : paths ? (rebuilding ? _u8L("Reslicing / Print order preview") : _u8L("Slicing / Print order preview"))
+                             : (rebuilding ? _u8L("Reslicing / Model geometry") : _u8L("Slicing / Model geometry"));
     draw->AddText(ImVec2(pos.x,pos.y+h),md3_notif_u32(MD3::Role::OnSurface,m_is_dark),label.c_str());
     draw->PopClipRect();
 }
@@ -442,7 +449,7 @@ void Slic3r::GUI::NotificationManager::SlicingProgressNotification::render_text(
 
 void Slic3r::GUI::NotificationManager::SlicingProgressNotification::render_bar(const ImVec2& pos, const ImVec2& size)
 {
-	if (m_sp_state != SlicingProgressState::SP_PROGRESS)
+	if (m_sp_state != SlicingProgressState::SP_PROGRESS || m_percentage < 0.f)
 		return;
 
 	ImGuiWrapper& imgui = *wxGetApp().imgui();

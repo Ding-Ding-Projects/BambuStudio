@@ -3061,6 +3061,10 @@ void NotificationManager::set_slicing_progress_began(bool is_helio)
 			SlicingProgressNotification* spn = dynamic_cast<SlicingProgressNotification*>(notification.get());
             spn->get_dailytips_panel()->set_is_helio(is_helio);
 			spn->set_progress_state(SlicingProgressNotification::SlicingProgressState::SP_BEGAN);
+            if (!is_helio) {
+                spn->set_progress_state(SlicingProgressNotification::SlicingProgressState::SP_PROGRESS, -1.f);
+                spn->set_status_text(_u8L("Slicing"));
+            }
 			return;
 		}
 	}

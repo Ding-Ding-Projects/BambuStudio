@@ -5,6 +5,11 @@ add_test(
             -P "${CMAKE_CURRENT_SOURCE_DIR}/native_gui_accessibility_contract.cmake"
 )
 
+add_executable(slice_motion_frame_test slice_motion_frame_test.cpp)
+target_compile_features(slice_motion_frame_test PRIVATE cxx_std_17)
+target_include_directories(slice_motion_frame_test PRIVATE "${PROJECT_SOURCE_DIR}/src")
+add_test(NAME slice_motion_frames COMMAND slice_motion_frame_test)
+
 add_executable(fan_motion_math_test fan_motion_math.cpp)
 target_compile_features(fan_motion_math_test PRIVATE cxx_std_17)
 add_test(NAME fan_motion_math COMMAND fan_motion_math_test)

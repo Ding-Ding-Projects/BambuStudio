@@ -3320,8 +3320,8 @@ bool MainFrame::request_slice_and_print(bool dialog_reslice)
             m_plater->get_partplate_list().get_curr_plate() != plate) return;
         update_slice_print_status(eEventSliceUpdate);
         if (!m_slice_print_btn->IsEnabled()) return;
-        if (dialog_reslice) SliceMotion::request_dialog(*m_plater);
         wxCommandEvent event(wxEVT_BUTTON, m_slice_print_btn->GetId());
+        event.SetInt(dialog_reslice ? 1 : 0);
         event.SetEventObject(m_slice_print_btn);
         m_slice_print_btn->GetEventHandler()->ProcessEvent(event);
     });
@@ -3931,7 +3931,7 @@ wxSizer* MainFrame::create_side_tools(wxWindow* parent)
         });
 #endif
 
-    auto start_slice = [this](int output_action) {
+    auto start_slice = [this](int output_action, bool dialog_reslice = false) {
             if (!m_plater || m_starting_slice || m_plater->is_background_process_slicing()) return;
             struct StartingSliceScope {
                 bool& active;
@@ -3990,6 +3990,12 @@ wxSizer* MainFrame::create_side_tools(wxWindow* parent)
                     SimpleEvent slice_event(action_type);
                     // Preview may auto-slice on entry. Establish this request first,
                     // otherwise its automatic run races the queued explicit action.
+                    struct OriginScope {
+                        explicit OriginScope(Plater &plater, bool reslice) {
+                            if (reslice) SliceMotion::request_dialog(plater);
+                        }
+                        ~OriginScope() { SliceMotion::clear_request(); }
+                    } origin(*m_plater, dialog_reslice);
                     m_plater->GetEventHandler()->ProcessEvent(slice_event);
                     // The action handler selects Preview with no_slice=true. Keep the
                     // navigation rail in step without firing a second preview-enter
@@ -4003,7 +4009,7 @@ wxSizer* MainFrame::create_side_tools(wxWindow* parent)
             }
         };
     m_slice_btn->Bind(wxEVT_BUTTON, [start_slice](wxCommandEvent &) { start_slice(0); });
-    m_slice_print_btn->Bind(wxEVT_BUTTON, [start_slice](wxCommandEvent &) { start_slice(1); });
+    m_slice_print_btn->Bind(wxEVT_BUTTON, [start_slice](wxCommandEvent &event) { start_slice(1, event.GetInt() == 1); });
     m_slice_send_btn->Bind(wxEVT_BUTTON, [start_slice](wxCommandEvent &) { start_slice(2); });
 
     m_print_btn->Bind(wxEVT_BUTTON, [this](wxCommandEvent& event)

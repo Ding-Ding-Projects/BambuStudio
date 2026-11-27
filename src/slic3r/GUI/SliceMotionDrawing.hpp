@@ -1,13 +1,16 @@
 #pragma once
-#include "SliceMotion.hpp"
+#include <algorithm>
+#include <cstddef>
+#include <utility>
 #include <cmath>
-#include "SliceToolpathSnapshot.hpp"
+
 
 namespace Slic3r::GUI {
+enum class SliceMotionKind { Ordinary, DialogRebuild, Required };
 // Playback follows the retained G-code sequence. Never join separate movements.
 // Oblique projection preserves a decline in Z when object-by-object printing starts the next part.
-template<class Line>
-void draw_slice_paths(const SliceToolpathSnapshot &snapshot, double seconds, bool reduced, Line line)
+template<class Snapshot, class Line>
+void draw_slice_paths(const Snapshot &snapshot, double seconds, bool reduced, Line line)
 {
     if (snapshot.segments.empty()) return;
     const auto project = [](double x, double y, double z) {

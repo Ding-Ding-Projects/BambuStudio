@@ -1,3 +1,4 @@
+#include "SliceMotion.hpp"
 #include "SliceMotionDrawing.hpp"
 #include "GUI_App.hpp"
 #include "SliceToolpathSnapshot.hpp"
@@ -58,13 +59,15 @@ void SliceMotion::request_dialog(Plater &plater)
     request_number = plater.automation_slice_request_generation() + 1;
 }
 
+void SliceMotion::clear_request() { requested.reset(); }
+
 void SliceMotion::begin(Plater &plater, int index)
 {
     finalized.reset();
     toast = identify(plater, index);
     origin = SliceMotionKind::Ordinary;
     if (toast && requested && requested->model == toast->model && requested->plate == toast->plate &&
-        requested->epoch == toast->epoch && request_number == plater.automation_slice_request_generation())
+        request_number == plater.automation_slice_request_generation())
         origin = SliceMotionKind::DialogRebuild;
     requested.reset();
     current_image = toast ? geometry(plater, *toast) : wxImage{};
@@ -87,7 +90,7 @@ std::shared_ptr<const SliceToolpathSnapshot> SliceMotion::paths(Plater &plater)
 }
 bool SliceMotion::active(Plater &plater)
 {
-    return toast && plater.get_partplate_list().get_curr_plate_index() == toast->index && identify(plater, toast->index) == toast;
+    return toast && !plater.background_process().cancellation_requested() && plater.get_partplate_list().get_curr_plate_index() == toast->index && identify(plater, toast->index) == toast;
 }
 SliceMotionKind SliceMotion::kind() { return origin; }
 int SliceMotion::plate_index() { return toast ? toast->index : -1; }
@@ -147,7 +150,11 @@ void SliceMotionPanel::paint(wxPaintEvent &)
     const bool required = m_required.has_value();
     const int index = required ? m_required->index : SliceMotion::plate_index();
     const auto paths = required ? nullptr : SliceMotion::paths(*plater);
-    wxString label = wxString::Format(_L("Plate %d"), index + 1) + "  /  " + (paths ? _L("Print order preview") : _L("Model geometry"));
+    const wxString state = required ? _L("Plate needs slicing") : _L("Slicing");
+    wxString label = state + "  /  " + wxString::Format(_L("Plate %d"), index + 1);
+    if (!required) label += "  /  " + (paths && paths->segments.size() < paths->source_segment_count ?
+        _L("Sampled print order") : paths ? _L("Print order preview") : _L("Model geometry"));
+    if (GetName() != label) SetName(label);
     dc.SetTextForeground(GetForegroundColour());
     dc.SetFont(GetFont()); dc.DrawLabel(label, GetClientRect(), wxALIGN_BOTTOM | wxALIGN_CENTER_HORIZONTAL);
     const int w = GetClientSize().x, h = GetClientSize().y - dc.GetCharHeight() - FromDIP(4);
@@ -166,6 +173,7 @@ void SliceMotionPanel::paint(wxPaintEvent &)
     });
     draw_slice_motion(required ? SliceMotionKind::Required : SliceMotion::kind(),elapsed,MD3::Motion::reduced(),
         [&](double x,double y,double x2,double y2,int weight) {
+            dc.SetPen(wxPen(GetBackgroundColour(),FromDIP(weight+2))); dc.DrawLine(w*x,h*y,w*x2,h*y2);
             dc.SetPen(wxPen(accent,FromDIP(weight))); dc.DrawLine(w*x,h*y,w*x2,h*y2);
         }, [&](double x,double y,double rx,double ry) {
             dc.SetPen(wxPen(accent,FromDIP(2))); dc.DrawEllipse(w*(x-rx),h*(y-ry),2*w*rx,2*h*ry);

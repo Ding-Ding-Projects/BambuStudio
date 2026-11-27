@@ -17,7 +17,9 @@ for(const still of [false,true]) for(const [id,title] of states.entries()){
   if(id===0){let p=12+9*(1-Math.cos(t*2*Math.PI/2.4));for(const x of [-1,1])for(const y of [-1,1]){let X=200+x*(180-p),Y=115+y*(104-p);line(X,Y,X-x*48,Y);line(X,Y,X,Y-y*36)}}
   if(id===1){let f=t/2.1%1,k=f<.35?f/.35:(1-f)/.65;for(const d of [-1,1]){let x=200+d*(170-75*k*k);line(x,42,x-d*34,115);line(x-d*34,115,x,188);line(x+d*17,57,x-d*8,115)}}
   if(id===2){let s=t/3.2%1;line(73,181-123*s,327,181-123*s);ctx.beginPath();ctx.ellipse(200,183,72+64*s,7+12*s,0,0,2*Math.PI);ctx.stroke()}
-  requestAnimationFrame(draw)
- }requestAnimationFrame(draw)
+  if (!still && motion.checked && !reduced.matches) frame=requestAnimationFrame(draw);
+ }
+ let frame=0;function redraw(){cancelAnimationFrame(frame);draw(performance.now())}
+ motion.addEventListener('change',redraw);accent.addEventListener('input',redraw);reduced.addEventListener('change',redraw);redraw()
 }
 </script></html>
