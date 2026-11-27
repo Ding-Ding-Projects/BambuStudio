@@ -1971,8 +1971,8 @@ void AMSDryCtrWin::update_normal_state(const DevDryer* dryer)
         m_normal_description->Hide();
 
         m_trays_combo->Hide();
-        m_temperature_input->Hide();
-        m_time_input->Hide();
+        m_temperature_box->Hide();
+        m_time_box->Hide();
         m_stop_button->Show(true);
     } else {
         m_next_button->Hide();
