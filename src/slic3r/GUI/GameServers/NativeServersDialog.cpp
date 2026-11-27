@@ -1,8 +1,11 @@
 #include "NativeServersDialog.hpp"
 #include "NativeServerTarget.hpp"
+#include "libslic3r/Utils.hpp"
+#include <random>
 #include "ServerSystem.hpp"
 #include "ContentInstaller.hpp"
 #include "../I18N.hpp"
+#include "../MsgDialog.hpp"
 #include "../Widgets/Button.hpp"
 #include "../Widgets/ComboBox.hpp"
 #include "../Widgets/Label.hpp"
@@ -51,7 +54,12 @@ public:
         profile = new TextInput(this, wxEmptyString);
         field(_L("Configured SSH host alias"), profile);
         folder = new TextInput(this, wxEmptyString);
-        field(_L("Existing server directory"), folder);
+        field(_L("Server directory"), folder);
+        source_package=new TextInput(this,wxEmptyString);
+        source_package->GetTextCtrl()->SetHint(_L("Absolute path on the SSH host"));
+        field(_L("Trusted remote server JAR or Bedrock ZIP"),source_package);
+        remote_port=new SpinInput(this,{}, {},wxDefaultPosition,wxDefaultSize,0,1,65535,25565);
+        field(_L("Port for new SSH server"),remote_port);
         browse = new Button(this, _L("Choose local directory..."));
         form->AddSpacer(1); form->Add(browse);
         browse->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) {
@@ -70,6 +78,7 @@ public:
         };
         add_pack=action(_L("Install Bedrock pack..."),[this] { pack(false); });
         enable_pack=action(_L("Activate installed pack..."),[this] { pack(true); });
+        remote_setup=action(_L("Provision new SSH server..."),[this]{ provision(); });
         setup_button = action(_L("Install Bedrock ZIP..."), [this] { install(); });
         action(_L("Read EULA"), [] { wxLaunchDefaultBrowser("https://aka.ms/MinecraftEULA"); });
         start_button = action(_L("Start server"), [this] { start(); });
@@ -87,7 +96,7 @@ public:
         run->Bind(wxEVT_BUTTON, submit); command->GetTextCtrl()->Bind(wxEVT_TEXT_ENTER, submit);
         commands->Add(run);
         body->Add(commands, 0, wxEXPAND | wxALL, FromDIP(8));
-        target->Bind(wxEVT_COMBOBOX, [this](wxCommandEvent &) { controls(); });
+        target->Bind(wxEVT_COMBOBOX, [this](wxCommandEvent &) { remote_port->SetValue(target->GetSelection()==2?19132:25565);controls(); });
         Bind(wxEVT_CLOSE_WINDOW, [this](wxCloseEvent &e) {
             if ((running || installing) && e.CanVeto()) { append(_L("Wait for installation or stop the server before closing.")); e.Veto(); }
             else e.Skip();
@@ -97,6 +106,50 @@ public:
         MD3DialogCaption::Adopt(this); CentreOnParent(); controls();
     }
 private:
+    std::string local_owner(bool create)
+    {
+        const auto host=profile->GetTextCtrl()->GetValue().ToStdString(wxConvUTF8),dir=folder->GetTextCtrl()->GetValue().ToStdString(wxConvUTF8);
+        if(!ssh_profile_name(host) || shell_path(dir).empty()) return {};
+        const auto id_dir=std::filesystem::u8path(Slic3r::data_dir())/"minecraft-native-profiles"/sha1_hex(host+"\n"+dir);
+        const auto file=id_dir/"id";
+        std::string id;
+        if(read_file(file.u8string(),id,64)) return ownership_id(id)?id:std::string();
+        if(!create)return {};
+        std::error_code ec;std::filesystem::create_directories(id_dir.parent_path(),ec);
+        if(ec || !std::filesystem::create_directory(id_dir,ec))return {};
+        std::random_device random;
+        for(int n=0;n<32;++n)id+="0123456789abcdef"[random()%16];
+        if(!write_file_atomic(file.u8string(),id)){std::filesystem::remove(id_dir,ec);return {};}
+        return id;
+    }
+    void provision()
+    {
+        if(running || installing || target->GetSelection()==0)return;
+        const auto host=profile->GetTextCtrl()->GetValue().ToStdString(wxConvUTF8),dir=folder->GetTextCtrl()->GetValue().ToStdString(wxConvUTF8);
+        const auto src=source_package->GetTextCtrl()->GetValue().ToStdString(wxConvUTF8);
+        wxString path,exe;wxGetEnv("PATH",&path);
+        if(!wxFindFileInPath(&exe,path,"ssh.exe") || !ssh_profile_name(host) || shell_path(dir).empty() || shell_path(src).empty()){
+            append(_L("Choose an SSH identity, absolute package and destination paths, and an installed OpenSSH client."));return;
+        }
+        if(MessageDialog(this,wxString::Format(_L("Create a new server directory at %s on %s from the selected package? The server will stay stopped."),
+                wxString::FromUTF8(dir),wxString::FromUTF8(host)),_L("Provision SSH server"),wxYES_NO|wxNO_DEFAULT|wxICON_INFORMATION).ShowModal()!=wxID_YES)return;
+        const auto owner=local_owner(true);
+        auto args=ssh_server_setup(exe.ToStdString(wxConvUTF8),host,dir,src,target->GetSelection()==2,remote_port->GetValue(),owner);
+        if(args.empty()){append(_L("Could not establish ownership for this server path."));return;}
+        std::weak_ptr<bool> weak=lifetime;
+        auto lines=std::make_shared<std::string>();
+        process=std::make_unique<ServerProcess>();std::string error;
+        installing=process->start(args,wxGetCwd().ToStdString(wxConvUTF8),
+            [lines](const std::string &line){if(lines->size()<2048)*lines+=line.substr(0,512)+"\n";},
+            [this,weak,lines](int code){wxTheApp->CallAfter([this,weak,lines,code]{
+                if(weak.expired())return;
+                installing=false;controls();
+                append(code==0?_L("New server installed on the SSH host. Review its network settings and EULA before starting."):
+                    wxString::Format(_L("SSH provisioning exited with code %d: %s"),code,wxString::FromUTF8(*lines)));
+            });},&error);
+        controls();append(installing?_L("Provisioning the selected remote server directory..."):wxString::FromUTF8(error));
+    }
+
     void pack(bool activate)
     {
         if (running || installing || target->GetSelection()!=0) return;
@@ -158,6 +211,8 @@ private:
         add_pack->Enable(idle && target->GetSelection() == 0); enable_pack->Enable(idle && target->GetSelection() == 0);
         browse->Enable(idle && target->GetSelection() == 0);
         profile->Enable(idle && target->GetSelection() != 0);
+        remote_setup->Enable(idle && target->GetSelection()!=0);
+        source_package->Enable(idle && target->GetSelection()!=0);remote_port->Enable(idle && target->GetSelection()!=0);
         start_button->Enable(idle); stop_button->Enable(running); command->Enable(running);
     }
     void append(const wxString &line)
@@ -192,7 +247,7 @@ private:
             wxString search, ssh;
             wxGetEnv("PATH", &search);
             if (!wxFindFileInPath(&ssh, search, "ssh.exe")) { append(_L("OpenSSH client was not found.")); return; }
-            argv = ssh_server_launch(ssh.ToStdString(wxConvUTF8), profile->GetTextCtrl()->GetValue().ToStdString(wxConvUTF8), dir, target->GetSelection() == 2);
+            argv = ssh_server_launch(ssh.ToStdString(wxConvUTF8), profile->GetTextCtrl()->GetValue().ToStdString(wxConvUTF8), dir, target->GetSelection() == 2, local_owner(false));
             if (argv.empty()) { append(_L("Enter a configured SSH alias and an absolute POSIX server directory.")); return; }
         }
         std::weak_ptr<bool> weak = lifetime;
@@ -214,9 +269,10 @@ private:
     }
     bool running = false, installing = false;
     ComboBox *target;
-    TextInput *profile, *folder, *command;
+    TextInput *profile, *folder, *command, *source_package;
+    SpinInput *remote_port;
     TextArea *console;
-    Button *browse, *start_button, *stop_button, *setup_button, *add_pack, *enable_pack;
+    Button *browse, *start_button, *stop_button, *setup_button, *add_pack, *enable_pack, *remote_setup;
     LabeledCheckBox *agree;
     std::unique_ptr<ServerProcess> process;
     std::shared_ptr<bool> lifetime = std::make_shared<bool>(true);
