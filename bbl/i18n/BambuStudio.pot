@@ -38242,3 +38242,471 @@ msgstr ""
 
 msgid "Delivery in progress"
 msgstr ""
+
+msgid "Clear the chamber of hands and tools. Take this hotend from its rack slot."
+msgstr ""
+
+msgid "Waiting for the selected hotend to be reported on the right toolhead."
+msgstr ""
+
+msgid "On the printer touchscreen, open Toolbox > Nozzle Cold Pull Maintenance. Choose the right hotend and its material. Follow the touchscreen prompts to detach the PTFE tube and insert the previously used filament. Use dedicated cleaning filament only if supported by the manufacturer's procedure for this material."
+msgstr ""
+
+msgid "Cold pull active. Follow the touchscreen prompts. When instructed, remove the filament and refit the PTFE tube. Keep clear during motion."
+msgstr ""
+
+msgid "The firmware has left cold pull mode. Check the touchscreen result. Confirm only if this nozzle finished successfully, the filament was removed and the PTFE tube was refitted. Close this guide if the operation failed or was cancelled."
+msgstr ""
+
+msgid "Clear the chamber of hands and tools. Return this hotend to its original rack slot."
+msgstr ""
+
+msgid "Waiting for the same hotend to be reported in its original rack slot."
+msgstr ""
+
+msgid "Every listed hotend was confirmed by the operator and verified back in its rack slot."
+msgstr ""
+
+msgid "Guide stopped. Check the printer touchscreen for any operation still running. Reopen the guide with an idle, connected H2C and a recognized rack inventory."
+msgstr ""
+
+msgid "Cold pull all rack nozzles"
+msgstr ""
+
+msgid "Close guide"
+msgstr ""
+
+msgid "No verified hotend queue"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Rack slot %d | %u of %u returned"
+msgstr ""
+
+msgid "Hands and tools are clear of the chamber"
+msgstr ""
+
+msgid "The printer confirmed success and the PTFE tube is refitted"
+msgstr ""
+
+msgid "Take nozzle"
+msgstr ""
+
+msgid "Return nozzle"
+msgstr ""
+
+msgid "Confirm result"
+msgstr ""
+
+msgid "Search articles"
+msgstr ""
+
+msgid "Search documentation"
+msgstr ""
+
+msgid "Documentation articles"
+msgstr ""
+
+msgid "Forward"
+msgstr ""
+
+msgid "Article"
+msgstr ""
+
+msgid "The embedded web view is not available on this PC, so articles cannot be rendered here. The same documentation ships in the docs folder of the source repository."
+msgstr ""
+
+msgid "No documentation bundle was found beside the application resources."
+msgstr ""
+
+#, possible-c-format
+msgid "%zu of %zu articles match"
+msgstr ""
+
+#, possible-c-format
+msgid "%zu articles, bundled offline"
+msgstr ""
+
+msgid "Bambu Studio"
+msgstr ""
+
+msgid "Slice this plate once for each ink you choose and save one sliced file per ink, ready for the printer's USB drive. For each file every ink slot uses the chosen ink; slot colours stay. Your current inks come back when it is done."
+msgstr ""
+
+msgid "Search inks by name or type"
+msgstr ""
+
+msgid "Choose at least two inks. Each one gets its own sliced file."
+msgstr ""
+
+msgid "No inks fit the current printer. Add or show inks in the ink list first."
+msgstr ""
+
+msgid "No folder chosen yet."
+msgstr ""
+
+msgid "Change folder"
+msgstr ""
+
+msgid "Show files"
+msgstr ""
+
+msgid "Slice and save"
+msgstr ""
+
+msgid "Stopping after the ink being sliced, then putting your inks back."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Slicing %d of %d. Leave the plate as it is until this finishes."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "%d inks chosen: %d sliced files will be saved."
+msgstr ""
+
+msgid "Choose where to save the sliced files"
+msgstr ""
+
+msgid "File saved"
+msgstr ""
+
+msgid "Not saved"
+msgstr ""
+
+msgid "This plate has nothing to print. Put a model on it first."
+msgstr ""
+
+msgid "The folder cannot be reached. Plug the USB drive back in or choose another folder."
+msgstr ""
+
+msgid "the plate did not slice with this ink"
+msgstr ""
+
+msgid "the file could not be written"
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Stopped. %d of %d sliced files saved; your inks are back."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Done. %d of %d sliced files saved; your inks are back."
+msgstr ""
+
+msgid "shutting down"
+msgstr ""
+
+msgid "Home Assistant is not connected (no URL or token in Smart home)"
+msgstr ""
+
+msgid "Home Assistant URL must be HTTPS or localhost"
+msgstr ""
+
+msgid "entity id must look like input_boolean.night_mode"
+msgstr ""
+
+msgid "could not start the request"
+msgstr ""
+
+msgid "could not reach Home Assistant"
+msgstr ""
+
+msgid "entity not found (HTTP 404)"
+msgstr ""
+
+msgid "response too large"
+msgstr ""
+
+msgid "response was not a Home Assistant state"
+msgstr ""
+
+msgid "unknown error"
+msgstr ""
+
+msgid "daylight saving time"
+msgstr ""
+
+msgid "Too many rules."
+msgstr ""
+
+msgid "Settings are not available yet."
+msgstr ""
+
+msgid "Home Assistant: on"
+msgstr ""
+
+msgid "Home Assistant: off"
+msgstr ""
+
+msgid "Home Assistant: entity state is"
+msgstr ""
+
+msgid "entity not found in the bounded query"
+msgstr ""
+
+msgid "redirect refused"
+msgstr ""
+
+msgid "API: ok"
+msgstr ""
+
+msgid "could not reach the server"
+msgstr ""
+
+msgid "API: could not start the request"
+msgstr ""
+
+msgid "Scheduled settings: rule"
+msgstr ""
+
+msgid "could not read its source."
+msgstr ""
+
+msgid "Your own settings stay in force until it answers."
+msgstr ""
+
+msgid "source is read only inside the time window"
+msgstr ""
+
+msgid "waiting for the source to answer"
+msgstr ""
+
+msgid "Not checked yet"
+msgstr ""
+
+msgid "Last checked at"
+msgstr ""
+
+msgid "New schedule rule"
+msgstr ""
+
+msgid "Edit schedule rule"
+msgstr ""
+
+msgid "Choose when the rule applies, where its values come from, and which settings it changes."
+msgstr ""
+
+msgid "Rule name"
+msgstr ""
+
+msgid "Evening dark mode"
+msgstr ""
+
+msgid "Rule is enabled"
+msgstr ""
+
+msgid "Dates (optional, inclusive)"
+msgstr ""
+
+msgid "Limit to a start date"
+msgstr ""
+
+msgid "Start date"
+msgstr ""
+
+msgid "Limit to an end date"
+msgstr ""
+
+msgid "Until"
+msgstr ""
+
+msgid "End date"
+msgstr ""
+
+msgid "Time window (local time)"
+msgstr ""
+
+msgid "Same start and end: the rule applies all day on the chosen days."
+msgstr ""
+
+msgid "The end is earlier than the start, so the window crosses midnight. The weekday is the day the window starts."
+msgstr ""
+
+msgid "The window includes the start minute and ends just before the end minute."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Times are local (%s). When the clocks change, a window spanning the change is one hour shorter or longer that night."
+msgstr ""
+
+msgid "Days"
+msgstr ""
+
+msgid "Every day"
+msgstr ""
+
+msgid "Where the values come from"
+msgstr ""
+
+msgid "Value source"
+msgstr ""
+
+msgid "This rule's own values"
+msgstr ""
+
+msgid "A settings API over HTTPS"
+msgstr ""
+
+msgid "A Home Assistant switch"
+msgstr ""
+
+msgid "API address"
+msgstr ""
+
+msgid "Settings API address"
+msgstr ""
+
+msgid "Allow plain http:// to localhost for local development"
+msgstr ""
+
+msgid "Allow plain http:// to localhost (development only)"
+msgstr ""
+
+msgid "Home Assistant entity id"
+msgstr ""
+
+msgid "Settings this rule changes"
+msgstr ""
+
+msgid "Tick a setting to include it. Untouched settings keep your own value."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Change %s"
+msgstr ""
+
+msgid "(not installed)"
+msgstr ""
+
+msgid "Save rule"
+msgstr ""
+
+msgid "Inside the time window the API is read every minute. It must answer {\"schemaVersion\": 1, \"values\": {...}} with only the settings listed below; anything else is ignored. The values ticked below are the fallback for settings the API leaves out. Redirects and addresses with a user name or password are refused."
+msgstr ""
+
+msgid "Inside the time window the switch is read every minute through the Home Assistant connection from Smart home. \"on\" applies the ticked values; \"off\" or no answer leaves your own settings in force."
+msgstr ""
+
+msgid "The ticked values apply for the whole time window."
+msgstr ""
+
+msgid "Change the language mode, theme, density, accent, font, text size, funny levels or app name at chosen times, from a settings API, or from a Home Assistant switch. When a rule ends, your own values come back. Later rules in the list win when two rules set the same setting."
+msgstr ""
+
+msgid "Search rules"
+msgstr ""
+
+msgid "Schedule rules"
+msgstr ""
+
+msgid "No rules yet. Add one to change a setting on a schedule."
+msgstr ""
+
+msgid "Add rule"
+msgstr ""
+
+msgid "disabled"
+msgstr ""
+
+msgid "active now"
+msgstr ""
+
+msgid "in window, waiting for source"
+msgstr ""
+
+msgid "waiting for its window"
+msgstr ""
+
+msgid "No rules match your search."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Times are your computer's local time, currently %s. Daylight-saving changes move the wall clock; a window spanning the change is an hour shorter or longer that night."
+msgstr ""
+
+msgid "Select a rule first."
+msgstr ""
+
+msgid "Edit the selected rule"
+msgstr ""
+
+msgid "Turn the selected rule on or off"
+msgstr ""
+
+msgid "Delete the selected rule"
+msgstr ""
+
+msgid "Move the rule earlier; later rules win conflicts"
+msgstr ""
+
+msgid "Already first"
+msgstr ""
+
+msgid "Move the rule later; later rules win conflicts"
+msgstr ""
+
+msgid "Already last"
+msgstr ""
+
+msgid "(values come from the API)"
+msgstr ""
+
+msgid "Currently controlling:"
+msgstr ""
+
+msgid "Rules are checked every minute."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Delete the schedule rule \"%s\"?\nIts settings go back to your own values at the next check. The rule itself is not recoverable from this screen."
+msgstr ""
+
+msgid "Delete schedule rule"
+msgstr ""
+
+msgid "Listening on this computer only"
+msgstr ""
+
+msgid "No token is available"
+msgstr ""
+
+msgid "The port is already in use"
+msgstr ""
+
+#, possible-boost-format
+msgid "%1% at http://127.0.0.1:%2%/api/v1/"
+msgstr ""
+
+msgid "Show token"
+msgstr ""
+
+msgid "Copy token"
+msgstr ""
+
+msgid "Regenerate token"
+msgstr ""
+
+msgid "Send it as Authorization: Bearer <token>. It is kept in the application settings and is never written to a log. Regenerating it stops the old one at once."
+msgstr ""
+
+msgid "Hide token"
+msgstr ""
+
+msgid "Token copied to the clipboard."
+msgstr ""
+
+msgid "The clipboard is not available. Show the token and copy it."
+msgstr ""
+
+msgid "A new token could not be made."
+msgstr ""
+
+msgid "A new token was made. The old one no longer works."
+msgstr ""
+
+msgid "Other programs on this computer can read the door state and the printer list over a local, read-only web interface. It listens on 127.0.0.1 only, needs the access token, and answers GET requests only."
+msgstr ""
+
+msgid "Live printer readings"
+msgstr ""

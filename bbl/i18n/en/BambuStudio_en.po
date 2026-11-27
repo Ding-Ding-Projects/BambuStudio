@@ -40352,3 +40352,274 @@ msgstr ""
 
 msgid "Delivery in progress"
 msgstr ""
+
+msgid "shutting down"
+msgstr ""
+
+msgid "Home Assistant is not connected (no URL or token in Smart home)"
+msgstr ""
+
+msgid "Home Assistant URL must be HTTPS or localhost"
+msgstr ""
+
+msgid "entity id must look like input_boolean.night_mode"
+msgstr ""
+
+msgid "could not start the request"
+msgstr ""
+
+msgid "could not reach Home Assistant"
+msgstr ""
+
+msgid "entity not found (HTTP 404)"
+msgstr ""
+
+msgid "response too large"
+msgstr ""
+
+msgid "response was not a Home Assistant state"
+msgstr ""
+
+msgid "unknown error"
+msgstr ""
+
+msgid "daylight saving time"
+msgstr ""
+
+msgid "Too many rules."
+msgstr ""
+
+msgid "Settings are not available yet."
+msgstr ""
+
+msgid "Home Assistant: on"
+msgstr ""
+
+msgid "Home Assistant: off"
+msgstr ""
+
+msgid "Home Assistant: entity state is"
+msgstr ""
+
+msgid "entity not found in the bounded query"
+msgstr ""
+
+msgid "redirect refused"
+msgstr ""
+
+msgid "API: ok"
+msgstr ""
+
+msgid "could not reach the server"
+msgstr ""
+
+msgid "API: could not start the request"
+msgstr ""
+
+msgid "Scheduled settings: rule"
+msgstr ""
+
+msgid "could not read its source."
+msgstr ""
+
+msgid "Your own settings stay in force until it answers."
+msgstr ""
+
+msgid "source is read only inside the time window"
+msgstr ""
+
+msgid "waiting for the source to answer"
+msgstr ""
+
+msgid "Not checked yet"
+msgstr ""
+
+msgid "Last checked at"
+msgstr ""
+
+msgid "New schedule rule"
+msgstr ""
+
+msgid "Edit schedule rule"
+msgstr ""
+
+msgid "Choose when the rule applies, where its values come from, and which settings it changes."
+msgstr ""
+
+msgid "Rule name"
+msgstr ""
+
+msgid "Evening dark mode"
+msgstr ""
+
+msgid "Rule is enabled"
+msgstr ""
+
+msgid "Dates (optional, inclusive)"
+msgstr ""
+
+msgid "Limit to a start date"
+msgstr ""
+
+msgid "Start date"
+msgstr ""
+
+msgid "Limit to an end date"
+msgstr ""
+
+msgid "Until"
+msgstr ""
+
+msgid "End date"
+msgstr ""
+
+msgid "Time window (local time)"
+msgstr ""
+
+msgid "Same start and end: the rule applies all day on the chosen days."
+msgstr ""
+
+msgid "The end is earlier than the start, so the window crosses midnight. The weekday is the day the window starts."
+msgstr ""
+
+msgid "The window includes the start minute and ends just before the end minute."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Times are local (%s). When the clocks change, a window spanning the change is one hour shorter or longer that night."
+msgstr ""
+
+msgid "Days"
+msgstr ""
+
+msgid "Every day"
+msgstr ""
+
+msgid "Where the values come from"
+msgstr ""
+
+msgid "Value source"
+msgstr ""
+
+msgid "This rule's own values"
+msgstr ""
+
+msgid "A settings API over HTTPS"
+msgstr ""
+
+msgid "A Home Assistant switch"
+msgstr ""
+
+msgid "API address"
+msgstr ""
+
+msgid "Settings API address"
+msgstr ""
+
+msgid "Allow plain http:// to localhost for local development"
+msgstr ""
+
+msgid "Allow plain http:// to localhost (development only)"
+msgstr ""
+
+msgid "Home Assistant entity id"
+msgstr ""
+
+msgid "Settings this rule changes"
+msgstr ""
+
+msgid "Tick a setting to include it. Untouched settings keep your own value."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Change %s"
+msgstr ""
+
+msgid "(not installed)"
+msgstr ""
+
+msgid "Save rule"
+msgstr ""
+
+msgid "Inside the time window the API is read every minute. It must answer {\"schemaVersion\": 1, \"values\": {...}} with only the settings listed below; anything else is ignored. The values ticked below are the fallback for settings the API leaves out. Redirects and addresses with a user name or password are refused."
+msgstr ""
+
+msgid "Inside the time window the switch is read every minute through the Home Assistant connection from Smart home. \"on\" applies the ticked values; \"off\" or no answer leaves your own settings in force."
+msgstr ""
+
+msgid "The ticked values apply for the whole time window."
+msgstr ""
+
+msgid "Change the language mode, theme, density, accent, font, text size, funny levels or app name at chosen times, from a settings API, or from a Home Assistant switch. When a rule ends, your own values come back. Later rules in the list win when two rules set the same setting."
+msgstr ""
+
+msgid "Search rules"
+msgstr ""
+
+msgid "Schedule rules"
+msgstr ""
+
+msgid "No rules yet. Add one to change a setting on a schedule."
+msgstr ""
+
+msgid "Add rule"
+msgstr ""
+
+msgid "disabled"
+msgstr ""
+
+msgid "active now"
+msgstr ""
+
+msgid "in window, waiting for source"
+msgstr ""
+
+msgid "waiting for its window"
+msgstr ""
+
+msgid "No rules match your search."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Times are your computer's local time, currently %s. Daylight-saving changes move the wall clock; a window spanning the change is an hour shorter or longer that night."
+msgstr ""
+
+msgid "Select a rule first."
+msgstr ""
+
+msgid "Edit the selected rule"
+msgstr ""
+
+msgid "Turn the selected rule on or off"
+msgstr ""
+
+msgid "Delete the selected rule"
+msgstr ""
+
+msgid "Move the rule earlier; later rules win conflicts"
+msgstr ""
+
+msgid "Already first"
+msgstr ""
+
+msgid "Move the rule later; later rules win conflicts"
+msgstr ""
+
+msgid "Already last"
+msgstr ""
+
+msgid "(values come from the API)"
+msgstr ""
+
+msgid "Currently controlling:"
+msgstr ""
+
+msgid "Rules are checked every minute."
+msgstr ""
+
+#, possible-c-format, possible-boost-format
+msgid "Delete the schedule rule \"%s\"?\nIts settings go back to your own values at the next check. The rule itself is not recoverable from this screen."
+msgstr ""
+
+msgid "Delete schedule rule"
+msgstr ""
