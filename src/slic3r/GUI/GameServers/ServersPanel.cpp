@@ -1,6 +1,7 @@
 #include "ServersPanel.hpp"
 #include "ContainerServersDialog.hpp"
 #include "ContentInstaller.hpp"
+#include "ContentCatalogDialog.hpp"
 #include "NativeServersDialog.hpp"
 
 #include "ServerModel.hpp"
@@ -1237,6 +1238,17 @@ void ServersPanel::Ui::build_overview(wxWindow *page)
     s->Add(cards, 0, wxEXPAND);
     auto *row = new wxBoxSizer(wxHORIZONTAL);
     row->Add(text(page, Label::Head_13, _L("Recent events")), 1, wxALIGN_CENTER_VERTICAL);
+    auto *catalog = button(page, _L("Browse catalog..."), GlyphFind, Button::Variant::Outlined);
+    catalog->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) {
+        ServerRecord *sv = server();
+        if (!sv || busy) return;
+        if (Live::get().running(sv->id)) {
+            MessageDialog(self, _L("Stop the server before installing content."), _L("Content catalog"), wxOK | wxICON_INFORMATION).ShowModal();
+            return;
+        }
+        show_content_catalog(self, sv->folder, sv->flavour, sv->version);
+    });
+    row->Add(catalog, 0, wxRIGHT, page->FromDIP(8));
     auto *install = button(page, _L("Install plugin, mod or data pack..."), GlyphAdd, Button::Variant::Outlined);
     install->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) {
         ServerRecord *sv = server();
