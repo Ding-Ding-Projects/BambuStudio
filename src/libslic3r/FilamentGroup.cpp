@@ -492,6 +492,10 @@ namespace Slic3r
             update_memoryed_groups(mg, one_change_budget, ctx.group_info.max_gap_threshold, m_memoryed_heap);
         }
 
+        if (!used_filaments.empty() && ctx.group_info.preferred_extruder >= 0 &&
+            best_nonpreferred_count == std::numeric_limits<int>::max())
+            throw Slic3r::RuntimeError("No printable nozzle assignment fits the available filament capacity.");
+
         if (cost) *cost = best_flush;
         return best_full_map;
     }
@@ -1084,7 +1088,9 @@ namespace Slic3r
             MultiNozzleUtils::NozzleInfo compact_nozzle = nozzle;
             compact_nozzle.group_id = compact_id;
             compact_nozzle_info.nozzle_list.emplace_back(std::move(compact_nozzle));
-            compact_nozzle_info.per_nozzle_capacity.emplace_back(full_id >= 0 && full_id < (int)nozzle_info.per_nozzle_capacity.size() ? nozzle_info.per_nozzle_capacity[full_id] : 1);
+            // An empty capacity vector selects the legacy heuristic, including for compacted contexts.
+            if (!nozzle_info.per_nozzle_capacity.empty())
+                compact_nozzle_info.per_nozzle_capacity.emplace_back(full_id >= 0 && full_id < (int)nozzle_info.per_nozzle_capacity.size() ? nozzle_info.per_nozzle_capacity[full_id] : 1);
             compact_nozzle_info.extruder_nozzle_list[nozzle.extruder_id].emplace_back(compact_id);
 
             if (auto it = nozzle_info.nozzle_status.find(full_id); it != nozzle_info.nozzle_status.end())
