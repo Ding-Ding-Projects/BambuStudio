@@ -22,10 +22,10 @@ leaking `yue` or `bilingual` identifiers to external services.
 
 ## The Cantonese catalog
 
-`bbl/i18n/yue_HK/BambuStudio_yue_HK.po` has an entry for every message in the current English
-extraction (7,498 messages) and in the English override catalog. It holds 7,660 entries: 993 curated
-and 6,667 carrying `#. review-status: agent-drafted` (a few cover messages the current source no
-longer uses). `scripts/i18n/Test-LanguageModes.ps1` fails when a message has no Cantonese entry, so
+The Cantonese catalog is `bbl/i18n/yue_HK/BambuStudio_yue_HK.po`. Its checked coverage record,
+`bbl/i18n/yue_HK/coverage.json`, gives the current total and the number marked
+`#. review-status: agent-drafted`. It includes both current source messages and retained historical
+entries. `scripts/i18n/Test-LanguageModes.ps1` fails when a message has no Cantonese entry, so
 a new string needs its translation in the same change. Every drafted entry has passed the
 mechanical checks in `scripts/i18n/merge_cantonese_drafts.py`:
 
@@ -114,8 +114,8 @@ pushing a change to the docs or the changelog.
 
 ## Embedded web surfaces
 
-- DeviceWeb has key parity for all 204 English entries and builds a bilingual English-first variant.
-- The legacy local web bundle (`resources/web/data/text.js`) has key parity for all 281 English keys.
+- DeviceWeb has key parity for every English key and builds a bilingual English-first variant.
+- The legacy local web bundle (`resources/web/data/text.js`) has key parity for every English key.
   Every page element marked `.trans` must name a key the English table has; image alternative text
   (`data-alt-tid`) and input placeholders (`data-ph-tid`) follow the language mode too. In bilingual
   mode a placeholder shows both languages when they fit the field, and otherwise English with both
@@ -224,4 +224,4 @@ The bilingual audit at source `0a12cd0945b782fb28d02cfc0cd1c02ed1ee094b` used th
 | Prepare | 8 | 12 | 1 | 2 |
 | Preferences > General, including the parent frame | 102 | 22 | 3 | 24 |
 
-Two distinct controls remained English-only: the nozzle/connection label and the presentation/monitoring status. The latter appeared twice under the same window handle because this build traversed the dialog both as its own top-level window and as a child of its parent. The source corrections format the nozzle and connection together in each language, render every status component bilingually and count nested top-level windows only once. A successful rerun needs a build containing those corrections. The probe does not count an unexpected modal, a splash window, or a missing General section as success. This two-surface result cannot establish complete coverage or a clipping verdict for other states.
+Two distinct controls remained English-only: the nozzle/connection label and the presentation/monitoring status. The latter appeared twice under the same window handle because this build traversed the dialog both as its own top-level window and as a child of its parent. The source corrections format the nozzle and connection together in each language, render every status component bilingually and count nested top-level windows only once. A successful rerun needs a build containing those corrections. The same synthetic profile generator can select English, Cantonese or bilingual wording. The audit records visible layout flags, client geometry, display scale and binary hashes separately for each surface. It rejects an unexpected modal, a splash window or a missing General section. This two-surface result cannot establish complete coverage or a clipping verdict for other states.

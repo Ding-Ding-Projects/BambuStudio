@@ -1460,7 +1460,7 @@
     {
       "route": "settings-drafts.yue_HK.md",
       "title": "獨立設定草稿",
-      "sha256": "35c40fb323f9090c0ab5c235cae186f51e150d72a0f3b2a3809f87ce7d6c2dd3"
+      "sha256": "27e3632d8710924f59d1f2c6de3ac1c57dc2ab916256bf7df94105dda6bec902"
     },
     {
       "route": "status-hub/README.md",
@@ -1800,12 +1800,12 @@
     {
       "route": "windows/language-modes.md",
       "title": "English, Hong Kong Cantonese, and bilingual modes",
-      "sha256": "b5f1b0d39adac429b6177a66bb79db5ed987fc8553be2924b049c4f3c4983a8f"
+      "sha256": "70d2fe491becfec29e9769250e9be7ca3ecdb7b83ca67578efff7c0ac14a764d"
     },
     {
       "route": "windows/language-modes.yue_HK.md",
       "title": "英文、香港粵語同雙語模式",
-      "sha256": "7a3fc050de498aaf230d57e4218b75da72ae24019f5d263d26a61b4dfe954e6f"
+      "sha256": "c8d2b946783dfa0f1eb3ea2a6780f9225e63b7623a88cb37979994a7287ac3a1"
     },
     {
       "route": "windows/local-tools.md",
@@ -1890,7 +1890,7 @@
     {
       "route": "windows/minecraft-servers.md",
       "title": "Minecraft servers",
-      "sha256": "e1462cecd88f915556895374ed5ebb5a18eac375ea539f294c62b96f73710ce5"
+      "sha256": "81a6039735be801c64f05dfa3163416a70c32444f1d724b60143a51e5be0fbd0"
     },
     {
       "route": "windows/minecraft-servers.yue_HK.md",
@@ -2315,7 +2315,7 @@
     {
       "route": "workspace/project-version-history.yue_HK.md",
       "title": "項目版本歷史",
-      "sha256": "bc76affc89cc9dd57e0bdeb944dc97a847ccb17e5cbcc56f6bde21aa42a7b5bb"
+      "sha256": "7a216e4e5dd4c665450aa74a7c2ca4fc638830380152b4bf31f7af29c54b70c9"
     },
     {
       "route": "workspace/readable-dates.md",
@@ -2410,7 +2410,7 @@
       "bytes": 16430
     }
   ],
-  "bundle_sha256": "3c67589c3bdf40e9ddbf2a513816043690b5462100ce73f6d39463598919afc7",
+  "bundle_sha256": "1de890dfba3e7d3d6eccdf68dfbc3968940015d749dbdf1725e50ab34057663b",
   "unavailable_references": [
     {
       "source": "api/README.md",
