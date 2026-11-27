@@ -7111,7 +7111,27 @@ bool Tab::select_preset(
     if (current_dirty && print_tab) {
         option_for_dirty_preset = option;
     }
-    if (current_dirty && ! may_discard_current_dirty_preset(nullptr, preset_name, no_transfer, option_for_dirty_preset) && !force_select) {
+    // Save and Transfer also end by clearing edited state. Record a discard only
+    // when the user chose it and all subsequent selection prompts have allowed it.
+    std::set<PresetCollection *> discard_choices;
+    auto allow_switch = [&](PresetCollection &collection, bool without_transfer, ForceOption action) {
+        bool discard = false;
+        const bool allowed = may_discard_current_dirty_preset(&collection, preset_name, without_transfer, action, &discard);
+        if (discard) discard_choices.insert(&collection);
+        return allowed;
+    };
+    auto clear_edits = [&](PresetCollection &collection) {
+        if (discard_choices.count(&collection)) {
+            const auto &preset = collection.get_edited_preset();
+            const auto identity = std::to_string(int(collection.type())) + ":" + preset.name;
+            if (!LocalConfigHistory::record_config("preset", identity, "Discard preset changes", preset.config, true)) {
+                if (auto *plater = wxGetApp().plater())
+                    plater->get_notification_manager()->push_notification(_u8L("The discarded preset changes could not be recorded in local history."));
+            }
+        }
+        collection.discard_current_changes();
+    };
+    if (current_dirty && !allow_switch(*m_presets, no_transfer, option_for_dirty_preset) && !force_select) {
         canceled = true;
         BOOST_LOG_TRIVIAL(info) << boost::format("current dirty and cancelled");
     } else if (print_tab) {
@@ -7126,12 +7146,12 @@ bool Tab::select_preset(
         bool 			   new_preset_compatible = is_compatible_with_print(dependent.get_edited_preset_with_vendor_profile(),
         	m_presets->get_preset_with_vendor_profile(*m_presets->find_preset(preset_name, true)), printer_profile);
         if (! canceled)
-            canceled = old_preset_dirty && ! new_preset_compatible && ! may_discard_current_dirty_preset(&dependent, preset_name, false, option) && !force_select;
+            canceled = old_preset_dirty && ! new_preset_compatible && !allow_switch(dependent, false, option) && !force_select;
         if (! canceled) {
             // The preset will be switched to a different, compatible preset, or the '-- default --'.
             m_dependent_tabs.emplace_back((printer_technology == ptFFF) ? Preset::Type::TYPE_FILAMENT : Preset::Type::TYPE_SLA_MATERIAL);
             if (old_preset_dirty && ! new_preset_compatible)
-                dependent.discard_current_changes();
+                clear_edits(dependent);
         }
         BOOST_LOG_TRIVIAL(info) << boost::format("select process, new_preset_compatible %1%, old_preset_dirty %2%, cancelled %3%")
             %new_preset_compatible %old_preset_dirty % canceled;
@@ -7168,7 +7188,7 @@ bool Tab::select_preset(
                 pu.old_preset_dirty = (old_printer_technology == pu.technology) && pu.presets->current_is_dirty();
                 pu.new_preset_compatible = (new_printer_technology == pu.technology) && is_compatible_with_printer(pu.presets->get_edited_preset_with_vendor_profile(), new_printer_preset_with_vendor_profile);
                 if (!canceled)
-                    canceled = pu.old_preset_dirty && !pu.new_preset_compatible && !may_discard_current_dirty_preset(pu.presets, preset_name, false, option) && !force_select;
+                    canceled = pu.old_preset_dirty && !pu.new_preset_compatible && !allow_switch(*pu.presets, false, option) && !force_select;
             }
             if (!canceled) {
                 for (PresetUpdate &pu : updates) {
@@ -7176,7 +7196,7 @@ bool Tab::select_preset(
                     if (pu.technology == new_printer_technology)
                         m_dependent_tabs.emplace_back(pu.tab_type);
                     if (pu.old_preset_dirty && !pu.new_preset_compatible)
-                        pu.presets->discard_current_changes();
+                        clear_edits(*pu.presets);
                 }
             }
         }
@@ -7258,7 +7278,7 @@ bool Tab::select_preset(
     } else {
         BOOST_LOG_TRIVIAL(info) << boost::format("successfully delete, will update compatibility");
         if (current_dirty)
-            m_presets->discard_current_changes();
+            clear_edits(*m_presets);
 
         const bool is_selected = m_presets->select_preset_by_name(preset_name, false, true) || delete_current;
         assert(m_presets->get_edited_preset().name == preset_name || ! is_selected);
@@ -7370,8 +7390,9 @@ bool Tab::select_preset(
 
 // If the current preset is dirty, the user is asked whether the changes may be discarded.
 // if the current preset was not dirty, or the user agreed to discard the changes, 1 is returned.
-bool Tab::may_discard_current_dirty_preset(PresetCollection* presets /*= nullptr*/, const std::string& new_printer_name /*= ""*/, bool no_transfer, ForceOption force_op)
+bool Tab::may_discard_current_dirty_preset(PresetCollection* presets /*= nullptr*/, const std::string& new_printer_name /*= ""*/, bool no_transfer, ForceOption force_op, bool *discard_chosen)
 {
+    if (discard_chosen) *discard_chosen = false;
     if (presets == nullptr) presets = m_presets;
 
     // The unsaved-changes dialog builds its list of modified options from the options searcher,
@@ -7490,6 +7511,9 @@ bool Tab::may_discard_current_dirty_preset(PresetCollection* presets /*= nullptr
     }
     else if (dlg.transfer_changes()) {
         handle_transfer_action();
+    }
+    else if (discard_chosen) {
+        *discard_chosen = dlg.discard();
     }
 
     return true;
