@@ -2206,31 +2206,38 @@ void ServersPanel::Ui::read_manifest(bool create_after)
 }
 
 // Fetches one version's record, then its server jar, checked by SHA-1.
-static void fetch_server_jar(const std::string &record_url, const std::string &target, std::shared_ptr<std::atomic<bool>> stop,
+static void fetch_server_jar(const ManifestVersion &selected_version, const std::string &target, std::shared_ptr<std::atomic<bool>> stop,
                              std::function<void(std::uint64_t, std::uint64_t)> progress, std::function<void(bool, std::string, VersionRecord)> done)
 {
     std::thread([=]() {
         VersionRecord rec;
-        Download      d = fetch(record_url, {}, stop.get());
+        Download      d = fetch(selected_version.url, {}, stop.get());
+        if(d.ok && !selected_version.sha1.empty() && sha1_hex(d.body)!=selected_version.sha1){
+            done(false,"The version record does not match its Mojang manifest SHA-1.",rec);return;
+        }
         if (!d.ok || !parse_version_record(d.body, rec)) {
             done(false, d.cancelled ? "" : (d.error.empty() ? std::string("The version record could not be read.") : d.error), rec);
             return;
         }
+        if(rec.id!=selected_version.id){done(false,"The downloaded version record identifies a different version.",rec);return;}
         if (rec.server_url.empty()) {
             done(false, "Mojang publishes no server for this version.", rec);
             return;
         }
+        if(rec.server_sha1.size()!=40 || rec.server_sha1.find_first_not_of("0123456789abcdef")!=std::string::npos || !rec.server_size){
+            done(false,"The publisher record lacks a usable server file size or SHA-1.",rec);return;
+        }
         std::error_code ec;
         if (fs::exists(fs::u8path(target), ec)) {
             std::string have;
-            if (read_file(target, have, 512ull * 1024 * 1024) && sha1_hex(have) == rec.server_sha1) {
+            if (read_file(target, have, 512ull * 1024 * 1024) && have.size()==rec.server_size && sha1_hex(have) == rec.server_sha1) {
                 done(true, "", rec); // already here and intact
                 return;
             }
             done(false, "A different file with that name is already in the folder.", rec);
             return;
         }
-        const Download jar = fetch_to_file(rec.server_url, target, rec.server_sha1, progress, stop.get());
+        const Download jar = fetch_to_file(rec.server_url, target, rec.server_sha1, progress, stop.get(), rec.server_size);
         done(jar.ok, jar.cancelled ? "" : jar.error, rec);
     }).detach();
 }
@@ -2261,12 +2268,13 @@ void ServersPanel::Ui::switch_version()
                                          u8(sv->version.empty() ? "?" : sv->version), u8(id));
     if (older) question << "\n\n" << _L("This goes back to an older version. Worlds saved by a newer version may not load; the backup lets you return.");
     if (MessageDialog(self, question, _L("Switch version"), wxYES_NO | wxICON_QUESTION).ShowModal() != wxID_YES) return;
-    const std::string id_copy = sv->id, url = mv->url, target = (fs::u8path(sv->folder) / ("minecraft_server." + id + ".jar")).u8string();
+    const ManifestVersion selected_version=*mv;
+    const std::string id_copy = sv->id, target = (fs::u8path(sv->folder) / ("minecraft_server." + id + ".jar")).u8string();
     set_busy(true, wxString::Format(_L("Switching to %s"), u8(id)));
     busy_step->SetLabel(_L("Making a full backup first"));
     std::weak_ptr<bool> guard = alive;
     auto                stop  = cancel;
-    Live::get().backup(id_copy, false, {}, [this, guard, stop, id_copy, url, target, id](const ZipOutcome &b) {
+    Live::get().backup(id_copy, false, {}, [this, guard, stop, id_copy, selected_version, target, id](const ZipOutcome &b) {
         if (guard.expired()) return;
         if (!b.ok || *stop) {
             set_busy(false);
@@ -2275,7 +2283,7 @@ void ServersPanel::Ui::switch_version()
         }
         busy_step->SetLabel(_L("Downloading the server file"));
         fetch_server_jar(
-            url, target, stop,
+            selected_version, target, stop,
             [this, guard](std::uint64_t a, std::uint64_t t) {
                 wxTheApp->CallAfter([this, guard, a, t]() {
                     if (!guard.expired()) busy_step->SetLabel(wxString::Format(_L("Downloading: %s of %s"), size_text(a), size_text(t)));
@@ -3274,9 +3282,9 @@ void ServersPanel::Ui::create_server()
     if(decision!=wxID_OK)return;
     const std::string name=dlg.name(),chosen=dlg.version(),folder=dlg.folder(),local=dlg.local();
     const int memory=dlg.memory(),port=dlg.port();
-    std::string url;
-    for(const auto &v:live.manifest.versions)if(v.id==chosen)url=v.url;
-    if(local.empty() && url.empty())return;
+    ManifestVersion selected_version;
+    for(const auto &v:live.manifest.versions)if(v.id==chosen)selected_version=v;
+    if(local.empty() && selected_version.url.empty())return;
     const fs::path target=fs::u8path(folder);
     std::error_code ec;fs::create_directories(target.parent_path(),ec);
     const fs::path stage=target.parent_path()/(".bambu-server-setup-"+std::to_string(std::random_device{}()));
@@ -3312,7 +3320,7 @@ void ServersPanel::Ui::create_server()
     if(!local.empty()){
         std::thread([local,stage,jar,finish]{JarInfo info;std::string error;bool ok=copy_runnable_server(fs::u8path(local),stage/fs::u8path(jar),info,error);finish(ok,error,info);}).detach();
     }else{
-        fetch_server_jar(url,(stage/fs::u8path(jar)).u8string(),stop,
+        fetch_server_jar(selected_version,(stage/fs::u8path(jar)).u8string(),stop,
             [this,weak](std::uint64_t a,std::uint64_t t){wxTheApp->CallAfter([this,weak,a,t]{if(!weak.expired())busy_step->SetLabel(wxString::Format(_L("Downloading: %s of %s"),size_text(a),size_text(t)));});},
             [finish](bool ok,std::string error,VersionRecord){finish(ok,error,{});});
     }

@@ -1,5 +1,8 @@
 #include "BedrockDownloadsDialog.hpp"
 #include "BedrockDistributions.hpp"
+#include "BedrockHistory.hpp"
+#include "libslic3r/Utils.hpp"
+#include <wx/datetime.h>
 #include "ServerSystem.hpp"
 #include "slic3r/Utils/Http.hpp"
 #include "../I18N.hpp"
@@ -96,9 +99,26 @@ public:
         SetSizerAndFit(body);
         MD3DialogCaption::Adopt(this);
         CentreOnParent();
+        std::string cached;
+        if(read_file(cache_path(),cached,8*1024*1024)){
+            history=read_bedrock_history(cached);
+            if(!history.empty()){display_history();status->SetLabel(_L("Showing previously observed official links from this computer. Refresh to check current availability."));}
+        }
     }
 
 private:
+    static std::string cache_path(){return (fs::u8path(data_dir())/"minecraft-bedrock-distributions.json").u8string();}
+    void display_history()
+    {
+        rows.clear();versions->Clear();
+        for(const auto &e:history){
+            const auto &r=e.file;rows.push_back(r);
+            auto label=(r.windows?_L("Windows"):_L("Linux"))+" / "+(r.preview?_L("Preview"):_L("Stable"))+" / "+wxString::FromUTF8(r.version);
+            label+=" / "+(e.current?_L("Last listed"):_L("Previously observed"))+" "+wxDateTime(e.last).FormatISOCombined();
+            versions->Append(label);
+        }
+        if(!rows.empty())versions->SetSelection(0);
+    }
     void read()
     {
         if (busy) return;
@@ -110,15 +130,11 @@ private:
             auto       entries = bedrock_distributions(d.body);
             wxTheApp->CallAfter([this, weak, entries = std::move(entries), error = d.error]() mutable {
                 if (weak.expired()) return;
-                busy = false;
-                rows = std::move(entries);
-                versions->Clear();
-                for (const auto &r : rows)
-                    versions->Append((r.windows ? _L("Windows") : _L("Linux")) + " / " + (r.preview ? _L("Preview") : _L("Stable")) + " / " + wxString::FromUTF8(r.version));
-                if (!rows.empty()) versions->SetSelection(0);
-                status->SetLabel(!error.empty() ? wxString::FromUTF8(error) :
-                                 rows.empty()   ? _L("No supported official distributions were listed.") :
-                                                  _L("Choose a listed distribution. The publisher's index does not supply checksums."));
+                busy=false;
+                if(!error.empty() || entries.empty()){status->SetLabel(error.empty()?_L("No supported official releases were returned. Cached history was preserved."):wxString::FromUTF8(error));return;}
+                history=merge_bedrock_history(history,entries,std::time(nullptr));display_history();
+                std::string why;if(!write_file_atomic(cache_path(),write_bedrock_history(history),&why))status->SetLabel(wxString::FromUTF8(why));
+                else status->SetLabel(_L("Live links refreshed. Previously observed links are retained; the publisher does not supply checksums in this index."));
             });
         }).detach();
     }
@@ -198,6 +214,7 @@ private:
     }
     std::function<void(const std::string &)> installed;
     bool                                     busy = false;
+    std::vector<ObservedDistribution> history;
     std::vector<BedrockDistribution>         rows;
     ComboBox                                *versions;
     TextInput                               *digest;
