@@ -29151,15 +29151,15 @@ int Plater::load_project(wxString const &filename2,
     auto strategy = LoadStrategy::LoadModel | LoadStrategy::LoadConfig;
     if (originfile == "<silence>") {
         strategy = strategy | LoadStrategy::Silence;
-    } else if (originfile != "-") {
+    } else if (originfile != "-" && !context.standalone_history_snapshot) {
         strategy = strategy | LoadStrategy::Restore;
     }
-    bool load_restore = strategy & LoadStrategy::Restore;
+    const bool load_restore = context.standalone_history_snapshot || (strategy & LoadStrategy::Restore);
     // A non-Bambu 3MF has no project to open: start an empty project and import it as a model.
     const bool import_as_model = !load_restore && boost::algorithm::iends_with(path.string(), ".3mf") && !is_bbs_project_3mf(path.string());
     if (import_as_model)
         strategy = LoadStrategy::LoadModel;
-    m_syncing_printer_after_load = !context.automatic() && !import_as_model && !wxGetApp().app_config->get_bool("skip_printer_check_on_3mf_load");
+    m_syncing_printer_after_load = !context.automatic() && !context.standalone_history_snapshot && !import_as_model && !wxGetApp().app_config->get_bool("skip_printer_check_on_3mf_load");
 
     // Take the Undo / Redo snapshot.
     reset();
@@ -29184,7 +29184,7 @@ int Plater::load_project(wxString const &filename2,
         return wxID_CANCEL;
     }
 
-    if (loaded_project && explicit_3mf_loaded && p->project_history_manager()) {
+    if (loaded_project && explicit_3mf_loaded && !context.standalone_history_snapshot && p->project_history_manager()) {
         try {
             const stdfs::path archive_path = stdfs::u8path(into_u8(filename));
             const auto imported = p->project_history_manager()->import_portable_history(archive_path, archive_path).get();
@@ -29256,7 +29256,7 @@ int Plater::load_project(wxString const &filename2,
     m_loading_project = false;
 
     // only pop up in 3mf
-    if (!context.automatic() && !import_as_model && !this->m_exported_file && !this->m_only_gcode){
+    if (!context.automatic() && !context.standalone_history_snapshot && !import_as_model && !this->m_exported_file && !this->m_only_gcode){
         int nozzle_diameter = 1;
         auto ok = try_sync_preset_with_connected_printer(nozzle_diameter);
         if (ok && nozzle_diameter > 1) {
@@ -29267,9 +29267,9 @@ int Plater::load_project(wxString const &filename2,
         m_syncing_printer_after_load = false;
         get_view3D_canvas3D()->reload_scene(false);
     }
-    statistics_burial_data(filename.utf8_string());
+    if (!context.standalone_history_snapshot) statistics_burial_data(filename.utf8_string());
 
-    if (!context.automatic() && !import_as_model)
+    if (!context.automatic() && !context.standalone_history_snapshot && !import_as_model)
         show_wrapping_detect_dialog_if_necessary();
     // Publish success only after every load finalizer above has completed. An
     // exception or early return therefore leaves the caller's value false and
@@ -35661,13 +35661,13 @@ bool Plater::restore_project_history_snapshot(const stdfs::path &restored_snapsh
     bool           selected_load_succeeded = false;
     p->m_project_history_restore_in_progress = true;
     ScopeGuard restore_capture_guard([this]() { p->m_project_history_restore_in_progress = false; });
-    // A non-"-" origin selects the existing restore path: load from the
-    // temporary archive while keeping the original project filename. Empty is
-    // intentionally meaningful here and preserves an untitled document. The
-    // out-parameter is the explicit load_files success signal; the dialog id
-    // only describes the earlier close confirmation and cannot prove a load.
+    // These are normal self-contained project archives, not the autosave
+    // format whose mesh parts live in an adjacent crash-backup directory.
+    // Both reads preserve the original filename and report actual load success.
+    ProjectLoadContext history_context;
+    history_context.standalone_history_snapshot = true;
     try {
-        load_project(restored_path, original_saved_project, &selected_load_succeeded, true);
+        load_project(restored_path, original_saved_project, &selected_load_succeeded, true, history_context);
     } catch (const std::exception &ex) {
         m_loading_project = false;
         BOOST_LOG_TRIVIAL(error) << "Selected project-history version threw while loading: " << ex.what();
@@ -35685,7 +35685,7 @@ bool Plater::restore_project_history_snapshot(const stdfs::path &restored_snapsh
         bool rollback_load_succeeded = false;
         try {
             load_project(from_path(boost::filesystem::path(rollback_path.native())), original_saved_project,
-                         &rollback_load_succeeded, true);
+                         &rollback_load_succeeded, true, history_context);
         } catch (const std::exception &ex) {
             m_loading_project = false;
             BOOST_LOG_TRIVIAL(error) << "Project-history rollback threw while loading: " << ex.what();

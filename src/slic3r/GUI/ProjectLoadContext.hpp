@@ -10,6 +10,9 @@ enum class ProjectRestoreResult { Failed, InteractionRequired, ApplicationStarte
 struct ProjectLoadContext {
     ProjectLoadMode mode = ProjectLoadMode::Interactive;
     ProjectRestoreResult* result = nullptr;
+    // A complete history 3MF keeps the current document's identity but carries
+    // its geometry inside the archive, unlike the crash-backup format.
+    bool standalone_history_snapshot = false;
     bool automatic() const { return mode == ProjectLoadMode::AutomaticStartup; }
     bool defer() const {
         if (result) *result = ProjectRestoreResult::InteractionRequired;
