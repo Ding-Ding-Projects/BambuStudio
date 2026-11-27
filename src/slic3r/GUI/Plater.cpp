@@ -15229,89 +15229,6 @@ BoundingBox Plater::priv::scaled_bed_shape_bb() const
 }
 
 
-void read_binary_stl(const std::string& filename, std::string& model_id, std::string& code,
-    std::string& ml_name, std::string& ml_region, std::string& ml_id) {
-    std::ifstream file( encode_path(filename.c_str()), std::ios::binary);
-    if (!file) {
-        return;
-    }
-
-    try {
-        // Read the first 80 bytes
-        char data[80];
-        file.read(data, 80);
-        if (!file) {
-            file.close();
-            return;
-        }
-
-        if (data[0] == '\0' || data[0] == ' ') {
-            file.close();
-            return;
-        }
-
-        /*include ml info*/
-        std::string ext_content(data);
-        std::string ml_content;
-        std::string mw_content;
-
-        size_t pos = ext_content.find('&');
-        if (pos != std::string::npos) {
-            mw_content = ext_content.substr(0, pos);
-            ml_content = ext_content.substr(pos + 1);
-        }
-
-        if (ml_content.empty() && ext_content.find("ML") != std::string::npos) {
-            ml_content = ext_content;
-        }
-
-        if (mw_content.empty() && ext_content.find("MW") != std::string::npos) {
-            mw_content = ext_content;
-        }
-
-        /*parse ml info*/
-        if (!ml_content.empty()) {
-            std::istringstream iss(ml_content);
-            std::string token;
-            std::vector<std::string> result;
-            while (iss >> token) {
-                if (token.find(' ') == std::string::npos) {
-                    result.push_back(token);
-                }
-            }
-
-            if (result.size() == 4 && result[0] == "ML") {
-                ml_region   = result[1];
-                ml_name     = result[2];
-                ml_id       = result[3];
-            }
-        }
-
-        /*parse mw info*/
-        if (!mw_content.empty()) {
-            std::istringstream iss(mw_content);
-            std::string token;
-            std::vector<std::string> result;
-            while (iss >> token) {
-                if (token.find(' ') == std::string::npos) {
-                    result.push_back(token);
-                }
-            }
-
-            if (result.size() == 4 && result[0] == "MW") {
-                model_id    = result[2];
-                code        = result[3];
-            }
-        }
-
-        file.close();
-    }
-    catch (...) {
-        BOOST_LOG_TRIVIAL(warning) << current_exception_message();
-    }
-    return;
-}
-
 // BBS: backup & restore
 std::vector<size_t> Plater::priv::load_files(const std::vector<fs::path>& input_files, LoadStrategy strategy, bool ask_multi,
                                              bool *successful_3mf_loaded, PreparedImport* prepared, ProjectLoadContext context)
@@ -15513,8 +15430,6 @@ std::vector<size_t> Plater::priv::load_files_now(const std::vector<fs::path>& in
                 makerlab_region = file.makerlab_region;
                 makerlab_name = file.makerlab_name;
                 makerlab_id = file.makerlab_id;
-                if (designer_model_id.empty() && boost::algorithm::iends_with(path.string(), ".stl"))
-                    read_binary_stl(path.string(), designer_model_id, designer_country_code, makerlab_name, makerlab_region, makerlab_id);
             } else if (type_3mf) {
                 DynamicPrintConfig config;
                 Semver             file_version;
@@ -16301,7 +16216,7 @@ std::vector<size_t> Plater::priv::load_files_now(const std::vector<fs::path>& in
                 }
 
                 if (designer_model_id.empty() && boost::algorithm::iends_with(path.string(), ".stl")) {
-                    read_binary_stl(path.string(), designer_model_id, designer_country_code, makerlab_name, makerlab_region, makerlab_id);
+                    read_stl_designer_metadata(path, designer_model_id, designer_country_code, makerlab_name, makerlab_region, makerlab_id);
                 }
 
                 if (type_any_amf && is_xxx) imperial_units = true;

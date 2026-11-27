@@ -1,4 +1,4 @@
-#include <catch2/catch.hpp>
+#include <catch_main.hpp>
 
 #include "libslic3r/MeshSimplification.hpp"
 #include <limits>
