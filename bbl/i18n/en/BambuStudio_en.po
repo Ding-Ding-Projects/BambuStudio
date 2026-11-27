@@ -39052,9 +39052,6 @@ msgstr ""
 msgid "This saved search contains an invalid date."
 msgstr ""
 
-msgid "The draft could not be recorded in local history. It is still open."
-msgstr ""
-
 msgid "Discard settings draft"
 msgstr ""
 
@@ -39065,4 +39062,34 @@ msgid "Could not preserve pending project history."
 msgstr ""
 
 msgid "Use File > Export > Export current version only as 3MF to save a separate copy without history."
+msgstr ""
+
+msgid "The discarded draft could not be recorded in local history."
+msgstr ""
+
+msgid "The discarded preset changes could not be recorded in local history."
+msgstr ""
+
+msgid "Edit settings draft: %s"
+msgstr ""
+
+msgid "Discard preset changes"
+msgstr ""
+
+msgid "Restore settings draft"
+msgstr ""
+
+msgid "Create settings draft"
+msgstr ""
+
+msgid "Duplicate settings draft"
+msgstr ""
+
+msgid "Apply settings draft"
+msgstr ""
+
+msgid "Edit settings draft"
+msgstr ""
+
+msgid "Save draft as preset"
 msgstr ""

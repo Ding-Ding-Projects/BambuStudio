@@ -60727,11 +60727,6 @@ msgstr "呢個已儲存搜尋包含無效日期。"
 
 #. reviewed-category: destructive-dirty-error-security
 #. review-status: agent-drafted
-msgid "The draft could not be recorded in local history. It is still open."
-msgstr "草稿未能寫入本機歷史記錄，仍然保持開啟。"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
 msgid "Discard settings draft"
 msgstr "放棄設定草稿"
 
@@ -60749,3 +60744,53 @@ msgstr "未能保留尚待寫入嘅項目歷史記錄。"
 #. review-status: agent-drafted
 msgid "Use File > Export > Export current version only as 3MF to save a separate copy without history."
 msgstr "如要另存一份唔包含歷史嘅副本，請揀「檔案 > 匯出 > 只將目前版本匯出為 3MF」。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The discarded draft could not be recorded in local history."
+msgstr "已放棄嘅草稿未能寫入本機歷史記錄。"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "The discarded preset changes could not be recorded in local history."
+msgstr "已放棄嘅預設變更未能寫入本機歷史記錄。"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Edit settings draft: %s"
+msgstr "編輯設定草稿：%s"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Discard preset changes"
+msgstr "放棄預設變更"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Restore settings draft"
+msgstr "還原設定草稿"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Create settings draft"
+msgstr "建立設定草稿"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Duplicate settings draft"
+msgstr "複製設定草稿"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Apply settings draft"
+msgstr "套用設定草稿"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Edit settings draft"
+msgstr "編輯設定草稿"
+
+#. reviewed-category: preferences
+#. review-status: agent-drafted
+msgid "Save draft as preset"
+msgstr "將草稿儲存為預設"
