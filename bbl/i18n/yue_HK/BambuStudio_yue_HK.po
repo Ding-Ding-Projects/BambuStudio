@@ -16390,7 +16390,7 @@ msgstr "新增墨水"
 #. reviewed-category: navigation
 #. review-status: agent-drafted
 msgid ", and %d more"
-msgstr "，以及仲有 %d 個"
+msgstr "，另外仲有 %d 項"
 
 #. reviewed-category: navigation
 #. review-status: agent-drafted
@@ -17430,47 +17430,47 @@ msgstr "存儲設備為唯讀時唔支援縮時攝影。"
 #. reviewed-category: slicing-printing
 #. review-status: agent-drafted
 msgid "To ensure your safety, certain processing tasks (such as laser) can only be resumed on printer."
-msgstr "為咗確保你嘅安全，某啲處理任務（例如激光"
+msgstr "為安全起見，部分加工工作（例如激光加工）只可以喺打印機上繼續。"
 
 #. reviewed-category: slicing-printing
 #. review-status: agent-drafted
 msgid "The chamber temperature is too high, which may cause the filament to soften. Please wait until the chamber temperature drops below %d℃. You may open the front door or enable fans to cool down."
-msgstr "機艙溫度太高，可能會導致墨水變軟。請等待 %d 秒。"
+msgstr "機艙溫度太高，墨水可能會變軟。請等機艙溫度降到 %d℃ 以下。可以打開前門或者開風扇降溫。"
 
 #. reviewed-category: slicing-printing
 #. review-status: agent-drafted
 msgid "AMS temperature is too high, which may cause the filament to soften. Please wait until the AMS temperature drops below %d℃."
-msgstr "墨水機溫度太高，可能會導致墨水變軟。請等待 %d 秒。"
+msgstr "墨水機溫度太高，墨水可能會變軟。請等墨水機溫度降到 %d℃ 以下。"
 
 #. reviewed-category: navigation
 #. review-status: agent-drafted
 msgid "View Liveview"
-msgstr "設備"
+msgstr "睇即時畫面"
 
 #. reviewed-category: navigation
 #. review-status: agent-drafted
 msgid "Cancle"
-msgstr "配置"
-
-#. reviewed-category: navigation
-#. review-status: agent-drafted
-msgid "Abort"
-msgstr "管理"
-
-#. reviewed-category: navigation
-#. review-status: agent-drafted
-msgid "Done"
-msgstr "禁用"
-
-#. reviewed-category: destructive-dirty-error-security
-#. review-status: agent-drafted
-msgid "Unable to load error details."
 msgstr "取消"
 
 #. reviewed-category: navigation
 #. review-status: agent-drafted
-msgid "default"
+msgid "Abort"
+msgstr "中止"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "Done"
 msgstr "完成"
+
+#. reviewed-category: destructive-dirty-error-security
+#. review-status: agent-drafted
+msgid "Unable to load error details."
+msgstr "載入唔到錯誤詳情。"
+
+#. reviewed-category: navigation
+#. review-status: agent-drafted
+msgid "default"
+msgstr "預設"
 
 #. reviewed-category: navigation
 #. review-status: agent-drafted
@@ -32253,7 +32253,7 @@ msgstr "廠商："
 #. reviewed-category: preferences
 #. review-status: agent-drafted
 msgid "Profile:"
-msgstr "配置文件："
+msgstr "設定檔："
 
 #. reviewed-category: preferences
 #. review-status: agent-drafted
@@ -32439,7 +32439,7 @@ msgstr "已安裝自訂打印機，將會被啟動。"
 #. reviewed-category: navigation
 #. review-status: agent-drafted
 msgid "<Back"
-msgstr "<返回"
+msgstr "<上一步"
 
 #. reviewed-category: navigation
 #. review-status: agent-drafted
@@ -42395,7 +42395,7 @@ msgstr "未安裝隨附、經雜湊驗證、寫入後會驗證頁面同中繼資
 #. reviewed-category: file-actions
 #. review-status: agent-drafted
 msgid "PNG, JPEG, GIF, TIFF, WebP, SVG"
-msgstr "PNG、JPEG、GIF、TIFF、WebP、SVG"
+msgstr "圖片格式：PNG、JPEG、GIF、TIFF、WebP、SVG"
 
 #. reviewed-category: file-actions
 #. review-status: agent-drafted
@@ -42405,7 +42405,7 @@ msgstr "呢啲格式冇已驗證嘅轉換器工作程序轉接器；切片器支
 #. reviewed-category: file-actions
 #. review-status: agent-drafted
 msgid "WAV, MP3, FLAC, AAC, Ogg"
-msgstr "WAV、MP3、FLAC、AAC、Ogg"
+msgstr "音訊格式：WAV、MP3、FLAC、AAC、Ogg"
 
 #. reviewed-category: file-actions
 #. review-status: agent-drafted
@@ -42415,7 +42415,7 @@ msgstr "未安裝隨附、已驗證嘅離線音訊轉換轉接器。"
 #. reviewed-category: file-actions
 #. review-status: agent-drafted
 msgid "MP4, WebM, AVI, MOV"
-msgstr "MP4、WebM、AVI、MOV"
+msgstr "影片格式：MP4、WebM、AVI、MOV"
 
 #. reviewed-category: file-actions
 #. review-status: agent-drafted
@@ -45140,7 +45140,7 @@ msgstr "音符 %d"
 #. reviewed-category: slicing-printing
 #. review-status: agent-drafted
 msgid "Ticks %d"
-msgstr "Tick %d"
+msgstr "節拍刻度 %d"
 
 #. reviewed-category: slicing-printing
 #. review-status: agent-drafted
@@ -50537,85 +50537,85 @@ msgstr "呢個傳送伺服器要更新先支援直接傳送。請喺佢嘅主機
 msgid "Waiting for the drop server connection. %1%"
 msgstr "等緊連接傳送伺服器。%1%"
 
-#. reviewed-category: converter
+#. reviewed-category: file-actions
 #. review-status: agent-drafted
 msgid "Base64 output was verified by SHA-256 round trip and written without replacing existing files."
 msgstr "Base64 輸出已通過 SHA-256 來回轉換驗證，並已寫入，冇取代現有檔案。"
 
-#. reviewed-category: converter
+#. reviewed-category: file-actions
 #. review-status: agent-drafted
 msgid "SHA-256 verification is unavailable. No output was published."
 msgstr "SHA-256 驗證未能使用，未有產生輸出檔案。"
 
-#. reviewed-category: converter
+#. reviewed-category: file-actions
 #. review-status: agent-drafted
 msgid "The data URL must contain a bounded MIME header and canonical Base64 data."
 msgstr "資料網址必須包含長度受限制嘅 MIME 標頭同標準 Base64 資料。"
 
-#. reviewed-category: converter
+#. reviewed-category: file-actions
 #. review-status: agent-drafted
 msgid "Too many numbered output names already exist. No file was replaced."
 msgstr "已有太多帶編號嘅輸出檔名，冇檔案被取代。"
 
-#. reviewed-category: converter
+#. reviewed-category: file-actions
 #. review-status: agent-drafted
 msgid "Adding same-folder Base64 files. Run the queue to write verified outputs."
 msgstr "正加入同一資料夾嘅 Base64 檔案。執行佇列即可寫入經驗證嘅輸出。"
 
-#. reviewed-category: converter
+#. reviewed-category: file-actions
 #. review-status: agent-drafted
 msgid "Base64 text (*.txt;*.b64;*.base64)|*.txt;*.b64;*.base64"
 msgstr "Base64 文字 (*.txt;*.b64;*.base64)|*.txt;*.b64;*.base64"
 
-#. reviewed-category: converter
+#. reviewed-category: file-actions
 #. review-status: agent-drafted
 msgid "Choose Base64 files to decode"
 msgstr "揀要解碼嘅 Base64 檔案"
 
-#. reviewed-category: converter
+#. reviewed-category: file-actions
 #. review-status: agent-drafted
 msgid "Choose files to encode"
 msgstr "揀要編碼嘅檔案"
 
-#. reviewed-category: converter
+#. reviewed-category: file-actions
 #. review-status: agent-drafted
 msgid "Decode files beside originals"
 msgstr "喺原檔案旁邊建立解碼檔案"
 
-#. reviewed-category: converter
+#. reviewed-category: file-actions
 #. review-status: agent-drafted
 msgid "Encode files beside originals"
 msgstr "喺原檔案旁邊建立編碼檔案"
 
-#. reviewed-category: converter
+#. reviewed-category: file-actions
 #. review-status: agent-drafted
 msgid "Select a completed output that still exists."
 msgstr "揀一個已完成而且仍然存在嘅輸出檔案。"
 
-#. reviewed-category: converter
+#. reviewed-category: file-actions
 #. review-status: agent-drafted
 msgid "Select between 1 and 1000 files."
 msgstr "請揀 1 至 1000 個檔案。"
 
-#. reviewed-category: converter
+#. reviewed-category: file-actions
 #. review-status: agent-drafted
 msgid "Show selected output in folder"
 msgstr "喺資料夾顯示所選輸出"
 
-#. reviewed-category: converter
+#. reviewed-category: file-actions
 #. review-status: agent-drafted
 msgid "Written path"
 msgstr "已寫入路徑"
 
-#. reviewed-category: converter
+#. reviewed-category: file-actions
 #. review-status: agent-drafted
 msgid "Same-folder Base64 files: pick or drop files, then run the queue. Canonical padded Base64 only; 16 MiB source or decoded-file limit. Encoded inputs may be larger. Existing files are never replaced."
 msgstr "同一資料夾嘅 Base64 檔案：揀選或拖入檔案，再執行佇列。只接受帶標準補位嘅 Base64；原檔案或解碼後檔案上限係 16 MiB，編碼輸入可以較大。現有檔案唔會被取代。"
 
-#. reviewed-category: application
+#. reviewed-category: navigation
 #. review-status: agent-drafted
 msgid "The previous project needs review before it can be restored. Its tab and file have been kept. Select that tab to review the import options, or use File > Open."
-msgstr "還原上一個專案之前，需要先確認匯入選項。原有分頁同檔案已保留。請揀返嗰個分頁確認選項，或者使用「檔案 > 開啟」。"
+msgstr "還原上一個項目之前，需要先確認匯入選項。原有分頁同檔案已保留。請揀返嗰個分頁確認選項，或者使用「檔案 > 開啟」。"
 
 #. reviewed-category: file-actions
 #. review-status: agent-drafted
@@ -50640,7 +50640,7 @@ msgstr "呢個程式每樣功能、佢住喺邊，一㩒就開"
 #. reviewed-category: file-actions
 #. review-status: agent-drafted
 msgid "Open or save a project first. The external editor opens the project's folder."
-msgstr "先開或者儲存一個專案啦。外部編輯器係打開專案嗰個資料夾嘅。"
+msgstr "先開或者儲存一個項目啦。外部編輯器係打開項目嗰個資料夾嘅。"
 
 #. reviewed-category: navigation
 #. review-status: agent-drafted
@@ -51510,7 +51510,7 @@ msgstr "歷史記錄 %s"
 #. reviewed-category: file-actions
 #. review-status: agent-drafted
 msgid "data: URL"
-msgstr "data: URL"
+msgstr "data: 網址"
 
 #. reviewed-category: file-actions
 #. review-status: agent-drafted
@@ -51540,7 +51540,7 @@ msgstr "標準 §4"
 #. reviewed-category: file-actions
 #. review-status: agent-drafted
 msgid "URL-safe §5"
-msgstr "URL-safe §5"
+msgstr "網址安全格式（第 5 節）"
 
 #. reviewed-category: file-actions
 #. review-status: agent-drafted
@@ -52015,7 +52015,7 @@ msgstr "檔案會用文字分頁嘅字母表（%s）、換行（%s）同補位�
 #. reviewed-category: file-actions
 #. review-status: agent-drafted
 msgid "URL-safe"
-msgstr "URL-safe"
+msgstr "網址安全格式"
 
 #. reviewed-category: file-actions
 #. review-status: agent-drafted
@@ -52185,7 +52185,7 @@ msgstr "類型 %s · MIME %s · %s · 參數：%s · %s"
 #. reviewed-category: file-actions
 #. review-status: agent-drafted
 msgid "Base64"
-msgstr "Base64"
+msgstr "Base64 編碼"
 
 #. reviewed-category: file-actions
 #. review-status: agent-drafted
@@ -52415,7 +52415,7 @@ msgstr "打印機"
 #. reviewed-category: preferences
 #. review-status: agent-drafted
 msgid "Inks and filaments"
-msgstr "墨水同線材"
+msgstr "墨水"
 
 #. reviewed-category: preferences
 #. review-status: agent-drafted
@@ -52625,7 +52625,7 @@ msgstr "嗰次匯入冇帶到新打印機"
 #. reviewed-category: preferences
 #. review-status: agent-drafted
 msgid "A filament or process file goes to its own list; use the Inks step for filaments."
-msgstr "線材或者處理檔會入返佢自己嘅清單；線材請用墨水嗰步。"
+msgstr "墨水或者處理檔會入返佢自己嘅清單；墨水請用墨水嗰步。"
 
 #. reviewed-category: preferences
 #. review-status: agent-drafted
@@ -52640,12 +52640,12 @@ msgstr "暫時未有。揀打印機，或者匯入打印機設定檔。"
 #. reviewed-category: preferences
 #. review-status: agent-drafted
 msgid "Read the AMS now and fill the plate's filament list from the printer"
-msgstr "即刻讀取 AMS，由打印機填好打印板嘅線材清單"
+msgstr "即刻讀取墨水機，由打印機填好打印板嘅墨水清單"
 
 #. reviewed-category: preferences
 #. review-status: agent-drafted
 msgid "Asked the printer for its AMS"
-msgstr "已經問打印機攞 AMS 資料"
+msgstr "已經問打印機攞墨水機資料"
 
 #. reviewed-category: preferences
 #. review-status: agent-drafted
@@ -52655,22 +52655,22 @@ msgstr "下面嘅清單係準備而家有嘅嘢。冇連接打印機嘅話，乜
 #. reviewed-category: preferences
 #. review-status: agent-drafted
 msgid "Pick filaments"
-msgstr "揀線材"
+msgstr "揀墨水"
 
 #. reviewed-category: preferences
 #. review-status: agent-drafted
 msgid "%d filament presets available"
-msgstr "有 %d 個線材預設可以用"
+msgstr "有 %d 個墨水預設可以用"
 
 #. reviewed-category: preferences
 #. review-status: agent-drafted
 msgid "The filament guide closed without changes"
-msgstr "線材指南冇改到嘢就關咗"
+msgstr "墨水指南冇改到嘢就關咗"
 
 #. reviewed-category: preferences
 #. review-status: agent-drafted
 msgid "Or pick filaments by brand, type and colour."
-msgstr "或者按品牌、種類同顏色揀線材。"
+msgstr "或者按品牌、種類同顏色揀墨水。"
 
 #. reviewed-category: preferences
 #. review-status: agent-drafted
@@ -52685,12 +52685,12 @@ msgstr "槽位 %d"
 #. reviewed-category: preferences
 #. review-status: agent-drafted
 msgid "No filaments on the plate yet."
-msgstr "打印板上暫時未有線材。"
+msgstr "打印板上暫時未有墨水。"
 
 #. reviewed-category: preferences
 #. review-status: agent-drafted
 msgid "Back up the open project every"
-msgstr "每隔一段時間備份開住嘅專案"
+msgstr "每隔一段時間備份開住嘅項目"
 
 #. reviewed-category: preferences
 #. review-status: agent-drafted
@@ -52785,7 +52785,7 @@ msgstr "就快搞掂"
 #. reviewed-category: preferences
 #. review-status: agent-drafted
 msgid "%d printers, %d filaments on the plate, %s."
-msgstr "%d 部打印機，打印板上 %d 款線材，%s。"
+msgstr "%d 部打印機，打印板上 %d 款墨水，%s。"
 
 #. reviewed-category: preferences
 #. review-status: agent-drafted
@@ -52795,7 +52795,7 @@ msgstr "仲需要：至少一部打印機（打印機嗰步）。"
 #. reviewed-category: preferences
 #. review-status: agent-drafted
 msgid "Still needed: at least one filament preset (Inks step)."
-msgstr "仲需要：至少一個線材預設（墨水嗰步）。"
+msgstr "仲需要：至少一個墨水預設（墨水嗰步）。"
 
 #. reviewed-category: preferences
 #. review-status: agent-drafted
@@ -52840,17 +52840,17 @@ msgstr "至少一部打印機。下一步一直都撳得；佢會解釋欠乜，
 #. reviewed-category: preferences
 #. review-status: agent-drafted
 msgid "Tell Bambu Studio what is loaded. Reading the AMS fills the plate's filament list from the printer."
-msgstr "話俾 Bambu Studio 知裝咗乜。讀取 AMS 會由打印機填好打印板嘅線材清單。"
+msgstr "話俾 Bambu Studio 知裝咗乜。讀取墨水機會由打印機填好打印板嘅墨水清單。"
 
 #. reviewed-category: preferences
 #. review-status: agent-drafted
 msgid "Filament presets set temperatures, cooling and flow for every slice."
-msgstr "線材預設會為每次切片設定溫度、冷卻同流量。"
+msgstr "墨水預設會為每次切片設定溫度、冷卻同流量。"
 
 #. reviewed-category: preferences
 #. review-status: agent-drafted
 msgid "At least one filament preset. Printers you add bring their own."
-msgstr "至少一個線材預設。你加嘅打印機會自帶。"
+msgstr "至少一個墨水預設。你加嘅打印機會自帶。"
 
 #. reviewed-category: preferences
 #. review-status: agent-drafted
@@ -52860,7 +52860,7 @@ msgstr "打印期間保住你嘅工作。呢步係可選嘅。"
 #. reviewed-category: preferences
 #. review-status: agent-drafted
 msgid "Auto-backup keeps a recovery copy of the open project; a config snapshot keeps your settings."
-msgstr "自動備份會保留開住嘅專案嘅復原副本；設定快照會保留你嘅設定。"
+msgstr "自動備份會保留開住嘅項目嘅復原副本；設定快照會保留你嘅設定。"
 
 #. reviewed-category: preferences
 #. review-status: agent-drafted
@@ -52930,7 +52930,7 @@ msgstr "暫時未設定任何打印機。請先揀打印機或者匯入打印機
 #. reviewed-category: destructive-dirty-error-security
 #. review-status: agent-drafted
 msgid "No filament preset is available yet. Pick filaments first, or go on and come back; setup cannot finish without one."
-msgstr "暫時未有線材預設。請先揀線材，或者繼續，遲啲先返嚟；冇線材預設設定就完成唔到。"
+msgstr "暫時未有墨水預設。請先揀墨水，或者繼續，遲啲先返嚟；冇墨水預設設定就完成唔到。"
 
 #. reviewed-category: preferences
 #. review-status: agent-drafted
@@ -53665,7 +53665,7 @@ msgstr "將每個擴充功能嘅每次執行儲存做 JSON：時間、掛鈎、�
 #. reviewed-category: file-actions
 #. review-status: agent-drafted
 msgid "manifest.json"
-msgstr "manifest.json"
+msgstr "資訊清單 manifest.json"
 
 #. reviewed-category: preferences
 #. review-status: agent-drafted
@@ -54622,262 +54622,262 @@ msgstr "由 Bambu Studio 開咗到而家都冇改動，已經 %s。"
 msgid "Not now (%s)"
 msgstr "唔係而家（%s）"
 
-#. reviewed-category: application
+#. reviewed-category: navigation
 #. review-status: agent-drafted
 msgid "Draw on a capture of the plate with seven pens, versions and export, saved on this computer"
 msgstr "喺打印板嘅相上面用七支筆畫嘢，有版本同匯出，儲喺呢部電腦"
 
-#. reviewed-category: application
+#. reviewed-category: navigation
 #. review-status: agent-drafted
 msgid "Pencil"
 msgstr "鉛筆"
 
-#. reviewed-category: application
+#. reviewed-category: navigation
 #. review-status: agent-drafted
 msgid "Fineliner"
 msgstr "針筆"
 
-#. reviewed-category: application
+#. reviewed-category: navigation
 #. review-status: agent-drafted
 msgid "Marker"
 msgstr "箱頭筆"
 
-#. reviewed-category: application
+#. reviewed-category: navigation
 #. review-status: agent-drafted
 msgid "Highlighter"
 msgstr "螢光筆"
 
-#. reviewed-category: application
+#. reviewed-category: navigation
 #. review-status: agent-drafted
 msgid "Fountain pen"
 msgstr "鋼筆"
 
-#. reviewed-category: application
+#. reviewed-category: navigation
 #. review-status: agent-drafted
 msgid "Eraser"
 msgstr "擦膠"
 
-#. reviewed-category: application
+#. reviewed-category: navigation
 #. review-status: agent-drafted
 msgid "Another plate..."
 msgstr "另一塊打印板..."
 
-#. reviewed-category: application
+#. reviewed-category: navigation
 #. review-status: agent-drafted
 msgid "Draw on a different plate of this project; each plate keeps its own drawing"
-msgstr "喺呢個專案另一塊打印板度畫；每塊打印板都有自己嘅畫"
+msgstr "喺呢個項目另一塊打印板度畫；每塊打印板都有自己嘅畫"
 
-#. reviewed-category: application
+#. reviewed-category: navigation
 #. review-status: agent-drafted
 msgid "How it works"
 msgstr "點樣運作"
 
-#. reviewed-category: application
+#. reviewed-category: navigation
 #. review-status: agent-drafted
 msgid "Versions kept on this computer"
 msgstr "儲喺呢部電腦嘅版本"
 
-#. reviewed-category: application
+#. reviewed-category: navigation
 #. review-status: agent-drafted
 msgid "Keep this version"
 msgstr "保留呢個版本"
 
-#. reviewed-category: application
+#. reviewed-category: navigation
 #. review-status: agent-drafted
 msgid "Kept by you"
 msgstr "你保留嘅"
 
-#. reviewed-category: application
+#. reviewed-category: navigation
 #. review-status: agent-drafted
 msgid "Saved"
 msgstr "儲存時間"
 
-#. reviewed-category: application
+#. reviewed-category: navigation
 #. review-status: agent-drafted
 msgid "What"
 msgstr "係乜"
 
-#. reviewed-category: application
+#. reviewed-category: navigation
 #. review-status: agent-drafted
 msgid "Strokes"
 msgstr "筆畫"
 
-#. reviewed-category: application
+#. reviewed-category: navigation
 #. review-status: agent-drafted
 msgid "Bring this version back"
 msgstr "攞返呢個版本"
 
-#. reviewed-category: application
+#. reviewed-category: navigation
 #. review-status: agent-drafted
 msgid "Bringing a version back replaces the drawing and can be undone. The last 20 versions are kept; clearing keeps one first."
 msgstr "攞返一個版本會取代而家嘅畫，而且可以復原。會保留最近 20 個版本；清除之前會先保留一個。"
 
-#. reviewed-category: application
+#. reviewed-category: navigation
 #. review-status: agent-drafted
 msgid "1 to 7 pick a pen and E the eraser. Hold Shift to keep a stroke on one of eight directions. Ctrl+Z and Ctrl+Y undo and redo. With the board focused, the arrow keys move the keyboard pen (Shift for small steps), Space puts it down and lifts it, and Esc lifts it."
 msgstr "1 至 7 揀筆，E 揀擦膠。撳住 Shift 會將筆畫保持喺八個方向之一。Ctrl+Z 同 Ctrl+Y 復原同重做。畫板有焦點嘅時候，方向鍵會郁鍵盤筆（撳住 Shift 行細步），Space 落筆同提筆，Esc 提筆。"
 
-#. reviewed-category: application
+#. reviewed-category: navigation
 #. review-status: agent-drafted
 msgid "%s (key %c)"
 msgstr "%s（鍵 %c）"
 
-#. reviewed-category: application
+#. reviewed-category: navigation
 #. review-status: agent-drafted
 msgid "Colour..."
 msgstr "顏色..."
 
-#. reviewed-category: application
+#. reviewed-category: navigation
 #. review-status: agent-drafted
 msgid "Pick any colour; the last eight stay beside this project's filament colours"
-msgstr "揀任何顏色；最近八隻會留喺呢個專案嘅線材顏色旁邊"
+msgstr "揀任何顏色；最近八隻會留喺呢個項目嘅墨水顏色旁邊"
 
-#. reviewed-category: application
+#. reviewed-category: navigation
 #. review-status: agent-drafted
 msgid "Width (px)"
 msgstr "闊度（像素）"
 
-#. reviewed-category: application
+#. reviewed-category: navigation
 #. review-status: agent-drafted
 msgid "Opacity (%)"
 msgstr "不透明度（%）"
 
-#. reviewed-category: application
+#. reviewed-category: navigation
 #. review-status: agent-drafted
 msgid "Smoothing (%)"
 msgstr "平滑（%）"
 
-#. reviewed-category: application
+#. reviewed-category: navigation
 #. review-status: agent-drafted
 msgid "Undo (Ctrl+Z)"
 msgstr "復原（Ctrl+Z）"
 
-#. reviewed-category: application
+#. reviewed-category: navigation
 #. review-status: agent-drafted
 msgid "Redo (Ctrl+Y)"
 msgstr "重做（Ctrl+Y）"
 
-#. reviewed-category: application
+#. reviewed-category: navigation
 #. review-status: agent-drafted
 msgid "Capture the plate again"
 msgstr "再影一次打印板"
 
-#. reviewed-category: application
+#. reviewed-category: navigation
 #. review-status: agent-drafted
 msgid "Take a new picture of the plate to draw on; your strokes stay where they are"
 msgstr "影一張新嘅打印板相嚟畫；你嘅筆畫留喺原位"
 
-#. reviewed-category: application
+#. reviewed-category: navigation
 #. review-status: agent-drafted
 msgid "Save the drawing as PNG at 1x, 2x or 3x, on a transparent background, or as SVG"
 msgstr "將畫儲成 1 倍、2 倍或者 3 倍嘅 PNG、透明背景，或者 SVG"
 
-#. reviewed-category: application
+#. reviewed-category: navigation
 #. review-status: agent-drafted
 msgid "Clear..."
 msgstr "清除..."
 
-#. reviewed-category: application
+#. reviewed-category: navigation
 #. review-status: agent-drafted
 msgid "Remove every stroke, behind the two-key confirmation; a version is kept first"
 msgstr "經過兩匙確認之後移除所有筆畫；會先保留一個版本"
 
-#. reviewed-category: application
+#. reviewed-category: navigation
 #. review-status: agent-drafted
 msgid "%s (drawing with it)"
 msgstr "%s（用緊佢畫）"
 
-#. reviewed-category: application
+#. reviewed-category: navigation
 #. review-status: agent-drafted
 msgid "The plate could not be captured. Open Prepare once so the 3D view is ready, then try again."
 msgstr "影唔到打印板。開一次準備等 3D 視圖準備好，然後再試。"
 
-#. reviewed-category: application
+#. reviewed-category: navigation
 #. review-status: agent-drafted
 msgid "Drawing on Plate %d"
 msgstr "喺打印板 %d 畫嘢"
 
-#. reviewed-category: application
+#. reviewed-category: navigation
 #. review-status: agent-drafted
 msgid "Clear the drawing"
 msgstr "清除個畫"
 
-#. reviewed-category: application
+#. reviewed-category: navigation
 #. review-status: agent-drafted
 msgid "All %d strokes on Plate %d are removed. The drawing is kept as a version first, so it can be brought back."
 msgstr "會移除 %d 筆筆畫，即係打印板 %d 上面嘅全部筆畫。個畫會先保留做一個版本，所以可以攞返。"
 
-#. reviewed-category: application
+#. reviewed-category: navigation
 #. review-status: agent-drafted
 msgid "Before clearing"
 msgstr "清除之前"
 
-#. reviewed-category: application
+#. reviewed-category: navigation
 #. review-status: agent-drafted
 msgid "PNG image"
 msgstr "PNG 圖片"
 
-#. reviewed-category: application
+#. reviewed-category: navigation
 #. review-status: agent-drafted
 msgid "PNG at twice the size"
 msgstr "兩倍大嘅 PNG"
 
-#. reviewed-category: application
+#. reviewed-category: navigation
 #. review-status: agent-drafted
 msgid "PNG at three times the size"
 msgstr "三倍大嘅 PNG"
 
-#. reviewed-category: application
+#. reviewed-category: navigation
 #. review-status: agent-drafted
 msgid "PNG on a transparent background"
 msgstr "透明背景嘅 PNG"
 
-#. reviewed-category: application
+#. reviewed-category: navigation
 #. review-status: agent-drafted
 msgid "SVG with the plate capture"
 msgstr "連打印板相嘅 SVG"
 
-#. reviewed-category: application
+#. reviewed-category: navigation
 #. review-status: agent-drafted
 msgid "SVG of the strokes only"
 msgstr "淨係筆畫嘅 SVG"
 
-#. reviewed-category: application
+#. reviewed-category: navigation
 #. review-status: agent-drafted
 msgid "Export the drawing"
 msgstr "匯出個畫"
 
-#. reviewed-category: application
+#. reviewed-category: navigation
 #. review-status: agent-drafted
 msgid "The drawing could not be saved there."
 msgstr "個畫儲唔到喺嗰度。"
 
-#. reviewed-category: application
+#. reviewed-category: navigation
 #. review-status: agent-drafted
 msgid "Saved on this computer at %s"
 msgstr "%s 儲咗喺呢部電腦"
 
-#. reviewed-category: application
+#. reviewed-category: navigation
 #. review-status: agent-drafted
 msgid "Saved on this computer as you draw"
 msgstr "你一路畫，一路儲喺呢部電腦"
 
-#. reviewed-category: application
+#. reviewed-category: navigation
 #. review-status: agent-drafted
 msgid "%d strokes"
 msgstr "%d 筆"
 
-#. reviewed-category: application
+#. reviewed-category: navigation
 #. review-status: agent-drafted
 msgid "%d versions kept"
 msgstr "保留咗 %d 個版本"
 
-#. reviewed-category: application
+#. reviewed-category: navigation
 #. review-status: agent-drafted
 msgid "never uploaded"
 msgstr "永遠唔會上載"
 
-#. reviewed-category: application
+#. reviewed-category: navigation
 #. review-status: agent-drafted
 msgid "1 to 7 pick a pen and E the eraser, C a colour and S the width. Hold Shift to keep a stroke on one of eight directions. Ctrl+Z and Ctrl+Y undo and redo, Ctrl+Shift+E exports. With the board focused, the arrow keys move the keyboard pen (Shift for small steps), Space puts it down and lifts it, and Esc lifts it. Right-click or Shift+F10 lists every pen with its key."
 msgstr "1 至 7 揀筆，E 揀擦膠，C 揀顏色，S 跳去闊度。撳住 Shift 會將筆畫保持喺八個方向之一。Ctrl+Z 同 Ctrl+Y 復原同重做，Ctrl+Shift+E 匯出。畫板有焦點嘅時候，方向鍵會郁鍵盤筆（撳住 Shift 行細步），Space 落筆同提筆，Esc 提筆。撳右掣或者 Shift+F10 會列出每支筆同佢嘅鍵。"
@@ -55135,7 +55135,7 @@ msgstr "便攜資料碟"
 #. reviewed-category: file-actions
 #. review-status: agent-drafted
 msgid "Dev Drive"
-msgstr "Dev Drive"
+msgstr "開發磁碟機（Dev Drive）"
 
 #. reviewed-category: file-actions
 #. review-status: agent-drafted
@@ -57490,7 +57490,7 @@ msgstr "運行咗"
 #. reviewed-category: file-actions
 #. review-status: agent-drafted
 msgid "Java"
-msgstr "Java"
+msgstr "Java 平台"
 
 #. reviewed-category: file-actions
 #. review-status: agent-drafted
@@ -58800,7 +58800,7 @@ msgstr "檔案同資料"
 #. reviewed-category: navigation
 #. review-status: agent-drafted
 msgid "Windows"
-msgstr "Windows"
+msgstr "Windows 系統"
 
 #. reviewed-category: navigation
 #. review-status: agent-drafted
@@ -59195,7 +59195,7 @@ msgstr "等緊重新啟動：%s。"
 #. reviewed-category: preferences
 #. review-status: agent-drafted
 msgid "Close Bambu Studio and start it again; an unsaved project asks first"
-msgstr "關閉 Bambu Studio 再重新開；未儲存嘅專案會先問你"
+msgstr "關閉 Bambu Studio 再重新開；未儲存嘅項目會先問你"
 
 #. reviewed-category: preferences
 #. review-status: agent-drafted
@@ -59772,187 +59772,187 @@ msgstr "檔案，匯出，多重切片"
 msgid "File saved"
 msgstr "已經存咗"
 
-#. reviewed-category: tooltip
+#. reviewed-category: preferences
 #. review-status: agent-drafted
 msgid "Whether this object is printed; a copy that is not printable stays on the plate, greyed"
 msgstr "呢件物件會唔會打印；唔可打印嘅副本會留喺板上，變灰"
 
-#. reviewed-category: label
+#. reviewed-category: preferences
 #. review-status: agent-drafted
 msgid "Solid"
 msgstr "實心"
 
-#. reviewed-category: label
+#. reviewed-category: preferences
 #. review-status: agent-drafted
 msgid "Wire"
 msgstr "線框"
 
-#. reviewed-category: tooltip
+#. reviewed-category: preferences
 #. review-status: agent-drafted
 msgid "Draw this object solid, or as the edges of its triangles. Only the view changes; nothing is saved in the project"
-msgstr "將呢件物件畫成實心，或者只畫三角形嘅邊。只係畫面改變，專案唔會儲存任何嘢"
+msgstr "將呢件物件畫成實心，或者只畫三角形嘅邊。只係畫面改變，項目唔會儲存任何嘢"
 
-#. reviewed-category: tooltip
+#. reviewed-category: preferences
 #. review-status: agent-drafted
 msgid "See through this object to what is behind it, down to 10 %. Only the view changes; nothing is saved in the project"
-msgstr "透過呢件物件睇到後面嘅嘢，最低去到 10 %。只係畫面改變，專案唔會儲存任何嘢"
+msgstr "透過呢件物件睇到後面嘅嘢，最低去到 10 %。只係畫面改變，項目唔會儲存任何嘢"
 
-#. reviewed-category: menu
+#. reviewed-category: navigation
 #. review-status: agent-drafted
 msgid "Snap to grid"
 msgstr "貼齊格線"
 
-#. reviewed-category: tooltip
+#. reviewed-category: preferences
 #. review-status: agent-drafted
 msgid "Dragging an object puts its centre on the grid. Hold Alt while dragging to move freely"
 msgstr "拖動物件時佢嘅中心會貼住格線。拖動時㩒住 Alt 就可以自由移動"
 
-#. reviewed-category: label
+#. reviewed-category: preferences
 #. review-status: agent-drafted
 msgid "Grid step"
 msgstr "格線間距"
 
-#. reviewed-category: tooltip
+#. reviewed-category: preferences
 #. review-status: agent-drafted
 msgid "How far apart the grid lines are that dragged objects snap to"
 msgstr "拖動物件貼齊嘅格線相隔幾遠"
 
-#. reviewed-category: label
+#. reviewed-category: preferences
 #. review-status: agent-drafted
 msgid "Locked"
 msgstr "已鎖定"
 
-#. reviewed-category: tooltip
+#. reviewed-category: preferences
 #. review-status: agent-drafted
 msgid "Arrange and orient leave a locked plate as it is"
 msgstr "排列同定向唔會郁已鎖定嘅板"
 
-#. reviewed-category: label
+#. reviewed-category: preferences
 #. review-status: agent-drafted
 msgid "Color scheme"
 msgstr "顏色方案"
 
-#. reviewed-category: tooltip
+#. reviewed-category: preferences
 #. review-status: agent-drafted
 msgid "What the colors of the preview show, as the legend's scheme does"
 msgstr "預覽嘅顏色代表乜嘢，同圖例嘅方案一樣"
 
-#. reviewed-category: tooltip
+#. reviewed-category: preferences
 #. review-status: agent-drafted
 msgid "Shown in the preview, as the legend's options are"
 msgstr "喺預覽顯示嘅嘢，同圖例嘅選項一樣"
 
-#. reviewed-category: label
+#. reviewed-category: preferences
 #. review-status: agent-drafted
 msgid "Legend"
 msgstr "圖例"
 
-#. reviewed-category: tooltip
+#. reviewed-category: preferences
 #. review-status: agent-drafted
 msgid "The legend with the color scheme, the options and the statistics"
 msgstr "有顏色方案、選項同統計嘅圖例"
 
-#. reviewed-category: tooltip
+#. reviewed-category: preferences
 #. review-status: agent-drafted
 msgid "Changes it at once, as its own switch on the row does"
 msgstr "即刻改變，同嗰行自己嘅開關一樣"
 
-#. reviewed-category: tooltip
+#. reviewed-category: preferences
 #. review-status: agent-drafted
 msgid "Changes it at once, as its own choice on the row does"
 msgstr "即刻改變，同嗰行自己嘅選擇一樣"
 
-#. reviewed-category: menu
+#. reviewed-category: navigation
 #. review-status: agent-drafted
 msgid "Back to the default, %s"
 msgstr "回復預設值，%s"
 
-#. reviewed-category: message
+#. reviewed-category: connection-offline
 #. review-status: agent-drafted
 msgid "An existing remote station is configured. Its address has not been changed."
 msgstr "已經設定咗一個遠端工作站，佢嘅地址冇改變。"
 
-#. reviewed-category: button
+#. reviewed-category: file-actions
 #. review-status: agent-drafted
 msgid "Pause this file"
 msgstr "暫停呢個檔案"
 
-#. reviewed-category: button
+#. reviewed-category: file-actions
 #. review-status: agent-drafted
 msgid "Resume this file"
 msgstr "繼續呢個檔案"
 
-#. reviewed-category: button
+#. reviewed-category: file-actions
 #. review-status: agent-drafted
 msgid "Cancel this file"
 msgstr "取消呢個檔案"
 
-#. reviewed-category: status
+#. reviewed-category: file-actions
 #. review-status: agent-drafted
 msgid "Paused, this file"
 msgstr "已暫停，呢個檔案"
 
-#. reviewed-category: status
+#. reviewed-category: file-actions
 #. review-status: agent-drafted
 msgid "This file waits where it is; the others go on."
 msgstr "呢個檔案停喺原位，其他檔案照做。"
 
-#. reviewed-category: status
+#. reviewed-category: file-actions
 #. review-status: agent-drafted
 msgid "This file goes on."
 msgstr "呢個檔案繼續。"
 
-#. reviewed-category: status
+#. reviewed-category: file-actions
 #. review-status: agent-drafted
 msgid "This file is cancelled; anything partly written is removed. The others go on."
 msgstr "呢個檔案已取消，寫咗一半嘅嘢會移除，其他檔案照做。"
 
-#. reviewed-category: menu
+#. reviewed-category: navigation
 #. review-status: agent-drafted
 msgid "Show the written file in its folder"
 msgstr "喺資料夾顯示寫出嘅檔案"
 
-#. reviewed-category: hint
+#. reviewed-category: file-actions
 #. review-status: agent-drafted
 msgid "Previews never run anything: images are drawn from their pixels, text is shown as plain text, and audio or video is played from a temporary file by the system player, which is removed when the preview changes. Text over 2 MB and images, audio or video over 64 MB show a size notice instead of a partial preview."
 msgstr "預覽唔會執行任何嘢：圖片由像素畫出嚟，文字以純文字顯示，聲音或者影片就由系統播放器播放一個臨時檔案，預覽一改就會移除。超過 2 MB 嘅文字同超過 64 MB 嘅圖片、聲音或者影片會顯示大小提示，唔會顯示一半嘅預覽。"
 
-#. reviewed-category: status
+#. reviewed-category: file-actions
 #. review-status: agent-drafted
 msgid "This %s is %s, over the 64 MB preview limit. Save it to play it."
 msgstr "呢個%s有 %s，超過 64 MB 嘅預覽上限。儲存佢先可以播放。"
 
-#. reviewed-category: label
+#. reviewed-category: preferences
 #. review-status: agent-drafted
 msgid "audio"
 msgstr "聲音"
 
-#. reviewed-category: label
+#. reviewed-category: preferences
 #. review-status: agent-drafted
 msgid "video"
 msgstr "影片"
 
-#. reviewed-category: status
+#. reviewed-category: file-actions
 #. review-status: agent-drafted
 msgid "The temporary file for the player could not be written. Save the bytes to play them in your own player."
 msgstr "寫唔到播放器要用嘅臨時檔案。將位元組儲存落嚟，用你自己嘅播放器播放。"
 
-#. reviewed-category: status
+#. reviewed-category: file-actions
 #. review-status: agent-drafted
 msgid "The system player cannot open this format. Save the bytes to play them in your own player."
 msgstr "系統播放器開唔到呢個格式。將位元組儲存落嚟，用你自己嘅播放器播放。"
 
-#. reviewed-category: status
+#. reviewed-category: file-actions
 #. review-status: agent-drafted
 msgid "This build has no media player. Save the bytes to play them in your own player."
 msgstr "呢個版本冇媒體播放器。將位元組儲存落嚟，用你自己嘅播放器播放。"
 
-#. reviewed-category: status
+#. reviewed-category: file-actions
 #. review-status: agent-drafted
 msgid "Playing"
 msgstr "播放緊"
 
-#. reviewed-category: status
+#. reviewed-category: file-actions
 #. review-status: agent-drafted
 msgid "Ready"
 msgstr "準備好"
@@ -60380,19 +60380,19 @@ msgstr "等緊打印機回報指定熱端已經裝喺右工具頭。"
 #. review-status: agent-drafted
 #: src/slic3r/GUI/DeviceTab/RackColdPullDialog.cpp
 msgid "On the printer touchscreen, open Toolbox > Nozzle Cold Pull Maintenance. Choose the right hotend and its material. Follow the touchscreen prompts to detach the PTFE tube and insert the previously used filament. Use dedicated cleaning filament only if supported by the manufacturer's procedure for this material."
-msgstr "喺打印機觸控屏打開「工具箱」嘅「噴嘴冷拉保養」。揀右熱端同相應物料。按觸控屏提示拆開 PTFE 管，插入之前用過嘅耗材。只有原廠指引確認清潔耗材適用於呢款物料先好用。"
+msgstr "喺打印機觸控屏打開「工具箱」嘅「噴嘴冷拉保養」。揀啱熱端同相應物料。按觸控屏提示拆開 PTFE 管，插入之前用過嘅墨水。只有原廠指引確認清潔墨水適用於呢款物料先好用。"
 
 #. reviewed-category: slicing-printing
 #. review-status: agent-drafted
 #: src/slic3r/GUI/DeviceTab/RackColdPullDialog.cpp
 msgid "Cold pull active. Follow the touchscreen prompts. When instructed, remove the filament and refit the PTFE tube. Keep clear during motion."
-msgstr "冷拉進行中。請跟觸控屏指示，到有提示先抽出耗材，再裝返 PTFE 管。機件移動期間請保持距離。"
+msgstr "冷拉進行中。請跟觸控屏指示，到有提示先抽出墨水，再裝返 PTFE 管。機件移動期間請保持距離。"
 
 #. reviewed-category: slicing-printing
 #. review-status: agent-drafted
 #: src/slic3r/GUI/DeviceTab/RackColdPullDialog.cpp
 msgid "The firmware has left cold pull mode. Check the touchscreen result. Confirm only if this nozzle finished successfully, the filament was removed and the PTFE tube was refitted. Close this guide if the operation failed or was cancelled."
-msgstr "韌體已退出冷拉模式。請睇觸控屏嘅結果。只有噴嘴完成保養、耗材已經抽出，而且 PTFE 管已經裝返好，先好確認。如果失敗或者取消咗，請關閉嚮導。"
+msgstr "韌體已退出冷拉模式。請睇觸控屏嘅結果。只有噴嘴完成保養、墨水已經抽出，而且 PTFE 管已經裝返好，先好確認。如果失敗或者取消咗，請關閉嚮導。"
 
 #. reviewed-category: slicing-printing
 #. review-status: agent-drafted

@@ -8,21 +8,12 @@
   "review_status": "curated-in-repository",
   "reviewed_on": "2026-09-26",
   "categories": {
-    "application": 53,
-    "button": 3,
-    "connection-offline": 568,
-    "converter": 15,
+    "connection-offline": 569,
     "destructive-dirty-error-security": 1809,
-    "file-actions": 1640,
-    "hint": 1,
-    "label": 8,
-    "menu": 3,
-    "message": 1,
-    "navigation": 1452,
-    "preferences": 3233,
-    "slicing-printing": 3469,
-    "status": 10,
-    "tooltip": 11
+    "file-actions": 1669,
+    "navigation": 1508,
+    "preferences": 3252,
+    "slicing-printing": 3469
   },
   "required_flows": [
     "primary navigation",
