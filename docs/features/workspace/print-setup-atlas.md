@@ -101,3 +101,10 @@ on its existing shared dialog shell; this unit does not claim a new full-body sc
 implementation for that dialog. No new data flow or persisted preference is introduced.
 Future screenshots must use isolated nonprivate device/project names and never expose
 access codes or account data.
+
+
+## Slicing motion and print order
+
+When print setup needs a new slice, brackets frame the current plate model beside the existing **Slice again** action. Starting that action closes setup and carries its origin into the progress view, where opposing bands mark a rebuild. Ordinary slicing uses a rising scan and an expanding ring. The batch dialog applies the ordinary treatment to the plate being processed. The plate preview comes from the printable instances on that plate, including their placement and transforms.
+
+Processing starts with a status and no percentage. Once the slicer reports a percentage, its existing progress bar displays it. As the G-code writer publishes real extrusion moves, an adjacent print-order preview draws those moves in their recorded order, including nonuniform heights and printing one object before the next. Long sequences may be sampled and are labeled. The replay speed is for inspection. A system reduced-motion preference or low-stimulation mode keeps the geometry and state visible without movement. Cancellation, empty geometry and a changed plate invalidate the preview.

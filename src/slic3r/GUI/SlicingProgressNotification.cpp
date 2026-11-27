@@ -252,10 +252,14 @@ void NotificationManager::SlicingProgressNotification::render(GLCanvas3D& canvas
     const float status_width = std::max(1.0f, progress_panel_width - 46.0f * scale - status_icon_width);
     const float status_height = ImGui::CalcTextSize(m_text1.c_str(), nullptr, false, status_width).y;
     auto *plater = wxGetApp().plater();
-    const bool show_scene = plater && SliceMotion::active(*plater) &&
-        (m_sp_state == SlicingProgressState::SP_PROGRESS || m_sp_state == SlicingProgressState::SP_COMPLETED);
-    const float scene_height = show_scene ? std::min(110.f * scale, float(cnv_size.get_height()) * .17f) : 0.f;
-    const float progress_panel_height = scene_height + std::max(58.0f * scale, status_height + m_line_height + 18.0f * scale);
+    const float status_panel_height = std::max(58.f * scale, status_height + m_line_height + 18.f * scale);
+    const bool current_plate = plater && SliceMotion::active(*plater) && SliceMotion::image().IsOk();
+    const bool scene_state = m_sp_state == SlicingProgressState::SP_PROGRESS || m_sp_state == SlicingProgressState::SP_COMPLETED;
+    const float available = std::max(0.f, m_stack_top - initial_y - status_panel_height);
+    const float budget = std::min({110.f * scale, float(cnv_size.get_height()) * .17f, available});
+    const bool show_scene = current_plate && scene_state && budget >= 36.f * scale;
+    const float scene_height = show_scene ? budget : 0.f;
+    const float progress_panel_height = status_panel_height + scene_height;
     m_window_height = progress_panel_height;
     if (!fit_to_stack(initial_y)) {
         ImGui::PopStyleVar(2);
