@@ -165,6 +165,11 @@ wxString translate_known_history_reason(const wxString &reason)
         "Project edit",
         "Project settings changed",
         L("Discard settings draft"),
+        L("Discard preset changes"),
+        L("Restore settings draft"),
+        L("Create settings draft"),
+        L("Duplicate settings draft"),
+        L("Apply settings draft"),
         L("Edit settings draft"),
         L("Save draft as preset"),
         "Assembly undo or redo",
@@ -1640,6 +1645,7 @@ wxString ProjectHistoryDialog::display_message(const std::string &message)
     // Preset and appearance actions are stored as "<action>: <name>"
     // (BlankEditorPresets::history_label); the name stays exactly as stored.
     static const char *const named_actions[] = {
+        L("Edit settings draft: %s"),
         L("Apply appearance preset: %s"), L("Save appearance preset: %s"), L("Delete appearance preset: %s"),
         L("Reset element appearance: %s"), L("Add schedule rule from preset: %s"),
         L("Reset element motion: %s"), L("Undo element motion: %s"), L("Redo element motion: %s"),

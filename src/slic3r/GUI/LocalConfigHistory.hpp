@@ -8,9 +8,9 @@ struct Source { std::string category, name; std::filesystem::path identity; };
 // Records only recognized, non-sensitive printing options. Geometry remains
 // exclusively in the existing per-project history store.
 bool record(const std::string &category, const std::string &identity,
-            const std::string &label, const std::map<std::string, std::string> &values);
+            const std::string &label, const std::map<std::string, std::string> &values, bool separate_action = false);
 bool record_config(const std::string &category, const std::string &identity,
-                   const std::string &label, const DynamicPrintConfig &config);
+                   const std::string &label, const DynamicPrintConfig &config, bool separate_action = false);
 DynamicPrintConfig merge_restored_config(const DynamicPrintConfig &current, const DynamicPrintConfig &snapshot);
 bool restore_config(const std::string &category, const std::string &identity,
                     const std::filesystem::path &snapshot, std::string &error);

@@ -10,6 +10,8 @@
 #include "libslic3r/Utils.hpp"
 #include <boost/uuid/name_generator_sha1.hpp>
 #include <boost/uuid/uuid_io.hpp>
+#include <boost/uuid/random_generator.hpp>
+#include <boost/uuid/string_generator.hpp>
 #include <nlohmann/json.hpp>
 #include <algorithm>
 #include <atomic>
@@ -29,7 +31,7 @@ bool permitted(const std::string &key, const std::string &value)
 }
 ProjectHistoryManager *manager() { return PreferencesHistory::manager(); }
 bool record(const std::string &category, const std::string &identity, const std::string &label,
-            const std::map<std::string, std::string> &values)
+            const std::map<std::string, std::string> &values, bool separate_action)
 {
     if ((category != "preset" && category != "draft") || identity.empty() || identity.size() > 1024 || label.size() > 1024 || !manager()) return false;
     try {
@@ -39,6 +41,9 @@ bool record(const std::string &category, const std::string &identity, const std:
         const auto key = root() / (id + ".3mf");
         nlohmann::json payload = {{"schema", "bambustudio.local-config-history"}, {"version", 1}, {"category", category}, {"values", nlohmann::json::object()}};
         for (const auto &value : values) if (permitted(value.first, value.second)) payload["values"][value.first] = value.second;
+        // The history store deduplicates identical snapshots. A confirmed discard
+        // is a distinct action even when the last edit has precisely these values.
+        if (separate_action) payload["action_id"] = boost::uuids::to_string(boost::uuids::random_generator()());
         static std::atomic<unsigned long long> serial{0};
         const auto staging = root() / (id + "-" + std::to_string(std::chrono::system_clock::now().time_since_epoch().count()) + "-" + std::to_string(++serial) + ".snapshot.3mf");
         { std::ofstream out(staging, std::ios::binary); out << payload.dump(); if (!out) return false; }
@@ -52,14 +57,16 @@ bool record(const std::string &category, const std::string &identity, const std:
     } catch (...) { return false; }
 }
 bool record_config(const std::string &category, const std::string &identity,
-                   const std::string &label, const DynamicPrintConfig &config)
+                   const std::string &label, const DynamicPrintConfig &config, bool separate_action)
 {
-    std::map<std::string, std::string> values;
-    for (const auto &key : config.keys()) {
-        const auto value = config.opt_serialize(key);
-        if (permitted(key, value)) values.emplace(key, value);
-    }
-    return record(category, identity, label, values);
+    try {
+        std::map<std::string, std::string> values;
+        for (const auto &key : config.keys()) {
+            const auto value = config.opt_serialize(key);
+            if (permitted(key, value)) values.emplace(key, value);
+        }
+        return record(category, identity, label, values, separate_action);
+    } catch (...) { return false; }
 }
 DynamicPrintConfig merge_restored_config(const DynamicPrintConfig &current, const DynamicPrintConfig &snapshot)
 {
@@ -130,7 +137,13 @@ std::map<std::string, std::string> read_snapshot(const std::filesystem::path &pa
     std::map<std::string, std::string> result;
     try { if (std::filesystem::file_size(path) > 4 * 1024 * 1024) return result;
         std::ifstream in(path); auto j = nlohmann::json::parse(in);
-        if (!j.is_object() || j.size() != 4 || j.value("schema", "") != "bambustudio.local-config-history" || j.value("version", 0) != 1 ||
+        const bool has_action = j.contains("action_id");
+        if (has_action) {
+            const auto action_id = j.at("action_id").get<std::string>();
+            if (action_id.size() != 36 || boost::uuids::to_string(boost::uuids::string_generator()(action_id)) != action_id)
+                return {};
+        }
+        if (!j.is_object() || j.size() != (has_action ? 5u : 4u) || j.value("schema", "") != "bambustudio.local-config-history" || j.value("version", 0) != 1 ||
             (j.value("category", "") != "preset" && j.value("category", "") != "draft") || !j.at("values").is_object() || j.at("values").size() > 4096) return {};
         for (auto it = j["values"].begin(); it != j["values"].end(); ++it) {
             if (!it.value().is_string()) return {};

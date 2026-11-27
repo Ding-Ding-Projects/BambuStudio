@@ -1,6 +1,7 @@
 #include "Widgets/MD3ScrolledWindow.hpp"
 #include "SettingsDraftPanel.hpp"
 #include "LocalConfigHistory.hpp"
+#include "NotificationManager.hpp"
 #include "GUI_App.hpp"
 #include "MainFrame.hpp"
 #include "ProjectTabBar.hpp"
@@ -64,10 +65,9 @@ SettingsDraftPanel::SettingsDraftPanel(wxWindow *parent, TabStrip *strip, std::f
             // A modal confirmation runs a nested event loop. Look up the draft again.
             const auto *draft = m_store.find(id);
             if (!draft) return;
-            if (!LocalConfigHistory::record_config("draft", id, "Discard settings draft", draft->config)) {
-                md3_message_box(_L("The draft could not be recorded in local history. It is still open."),
-                                _L("Close draft"), wxOK | wxICON_WARNING, this);
-                return;
+            if (!LocalConfigHistory::record_config("draft", id, "Discard settings draft", draft->config, true)) {
+                if (auto *plater = wxGetApp().plater())
+                    plater->get_notification_manager()->push_notification(_u8L("The discarded draft could not be recorded in local history."));
             }
         }
         if (m_active == id) { ++m_view_generation; m_groups.clear(); GetSizer()->Clear(true); }
@@ -90,20 +90,21 @@ bool SettingsDraftPanel::RestoreHistory(const std::string &id, const DynamicPrin
         panel->m_strip->Activate(id);
         panel->Rebuild();
         panel->m_show_page(true);
-        panel->Persist();
+        panel->Persist("Restore settings draft");
         return true;
     }
     return false;
 }
-void SettingsDraftPanel::Persist() {
+void SettingsDraftPanel::Persist(const std::string &history_action, const std::string &history_id) {
     if (wxGetApp().app_config) {
         wxGetApp().app_config->set("settings_drafts", m_storage_key, m_store.serialize());
         wxGetApp().app_config->save();
     }
-    if (!m_active.empty()) {
+    if (!m_active.empty())
         m_strip->SetDirty(m_active, m_store.dirty(m_active));
-        if (const auto *draft = m_store.find(m_active))
-            LocalConfigHistory::record_config("draft", draft->id, "Edit settings draft", draft->config);
+    if (!history_action.empty()) {
+        if (const auto *draft = m_store.find(history_id.empty() ? m_active : history_id))
+            LocalConfigHistory::record_config("draft", draft->id, history_action, draft->config);
     }
 }
 bool SettingsDraftPanel::Activate(const std::string &id) {
@@ -140,7 +141,9 @@ void SettingsDraftPanel::Rebuild() {
         auto group = std::make_shared<ConfigOptionsGroup>(scroll, wxString::FromUTF8(key), &draft->config, false);
         group->label_width = 15;
         group->m_get_initial_config = [this] { return m_store.find(m_active)->baseline; };
-        group->m_on_change = [this](const t_config_option_key &, const boost::any &) { Persist(); };
+        group->m_on_change = [this, key](const t_config_option_key &, const boost::any &) {
+            Persist(SettingsDraftStore::permitted_key(key) ? "Edit settings draft: " + key : "Edit settings draft");
+        };
         const auto *vector = dynamic_cast<const ConfigOptionVectorBase *>(draft->config.option(key));
         if (vector && vector->size() > 0) {
             for (size_t i = 0; i < vector->size(); ++i) group->append_single_option_line(key, {}, int(i));
@@ -190,7 +193,7 @@ void SettingsDraftPanel::Rebuild() {
     button(_L("Duplicate"), [this] {
         const auto id = m_store.duplicate(m_active); const auto *copy = m_store.find(id);
         if (!copy) return;
-        m_strip->AddTab(id, draft_title(copy->type) + " [" + wxString::FromUTF8(id.substr(id.size() - 4)) + "]", {}, true); Persist();
+        m_strip->AddTab(id, draft_title(copy->type) + " [" + wxString::FromUTF8(id.substr(id.size() - 4)) + "]", {}, true); Persist("Duplicate settings draft", id);
     });
     GetSizer()->Add(actions, 0, wxEXPAND); Layout(); scroll->FitInside();
     scroll->Scroll(0, draft->scroll_y);
@@ -228,7 +231,7 @@ void SettingsDraftPanel::OpenPicker() {
         if (target.project_id.empty()) { md3_message_box(_L("Open a project before creating a settings draft."), _L("Create draft"), wxOK, this); return; }
         id = m_store.create(type, tab->get_presets()->get_selected_preset().name, *tab->get_config(), target);
         if (id.empty()) return;
-        m_strip->AddTab(id, draft_title(type) + " [" + wxString::FromUTF8(id.substr(id.size() - 4)) + "]"); Persist();
+        m_strip->AddTab(id, draft_title(type) + " [" + wxString::FromUTF8(id.substr(id.size() - 4)) + "]"); Persist("Create settings draft", id);
     }
     m_strip->Activate(id);
 }
@@ -274,7 +277,7 @@ void SettingsDraftPanel::Apply() {
     for (const auto &key : draft->baseline.keys())
         if (!SettingsDraftStore::permitted_key(key)) draft->baseline.erase(key);
     draft->config = draft->baseline;
-    draft->baseline_fingerprint = SettingsDraftStore::fingerprint(draft->baseline); Persist();
+    draft->baseline_fingerprint = SettingsDraftStore::fingerprint(draft->baseline); Persist("Apply settings draft");
 }
 void SettingsDraftPanel::UndoApply() {
     if (m_undo_type == Preset::TYPE_INVALID) return;

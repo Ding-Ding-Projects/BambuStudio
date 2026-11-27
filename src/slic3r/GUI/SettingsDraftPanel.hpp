@@ -25,7 +25,7 @@ private:
     std::string m_storage_key;
     size_t m_view_generation = 0;
     std::vector<std::shared_ptr<ConfigOptionsGroup>> m_groups;
-    void Persist();
+    void Persist(const std::string &history_action = {}, const std::string &history_id = {});
     void Rebuild();
     void OpenPicker();
     void Apply();
