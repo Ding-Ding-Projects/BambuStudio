@@ -1,4 +1,5 @@
 #include <catch2/catch.hpp>
+#include <thread>
 #include "slic3r/GUI/SliceToolpathSnapshot.hpp"
 
 using namespace Slic3r;
@@ -69,4 +70,30 @@ TEST_CASE("Bounded slice playback samples source edges without bridging omitted 
     CHECK(snapshot->segments.back().x2 == 19);
     for (const auto& edge : snapshot->segments)
         CHECK(edge.x2 == edge.x1 + 1);
+}
+
+
+TEST_CASE("Live slice playback rejects late workers and preserves an existing reader", "[slice-playback]")
+{
+    LiveSliceToolpathMailbox mailbox;
+    auto previous = std::make_shared<SliceToolpathSnapshot>();
+    previous->key = {5, 0, 7};
+    mailbox.begin(5, 0);
+    mailbox.publish(5, 0, previous);
+    auto held = mailbox.read(5, 0);
+    REQUIRE(held == previous);
+
+    mailbox.begin(6, 1);
+    auto next = std::make_shared<SliceToolpathSnapshot>();
+    next->key = {6, 1, 8};
+    std::thread late_worker([&] { mailbox.publish(5, 0, previous); });
+    mailbox.publish(6, 1, next);
+    late_worker.join();
+    mailbox.publish(6, 1, previous);
+    REQUIRE(mailbox.read(6, 1) == next);
+    CHECK_FALSE(mailbox.read(5, 0));
+    CHECK_FALSE(mailbox.read(6, 0));
+    CHECK(held->key.result_id == 7);
+    mailbox.publish(6, 1, nullptr);
+    CHECK_FALSE(mailbox.read(6, 1));
 }

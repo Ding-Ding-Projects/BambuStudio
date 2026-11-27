@@ -32,7 +32,7 @@ Run the commands below from the source root in PowerShell. Set `$exe` to the ins
 python scripts/md3/prepare-capture-datadirs.py "$root/source" --themes light --densities comfortable
 foreach ($language in 'en','yue_HK','bilingual_en_yue_HK') {
     $tuple = "$language-light-comfortable"
-    python scripts/md3/capture-preview.py --exe $exe --project tests/data/preview/six-cups.3mf `
+    python scripts/md3/capture-preview.py --exe $exe --project tests/data/preview/six-cups.3mf --project-sidebar `
         --source-datadir "$root/source/$tuple" --datadir "$root/profile-$tuple" `
         --tuple $tuple --out "$root/images-$tuple" --desktop "preview51-$language"
 }

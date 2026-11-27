@@ -13,6 +13,7 @@
 #include <array>
 #include <vector>
 #include <regex>
+#include <functional>
 #include <mutex>
 #include <string>
 #include <string_view>

@@ -7046,8 +7046,15 @@ void GCode::GCodeOutputStream::write(const char *what)
             m_write_errno = errno;
         //FIXME don't allocate a string, maybe process a batch of lines?
         m_processor.process_buffer(std::string(gcode));
-        if (m_moves_written && m_write_errno == 0 && ::ferror(f) == 0)
-            m_moves_written(m_processor.result());
+        if (m_moves_written && m_write_errno == 0 && ::ferror(f) == 0) {
+            try {
+                m_moves_written(m_processor.result());
+            } catch (const std::exception&) {
+                // Optional playback must not turn an otherwise valid export into a failure.
+                m_moves_written = {};
+                BOOST_LOG_TRIVIAL(warning) << "Disabled live toolpath preview after an observer error";
+            }
+        }
     }
 }
 
