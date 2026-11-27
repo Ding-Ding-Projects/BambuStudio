@@ -213,12 +213,20 @@ inline bool melody_parse_gcode(const std::string &text, Melody &out)
                     if (end && *end == '\0') { values[k] = static_cast<int>(v); have[k] = true; }
                 }
         }
-        bool complete = true;
+        bool valid = true;
+        bool any_event = false;
         for (int k : {0, 3, 6}) {
-            complete = complete && have[k] && have[k + 1] && values[k] >= 0 && values[k] <= 72;
+            // A missing channel queues no time. An explicit zero pitch queues a rest.
+            if (!have[k] && !have[k + 1]) continue;
+            if (!have[k] || !have[k + 1] || values[k] < 0 || values[k] > 72 ||
+                values[k + 1] < 0 || values[k + 1] > MELODY_MAX_TICKS) {
+                valid = false;
+                break;
+            }
             if (values[k] != 0) values[k] += 23;
+            any_event = true;
         }
-        if (!complete) continue; // M1006 S1, M1006 W and partial lines
+        if (!valid || !any_event) continue;
         MelodyStep step;
         step.voices[0] = {values[0], values[1], values[2]};
         step.voices[1] = {values[3], values[4], values[5]};

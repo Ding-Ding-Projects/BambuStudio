@@ -54,6 +54,12 @@ static void import_assertions()
     CHECK(melody_validate(loaded) == MelodyProblem::None && melody_total_ms(loaded) == 300);
     CHECK(melody_validate(loaded, true) == MelodyProblem::PrinterPitchOutOfRange);
     CHECK(melody_to_gcode(loaded).empty());
+    Melody sparse;
+    CHECK(melody_parse_gcode("M1006 L70 M70 N99\nM1006 C37 D25 M80\nM1006 A0 B12\n", sparse));
+    CHECK(sparse.steps.size() == 2 && melody_total_ms(sparse) == 250);
+    CHECK(sparse.steps[0].voices[1] == (MelodyVoice{60, 25, 80}));
+    CHECK(sparse.steps[0].voices[0] == (MelodyVoice{0, 0, 0}));
+    CHECK(sparse.steps[1].voices[0] == (MelodyVoice{0, 12, 0}));
     // Nothing to import.
     Melody none;
     CHECK(!melody_parse_gcode("G28\nM1006 S1\nM1006 W\n", none));
