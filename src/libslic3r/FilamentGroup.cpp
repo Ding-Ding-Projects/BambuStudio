@@ -1088,8 +1088,8 @@ namespace Slic3r
             MultiNozzleUtils::NozzleInfo compact_nozzle = nozzle;
             compact_nozzle.group_id = compact_id;
             compact_nozzle_info.nozzle_list.emplace_back(std::move(compact_nozzle));
-            // An empty capacity vector selects the legacy heuristic, including for compacted contexts.
-            if (!nozzle_info.per_nozzle_capacity.empty())
+            // Preferred grouping enforces declared capacities. An inferred one-slot score for ordinary grouping is not a hard limit.
+            if (group_info.preferred_extruder < 0 || !nozzle_info.per_nozzle_capacity.empty())
                 compact_nozzle_info.per_nozzle_capacity.emplace_back(full_id >= 0 && full_id < (int)nozzle_info.per_nozzle_capacity.size() ? nozzle_info.per_nozzle_capacity[full_id] : 1);
             compact_nozzle_info.extruder_nozzle_list[nozzle.extruder_id].emplace_back(compact_id);
 
