@@ -33,11 +33,14 @@ struct PreparedImportFile {
     std::string makerlab_region, makerlab_name, makerlab_id;
 };
 
+struct ImportedOriginalMesh {
+    std::shared_ptr<const TriangleMesh> reduced, original, original_hull;
+};
+
 struct PreparedImport {
     std::vector<PreparedImportFile> files;
-    // Model copies share immutable mesh storage until replacement. Originals
-    // remain available for recovery without writing or changing input files.
-    std::vector<Model> originals;
+    // Retain recovery geometry only when the worker actually replaced a mesh.
+    std::vector<ImportedOriginalMesh> originals;
     size_t simplified_volumes = 0;
     size_t skipped_volumes = 0;
 };

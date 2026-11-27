@@ -12087,9 +12087,6 @@ public:
     // UIThreadWorker can be used as a replacement for BoostThreadWorker if
     // no additional worker threads are desired (useful for debugging or profiling)
     PlaterWorker<BoostThreadWorker> m_worker;
-    struct ImportedOriginalMesh {
-        std::shared_ptr<const TriangleMesh> reduced, original, original_hull;
-    };
     std::vector<ImportedOriginalMesh> m_import_original_meshes;
 
     // Jobs defined inside the group class will be managed so that only one can
@@ -30162,21 +30159,6 @@ bool Plater::load_files_async(const std::vector<fs::path>& paths, LoadStrategy s
         [this, paths, strategy, ask_multi, snapshot_label](PreparedImport&& prepared) {
             // finalize runs on the UI thread, after the entire detached batch
             // succeeds. Cancellation before this point cannot change the scene.
-            std::vector<priv::ImportedOriginalMesh> originals;
-            for (size_t file = 0; file < prepared.files.size(); ++file) {
-                const auto& reduced_model = prepared.files[file].model;
-                const auto& original_model = prepared.originals[file];
-                for (size_t object = 0; object < reduced_model.objects.size(); ++object) {
-                    const auto& reduced_volumes = reduced_model.objects[object]->volumes;
-                    const auto& original_volumes = original_model.objects[object]->volumes;
-                    for (size_t volume = 0; volume < reduced_volumes.size(); ++volume) {
-                        const auto* reduced = reduced_volumes[volume];
-                        const auto* original = original_volumes[volume];
-                        if (reduced->get_mesh_shared_ptr() != original->get_mesh_shared_ptr())
-                            originals.push_back({reduced->get_mesh_shared_ptr(), original->get_mesh_shared_ptr(), original->get_convex_hull_shared_ptr()});
-                    }
-                }
-            }
             // Restore the model, plates, selection and project settings if
             // publication is canceled or throws after touching the live scene.
             size_t rollback_time = 0;
@@ -30209,7 +30191,9 @@ bool Plater::load_files_async(const std::vector<fs::path>& paths, LoadStrategy s
                 rollback();
                 return;
             }
-            p->m_import_original_meshes.insert(p->m_import_original_meshes.end(), originals.begin(), originals.end());
+            auto &originals = prepared.originals;
+            p->m_import_original_meshes.insert(p->m_import_original_meshes.end(),
+                std::make_move_iterator(originals.begin()), std::make_move_iterator(originals.end()));
             if (!originals.empty())
                 p->notification_manager->push_notification(NotificationType::CustomNotification,
                     NotificationManager::NotificationLevel::WarningNotificationLevel,
