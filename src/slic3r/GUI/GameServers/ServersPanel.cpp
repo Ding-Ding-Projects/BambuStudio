@@ -1,5 +1,6 @@
 #include "ServersPanel.hpp"
 #include "ContainerServersDialog.hpp"
+#include "ContentInstaller.hpp"
 #include "NativeServersDialog.hpp"
 
 #include "ServerModel.hpp"
@@ -1236,6 +1237,34 @@ void ServersPanel::Ui::build_overview(wxWindow *page)
     s->Add(cards, 0, wxEXPAND);
     auto *row = new wxBoxSizer(wxHORIZONTAL);
     row->Add(text(page, Label::Head_13, _L("Recent events")), 1, wxALIGN_CENTER_VERTICAL);
+    auto *install = button(page, _L("Install plugin, mod or data pack..."), GlyphAdd, Button::Variant::Outlined);
+    install->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) {
+        ServerRecord *sv = server();
+        if (!sv || busy) return;
+        if (Live::get().running(sv->id)) {
+            MessageDialog(self, _L("Stop the server before installing content."), _L("Install content"), wxOK | wxICON_INFORMATION).ShowModal();
+            return;
+        }
+        wxFileDialog pick(self, _L("Select a trusted package for this server version"), {}, {}, "JAR / ZIP (*.jar;*.zip)|*.jar;*.zip", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+        if (pick.ShowModal() != wxID_OK) return;
+        const auto path = into_u8(pick.GetPath());
+        if (MessageDialog(self, wxString::Format(_L("Install %s for %s? Plugins and mods run code with the server's permissions."), u8(leaf(path)), u8(sv->name)),
+                          _L("Install content"), wxYES_NO | wxNO_DEFAULT | wxICON_WARNING).ShowModal() != wxID_YES) return;
+        const std::string folder = sv->folder, flavour = sv->flavour, name = sv->name;
+        std::weak_ptr<bool> weak = alive;
+        set_busy(true, _L("Checking and installing the package"));
+        std::thread([this, weak, folder, flavour, name, path] {
+            const auto result = install_java_content(folder, flavour, path);
+            wxTheApp->CallAfter([this, weak, name, path, result] {
+                if (weak.expired()) return;
+                Live::get().record(name, "Install content", leaf(path), result.ok ? "Done" : "Failed");
+                set_busy(false);
+                MessageDialog(self, result.ok ? _L("Package installed. Start the server and check its startup log for compatibility.") : u8(result.message),
+                              _L("Install content"), wxOK | (result.ok ? wxICON_INFORMATION : wxICON_WARNING)).ShowModal();
+            });
+        }).detach();
+    });
+    row->Add(install, 0, wxRIGHT, page->FromDIP(8));
     auto *find = button(page, _L("Find Java again"), GlyphRefresh, Button::Variant::Text);
     find->Bind(wxEVT_BUTTON, [this](wxCommandEvent &) {
         Live::get().javas(true);

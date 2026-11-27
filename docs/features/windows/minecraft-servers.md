@@ -287,3 +287,13 @@ an executable bedrock_server and server.properties. Review network settings
 and accept the EULA before starting. The dialog streams output, supports
 single-line console commands and can send a graceful stop. A successful SSH
 process launch alone does not indicate that the game server has become ready.
+### Install Java plugins, mods and data packs
+
+On a stopped local Java server, choose **Overview > Install plugin, mod or
+data pack** and select a trusted local package for the server's version.
+The manager checks the loader descriptor, places Bukkit/Paper plugins under
+`plugins`, or Fabric, Forge, NeoForge and Quilt mods under `mods`. A ZIP with
+a valid `pack.mcmeta` and `data/` tree goes in the configured world's
+`datapacks`. Publication checks the copied bytes and refuses an existing
+filename. The source is retained. Start the server and check its log for
+game-version compatibility, dependency errors and successful loading.
