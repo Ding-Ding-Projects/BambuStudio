@@ -16,7 +16,7 @@ Product fixes:
 
 The other 16 entries described code that the release merge or the melody pitch correction had changed on purpose. Their contracts follow the current code. The humidity preservation baselines moved to the merge commit `987ec23fb`, and the door chime fixture expects the printer's note numbering.
 
-The seven changed or previously uncompiled C++ files (`AlertDialog.cpp`, `AMSDryControl.cpp`, `ServersPanel.cpp`, `TextTabbar.cpp`, `MsgDialog.cpp`, `MD3Dialog.cpp` and `WebView.cpp`) compile in the configured Release project. No link, packaged build or runtime check was run, and the old-runtime menu case was not reproduced. These commits are marked to skip workflows, so nothing was built or published; `md3-v338` is still the latest release.
+The seven changed or previously uncompiled C++ files (`AlertDialog.cpp`, `AMSDryControl.cpp`, `ServersPanel.cpp`, `TextTabbar.cpp`, `MsgDialog.cpp`, `MD3Dialog.cpp` and `WebView.cpp`) compile in the configured Release project. No link, packaged build or runtime check was run, and the old-runtime menu case was not reproduced. `compile_translation.py --require-complete` passes on a fresh output with 13015 translations. These commits are marked to skip workflows, so nothing was built or published; `md3-v338` is still the latest release.
 
 ## Branch integration, 27 November 2026
 
