@@ -1,5 +1,15 @@
 # Bambu Studio handoff
 
+## Branch integration, 27 November 2026
+
+All local work branches are merged into `main`, which is pushed. The one commit that was still outside `main`, `46c813548`, removes a reference to the former raster logo member from `MsgDialog::HideLogo` and hides the header icon tile with its spacing.
+
+This push is marked to skip workflows, so it started no build and published no release. `md3-v338` remains the published release. The combined source has not been built natively. The Node contract suite was run on `46c813548` on the Windows host: 1016 tests, 910 passed, 105 failed, 1 skipped. The same command on a clean clone of the released `6be454d35` gave 1010 tests, 919 passed, 90 failed, 1 skipped. 22 failing entries on the integrated source do not fail on that baseline, in the element lock row wiring, the three game server suites and the camera popup, context menu, humidity popup, ink naming, dialog caption, button, text field, message box, list, native lifecycle, scroll bar and stale slice contracts. Their causes have not been examined. `compile_translation.py`, the C++ contracts that need `cl.exe` and every native runtime check remain to be run.
+
+Next step: repair the 22 entries, build the combined source, then publish by running "Windows build and release" on `main` with `publish_release` selected.
+
+Four remote branches are not ancestors of `main` and are retained: `gap/lan-drop-site-w1`, `gap/lan-drop-app-w1` and `gap/lan-drop-integrate-w1` (earlier history of work that reached `main` as `e352f8ed1`; see the 10 October note about the application branch history) and `md3-dynamic-color-wip` (unfinished).
+
 ## Native integration and verification, 27 November 2026
 
 The local integration candidate includes Bambu Lab v02.09.02.62 (`23a337589`). The successful local build at `0a12cd094` predates that merge and the new slicing animations, melody changes and expanded server manager. Use an executable and DLL from the combined source before attributing runtime results to it.
