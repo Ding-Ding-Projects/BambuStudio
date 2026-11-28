@@ -18,7 +18,7 @@ function menuContract(source) {
   assert.ok(run.includes('AppearanceEditor::open_for(appearance_anchor.get(), appearance_element)'));
 }
 function dropdownContract(source) {
-  const dispatch = part(source, 'void DropDown::sendDropDownEvent()', 'void DropDown::Dismiss()');
+  const dispatch = part(source, 'void DropDown::sendDropDownEvent()', 'void DropDown::DismissAll()');
   assert.ok(dispatch.indexOf('event.SetString(items[index].text);') < dispatch.indexOf('DismissAndNotify();'));
   assert.ok(dispatch.lastIndexOf('DismissAndNotify();') < dispatch.indexOf('ProcessEvent(event);'));
   assert.ok(dispatch.includes('wxWeakRef<DropDown> target(root);'));
@@ -45,11 +45,27 @@ test('printer card opens explicitly and canceled switch stops plate changes', ()
   assert.ok(plater.includes('if (selection_applied && !*selection_applied) return;'));
   assert.ok(plater.includes('if (!selection_applied) return;'));
 });
+function confirmedDeleteContract(source) {
+  const deletion = part(source, 'void Sidebar::delete_filament_with_confirm(', 'void Sidebar::delete_mixed_filament_at(');
+  // The rows change only after the menu command has finished routing, and only if the row,
+  // the project and the slots are still the ones that were confirmed.
+  assert.match(deletion, /if \(!SuperConfirmGate::Run\(anchor, spec\) \|\| !sidebar\) return;\s*sidebar->CallAfter\(/,
+    'a refused confirmation deletes nothing');
+  const deferred = deletion.slice(deletion.indexOf('sidebar->CallAfter('));
+  assert.match(deferred, /if \(!row \|\| p->plater->model\(\)\.id\(\) != project \|\|\s*presets != wxGetApp\(\)\.preset_bundle->filament_presets\)\s*return;/);
+  assert.ok(deferred.indexOf('presets != wxGetApp().preset_bundle->filament_presets') < deferred.indexOf('delete_filament(resolved);'));
+}
 test('filament menu reads live config slot and deletion uses confirmed index', () => {
   assert.ok(plater.includes('const int config_slot = menu_combo->get_filament_idx();'));
-  const deletion = part(plater, 'void Sidebar::delete_filament_with_confirm(', 'void Sidebar::delete_mixed_filament_at(');
-  assert.ok(deletion.includes('delete_filament(resolved);'));
-  assert.ok(deletion.includes('if (presets != wxGetApp().preset_bundle->filament_presets) return;'));
+  confirmedDeleteContract(plater);
+});
+test('filament delete contract rejects a deletion that skips the slot check', () => {
+  const unchecked = plater.replace(/\|\|(\s*)presets != wxGetApp\(\)\.preset_bundle->filament_presets\)/, ')');
+  assert.notEqual(unchecked, plater);
+  assert.throws(() => confirmedDeleteContract(unchecked));
+  const unconfirmed = plater.replace('if (!SuperConfirmGate::Run(anchor, spec) || !sidebar) return;', 'SuperConfirmGate::Run(anchor, spec);');
+  assert.notEqual(unconfirmed, plater);
+  assert.throws(() => confirmedDeleteContract(unconfirmed));
 });
 function editSlotContract(source) {
   const edit = part(source, 'void Sidebar::edit_filament()', 'void Sidebar::add_custom_filament(');

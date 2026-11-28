@@ -71,6 +71,7 @@ const ALLOWED = {
   'GUI_App.cpp': { count: 3, why: 'fatal and critical exceptions, and the first language load before any window exists' },
   'MsgDialog.hpp': { count: 4, why: 'the non-Material wrappers in the disabled #else branch' },
   'StatusPanel.cpp': { count: 2, why: 'the macOS branch, where MessageDialog can block' },
+  'DeviceWeb/ViewModels/DevicePage/ControlPanel/ViewModelActions.cpp': { count: 2, why: 'the macOS branch, where MessageDialog can block' },
 };
 
 test('the scan counts calls, not names in comments or message texts', () => {

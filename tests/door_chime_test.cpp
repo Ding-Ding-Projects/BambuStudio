@@ -52,8 +52,8 @@ static void gcode_assertions()
     // Motors on, queue drained, the tune between S1 and W, motors released.
     CHECK(gcode.rfind("M17\nM400 S1\nM1006 S1\n", 0) == 0);
     CHECK(gcode.find("M1006 W\nM18\n") != std::string::npos);
-    CHECK(gcode.find("M1006 A76 B25 L100 C76 D25 M100 E76 F25 N100\n") != std::string::npos);
-    CHECK(gcode.find("M1006 A72 B35 L100 C72 D35 M100 E72 F35 N100\n") != std::string::npos);
+    CHECK(gcode.find("M1006 A53 B25 L100 C53 D25 M100 E53 F25 N100\n") != std::string::npos);
+    CHECK(gcode.find("M1006 A49 B35 L100 C49 D35 M100 E49 F35 N100\n") != std::string::npos);
     CHECK(count(gcode, "M1006 A") == ding.notes.size());
     CHECK(gcode.find(';') == std::string::npos); // live commands carry no comments
 
@@ -63,8 +63,11 @@ static void gcode_assertions()
 
     CHECK(chime_gcode(find_chime(open_chimes(), SILENT_ID)).empty());
     CHECK(chime_gcode(find_chime(close_chimes(), SILENT_ID)).empty());
-    for (const Chime &chime : close_chimes())
-        if (!is_silent(chime)) CHECK(count(chime_gcode(chime), "M1006 A") == chime.notes.size());
+    // The writer refuses a pitch the printer cannot play, so every shipped chime must still
+    // produce one command per note.
+    for (const std::vector<Chime> *list : {&open_chimes(), &close_chimes()})
+        for (const Chime &chime : *list)
+            if (!is_silent(chime)) CHECK(count(chime_gcode(chime), "M1006 A") == chime.notes.size());
 }
 
 static void edge_assertions()

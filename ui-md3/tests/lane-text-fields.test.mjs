@@ -218,6 +218,8 @@ test('only the kit\'s own classes derive from wxTextCtrl', async () => {
   // TextAreaEditor is the multi-line entry of the kit TextArea, TextCtrl is the kit's
   // colour-safe subclass, and DiamTextCtrl belongs to the configuration wizard, whose
   // pages are not reachable. LayerRangeEditor used to be on this list and is gone.
+  // MultilineTextCtrl is upstream's GTK crash guard; every other platform, Windows included,
+  // gets a plain alias instead.
   const found = [];
   for (const file of await sources(guiDir)) {
     const text = code(await readFile(file, 'utf8'));
@@ -225,5 +227,8 @@ test('only the kit\'s own classes derive from wxTextCtrl', async () => {
       found.push(match[1]);
     assert.doesNotMatch(text, /\b(?:class|struct)\s+\w+\s*(?:final\s*)?:\s*(?:public\s+)?(?:::)?TextCtrl\b/, `${rel(file)} derives from the kit's TextCtrl`);
   }
-  assert.deepEqual(found.sort(), ['DiamTextCtrl', 'TextAreaEditor', 'TextCtrl']);
+  assert.deepEqual(found.sort(), ['DiamTextCtrl', 'MultilineTextCtrl', 'TextAreaEditor', 'TextCtrl']);
+  const field = (await readFile(path.join(guiDir, 'Field.cpp'), 'utf8')).replace(/\r\n/g, '\n');
+  assert.match(field, /#ifdef __WXGTK3__\n(?:(?!#endif|#else)[\s\S])*?class MultilineTextCtrl : public wxTextCtrl\n(?:(?!#endif)[\s\S])*?#else\nusing MultilineTextCtrl = wxTextCtrl;\n#endif/,
+    'the subclass exists only in the GTK build');
 });

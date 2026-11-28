@@ -132,10 +132,12 @@ test('the firmware page translates every dispenser name it builds', () => {
 
 test('the drying limits name each dispenser through the catalogue', () => {
   const source = read(...gui('AMSDryControl.cpp'));
-  const table = block(source, /static const AmsTempLimit ams_limits\[\]\s*=\s*\{/, /\n\s*\};/, 'ams_limits');
-  assert.deepEqual(rawDisplayLiterals(table), [], 'the names in ams_limits are marked with L');
-  assert.match(source, /wxString msg = _L\(lim\.name\) \+ _L\(" maximum drying temperature is "\)/);
-  assert.match(source, /wxString msg = _L\(lim\.name\) \+ _L\(" minimum drying temperature is "\)/);
+  const names = block(source, /static wxString get_dryer_name\(DevDryerType model\)\s*\{/, /\n\}/, 'get_dryer_name');
+  assert.deepEqual(rawDisplayLiterals(names.replace(/return "";/g, '')), [], 'every dryer name is a catalogue message');
+  for (const [type, name] of [['N3F', 'AMS 2 Pro'], ['N3S', 'AMS HT'], ['ZMULTI_A', 'AMS 3H']])
+    assert.ok(new RegExp(`case DevDryerType::${type}:\\s*return _L\\("${name}"\\);`).test(names), `${type} reads as ${name}`);
+  assert.match(source, /wxString msg = get_dryer_name\(dryer->GetDryerType\(\)\) \+ _L\(" maximum drying temperature is "\)/);
+  assert.match(source, /wxString msg = get_dryer_name\(dryer->GetDryerType\(\)\) \+ _L\(" minimum drying temperature is "\)/);
 });
 
 test('the colour-swatch label is a short context message, not the raw word', () => {

@@ -88,12 +88,51 @@ test('a copyable label opens the Material menu', async () => {
   assert.match(copy.slice(0, copy.indexOf('\n}\n')), /MD3::PopupMenu\(label, &menu, label->ClientToScreen\(evt\.GetPosition\(\)\)\);/);
 });
 
+// A view that goes through apply_devtools() is gated by the same preference: WebView2
+// keeps its menus on only so that ContextMenuRequested fires, and the handler swallows
+// the request unless developer tools are on. Every other backend takes the flag itself.
+function assertLiveMenuGate(text, file) {
+  const apply = text.slice(text.indexOf('static void apply_devtools(wxWebView *webView, bool enable)'));
+  const applyBody = apply.slice(0, apply.indexOf('\n}\n'));
+  assert.match(applyBody, /edge->ApplyDevTools\(enable\);\s*return;/, `${file}: WebView2 takes the live gate`);
+  assert.match(applyBody, /webView->EnableContextMenu\(enable\);/, `${file}: other backends take the flag`);
+  assert.match(text, /EnableContextMenu\(m_contextMenuMode == ContextMenuMode::Fallback \? enable : true\);/,
+    `${file}: an old runtime without the event takes the flag`);
+  assert.match(text, /add_ContextMenuRequested\(/, `${file}: the request event is subscribed`);
+  const poll = text.slice(text.indexOf('void DoGetClientSize(int *x, int *y) const override'));
+  assert.match(poll.slice(0, poll.indexOf('wxWebViewEdge::DoGetClientSize(x, y);')), /thiz->EnsureContextMenuSubscribed\(\);/,
+    `${file}: the subscription happens as soon as the backend exists`);
+  assert.match(text, /if \(m_contextMenuMode != ContextMenuMode::Pending\)\s*EnableContextMenu\(/,
+    `${file}: no value is queued before the subscription has decided`);
+  assert.match(text, /m_contextMenuMode = ContextMenuMode::Fallback;\s*EnableContextMenu\(devtools_enabled_from_config\(\)\);/,
+    `${file}: a failed subscription sets the flag itself`);
+  assert.match(text, /if \(!devtools_enabled_from_config\(\)\) \{\s*args->put_Handled\(TRUE\);\s*return S_OK;\s*\}/,
+    `${file}: the browser menu is swallowed unless developer tools are on`);
+}
+
+test('the live menu gate rejects a handler that lets the browser menu through', () => {
+  const webview = all.find((s) => s.file === 'Widgets/WebView.cpp').text;
+  assertLiveMenuGate(webview, 'Widgets/WebView.cpp');
+  for (const [from, to] of [
+    ['args->put_Handled(TRUE);', 'args->put_Handled(FALSE);'],
+    ['thiz->EnsureContextMenuSubscribed();', ''],
+    ['if (m_contextMenuMode != ContextMenuMode::Pending)', 'if (true)'],
+  ]) {
+    assert.ok(webview.includes(from), from);
+    assert.throws(() => assertLiveMenuGate(webview.replace(from, to), 'mutated'), from);
+  }
+});
+
 test('no web page opens the browser\'s own menu in a public build', () => {
   for (const { file, text } of all) {
     for (const match of text.matchAll(/(\w+)\s*=\s*wxWebView::New\(/g)) {
       const rest = text.slice(match.index);
       const fnEnd = rest.indexOf('\n}\n');
       const body = rest.slice(0, fnEnd < 0 ? rest.length : fnEnd);
+      if (new RegExp(`apply_devtools\\(${match[1]}, devtools_enabled_from_config\\(\\)\\)`).test(body)) {
+        assertLiveMenuGate(text, file);
+        continue;
+      }
       assert.match(body, new RegExp(`${match[1]}->EnableContextMenu\\((?:false|enable_devtools)\\)`), `${file}: ${match[1]} keeps the browser menu`);
     }
     for (const match of text.matchAll(/EnableContextMenu\(true\)/g)) {

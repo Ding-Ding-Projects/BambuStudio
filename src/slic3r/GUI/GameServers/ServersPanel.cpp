@@ -31,6 +31,7 @@
 #include "../Widgets/LabeledCheckBox.hpp"
 #include "../Widgets/MD3DataView.hpp"
 #include "../Widgets/MD3DialogChrome.hpp"
+#include "../Widgets/MD3Menu.hpp"
 #include "../Widgets/MD3ScrolledWindow.hpp"
 #include "../Widgets/MD3Tokens.hpp"
 #include "../Widgets/SpinInput.hpp"
@@ -1111,9 +1112,11 @@ void ServersPanel::Ui::build()
         wxMenu targets;
         auto *native = targets.Append(wxID_ANY, _L("Native console and Bedrock setup..."));
         auto *containers = targets.Append(wxID_ANY, _L("Container servers..."));
-        const int choice = self->GetPopupMenuSelectionFromUser(targets);
-        if (choice == native->GetId()) show_native_servers(self);
-        if (choice == containers->GetId()) show_container_servers(self);
+        // PopupMenu delivers the chosen command through the menu, which the appended
+        // appearance and lock entries need as much as these two do.
+        targets.Bind(wxEVT_MENU, [this](wxCommandEvent &) { show_native_servers(self); }, native->GetId());
+        targets.Bind(wxEVT_MENU, [this](wxCommandEvent &) { show_container_servers(self); }, containers->GetId());
+        MD3::PopupMenu(self, &targets);
     });
     head_button(_L("Find and adopt..."), GlyphFind, Button::Variant::Outlined, [this]() { adopt(); });
     head_button(_L("Create server..."), GlyphAdd, Button::Variant::Filled, [this]() { create_server(); });

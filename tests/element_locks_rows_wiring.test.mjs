@@ -73,7 +73,7 @@ function checkInkRows(platerSource, factoriesSource) {
                  'the identity follows the row number');
     for (const target of ['combobox', 'combobox->clr_picker', 'diameter_btns'])
         assert.match(platerSource, new RegExp(`ElementLocks::set_lock_identity\\(${target.replace(/[>-]/g, (c) => '\\' + c)}, identity\\);`));
-    const del = code(body(platerSource, 'void Sidebar::delete_filament(size_t filament_id, int replace_filament_id)'));
+    const del = code(body(platerSource, 'void Sidebar::delete_filament(size_t filament_id, int replace_filament_id, bool confirm_if_used)'));
     assert.match(del, /ElementLocks::ink_row_lock_id\(int\(filament_id\) \+ 1\); ElementLocks::is_locked\(lock\)\) \{[\s\S]*?return;/);
     const menu = code(body(factoriesSource, 'void MenuFactory::create_filament_action_menu('));
     assert.match(menu, /delete_item->Enable\(!row_locked &&/);

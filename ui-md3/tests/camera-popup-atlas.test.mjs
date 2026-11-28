@@ -42,7 +42,11 @@ test('camera popup uses a shared tonal body and measured content width', () => {
   assert.match(popup, /m_panel->SetBackgroundColour\(StateColor::semantic\(MD3::Role::SurfaceContainerLow\)\)/);
   assert.match(popup, /item->SetBackgroundColour\(StateColor::semantic\(MD3::Role::SurfaceContainerLow\)\)/);
   assert.match(popup, /main_sizer->Add\(grid_recording, 0, wxEXPAND \| wxLEFT \| wxRIGHT \| wxTOP, FromDIP\(10\)\)/);
-  assert.match(popup, /main_sizer->Add\(grid_rest, 0, wxEXPAND \| wxLEFT \| wxRIGHT \| wxBOTTOM, FromDIP\(10\)\)/);
+  // v02.09.02.62 split the rest of the rows into one grid per section, each at the same inset;
+  // the closing hint carries the bottom padding.
+  for (const grid of ['grid_per_cam', 'grid_vcamera', 'grid_resolution', 'grid_storage'])
+    assert.match(popup, new RegExp(`main_sizer->Add\\(${grid}, 0, wxEXPAND \\| wxLEFT \\| wxRIGHT, FromDIP\\(10\\)\\)`), grid);
+  assert.match(popup, /main_sizer->Add\(timelapse_hint_sizer, 0, wxEXPAND \| wxLEFT \| wxRIGHT \| wxBOTTOM, FromDIP\(15\)\)/);
 });
 
 test('temperature extent grows for measured text and paint uses the allocated height', () => {

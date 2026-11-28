@@ -22,6 +22,7 @@
 #include "Widgets/Button.hpp"
 #include "Widgets/CheckBox.hpp"
 #include "Widgets/Label.hpp"
+#include "Widgets/MD3ScrolledWindow.hpp"
 #include "Widgets/StateColor.hpp"
 #include "libslic3r/Utils.hpp"
 
@@ -100,7 +101,7 @@ struct AlertDialog::Impl
     wxSizerItem      *button_row{nullptr};
     wxStaticBitmap   *image{nullptr};
     wxBitmap          image_source;
-    wxScrolledWindow *message_area{nullptr};
+    MD3ScrolledWindow *message_area{nullptr};
     Label            *message{nullptr};
     wxBoxSizer       *content{nullptr};
     wxBoxSizer       *notes{nullptr};
@@ -137,7 +138,7 @@ struct AlertDialog::Impl
         image = new wxStaticBitmap(dlg, wxID_ANY, wxNullBitmap);
         image->Hide();
 
-        message_area = new wxScrolledWindow(dlg, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL);
+        message_area = new MD3ScrolledWindow(dlg, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL);
         message_area->SetBackgroundColour(StateColor::darkModeColorFor(ThemeColor::White));
         message_area->SetScrollRate(0, 20);
         message_area->EnableScrolling(false, true);
@@ -205,7 +206,7 @@ struct AlertDialog::Impl
         const int max_height  = dlg->FromDIP(TEXT_MAX_HEIGHT);
         if (text_height > max_height) {
             // Keep the wrapped text clear of the scrollbar
-            width += wxSystemSettings::GetMetric(wxSYS_VSCROLL_X, dlg);
+            width += MD3ScrolledWindow::BarThickness(dlg);
         }
         const wxSize size(width, std::min(text_height, max_height));
         message_area->SetMinSize(size);

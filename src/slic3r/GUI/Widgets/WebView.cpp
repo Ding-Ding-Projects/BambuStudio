@@ -391,7 +391,11 @@ public:
     {
         EnableAccessToDevTools(enable);
         EnsureContextMenuSubscribed();
-        EnableContextMenu(m_contextMenuMode == ContextMenuMode::Fallback ? enable : true);
+        // Nothing is set before the backend exists: wx would queue the value and apply
+        // it after the subscription had already chosen the right one, which switched the
+        // browser menu back on for runtimes without the event. Subscribing decides it.
+        if (m_contextMenuMode != ContextMenuMode::Pending)
+            EnableContextMenu(m_contextMenuMode == ContextMenuMode::Fallback ? enable : true);
     }
 
     bool SetUserAgent(const wxString &userAgent)

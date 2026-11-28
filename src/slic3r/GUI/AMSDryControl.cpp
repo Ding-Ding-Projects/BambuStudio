@@ -93,12 +93,13 @@ static std::string get_dry_img_prefix(DevAmsType type)
     }
 }
 
+// The names are catalogue messages, so the dryer reads in the product wording.
 static wxString get_dryer_name(DevDryerType model)
 {
     switch (model) {
-        case DevDryerType::N3F:       return "AMS2";
-        case DevDryerType::N3S:       return "AMS-S";
-        case DevDryerType::ZMULTI_A:  return "AMS 3H";
+        case DevDryerType::N3F:       return _L("AMS 2 Pro");
+        case DevDryerType::N3S:       return _L("AMS HT");
+        case DevDryerType::ZMULTI_A:  return _L("AMS 3H");
         case DevDryerType::HT_MODULE: return _L("Drying Module");
         default:                       return "";
     }

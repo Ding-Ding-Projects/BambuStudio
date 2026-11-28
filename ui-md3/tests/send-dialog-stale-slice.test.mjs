@@ -184,7 +184,7 @@ const checks = {
   sliceAgainOwnControl(src) {
     const dialog = src['SelectMachine.cpp'];
     const show = block(dialog, 'void SelectMachineDialog::show_status(');
-    assert.match(show, /if \(status == PrintDialogStatus::PrintStatusPlateNeedsSlicing && can_slice_again_from_dialog\(\)\)\s*style = style \| prePrintInfoStyle::BtnSliceAgain;\s*m_pre_print_checker\.add\(status, msg, tips, wiki_url, style\);\s*(?:update_add_to_queue_button_state\(status\);\s*)?\}$/,
+    assert.match(show, /if \(status == PrintDialogStatus::PrintStatusPlateNeedsSlicing && can_slice_again_from_dialog\(\)\)\s*style = style \| prePrintInfoStyle::BtnSliceAgain;\s*m_pre_print_checker\.add\(status, msg, tips, wiki_url, style(?:, link_label)?\);\s*(?:update_add_to_queue_button_state\(status\);\s*)?\}$/,
       'the stale-slice message is added as itself, flagged for its action');
     assert.doesNotMatch(show, /add_with_link\(/, 'show_status never joins a message and an action into one label');
     assert.doesNotMatch(dialog, /_L\("Slice again"\)/, 'the dialog never puts the action text into a message');

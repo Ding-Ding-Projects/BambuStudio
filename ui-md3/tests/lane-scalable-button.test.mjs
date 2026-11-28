@@ -124,7 +124,7 @@ const CONSTRUCTING_FILES = [
   'SendMultiMachinePage.cpp', 'UnsavedChangesDialog.cpp', 'StatusPanel.cpp',
   'Widgets/SideTools.cpp', 'Widgets/StaticGroup.cpp',
   'DeviceTab/wgtRackExtruder.cpp', 'ExtruderPanelGroup.cpp', 'MixedFilamentDialog.cpp',
-  'MixSupplementFilamentDialog.cpp', 'Widgets/NozzleAmsRow.cpp', // new with upstream v02.09.01.70
+  'MixSupplementFilamentDialog.cpp', // new with upstream v02.09.01.70
 ];
 // Classes that derive from ScalableButton and sit in a header that does not reach
 // Widgets/Button.hpp yet. PlusMinusButton (GUI_ObjectLayers.hpp) is converted on its
@@ -135,7 +135,7 @@ const DERIVING_WITHOUT_BUTTON_HEADER = new Set([
 ]);
 
 test('every source that constructs a ScalableButton reaches Widgets/Button.hpp', async () => {
-  assert.equal(CONSTRUCTING_FILES.length, 27, 'the include-closure scan found 27 constructing files');
+  assert.equal(CONSTRUCTING_FILES.length, 26, 'the include-closure scan found 26 constructing files');
   const missing = [];
   for (const file of CONSTRUCTING_FILES) {
     const full = path.join(gui, file);

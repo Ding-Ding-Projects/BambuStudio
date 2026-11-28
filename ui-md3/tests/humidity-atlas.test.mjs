@@ -26,15 +26,18 @@ const body = (source, signature) => {
   assert.fail(signature);
 };
 
+// Bambu Studio v02.09.02.62 changed the percent popup's droplet to a dark-theme image, so its
+// UpdateContents() body is preserved against the commit that merged the release.
+const upstreamReleaseMerge = '987ec23fb';
 test('level and percentage telemetry assignments and formatting remain unchanged', () => {
   for (const signature of ['void AmsHumidityTipPopup::set_humidity_level('])
     assert.equal(body(classic, signature), body(historical(classicPath), signature));
   assert.equal(body(percent, 'void uiAmsPercentHumidityDryPopup::Update('), body(historical(percentPath), 'void uiAmsPercentHumidityDryPopup::Update('));
   const removeFinalLayout = s => s.replace(/^\s*(?:Fit|Layout|LayoutReadouts)\(\);/gm, '').replace(/\n(?:[ \t]*\n)+/g, '\n').trim();
   assert.equal(removeFinalLayout(body(percent, 'void uiAmsPercentHumidityDryPopup::UpdateContents()')),
-    removeFinalLayout(body(historical(percentPath), 'void uiAmsPercentHumidityDryPopup::UpdateContents()')));
+    removeFinalLayout(body(historical(percentPath, upstreamReleaseMerge), 'void uiAmsPercentHumidityDryPopup::UpdateContents()')));
   assert.notEqual(removeFinalLayout(body(percent, 'void uiAmsPercentHumidityDryPopup::UpdateContents()').replace('m_humidity_percent', 'm_humidity_level')),
-    removeFinalLayout(body(historical(percentPath), 'void uiAmsPercentHumidityDryPopup::UpdateContents()')));
+    removeFinalLayout(body(historical(percentPath, upstreamReleaseMerge), 'void uiAmsPercentHumidityDryPopup::UpdateContents()')));
 });
 
 // Refreshed for the Bambu Studio v02.09.01.70 upstream merge. Upstream changed these two files
@@ -43,7 +46,9 @@ test('level and percentage telemetry assignments and formatting remain unchanged
 // own hunks (da8b44ee3..v02.09.01.70: 579712cca, 3e46e23a9, 9cfdde3be, 1f57f20db, 96b6f1865,
 // b8661541e, a20790efa, bf25dd029, 7e8af939e for AMSControl.cpp; fbebe983d, cd96497de, 1f57f20db,
 // 63e741b10 for ViewModelActions.cpp), so the preserved reference is the merge commit.
-const capabilityRoutingBaseline = '88a19d7d61d5d0b5a3cc2734c5f1582d06a70f70';
+// Refreshed again for v02.09.02.62: no fork commit touched either file after 88a19d7 and the
+// merge resolved neither by hand, so the preserved reference is that merge commit.
+const capabilityRoutingBaseline = upstreamReleaseMerge;
 test('native and embedded capability routing is byte-identical to the preserved baseline', () => {
   for (const file of ['src/slic3r/GUI/Widgets/AMSControl.cpp', 'src/slic3r/GUI/DeviceWeb/ViewModels/DevicePage/AmsControlWeb/ViewModelActions.cpp'])
     assert.equal(read(file), historical(file, capabilityRoutingBaseline));
@@ -103,8 +108,11 @@ test('both popups bound a real scroll owner and refresh geometry after content o
 test('actual Fit then Position then Popup sequence clamps the final measured rectangle', () => {
   const caller = read('src/slic3r/GUI/DeviceWeb/ViewModels/DevicePage/AmsControlWeb/ViewModelActions.cpp');
   const show = body(caller, 'void show_ams_level_humidity_tip(');
-  assert.ok(show.indexOf('popup->Fit()') < show.indexOf('popup->Position('));
-  assert.ok(show.indexOf('popup->Position(') < show.indexOf('popup->Popup()'));
+  // The caller places the popup a second time, with its fitted size, after Fit().
+  const fit = show.indexOf('popup->Fit()');
+  const place = show.indexOf('popup->Move(AMSDryCtrWin::DefaultPopupPos(parent, popup->GetSize()))');
+  assert.ok(fit >= 0 && place >= 0 && fit < place);
+  assert.ok(place < show.indexOf('popup->Popup()'));
   let source = body(classic, 'void AmsHumidityTipPopup::Popup(')
     .replace(/\/\/[^\n]*/g, '').replace(/const wx(?:Point|Size|Rect)\s+/g, 'const ')
     .replace(/const int\s+/g, 'const ').replace(/wxDisplay::GetFromWindow/g, 'displayFor')

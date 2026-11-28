@@ -123,7 +123,7 @@ test('the code that compares the type still compares the value as written', () =
   const expectations = [
     [['src', 'libslic3r', 'Brim.cpp'], 'materialName == "TPU-AMS"'],
     [['src', 'libslic3r', 'Model.cpp'], 'materialName == "TPU-AMS"'],
-    [gui('Tab.cpp'), 'has_filaments({"TPU", "TPU-AMS"})'],
+    [['src', 'libslic3r', 'SupportRecommendedParams.cpp'], 'filament_type == "TPU" || filament_type == "TPU-AMS"'],
     [gui('GUI_App.cpp'), '{"PETG", "TPU", "TPU-AMS"}'],
     [gui('AMSMaterialsSetting.cpp'), 'fila_item->filament_type == "TPU-AMS"'],
   ];
@@ -266,7 +266,8 @@ test('the changes dialog and the support suggestion show the ink wording', () =>
   const tab = read(...gui('Tab.cpp'));
   const advisor = read(...gui('SupportComboAdvisor.cpp'));
   assert.ok(advisor.includes('slot_str += " " + I18N::display_material_type(filament->config.option<ConfigOptionStrings>("filament_type")->values[0]);'));
-  assert.ok(tab.includes('I18N::display_material_name(rec.support_material_display_name), I18N::display_material_name(rec.model_material_display_name)'));
+  assert.match(advisor, /I18N::display_material_name\(rec\.support_material_display_name\), I18N::display_material_name\(rec\.model_material_display_name\)/);
+  assert.ok(tab.includes('support_recommendation_dialog_text('), 'the process page shows the advisor text');
 });
 
 test('the ink slot picker lists system presets in the ink wording and still returns the alias', () => {

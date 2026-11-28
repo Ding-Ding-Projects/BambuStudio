@@ -270,7 +270,15 @@ const fileNamed = async (name) => (await guiFiles()).find((f) => f.file === name
 // no native title bar, or that no person can open, each with the reason the sweep leaves them
 // out. Adding a class here is a decision somebody has to justify in this list, never a way to
 // turn the sweep green.
+// Internal-build debug windows whose opener adopts the caption once the page is laid out.
+const ADOPTED_BY_OPENER = [
+  ['ControlPanelDebugDialog', 'DeviceWeb/ViewModels/DevicePage/ControlPanel/ViewModel.cpp'],
+  ['FilamentLoadDebugDialog', 'DeviceWeb/ViewModels/DevicePage/FilamentLoad/ViewModel.cpp'],
+  ['HotendRackWebDebugDialog', 'DeviceWeb/ViewModels/DevicePage/HotendRack/ViewModel.cpp'],
+];
+
 const ALLOWED_WITHOUT_CAPTION = new Map([
+  ...ADOPTED_BY_OPENER.map(([name]) => [name, 'developer-only debug window; the function that opens it adopts the caption after layout']),
   ['AmsControlWebDebugDialog', 'developer-only page of the web AMS view, adopts outside its constructor, in the function that builds it'],
   ['BedShapeDialog', 'its constructor is empty; build_dialog(), which every caller runs before showing it, adopts'],
   ['DPIDialog', 'the DPI-aware base class itself: it draws no chrome and has no constructor of its own'],
@@ -326,6 +334,14 @@ test('per-class sweep: every dialog class reaches the kit caption from its const
     else if (missing > 0) offenders.push(`${name} (${file}): ${missing} of ${ctors} constructors never reach the kit caption`);
   }
   assert.deepEqual(offenders, []);
+});
+
+test('each debug window allowlisted above is adopted by its opener before it is shown', async () => {
+  for (const [name, file] of ADOPTED_BY_OPENER) {
+    const text = (await readFile(path.join(repoDir, 'src', 'slic3r', 'GUI', file), 'utf8')).replace(/\r\n/g, '\n');
+    const opened = new RegExp(`\\n\\s*${name} dlg\\([^\\n]*\\);[\\s\\S]*?MD3DialogCaption::Adopt\\(&dlg\\);\\s*dlg\\.ShowModal\\(\\);`);
+    expect(opened.test(text), `${name}: the opener must adopt the caption before ShowModal`);
+  }
 });
 
 test('every allowlisted dialog class still exists and still needs its entry', async () => {
