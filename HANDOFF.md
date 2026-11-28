@@ -1,5 +1,23 @@
 # Bambu Studio handoff
 
+## Contract repairs after the release merge, 27 November 2026
+
+The new contract failures left by the integration are repaired. Run inside the Visual Studio 18 x64 developer environment on the Windows host, the Node suite gives 1019 tests, 976 passed, 42 failed and 1 skipped. The same run on a clean clone of the released `6be454d35` gives 1010 tests, 959 passed, 50 failed and 1 skipped. No failing entry on the repaired source passes on that baseline. The 42 remaining failures have not been examined.
+
+The earlier count of 22 was taken without a C++ compiler on the path. Three of those entries were game server suites that pass once `cl.exe` is available, and the compiler run showed one more, the door chime suite, which makes 20.
+
+Product fixes:
+
+- The Servers panel's "More targets" menu is the kit menu, and its commands arrive as menu events.
+- The alert dialog's message area uses the kit scrolled window.
+- Dryer names go through the translation catalogue again.
+- The text tab bar takes a Material colour role.
+- On a WebView2 runtime without `ContextMenuRequested`, a value queued before the backend existed switched the browser menu back on after the fallback had disabled it. Nothing is queued now. This came with the release merge and was found by review, not by a failing test.
+
+The other 16 entries described code that the release merge or the melody pitch correction had changed on purpose. Their contracts follow the current code. The humidity preservation baselines moved to the merge commit `987ec23fb`, and the door chime fixture expects the printer's note numbering.
+
+The seven changed or previously uncompiled C++ files (`AlertDialog.cpp`, `AMSDryControl.cpp`, `ServersPanel.cpp`, `TextTabbar.cpp`, `MsgDialog.cpp`, `MD3Dialog.cpp` and `WebView.cpp`) compile in the configured Release project. No link, packaged build or runtime check was run, and the old-runtime menu case was not reproduced. These commits are marked to skip workflows, so nothing was built or published; `md3-v338` is still the latest release.
+
 ## Branch integration, 27 November 2026
 
 All local work branches are merged into `main`, which is pushed. The one commit that was still outside `main`, `46c813548`, removes a reference to the former raster logo member from `MsgDialog::HideLogo` and hides the header icon tile with its spacing.

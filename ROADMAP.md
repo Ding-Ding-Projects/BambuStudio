@@ -3,7 +3,9 @@
 ## Native integration and verification, 27 November 2026
 
 - [x] Merge every local work branch into `main`, push it and remove the branches and worktrees it contains.
-- [ ] Repair the 22 Node contract entries that fail on the integrated source and pass on `md3-v338`, then build and publish the combined source.
+- [x] Repair the Node contract entries that fail on the integrated source and pass on `md3-v338`.
+- [ ] Build, link and publish the combined source.
+- [ ] Examine the 42 Node contract entries that fail both on the integrated source and on `md3-v338`.
 - [x] Verify the MCP/CLI payload in `md3-v338` against the released SBOM and close #53 under its accepted device scope.
 - [ ] Verify the combined v02.09.02.62 native build, launch and representative slice.
 - [ ] Exercise ordinary slicing, reslice-required and in-dialog reslicing with the exact selected models and emitted toolpaths, including cancellation, sequential printing and reduced motion.
